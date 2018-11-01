@@ -1,0 +1,76 @@
+{% extends 'layouts/base.html' %}
+{% block title %} : Login {% endblock %}
+
+{% block extra_css %}
+<style>
+        .text-lightgray {
+            color: #cecece!important;
+        }
+        
+        .inputSpace {
+            padding-top: 5px!important;
+            padding-bottom: 5px!important;
+            margin-bottom: 0px!important;
+        }
+        
+        .txtFocus:focus {
+            color: #495057;
+            background-color: #fff;
+            border-color: transparent;
+            outline: 0;
+            box-shadow: none;
+        }
+        
+        .borderB {
+            border-bottom-left-radius: 0px!important;
+            border-bottom: none!important;
+            border-bottom-right-radius: 0px!important;
+        }
+        
+        .borderT {
+            border-top-left-radius: 0px!important;
+            border-top-right-radius: 0px!important;
+        }
+        
+        .text-offlight {
+            color: #e4f7ff
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section>
+  	<div class="container h-100vh">
+  		<div class="row justify-content-md-center mt-md-5 mt-sm-0">
+    		<div class=" col-md-4 col-sm-12 theme-bg rounded-left">
+            	<form class="form-signin text-center">
+             		<h1 class="h5 mb-5 mt-5 font-weight-normal text-white">Welcome to Deliver-Me </h1>
+					<div class="input-group input-group-text bg-white borderB">
+					 	<span class="input-group-addon bg-white">
+							<i class="fa fa-envelope text-lightgray"></i>
+					  	</span>
+						<input class="form-control border-0 txtFocus inputSpace" type="text" placeholder="Email address">
+					</div>
+					<div class="input-group input-group-text bg-white borderT">
+				  		<span class="input-group-addon bg-white">
+							<i class="fa fa-lock text-lightgray"></i>
+				  		</span>
+				  		<input class="form-control border-0 txtFocus inputSpace" type="password" placeholder="Password">
+					</div>
+		  			<button class="btn btn-lg btn-info mt-md-2 btn-block"" type="submit">Sign in</button>
+		  			<p class="mt-5 mb-0"><a href="#" class="text-offlight">Forgot your password?</a></p>
+				</form>
+			</div>
+
+	    	<div class="col-md-5 col-sm-12 bg-light login-info-center rounded-right rounded-sm-0">
+	        	<div class="login-info-center">
+	            	<div class="login-info-divider mt-5"></div>
+	            		<h1 class="login-info-title">Freight Your Delivery</h1>
+	            	<div class="login-info-divider mb-5"></div>
+	         	</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+{% endblock %}
