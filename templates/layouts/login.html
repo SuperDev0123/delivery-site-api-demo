@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deliver Me {% block title %}{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="description" content="Free Web tutorials">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="HTML,CSS,XML,JavaScript">
+    <meta name="author" content="John Doe">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="css/mystyle.css">
+    {% block extra_css %}<!--For Page styles -->{% endblock %}
+</head>
+<body>
+    <!-- start header -->
+    <header>
+        <nav class="navbar navbar-light bg-nav">
+            <a class="navbar-brand m-auto" href="index.html">
+                <img src="img/logo-2.png" class="head-logo" alt="logo" />
+            </a>
+        </nav>
+    </header>
+    <!-- end header -->
+
+    <!-- start content -->
+    {% block content %}
+    {% endblock %}
+    <!-- end content -->
+
+    <!-- start footer -->
+    <footer class="bg-dark text-center px-3 text-white">
+        <span>© 2018  Limited. All rights reserved. " Deliver-Me" and "Beautiful business" are trademarks of  Deliver-Me Limited.</span>
+    </footer>
+    <!-- end footer -->
+
+    <!-- start scripts -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <!-- end scripts  -->
+    {% block extra_js %}<!--For Page JS -->{% endblock %}
+</body>
+</html>
