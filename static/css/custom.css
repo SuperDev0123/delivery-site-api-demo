@@ -6,3 +6,16 @@ ul.errorlist{
     text-align: left;
     padding: 0px;
 }
+
+.dropzone {
+    min-height: 300px;
+    border: 1px solid rgba(193, 194, 195, 0.5);
+    background: #e9ecef;
+    padding: 54px 54px;
+    border-radius: 10px;
+ }
+
+ .dropzone .dz-message {
+    text-align: center;
+    margin: 6em 0;
+}
