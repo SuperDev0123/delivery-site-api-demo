@@ -43,15 +43,23 @@
     <div class="container h-100vh">
   		<div class="row justify-content-md-center mt-md-5 mt-sm-0">
     		<div class=" col-md-4 col-sm-12 theme-bg rounded-left">
-            	<form class="form-signin text-center" method="post">
-                      {% csrf_token %}
 
-             		<h1 class="h5 mb-5 mt-5 font-weight-normal text-white">Welcome to Deliver-Me </h1>
+
+            	<form class="form-signin text-center" method="post">
+                    <h1 class="h5 mb-5 mt-5 font-weight-normal text-white">Welcome to Deliver-Me </h1>
+                    {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}    
+                    {% csrf_token %}
+
+             		
 					<div class="input-group input-group-text bg-white borderB">
 					 	<span class="input-group-addon bg-white">
 							<i class="fa fa-envelope text-lightgray"></i>
 					  	</span>
-						<input name="username" class="form-control border-0 txtFocus inputSpace" type="text" placeholder="Email address">
+						<input name="username" class="form-control border-0 txtFocus inputSpace" type="text" placeholder="User Name">
 					</div>
 					<div class="input-group input-group-text bg-white borderT">
 				  		<span class="input-group-addon bg-white">
