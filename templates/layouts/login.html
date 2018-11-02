@@ -11,8 +11,10 @@
     <meta name="author" content="John Doe">
     <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
-     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    {% block extra_css %}<!--For Page styles -->{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css_lib %}<!--For Page styles -->{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    {% block extra_css_custom %}<!--For Page styles -->{% endblock %}
 </head>
 <body>
     <!-- start header -->
