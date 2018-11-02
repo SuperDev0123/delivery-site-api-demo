@@ -1,11 +1,12 @@
 .cut-user-name{color:#333;font-size:14px;background: none;}
 .fa .fa-user{color: #fff;}
-header a, header a:hover, header a:active{color: #fff;}
-ul.errorlist{
+.alert-danger .errorlist {
 	list-style: none;
     text-align: left;
     padding: 0px;
 }
+header a, header a:hover, header a:active{color: #fff;}
+
 
 .dropzone {
     min-height: 300px;
@@ -19,3 +20,4 @@ ul.errorlist{
     text-align: center;
     margin: 6em 0;
 }
+ul,li{list-style:none;}
