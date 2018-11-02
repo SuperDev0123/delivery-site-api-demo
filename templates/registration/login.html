@@ -1,7 +1,7 @@
 {% extends 'layouts/login.html' %}
 {% block title %} : Login {% endblock %}
 {% load static %}
-{% block extra_css %}
+{% block extra_css_custom %}
 <style>
         .text-lightgray {
             color: #cecece!important;
@@ -35,6 +35,7 @@
         .text-offlight {
             color: #e4f7ff
         }
+        .form-signin a, .form-signin a:hover, .form-signin a:active{color: #fff;}
     </style>
 {% endblock %}
 
