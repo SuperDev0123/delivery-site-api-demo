@@ -2,10 +2,13 @@
 {% block title %} : Home {% endblock %}
 {% load static %}
 {% block content %}
+
     <div class="container h-100vh">
     	<div class="row justify-content-md-center mt-5 mb-5">
     		<div class="col-12 ">
-    			<form action="/share/upload/" class="dropzone" id="uploadDropzone"></form>
+    			<form action="/share/upload/" class="dropzone" id="uploadDropzone">
+    				{% csrf_token %}
+    			</form>
         	</div>
         </div>
     </div>
@@ -17,8 +20,8 @@
 	<script src="{% static '/js/libs/dropzone/dropzone.js' %}"></script>
 	<script>
 		Dropzone.options.uploadDropzone = {
-			paramName: "files", // The name that will be used to transfer the file,
-			maxFilesize: 2, // MB
+			paramName: "file", // The name that will be used to transfer the file,
+			maxFilesize: 250 // MB
 			accept: function(file, done) {
 				console.log(file.name);
 			if (file.name == "justinbieber.jpg") {
