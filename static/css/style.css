@@ -1,5 +1,23 @@
+@font-face {
+  font-family: 'icomoon';
+  src: url("../fonts/icomoon/icomoon.eot?srf3rx");
+  src: url("../fonts/icomoon/icomoon.eot?srf3rx#iefix") format("embedded-opentype"), url("../fonts/icomoon/icomoon.ttf?srf3rx") format("truetype"), url("../fonts/icomoon/icomoon.woff?srf3rx") format("woff"), url("../fonts/icomoon/icomoon.svg?srf3rx#icomoon") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+body {
+  font-family: "Poppins", Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #828282;
+  background: #fff;
+}
 .theme-bg{
-background:  #00a2d5;
+background:  #048abb;
+}
+h1 {
+  font-family: arial,helvetica,sans-serif;
 }
 p{
   font-size: 16px;
@@ -130,7 +148,7 @@ footer{
 }
 }
 
-.bg-nav{background:#32465a}
+.bg-nav{background:#048abb}
 .carousel-item img{height:600px;width:50%!important;display:inline!important;float:right;}
   .carousel-caption {
     right: 0;
