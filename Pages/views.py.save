@@ -16,7 +16,7 @@ class SharePageView(TemplateView):
     template_name = 'pages/share.html'   
 
 def handle_uploaded_file(f):
-    with open('/var/www/html/DeliverMe/media/onedrive/2222016067_' + f.name, 'wb+') as destination:
+    with open('/var/www/html/DeliverMe/media/onedrive/2222016067/' + f.name, 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
 
