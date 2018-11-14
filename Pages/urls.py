@@ -7,5 +7,6 @@ urlpatterns = [
     path('share/', SharePageView.as_view(), name='share'), # new
     path('share/upload/', views.upload, name='upload'), # new
     path('', HomePageView.as_view(), name='home'),  
-    path('bookings/', views.bookings, name='bookings'),
+    path('allbookings/', views.allbookings, name='allbookings'),
+    path('booking/', views.bookings, name='bookings'),
 ]

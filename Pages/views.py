@@ -27,4 +27,8 @@ def upload(request):
 
 def bookings(request):
 	context = {'latest_question_list': 'latest_question_list'}
-	return render(request, 'pages/bookings.html', context)
+	return render(request, 'pages/booking.html', context)
+
+def allbookings(request):
+	context = {'latest_question_list': 'latest_question_list'}
+	return render(request, 'pages/allbookings.html', context)

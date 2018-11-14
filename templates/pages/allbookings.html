@@ -1,0 +1,350 @@
+{% extends 'layouts/base_booking.html' %}
+{% block title %} : Home {% endblock %}
+{% load static %}
+{% block content %}
+<div class="qbootstrap-loader"></div>
+<div id="page">
+  <nav class="qbootstrap-nav" role="navigation">
+    <div class="col-md-12" id="headr">
+      <div class="top">
+        <div class="row">
+          <div class="col-md-8 col-sm-12 col-lg-8 col-xs-12 col-md-push-1 ">
+            <h3 class="label_hel">Booking List BioPAK:</h3>
+              <h3 class="label_hel">Warehouse names goes here if client has them</label>
+          </div>
+        <div class="col-md-4 col-sm-12 col-lg-4 col-xs-12 text-right"> <a href="">Login Info Client</a> | <a href="">Accounts</a> | <a href="">Client Mode</a> </div>
+        </div>
+        <div class="line"></div> 
+      </div>
+      <div class="col-md-7 col-sm-12 col-lg-8 col-xs-12 col-md-push-1">
+        <ul class="nav nav-tabs">
+          <li class="active"><a data-toggle="tab" href="#header">Header</a></li>
+          <li><a data-toggle="tab" href="#all_booking">All Bookings</a></li>
+          <li><a data-toggle="tab" href="#other1">Other 1</a></li>
+          <li><a data-toggle="tab" href="#other2">Other 2</a></li>
+          <li><a data-toggle="tab" href="#other3">Other 3</a></li>
+          <li><a data-toggle="tab" href="#other4">Other 4</a></li>
+          <li><a data-toggle="tab" href="#other5">Other 5</a></li>
+        </ul>
+      </div>
+      <div id="icn" class="col-md-4 col-sm-12 col-lg-4 col-xs-12 text-right">
+        <a href=""><i class="icon-plus" aria-hidden="true"></i></a>
+        <div class="popup" onclick="myFunction()">
+          <i class="icon-search3" aria-hidden="true"></i>
+            <form id="srch">
+              <input class="popuptext" id="myPopup" type="text" placeholder="Search.." name="search">
+            </form>
+        </div>
+        <a href=""><i class="icon-cog2" aria-hidden="true"></i></a>
+        <a href=""><i class="icon-calendar3" aria-hidden="true"></i></a>
+        <a href="">?</a>
+      </div>
+    </div>
+    <div class="top-menu">
+      <div class="container">
+        <div class="row">
+
+          <div class="col-md-12 col-sm-12 col-lg-12 col-xs-12">
+            <div class="tab-content">
+              <div id="header" class="tab-pane fade in active">
+                <table style="width:100%">
+                  <tr>
+                    <td> <h3>Header</h3> </th>
+                    <td align="right"> <h3>Count : 4</h3> </th>
+                 </tr>
+               </table>
+                <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                  <thead class="thead-light">
+                    <tr>
+                      <th scope="col">Booking Id</th>
+                      <th scope="col">Qty</th>
+                      <th scope="col">Booked Date</th>
+                      <th scope="col">Pickup from /<br/>
+                        Manifest Date</th>
+                      <th scope="col">Ref. Number</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Freight Provider</th>
+                      <th scope="col">Service</th>
+                      <th scope="col">Pickup By</th>
+                      <th scope="col">Latest Delivery</th>
+                      <th scope="col">Consignment#</th>
+                      <th scope="col">Pick Up Entity</th>
+                      <th scope="col">Delivery Entity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                       <th scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td>5&nbsp;&nbsp;<a href="#"><i class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td>STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                    
+                    <tr>
+                       <th scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td>5&nbsp;&nbsp;<a href="#"><i class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                      <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td>STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                    
+                    <tr>
+                       <th scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td>5&nbsp;&nbsp;<a href="#"><i class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td>STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                    
+                    <tr>
+                       <th scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td>5&nbsp;&nbsp;<a href="#"><i class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td>STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                  </tbody>
+                </table>
+                </div>
+              </div>
+              <div id="all_booking" class="tab-pane fade">
+                <p>Date</p>
+                <div id="line1"></div>
+              <div class="row">
+                <div id="msection" class="col-md-6">
+                <ul id="datesection">
+                  <li><a href="#">( 04 ) Errors to Correct</a></li>
+                  <li><a href="#">( 00 ) Missing Labels</a></li>
+                  <li><a href="#">( 50 ) To Manifest</a></li>
+                  <li><a href="#">( 15 ) To Process</a></li>
+                  <li><a href="#">( 01 ) Closed</a></li>
+                </ul>
+                </div>
+                <div class="col-md-4">
+                  <a href="#" id="manifest">Manifest</a>
+                </div>
+                <div id="found" class="col-md-2">
+                  <p>Found: <b>32</b> of 8607</p>
+                </div>
+              </div>
+                <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                  <thead class="thead-light">
+                    <tr>
+                      <th scope="col"><input type="checkbox" onClick="toggle(this)" name="chk" id="name1" /></th>
+                      <th scope="col">Booking Id</th>
+                      <th scope="col">Qty</th>
+                      <th scope="col">Booked Date</th>
+                      <th scope="col">Pickup from /
+                        Manifest Date</th>
+                      <th scope="col">Ref. Number</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Freight Provider</th>
+                      <th scope="col">Service</th>
+                      <th scope="col">Pickup By</th>
+                      <th scope="col">Latest Delivery</th>
+                      <th scope="col">Consignment#</th>
+                      <th scope="col">Pick Up Entity</th>
+                      <th scope="col">Delivery Entity</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tb1">
+                    <tr>
+                      <td scope="col"><input type="checkbox" name="chk" id="name2" /></th>
+                       <td scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td id="lsts">5&nbsp;&nbsp;<a href="#"><i id="lists" class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td id="plus">STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                    
+                    <tr>
+                      <td scope="col"><input type="checkbox" name="chk" id="name3" /></th>
+                       <td scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td id="lsts">5&nbsp;&nbsp;<a href="#"><i id="lists" class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td id="plus">STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                    
+                    <tr>
+                      <td scope="col"><input type="checkbox" name="chk" id="name4" /></th>
+                       <td scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td id="lsts">5&nbsp;&nbsp;<a href="#"><i id="lists" class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td id="plus">STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                    
+                    <tr>
+                      <td scope="col"><input type="checkbox" name="chk" id="name5" /></th>
+                       <td scope="row">BioPak<br/>78166</th>
+                      <!--<td>BioPak<br/>78166</td>-->
+                      <td id="lsts">5&nbsp;&nbsp;<a href="#"><i id="lists" class="icon icon-th-list"></i></a></td>
+                      <td>10/18/2018</td>
+                       <td>10/18/2018</td>
+                      <td>FFL-323750&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
+                      <td>Booked</td>
+                      <td id="plus">STARTRACK&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
+                      <td>EXP</td>
+                      <td></td>
+                      <td></td>
+                      <td>7IXZ50001253</td>
+                      <td>BIOPAK MAIN WAREHOUSE, CS LOGISTICS SYD</td>
+                      <td>Melbourne Health</td>
+                    </tr>
+                  </tbody>
+                </table>
+                </div>
+              </div>
+              <div id="other1" class="tab-pane fade">
+                <h3>Other 1</h3>
+                <p>Some content in Other 1</p>
+              </div>
+              <div id="other2" class="tab-pane fade">
+                <h3>Other 2</h3>
+                <p>Some content in Other 2</p>
+              </div>
+              <div id="other3" class="tab-pane fade">
+                <h3>Other 3</h3>
+                <p>Some content in Other 3</p>
+              </div>
+              <div id="other4" class="tab-pane fade">
+                <h3>Other 4</h3>
+                <p>Some content in Other 4</p>
+              </div>
+              <div id="other5" class="tab-pane fade">
+                <h3>Other 5</h3>
+                <p>Some content in Other 5</p>  
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!--<footer id="qbootstrap-footer" role="contentinfo">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row row-pb-md">
+        <div class="col-md-3 qbootstrap-widget">
+          <h3>About</h3>
+          <p>Facilis ipsum reprehenderit nemo molestias. Aut cum mollitia reprehenderit. Eos cumque dicta adipisci architecto culpa amet.</p>
+        </div>
+        <div class="col-md-2 col-sm-4 col-xs-6 qbootstrap-widget">
+          <h3>Links</h3>
+          <ul class="qbootstrap-footer-links">
+            <li><a href="#">Department</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Terms</a></li>
+            <li><a href="#">Shop</a></li>
+          </ul>
+        </div>
+        <div class="col-md-2 col-sm-4 col-xs-6 qbootstrap-widget">
+          <h3>Our Services</h3>
+          <ul class="qbootstrap-footer-links">
+            <li><a href="#">Heart Surgery</a></li>
+            <li><a href="#">Surgical Treatment</a></li>
+            <li><a href="#">General Treatment</a></li>
+            <li><a href="#">Medical Treatment</a></li>
+            <li><a href="#">Help Desk</a></li>
+          </ul>
+        </div>
+        <div class="col-md-5 col-sm-4 col-xs-12 qbootstrap-widget">
+          <h3>Let's Talk</h3>
+          <form class="contact-form">
+            <div class="form-group">
+              <label for="name" class="sr-only">Name</label>
+              <input type="name" class="form-control" id="name" placeholder="Name">
+            </div>
+            <div class="form-group">
+              <label for="email" class="sr-only">Email</label>
+              <input type="email" class="form-control" id="email" placeholder="Email">
+            </div>
+            <div class="form-group">
+              <label for="message" class="sr-only">Message</label>
+              <textarea class="form-control" id="message" rows="3" placeholder="Message"></textarea>
+            </div>
+            <div class="form-group">
+              <input type="submit" id="btn-submit" class="btn btn-primary btn-send-message btn-md" value="Send Message">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="row copyright">
+      <div class="col-md-12 text-center">
+        <p> <small class="block">&copy; 2017 Free HTML5. All Rights Reserved.</small> <small class="block">Designed by <a href="https://qbootstrap.com/" target="_blank">QBootstrap.com</a> Avaiable on <a href="https://themefisher.com/free-bootstrap-templates" class="">Themefisher.com</a></small> </p>
+      </div>
+    </div>
+  </footer>-->
+</div>
+
+{% endblock %}    
