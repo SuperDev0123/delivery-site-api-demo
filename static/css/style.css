@@ -1900,9 +1900,7 @@ h1, h2, h3, h4, h5, h6, figure {
 #bd-versions > i {
   color: green
 }
-.dropdown-item {
-  background-color: #eee;
-}
+
 tbody .icon-plus{
   background-color: grey;
   font-size: 16px;
