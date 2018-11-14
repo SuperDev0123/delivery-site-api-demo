@@ -1890,4 +1890,25 @@ h1, h2, h3, h4, h5, h6, figure {
   }
 }
 
+.icon-th-list {
+  background-color: grey;
+  font-size: 16px;
+}
+#bd-versions {
+  background-color: #ddd;
+}
+#bd-versions > i {
+  color: green
+}
+.dropdown-item {
+  background-color: #eee;
+}
+tbody .icon-plus{
+  background-color: grey;
+  font-size: 16px;
+}
+
+.table td {
+  line-height: 18px !important;
+}
 /*# sourceMappingURL=style.css.map */
