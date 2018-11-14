@@ -1,23 +1,281 @@
-.cut-user-name{color:#333;font-size:14px;background: none;}
-.fa .fa-user{color: #fff;}
-.alert-danger .errorlist {
-	list-style: none;
-    text-align: left;
-    padding: 0px;
+@font-face {
+    font-family: 'Helvetica Neue Bold';
+    src: url('fonts/helvetica/HelveticaNeue-BoldExt.eot');
+    src: url('fonts/helvetica/HelveticaNeue-BoldExt.eot?#iefix') format('embedded-opentype'),
+        url('fonts/helvetica/HelveticaNeue-BoldExt.woff2') format('woff2'),
+        url('fonts/helvetica/HelveticaNeue-BoldExt.woff') format('woff'),
+        url('fonts/helvetica/HelveticaNeue-BoldExt.ttf') format('truetype'),
+        url('fonts/helvetica/HelveticaNeue-BoldExt.svg#HelveticaNeue-BoldExt') format('svg');
+    font-weight: bold;
+    font-style: normal;
 }
-header a, header a:hover, header a:active{color: #fff;}
+/*for columns but the right size*/
 
+@font-face {
+    font-family: 'Helvetica Neue Light';
+    src: url('fonts/helvetica/HelveticaNeue-LightExt.eot');
+    src: url('fonts/helvetica/HelveticaNeue-LightExt.eot?#iefix') format('embedded-opentype'),
+        url('fonts/helvetica/HelveticaNeue-LightExt.woff2') format('woff2'),
+        url('fonts/helvetica/HelveticaNeue-LightExt.woff') format('woff'),
+        url('fonts/helvetica/HelveticaNeue-LightExt.ttf') format('truetype'),
+        url('fonts/helvetica/HelveticaNeue-LightExt.svg#HelveticaNeue-LightExt') format('svg');
+    font-weight: 300;
+    font-style: normal;
+}
+/*for labels but right size*/
 
-.dropzone {
-    min-height: 300px;
-    border: 1px solid rgba(193, 194, 195, 0.5);
-    background: #e9ecef;
-    padding: 54px 54px;
-    border-radius: 10px;
- }
+@font-face {
+    font-family: 'Helvetica Neue Medium';
+    src: url('fonts/helvetica/HelveticaNeue-Medium.eot');
+    src: url('fonts/helvetica/HelveticaNeue-Medium.eot?#iefix') format('embedded-opentype'),
+        url('fonts/helvetica/HelveticaNeue-Medium.woff2') format('woff2'),
+        url('fonts/helvetica/HelveticaNeue-Medium.woff') format('woff'),
+        url('fonts/helvetica/HelveticaNeue-Medium.ttf') format('truetype'),
+        url('fonts/helvetica/HelveticaNeue-Medium.svg#HelveticaNeue-Medium') format('svg');
+    font-weight: 500;
+    font-style: normal;
+}
+/*for buttons but right size*/
 
- .dropzone .dz-message {
+@font-face {
+    font-family: 'Helvetica Neue Roman';
+    src: url('fonts/helvetica/HelveticaNeue-Roman.eot');
+    src: url('fonts/helvetica/HelveticaNeue-Roman.eot?#iefix') format('embedded-opentype'),
+        url('fonts/helvetica/HelveticaNeue-Roman.woff2') format('woff2'),
+        url('fonts/helvetica/HelveticaNeue-Roman.woff') format('woff'),
+        url('fonts/helvetica/HelveticaNeue-Roman.ttf') format('truetype'),
+        url('fonts/helvetica/HelveticaNeue-Roman.svg#HelveticaNeue-Roman') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+/*for body - but smaller*/
+
+.nav-tabs > li > a
+{
+   font-family: Helvetica,sans-serif;
+}
+
+.label_hel
+{
+	font-family: arial,helvetica,sans-serif;
+	color: #fff;
+	font-weight: 700;
+	font-size: 17px;
+}
+
+.table > thead > tr > th, .table > tbody > tr > td
+{
+	font-family: "Helvetica Neue Light", Helvetica, Arial, sans-serif!important;
+}
+
+.table > thead > tr > th 
+{
+   font-family: "Helvetica Neue Bold", Helvetica, Arial, sans-serif!important;
+}
+
+#headr{
+	background-color: #048abb;
+	margin-bottom: 15px;
+}
+
+.top *
+{
+	color: #fff;
+}
+
+.tab-content h3
+{
+	font-family: Helvetica,Arial,sans-serif;
+	font-size: 24px;
+	font-weight: 700;
+	color: #515151;
+}
+
+.tab-content thead th
+{
+	font-size: 12px;
+	font-family: Helvetica,sans-serif;
+	color: #048fc2;
+}
+
+.tab-content tbody th, td
+{
+	font-size: 12px;
+	font-family: Helvetica,sans-serif;
+	color: #444;
+	padding: 10px 5px;
+	font-weight: normal;
+}
+.line
+{
+	border-top: 1px solid rgba(50,70,90,.1);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    content: "";
+}
+#line1
+{
+	border-top: 1px solid rgba(50,70,90,.1);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    content: "";
+	width: 29%;
+	margin-top: 0px;
+	margin-bottom: 5px;
+}
+#all_booking p
+{
+	margin-bottom: 2px;
+}
+ul#datesection
+{
+	padding-bottom: 5px;
+}
+ul#datesection li 
+{
+	display: block;
+	padding-bottom: 2px;
+	margin-bottom: 0px;
+	line-height: 1.3;
+}
+ul#datesection li a
+{
+	color: #048fc2;
+	padding: 0px 0px 0px 0px;
+	font-size: 12px;
+	font-weight: normal;
+	
+}
+.text-right
+{
+	padding-right: 70px;
+}
+div#msection
+{
+	padding-left: 0px;
+}
+
+#manifest
+{
+	border: 2px solid;
+	color: #048fc2;
+	padding: 8px 18px;
+	background: linear-gradient(#fff,#e6eaec);
+    box-shadow: none;
+    border-radius: 3px;
+    transition: opacity .2s ease-out;
+    box-sizing: border-box;
+	font: 700 12px Helvetica,sans-serif;
+    border: 1px solid #cfd2d4;
+    background-color: #fafafa;
+    white-space: nowrap;
+}
+td input, th input
+{
+	height: 17px;
+	width: 17px;
+	text-align: center;
+}
+tbody a i#lists
+{
+	font-size: 20px;
+}
+tbody td#lsts
+{
+	position: relative;
+}
+tbody td#lsts a
+{
+	width: 15px;
+    padding: 23px 5px 15px 5px;
+    background-color: #ebebe0;
+    margin-left: 8px;
+}
+tbody#tb1 i.icon-plus
+{
+	font-size: 19px;
+}
+tbody#tb1 td#plus a
+{
+	background-color: #e0e0d2;
+	width: 14px;
+    padding: 9px 3px 2px 3px;
+}
+#found p
+{
+	margin-top: 72px;
+	margin-left: 19px;
+	font-size: 18px;
+}
+div.popup i
+{
+	color: #fff;
+	font-size: 19px;
+	font-family: 'icomoon' !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+	transition: 0.5s;
+    padding: 12px 15px 0;
+}
+.popup {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* The actual popup */
+.popup .popuptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #f4f5f6;
+    color: black;
     text-align: center;
-    margin: 6em 0;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    top: 150%;
+    left: 50%;
+    margin-left: -60px;
 }
-ul,li{list-style:none;}
+
+/* Popup arrow */
+.popup .popuptext::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent black transparent;
+}
+
+/* Toggle this class - hide and show the popup */
+.popup .show {
+    visibility: visible;
+    -webkit-animation: fadeIn 1s;
+    animation: fadeIn 1s;
+}
+
+/* Add animation (fade in the popup) */
+@-webkit-keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity:1 ;}
+}
+input#myPopup[type=text]:focus
+{
+	visibility: visible;
+}

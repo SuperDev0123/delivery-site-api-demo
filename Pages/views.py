@@ -24,3 +24,7 @@ def upload(request):
 	handle_uploaded_file(request.FILES['file'])
 	html = "<html><body>Uploaded File :  %s </body></html>"  % request.FILES['file'].name      
 	return HttpResponse(html)
+
+def bookings(request):
+	context = {'latest_question_list': 'latest_question_list'}
+	return render(request, 'pages/bookings.html', context)
