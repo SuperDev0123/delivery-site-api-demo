@@ -8,5 +8,6 @@ urlpatterns = [
     path('share/upload/', views.upload, name='upload'), # new
     path('', HomePageView.as_view(), name='home'),  
     path('allbookings/', views.allbookings, name='allbookings'),
-    path('booking/', views.bookings, name='bookings'),
+    #path('booking/', views.bookings, name='bookings'),
+    path('sync-booking/', views.syncbooking, name='syncbooking'),
 ]

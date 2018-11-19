@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 # Create your models here.
 from django.contrib.auth.models import BaseUserManager
 from django.conf import settings
@@ -39,6 +39,22 @@ class Client_employees(models.Model):
 	phone = models.IntegerField(verbose_name=_('phone number'))
 
 	fk_id_client_warehouse = models.OneToOneField(Client_Warehouse, on_delete=models.CASCADE)
+
+class bookings(models.Model):
+	id = models.AutoField(primary_key=True)
+	booking_id = models.CharField(verbose_name=_('booking id'), max_length=230, blank=False)
+	qty = models.IntegerField(verbose_name=_('qty'))
+	booked_date = models.DateTimeField(verbose_name=_('booked date'), default=timezone.now)
+	pickup_from_date = models.DateTimeField(verbose_name=_('pickup from date'), default=timezone.now)
+	ref_number = models.IntegerField(verbose_name=_('ref number'))
+	status = models.CharField(verbose_name=_('status'), max_length=230)
+	freight_provider = models.CharField(verbose_name=_('freight provider'), max_length=30)
+	service = models.CharField(verbose_name=_('service'), max_length=230)
+	pickup_by = models.CharField(verbose_name=_('pickup by'), max_length=230)
+	latest_delivery = models.CharField(verbose_name=_('latest devlivery'), max_length=230)
+	consignment = models.CharField(verbose_name=_('consignment'), max_length=230)
+	pick_up_entity = models.CharField(verbose_name=_('booking id'), max_length=230)
+	delivery_entity = models.CharField(verbose_name=_('booking id'), max_length=230)
 
 
 

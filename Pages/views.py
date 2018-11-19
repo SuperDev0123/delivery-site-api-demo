@@ -6,14 +6,16 @@ from django.views import generic
 from django.utils import timezone
 from pages.models import Client_employees
 from pages.models import DME_clients
-
+from pages.models import bookings
+from django.shortcuts import render_to_response
 class HomePageView(TemplateView):
 
 	template_name = "pages/home.html"
 
 
 class SharePageView(TemplateView):
-	template_name = 'pages/share.html'   
+	template_name = 'pages/share.html'  
+
 
 def handle_uploaded_file(f,request):
 	user_id = request.user.id
@@ -28,10 +30,14 @@ def upload(request):
 	html = "<html><body>Uploaded File :  %s </body></html>"  % request.FILES['file'].name      
 	return HttpResponse(html)
 
-def bookings(request):
-	context = {'latest_question_list': 'latest_question_list'}
-	return render(request, 'pages/booking.html', context)
 
 def allbookings(request):
 	context = {'latest_question_list': 'latest_question_list'}
 	return render(request, 'pages/allbookings.html', context)
+
+def syncbooking(request):
+	data = bookings.objects.all()
+	booking_data = {
+	    "bookings": data
+	}
+	return render_to_response("pages/sync_booking.html", booking_data)
