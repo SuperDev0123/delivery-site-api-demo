@@ -52,9 +52,9 @@
                     <td> <h3>Header</h3> </th>
                     <td align="right"> <h3>Count : 4</h3> </th>
                  </tr>
-               </table>
+                </table>
                 <div class="table-responsive">
-                <table class="table table-hover table-bordered">
+                <table class="table table-hover table-bordered sortable">
                   <thead class="thead-light">
                     <tr>
                       <th scope="col">Booking Id</th>
@@ -73,14 +73,13 @@
                       <th scope="col">Delivery Entity</th>
                     </tr>
                   </thead>
-                  {% for booking in bookings %}
                   <tbody>
+                  {% for booking in bookings %}
                     <tr>
-                       <th scope="row">{{booking.booking_id}}</th>
-                      <!--<td>BioPak<br/>78166</td>-->
+                      <th scope="row">{{booking.booking_id}}</th>
                       <td>{{booking.qty}}&nbsp;&nbsp;<a href="#"><i class="icon icon-th-list"></i></a></td>
                       <td>{{booking.booked_date}}</td>
-                       <td>{{booking.pickup_from_date}}</td>
+                      <td>{{booking.pickup_from_date}}</td>
                       <td>{{booking.ref_number}}&nbsp;&nbsp;<a href="#"><i class="icon icon-warning"></i></a>&nbsp;&nbsp;<a href="#"><i class="icon icon-printer"></i></a></td>
                       <td>{{booking.status}}</td>
                       <td>{{booking.freight_provider}}&nbsp;&nbsp;<a href="#"><i class="icon icon-plus"></i></a></td>
@@ -90,11 +89,9 @@
                       <td>{{booking.consignment}}</td>
                       <td>{{booking.pick_up_entity}}</td>
                       <td>{{booking.delivery_entity}}</td>
-                    </tr>
-                    
-   
-                  </tbody>
+                    </tr>   
                   {% endfor %}
+                  </tbody>
                 </table>
                 </div>
               </div>

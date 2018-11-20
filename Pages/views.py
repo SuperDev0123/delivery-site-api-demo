@@ -28,14 +28,15 @@ def upload(request):
 	html = str(dme_account_num) + '_' + request.FILES['file'].name
 	return HttpResponse(html)
 
-
-def allbookings(request):
-	context = {'latest_question_list': 'latest_question_list'}
-	return render(request, 'pages/allbookings.html', context)
+def booking(request):
+	context = {}
+	return render(request, 'pages/booking.html', context)
 
 def syncbooking(request):
 	data = bookings.objects.all()
-	booking_data = {
-	    "bookings": data
-	}
+	booking_data = { "bookings": data }
 	return render_to_response("pages/sync_booking.html", booking_data)
+
+def allbookings(request):
+	context = {}
+	return render(request, 'pages/allbookings.html', context)
