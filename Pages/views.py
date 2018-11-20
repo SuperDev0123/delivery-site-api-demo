@@ -32,11 +32,7 @@ def booking(request):
 	context = {}
 	return render(request, 'pages/booking.html', context)
 
-def syncbooking(request):
+def allbookings(request):
 	data = bookings.objects.all()
 	booking_data = { "bookings": data }
-	return render_to_response("pages/sync_booking.html", booking_data)
-
-def allbookings(request):
-	context = {}
-	return render(request, 'pages/allbookings.html', context)
+	return render_to_response("pages/allbookings.html", booking_data)
