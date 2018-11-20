@@ -17,16 +17,16 @@ class SharePageView(TemplateView):
 	template_name = 'pages/share.html'  
 
 
-def handle_uploaded_file(f,request):
-	user_id = request.user.id
-	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
-	dme_account_num = cleintEmployeObject[0].fk_id_dme_client.dme_account_num
+def handle_uploaded_file(dme_account_num, f, request):
 	with open('/var/www/html/DeliverMe/media/onedrive/' + dme_account_num + '_' + f.name, 'wb+') as destination:
 		for chunk in f.chunks():
 			destination.write(chunk)
 
 def upload(request):
-	handle_uploaded_file(request.FILES['file'])
+	user_id = request.user.id
+	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+	dme_account_num = cleintEmployeObject[0].fk_id_dme_client.dme_account_num
+	handle_uploaded_file(dme_account_num, request.FILES['file'], request)
 	html = "<html><body>Uploaded File :  %s </body></html>"  % request.FILES['file'].name      
 	return HttpResponse(html)
 
