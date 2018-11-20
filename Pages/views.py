@@ -8,14 +8,12 @@ from pages.models import Client_employees
 from pages.models import DME_clients
 from pages.models import bookings
 from django.shortcuts import render_to_response
-class HomePageView(TemplateView):
 
+class HomePageView(TemplateView):
 	template_name = "pages/home.html"
 
-
 class SharePageView(TemplateView):
-	template_name = 'pages/share.html'  
-
+	template_name = 'pages/share.html'
 
 def handle_uploaded_file(dme_account_num, f):
 	with open('/var/www/html/DeliverMe/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:

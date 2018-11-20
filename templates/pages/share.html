@@ -18,18 +18,24 @@
 {% endblock %}
 {% block extra_js %}
 	<script src="{% static '/js/libs/dropzone/dropzone.js' %}"></script>
+	<script src="{% static '/js/custom.js' %}"></script>
 	<script>
 		Dropzone.options.uploadDropzone = {
-			paramName: "file", // The name that will be used to transfer the file,
-			maxFilesize: 250 // MB
+			paramName: "file", 	// The name that will be used to transfer the file,
+			maxFilesize: 250, 	// MB
 			accept: function(file, done) {
 				console.log(file.name);
-			if (file.name == "justinbieber.jpg") {
-			  done("Naha, you don't.");
-			}
-			else { done(); }
+				if (file.name == "justinbieber.jpg") {
+				  done("Naha, you don't.");
+				}
+				else { done(); }
+			},
+			init: function() {
+				this.on("complete", function(file) { 
+					console.log('@1 - ', file)
+					alert("Uploading has been completed."); 
+				});
 			}
 		};
-
 	</script>
 {% endblock %}  
