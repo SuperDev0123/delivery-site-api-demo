@@ -25,7 +25,7 @@ def upload(request):
 	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
 	dme_account_num = cleintEmployeObject[0].fk_id_dme_client.dme_account_num
 	handle_uploaded_file(dme_account_num, request.FILES['file'])
-	html = "<html><body>Uploaded File :  %s </body></html>"  % str(dme_account_num) + '_' + request.FILES['file'].name
+	html = str(dme_account_num) + '_' + request.FILES['file'].name
 	return HttpResponse(html)
 
 

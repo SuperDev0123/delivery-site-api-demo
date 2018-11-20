@@ -2,13 +2,15 @@
 {% block title %} : Home {% endblock %}
 {% load static %}
 {% block content %}
-
     <div class="container h-100vh">
     	<div class="row justify-content-md-center mt-5 mb-5">
-    		<div class="col-12 ">
+    		<div class="col-12">
     			<form action="/share/upload/" class="dropzone" id="uploadDropzone">
     				{% csrf_token %}
     			</form>
+        	</div>
+        	<div class="col-6" id="upload-filename">
+        		<p></p>
         	</div>
         </div>
     </div>
@@ -18,7 +20,6 @@
 {% endblock %}
 {% block extra_js %}
 	<script src="{% static '/js/libs/dropzone/dropzone.js' %}"></script>
-	<script src="{% static '/js/custom.js' %}"></script>
 	<script>
 		Dropzone.options.uploadDropzone = {
 			paramName: "file", 	// The name that will be used to transfer the file,
@@ -31,9 +32,8 @@
 				else { done(); }
 			},
 			init: function() {
-				this.on("complete", function(file) { 
-					console.log('@1 - ', file)
-					alert("Uploading has been completed."); 
+				this.on("success", function(file) { 
+					$("#upload-filename > p").text(file.xhr.response);
 				});
 			}
 		};
