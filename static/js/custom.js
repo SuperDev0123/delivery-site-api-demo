@@ -6,7 +6,7 @@ function toggle(source) {
 }
 
 $(document).ready(function(){
-    $('[data-toggle="popover"]').popover();   
+    $('[data-toggle="popover"]').popover(); 
 });
 
 // When the user clicks on div, open the popup

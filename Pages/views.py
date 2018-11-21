@@ -1,25 +1,23 @@
 from django.views.generic.base import TemplateView
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, render_to_response
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
-from pages.models import Client_employees
-from pages.models import DME_clients
-from pages.models import bookings
-from django.shortcuts import render_to_response
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
-def home(TemplateView):
-	template_name = "pages/home.html"
-	context = {}
-	return render_to_response(template_name, context)
+from pages.models import Client_employees, DME_clients, bookings
+from .filters import BookingFilter
+
+class HomeView(TemplateView):
+    template_name = "pages/home.html"
 
 @login_required(login_url='/login/')
-def share(TemplateView):
+def share(request):
 	template_name = 'pages/share.html'
 	context = {}
-	return render_to_response(template_name, context)
+	return render(request, template_name, context)
 
 @login_required(login_url='/login/')
 def handle_uploaded_file(dme_account_num, f):
@@ -43,6 +41,12 @@ def booking(request):
 
 @login_required(login_url='/login/')
 def allbookings(request):
-	data = bookings.objects.all()
-	booking_data = { "bookings": data }
+	search = request.GET.get('search')
+
+	if search is not None:
+		booking_search = bookings.objects.filter(Q(booking_id__contains=search) | Q(qty=search) | Q(booked_date__contains=search) | Q(pickup_from_date__contains=search) | Q(ref_number=search) | Q(status__contains=search) | Q(service__contains=search) | Q(pickup_by__contains=search) | Q(latest_delivery__contains=search) | Q(consignment__contains=search) | Q(pick_up_entity__contains=search) | Q(delivery_entity__contains=search))
+		return render(request, 'pages/allbookings.html', {'bookings': booking_search})
+
+	booking_list = bookings.objects.all()
+	booking_data = { "bookings": booking_list }
 	return render_to_response("pages/allbookings.html", booking_data)

@@ -1,9 +1,9 @@
 from django.db import models
 from django.utils import timezone
-# Create your models here.
 from django.contrib.auth.models import BaseUserManager
 from django.conf import settings
 from django.utils.translation import gettext as _
+
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
@@ -55,7 +55,3 @@ class bookings(models.Model):
 	consignment = models.CharField(verbose_name=_('consignment'), max_length=230)
 	pick_up_entity = models.CharField(verbose_name=_('booking id'), max_length=230)
 	delivery_entity = models.CharField(verbose_name=_('booking id'), max_length=230)
-
-
-
-
