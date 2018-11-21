@@ -44,7 +44,10 @@ def allbookings(request):
 	search = request.GET.get('search')
 
 	if search is not None:
-		booking_search = bookings.objects.filter(Q(booking_id__contains=search) | Q(qty=search) | Q(booked_date__contains=search) | Q(pickup_from_date__contains=search) | Q(ref_number=search) | Q(status__contains=search) | Q(service__contains=search) | Q(pickup_by__contains=search) | Q(latest_delivery__contains=search) | Q(consignment__contains=search) | Q(pick_up_entity__contains=search) | Q(delivery_entity__contains=search))
+		if search.isdigit():
+			booking_search = bookings.objects.filter(Q(booking_id__contains=search) | Q(qty=search) | Q(booked_date__contains=search) | Q(pickup_from_date__contains=search) | Q(ref_number=search) | Q(status__contains=search) | Q(service__contains=search) | Q(pickup_by__contains=search) | Q(latest_delivery__contains=search) | Q(consignment__contains=search) | Q(pick_up_entity__contains=search) | Q(delivery_entity__contains=search))
+		else:
+			booking_search = bookings.objects.filter(Q(booking_id__contains=search) | Q(booked_date__contains=search) | Q(pickup_from_date__contains=search) | Q(status__contains=search) | Q(service__contains=search) | Q(pickup_by__contains=search) | Q(latest_delivery__contains=search) | Q(consignment__contains=search) | Q(pick_up_entity__contains=search) | Q(delivery_entity__contains=search))
 		return render(request, 'pages/allbookings.html', {'bookings': booking_search})
 
 	booking_list = bookings.objects.all()
