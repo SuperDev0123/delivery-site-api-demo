@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'pages',
 ]
 
@@ -80,7 +81,7 @@ WSGI_APPLICATION = 'DeliverMe.wsgi.application'
 #        'ENGINE': 'django.db.backends.mysql',
 #        'NAME': 'deliver_me',
 #        'USER': 'root',
-#        'PASSWORD': '',
+#        'PASSWORD': 'root',
 #        'HOST': 'localhost',
 #        'PORT': '',
 #    }
