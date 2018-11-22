@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 from pages.models import Client_employees, DME_clients, bookings
-from .filters import BookingFilter
+# from .filters import BookingFilter
 
 class HomeView(TemplateView):
     template_name = "pages/home.html"
@@ -28,7 +28,7 @@ def handle_uploaded_file(dme_account_num, f):
 @login_required(login_url='/login/')
 def upload(request):
 	user_id = request.user.id
-	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id)
 	dme_account_num = cleintEmployeObject[0].fk_id_dme_client.dme_account_num
 	handle_uploaded_file(dme_account_num, request.FILES['file'])
 	html = str(dme_account_num) + '_' + request.FILES['file'].name
