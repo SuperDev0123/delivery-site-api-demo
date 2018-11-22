@@ -20,7 +20,7 @@ def share(request):
 	return render(request, template_name, context)
 
 @login_required(login_url='/login/')
-def handle_uploaded_file(dme_account_num, f):
+def handle_uploaded_file(requst, dme_account_num, f):
 	with open('/var/www/html/DeliverMe/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
 		for chunk in f.chunks():
 			destination.write(chunk)
@@ -28,9 +28,9 @@ def handle_uploaded_file(dme_account_num, f):
 @login_required(login_url='/login/')
 def upload(request):
 	user_id = request.user.id
-	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id)
+	cleintEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
 	dme_account_num = cleintEmployeObject[0].fk_id_dme_client.dme_account_num
-	handle_uploaded_file(dme_account_num, request.FILES['file'])
+	handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 	html = str(dme_account_num) + '_' + request.FILES['file'].name
 	return HttpResponse(html)
 
