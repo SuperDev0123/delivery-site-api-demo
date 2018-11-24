@@ -43,10 +43,10 @@ def upload(request):
 
 @login_required(login_url='/login/')
 def upload_status(request):
-	# user_id = request.user.id
-	# clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
-	# dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
-	result = getFileCheckHistory(request.GET.get('filename'))
+	user_id = request.user.id
+	clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+	dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
+	result = getFileCheckHistory(str(dme_account_num) + '_' + request.GET.get('filename'))
 
 	if result == 0:
 		return JsonResponse({'status_code': 0})
