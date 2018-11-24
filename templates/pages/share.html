@@ -42,7 +42,7 @@
 
 					function myTimer() {
 					    $.ajax({
-						  url: "http://localhost:8000/share/upload/status/",
+						  url: "/share/upload/status/",
 						  data: {filename: filename}
 						}).done(function(res) {
 						  if (res.status_code === 0) {
