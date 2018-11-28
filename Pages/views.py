@@ -75,7 +75,4 @@ def allbookings(request):
 
 	booking_list = bookings.objects.all()
 	booking_data = { "bookings": booking_list }
-
-	print(booking_list[0].__dict__)
-
 	return render_to_response("pages/allbookings.html", booking_data)
