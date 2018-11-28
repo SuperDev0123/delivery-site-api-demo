@@ -68,11 +68,14 @@ def allbookings(request):
 
 	if search is not None:
 		if search.isdigit():
-			booking_search = bookings.objects.filter(Q(booking_id__contains=search) | Q(qty=search) | Q(booked_date__contains=search) | Q(pickup_from_date__contains=search) | Q(ref_number=search) | Q(status__contains=search) | Q(service__contains=search) | Q(pickup_by__contains=search) | Q(latest_delivery__contains=search) | Q(consignment__contains=search) | Q(pick_up_entity__contains=search) | Q(delivery_entity__contains=search))
+			booking_search = bookings.objects.filter(Q(id__contains=search) | Q(b_bookingID_Visual=search) | Q(b_dateBookedDate__contains=search) | Q(puPickUpAvailFrom_Date__contains=search) | Q(b_clientReference_RA_Numbers=search) | Q(b_status__contains=search) | Q(vx_freight_provider__contains=search) | Q(vx_serviceName__contains=search) | Q(s_05_LatestPickUpDateTimeFinal__contains=search) | Q(s_06_LatestDeliveryDateTimeFinal__contains=search) | Q(v_FPBookingNumber__contains=search) | Q(puCompany__contains=search) | Q(deToCompanyName__contains=search))
 		else:
-			booking_search = bookings.objects.filter(Q(booking_id__contains=search) | Q(booked_date__contains=search) | Q(pickup_from_date__contains=search) | Q(status__contains=search) | Q(service__contains=search) | Q(pickup_by__contains=search) | Q(latest_delivery__contains=search) | Q(consignment__contains=search) | Q(pick_up_entity__contains=search) | Q(delivery_entity__contains=search))
+			booking_search = bookings.objects.filter(Q(id__contains=search) | Q(b_dateBookedDate__contains=search) | Q(puPickUpAvailFrom_Date__contains=search) | Q(b_clientReference_RA_Numbers=search) | Q(b_status__contains=search) | Q(vx_freight_provider__contains=search) | Q(vx_serviceName__contains=search) | Q(s_05_LatestPickUpDateTimeFinal__contains=search) | Q(s_06_LatestDeliveryDateTimeFinal__contains=search) | Q(v_FPBookingNumber__contains=search) | Q(puCompany__contains=search) | Q(deToCompanyName__contains=search))
 		return render(request, 'pages/allbookings.html', {'bookings': booking_search})
 
 	booking_list = bookings.objects.all()
 	booking_data = { "bookings": booking_list }
+
+	print(booking_list[0].__dict__)
+
 	return render_to_response("pages/allbookings.html", booking_data)
