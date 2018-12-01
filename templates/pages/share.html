@@ -7,6 +7,13 @@
     		<div class="col-12">
     			<form action="/share/upload/" class="dropzone" id="uploadDropzone">
     				{% csrf_token %}
+    				<select id="warehouse" required>
+	    				<option value="">Select a warehouse</option>
+	    				{% for warehouse in warehouses %}
+	    					<option value={{warehouse.pk_id_client_warehouse}}>{{warehouse.warehousename}}</option>
+	    				{% endfor %}
+	    			</select>
+    				<button id="submit-upload" type="submit">upload</button>
     			</form>
         	</div>
         	<div class="col-12">
@@ -28,17 +35,30 @@
 		Dropzone.options.uploadDropzone = {
 			paramName: "file", 	// The name that will be used to transfer the file,
 			maxFilesize: 250, 	// MB
+			autoProcessQueue: false,
 			accept: function(file, done) {
 				console.log(file.name);
 				filename = file.name;
-				if (file.name == "justinbieber.jpg") {
-				  done("Naha, you don't.");
-				}
-				else { done(); }
+				done();
 			},
 			init: function() {
+				var myDropzone = this,
+        		submitButton = document.querySelector("[type=submit]");
+
+        		submitButton.addEventListener('click', function(e) {
+        			var isValid = document.querySelector('#warehouse').reportValidity();
+			        e.preventDefault();
+			        e.stopPropagation();
+			        if (isValid)
+			        	myDropzone.processQueue();
+			    });
+
+			    this.on('sending', function(data, xhr, formData) {
+			    	formData.append("warehouse_id", jQuery("#warehouse option:selected").val());
+			    });
+
 				this.on("success", function(file) { 
-					var myInterval = setInterval(myTimer, 2000);
+					// var myInterval = setInterval(myTimer, 2000);
 
 					function myTimer() {
 					    $.ajax({

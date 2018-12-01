@@ -6,11 +6,12 @@ from django.views import generic
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.contrib.auth import logout
 import redis
 
 # from .filters import BookingFilter
-from .utils import clearFileCheckHistory, getFileCheckHistory
-from .models import Client_employees, DME_clients, bookings
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
+from .models import Client_employees, DME_clients, bookings, Client_Warehouse
 
 class HomeView(TemplateView):
     template_name = "pages/home.html"
@@ -18,14 +19,16 @@ class HomeView(TemplateView):
 @login_required(login_url='/login/')
 def share(request):
 	template_name = 'pages/share.html'
-	context = {}
+	clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(request.user.id))
+	clientWarehouseObject_list = Client_Warehouse.objects.select_related().filter(pk_id_client_warehouse = int(clientEmployeObject[0].pk_id_client_emp))
+	context = {'warehouses': clientWarehouseObject_list}
 	return render(request, template_name, context)
 
 @login_required(login_url='/login/')
 def handle_uploaded_file(requst, dme_account_num, f):
 	# live code
 	with open('/var/www/html/DeliverMe/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
-	# local code
+	# local code(local url)
 	# with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
 		for chunk in f.chunks():
 			destination.write(chunk)
@@ -37,7 +40,15 @@ def upload(request):
 	user_id = request.user.id
 	clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
 	dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
-	handle_uploaded_file(request, dme_account_num, request.FILES['file'])
+
+	warehouse_id = request.POST.get('warehouse_id')
+	clientWarehouseObject = Client_Warehouse.objects.filter(pk_id_client_warehouse__contains=warehouse_id)
+	save2Redis("l_000_client_acct_number", dme_account_num)
+	save2Redis("1_011_client_warehouse_id", warehouse_id)
+	save2Redis("1_011_client_warehouse_name", clientWarehouseObject[0].warehousename)
+
+	# handle_uploaded_file(request, dme_account_num, request.FILES['file'])
+
 	html = str(dme_account_num) + '_' + request.FILES['file'].name
 	return HttpResponse(html)
 

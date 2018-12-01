@@ -13,7 +13,7 @@ class DME_clients(models.Model):
 class Client_Warehouse(models.Model):
 	pk_id_client_warehouse = models.AutoField(primary_key=True)
 	fk_id_dme_client = models.OneToOneField(DME_clients, on_delete=models.CASCADE)
-	warehoursename = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
+	warehousename = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
 	warehouse_address1 = models.TextField(verbose_name=_('warehouse address1'))
 	warehouse_address2 = models.TextField(verbose_name=_('warehouse address2'))
 	warehouse_state = models.TextField(verbose_name=_('warehouse state'))
@@ -37,7 +37,6 @@ class Client_employees(models.Model):
 	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
 	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True)
 	phone = models.IntegerField(verbose_name=_('phone number'))
-
 	fk_id_client_warehouse = models.OneToOneField(Client_Warehouse, on_delete=models.CASCADE)
 
 class bookings(models.Model):
