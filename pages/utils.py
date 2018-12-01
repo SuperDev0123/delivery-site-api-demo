@@ -13,6 +13,9 @@ def redis_con():
 
 	return redisCon
 
+def save2Redis(key, value):
+	redisCon = redis_con()
+	redisCon.set(key, value)
 
 def clearFileCheckHistory(filename):
 	redisCon = redis_con()
