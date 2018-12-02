@@ -47,7 +47,7 @@ def upload(request):
 	
 	save2Redis(upload_file_name + "l_000_client_acct_number", dme_account_num)
 	save2Redis(upload_file_name + "l_011_client_warehouse_id", warehouse_id)
-	save2Redis(upload_file_name + "l_011_client_warehouse_name", clientWarehouseObject[0].warehousename)
+	save2Redis(upload_file_name + "l_012_client_warehouse_name", clientWarehouseObject[0].warehousename)
 
 	handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 
