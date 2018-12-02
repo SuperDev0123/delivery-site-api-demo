@@ -58,7 +58,7 @@
 			    });
 
 				this.on("success", function(file) { 
-					// var myInterval = setInterval(myTimer, 2000);
+					var myInterval = setInterval(myTimer, 2000);
 
 					function myTimer() {
 					    $.ajax({
@@ -86,7 +86,7 @@
 					    clearInterval(myInterval);
 					} 
 
-					// $("p#upload-filename").text("Upload a file with prepend filename: " + file.xhr.response);
+					$("p#upload-filename").text("Upload a file with prepend filename: " + file.xhr.response);
 				});
 			}
 		};
