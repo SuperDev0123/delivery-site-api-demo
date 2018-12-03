@@ -20,7 +20,7 @@ class HomeView(TemplateView):
 def share(request):
 	template_name = 'pages/share.html'
 	clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(request.user.id))
-	clientWarehouseObject_list = Client_Warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].pk_id_client_emp))
+	clientWarehouseObject_list = Client_Warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id))
 	context = {'warehouses': clientWarehouseObject_list}
 	return render(request, template_name, context)
 
