@@ -1,31 +1,76 @@
 from django.shortcuts import render
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import authentication, permissions
 from rest_framework import viewsets
+from rest_framework.parsers import MultiPartParser
 from django.http import JsonResponse
 from django.db.models import Q
-from api.serializers import BookingSerializer
-from pages.models import bookings
+
+from api.serializers import BookingSerializer, WarehouseSerializer
+from pages.models import bookings, Client_employees, Client_Warehouse
+from pages.utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 
 class UserView(APIView):
-	def post(self, request, format=None):
-		return JsonResponse({'username': request.user.username})
+    def post(self, request, format=None):
+        return JsonResponse({'username': request.user.username})
 
 class BookingViewSet(viewsets.ModelViewSet):
-	serializer_class = BookingSerializer
+    serializer_class = BookingSerializer
 
-	def get_queryset(self):
-		searchType = self.request.query_params.get('searchType', None)
-		keyword = self.request.query_params.get('keyword', None)
+    def get_queryset(self):
+        searchType = self.request.query_params.get('searchType', None)
+        keyword = self.request.query_params.get('keyword', None)
 
-		if searchType is not None:
-			if keyword.isdigit():
-				queryset = bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
-			else:
-				queryset = bookings.objects.filter(Q(id__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
-		else:
-			queryset = bookings.objects.all()
+        if searchType is not None:
+            if keyword.isdigit():
+                queryset = bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
+            else:
+                queryset = bookings.objects.filter(Q(id__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
+        else:
+            queryset = bookings.objects.all()
 
-		return queryset
+        return queryset
+
+class WarehouseViewSet(viewsets.ModelViewSet):
+    serializer_class = WarehouseSerializer
+
+    def get_queryset(self):
+        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id))
+        clientWarehouseObject_list = Client_Warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id))
+        queryset = clientWarehouseObject_list
+        return queryset
+
+class FileUploadView(views.APIView):
+    parser_classes = (MultiPartParser,)
+
+    def post(self, request, filename, format=None):
+        file_obj = request.FILES['file']
+        user_id = request.user.id
+        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+        dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
+        warehouse_id = request.POST.get('warehouse_id')
+        clientWarehouseObject = Client_Warehouse.objects.filter(pk_id_client_warehouse__contains=warehouse_id)
+        upload_file_name = request.FILES['file'].name
+        prepend_name = str(dme_account_num) + '_' + upload_file_name
+        
+        save2Redis(prepend_name + "l_000_client_acct_number", dme_account_num)
+        save2Redis(prepend_name + "l_011_client_warehouse_id", warehouse_id)
+        save2Redis(prepend_name + "l_012_client_warehouse_name", clientWarehouseObject[0].warehousename)
+
+        handle_uploaded_file(request, dme_account_num, request.FILES['file'])
+
+        html = prepend_name
+        return JsonResponse({'filename': prepend_name})
+
+def handle_uploaded_file(requst, dme_account_num, f):
+    # live code
+    # with open('/var/www/html/DeliverMe/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
+    # local code(local url)
+    with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+
+    clearFileCheckHistory(str(dme_account_num) + '_' + f.name)
