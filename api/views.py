@@ -63,7 +63,7 @@ class FileUploadView(views.APIView):
         handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 
         html = prepend_name
-        return JsonResponse({'filename': prepend_name})
+        return Response(prepend_name)
 
 def handle_uploaded_file(requst, dme_account_num, f):
     # live code
@@ -74,3 +74,14 @@ def handle_uploaded_file(requst, dme_account_num, f):
             destination.write(chunk)
 
     clearFileCheckHistory(str(dme_account_num) + '_' + f.name)
+
+def upload_status(request):
+    result = getFileCheckHistory(request.GET.get('filename'))
+
+    if result == 0:
+        return JsonResponse({'status_code': 0})
+
+    if len(result) == 0:
+        return JsonResponse({'status_code': 1})
+    else:
+        return JsonResponse({'status_code': 2, 'errors': result})
