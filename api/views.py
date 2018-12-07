@@ -24,6 +24,9 @@ class BookingViewSet(viewsets.ModelViewSet):
         searchType = self.request.query_params.get('searchType', None)
         keyword = self.request.query_params.get('keyword', None)
 
+        clientEmp = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id)).first()
+        clientWarehouses = Client_Warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmp.fk_id_dme_client_id))
+
         if searchType is not None:
             if keyword.isdigit():
                 queryset = bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
@@ -32,7 +35,14 @@ class BookingViewSet(viewsets.ModelViewSet):
         else:
             queryset = bookings.objects.all()
 
-        return queryset
+        retData = []
+        
+        for x in queryset:
+            for y in clientWarehouses:
+                if (x.b_clientPU_Warehouse == y):
+                    retData.append(x)
+
+        return retData
 
 class WarehouseViewSet(viewsets.ModelViewSet):
     serializer_class = WarehouseSerializer
@@ -67,9 +77,9 @@ class FileUploadView(views.APIView):
 
 def handle_uploaded_file(requst, dme_account_num, f):
     # live code
-    # with open('/var/www/html/DeliverMe/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
+    with open('/var/www/html/DeliverMe/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
-    with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
+    # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
 

@@ -12,7 +12,7 @@ class DME_clients(models.Model):
 
 class Client_Warehouse(models.Model):
 	pk_id_client_warehouse = models.AutoField(primary_key=True)
-	fk_id_dme_client = models.OneToOneField(DME_clients, on_delete=models.CASCADE)
+	fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
 	warehousename = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
 	warehouse_address1 = models.TextField(verbose_name=_('warehouse address1'))
 	warehouse_address2 = models.TextField(verbose_name=_('warehouse address2'))
@@ -53,3 +53,6 @@ class bookings(models.Model):
 	v_FPBookingNumber = models.CharField(verbose_name=_('FP Booking Number'), max_length=40, blank=True)
 	puCompany = models.CharField(verbose_name=_('Company'), max_length=40, blank=True)
 	deToCompanyName = models.CharField(verbose_name=_('Company Name'), max_length=40, blank=True)
+	consignment_label_link = models.CharField(verbose_name=_('Consignment'), max_length=250, blank=True)
+	error_details = models.CharField(verbose_name=_('Error Detail'), max_length=250, blank=True, default='')
+	b_clientPU_Warehouse = models.ForeignKey(Client_Warehouse, on_delete=models.CASCADE, default='1')
