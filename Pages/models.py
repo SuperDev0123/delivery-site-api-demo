@@ -10,7 +10,7 @@ class DME_clients(models.Model):
 	dme_account_num = models.IntegerField(verbose_name=_('dme account num'))
 	phone = models.IntegerField(verbose_name=_('phone number'))
 
-class Client_Warehouse(models.Model):
+class Client_warehouse(models.Model):
 	pk_id_client_warehouse = models.AutoField(primary_key=True)
 	fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
 	warehousename = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
@@ -37,9 +37,9 @@ class Client_employees(models.Model):
 	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
 	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True)
 	phone = models.IntegerField(verbose_name=_('phone number'))
-	fk_id_client_warehouse = models.OneToOneField(Client_Warehouse, on_delete=models.CASCADE)
+	fk_id_client_warehouse = models.OneToOneField(Client_warehouse, on_delete=models.CASCADE)
 
-class bookings(models.Model):
+class Bookings(models.Model):
 	id = models.AutoField(primary_key=True)
 	b_bookingID_Visual = models.CharField(verbose_name=_('BookingID Visual'), max_length=40, blank=True)
 	b_dateBookedDate = models.DateTimeField(verbose_name=_('Booked Date'), default=timezone.now)
@@ -55,4 +55,5 @@ class bookings(models.Model):
 	deToCompanyName = models.CharField(verbose_name=_('Company Name'), max_length=40, blank=True)
 	consignment_label_link = models.CharField(verbose_name=_('Consignment'), max_length=250, blank=True)
 	error_details = models.CharField(verbose_name=_('Error Detail'), max_length=250, blank=True, default='')
-	b_clientPU_Warehouse = models.ForeignKey(Client_Warehouse, on_delete=models.CASCADE, default='1')
+	b_clientPU_Warehouse = models.ForeignKey(Client_warehouse, on_delete=models.CASCADE, default='1')
+	is_printed = models.BooleanField(verbose_name=_('Is printed'), default=False)

@@ -11,7 +11,7 @@ import redis
 
 # from .filters import BookingFilter
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
-from .models import Client_employees, DME_clients, bookings, Client_Warehouse
+from .models import Client_employees, DME_clients, Bookings, Client_warehouse
 
 class HomeView(TemplateView):
     template_name = "pages/home.html"
@@ -20,7 +20,7 @@ class HomeView(TemplateView):
 def share(request):
 	template_name = 'pages/share.html'
 	clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(request.user.id))
-	clientWarehouseObject_list = Client_Warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id))
+	clientWarehouseObject_list = Client_warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id))
 	context = {'warehouses': clientWarehouseObject_list}
 	return render(request, template_name, context)
 
@@ -41,7 +41,7 @@ def upload(request):
 	clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
 	dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
 	warehouse_id = request.POST.get('warehouse_id')
-	clientWarehouseObject = Client_Warehouse.objects.filter(pk_id_client_warehouse__contains=warehouse_id)
+	clientWarehouseObject = Client_warehouse.objects.filter(pk_id_client_warehouse__contains=warehouse_id)
 	upload_file_name = request.FILES['file'].name
 	prepend_name = str(dme_account_num) + '_' + upload_file_name
 	
@@ -81,11 +81,11 @@ def allbookings(request):
 
 	if search is not None:
 		if search.isdigit():
-			booking_search = bookings.objects.filter(Q(id__contains=search) | Q(b_bookingID_Visual=search) | Q(b_dateBookedDate__contains=search) | Q(puPickUpAvailFrom_Date__contains=search) | Q(b_clientReference_RA_Numbers=search) | Q(b_status__contains=search) | Q(vx_freight_provider__contains=search) | Q(vx_serviceName__contains=search) | Q(s_05_LatestPickUpDateTimeFinal__contains=search) | Q(s_06_LatestDeliveryDateTimeFinal__contains=search) | Q(v_FPBookingNumber__contains=search) | Q(puCompany__contains=search) | Q(deToCompanyName__contains=search))
+			booking_search = Bookings.objects.filter(Q(id__contains=search) | Q(b_bookingID_Visual=search) | Q(b_dateBookedDate__contains=search) | Q(puPickUpAvailFrom_Date__contains=search) | Q(b_clientReference_RA_Numbers=search) | Q(b_status__contains=search) | Q(vx_freight_provider__contains=search) | Q(vx_serviceName__contains=search) | Q(s_05_LatestPickUpDateTimeFinal__contains=search) | Q(s_06_LatestDeliveryDateTimeFinal__contains=search) | Q(v_FPBookingNumber__contains=search) | Q(puCompany__contains=search) | Q(deToCompanyName__contains=search))
 		else:
-			booking_search = bookings.objects.filter(Q(id__contains=search) | Q(b_dateBookedDate__contains=search) | Q(puPickUpAvailFrom_Date__contains=search) | Q(b_clientReference_RA_Numbers=search) | Q(b_status__contains=search) | Q(vx_freight_provider__contains=search) | Q(vx_serviceName__contains=search) | Q(s_05_LatestPickUpDateTimeFinal__contains=search) | Q(s_06_LatestDeliveryDateTimeFinal__contains=search) | Q(v_FPBookingNumber__contains=search) | Q(puCompany__contains=search) | Q(deToCompanyName__contains=search))
+			booking_search = Bookings.objects.filter(Q(id__contains=search) | Q(b_dateBookedDate__contains=search) | Q(puPickUpAvailFrom_Date__contains=search) | Q(b_clientReference_RA_Numbers=search) | Q(b_status__contains=search) | Q(vx_freight_provider__contains=search) | Q(vx_serviceName__contains=search) | Q(s_05_LatestPickUpDateTimeFinal__contains=search) | Q(s_06_LatestDeliveryDateTimeFinal__contains=search) | Q(v_FPBookingNumber__contains=search) | Q(puCompany__contains=search) | Q(deToCompanyName__contains=search))
 		return render(request, 'pages/allbookings.html', {'bookings': booking_search})
 
-	booking_list = bookings.objects.all()
+	booking_list = Bookings.objects.all()
 	booking_data = { "bookings": booking_list }
 	return render_to_response("pages/allbookings.html", booking_data)
