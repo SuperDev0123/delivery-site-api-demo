@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'DeliverMe.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-# DATABASES = {
+# DATABASES = {       # Local
 #    'default': {
 #        'ENGINE': 'django.db.backends.mysql',
 #        'NAME': 'deliver_me',
@@ -104,7 +104,7 @@ WSGI_APPLICATION = 'DeliverMe.wsgi.application'
 #    }
 # }
 
-DATABASES = {
+DATABASES = {     # Dev
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'fm_dev_database',
@@ -167,7 +167,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+CORS_ALLOW_HEADERS = (
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-requested-with',
+    'cache-control',
+)
+
 JWT_AUTH = {
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3000),
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=30000),  # Test case
 }
 
