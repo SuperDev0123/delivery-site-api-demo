@@ -1,6 +1,7 @@
 from django.conf.urls import url, include
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 from .views import UserView, BookingViewSet, WarehouseViewSet, FileUploadView, upload_status
+from .views_api import bok_0_bookingkeys, bok_1_headers, bok_2_lines
 
 urlpatterns = [
     url(r'^auth/user/$', UserView.as_view()),
@@ -11,4 +12,8 @@ urlpatterns = [
     url(r'^warehouses/', WarehouseViewSet.as_view({'get': 'list'})),
     url(r'^share/upload/(?P<filename>[^/]+)$', FileUploadView.as_view()),
     url(r'^share/upload-status/', upload_status),
+
+    url(r'^bok_0_bookingskeys/', bok_0_bookingkeys),
+    url(r'^bok_1_headers/', bok_1_headers),
+    url(r'^bok_2_lines/', bok_2_lines),
 ]
