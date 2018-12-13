@@ -45,7 +45,7 @@ def bok_1_headers(request):
 @api_view(['GET', 'POST'])
 def bok_2_lines(request):
     if request.method == 'GET':
-        bok_2_lines = BOK_2_linesSerializer.objects.all()
+        bok_2_lines = BOK_2_lines.objects.all()
         serializer = BOK_2_linesSerializer(bok_2_lines, many=True)
         return Response(serializer.data)
 
