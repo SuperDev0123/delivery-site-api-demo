@@ -18,7 +18,7 @@ class Client_warehouse(models.Model):
 	warehouse_address2 = models.TextField(verbose_name=_('warehouse address2'))
 	warehouse_state = models.TextField(verbose_name=_('warehouse state'))
 	warehouse_suburb = models.TextField(verbose_name=_('warehouse suburb'))
-	warehouse_phone_main = models.IntegerField(verbose_name=_('warehouse phone number'))		
+	warehouse_phone_main = models.IntegerField(verbose_name=_('warehouse phone number'))
 	#warehouse_hours = models.DateTimeField(verbose_name=_('warehouse hours'), default=timezone.now)
 	warehouse_hours = models.IntegerField(verbose_name=_('warehouse hours'))
 
@@ -57,6 +57,7 @@ class Bookings(models.Model):
 	error_details = models.CharField(verbose_name=_('Error Detail'), max_length=250, blank=True, default='')
 	b_clientPU_Warehouse = models.ForeignKey(Client_warehouse, on_delete=models.CASCADE, default='1')
 	is_printed = models.BooleanField(verbose_name=_('Is printed'), default=False)
+	label_base64 = models.CharField(verbose_name=_('Based64 Label'), max_length=2000, blank=True, default='')
 
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
