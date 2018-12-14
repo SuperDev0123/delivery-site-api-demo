@@ -4,7 +4,7 @@ from rest_framework import serializers
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Client_warehouse
-        fields = ('pk_id_client_warehouse', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours', 'shipping_label_base64')
+        fields = ('pk_id_client_warehouse', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours')
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
