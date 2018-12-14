@@ -20,7 +20,6 @@ class Client_warehouse(models.Model):
 	warehouse_state = models.TextField(verbose_name=_('warehouse state'))
 	warehouse_suburb = models.TextField(verbose_name=_('warehouse suburb'))
 	warehouse_phone_main = models.IntegerField(verbose_name=_('warehouse phone number'))
-	#warehouse_hours = models.DateTimeField(verbose_name=_('warehouse hours'), default=timezone.now)
 	warehouse_hours = models.IntegerField(verbose_name=_('warehouse hours'))
 
 class DME_employees(models.Model):
@@ -59,6 +58,12 @@ class Bookings(models.Model):
 	b_clientPU_Warehouse = models.ForeignKey(Client_warehouse, on_delete=models.CASCADE, default='1')
 	is_printed = models.BooleanField(verbose_name=_('Is printed'), default=False)
 	shipping_label_base64 = Base64Field(verbose_name=_('Based64 Label'), blank=True, default='')
+	kf_client_id = models.CharField(verbose_name=_('KF Client ID'), max_length=64, blank=True, default='')
+	b_client_name = models.CharField(verbose_name=_('Client Name'), max_length=36, blank=True, default='')
+	pk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, default='')
+	zb_002_client_booking_key = models.CharField(verbose_name=_('Client Booking Key'), max_length=64, blank=True, default='')
+	fk_fp_pickup_id = models.CharField(verbose_name=_('KF FP pickup id'), max_length=64, blank=True, default='')
+	pu_pickup_instructions_address = models.CharField(verbose_name=_('Pickup instrunctions address'), max_length=100, blank=True, default='')
 
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
