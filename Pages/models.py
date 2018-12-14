@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager
 from django.conf import settings
 from django.utils.translation import gettext as _
+from django_base64field.fields import Base64Field
 
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
@@ -43,7 +44,7 @@ class Bookings(models.Model):
 	id = models.AutoField(primary_key=True)
 	b_bookingID_Visual = models.CharField(verbose_name=_('BookingID Visual'), max_length=40, blank=True)
 	b_dateBookedDate = models.DateTimeField(verbose_name=_('Booked Date'), default=timezone.now)
-	puPickUpAvailFrom_Date = models.DateTimeField(verbose_name=_('PickUp Available From'), default=timezone.now)
+	puPickUpAvailFrom_Date = models.DateField(verbose_name=_('PickUp Available From'), default=timezone.now)
 	b_clientReference_RA_Numbers = models.CharField(verbose_name=_('Client Reference Ra Numbers'), max_length=1000, blank=True)
 	b_status = models.CharField(verbose_name=_('Status'), max_length=40, blank=True)
 	vx_freight_provider = models.CharField(verbose_name=_('Freight Provider'), max_length=100, blank=True)
@@ -57,7 +58,7 @@ class Bookings(models.Model):
 	error_details = models.CharField(verbose_name=_('Error Detail'), max_length=250, blank=True, default='')
 	b_clientPU_Warehouse = models.ForeignKey(Client_warehouse, on_delete=models.CASCADE, default='1')
 	is_printed = models.BooleanField(verbose_name=_('Is printed'), default=False)
-	label_base64 = models.CharField(verbose_name=_('Based64 Label'), max_length=2000, blank=True, default='')
+	shipping_label_base64 = Base64Field(verbose_name=_('Based64 Label'), blank=True, default='')
 
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
