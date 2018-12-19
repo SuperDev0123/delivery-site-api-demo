@@ -19,7 +19,7 @@ import datetime
 from ast import literal_eval
 
 from api.serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
-from pages.models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines 
+from pages.models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines
 from api.models import Log
 
 @api_view(['GET', 'POST'])
@@ -71,7 +71,7 @@ def st_tracking(request):
     url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
     data = literal_eval(request.body.decode('utf8'))
     request_timestamp = datetime.datetime.now()
-    
+
     response0 = requests.post(url, params={}, json=data)
     response0 = response0.content.decode('utf8').replace("'", '"')
     data0 = json.loads(response0)
@@ -86,10 +86,12 @@ def st_tracking(request):
         request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
         request_type = "TRACKING"
         request_status = "SUCCESS"
+        booking = Bookings.objects.get(v_FPBookingNumber=request_payload["trackingId"])
+        fk_booking_id = booking.id
 
         oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type, response=response0)
         oneLog.save()
 
-        return Response({"Log id": oneLog.id})
+        return Response({"Created Log ID": oneLog.id})
     except AttributeError:
         return Response(data0)
