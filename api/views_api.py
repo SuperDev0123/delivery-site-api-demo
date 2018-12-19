@@ -19,7 +19,7 @@ import datetime
 from ast import literal_eval
 
 from api.serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
-from pages.models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines
+from pages.models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings
 from api.models import Log
 
 @api_view(['GET', 'POST'])
