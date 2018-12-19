@@ -68,30 +68,36 @@ def bok_2_lines(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def st_tracking(request):
-    url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
-    data = literal_eval(request.body.decode('utf8'))
-    request_timestamp = datetime.datetime.now()
+    booking_list = Bookings.objects.all()
+    results = []
 
-    response0 = requests.post(url, params={}, json=data)
-    response0 = response0.content.decode('utf8').replace("'", '"')
-    data0 = json.loads(response0)
-    s0 = json.dumps(data0, indent=4, sort_keys=True)
+    for booking in booking_list:
+        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+        data = literal_eval(request.body.decode('utf8'))
+        data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
+        request_timestamp = datetime.datetime.now()
 
-    try:
-        request_id = data0['requestId']
-        request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
-        request_payload["apiUrl"] = url
-        request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-        request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-        request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
-        request_type = "TRACKING"
-        request_status = "SUCCESS"
-        booking = Bookings.objects.get(v_FPBookingNumber=request_payload["trackingId"])
-        fk_booking_id = booking
+        response0 = requests.post(url, params={}, json=data)
+        response0 = response0.content.decode('utf8').replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+        print(s0)
 
-        oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type, response=response0, fk_booking_id=fk_booking_id)
-        oneLog.save()
+        try:
+            request_id = data0['requestId']
+            request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
+            request_payload["apiUrl"] = url
+            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
+            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
+            request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
+            request_type = "TRACKING"
+            request_status = "SUCCESS"
 
-        return Response({"Created Log ID": oneLog.id})
-    except KeyError:
-        return Response(data0)
+            oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type, response=response0, fk_booking_id=booking)
+            oneLog.save()
+
+            results.append({"Created Log ID": oneLog.id})
+        except KeyError:
+            results.append({"Error": "Too many request"})
+
+    return Response(results)
