@@ -87,7 +87,7 @@ def st_tracking(request):
         request_type = "TRACKING"
         request_status = "SUCCESS"
         booking = Bookings.objects.get(v_FPBookingNumber=request_payload["trackingId"])
-        fk_booking_id = booking.id
+        fk_booking_id = booking
 
         oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type, response=response0, fk_booking_id=fk_booking_id)
         oneLog.save()
