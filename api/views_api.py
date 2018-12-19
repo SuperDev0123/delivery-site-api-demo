@@ -78,7 +78,7 @@ def st_tracking(request):
     s0 = json.dumps(data0, indent=4, sort_keys=True)
 
     try:
-        request_id = data0.requestId
+        request_id = data0['requestId']
         request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
         request_payload["apiUrl"] = url
         request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
@@ -93,5 +93,5 @@ def st_tracking(request):
         oneLog.save()
 
         return Response({"Created Log ID": oneLog.id})
-    except AttributeError:
+    except KeyError:
         return Response(data0)
