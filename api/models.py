@@ -64,6 +64,7 @@ class Bookings(models.Model):
 	zb_002_client_booking_key = models.CharField(verbose_name=_('Client Booking Key'), max_length=64, blank=True, null=True, default='')
 	fk_fp_pickup_id = models.CharField(verbose_name=_('KF FP pickup id'), max_length=64, blank=True, null=True, default='')
 	pu_pickup_instructions_address = models.CharField(verbose_name=_('Pickup instrunctions address'), max_length=100, blank=True, null=True, default='')
+	deToAddressPostalCode = models.CharField(verbose_name=_('DeliverTo Addr Postal Code'), max_length=12, blank=True, null=True, default='')
 
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
