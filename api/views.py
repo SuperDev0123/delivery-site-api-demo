@@ -11,8 +11,8 @@ from django.http import QueryDict
 from django.db.models import Q
 
 from api.serializers import BookingSerializer, WarehouseSerializer
-from pages.models import Bookings, Client_employees, Client_warehouse
-from pages.utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
+from .models import *
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 
 class UserView(APIView):
     def post(self, request, format=None):

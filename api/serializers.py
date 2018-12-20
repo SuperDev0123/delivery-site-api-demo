@@ -1,5 +1,5 @@
-from pages.models import Bookings, Client_warehouse, DME_employees, Client_employees
 from rest_framework import serializers
+from .models import Bookings, Client_warehouse, DME_employees, Client_employees
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

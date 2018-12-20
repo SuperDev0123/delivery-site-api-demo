@@ -1,5 +1,5 @@
-from pages.models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines
 from rest_framework import serializers
+from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines
 
 class BOK_0_BookingKeysSerializer(serializers.ModelSerializer):
     class Meta:
