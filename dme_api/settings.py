@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'dme_api.wsgi.application'
 DATABASES = {     # Dev
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'fm_dev_database',
+        'NAME': 'dme_db_dev',
         'USER': 'fmadmin',
         'PASSWORD': 'Fmadmin1',
         'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com',
