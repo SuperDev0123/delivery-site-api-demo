@@ -58,7 +58,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id))
-        clientWarehouseObject_list = Client_warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id))
+        clientWarehouseObject_list = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id))
         queryset = clientWarehouseObject_list
         return queryset
 
