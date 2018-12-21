@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from .models import Bookings, Client_warehouse, DME_employees, Client_employees
+from .models import Bookings, Client_warehouses, DME_employees, Client_employees
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = Client_warehouse
-        fields = ('pk_id_client_warehouse', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours')
+        model = Client_warehouses
+        fields = ('pk_id_client_warehouses', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours')
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:

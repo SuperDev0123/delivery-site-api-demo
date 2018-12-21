@@ -11,8 +11,11 @@ class DME_clients(models.Model):
 	dme_account_num = models.IntegerField(verbose_name=_('dme account num'))
 	phone = models.IntegerField(verbose_name=_('phone number'))
 
-class Client_warehouse(models.Model):
-	pk_id_client_warehouse = models.AutoField(primary_key=True)
+	class Meta:
+		db_table = 'dme_clients'
+
+class Client_warehouses(models.Model):
+	pk_id_client_warehouses = models.AutoField(primary_key=True)
 	fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
 	warehousename = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
 	warehouse_address1 = models.TextField(verbose_name=_('warehouse address1'))
@@ -22,12 +25,18 @@ class Client_warehouse(models.Model):
 	warehouse_phone_main = models.IntegerField(verbose_name=_('warehouse phone number'))
 	warehouse_hours = models.IntegerField(verbose_name=_('warehouse hours'))
 
+	class Meta:
+		db_table = 'dme_client_warehouses'
+
 class DME_employees(models.Model):
 	pk_id_dme_emp = models.AutoField(primary_key=True)
 	fk_id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 	name_last = models.CharField(verbose_name=_('last name'), max_length=30, blank=False)
 	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
 	Role = models.TextField(verbose_name=_('Role'))
+
+	class Meta:
+		db_table = 'dme_employees'
 
 class Client_employees(models.Model):
 	pk_id_client_emp = models.AutoField(primary_key=True)
@@ -37,7 +46,10 @@ class Client_employees(models.Model):
 	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
 	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True)
 	phone = models.IntegerField(verbose_name=_('phone number'))
-	fk_id_client_warehouse = models.OneToOneField(Client_warehouse, on_delete=models.CASCADE)
+	fk_id_client_warehouses = models.OneToOneField(Client_warehouses, on_delete=models.CASCADE)
+
+	class Meta:
+		db_table = 'dme_client_employees'
 
 class Bookings(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -55,7 +67,7 @@ class Bookings(models.Model):
 	deToCompanyName = models.CharField(verbose_name=_('Company Name'), max_length=40, blank=True, null=True, default='')
 	consignment_label_link = models.CharField(verbose_name=_('Consignment'), max_length=250, blank=True, null=True, default='')
 	error_details = models.CharField(verbose_name=_('Error Detail'), max_length=250, blank=True, null=True, default='')
-	b_clientPU_Warehouse = models.ForeignKey(Client_warehouse, on_delete=models.CASCADE, default='1')
+	b_clientPU_Warehouse = models.ForeignKey(Client_warehouses, on_delete=models.CASCADE, default='1')
 	is_printed = models.BooleanField(verbose_name=_('Is printed'), default=False, blank=True, null=True)
 	shipping_label_base64 = Base64Field(verbose_name=_('Based64 Label'), blank=True, null=True, default='')
 	kf_client_id = models.CharField(verbose_name=_('KF Client ID'), max_length=64, blank=True, null=True, default='')
@@ -65,6 +77,9 @@ class Bookings(models.Model):
 	fk_fp_pickup_id = models.CharField(verbose_name=_('KF FP pickup id'), max_length=64, blank=True, null=True, default='')
 	pu_pickup_instructions_address = models.CharField(verbose_name=_('Pickup instrunctions address'), max_length=100, blank=True, null=True, default='')
 	deToAddressPostalCode = models.CharField(verbose_name=_('DeliverTo Addr Postal Code'), max_length=12, blank=True, null=True, default='')
+
+	class Meta:
+		db_table = 'dme_bookings'
 
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
@@ -77,6 +92,9 @@ class BOK_0_BookingKeys(models.Model):
 	l_000_client_acct_number = models.IntegerField(verbose_name=_('Client account number'), blank=True)
 	l_011_client_warehouse_id = models.IntegerField(verbose_name=_('Client warehouse Id'), blank=True)
 	l_012_client_warehouse_name = models.CharField(verbose_name=_('Client warehouse Name'), max_length=240, blank=True)
+
+	class Meta:
+		db_table = 'bok_0_bookingkeys'
 
 class BOK_1_headers(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
@@ -94,6 +112,9 @@ class BOK_1_headers(models.Model):
 	total_kg = models.FloatField(verbose_name=_('Total Kg'), blank=True)
 	success = models.CharField(verbose_name=_('Success'), max_length=1, default=0)
 
+	class Meta:
+		db_table = 'bok_1_headers'
+
 class BOK_2_lines(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
 	client_booking_id = models.CharField(verbose_name=_('Client booking id'), max_length=64, blank=True, null=True)
@@ -106,6 +127,9 @@ class BOK_2_lines(models.Model):
 	l_cubic_weight = models.FloatField(verbose_name=_('Cubic Weight'), blank=True, null=True)
 	l_002_qty = models.IntegerField(verbose_name=_('Address Postal Code'), blank=True, null=True)
 	success = models.CharField(verbose_name=_('Success'), max_length=1, default=0, blank=True, null=True)
+
+	class Meta:
+		db_table = 'bok_2_lines'
 
 class Booking_Status_History(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -130,6 +154,9 @@ class Booking_Status_History(models.Model):
 	status_api = models.CharField(verbose_name=_('Status API'), max_length=40, blank=True, default='')
 	depotName = models.CharField(verbose_name=_('Depot Name'), max_length=30, blank=True, default='')
 
+	class Meta:
+		db_table = 'dme_booking_status_history'
+
 class Log(models.Model):
 	id = models.AutoField(primary_key=True)
 	fk_booking_id = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
@@ -145,3 +172,6 @@ class Log(models.Model):
 	z_modifiedBy = models.CharField(verbose_name=_('Modified By'), max_length=40, blank=True, default='')
 	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=40, blank=True, default='')
 	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True)
+
+	class Meta:
+		db_table = 'dme_log'

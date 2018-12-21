@@ -26,7 +26,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         keyword = self.request.query_params.get('keyword', None)
 
         clientEmp = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id)).first()
-        clientWarehouses = Client_warehouse.objects.select_related().filter(fk_id_dme_client_id = int(clientEmp.fk_id_dme_client_id))
+        clientWarehouses = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(clientEmp.fk_id_dme_client_id))
 
         if searchType is not None:
             if keyword.isdigit():
@@ -37,7 +37,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             queryset = Bookings.objects.all()
 
         retData = []
-        
+
         for x in queryset:
             for y in clientWarehouses:
                 if (x.b_clientPU_Warehouse == y):
@@ -71,10 +71,10 @@ class FileUploadView(views.APIView):
         clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
         dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
         warehouse_id = request.POST.get('warehouse_id')
-        clientWarehouseObject = Client_warehouse.objects.filter(pk_id_client_warehouse__contains=warehouse_id)
+        clientWarehouseObject = Client_warehouses.objects.filter(pk_id_client_warehouses__contains=warehouse_id)
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
-        
+
         save2Redis(prepend_name + "l_000_client_acct_number", dme_account_num)
         save2Redis(prepend_name + "l_011_client_warehouse_id", warehouse_id)
         save2Redis(prepend_name + "l_012_client_warehouse_name", clientWarehouseObject[0].warehousename)

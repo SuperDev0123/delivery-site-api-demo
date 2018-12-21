@@ -181,4 +181,3 @@ CORS_ALLOW_HEADERS = (
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=30000),  # Test case
 }
-
