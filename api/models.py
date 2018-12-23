@@ -81,6 +81,40 @@ class Bookings(models.Model):
 	class Meta:
 		db_table = 'dme_bookings'
 
+class Booking_lines(models.Model):
+	pk_auto_id_lines = models.AutoField(primary_key=True)
+	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True)
+	e_type_of_packaging = models.CharField(verbose_name=_('Type Of Packaging'), max_length=36, blank=True)
+	e_item_type = models.CharField(verbose_name=_('Item Type'), max_length=64, blank=True)
+	e_pallet_type = models.CharField(verbose_name=_('Pallet Type'), max_length=24, blank=True)
+	e_item = models.CharField(verbose_name=_('Item'), max_length=56, blank=True)
+	e_qty = models.IntegerField(verbose_name=_('Quantity'), blank=True, null=True)
+	e_weightUOM = models.CharField(verbose_name=_('Weight UOM'), max_length=56, blank=True)
+	e_weightPerEach = models.IntegerField(verbose_name=_('Weight Per Each'), blank=True, null=True)
+	e_dimUOM = models.CharField(verbose_name=_('Dim UOM'), max_length=10, blank=True)
+	e_dimLength = models.IntegerField(verbose_name=_('Dim Length'), blank=True, null=True)
+	e_dimWidth = models.IntegerField(verbose_name=_('Dim Width'), blank=True, null=True)
+	e_dimHeight = models.IntegerField(verbose_name=_('Dim Height'), blank=True, null=True)
+	e_dangerousGoods = models.IntegerField(verbose_name=_('Dangerous Goods'), blank=True, null=True)
+	e_insuranceValueEach = models.IntegerField(verbose_name=_('Insurance Value Each'), blank=True, null=True)
+	discount_rate = models.IntegerField(verbose_name=_('Discount Rate'), blank=True, null=True)
+	e_options1 = models.CharField(verbose_name=_('Option 1'), max_length=56, blank=True)
+	e_options2 = models.CharField(verbose_name=_('Option 2'), max_length=56, blank=True)
+	e_options3 = models.CharField(verbose_name=_('Option 3'), max_length=56, blank=True)
+	e_options4 = models.CharField(verbose_name=_('Option 4'), max_length=56, blank=True)
+	fk_service_id = models.CharField(verbose_name=_('Service ID'), max_length=64, blank=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=24, blank=True)
+	z_documentUploadedUser = models.CharField(verbose_name=_('Document Uploaded User'), max_length=24, blank=True)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=24, blank=True)
+	e_spec_clientRMA_Number = models.TextField(verbose_name=_('Spec ClientRMA Number'), max_length=300, blank=True)
+	e_spec_customerReferenceNo = models.TextField(verbose_name=_('Spec Customer Reference No'), max_length=200, blank=True)
+	taxable = models.BooleanField(verbose_name=_('Taxable'), default=False, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True)
+
+	class Meta:
+		db_table = 'dme_booking_lines'
+
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
 	client_booking_id = models.CharField(verbose_name=_('Client booking id'), max_length=64, blank=True)
