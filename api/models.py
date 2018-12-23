@@ -131,6 +131,27 @@ class BOK_2_lines(models.Model):
 	class Meta:
 		db_table = 'bok_2_lines'
 
+class BOK_3_lines_data(models.Model):
+	pk_auto_id = models.AutoField(primary_key=True)
+	client_booking_id = models.CharField(verbose_name=_('Client booking id'), max_length=64, blank=True, null=True)
+	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True)
+	v_client_pk_consigment_num = models.CharField(verbose_name=_('Consigment num'), max_length=64, blank=True, null=True)
+	ld_001_qty = models.IntegerField(verbose_name=_('Quantity'), blank=True, null=True)
+	ld_002_model_number = models.CharField(verbose_name=_('Consigment num'), max_length=40, blank=True, null=True)
+	ld_003_item_description = models.TextField(verbose_name=_('Item Description'), max_length=500, blank=True, null=True)
+	ld_004_fault_description = models.CharField(verbose_name=_('fault Description'), max_length=500, blank=True, null=True)
+	ld_005_item_serial_number = models.CharField(verbose_name=_('Item Serial Number'), max_length=40, blank=True, null=True)
+	ld_006_insurance_value = models.IntegerField(verbose_name=_('Insurance Value'), blank=True, null=True)
+	ld_007_gap_ra = models.TextField(verbose_name=_('Gap Ra'), max_length=300, blank=True, null=True)
+	ld_008_client_ref_number = models.CharField(verbose_name=_('Client Ref Number'), max_length=40, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=25, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=25, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True)
+
+	class Meta:
+		db_table = 'bok_3_lines_data'
+
 class Booking_Status_History(models.Model):
 	id = models.AutoField(primary_key=True)
 	fk_booking_id = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
