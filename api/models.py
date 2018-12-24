@@ -115,6 +115,26 @@ class Booking_lines(models.Model):
 	class Meta:
 		db_table = 'dme_booking_lines'
 
+class Booking_lines_data(models.Model):
+	pk_id_lines_data = models.AutoField(primary_key=True)
+	fk_id_booking_lines = models.CharField(verbose_name=_('FK Booking Lines Id'), max_length=64, blank=True)
+	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True)
+	modelNumber = models.CharField(verbose_name=_('Model Number'), max_length=50, blank=True, null=True)
+	itemDescription = models.TextField(verbose_name=_('Item Description'), max_length=200, blank=True, null=True)
+	quantity = models.IntegerField(verbose_name=_('Quantity'), blank=True, null=True)
+	itemFaultDescription = models.TextField(verbose_name=_('Item Description'), max_length=200, blank=True, null=True)
+	insuranceValueEach = models.IntegerField(verbose_name=_('Insurance Value Each'), blank=True, null=True)
+	gap_ra = models.TextField(verbose_name=_('Gap Ra'), max_length=300, blank=True, null=True)
+	clientRefNumber = models.CharField(verbose_name=_('Client Ref Number'), max_length=50, blank=True, null=True)
+	itemSerialNumbers = models.CharField(verbose_name=_('Item Serial Numbers'), max_length=100, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=25, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=25, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True)
+
+	class Meta:
+		db_table = 'dme_booking_lines_data'
+
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
 	client_booking_id = models.CharField(verbose_name=_('Client booking id'), max_length=64, blank=True)
