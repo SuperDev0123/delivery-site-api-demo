@@ -397,7 +397,7 @@ class Booking_Status_History(models.Model):
 
 class Log(models.Model):
 	id = models.AutoField(primary_key=True)
-	fk_booking_id = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
+	fk_booking = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
 	request_payload = models.TextField(verbose_name=_('Request Payload'), max_length=2000, blank=True, default='')
 	response = models.TextField(verbose_name=_('Response'), max_length=10000, blank=True, default='')
 	request_timestamp = models.DateTimeField(verbose_name=_('Request Timestamp'), default=timezone.now, blank=True)
