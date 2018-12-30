@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from rest_framework import views, serializers, status
+from rest_framework import views, status
+from django.core import serializers
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.views import APIView
@@ -17,6 +18,17 @@ from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 class UserView(APIView):
     def post(self, request, format=None):
         return JsonResponse({'username': request.user.username})
+
+class BookingLinesView(APIView):
+    def get(self, request, format=None):
+        booking_id = request.GET['booking_id']
+        booking_lines = Booking_lines.objects.filter(fk_booking_id=int(booking_id))
+        return_data = []
+
+        for booking_line in booking_lines:
+            return_data.append({'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
+
+        return JsonResponse({'booking_lines': return_data})
 
 class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
@@ -48,9 +60,11 @@ class BookingViewSet(viewsets.ModelViewSet):
     def update(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
         serializer = BookingSerializer(booking, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class WarehouseViewSet(viewsets.ModelViewSet):
