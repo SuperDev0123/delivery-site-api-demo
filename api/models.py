@@ -319,7 +319,7 @@ class BOK_0_BookingKeys(models.Model):
 class BOK_1_headers(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
 	client_booking_id = models.CharField(verbose_name=_('Client booking id'), max_length=64, blank=True)
-	b_21_b_pu_avail_from_date = models.DateTimeField(verbose_name=_('Available From'), default=timezone.now)
+	b_021_b_pu_avail_from_date = models.DateTimeField(verbose_name=_('Available From'), default=timezone.now)
 	b_003_b_service_name = models.CharField(verbose_name=_('Service Name'), max_length=31, blank=True)
 	b_500_b_client_cust_job_code = models.CharField(verbose_name=_('Client Job Code'), max_length=20, blank=True)
 	b_054_b_del_company = models.CharField(verbose_name=_('Del company'), max_length=100, blank=True)
@@ -361,7 +361,7 @@ class BOK_1_headers(models.Model):
 	b_026_b_pu_by_time_minute = models.IntegerField(verbose_name=_('b_026_b_pu_by_time_minute'), max_length=2, blank=True, default=0)
 	b_027_b_pu_address_type = models.CharField(verbose_name=_('b_027_b_pu_address_type'), max_length=20, blank=True)
 	b_028_b_pu_company = models.CharField(verbose_name=_('b_028_b_pu_company'), max_length=40, blank=True)
-	b_028_b_pu_compb_029_b_pu_address_street_1any = models.CharField(verbose_name=_('b_029_b_pu_address_street_1'), max_length=50, blank=True)
+	b_029_b_pu_address_street_1 = models.CharField(verbose_name=_('b_029_b_pu_address_street_1'), max_length=50, blank=True)
 	b_030_b_pu_address_street_2 = models.CharField(verbose_name=_('b_030_b_pu_address_street_2'), max_length=50, blank=True)
 	b_031_b_pu_address_state = models.CharField(verbose_name=_('b_031_b_pu_address_state'), max_length=20, blank=True)
 	b_032_b_pu_address_suburb = models.CharField(verbose_name=_('b_032_b_pu_address_suburb'), max_length=20, blank=True)
