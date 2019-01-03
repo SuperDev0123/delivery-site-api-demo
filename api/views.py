@@ -26,9 +26,20 @@ class BookingLinesView(APIView):
         return_data = []
 
         for booking_line in booking_lines:
-            return_data.append({'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
+            return_data.append({'pk_auto_id_lines': booking_line.pk_auto_id_lines, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
 
         return JsonResponse({'booking_lines': return_data})
+
+class BookingLineDetailsView(APIView):
+    def get(self, request, format=None):
+        booking_line_id = request.GET['booking_line_id']
+        booking_line_details = Booking_lines_data.objects.filter(fk_id_booking_lines=int(booking_line_id))
+        return_data = []
+
+        for booking_line_detail in booking_line_details:
+            return_data.append({'modelNumber': booking_line_detail.modelNumber, 'itemDescription': booking_line_detail.itemDescription, 'quantity': booking_line_detail.quantity, 'itemFaultDescription': booking_line_detail.itemFaultDescription, 'insuranceValueEach': booking_line_detail.insuranceValueEach, 'gap_ra': booking_line_detail.gap_ra, 'clientRefNumber': booking_line_detail.clientRefNumber})
+
+        return JsonResponse({'booking_line_details': return_data})
 
 class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
