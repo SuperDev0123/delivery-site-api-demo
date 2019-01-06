@@ -244,6 +244,7 @@ class Bookings(models.Model):
 	b_booking_statusmanual_DME_Note = models.CharField(verbose_name=_('Booking Status Manual DME Note'), max_length=200, blank=True, null=True, default='')
 	DME_price_from_client = models.IntegerField(verbose_name=_('DME Price From Client'), blank=True, default=0)
 	z_label_url = models.CharField(verbose_name=_('PDF Url'), max_length=255, blank=True, null=True, default='')
+	z_lastStatusAPI_ProcessedTimeStamp = models.DateTimeField(verbose_name=_('Last StatusAPI Processed Timestamp'), default=timezone.now, blank=True)
 
 	class Meta:
 		db_table = 'dme_bookings'
