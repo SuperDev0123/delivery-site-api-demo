@@ -104,7 +104,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
-def bookings(request):
+def booking(request):
     if request.method == 'POST':
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
