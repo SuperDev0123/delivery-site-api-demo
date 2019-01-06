@@ -6,9 +6,6 @@ from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 
-def default_start_time():
-	return 'aaa'
-
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
