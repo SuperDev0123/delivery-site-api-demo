@@ -1,7 +1,8 @@
 from django.conf.urls import url, include
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 from .views import UserView, BookingViewSet, BookingLinesView, BookingLineDetailsView, WarehouseViewSet, FileUploadView, upload_status, bookings
-from .views_api import bok_0_bookingkeys, bok_1_headers, bok_2_lines, st_tracking, allied_tracking,hunter_tracking, trigger_allied, trigger_st
+from .views_api import bok_0_bookingkeys, bok_1_headers, bok_2_lines, st_tracking, allied_tracking, hunter_tracking, \
+    trigger_allied, trigger_st, all_trigger
 
 urlpatterns = [
     url(r'^auth/user/$', UserView.as_view()),
@@ -26,5 +27,6 @@ urlpatterns = [
 
     url(r'^trigger_allied/', trigger_allied),
     url(r'^trigger_st/', trigger_st),
+    url(r'^trigger_all/', all_trigger),
 
 ]
