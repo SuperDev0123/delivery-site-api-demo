@@ -200,7 +200,7 @@ class Bookings(models.Model):
 	vx_price_Tax = models.IntegerField(verbose_name=_('Price Tax'), blank=True, default=0)
 	vx_price_Total_Sell_Price_Override = models.IntegerField(verbose_name=_('Price Total Sell Price Override'), blank=True, default=0)
 	vx_FP_ETA_Date = models.DateField(verbose_name=_('FP ETA Date'), default=datetime.date.today, blank=True, null=True)
-	vx_FP_ETA_Time = models.DateTimeField(verbose_name=_('FP ETA Time'), default=timezone.now, blank=True, null=True)
+	vx_FP_ETA_Time = models.TimeField(verbose_name=_('FP ETA Time'), auto_now_add=True, blank=True, null=True)
 	vx_service_Name_ID = models.CharField(verbose_name=_('Service Name ID'), max_length=64, blank=True, null=True, default='')
 	vx_futile_Booking_Notes = models.CharField(verbose_name=_('Futile Booking Notes'), max_length=200, blank=True, null=True, default='')
 	z_CreatedByAccount = models.TextField(verbose_name=_('Created By Account'), max_length=30, blank=True, null=True, default='')
