@@ -338,7 +338,7 @@ class BOK_1_headers(models.Model):
 	date_processed = models.DateTimeField(verbose_name=_('date_processed'), default=timezone.now)
 	pk_header_id = models.CharField(verbose_name=_('pk_header_id'), max_length=64, blank=True, null=True)
 	b_000_1_b_clientReference_RA_Numbers = models.CharField(verbose_name=_('b_000_1_b_clientReference_RA_Numbers'), max_length=500, blank=True, null=True)
-	b_000_2_b_price = models.IntegerField(verbose_name=_('b_000_2_b_price'), max_length=4, blank=True, default=0, null=True)
+	b_000_2_b_price = models.FloatField(verbose_name=_('b_000_2_b_price'), max_length=4, blank=True, default=0, null=True)
 	b_001_b_freight_provider = models.CharField(verbose_name=_('b_001_b_freight_provider'), max_length=36, blank=True, null=True)
 	b_002_b_vehicle_type = models.CharField(verbose_name=_('b_002_b_vehicle_type'), max_length=36, blank=True, null=True)
 	b_005_b_created_for = models.CharField(verbose_name=_('b_005_b_created_for'), max_length=50, blank=True, null=True)
