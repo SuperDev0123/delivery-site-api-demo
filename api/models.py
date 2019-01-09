@@ -132,7 +132,7 @@ class Bookings(models.Model):
 	de_to_WareHouse_Bay = models.CharField(verbose_name=_('DE Warehouse Bay'), max_length=25, blank=True, null=True, default='')
 	de_to_Phone_Mobile = models.CharField(verbose_name=_('DE Phone Mobile'), max_length=25, blank=True, null=True, default='')
 	de_to_Phone_Main = models.CharField(verbose_name=_('DE Phone Main'), max_length=30, blank=True, null=True, default='')
-	de_to_addressed_Saved = models.IntegerField(verbose_name=_('DE Addressed Saved'), blank=True, default=0)
+	de_to_addressed_Saved = models.IntegerField(verbose_name=_('DE Addressed Saved'), blank=True, default=0, null=True)
 	de_Contact = models.CharField(verbose_name=_('DE Contact'), max_length=50, blank=True, null=True, default='')
 	pu_PickUp_By_Date = models.DateField(verbose_name=_('PickUp By Date'), default=datetime.date.today, blank=True, null=True)
 	pu_addressed_Saved = models.IntegerField(verbose_name=_('PU Addressed Saved'), blank=True, default=0)
@@ -229,8 +229,8 @@ class Bookings(models.Model):
 	z_admin_dme_invoice_number = models.CharField(verbose_name=_('Admin DME Invoice Number'), max_length=25, blank=True, null=True, default='')
 	z_included_with_manifest_date = models.DateTimeField(verbose_name=_('Included With Manifest Date'), default=timezone.now, blank=True, null=True)
 	b_dateinvoice = models.DateField(verbose_name=_('Date Invoice'), default=datetime.date.today, blank=True, null=True)
-	b_booking_tail_lift_pickup = models.CharField(verbose_name=_('Booking Tail Lift PU'), max_length=2, blank=True, null=True, default='')
-	b_booking_tail_lift_deliver = models.CharField(verbose_name=_('Booking Tail Lift DE'), max_length=2, blank=True, null=True, default='')
+	b_booking_tail_lift_pickup = models.BooleanField(verbose_name=_('Booking Tail Lift PU'), default=False, blank=True, null=True)
+	b_booking_tail_lift_deliver = models.BooleanField(verbose_name=_('Booking Tail Lift DE'), default=False, blank=True, null=True)
 	b_booking_no_operator_pickup = models.IntegerField(verbose_name=_('Booking No Operator PU'), blank=True, default=0, null=True)
 	b_bookingNoOperatorDeliver = models.IntegerField(verbose_name=_('Booking No Operator DE'), blank=True, default=0, null=True)
 	b_ImportedFromFile = models.CharField(verbose_name=_('Imported File Filed'), max_length=30, blank=True, null=True, default='')
@@ -401,6 +401,8 @@ class BOK_1_headers(models.Model):
 	pu_addressed_saved = models.CharField(verbose_name=_('pu_addressed_saved'), max_length=3, blank=True, null=True)
 	b_client_max_book_amount = models.IntegerField(verbose_name=_('b_client_max_book_amount'), max_length=6, blank=True, default=0, null=True)
 	vx_serviceType_XXX = models.CharField(verbose_name=_('vx_serviceType_XXX'), max_length=50, blank=True, null=True)
+	b_021_pu_avail_from_date = models.DateTimeField(verbose_name=_('b_021_pu_avail_from_date'), default=timezone.now, null=True)
+	b_053_b_del_address_type = models.CharField(verbose_name=_('b_053_b_del_address_type'), max_length=50, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('z_createdTimeStamp'), default=timezone.now, null=True)
 
 	class Meta:
