@@ -69,16 +69,13 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         searchType = self.request.query_params.get('searchType', None)
-        keyword = self.request.query_params.get('keyword', None)
+        keyword = str(self.request.query_params.get('keyword', None))
 
         clientEmp = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id)).first()
         clientWarehouses = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(clientEmp.fk_id_dme_client_id))
 
         if searchType is not None:
-            if keyword.isdigit():
-                queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
-            else:
-                queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
+            queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers__contains=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
         else:
             queryset = Bookings.objects.all()
 
