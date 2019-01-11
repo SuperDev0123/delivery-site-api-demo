@@ -334,6 +334,7 @@ class BOK_1_headers(models.Model):
 	v_client_pk_consigment_num = models.CharField(verbose_name=_('Consigment num'), max_length=64, blank=True, null=True)
 	total_kg = models.FloatField(verbose_name=_('Total Kg'), blank=True, null=True)
 	success = models.CharField(verbose_name=_('Success'), max_length=1, default=0, null=True)
+	fk_client_warehouse_id = models.ForeignKey(Client_warehouses, on_delete=models.CASCADE, default='1')
 	b_clientPU_Warehouse = models.CharField(verbose_name=_('warehouse'), max_length=32, blank=True, null=True)
 	fk_client_id = models.CharField(verbose_name=_('fk_client_id'), max_length=64, blank=True, null=True)
 	date_processed = models.DateTimeField(verbose_name=_('date_processed'), default=timezone.now)
