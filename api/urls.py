@@ -1,11 +1,15 @@
 from django.conf.urls import url, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
-from .views import UserView, BookingViewSet, BookingLinesView, BookingLineDetailsView, WarehouseViewSet, FileUploadView, upload_status, booking
+from .views import UserViewSet, BookingViewSet, BookingLinesView, BookingLineDetailsView, WarehouseViewSet, FileUploadView, upload_status, booking
 from .views_api import bok_0_bookingkeys, bok_1_headers, bok_2_lines, st_tracking, allied_tracking, hunter_tracking, \
     trigger_allied, trigger_st, all_trigger, bok_1_to_bookings
 
-urlpatterns = [
-    url(r'^auth/user/$', UserView.as_view()),
+router = DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
+urlpatterns = router.urls
+
+urlpatterns += [
     url(r'^api-token-auth/', obtain_jwt_token),
     url(r'^api-token-verify/', verify_jwt_token),
     url(r'^bookinglines/', BookingLinesView.as_view()),

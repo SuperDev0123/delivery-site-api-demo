@@ -11,6 +11,7 @@ class DME_clients(models.Model):
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
 	dme_account_num = models.IntegerField(verbose_name=_('dme account num'))
 	phone = models.IntegerField(verbose_name=_('phone number'))
+	client_filter_date_field = models.CharField(verbose_name=_('Client Filter Date Field'), max_length=64, blank=False, null=False, default="z_CreatedTimestamp")
 
 	class Meta:
 		db_table = 'dme_clients'
@@ -249,7 +250,7 @@ class Bookings(models.Model):
 
 	class Meta:
 		db_table = 'dme_bookings'
-models.FloatField(verbose_name=_('Total'), default=0, blank=True, null=True)
+
 class Booking_lines(models.Model):
 	pk_auto_id_lines = models.AutoField(primary_key=True)
 	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True)

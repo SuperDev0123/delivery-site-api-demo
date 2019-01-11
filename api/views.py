@@ -4,10 +4,11 @@ from django.core import serializers
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.views import APIView
+from rest_framework import viewsets
 from rest_framework import authentication, permissions
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
 from django.http import JsonResponse
@@ -18,9 +19,17 @@ from api.serializers import BookingSerializer, WarehouseSerializer
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 
-class UserView(APIView):
-    def post(self, request, format=None):
+class UserViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['post'])
+    def username(self, request, format=None):
         return JsonResponse({'username': request.user.username})
+
+    @action(detail=False, methods=['get'])
+    def get_user_date_filter_field(self, requst, pk=None):
+        user_id = self.request.user.id
+        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+        clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeObject.fk_id_dme_client_id)
+        return JsonResponse({'user_date_filter_field': clientObject.client_filter_date_field})
 
 class BookingLinesView(APIView):
     def get(self, request, format=None):
@@ -97,6 +106,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
