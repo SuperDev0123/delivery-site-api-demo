@@ -83,7 +83,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         for x in queryset:
             for y in clientWarehouses:
-                if (x.fk_client_warehouse_id == y):
+                if (x.fk_client_warehouse == y):
                     retData.append(x)
 
         return retData
