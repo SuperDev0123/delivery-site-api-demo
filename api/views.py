@@ -139,7 +139,7 @@ class FileUploadView(views.APIView):
         warehouse_id = request.POST.get('warehouse_id')
         clientWarehouseObject = Client_warehouses.objects.filter(pk_id_client_warehouses__contains=warehouse_id)
         upload_file_name = request.FILES['file'].name
-        prepend_name = upload_file_name
+        prepend_name = str(dme_account_num) + '_' + upload_file_name
 
         save2Redis(upload_file_name + "l_000_client_acct_number", dme_account_num)
         save2Redis(upload_file_name + "l_011_client_warehouse_id", warehouse_id)
