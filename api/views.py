@@ -165,8 +165,7 @@ def upload_status(request):
 
     if result == 0:
         return JsonResponse({'status_code': 0})
-
-    if len(result) == 0:
+    elif result == 'success':
         return JsonResponse({'status_code': 1})
     else:
         return JsonResponse({'status_code': 2, 'errors': result})
