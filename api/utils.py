@@ -34,10 +34,10 @@ def getFileCheckHistory(filename):
 	if errorCnt is None:
 		return 0
 	else:
-		if errorCnt > 0:
+		if int(errorCnt) > 0:
 			for index in range(int(errorCnt)):
 				errors.append(redisCon.get(filename + str(index)).decode("utf-8"))
-		elif errorCnt == 0:
+		elif int(errorCnt) == 0:
 			return 'success'
 
 		return errors
