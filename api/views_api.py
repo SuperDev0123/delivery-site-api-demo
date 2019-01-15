@@ -209,7 +209,7 @@ def allied_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -301,7 +301,7 @@ def all_trigger(request):
 
     for booking in booking_list:
         if booking.vx_freight_provider == "Allied" and booking.b_client_name == "Seaway":
-            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+            url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
@@ -331,15 +331,18 @@ def all_trigger(request):
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
                              response=response0, fk_booking_id=booking.id)
                 oneLog.save()
-                booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                booking.save()
-
+                try:
+                    booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                    booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                    booking.save()
+                except IndexError:
+                    print("asd")
+                    
                 results.append({"Created Log ID": oneLog.id})
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+            url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
@@ -369,9 +372,12 @@ def all_trigger(request):
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
                              response=response0, fk_booking_id=booking.id)
                 oneLog.save()
-                booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                booking.save()
+                try:
+                    booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                    booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                    booking.save()
+                except IndexError:
+                    print("asd")
 
                 results.append({"Created Log ID": oneLog.id})
             except KeyError:
@@ -389,7 +395,7 @@ def trigger_allied(request):
     results = []
 
     for booking in booking_list:
-        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
         data = {}
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -419,10 +425,13 @@ def trigger_allied(request):
             oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
-            booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-            booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-            booking.save()
-
+            try:
+                booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                booking.save()
+            except IndexError:
+                print("asd")
+                
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
             results.append({"Error": "Too many request"})
@@ -439,7 +448,7 @@ def trigger_st(request):
     results = []
 
     for booking in booking_list:
-        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -463,9 +472,13 @@ def trigger_st(request):
             oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
-            booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-            booking.save()
-
+            try:
+                booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                booking.save()
+            except IndexError:
+                print("asd")
+                
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
             results.append({"Error": "Too many request"})
