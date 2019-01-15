@@ -141,9 +141,9 @@ class FileUploadView(views.APIView):
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
-        save2Redis(upload_file_name + "_l_000_client_acct_number", dme_account_num)
-        save2Redis(upload_file_name + "_l_011_client_warehouse_id", warehouse_id)
-        save2Redis(upload_file_name + "_l_012_client_warehouse_name", clientWarehouseObject[0].warehousename)
+        save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
+        save2Redis(prepend_name + "_l_011_client_warehouse_id", warehouse_id)
+        save2Redis(prepend_name + "_l_012_client_warehouse_name", clientWarehouseObject[0].warehousename)
 
         handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 
@@ -152,9 +152,9 @@ class FileUploadView(views.APIView):
 
 def handle_uploaded_file(requst, dme_account_num, f):
     # live code 
-    with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
+    # with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
-    # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
+    with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
 
