@@ -152,9 +152,9 @@ class FileUploadView(views.APIView):
 
 def handle_uploaded_file(requst, dme_account_num, f):
     # live code 
-    # with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
+    with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
-    with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
+    # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
 
