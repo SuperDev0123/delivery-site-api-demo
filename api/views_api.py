@@ -236,6 +236,53 @@ def allied_tracking(request):
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
             booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+            booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+            booking.save()
+
+            results.append({"Created Log ID": oneLog.id})
+        except KeyError:
+            results.append({"Error": "Too many request"})
+
+    return Response(results)
+
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def allied_label(request):
+    booking_list = Bookings.objects.filter(vx_freight_provider="ALLIED",
+                                           z_api_issue_update_flag_500=1)  # add z_api_status_update_flag_500 check
+    results = []
+
+    for booking in booking_list:
+        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+        data = literal_eval(request.body.decode('utf8'))
+        print("==============")
+        print(booking.v_FPBookingNumber)
+        print(booking.deToAddressPostalCode)
+        print("==============")
+        data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
+                                       "destinationPostcode": booking.deToAddressPostalCode}]
+        response0 = requests.post(url, params={}, json=data)
+        response0 = response0.content.decode('utf8').replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+        print(s0)
+
+        try:
+            request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
+            request_payload["apiUrl"] = url
+            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
+            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
+            request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
+            request_type = "TRACKING"
+            request_status = "SUCCESS"
+
+            oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
+            booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+            booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
             booking.save()
 
             results.append({"Created Log ID": oneLog.id})
@@ -253,7 +300,7 @@ def all_trigger(request):
     results = []
 
     for booking in booking_list:
-        if booking.vx_freight_provider == "ALLIED":
+        if booking.vx_freight_provider == "Allied" and booking.b_client_name == "Seaway":
             url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
             data = {}
             print("==============")
@@ -337,19 +384,23 @@ def all_trigger(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def trigger_allied(request):
-    booking_list = Bookings.objects.filter(vx_freight_provider="ALLIED",
-                                           z_api_issue_update_flag_500=1, b_client_name="seaway")
+    booking_list = Bookings.objects.filter(vx_freight_provider="Allied",
+                                           z_api_issue_update_flag_500=1, b_client_name="Seaway")
     results = []
 
     for booking in booking_list:
         url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
-        data = literal_eval(request.body.decode('utf8'))
+        data = {}
         print("==============")
         print(booking.v_FPBookingNumber)
         print(booking.deToAddressPostalCode)
         print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.deToAddressPostalCode}]
+        data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
+                                    "accountKey": "ce0d58fd22ae8619974958e65302a715"}
+        data['serviceProvider'] = "ALLIED"
+
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -369,6 +420,7 @@ def trigger_allied(request):
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
             booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+            booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
             booking.save()
 
             results.append({"Created Log ID": oneLog.id})
