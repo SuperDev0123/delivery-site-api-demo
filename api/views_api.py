@@ -339,7 +339,7 @@ def all_trigger(request):
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
