@@ -19,7 +19,7 @@ import datetime
 from ast import literal_eval
 
 from .serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
-from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings
+from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings, Booking_lines
 from .models import Log
 
 
@@ -536,37 +536,198 @@ def get_label_allied(request):
 @permission_classes((AllowAny,))
 def booking_allied(request):
     results = []
-    url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
-    data = literal_eval(request.body.decode('utf8'))
-    data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
-                                "accountKey": "ce0d58fd22ae8619974958e65302a715"}
-    data['serviceProvider'] = "ALLIED"
-
-    response0 = requests.post(url, params={}, json=data)
-    response0 = response0.content.decode('utf8').replace("'", '"')
-    data0 = json.loads(response0)
-    s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-    print(s0)
-
     try:
-        request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
-        request_payload["apiUrl"] = url
-        request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-        request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-        request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
-        request_type = "TRACKING"
-        request_status = "SUCCESS"
+        bid = literal_eval(request.body.decode('utf8'))
+        bid = bid["booking_id"]
+        print(bid)
+        try:
+            booking = Bookings.objects.filter(id=bid)[0]
+            data = {}
+            data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
+                                        "accountKey": "ce0d58fd22ae8619974958e65302a715"}
+            data['serviceProvider'] = "ALLIED"
+            data['readyDate'] = booking.puPickUpAvailFrom_Date
+            data['referenceNumber'] = booking.b_clientReference_RA_Numbers
+            data['serviceType'] = booking.vx_serviceName
+            data['bookedBy'] = "Mr.CharlieBrown"
+            data['pickupAddress'] = {"companyName": booking.puCompany, "contact": booking.pu_Contact_F_L_Name,
+                                        "emailAddress": booking.pu_Email,
+                                     "instruction":booking.pu_PickUp_Instructions_Contact,
+                                     "phoneNumber": booking.pu_Phone_Main}
+            data['pickupAddress']["postalAddress"] = {"address1": booking.pu_Address_Street_1,
+                                                      "address2": booking.pu_Address_street_2,
+                                        "country": booking.pu_Address_Country,
+                                     "postCode":booking.pu_Address_PostalCode,
+                                     "state":booking.pu_Address_State,
+                                     "suburb":booking.pu_Address_Suburb,
+                                     "sortCode": booking.pu_Address_PostalCode}
 
-        oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
-                     response=response0, fk_booking_id=booking.id)
-        oneLog.save()
+            data['dropAddress'] = {"companyName": booking.deToCompanyName, "contact": booking.de_to_Contact_F_LName,
+                                        "emailAddress": booking.de_Email,
+                                     "instruction":booking.de_to_Pick_Up_Instructions_Contact,
+                                     "phoneNumber": booking.pu_Phone_Main}
+            data['dropAddress']["postalAddress"] = {"address1": booking.de_To_Address_Street_1,
+                                                      "address2": booking.de_To_Address_Street_2,
+                                        "country": booking.de_To_Address_Country,
+                                     "postCode":booking.deToAddressPostalCode,
+                                     "state":booking.de_To_Address_State,
+                                     "suburb":booking.de_To_Address_Suburb,
+                                     "sortCode": booking.deToAddressPostalCode}
 
-        booking = Bookings(vx_freight_provider="Allied", z_api_issue_update_flag_500=1,
-                           v_FPBookingNumber=data["consignmentDetails"][0]["consignmentNumber"])
-        booking.save()
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.id)
 
-        results.append({"Created Booking ID": booking.id})
-    except KeyError:
-        results.append({"Error": "Too many request"})
+            items = []
+
+            for line in booking_lines:
+
+                temp_item = {"dangerous": 0,
+                                "height": line.e_dimHeight,
+                                "length": line.e_dimLength,
+                                "quantity": line.e_qty,
+                                "volume": 0,
+                                "weight": line.e_weightPerEach,
+                                "width": line.e_dimWidth
+                             }
+                items.append(temp_item)
+
+            data['items'] = items
+            print(data)
+
+            url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
+            response0 = requests.post(url, params={}, json=data)
+            response0 = response0.content.decode('utf8').replace("'", '"')
+            data0 = json.loads(response0)
+            s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+            print(s0)
+
+            try:
+                request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
+                request_payload["apiUrl"] = url
+                request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
+                request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
+                request_payload["trackingId"] = data0['consignmentNumber']
+                request_type = "TRACKING"
+                request_status = "SUCCESS"
+
+
+                booking.v_FPBookingNumber = data0['consignmentNumber']
+                booking.fk_fp_pickup_id = data0['requestId']
+                booking.b_dateBookedDate = datetime.datetime.now()
+                booking.save()
+
+                oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
+
+                results.append({"Created Booking ID": booking.id})
+            except KeyError:
+                results.append({"Error": "Too many request"})
+
+        except IndexError:
+            results.append({"message": "Booking not found"})
+
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
+
+    return Response(results)
+
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def booking_st(request):
+    results = []
+    try:
+        bid = literal_eval(request.body.decode('utf8'))
+        bid = bid["booking_id"]
+        print(bid)
+        try:
+            booking = Bookings.objects.filter(id=bid)[0]
+            data = {}
+            data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
+                                        "accountKey": "ce0d58fd22ae8619974958e65302a715"}
+            data['serviceProvider'] = "ALLIED"
+            data['readyDate'] = booking.puPickUpAvailFrom_Date
+            data['referenceNumber'] = booking.b_clientReference_RA_Numbers
+            data['serviceType'] = booking.vx_serviceName
+            data['bookedBy'] = "Mr.CharlieBrown"
+            data['pickupAddress'] = {"companyName": booking.puCompany, "contact": booking.pu_Contact_F_L_Name,
+                                        "emailAddress": booking.pu_Email,
+                                     "instruction":booking.pu_PickUp_Instructions_Contact,
+                                     "phoneNumber": booking.pu_Phone_Main}
+            data['pickupAddress']["postalAddress"] = {"address1": booking.pu_Address_Street_1,
+                                                      "address2": booking.pu_Address_street_2,
+                                        "country": booking.pu_Address_Country,
+                                     "postCode":booking.pu_Address_PostalCode,
+                                     "state":booking.pu_Address_State,
+                                     "suburb":booking.pu_Address_Suburb,
+                                     "sortCode": booking.pu_Address_PostalCode}
+
+            data['dropAddress'] = {"companyName": booking.deToCompanyName, "contact": booking.de_to_Contact_F_LName,
+                                        "emailAddress": booking.de_Email,
+                                     "instruction":booking.de_to_Pick_Up_Instructions_Contact,
+                                     "phoneNumber": booking.pu_Phone_Main}
+            data['dropAddress']["postalAddress"] = {"address1": booking.de_To_Address_Street_1,
+                                                      "address2": booking.de_To_Address_Street_2,
+                                        "country": booking.de_To_Address_Country,
+                                     "postCode":booking.deToAddressPostalCode,
+                                     "state":booking.de_To_Address_State,
+                                     "suburb":booking.de_To_Address_Suburb,
+                                     "sortCode": booking.deToAddressPostalCode}
+
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.id)
+
+            items = []
+
+            for line in booking_lines:
+
+                temp_item = {"dangerous": 0,
+                                "height": line.e_dimHeight,
+                                "length": line.e_dimLength,
+                                "quantity": line.e_qty,
+                                "volume": 0,
+                                "weight": line.e_weightPerEach,
+                                "width": line.e_dimWidth
+                             }
+                items.append(temp_item)
+
+            data['items'] = items
+            print(data)
+
+            url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
+            response0 = requests.post(url, params={}, json=data)
+            response0 = response0.content.decode('utf8').replace("'", '"')
+            data0 = json.loads(response0)
+            s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+            print(s0)
+
+            try:
+                request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
+                request_payload["apiUrl"] = url
+                request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
+                request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
+                request_payload["trackingId"] = data0['consignmentNumber']
+                request_type = "TRACKING"
+                request_status = "SUCCESS"
+
+
+                booking.v_FPBookingNumber = data0['consignmentNumber']
+                booking.fk_fp_pickup_id = data0['requestId']
+                booking.b_dateBookedDate = datetime.datetime.now()
+                booking.save()
+
+                oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
+
+                results.append({"Created Booking ID": booking.id})
+            except KeyError:
+                results.append({"Error": "Too many request"})
+
+        except IndexError:
+            results.append({"message": "Booking not found"})
+
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
 
     return Response(results)
