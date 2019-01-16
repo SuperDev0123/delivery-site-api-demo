@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 from .views import UserViewSet, BookingViewSet, BookingLinesView, BookingLineDetailsView, WarehouseViewSet, FileUploadView, upload_status, booking
 from .views_api import bok_0_bookingkeys, bok_1_headers, bok_2_lines, st_tracking, allied_tracking, hunter_tracking, \
-    trigger_allied, trigger_st, all_trigger, bok_1_to_bookings
+    trigger_allied, trigger_st, all_trigger, bok_1_to_bookings, booking_allied, booking_st, get_label_allied
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -33,4 +33,8 @@ urlpatterns += [
     url(r'^trigger_allied/', trigger_allied),
     url(r'^trigger_st/', trigger_st),
     url(r'^trigger_all/', all_trigger),
+
+    url(r'^booking_allied/', booking_allied),
+    url(r'^booking_st/', booking_st),
+    url(r'^get_label_allied/', get_label_allied),
 ]
