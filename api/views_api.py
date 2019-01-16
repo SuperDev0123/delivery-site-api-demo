@@ -351,7 +351,7 @@ def trigger_allied(request):
                                            b_client_name="Seaway",
                                            z_CreatedTimestamp__range=(start_date, end_date))
     results = []
-    return Response({'len': len(booking_results)})
+    return Response({'len': len(booking_list)})
 
     for booking in booking_list:
         url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
