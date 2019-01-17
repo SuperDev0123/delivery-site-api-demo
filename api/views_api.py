@@ -349,7 +349,7 @@ def trigger_allied(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
         data = {}
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.deToAddressPostalCode}]
