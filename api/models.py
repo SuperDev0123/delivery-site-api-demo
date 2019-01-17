@@ -55,7 +55,7 @@ class Client_employees(models.Model):
 
 class Bookings(models.Model):
 	id = models.AutoField(primary_key=True)
-	b_bookingID_Visual = models.CharField(verbose_name=_('BookingID Visual'), max_length=40, blank=True, null=True, default='')
+	b_bookingID_Visual = models.IntegerField(verbose_name=_('BookingID Visual'), blank=True, null=True, default=0)
 	b_dateBookedDate = models.DateTimeField(verbose_name=_('Booked Date'), default=timezone.now, blank=True, null=True)
 	puPickUpAvailFrom_Date = models.DateField(verbose_name=_('PickUp Available From'), default=datetime.date.today, blank=True, null=True)
 	b_clientReference_RA_Numbers = models.CharField(verbose_name=_('Client Reference Ra Numbers'), max_length=1000, blank=True, null=True, default='')
@@ -72,7 +72,7 @@ class Bookings(models.Model):
 	fk_client_warehouse = models.ForeignKey(Client_warehouses, on_delete=models.CASCADE, default='1')
 	b_clientPU_Warehouse = models.CharField(verbose_name=_('warehouse'), max_length=32, blank=True, null=True)
 	is_printed = models.BooleanField(verbose_name=_('Is printed'), default=False, blank=True, null=True)
-	shipping_label_base64 = Base64Field(verbose_name=_('Based64 Label'), blank=True, null=True, default='')
+	shipping_label_base64 = models.CharField(verbose_name=_('Based64 Label'), max_length=255, blank=True, null=True, default='')
 	kf_client_id = models.CharField(verbose_name=_('KF Client ID'), max_length=64, blank=True, null=True, default='')
 	b_client_name = models.CharField(verbose_name=_('Client Name'), max_length=36, blank=True, null=True, default='')
 	pk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True, default='')
@@ -490,7 +490,7 @@ class Booking_Status_History(models.Model):
 
 class Log(models.Model):
 	id = models.AutoField(primary_key=True)
-	fk_booking = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
+	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True)
 	request_payload = models.TextField(verbose_name=_('Request Payload'), max_length=2000, blank=True, default='')
 	response = models.TextField(verbose_name=_('Response'), max_length=10000, blank=True, default='')
 	request_timestamp = models.DateTimeField(verbose_name=_('Request Timestamp'), default=timezone.now, blank=True)
