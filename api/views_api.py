@@ -344,14 +344,14 @@ def all_trigger(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def trigger_allied(request):
-    start_date = datetime.date(2019, 1, 15)
-    end_date = datetime.date(2019, 1, 16)
+    # start_date = datetime.date(2019, 1, 15)
+    # end_date = datetime.date(2019, 1, 16)
     booking_list = Bookings.objects.filter(vx_freight_provider="Allied",
                                            z_api_issue_update_flag_500=1, 
-                                           b_client_name="Seaway",
-                                           z_CreatedTimestamp__range=(start_date, end_date))
+                                           b_client_name="Seaway")
+                                           # z_CreatedTimestamp__range=(start_date, end_date))
     results = []
-    return Response({'len': len(booking_list)})
+    # return Response({'len': len(booking_list)})
 
     for booking in booking_list:
         url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
