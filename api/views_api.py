@@ -204,8 +204,8 @@ def st_tracking(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def st_booking(request):
-    booking_list = Bookings.objects.filter(vx_freight_provider="STARTRACK",
-                                           z_api_issue_update_flag_500=1)  # add z_api_status_update_flag_500 check
+    booking_list = Bookings.objects.all() #.filter(vx_freight_provider="STARTRACK",
+                                           #z_api_issue_update_flag_500=1)  # add z_api_status_update_flag_500 check
     results = []
     print("Response ",booking_list)
     for booking in booking_list:
@@ -254,15 +254,15 @@ def st_booking(request):
         booking_lines = Booking_lines.objects.filter(fk_booking_id=int(booking.id))
         for booking_line in booking_lines:
 
-            data["items"][0]["itemId"] = booking.vx_serviceName
-            data["items"][0]["dangerous"] = booking_line.e_dangerousGoods
-            data["items"][0]["height"] = booking_line.e_dimHeight 
-            data["items"][0]["length"] = booking_line.e_dimLength
-            data["items"][0]["quantity"] = booking_line.e_qty
-            data["items"][0]["volume"] = 10
-            data["items"][0]["weight"] = booking_line.e_weightPerEach
-            data["items"][0]["width"] = booking_line.e_dimWidth
-            data["items"][0]["packagingType"] = booking_line.e_item_type
+            data["items"]["itemId"] = booking.vx_serviceName
+            # data["items"][0]["dangerous"] = booking_line.e_dangerousGoods
+            # data["items"][0]["height"] = booking_line.e_dimHeight 
+            # data["items"][0]["length"] = booking_line.e_dimLength
+            # data["items"][0]["quantity"] = booking_line.e_qty
+            # data["items"][0]["volume"] = 10
+            # data["items"][0]["weight"] = booking_line.e_weightPerEach
+            # data["items"][0]["width"] = booking_line.e_dimWidth
+            # data["items"][0]["packagingType"] = booking_line.e_item_type
 
         
         data["readyDate"] = booking.x_ReadyStatus
@@ -298,7 +298,7 @@ def st_booking(request):
         # except KeyError:
         #     results.append({"Error": "Too many request"})
 
-    return Response("Sucess")
+    return Response(response0)
 
 
 
