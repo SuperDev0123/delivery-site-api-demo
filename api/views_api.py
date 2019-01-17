@@ -344,22 +344,13 @@ def all_trigger(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def trigger_allied(request):
-    # start_date = datetime.date(2019, 1, 15)
-    # end_date = datetime.date(2019, 1, 16)
     booking_list = Bookings.objects.filter(vx_freight_provider="Allied",
-                                           z_api_issue_update_flag_500=1, 
-                                           b_client_name="Seaway")
-                                           # z_CreatedTimestamp__range=(start_date, end_date))
+                                           z_api_issue_update_flag_500=1, b_client_name="Seaway", b_status_API__isnull=True)
     results = []
-    # return Response({'len': len(booking_list)})
 
     for booking in booking_list:
         url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
         data = {}
-        print("==============")
-        print(booking.v_FPBookingNumber)
-        print(booking.deToAddressPostalCode)
-        print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.deToAddressPostalCode}]
         data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
@@ -370,7 +361,6 @@ def trigger_allied(request):
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        print(s0)
 
         try:
             request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -389,7 +379,7 @@ def trigger_allied(request):
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
                 booking.save()
             except IndexError:
-                print("asd")
+                print("no")
 
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
