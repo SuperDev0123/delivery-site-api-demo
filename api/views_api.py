@@ -203,6 +203,108 @@ def st_tracking(request):
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
+def st_booking(request):
+    booking_list = Bookings.objects.filter(vx_freight_provider="STARTRACK",
+                                           z_api_issue_update_flag_500=1)  # add z_api_status_update_flag_500 check
+    results = []
+    print("Response ",booking_list)
+    for booking in booking_list:
+        url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
+        data = []
+
+        data["serviceProvider"] = "ST"
+        data["spAccountDetails"]["accountCode"]="10149943"
+        data["spAccountDetails"]["accountState"]="NSW"
+        data["spAccountDetails"]["accountPassword"]="x81775935aece65541c9"
+        data["spAccountDetails"]["accountKey"]= "d36fca86-53da-4db8-9a7d-3029975aa134"
+        
+        data["referenceNumber"] = booking.b_clientReference_RA_Numbers 
+        data["bookedBy"] = "Pete Walbolt"
+
+        #Pickup Address
+        data["pickupAddress"]["companyName"] = booking.puCompany     
+        data["pickupAddress"]["contact"] = booking.pu_Contact_F_L_Name
+        data["pickupAddress"]["emailAddress"] = booking.pu_Email
+        data["pickupAddress"]["instruction"] = booking.pu_PickUp_Instructions_Contact
+        data["pickupAddress"]["phoneNumber"] = booking.pu_Phone_Main 
+
+        data["pickupAddress"]["postalAddress"]["address1"] = booking.pu_Address_Street_1 
+        data["pickupAddress"]["postalAddress"]["address2"]= booking.pu_Address_street_2
+        data["pickupAddress"]["postalAddress"]["country"] = booking.pu_Address_Country
+        data["pickupAddress"]["postalAddress"]["postCode"] = booking.pu_Address_PostalCode
+        data["pickupAddress"]["postalAddress"]["sortCode"] =  "2340"
+        data["pickupAddress"]["postalAddress"]["state"] = booking.pu_Address_State
+        data["pickupAddress"]["postalAddress"]["suburb"] = booking.pu_Address_Suburb
+
+        #Drop Address
+        data["dropAddress"]["companyName"] = booking.deToCompanyName    
+        data["dropAddress"]["contact"] = booking.de_Contact
+        data["dropAddress"]["emailAddress"] = booking.de_Email
+        data["dropAddress"]["instruction"] = booking.de_to_Pick_Up_Instructions_Contact
+        data["dropAddress"]["phoneNumber"] = booking.de_to_Phone_Main
+        
+        data["dropAddress"]["postalAddress"]["address1"] = booking.de_To_Address_Street_1
+        data["dropAddress"]["postalAddress"]["address2"] = booking.de_To_Address_Street_2
+        data["dropAddress"]["postalAddress"]["country"] = booking.de_To_Address_Country 
+        data["dropAddress"]["postalAddress"]["postCode"] = booking.de_To_Address_PostalCode
+        data["dropAddress"]["postalAddress"]["sortCode"] = "3012"
+        data["dropAddress"]["postalAddress"]["state"] = booking.de_To_Address_State
+        data["dropAddress"]["postalAddress"]["suburb"] = booking.de_To_Address_Suburb
+
+        booking_lines = Booking_lines.objects.filter(fk_booking_id=int(booking.id))
+        for booking_line in booking_lines:
+
+            data["items"][0]["itemId"] = booking.vx_serviceName
+            data["items"][0]["dangerous"] = booking_line.e_dangerousGoods
+            data["items"][0]["height"] = booking_line.e_dimHeight 
+            data["items"][0]["length"] = booking_line.e_dimLength
+            data["items"][0]["quantity"] = booking_line.e_qty
+            data["items"][0]["volume"] = 10
+            data["items"][0]["weight"] = booking_line.e_weightPerEach
+            data["items"][0]["width"] = booking_line.e_dimWidth
+            data["items"][0]["packagingType"] = booking_line.e_item_type
+
+        
+        data["readyDate"] = booking.x_ReadyStatus
+        data["serviceType"] =booking.v_service_Type_2
+
+       
+        request_timestamp = datetime.datetime.now()
+
+        response0 = requests.post(url, params={}, json=data)
+        print("Response ==> ",response0)
+        # response0 = response0.content.decode('utf8').replace("'", '"')
+        # data0 = json.loads(response0)
+        # s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+        # print(s0)
+
+        # try:
+        #     request_id = data0['requestId']
+        #     request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
+        #     request_payload["apiUrl"] = url
+        #     request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
+        #     request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
+        #     request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
+        #     request_type = "TRACKING"
+        #     request_status = "SUCCESS"
+
+        #     oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
+        #                  response=response0, fk_booking_id=booking.id)
+        #     oneLog.save()
+        #     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+        #     booking.save()
+
+        #     results.append({"Created Log ID": oneLog.id})
+        # except KeyError:
+        #     results.append({"Error": "Too many request"})
+
+    return Response("Sucess")
+
+
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
 def allied_tracking(request):
     booking_list = Bookings.objects.filter(vx_freight_provider="ALLIED",
                                            z_api_issue_update_flag_500=1)  # add z_api_status_update_flag_500 check
