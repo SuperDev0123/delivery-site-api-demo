@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+import xlsxwriter as xlsxwriter
 from django.shortcuts import render
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
@@ -351,6 +353,9 @@ def trigger_allied(request):
     for booking in booking_list:
         url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
         data = {}
+        print("==============")
+        print(booking.v_FPBookingNumber)
+        print(booking.deToAddressPostalCode)
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.deToAddressPostalCode}]
         data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
@@ -378,9 +383,11 @@ def trigger_allied(request):
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
                 booking.save()
+                print("yes")
             except IndexError:
                 print("no")
 
+            print("==============")
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
             results.append({"Error": "Too many request"})
@@ -539,49 +546,51 @@ def booking_allied(request):
             booking = Bookings.objects.filter(id=bid)[0]
             data = {}
             data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
-                                        "accountKey": "ce0d58fd22ae8619974958e65302a715"}
+                                        "accountKey": "11e328f646051c3decc4b2bb4584530b"}
             data['serviceProvider'] = "ALLIED"
-            data['readyDate'] = booking.puPickUpAvailFrom_Date
-            data['referenceNumber'] = booking.b_clientReference_RA_Numbers
-            data['serviceType'] = booking.vx_serviceName
+            data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else booking.puPickUpAvailFrom_Date
+            data['referenceNumber'] = "" if booking.b_clientReference_RA_Numbers is None else booking.b_clientReference_RA_Numbers
+            data['serviceType'] = "" if booking.vx_serviceName is None else booking.vx_serviceName
             data['bookedBy'] = "Mr.CharlieBrown"
-            data['pickupAddress'] = {"companyName": booking.puCompany, "contact": booking.pu_Contact_F_L_Name,
-                                        "emailAddress": booking.pu_Email,
-                                     "instruction":booking.pu_PickUp_Instructions_Contact,
-                                     "phoneNumber": booking.pu_Phone_Main}
-            data['pickupAddress']["postalAddress"] = {"address1": booking.pu_Address_Street_1,
-                                                      "address2": booking.pu_Address_street_2,
-                                        "country": booking.pu_Address_Country,
-                                     "postCode":booking.pu_Address_PostalCode,
-                                     "state":booking.pu_Address_State,
-                                     "suburb":booking.pu_Address_Suburb,
-                                     "sortCode": booking.pu_Address_PostalCode}
+            data['pickupAddress'] = {"companyName": "" if booking.puCompany is None else booking.puCompany,
+                                     "contact": "" if booking.pu_Contact_F_L_Name is None else booking.pu_Contact_F_L_Name,
+                                        "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
+                                     "instruction": "" if booking.pu_PickUp_Instructions_Contact is None else booking.pu_PickUp_Instructions_Contact,
+                                     "phoneNumber": "" if booking.pu_Phone_Main is None else booking.pu_Phone_Main}
+            data['pickupAddress']["postalAddress"] = {"address1": "" if booking.pu_Address_Street_1 is None else booking.pu_Address_Street_1,
+                                                      "address2": "" if booking.pu_Address_street_2 is None else booking.pu_Address_street_2,
+                                        "country": "" if booking.pu_Address_Country is None else booking.pu_Address_Country,
+                                     "postCode":"" if booking.pu_Address_PostalCode is None else booking.pu_Address_PostalCode,
+                                     "state":"" if booking.pu_Address_State is None else booking.pu_Address_State,
+                                     "suburb":"" if booking.pu_Address_Suburb is None else booking.pu_Address_Suburb,
+                                     "sortCode": "" if booking.pu_Address_PostalCode is None else booking.pu_Address_PostalCode}
 
-            data['dropAddress'] = {"companyName": booking.deToCompanyName, "contact": booking.de_to_Contact_F_LName,
-                                        "emailAddress": booking.de_Email,
-                                     "instruction":booking.de_to_Pick_Up_Instructions_Contact,
-                                     "phoneNumber": booking.pu_Phone_Main}
-            data['dropAddress']["postalAddress"] = {"address1": booking.de_To_Address_Street_1,
-                                                      "address2": booking.de_To_Address_Street_2,
-                                        "country": booking.de_To_Address_Country,
-                                     "postCode":booking.deToAddressPostalCode,
-                                     "state":booking.de_To_Address_State,
-                                     "suburb":booking.de_To_Address_Suburb,
-                                     "sortCode": booking.deToAddressPostalCode}
+            data['dropAddress'] = {"companyName": "" if booking.deToCompanyName is None else booking.deToCompanyName,
+                                   "contact": "" if booking.de_to_Contact_F_LName is None else booking.de_to_Contact_F_LName,
+                                        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+                                     "instruction": "" if booking.de_to_Pick_Up_Instructions_Contact is None else booking.de_to_Pick_Up_Instructions_Contact,
+                                     "phoneNumber": "" if booking.pu_Phone_Main is None else booking.pu_Phone_Main}
+            data['dropAddress']["postalAddress"] = {"address1": "" if booking.de_To_Address_Street_1 is None else booking.de_To_Address_Street_1,
+                                                      "address2": "" if booking.de_To_Address_Street_2 is None else booking.de_To_Address_Street_2,
+                                        "country": "" if booking.de_To_Address_Country is None else booking.de_To_Address_Country,
+                                     "postCode":"" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode,
+                                     "state":"" if booking.de_To_Address_State is None else booking.de_To_Address_State,
+                                     "suburb":"" if booking.de_To_Address_Suburb is None else booking.de_To_Address_Suburb,
+                                     "sortCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode}
 
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.id)
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
             items = []
 
             for line in booking_lines:
 
                 temp_item = {"dangerous": 0,
-                                "height": line.e_dimHeight,
-                                "length": line.e_dimLength,
-                                "quantity": line.e_qty,
-                                "volume": 0,
-                                "weight": line.e_weightPerEach,
-                                "width": line.e_dimWidth
+                                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
+                                "length": 0 if line.e_dimLength is None else line.e_dimLength,
+                                "quantity": 0 if line.e_qty is None else line.e_qty,
+                                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                "width": 0 if line.e_dimWidth is None else line.e_dimWidth
                              }
                 items.append(temp_item)
 
@@ -616,7 +625,7 @@ def booking_allied(request):
 
                 results.append({"Created Booking ID": booking.id})
             except KeyError:
-                results.append({"Error": "Too many request"})
+                results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
             results.append({"message": "Booking not found"})
@@ -726,3 +735,48 @@ def booking_st(request):
         results.append({"message": "booking id is required"})
 
     return Response(results)
+
+
+@api_view(['GET'])
+@permission_classes((AllowAny,))
+def returnexcel(request):
+    response = HttpResponse(content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
+
+    workbook = xlsxwriter.Workbook(response, {'in_memory': True})
+
+    bookings = Bookings.objects.filter(b_client_name="Seaway")
+
+    worksheet = workbook.add_worksheet()
+
+    worksheet.set_column(0, 9, width=20)
+    bold = workbook.add_format({'bold': 1, 'align': 'left'})
+    worksheet.write('A1', 'z_CreatedTimestamp', bold)
+    worksheet.write('B1', 'b_client_name', bold)
+    worksheet.write('C1', 'b_bookingID_Visual', bold)
+    worksheet.write('D1', 'vx_freight_provider', bold)
+    worksheet.write('E1', 'v_FPBookingNumber', bold)
+    worksheet.write('F1', 'vx_serviceName', bold)
+    worksheet.write('G1', 'deToCompanyName', bold)
+    worksheet.write('H1', 'deToAddressPostalCode', bold)
+    worksheet.write('I1', 'b_status', bold)
+    worksheet.write('J1', 'b_status_API', bold)
+
+    row = 1
+    col = 0
+
+    for booking in bookings:
+        worksheet.write(row, col, booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M:%S"))
+        worksheet.write(row, col + 1, booking.b_client_name)
+        worksheet.write(row, col + 2, booking.b_bookingID_Visual)
+        worksheet.write(row, col + 3, booking.vx_freight_provider)
+        worksheet.write(row, col + 4, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 5, booking.vx_serviceName)
+        worksheet.write(row, col + 6, booking.deToCompanyName)
+        worksheet.write(row, col + 7, booking.deToAddressPostalCode)
+        worksheet.write(row, col + 8, booking.b_status)
+        worksheet.write(row, col + 9, booking.b_status_API)
+        row += 1
+
+    workbook.close()
+    return response
