@@ -144,7 +144,7 @@ class Bookings(models.Model):
 	s_05_Latest_PickUp_Date_Time_Override = models.DateTimeField(verbose_name=_('Latest PU DateTime Override'), default=timezone.now, blank=True, null=True)
 	s_05_Latest_Pick_Up_Date_TimeSet = models.DateTimeField(verbose_name=_('Latest PU DateTime Set'), default=timezone.now, blank=True, null=True)
 	s_06_Latest_Delivery_Date_Time_Override = models.DateTimeField(verbose_name=_('Latest DE DateTime Override'), default=timezone.now, blank=True, null=True)
-	s_06_Latest_Delivery_Date_TimeSet = models.DateTimeField(verbose_name=_('Latest DE DateTime Set'), default=timezone.now, blank=True)
+	s_06_Latest_Delivery_Date_TimeSet = models.DateTimeField(verbose_name=_('Latest DE DateTime Set'), default=timezone.now, blank=True, null=True)
 	s_07_PickUp_Progress = models.CharField(verbose_name=_('PU Progress'), max_length=30, blank=True, null=True, default='')
 	s_08_Delivery_Progress = models.CharField(verbose_name=_('DE Progress'), max_length=30, blank=True, null=True, default='')
 	s_20_Actual_Pickup_TimeStamp = models.DateTimeField(verbose_name=_('Actual PU TimeStamp'), default=timezone.now, blank=True, null=True)
