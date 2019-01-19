@@ -11,9 +11,11 @@ from rest_framework.authentication import BasicAuthentication, SessionAuthentica
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
+from django.http import HttpResponse
 from django.http import JsonResponse
 from django.http import QueryDict
 from django.db.models import Q
+from wsgiref.util import FileWrapper
 
 from api.serializers import BookingSerializer, WarehouseSerializer
 from .models import *
@@ -147,7 +149,7 @@ class FileUploadView(views.APIView):
         return Response(prepend_name)
 
 def handle_uploaded_file(requst, dme_account_num, f):
-    # live code 
+    # live code
     with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
     # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
@@ -165,3 +167,16 @@ def upload_status(request):
         return JsonResponse({'status_code': 1})
     else:
         return JsonResponse({'status_code': 2, 'errors': result})
+
+def download_pdf(request):
+    filename = request.GET['filename']
+    file = open('./static/pdfs/{}'.format(filename), "rb")
+
+    response = HttpResponse(
+        file,
+        content_type='application/pdf'
+    )
+
+    response['Content-Disposition'] = 'attachment; filename=a.pdf'
+
+    return response

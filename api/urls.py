@@ -1,10 +1,8 @@
 from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
-from .views import UserViewSet, BookingViewSet, BookingLinesView, BookingLineDetailsView, WarehouseViewSet, FileUploadView, upload_status, booking
-from .views_api import bok_0_bookingkeys, bok_1_headers, bok_2_lines, st_tracking, allied_tracking, hunter_tracking, \
-    trigger_allied, trigger_st, all_trigger, bok_1_to_bookings, booking_allied, booking_st, get_label_allied, \
-    returnexcel
+from .views import *
+from .views_api import *
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -21,6 +19,7 @@ urlpatterns += [
     url(r'^warehouses/', WarehouseViewSet.as_view({'get': 'list'})),
     url(r'^share/upload/(?P<filename>[^/]+)$', FileUploadView.as_view()),
     url(r'^share/upload-status/', upload_status),
+    url(r'^download-pdf/', download_pdf),
 
     url(r'^bok_0_bookingskeys/', bok_0_bookingkeys),
     url(r'^bok_1_headers/', bok_1_headers),
