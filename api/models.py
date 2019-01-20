@@ -252,7 +252,7 @@ class Bookings(models.Model):
 		db_table = 'dme_bookings'
 
 class Booking_lines(models.Model):
-	pk_auto_id_lines = models.AutoField(primary_key=True)
+	pk_lines_id = models.AutoField(primary_key=True)
 	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)
 	e_type_of_packaging = models.CharField(verbose_name=_('Type Of Packaging'), max_length=36, blank=True, null=True)
 	e_item_type = models.CharField(verbose_name=_('Item Type'), max_length=64, blank=True, null=True)
