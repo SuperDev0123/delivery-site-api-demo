@@ -170,7 +170,7 @@ def upload_status(request):
 
 def download_pdf(request):
     filename = request.GET['filename']
-    file = open('./static/pdfs/{}'.format(filename), "rb")
+    file = open('/var/www/html/dme_api/static/pdfs/{}'.format(filename), "rb")
 
     response = HttpResponse(
         file,
