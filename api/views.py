@@ -96,7 +96,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         retData = []
 
         for x in queryset:
-            if (client.dme_account_num == x.fk_client_id):
+            if (client.dme_account_num == x.kf_client_id):
                 retData.append(x)
 
         return retData
