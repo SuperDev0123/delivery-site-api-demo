@@ -9,7 +9,7 @@ from django.contrib.auth.models import BaseUserManager
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
-	dme_account_num = models.IntegerField(verbose_name=_('dme account num'))
+	dme_account_num = models.CharField(verbose_name=_('dme account num'), max_length=230)
 	phone = models.IntegerField(verbose_name=_('phone number'))
 	client_filter_date_field = models.CharField(verbose_name=_('Client Filter Date Field'), max_length=64, blank=False, null=False, default="z_CreatedTimestamp")
 
@@ -48,7 +48,7 @@ class Client_employees(models.Model):
 	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
 	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True)
 	phone = models.IntegerField(verbose_name=_('phone number'))
-	fk_id_client_warehouses = models.OneToOneField(Client_warehouses, on_delete=models.CASCADE)
+	fk_id_client_warehouses = models.ForeignKey(Client_warehouses, on_delete=models.CASCADE)
 
 	class Meta:
 		db_table = 'dme_client_employees'
