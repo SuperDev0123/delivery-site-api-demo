@@ -456,6 +456,7 @@ class BOK_3_lines_data(models.Model):
 	ld_006_insurance_value = models.IntegerField(verbose_name=_('Insurance Value'), blank=True, null=True)
 	ld_007_gap_ra = models.TextField(verbose_name=_('Gap Ra'), max_length=300, blank=True, null=True)
 	ld_008_client_ref_number = models.CharField(verbose_name=_('Client Ref Number'), max_length=40, blank=True, null=True)
+	success = models.CharField(verbose_name=_('Success'), max_length=1, default=2, blank=True, null=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=25, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
 	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=25, blank=True, null=True)
