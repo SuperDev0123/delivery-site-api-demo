@@ -11,9 +11,11 @@ from rest_framework.authentication import BasicAuthentication, SessionAuthentica
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
+from django.http import HttpResponse
 from django.http import JsonResponse
 from django.http import QueryDict
 from django.db.models import Q
+from wsgiref.util import FileWrapper
 
 from api.serializers import BookingSerializer, WarehouseSerializer
 from .models import *
@@ -44,7 +46,7 @@ class BookingLinesView(APIView):
 
             return JsonResponse({'booking_lines': return_data})
         else:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=int(booking_id))
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking_id)
             return_data = []
 
             for booking_line in booking_lines:
@@ -136,14 +138,10 @@ class FileUploadView(views.APIView):
         user_id = request.user.id
         clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
         dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
-        warehouse_id = request.POST.get('warehouse_id')
-        clientWarehouseObject = Client_warehouses.objects.filter(pk_id_client_warehouses__contains=warehouse_id)
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
         save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
-        save2Redis(prepend_name + "_l_011_client_warehouse_id", warehouse_id)
-        save2Redis(prepend_name + "_l_012_client_warehouse_name", clientWarehouseObject[0].warehousename)
 
         handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 
@@ -151,7 +149,7 @@ class FileUploadView(views.APIView):
         return Response(prepend_name)
 
 def handle_uploaded_file(requst, dme_account_num, f):
-    # live code 
+    # live code
     with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
     # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
@@ -169,3 +167,16 @@ def upload_status(request):
         return JsonResponse({'status_code': 1})
     else:
         return JsonResponse({'status_code': 2, 'errors': result})
+
+def download_pdf(request):
+    filename = request.GET['filename']
+    file = open('./static/pdfs/{}'.format(filename), "rb")
+
+    response = HttpResponse(
+        file,
+        content_type='application/pdf'
+    )
+
+    response['Content-Disposition'] = 'attachment; filename=a.pdf'
+
+    return response
