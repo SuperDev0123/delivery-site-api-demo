@@ -55,7 +55,7 @@ class Client_employees(models.Model):
 
 class Bookings(models.Model):
 	id = models.AutoField(primary_key=True)
-	b_bookingID_Visual = models.CharField(verbose_name=_('BookingID Visual'), max_length=40, blank=True, null=True, default='')
+	b_bookingID_Visual = models.IntegerField(verbose_name=_('BookingID Visual'), blank=True, null=True, default=0)
 	b_dateBookedDate = models.DateTimeField(verbose_name=_('Booked Date'), default=timezone.now, blank=True, null=True)
 	puPickUpAvailFrom_Date = models.DateField(verbose_name=_('PickUp Available From'), default=datetime.date.today, blank=True, null=True)
 	b_clientReference_RA_Numbers = models.CharField(verbose_name=_('Client Reference Ra Numbers'), max_length=1000, blank=True, null=True, default='')
@@ -279,6 +279,8 @@ class Booking_lines(models.Model):
 	e_spec_clientRMA_Number = models.TextField(verbose_name=_('Spec ClientRMA Number'), max_length=300, blank=True, null=True)
 	e_spec_customerReferenceNo = models.TextField(verbose_name=_('Spec Customer Reference No'), max_length=200, blank=True, null=True)
 	taxable = models.BooleanField(verbose_name=_('Taxable'), default=False, blank=True, null=True)
+	e_Total_KG_weight = models.FloatField(verbose_name=_('Total KG Weight'), blank=True, default=0, null=True)
+	e_1_Total_dimCubicMeter = models.FloatField(verbose_name=_('Total Dim Cubic Meter'), blank=True, default=0, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True, null=True)
 	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True, null=True)
 
@@ -490,7 +492,7 @@ class Booking_Status_History(models.Model):
 
 class Log(models.Model):
 	id = models.AutoField(primary_key=True)
-	fk_booking = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
+	fk_booking = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)
 	request_payload = models.TextField(verbose_name=_('Request Payload'), max_length=2000, blank=True, default='')
 	response = models.TextField(verbose_name=_('Response'), max_length=10000, blank=True, default='')
 	request_timestamp = models.DateTimeField(verbose_name=_('Request Timestamp'), default=timezone.now, blank=True)
