@@ -26,6 +26,8 @@ class Client_warehouses(models.Model):
 	warehouse_suburb = models.TextField(verbose_name=_('warehouse suburb'))
 	warehouse_phone_main = models.IntegerField(verbose_name=_('warehouse phone number'))
 	warehouse_hours = models.IntegerField(verbose_name=_('warehouse hours'))
+	type = models.CharField(verbose_name=_('warehouse type'), max_length=30, blank=True, null=True)
+	client_whouse_code = models.CharField(verbose_name=_('warehouse code'), max_length=100, blank=True, null=True)
 
 	class Meta:
 		db_table = 'dme_client_warehouses'
@@ -247,6 +249,7 @@ class Bookings(models.Model):
 	DME_price_from_client = models.IntegerField(verbose_name=_('DME Price From Client'), blank=True, default=0, null=True)
 	z_label_url = models.CharField(verbose_name=_('PDF Url'), max_length=255, blank=True, null=True, default='')
 	z_lastStatusAPI_ProcessedTimeStamp = models.DateTimeField(verbose_name=_('Last StatusAPI Processed Timestamp'), default=timezone.now, blank=True, null=True)
+	s_21_ActualDeliveryTimeStamp = models.DateTimeField(verbose_name=_('Actual Delivery Timestamp'), default=timezone.now, blank=True, null=True)
 
 	class Meta:
 		db_table = 'dme_bookings'

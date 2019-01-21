@@ -24,7 +24,10 @@ from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def username(self, request, format=None):
-        return JsonResponse({'username': request.user.username})
+        user_id = self.request.user.id
+        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+        clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeObject.fk_id_dme_client_id)
+        return JsonResponse({'username': request.user.username, 'clientname': clientObject.company_name})
 
     @action(detail=False, methods=['get'])
     def get_user_date_filter_field(self, requst, pk=None):
