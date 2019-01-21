@@ -149,8 +149,8 @@ class Bookings(models.Model):
 	s_06_Latest_Delivery_Date_TimeSet = models.DateTimeField(verbose_name=_('Latest DE DateTime Set'), default=timezone.now, blank=True, null=True)
 	s_07_PickUp_Progress = models.CharField(verbose_name=_('PU Progress'), max_length=30, blank=True, null=True, default='')
 	s_08_Delivery_Progress = models.CharField(verbose_name=_('DE Progress'), max_length=30, blank=True, null=True, default='')
-	s_20_Actual_Pickup_TimeStamp = models.DateTimeField(verbose_name=_('Actual PU TimeStamp'), default=timezone.now, blank=True, null=True)
-	s_21_Actual_Delivery_TimeStamp = models.DateTimeField(verbose_name=_('Actual DE TimeStamp'), default=timezone.now, blank=True, null=True)
+	s_20_Actual_Pickup_TimeStamp = models.DateTimeField(verbose_name=_('Actual PU TimeStamp'), default=timezone.now, blank=True)
+	s_21_Actual_Delivery_TimeStamp = models.DateTimeField(verbose_name=_('Actual DE TimeStamp'), default=timezone.now, blank=True)
 	b_handling_Instructions = models.CharField(verbose_name=_('Handling Instructions'), max_length=120, blank=True, null=True, default='')
 	v_price_Booking = models.FloatField(verbose_name=_('Price Booking'), default=0, blank=True, null=True)
 	v_service_Type_2 = models.CharField(verbose_name=_('Service Type 2'), max_length=30, blank=True, null=True, default='')
@@ -210,9 +210,9 @@ class Bookings(models.Model):
 	z_CreatedByAccount = models.TextField(verbose_name=_('Created By Account'), max_length=30, blank=True, null=True, default='')
 	pu_Operting_Hours = models.TextField(verbose_name=_('PU Operating hours'), max_length=500, blank=True, null=True, default='')
 	de_Operating_Hours = models.TextField(verbose_name=_('DE Operating hours'), max_length=500, blank=True, null=True, default='')
-	z_CreatedTimestamp = models.DateTimeField(verbose_name=_('Created By Account'), default=timezone.now, blank=True, null=True)
+	z_CreatedTimestamp = models.DateTimeField(verbose_name=_('Created By Account'), default=timezone.now, blank=True)
 	z_ModifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=25, blank=True, null=True, default='')
-	z_ModifiedTimestamp = models.DateTimeField(verbose_name=_('Modified By Account'), default=timezone.now, blank=True, null=True)
+	z_ModifiedTimestamp = models.DateTimeField(verbose_name=_('Modified By Account'), default=timezone.now, blank=True)
 	pu_PickUp_TimeSlot_TimeEnd = models.TimeField(verbose_name=_('PU TimeSlot TimeEnd'), auto_now_add=True, blank=True, null=True)
 	de_TimeSlot_TimeStart = models.TimeField(verbose_name=_('DE TimeSlot TimeStart'), auto_now_add=True, blank=True, null=True)
 	de_TimeSlot_Time_End = models.TimeField(verbose_name=_('TimeSlot Time End'), auto_now_add=True, blank=True, null=True)
@@ -248,8 +248,8 @@ class Bookings(models.Model):
 	b_booking_statusmanual_DME_Note = models.CharField(verbose_name=_('Booking Status Manual DME Note'), max_length=200, blank=True, null=True, default='')
 	DME_price_from_client = models.IntegerField(verbose_name=_('DME Price From Client'), blank=True, default=0, null=True)
 	z_label_url = models.CharField(verbose_name=_('PDF Url'), max_length=255, blank=True, null=True, default='')
-	z_lastStatusAPI_ProcessedTimeStamp = models.DateTimeField(verbose_name=_('Last StatusAPI Processed Timestamp'), default=timezone.now, blank=True, null=True)
-	s_21_ActualDeliveryTimeStamp = models.DateTimeField(verbose_name=_('Actual Delivery Timestamp'), default=timezone.now, blank=True, null=True)
+	z_lastStatusAPI_ProcessedTimeStamp = models.DateTimeField(verbose_name=_('Last StatusAPI Processed Timestamp'), default=timezone.now, blank=True)
+	s_21_ActualDeliveryTimeStamp = models.DateTimeField(verbose_name=_('Actual Delivery Timestamp'), default=timezone.now, blank=True)
 	b_client_booking_ref_num = models.CharField(verbose_name=_('Booking Ref Num'), max_length=64, blank=True, null=True, default='')
 	b_client_sales_inv_num = models.CharField(verbose_name=_('Sales Inv Num'), max_length=64, blank=True, null=True, default='')
 	b_client_order_num = models.CharField(verbose_name=_('Order Num'), max_length=64, blank=True, null=True, default='')
@@ -289,8 +289,8 @@ class Booking_lines(models.Model):
 	taxable = models.BooleanField(verbose_name=_('Taxable'), default=False, blank=True, null=True)
 	e_Total_KG_weight = models.FloatField(verbose_name=_('Total KG Weight'), blank=True, default=0, null=True)
 	e_1_Total_dimCubicMeter = models.FloatField(verbose_name=_('Total Dim Cubic Meter'), blank=True, default=0, null=True)
-	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True, null=True)
-	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True)
 
 	class Meta:
 		db_table = 'dme_booking_lines'
@@ -308,9 +308,9 @@ class Booking_lines_data(models.Model):
 	clientRefNumber = models.CharField(verbose_name=_('Client Ref Number'), max_length=50, blank=True, null=True)
 	itemSerialNumbers = models.CharField(verbose_name=_('Item Serial Numbers'), max_length=100, blank=True, null=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=25, blank=True, null=True)
-	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
 	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=25, blank=True, null=True)
-	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True)
 
 	class Meta:
 		db_table = 'dme_booking_lines_data'
@@ -420,7 +420,7 @@ class BOK_1_headers(models.Model):
 	b_client_sales_inv_num = models.CharField(verbose_name=_('Sales Inv Num'), max_length=64, blank=True, null=True, default='')
 	b_client_order_num = models.CharField(verbose_name=_('Order Num'), max_length=64, blank=True, null=True, default='')
 	b_client_del_note_num = models.CharField(verbose_name=_('Del Note Num'), max_length=64, blank=True, null=True, default='')
-	z_createdTimeStamp = models.DateTimeField(verbose_name=_('z_createdTimeStamp'), default=timezone.now, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('z_createdTimeStamp'), default=timezone.now, blank=True)
 	b_client_warehouse_code = models.CharField(verbose_name=_('Warehouse code'), max_length=64, blank=True, null=True, default='')
 
 	class Meta:
