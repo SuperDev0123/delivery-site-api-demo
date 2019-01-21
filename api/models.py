@@ -9,7 +9,7 @@ from django.contrib.auth.models import BaseUserManager
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
-	dme_account_num = models.IntegerField(verbose_name=_('dme account num'))
+	dme_account_num = models.CharField(verbose_name=_('dme account num'), max_length=230)
 	phone = models.IntegerField(verbose_name=_('phone number'))
 	client_filter_date_field = models.CharField(verbose_name=_('Client Filter Date Field'), max_length=64, blank=False, null=False, default="z_CreatedTimestamp")
 
@@ -48,7 +48,7 @@ class Client_employees(models.Model):
 	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
 	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True)
 	phone = models.IntegerField(verbose_name=_('phone number'))
-	fk_id_client_warehouses = models.OneToOneField(Client_warehouses, on_delete=models.CASCADE)
+	fk_id_client_warehouses = models.ForeignKey(Client_warehouses, on_delete=models.CASCADE)
 
 	class Meta:
 		db_table = 'dme_client_employees'
@@ -252,7 +252,7 @@ class Bookings(models.Model):
 		db_table = 'dme_bookings'
 
 class Booking_lines(models.Model):
-	pk_auto_id_lines = models.AutoField(primary_key=True)
+	pk_lines_id = models.AutoField(primary_key=True)
 	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)
 	e_type_of_packaging = models.CharField(verbose_name=_('Type Of Packaging'), max_length=36, blank=True, null=True)
 	e_item_type = models.CharField(verbose_name=_('Item Type'), max_length=64, blank=True, null=True)
@@ -279,6 +279,8 @@ class Booking_lines(models.Model):
 	e_spec_clientRMA_Number = models.TextField(verbose_name=_('Spec ClientRMA Number'), max_length=300, blank=True, null=True)
 	e_spec_customerReferenceNo = models.TextField(verbose_name=_('Spec Customer Reference No'), max_length=200, blank=True, null=True)
 	taxable = models.BooleanField(verbose_name=_('Taxable'), default=False, blank=True, null=True)
+	e_Total_KG_weight = models.FloatField(verbose_name=_('Total KG Weight'), blank=True, default=0, null=True)
+	e_1_Total_dimCubicMeter = models.FloatField(verbose_name=_('Total Dim Cubic Meter'), blank=True, default=0, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True, null=True)
 	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=timezone.now, blank=True, null=True)
 
@@ -454,6 +456,7 @@ class BOK_3_lines_data(models.Model):
 	ld_006_insurance_value = models.IntegerField(verbose_name=_('Insurance Value'), blank=True, null=True)
 	ld_007_gap_ra = models.TextField(verbose_name=_('Gap Ra'), max_length=300, blank=True, null=True)
 	ld_008_client_ref_number = models.CharField(verbose_name=_('Client Ref Number'), max_length=40, blank=True, null=True)
+	success = models.CharField(verbose_name=_('Success'), max_length=1, default=2, blank=True, null=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=25, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=timezone.now, blank=True)
 	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=25, blank=True, null=True)
@@ -490,7 +493,7 @@ class Booking_Status_History(models.Model):
 
 class Log(models.Model):
 	id = models.AutoField(primary_key=True)
-	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True)
+	fk_booking = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)
 	request_payload = models.TextField(verbose_name=_('Request Payload'), max_length=2000, blank=True, default='')
 	response = models.TextField(verbose_name=_('Response'), max_length=10000, blank=True, default='')
 	request_timestamp = models.DateTimeField(verbose_name=_('Request Timestamp'), default=timezone.now, blank=True)

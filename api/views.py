@@ -11,9 +11,11 @@ from rest_framework.authentication import BasicAuthentication, SessionAuthentica
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
+from django.http import HttpResponse
 from django.http import JsonResponse
 from django.http import QueryDict
 from django.db.models import Q
+from wsgiref.util import FileWrapper
 
 from api.serializers import BookingSerializer, WarehouseSerializer
 from .models import *
@@ -33,30 +35,30 @@ class UserViewSet(viewsets.ViewSet):
 
 class BookingLinesView(APIView):
     def get(self, request, format=None):
-        booking_id = request.GET['booking_id']
+        pk_booking_id = request.GET['pk_booking_id']
 
-        if booking_id == 'undefined':
+        if pk_booking_id == 'undefined':
             booking_lines = Booking_lines.objects.all()
             return_data = []
 
             for booking_line in booking_lines:
-                return_data.append({'pk_auto_id_lines': booking_line.pk_auto_id_lines, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
+                return_data.append({'pk_lines_id': booking_line.pk_lines_id, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
 
             return JsonResponse({'booking_lines': return_data})
         else:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking_id)
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
             return_data = []
 
             for booking_line in booking_lines:
-                return_data.append({'pk_auto_id_lines': booking_line.pk_auto_id_lines, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
+                return_data.append({'pk_lines_id': booking_line.pk_lines_id, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
 
             return JsonResponse({'booking_lines': return_data})
 
 class BookingLineDetailsView(APIView):
     def get(self, request, format=None):
-        booking_line_id = request.GET['booking_line_id']
+        pk_booking_id = request.GET['pk_booking_id']
 
-        if booking_line_id == 'undefined':
+        if pk_booking_id == 'undefined':
             booking_line_details = Booking_lines_data.objects.all()
             return_data = []
 
@@ -65,10 +67,10 @@ class BookingLineDetailsView(APIView):
 
             return JsonResponse({'booking_line_details': return_data})
         else:
-            booking_line_details = Booking_lines_data.objects.filter(fk_id_booking_lines=int(booking_line_id))
+            booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=int(booking_line.pk_booking_id))
             return_data = []
 
-            for booking_line_detail in booking_line_details:
+            for booking_line in booking_line_detials:
                 return_data.append({'modelNumber': booking_line_detail.modelNumber, 'itemDescription': booking_line_detail.itemDescription, 'quantity': booking_line_detail.quantity, 'itemFaultDescription': booking_line_detail.itemFaultDescription, 'insuranceValueEach': booking_line_detail.insuranceValueEach, 'gap_ra': booking_line_detail.gap_ra, 'clientRefNumber': booking_line_detail.clientRefNumber})
 
             return JsonResponse({'booking_line_details': return_data})
@@ -81,7 +83,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         keyword = str(self.request.query_params.get('keyword', None))
 
         clientEmp = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id)).first()
-        clientWarehouses = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(clientEmp.fk_id_dme_client_id))
+        client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(clientEmp.fk_id_dme_client_id)).first()
 
         if searchType is not None:
             queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers__contains=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
@@ -91,9 +93,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         retData = []
 
         for x in queryset:
-            for y in clientWarehouses:
-                if (x.fk_client_warehouse == y):
-                    retData.append(x)
+            if (client.dme_account_num == x.kf_client_id):
+                retData.append(x)
 
         return retData
 
@@ -147,7 +148,7 @@ class FileUploadView(views.APIView):
         return Response(prepend_name)
 
 def handle_uploaded_file(requst, dme_account_num, f):
-    # live code 
+    # live code
     with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
     # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
@@ -165,3 +166,16 @@ def upload_status(request):
         return JsonResponse({'status_code': 1})
     else:
         return JsonResponse({'status_code': 2, 'errors': result})
+
+def download_pdf(request):
+    filename = request.GET['filename']
+    file = open('/var/www/html/dme_api/static/pdfs/{}'.format(filename), "rb")
+
+    response = HttpResponse(
+        file,
+        content_type='application/pdf'
+    )
+
+    response['Content-Disposition'] = 'attachment; filename=a.pdf'
+
+    return response
