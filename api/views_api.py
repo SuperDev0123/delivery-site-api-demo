@@ -703,16 +703,16 @@ def booking_allied(request):
     try:
         bid = literal_eval(request.body.decode('utf8'))
         bid = bid["booking_id"]
-        print(bid)
+
         try:
             booking = Bookings.objects.filter(id=bid)[0]
             data = {}
             data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
                                         "accountKey": "11e328f646051c3decc4b2bb4584530b"}
             data['serviceProvider'] = "ALLIED"
-            data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else booking.puPickUpAvailFrom_Date
+            data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
             data['referenceNumber'] = "" if booking.b_clientReference_RA_Numbers is None else booking.b_clientReference_RA_Numbers
-            data['serviceType'] = "" if booking.vx_serviceName is None else booking.vx_serviceName
+            data['serviceType'] = "" if booking.vx_serviceName is None else 'R'
             data['bookedBy'] = "Mr.CharlieBrown"
             data['pickupAddress'] = {"companyName": "" if booking.puCompany is None else booking.puCompany,
                                      "contact": "" if booking.pu_Contact_F_L_Name is None else booking.pu_Contact_F_L_Name,
@@ -775,10 +775,9 @@ def booking_allied(request):
                 request_type = "TRACKING"
                 request_status = "SUCCESS"
 
-
                 booking.v_FPBookingNumber = data0['consignmentNumber']
                 booking.fk_fp_pickup_id = data0['requestId']
-                booking.b_dateBookedDate = datetime.datetime.now()
+                booking.b_dateBookedDate = str(datetime.datetime.now())
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
