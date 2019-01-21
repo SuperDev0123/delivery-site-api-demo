@@ -26,6 +26,8 @@ class Client_warehouses(models.Model):
 	warehouse_suburb = models.TextField(verbose_name=_('warehouse suburb'))
 	warehouse_phone_main = models.IntegerField(verbose_name=_('warehouse phone number'))
 	warehouse_hours = models.IntegerField(verbose_name=_('warehouse hours'))
+	type = models.CharField(verbose_name=_('warehouse type'), max_length=30, blank=True, null=True)
+	client_whouse_code = models.CharField(verbose_name=_('warehouse code'), max_length=100, blank=True, null=True)
 
 	class Meta:
 		db_table = 'dme_client_warehouses'
