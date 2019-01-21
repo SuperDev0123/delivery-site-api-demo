@@ -249,6 +249,7 @@ class Bookings(models.Model):
 	DME_price_from_client = models.IntegerField(verbose_name=_('DME Price From Client'), blank=True, default=0, null=True)
 	z_label_url = models.CharField(verbose_name=_('PDF Url'), max_length=255, blank=True, null=True, default='')
 	z_lastStatusAPI_ProcessedTimeStamp = models.DateTimeField(verbose_name=_('Last StatusAPI Processed Timestamp'), default=timezone.now, blank=True, null=True)
+	s_21_ActualDeliveryTimeStamp = models.DateTimeField(verbose_name=_('Actual Delivery Timestamp'), default=timezone.now, blank=True, null=True)
 
 	class Meta:
 		db_table = 'dme_bookings'
