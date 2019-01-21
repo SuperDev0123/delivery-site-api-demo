@@ -452,6 +452,9 @@ def all_trigger(request):
                 try:
                     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                     booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                    if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                        booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+
                     booking.save()
                 except IndexError:
                     print("asd")
@@ -493,6 +496,8 @@ def all_trigger(request):
                 try:
                     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                     booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                    if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                        booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
                     booking.save()
                 except IndexError:
                     print("asd")
@@ -544,6 +549,9 @@ def trigger_allied(request):
             try:
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                    booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+
                 booking.save()
                 print("yes")
             except IndexError:
@@ -593,6 +601,9 @@ def trigger_st(request):
             try:
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                    booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+
                 booking.save()
             except IndexError:
                 print("asd")
@@ -706,6 +717,13 @@ def booking_allied(request):
 
         try:
             booking = Bookings.objects.filter(id=bid)[0]
+
+            if booking.pu_Address_State is None or not booking.pu_Address_State:
+                return Response([{"Error": "State for pickup postal address is required."}])
+
+            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
+                return Response([{"Error": "suburb name for pickup postal address is required."}])
+
             data = {}
             data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
                                         "accountKey": "11e328f646051c3decc4b2bb4584530b"}
@@ -763,7 +781,7 @@ def booking_allied(request):
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
-            s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+            s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
             print(s0)
 
             try:
@@ -910,7 +928,7 @@ def returnexcel(request):
 
     worksheet = workbook.add_worksheet()
 
-    worksheet.set_column(0, 9, width=20)
+    worksheet.set_column(0, 10, width=20)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
     worksheet.write('A1', 'z_CreatedTimestamp', bold)
     worksheet.write('B1', 'b_client_name', bold)
@@ -922,6 +940,7 @@ def returnexcel(request):
     worksheet.write('H1', 'deToAddressPostalCode', bold)
     worksheet.write('I1', 'b_status', bold)
     worksheet.write('J1', 'b_status_API', bold)
+    worksheet.write('K1', 's_21_ActualDeliveryTimeStamp', bold)
 
     row = 1
     col = 0
@@ -937,6 +956,7 @@ def returnexcel(request):
         worksheet.write(row, col + 7, booking.deToAddressPostalCode)
         worksheet.write(row, col + 8, booking.b_status)
         worksheet.write(row, col + 9, booking.b_status_API)
+        worksheet.write(row, col + 10, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         row += 1
 
     workbook.close()
