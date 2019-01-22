@@ -169,7 +169,7 @@ def st_tracking(request):
 	print("Response ",booking_list)
 	for booking in booking_list:
 		print("booking",booking)
-		url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+		url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
 		data = literal_eval(request.body.decode('utf8'))
 		data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
 		request_timestamp = datetime.datetime.now()
@@ -213,7 +213,7 @@ def st_booking(request):
 	print("Response ",booking_list)
 	for booking in booking_list:
 		print("booking",booking)
-		url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
+		url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
 		# data = {}
 
 		# data["serviceProvider"] = "ST"
@@ -373,7 +373,7 @@ def allied_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -419,7 +419,7 @@ def all_trigger(request):
 
     for booking in booking_list:
         if booking.vx_freight_provider == "Allied" and booking.b_client_name == "Seaway":
-            url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+            url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
@@ -463,7 +463,7 @@ def all_trigger(request):
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+            url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
@@ -574,7 +574,7 @@ def trigger_st(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -624,7 +624,7 @@ def hunter_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api/tracking/trackconsignment"
+        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -668,7 +668,7 @@ def get_label_allied(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api/labelling/getlabel"
+        url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
         data = {}
         print("==============")
         print(booking.v_FPBookingNumber)
@@ -777,7 +777,7 @@ def booking_allied(request):
             data['items'] = items
             print(data)
 
-            url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
+            url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
@@ -796,6 +796,7 @@ def booking_allied(request):
                 booking.v_FPBookingNumber = data0['consignmentNumber']
                 booking.fk_fp_pickup_id = data0['requestId']
                 booking.b_dateBookedDate = str(datetime.datetime.now())
+                booking.b_status = "Booked"
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
@@ -823,65 +824,77 @@ def booking_st(request):
     try:
         bid = literal_eval(request.body.decode('utf8'))
         bid = bid["booking_id"]
-        print(bid)
+
         try:
             booking = Bookings.objects.filter(id=bid)[0]
+
+            if booking.pu_Address_State is None or not booking.pu_Address_State:
+                return Response([{"Error": "State for pickup postal address is required."}])
+
+            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
+                return Response([{"Error": "suburb name for pickup postal address is required."}])
+
             data = {}
-            data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
-                                        "accountKey": "ce0d58fd22ae8619974958e65302a715"}
-            data['serviceProvider'] = "ALLIED"
-            data['readyDate'] = booking.puPickUpAvailFrom_Date
-            data['referenceNumber'] = booking.b_clientReference_RA_Numbers
-            data['serviceType'] = booking.vx_serviceName
+            data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                        "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                        "accountPassword": "x9083d2fed4d50aa2ad5"}
+            data['serviceProvider'] = "ST"
+            data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
+            data['referenceNumber'] = "" if booking.b_clientReference_RA_Numbers is None else booking.b_clientReference_RA_Numbers
+            data['serviceType'] = "R" if booking.vx_serviceName is None else 'R'
             data['bookedBy'] = "Mr.CharlieBrown"
-            data['pickupAddress'] = {"companyName": booking.puCompany, "contact": booking.pu_Contact_F_L_Name,
-                                        "emailAddress": booking.pu_Email,
-                                     "instruction":booking.pu_PickUp_Instructions_Contact,
-                                     "phoneNumber": booking.pu_Phone_Main}
-            data['pickupAddress']["postalAddress"] = {"address1": booking.pu_Address_Street_1,
-                                                      "address2": booking.pu_Address_street_2,
-                                        "country": booking.pu_Address_Country,
-                                     "postCode":booking.pu_Address_PostalCode,
-                                     "state":booking.pu_Address_State,
-                                     "suburb":booking.pu_Address_Suburb,
-                                     "sortCode": booking.pu_Address_PostalCode}
+            data['pickupAddress'] = {"companyName": "" if booking.puCompany is None else booking.puCompany,
+                                     "contact": "Rosie Stokeld" if booking.pu_Contact_F_L_Name is None else booking.pu_Contact_F_L_Name,
+                                        "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
+                                     "instruction": "" if booking.pu_PickUp_Instructions_Contact is None else booking.pu_PickUp_Instructions_Contact,
+                                     "phoneNumber": "0267651109" if booking.pu_Phone_Main is None else booking.pu_Phone_Main}
+            data['pickupAddress']["postalAddress"] = {"address1": "" if booking.pu_Address_Street_1 is None else booking.pu_Address_Street_1,
+                                                      "address2": "" if booking.pu_Address_street_2 is None else booking.pu_Address_street_2,
+                                        "country": "" if booking.pu_Address_Country is None else booking.pu_Address_Country,
+                                     "postCode":"" if booking.pu_Address_PostalCode is None else booking.pu_Address_PostalCode,
+                                     "state":"" if booking.pu_Address_State is None else booking.pu_Address_State,
+                                     "suburb":"" if booking.pu_Address_Suburb is None else booking.pu_Address_Suburb,
+                                     "sortCode": "" if booking.pu_Address_PostalCode is None else booking.pu_Address_PostalCode}
 
-            data['dropAddress'] = {"companyName": booking.deToCompanyName, "contact": booking.de_to_Contact_F_LName,
-                                        "emailAddress": booking.de_Email,
-                                     "instruction":booking.de_to_Pick_Up_Instructions_Contact,
-                                     "phoneNumber": booking.pu_Phone_Main}
-            data['dropAddress']["postalAddress"] = {"address1": booking.de_To_Address_Street_1,
-                                                      "address2": booking.de_To_Address_Street_2,
-                                        "country": booking.de_To_Address_Country,
-                                     "postCode":booking.deToAddressPostalCode,
-                                     "state":booking.de_To_Address_State,
-                                     "suburb":booking.de_To_Address_Suburb,
-                                     "sortCode": booking.deToAddressPostalCode}
+            data['dropAddress'] = {"companyName": "" if booking.deToCompanyName is None else booking.deToCompanyName,
+                                   "contact": "James Sam" if booking.de_to_Contact_F_LName is None else booking.de_to_Contact_F_LName,
+                                        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+                                     "instruction": "" if booking.de_to_Pick_Up_Instructions_Contact is None else booking.de_to_Pick_Up_Instructions_Contact,
+                                     "phoneNumber": "0393920020" if booking.pu_Phone_Main is None else booking.pu_Phone_Main}
+            data['dropAddress']["postalAddress"] = {"address1": "" if booking.de_To_Address_Street_1 is None else booking.de_To_Address_Street_1,
+                                                      "address2": "" if booking.de_To_Address_Street_2 is None else booking.de_To_Address_Street_2,
+                                        "country": "" if booking.de_To_Address_Country is None else booking.de_To_Address_Country,
+                                     "postCode":"" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode,
+                                     "state":"" if booking.de_To_Address_State is None else booking.de_To_Address_State,
+                                     "suburb":"" if booking.de_To_Address_Suburb is None else booking.de_To_Address_Suburb,
+                                     "sortCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode}
 
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.id)
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
             items = []
 
             for line in booking_lines:
 
                 temp_item = {"dangerous": 0,
-                                "height": line.e_dimHeight,
-                                "length": line.e_dimLength,
-                                "quantity": line.e_qty,
-                                "volume": 0,
-                                "weight": line.e_weightPerEach,
-                                "width": line.e_dimWidth
+                                "itemId": "EXP",
+                                "packagingType": "PAL",
+                                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
+                                "length": 0 if line.e_dimLength is None else line.e_dimLength,
+                                "quantity": 0 if line.e_qty is None else line.e_qty,
+                                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                "width": 0 if line.e_dimWidth is None else line.e_dimWidth
                              }
                 items.append(temp_item)
 
             data['items'] = items
             print(data)
 
-            url = "http://52.39.202.126:8080/dme-api/booking/bookconsignment"
+            url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
-            s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+            s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
             print(s0)
 
             try:
@@ -893,19 +906,19 @@ def booking_st(request):
                 request_type = "TRACKING"
                 request_status = "SUCCESS"
 
-
                 booking.v_FPBookingNumber = data0['consignmentNumber']
                 booking.fk_fp_pickup_id = data0['requestId']
-                booking.b_dateBookedDate = datetime.datetime.now()
+                booking.b_dateBookedDate = str(datetime.datetime.now())
+                booking.b_status = "Booked"
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
                              response=response0, fk_booking_id=booking.id)
                 oneLog.save()
 
-                results.append({"Created Booking ID": booking.id})
+                results.append({"Created Booking ID": data0['consignmentNumber']})
             except KeyError:
-                results.append({"Error": "Too many request"})
+                results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
             results.append({"message": "Booking not found"})
