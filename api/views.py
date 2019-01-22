@@ -70,7 +70,7 @@ class BookingLineDetailsView(APIView):
 
             return JsonResponse({'booking_line_details': return_data})
         else:
-            booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=int(booking_line.pk_booking_id))
+            booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
             return_data = []
 
             for booking_line in booking_line_detials:
