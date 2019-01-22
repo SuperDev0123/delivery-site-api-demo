@@ -802,7 +802,7 @@ def booking_allied(request):
                              response=response0, fk_booking_id=booking.id)
                 oneLog.save()
 
-                results.append({"Created Booking ID": booking.id})
+                results.append({"Created Booking ID": data0['consignmentNumber']})
             except KeyError:
                 results.append({"Error": data0["errorMsg"]})
 
