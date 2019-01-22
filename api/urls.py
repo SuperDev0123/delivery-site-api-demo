@@ -38,5 +38,4 @@ urlpatterns += [
     url(r'^booking_st/', booking_st),
     url(r'^get_label_allied/', get_label_allied),
     url(r'^excel/', returnexcel),
-    url(r'^st_booking/', st_booking),
 ]
