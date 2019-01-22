@@ -419,7 +419,7 @@ def all_trigger(request):
 
     for booking in booking_list:
         if booking.vx_freight_provider == "Allied" and booking.b_client_name == "Seaway":
-            url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
+            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
@@ -463,7 +463,7 @@ def all_trigger(request):
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
+            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
@@ -574,12 +574,18 @@ def trigger_st(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
-        data = literal_eval(request.body.decode('utf8'))
+        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+        data = {}
         print("==============")
         print(booking.v_FPBookingNumber)
-        print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
+        data['spAccountDetails'] = {"accountCode": "10149943", "accountState": "NSW",
+                                    "accountPassword": "x81775935aece65541c9",
+                                    "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134"}
+        data['serviceProvider'] = "ST"
+
+        print(data)
+        print("==============")
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -601,9 +607,9 @@ def trigger_st(request):
             try:
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0][
+                    'status'] == 'Shipment has been delivered.':
                     booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
-
                 booking.save()
             except IndexError:
                 print("asd")
