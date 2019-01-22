@@ -712,6 +712,93 @@ def get_label_allied(request):
     return Response(results)
 
 
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def get_label_st(request):
+    results = []
+    try:
+        bid = literal_eval(request.body.decode('utf8'))
+        bid = bid["booking_id"]
+        try:
+            booking = Bookings.objects.filter(id=bid)[0]
+
+            data = {}
+
+            data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                        "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                        "accountPassword": "x9083d2fed4d50aa2ad5"}
+            data['serviceProvider'] = "ST"
+            data['consignmentNumber'] = booking.v_FPBookingNumber
+
+            data['type'] = "PRINT"
+
+
+            items = []
+
+
+            temp_item = {"itemId": "_CMK0E6mwiMAAAFoYvcg7Ha9",
+                            "packagingType": "PAL",
+                            "weight": 10
+                         }
+            items.append(temp_item)
+
+            data['items'] = items
+
+            items = []
+
+
+            temp_item = {"branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
+                             "branded": False,
+                          "layout": "A4-1pp",
+                          "leftOffset": 0,
+                          "topOffset": 0,
+                          "typeOfPost": "Express Post"
+                         }
+            items.append(temp_item)
+
+            data['pageFormat'] = items
+
+
+            print(data)
+
+            url = "http://52.39.202.126:8080/dme-api-sit/labelling/createlabel"
+            response0 = requests.post(url, params={}, json=data)
+            response0 = response0.content.decode('utf8').replace("'", '"')
+            data0 = json.loads(response0)
+            s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+            print(s0)
+
+            try:
+                # id = data0['stLabelRequestId']
+                id = "4c055984-2831-49b8-aca3-bf381a8315b8"
+                data['consignmentNumber'] = id
+
+                data['labelType'] = "PRINT"
+
+                url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
+                response0 = requests.post(url, params={}, json=data)
+                response0 = response0.content.decode('utf8').replace("'", '"')
+                data0 = json.loads(response0)
+                s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+                print(s0)
+
+                booking.z_label_url = data0["url"]
+                booking.save()
+                results.append({"Created Booking ID": data0['consignmentNumber']})
+            except KeyError:
+                results.append({"Error": data0["errorMsg"]})
+
+        except IndexError:
+            results.append({"message": "Booking not found"})
+
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
+
+    return Response(results)
+
+
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
