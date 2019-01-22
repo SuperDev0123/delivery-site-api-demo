@@ -730,7 +730,7 @@ def booking_allied(request):
             data['serviceProvider'] = "ALLIED"
             data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
             data['referenceNumber'] = "" if booking.b_clientReference_RA_Numbers is None else booking.b_clientReference_RA_Numbers
-            data['serviceType'] = "" if booking.vx_serviceName is None else 'R'
+            data['serviceType'] = "R" if booking.vx_serviceName is None else 'R'
             data['bookedBy'] = "Mr.CharlieBrown"
             data['pickupAddress'] = {"companyName": "" if booking.puCompany is None else booking.puCompany,
                                      "contact": "" if booking.pu_Contact_F_L_Name is None else booking.pu_Contact_F_L_Name,
