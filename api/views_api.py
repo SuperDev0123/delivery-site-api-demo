@@ -698,7 +698,7 @@ def get_label_allied(request):
             print(s0)
 
             try:
-                file_url = 'static/booking-' + str(booking.id) + '.txt'
+                file_url = '/var/www/html/dme_api/static/booking-' + str(booking.id) + '.txt'
                 new_days = open(file_url, 'w')
                 new_days.write(data0["encodedPdfData"])
                 booking.z_label_url = file_url

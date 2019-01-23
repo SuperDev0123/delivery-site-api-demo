@@ -323,7 +323,7 @@ class BOK_0_BookingKeys(models.Model):
 	timestampCreated = models.DateTimeField(verbose_name=_('PickUp Available From'), default=datetime.now, blank=True)
 	client = models.CharField(verbose_name=_('Client'), max_length=64, blank=True, null=True, default="")
 	v_client_pk_consigment_num = models.CharField(verbose_name=_('Consigment num'), max_length=64, blank=True)
-	l_000_client_acct_number = models.IntegerField(verbose_name=_('Client account number'), blank=True)
+	l_000_client_acct_number = models.CharField(verbose_name=_('Client account number'), max_length=64, blank=True, null=True)
 	l_011_client_warehouse_id = models.IntegerField(verbose_name=_('Client warehouse Id'), blank=True)
 	l_012_client_warehouse_name = models.CharField(verbose_name=_('Client warehouse Name'), max_length=240, blank=True)
 
