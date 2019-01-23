@@ -1,3 +1,6 @@
+import base64
+import codecs
+
 from django.http import HttpResponse
 import xlsxwriter as xlsxwriter
 from django.shortcuts import render
@@ -452,7 +455,7 @@ def all_trigger(request):
                 try:
                     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                     booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                    if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                    if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
                         booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
 
                     booking.save()
@@ -496,7 +499,7 @@ def all_trigger(request):
                 try:
                     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                     booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                    if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                    if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
                         booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
                     booking.save()
                 except IndexError:
@@ -549,7 +552,7 @@ def trigger_allied(request):
             try:
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
                     booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
 
                 booking.save()
@@ -608,7 +611,7 @@ def trigger_st(request):
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
                 if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0][
-                    'status'] == 'Shipment has been delivered.':
+                    'status'] == 'Delivered in Full':
                     booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
                 booking.save()
             except IndexError:
@@ -669,45 +672,46 @@ def hunter_tracking(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def get_label_allied(request):
-    booking_list = Bookings.objects.filter(vx_freight_provider="Allied",
-                                           z_api_issue_update_flag_500=1)
     results = []
-
-    for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
-        data = {}
-        print("==============")
-        print(booking.v_FPBookingNumber)
-        print(booking.deToAddressPostalCode)
-        print("==============")
-        data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
-                                       "destinationPostcode": booking.deToAddressPostalCode}]
-        data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
-                                    "accountKey": "ce0d58fd22ae8619974958e65302a715"}
-        data['serviceProvider'] = "ALLIED"
-
-        response0 = requests.post(url, params={}, json=data)
-        response0 = response0.content.decode('utf8').replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        print(s0)
-
+    try:
+        bid = literal_eval(request.body.decode('utf8'))
+        bid = bid["booking_id"]
         try:
-            request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-            request_payload["trackingId"] = data["consignmentDetails"][0]["consignmentNumber"]
-            request_type = "TRACKING"
-            request_status = "SUCCESS"
+            booking = Bookings.objects.filter(id=bid)[0]
 
-            oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
-                         response=response0, fk_booking_id=booking.id)
-            oneLog.save()
+            data = {}
 
-            results.append({"Created Log ID": oneLog.id})
-        except KeyError:
-            results.append({"Error": "Too many request"})
+            data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
+                                        "accountKey": "11e328f646051c3decc4b2bb4584530b"}
+            data['serviceProvider'] = "ALLIED"
+            data['consignmentNumber'] = booking.v_FPBookingNumber
+            data['destinationPostcode'] = booking.deToAddressPostalCode
+
+            data['labelType'] = "1"
+            print(data)
+
+            url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
+            response0 = requests.post(url, params={}, json=data)
+            response0 = response0.content.decode('utf8').replace("'", '"')
+            data0 = json.loads(response0)
+            s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+            print(s0)
+
+            try:
+                file_url = 'static/booking-' + str(booking.id) + '.txt'
+                new_days = open(file_url, 'w')
+                new_days.write(data0["encodedPdfData"])
+                booking.z_label_url = file_url
+                booking.save()
+                results.append({"Created label ID": file_url})
+            except KeyError:
+                results.append({"Error": data0["errorMsg"]})
+
+        except IndexError:
+            results.append({"message": "Booking not found"})
+
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
 
     return Response(results)
 
@@ -1062,7 +1066,10 @@ def returnexcel(request):
         worksheet.write(row, col + 7, booking.deToAddressPostalCode)
         worksheet.write(row, col + 8, booking.b_status)
         worksheet.write(row, col + 9, booking.b_status_API)
-        worksheet.write(row, col + 10, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+        if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
+            worksheet.write(row, col + 10, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 10, "")
         row += 1
 
     workbook.close()
