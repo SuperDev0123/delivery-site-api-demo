@@ -701,7 +701,7 @@ def get_label_allied(request):
                 file_url = '/var/www/html/dme_api/static/booking-' + str(booking.id) + '.txt'
                 new_days = open(file_url, 'w')
                 new_days.write(data0["encodedPdfData"])
-                booking.z_label_url = file_url
+                booking.z_label_url = str(booking.id) + '.txt'
                 booking.save()
                 results.append({"Created label ID": file_url})
             except KeyError:
