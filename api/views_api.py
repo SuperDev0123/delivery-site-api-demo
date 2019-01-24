@@ -1,6 +1,5 @@
-import base64
+import base64, os
 import codecs
-
 from django.http import HttpResponse
 import xlsxwriter as xlsxwriter
 from django.shortcuts import render
@@ -698,10 +697,12 @@ def get_label_allied(request):
             print(s0)
 
             try:
-                file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.b_bookingID_Visual) + '.txt'
-                new_days = open(file_url, 'w')
-                new_days.write(data0["encodedPdfData"])
-                booking.z_label_url = str(booking.b_bookingID_Visual) + '.txt'
+                file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.b_bookingID_Visual) + '.pdf'
+
+                with open(os.path.expanduser(file_url), 'wb') as fout:
+                    fout.write(base64.decodestring(data0["encodedPdfData"]))
+
+                booking.z_label_url = str(booking.b_bookingID_Visual) + '.pdf'
                 booking.save()
                 results.append({"Created label ID": file_url})
             except KeyError:
