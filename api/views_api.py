@@ -700,7 +700,7 @@ def get_label_allied(request):
                 file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.b_bookingID_Visual) + '.pdf'
 
                 with open(os.path.expanduser(file_url), 'wb') as fout:
-                    fout.write(base64.decodestring(data0["encodedPdfData"]))
+                    fout.write(base64.decodestring(data0["encodedPdfData"].encode('utf-8')))
 
                 booking.z_label_url = str(booking.b_bookingID_Visual) + '.pdf'
                 booking.save()
