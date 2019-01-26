@@ -6,6 +6,7 @@ from .views_api import *
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'bookings', BookingViewSet, basename='bookings')
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -14,8 +15,6 @@ urlpatterns += [
     url(r'^bookinglines/', BookingLinesView.as_view()),
     url(r'^bookinglinedetails/', BookingLineDetailsView.as_view()),
     url(r'^booking/$', booking),
-    url(r'^bookings/$', BookingViewSet.as_view({'get': 'list'})),
-    url(r'^bookings/(?P<pk>\d+)/$', BookingViewSet.as_view({'get': 'list', 'put': 'update', 'post': 'create'})),
     url(r'^warehouses/', WarehouseViewSet.as_view({'get': 'list'})),
     url(r'^share/upload/(?P<filename>[^/]+)$', FileUploadView.as_view()),
     url(r'^share/upload-status/', upload_status),

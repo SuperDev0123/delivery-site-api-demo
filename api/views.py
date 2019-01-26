@@ -12,12 +12,13 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse
-from django.http import JsonResponse
 from django.http import QueryDict
 from django.db.models import Q
 from wsgiref.util import FileWrapper
+from datetime import datetime, date, timedelta
+import json
 
-from api.serializers import BookingSerializer, WarehouseSerializer
+from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 
@@ -79,35 +80,149 @@ class BookingLineDetailsView(APIView):
             booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
             return_data = []
 
-            for booking_line in booking_line_detials:
+            for booking_line_detail in booking_line_details:
                 return_data.append({'modelNumber': booking_line_detail.modelNumber, 'itemDescription': booking_line_detail.itemDescription, 'quantity': booking_line_detail.quantity, 'itemFaultDescription': booking_line_detail.itemFaultDescription, 'insuranceValueEach': booking_line_detail.insuranceValueEach, 'gap_ra': booking_line_detail.gap_ra, 'clientRefNumber': booking_line_detail.clientRefNumber})
 
             return JsonResponse({'booking_line_details': return_data})
 
-class BookingViewSet(viewsets.ModelViewSet):
+class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
-
-    def get_queryset(self):
-        searchType = self.request.query_params.get('searchType', None)
-        keyword = str(self.request.query_params.get('keyword', None))
-
+    
+    @action(detail=False, methods=['get'])
+    def get_bookings(self, request, format=None):
         clientEmp = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id)).first()
         client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(clientEmp.fk_id_dme_client_id)).first()
 
-        if searchType is not None:
-            queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers__contains=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
+        cur_date = self.request.query_params.get('date', None)
+        first_date = datetime.strptime(cur_date, '%Y-%m-%d')
+        last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1))
+        warehouse_id = self.request.query_params.get('warehouseId', None)
+        sort_field = self.request.query_params.get('sortField', None)
+        column_filters = json.loads(self.request.query_params.get('columnFilters', None))
+        # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
+        
+        print('@01 - Client filter: ', client.dme_account_num)
+        print('@02 - Date filter: ', first_date, last_date)
+        print('@03 - Warehouse ID filter: ', warehouse_id)
+        print('@04 - Sort field: ', sort_field)
+        print('@05 - Column filter: ', column_filters)
+
+        # Client filter
+        queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+
+        # Date filter
+        queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+        
+        # Warehouse filter
+        if int(warehouse_id) is not 0:
+            queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+
+        # Column filter
+        try:
+            column_filter = column_filters['b_bookingID_Visual']
+            queryset = queryset.filter(b_bookingID_Visual__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['b_dateBookedDate']
+            queryset = queryset.filter(b_dateBookedDate__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['b_clientReference_RA_Numbers']
+            queryset = queryset.filter(b_clientReference_RA_Numbers__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['puPickUpAvailFrom_Date']
+            queryset = queryset.filter(puPickUpAvailFrom_Date__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['b_status']
+            queryset = queryset.filter(b_status__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['vx_freight_provider']
+            queryset = queryset.filter(vx_freight_provider__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['vx_serviceName']
+            queryset = queryset.filter(vx_serviceName__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
+            queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
+            queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+            
+        try:
+            column_filter = column_filters['v_FPBookingNumber']
+            queryset = queryset.filter(v_FPBookingNumber__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['puCompany']
+            queryset = queryset.filter(puCompany__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+            
+        try:
+            column_filter = column_filters['deToCompanyName']
+            queryset = queryset.filter(deToCompanyName__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        # Sort
+        if sort_field is None:
+            queryset = queryset.order_by('id')
         else:
-            queryset = Bookings.objects.all()
+            queryset = queryset.order_by(sort_field)
 
-        retData = []
+        # Count
+        bookings_cnt = queryset.count()
+        # bookings = queryset[0:int(item_count_per_page)]
+        bookings = queryset
+        ret_data = [];
 
-        for x in queryset:
-            if (client.dme_account_num == x.kf_client_id):
-                retData.append(x)
+        for booking in bookings:
+            ret_data.append({
+                'id': booking.id, 
+                'b_bookingID_Visual': booking.b_bookingID_Visual, 
+                'b_dateBookedDate': booking.b_dateBookedDate, 
+                'puPickUpAvailFrom_Date': booking.puPickUpAvailFrom_Date, 
+                'b_clientReference_RA_Numbers': booking.b_clientReference_RA_Numbers, 
+                'b_status': booking.b_status, 
+                'vx_freight_provider': booking.vx_freight_provider, 
+                'vx_serviceName': booking.vx_serviceName, 
+                's_05_LatestPickUpDateTimeFinal': booking.s_05_LatestPickUpDateTimeFinal, 
+                's_06_LatestDeliveryDateTimeFinal': booking.s_06_LatestDeliveryDateTimeFinal, 
+                'puCompany': booking.puCompany,
+                'deToCompanyName': booking.deToCompanyName,
+                'z_label_url': booking.z_label_url,
+                'b_error_Capture': booking.b_error_Capture,
+            })
+        
+        return JsonResponse({'bookings': ret_data, 'count': bookings_cnt})
 
-        return retData
-
-    def update(self, request, pk, format=None):
+    def update_booking(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
         serializer = BookingSerializer(booking, data=request.data)
 
@@ -117,6 +232,13 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        # searchType = self.request.query_params.get('searchType', None)
+        # keyword = str(self.request.query_params.get('keyword', None))
+
+        # if searchType is not None:
+        #     queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers__contains=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
+        # else:
+        #     queryset = Bookings.objects.all()
 
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
@@ -177,6 +299,7 @@ class FileUploadView(views.APIView):
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
         save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
+        save2Redis(prepend_name + "_b_client_name", clientEmployeObject[0].fk_id_dme_client.dme_account_num)
 
         handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 
