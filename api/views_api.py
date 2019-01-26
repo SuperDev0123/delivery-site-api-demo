@@ -667,6 +667,47 @@ def hunter_tracking(request):
     return Response(results)
 
 
+def get_label_allied_fn(bid):
+    results = []
+    try:
+        booking = Bookings.objects.filter(id=bid)[0]
+
+        data = {}
+
+        data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
+                                    "accountKey": "11e328f646051c3decc4b2bb4584530b"}
+        data['serviceProvider'] = "ALLIED"
+        data['consignmentNumber'] = booking.v_FPBookingNumber
+        data['destinationPostcode'] = booking.deToAddressPostalCode
+
+        data['labelType'] = "1"
+        print(data)
+
+        url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
+        response0 = requests.post(url, params={}, json=data)
+        response0 = response0.content.decode('utf8').replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+        print(s0)
+
+        try:
+            file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.b_bookingID_Visual) + '.pdf'
+
+            with open(os.path.expanduser(file_url), 'wb') as fout:
+                fout.write(base64.decodestring(data0["encodedPdfData"].encode('utf-8')))
+
+            booking.z_label_url = str(booking.b_bookingID_Visual) + '.pdf'
+            booking.save()
+            results.append({"Created label ID": file_url})
+        except KeyError:
+            results.append({"Error": data0["errorMsg"]})
+
+    except IndexError:
+        results.append({"message": "Booking not found"})
+
+    return results
+
+
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -675,19 +716,67 @@ def get_label_allied(request):
     try:
         bid = literal_eval(request.body.decode('utf8'))
         bid = bid["booking_id"]
+        results = get_label_allied_fn(bid)
+
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
+
+    return Response(results)
+
+
+def get_label_st_fn(bid):
+    results = []
+    try:
+        booking = Bookings.objects.filter(id=bid)[0]
+
+        data = {}
+
+        data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                    "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                    "accountPassword": "x9083d2fed4d50aa2ad5"}
+        data['serviceProvider'] = "ST"
+        data['consignmentNumber'] = booking.v_FPBookingNumber
+
+        data['type'] = "PRINT"
+
+        items = []
+
+        temp_item = {"itemId": "_CMK0E6mwiMAAAFoYvcg7Ha9",
+                     "packagingType": "PAL",
+                     "weight": 10
+                     }
+        items.append(temp_item)
+
+        data['items'] = items
+
+        items = []
+
+        temp_item = {"branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
+                     "branded": False,
+                     "layout": "A4-1pp",
+                     "leftOffset": 0,
+                     "topOffset": 0,
+                     "typeOfPost": "Express Post"
+                     }
+        items.append(temp_item)
+
+        data['pageFormat'] = items
+
+        print(data)
+
+        url = "http://52.39.202.126:8080/dme-api-sit/labelling/createlabel"
+        response0 = requests.post(url, params={}, json=data)
+        response0 = response0.content.decode('utf8').replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+        print(s0)
+
         try:
-            booking = Bookings.objects.filter(id=bid)[0]
+            # id = data0['stLabelRequestId']
+            id = "4c055984-2831-49b8-aca3-bf381a8315b8"
+            data['consignmentNumber'] = id
 
-            data = {}
-
-            data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
-                                        "accountKey": "11e328f646051c3decc4b2bb4584530b"}
-            data['serviceProvider'] = "ALLIED"
-            data['consignmentNumber'] = booking.v_FPBookingNumber
-            data['destinationPostcode'] = booking.deToAddressPostalCode
-
-            data['labelType'] = "1"
-            print(data)
+            data['labelType'] = "PRINT"
 
             url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
             response0 = requests.post(url, params={}, json=data)
@@ -696,26 +785,16 @@ def get_label_allied(request):
             s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
             print(s0)
 
-            try:
-                file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.b_bookingID_Visual) + '.pdf'
+            booking.z_label_url = data0["url"]
+            booking.save()
+            results.append({"Created Booking ID": data0['consignmentNumber']})
+        except KeyError:
+            results.append({"Error": data0["errorMsg"]})
 
-                with open(os.path.expanduser(file_url), 'wb') as fout:
-                    fout.write(base64.decodestring(data0["encodedPdfData"].encode('utf-8')))
+    except IndexError:
+        results.append({"message": "Booking not found"})
 
-                booking.z_label_url = str(booking.b_bookingID_Visual) + '.pdf'
-                booking.save()
-                results.append({"Created label ID": file_url})
-            except KeyError:
-                results.append({"Error": data0["errorMsg"]})
-
-        except IndexError:
-            results.append({"message": "Booking not found"})
-
-    except SyntaxError:
-        results.append({"message": "booking id is required"})
-
-    return Response(results)
-
+    return results
 
 
 @api_view(['POST'])
@@ -726,77 +805,7 @@ def get_label_st(request):
     try:
         bid = literal_eval(request.body.decode('utf8'))
         bid = bid["booking_id"]
-        try:
-            booking = Bookings.objects.filter(id=bid)[0]
-
-            data = {}
-
-            data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                        "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                        "accountPassword": "x9083d2fed4d50aa2ad5"}
-            data['serviceProvider'] = "ST"
-            data['consignmentNumber'] = booking.v_FPBookingNumber
-
-            data['type'] = "PRINT"
-
-
-            items = []
-
-
-            temp_item = {"itemId": "_CMK0E6mwiMAAAFoYvcg7Ha9",
-                            "packagingType": "PAL",
-                            "weight": 10
-                         }
-            items.append(temp_item)
-
-            data['items'] = items
-
-            items = []
-
-
-            temp_item = {"branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
-                             "branded": False,
-                          "layout": "A4-1pp",
-                          "leftOffset": 0,
-                          "topOffset": 0,
-                          "typeOfPost": "Express Post"
-                         }
-            items.append(temp_item)
-
-            data['pageFormat'] = items
-
-
-            print(data)
-
-            url = "http://52.39.202.126:8080/dme-api-sit/labelling/createlabel"
-            response0 = requests.post(url, params={}, json=data)
-            response0 = response0.content.decode('utf8').replace("'", '"')
-            data0 = json.loads(response0)
-            s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-            print(s0)
-
-            try:
-                # id = data0['stLabelRequestId']
-                id = "4c055984-2831-49b8-aca3-bf381a8315b8"
-                data['consignmentNumber'] = id
-
-                data['labelType'] = "PRINT"
-
-                url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
-                response0 = requests.post(url, params={}, json=data)
-                response0 = response0.content.decode('utf8').replace("'", '"')
-                data0 = json.loads(response0)
-                s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-                print(s0)
-
-                booking.z_label_url = data0["url"]
-                booking.save()
-                results.append({"Created Booking ID": data0['consignmentNumber']})
-            except KeyError:
-                results.append({"Error": data0["errorMsg"]})
-
-        except IndexError:
-            results.append({"message": "Booking not found"})
+        results = get_label_st_fn(bid)
 
     except SyntaxError:
         results.append({"message": "booking id is required"})
@@ -902,7 +911,10 @@ def booking_allied(request):
                 oneLog.save()
 
                 results.append({"Created Booking ID": data0['consignmentNumber']})
+                get_label_allied_fn(booking.id)
             except KeyError:
+                booking.b_error_Capture = data0["errorMsg"]
+                booking.save()
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
@@ -1015,7 +1027,10 @@ def booking_st(request):
                 oneLog.save()
 
                 results.append({"Created Booking ID": data0['consignmentNumber']})
+                get_label_st_fn(booking.id)
             except KeyError:
+                booking.b_error_Capture = data0["errorMsg"]
+                booking.save()
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
