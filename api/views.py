@@ -210,6 +210,8 @@ class BookingViewSet(viewsets.ViewSet):
                 's_06_LatestDeliveryDateTimeFinal': booking.s_06_LatestDeliveryDateTimeFinal, 
                 'puCompany': booking.puCompany,
                 'deToCompanyName': booking.deToCompanyName,
+                'z_label_url': booking.z_label_url,
+                'b_error_Capture': booking.b_error_Capture,
             })
         
         return JsonResponse({'bookings': ret_data, 'count': bookings_cnt})
