@@ -87,14 +87,16 @@ class BookingViewSet(viewsets.ViewSet):
         client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(clientEmp.fk_id_dme_client_id)).first()
 
         cur_date = self.request.query_params.get('date', None)
-        first_date = datetime.strptime(cur_date, '%Y-%m-%d').date()
-        last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1)).date()
+        first_date = datetime.strptime(cur_date, '%Y-%m-%d')
+        last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1))
         warehouse_id = self.request.query_params.get('warehouseId', None)
-        item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
+        sort_field = self.request.query_params.get('sortField', None)
+        # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         print('@01 - Client filter: ', client.dme_account_num)
         print('@02 - Date filter: ', first_date, last_date)
-        print('@02 - Warehouse ID filter: ', warehouse_id)
+        print('@03 - Warehouse ID filter: ', warehouse_id)
+        print('@04 - Sort field: ', sort_field)
 
         queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
         queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
@@ -102,8 +104,14 @@ class BookingViewSet(viewsets.ViewSet):
         if int(warehouse_id) is not 0:
             queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
+        if sort_field is None:
+            queryset = queryset.order_by('id')
+        else:
+            queryset = queryset.order_by(sort_field)
+
         bookings_cnt = queryset.count()
-        bookings = queryset[0:int(item_count_per_page)]
+        # bookings = queryset[0:int(item_count_per_page)]
+        bookings = queryset
         ret_data = [];
 
         for booking in bookings:
