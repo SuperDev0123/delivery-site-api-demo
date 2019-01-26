@@ -74,7 +74,7 @@ class BookingLineDetailsView(APIView):
             booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
             return_data = []
 
-            for booking_line in booking_line_detials:
+            for booking_line_detail in booking_line_details:
                 return_data.append({'modelNumber': booking_line_detail.modelNumber, 'itemDescription': booking_line_detail.itemDescription, 'quantity': booking_line_detail.quantity, 'itemFaultDescription': booking_line_detail.itemFaultDescription, 'insuranceValueEach': booking_line_detail.insuranceValueEach, 'gap_ra': booking_line_detail.gap_ra, 'clientRefNumber': booking_line_detail.clientRefNumber})
 
             return JsonResponse({'booking_line_details': return_data})
