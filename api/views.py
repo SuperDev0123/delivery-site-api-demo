@@ -16,6 +16,7 @@ from django.http import QueryDict
 from django.db.models import Q
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
+import json
 
 from .serializers import *
 from .models import *
@@ -91,24 +92,105 @@ class BookingViewSet(viewsets.ViewSet):
         last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1))
         warehouse_id = self.request.query_params.get('warehouseId', None)
         sort_field = self.request.query_params.get('sortField', None)
+        column_filters = json.loads(self.request.query_params.get('columnFilters', None))
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         print('@01 - Client filter: ', client.dme_account_num)
         print('@02 - Date filter: ', first_date, last_date)
         print('@03 - Warehouse ID filter: ', warehouse_id)
         print('@04 - Sort field: ', sort_field)
+        print('@05 - Column filter: ', column_filters)
 
+        # Client filter
         queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+
+        # Date filter
         queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
         
+        # Warehouse filter
         if int(warehouse_id) is not 0:
             queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
+        # Column filter
+        try:
+            column_filter = column_filters['b_bookingID_Visual']
+            queryset = queryset.filter(b_bookingID_Visual__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['b_dateBookedDate']
+            queryset = queryset.filter(b_dateBookedDate__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['b_clientReference_RA_Numbers']
+            queryset = queryset.filter(b_clientReference_RA_Numbers__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['puPickUpAvailFrom_Date']
+            queryset = queryset.filter(puPickUpAvailFrom_Date__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['b_status']
+            queryset = queryset.filter(b_status__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['vx_freight_provider']
+            queryset = queryset.filter(vx_freight_provider__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['vx_serviceName']
+            queryset = queryset.filter(vx_serviceName__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
+            queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
+            queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+            
+        try:
+            column_filter = column_filters['v_FPBookingNumber']
+            queryset = queryset.filter(v_FPBookingNumber__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        try:
+            column_filter = column_filters['puCompany']
+            queryset = queryset.filter(puCompany__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+            
+        try:
+            column_filter = column_filters['deToCompanyName']
+            queryset = queryset.filter(deToCompanyName__contains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        # Sort
         if sort_field is None:
             queryset = queryset.order_by('id')
         else:
             queryset = queryset.order_by(sort_field)
 
+        # Count
         bookings_cnt = queryset.count()
         # bookings = queryset[0:int(item_count_per_page)]
         bookings = queryset
