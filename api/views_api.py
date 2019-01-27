@@ -904,6 +904,7 @@ def booking_allied(request):
                 booking.fk_fp_pickup_id = data0['requestId']
                 booking.b_dateBookedDate = str(datetime.datetime.now())
                 booking.b_status = "Booked"
+                booking.b_error_Capture = ""
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
@@ -1020,6 +1021,7 @@ def booking_st(request):
                 booking.fk_fp_pickup_id = data0['requestId']
                 booking.b_dateBookedDate = str(datetime.datetime.now())
                 booking.b_status = "Booked"
+                booking.b_error_Capture = ""
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,

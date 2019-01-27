@@ -217,6 +217,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'z_label_url': booking.z_label_url,
                 'b_error_Capture': booking.b_error_Capture,
                 'z_downloaded_shipping_label_timestamp': booking.z_downloaded_shipping_label_timestamp,
+                'pk_booking_id': booking.pk_booking_id,
             })
         
         return JsonResponse({'bookings': ret_data, 'count': bookings_cnt})
