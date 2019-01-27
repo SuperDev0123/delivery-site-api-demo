@@ -9,4 +9,4 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
-        fields = ('id', 'b_bookingID_Visual', 'b_dateBookedDate', 'puPickUpAvailFrom_Date', 'b_clientReference_RA_Numbers', 'b_status', 'vx_freight_provider', 'vx_serviceName', 's_05_LatestPickUpDateTimeFinal', 's_06_LatestDeliveryDateTimeFinal', 'v_FPBookingNumber', 'puCompany', 'deToCompanyName')
+        fields = ('id', 'b_bookingID_Visual', 'z_downloaded_shipping_label_timestamp', 'b_dateBookedDate', 'puPickUpAvailFrom_Date', 'b_clientReference_RA_Numbers', 'b_status', 'vx_freight_provider', 'vx_serviceName', 's_05_LatestPickUpDateTimeFinal', 's_06_LatestDeliveryDateTimeFinal', 'v_FPBookingNumber', 'puCompany', 'deToCompanyName')

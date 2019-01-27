@@ -17,7 +17,7 @@ from django.db.models import Q
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 import json
-
+from time import gmtime, strftime
 from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
@@ -212,10 +212,12 @@ class BookingViewSet(viewsets.ViewSet):
                 'deToCompanyName': booking.deToCompanyName,
                 'z_label_url': booking.z_label_url,
                 'b_error_Capture': booking.b_error_Capture,
+                'z_downloaded_shipping_label_timestamp': booking.z_downloaded_shipping_label_timestamp,
             })
         
         return JsonResponse({'bookings': ret_data, 'count': bookings_cnt})
 
+    @action(detail=True, methods=['PUT'])
     def update_booking(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
         serializer = BookingSerializer(booking, data=request.data)
@@ -325,6 +327,8 @@ def upload_status(request):
 
 def download_pdf(request):
     filename = request.GET['filename']
+    updatedId = request.GET['id']
+    print('@01 - Download Api ', datetime.now())
     file = open('/var/www/html/dme_api/static/pdfs/{}'.format(filename), "rb")
 
     response = HttpResponse(
@@ -333,5 +337,8 @@ def download_pdf(request):
     )
 
     response['Content-Disposition'] = 'attachment; filename=a.pdf'
-
+    booking = Bookings.objects.get(pk=updatedId)
+    booking.z_downloaded_shipping_label_timestamp = datetime.now()
+    booking.save()
     return response
+
