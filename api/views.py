@@ -96,17 +96,21 @@ class BookingViewSet(viewsets.ViewSet):
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         print('@01 - Client filter: ', client.dme_account_num)
-        print('@02 - Date filter: ', first_date, last_date)
+        print('@02 - Date filter: ', cur_date, first_date, last_date)
         print('@03 - Warehouse ID filter: ', warehouse_id)
         print('@04 - Sort field: ', sort_field)
-        print('@05 - Column filter: ', column_filters)
+        print('@05 - Company name: ', client.company_name)
+
 
         # Client filter
         queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
 
         # Date filter
-        queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-        
+        if client.company_name  == 'Seaway':
+            queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+        elif client.company_name == 'BioPak':
+            queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
+
         # Warehouse filter
         if int(warehouse_id) is not 0:
             queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
