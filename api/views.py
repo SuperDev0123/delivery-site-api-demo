@@ -22,12 +22,6 @@ from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 
-from next_prev import next_in_order, prev_in_order
-
-import logging
-
-# Get an instance of a logger
-logger = logging.getLogger(__name__)
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def username(self, request, format=None):
@@ -240,43 +234,46 @@ class BookingViewSet(viewsets.ViewSet):
         # else:
         #     queryset = Bookings.objects.all()
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def booking(request):
+    if request.method == 'GET':
+        idBookingNumber = request.GET['id']
+        filterName = request.GET['filter']
+
+        try:
+            if filterName == 'dme':
+                booking = Bookings.objects.get(b_bookingID_Visual=idBookingNumber)
+            elif filterName == 'con':
+                booking = Bookings.objects.get(v_FPBookingNumber=idBookingNumber)
+            elif filterName == 'id':
+                booking = Bookings.objects.get(id=idBookingNumber)
+            else: 
+                return JsonResponse({'booking': {}})
+            nextBooking = (Bookings.objects.filter(id__gt=booking.id).order_by('id').first())
+            prevBooking = (Bookings.objects.filter(id__lt=booking.id).order_by('-id').first())
+            nextBookingId = -1
+            prevBookingId = -1
+
+            if nextBooking is not None:
+                nextBookingId = nextBooking.id
+            if prevBooking is not None:
+                prevBookingId = prevBooking.id
+
+            return_data = []
+
+            if booking is not None:
+                return_data = {'puCompany': booking.puCompany,'pu_Address_Street_1': booking.pu_Address_Street_1, 'pu_Address_street_2': booking.pu_Address_street_2, 'pu_Address_PostalCode': booking.pu_Address_PostalCode, 'pu_Address_Suburb': booking.pu_Address_Suburb, 'pu_Address_Country': booking.pu_Address_Country, 'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name, 'pu_Phone_Main': booking.pu_Phone_Main, 'pu_Email': booking.pu_Email,'de_To_Address_Street_1': booking.de_To_Address_Street_1, 'de_To_Address_Street_2':booking.de_To_Address_Street_2, 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode, 'de_To_Address_Suburb': booking.de_To_Address_Suburb, 'de_To_Address_Country': booking.de_To_Address_Country, 'de_to_Contact_F_LName': booking.de_to_Contact_F_LName, 'de_to_Phone_Main':booking.de_to_Phone_Main,  'de_Email': booking.de_Email, 'deToCompanyName': booking.deToCompanyName, 'b_bookingID_Visual': booking.b_bookingID_Visual, 'v_FPBookingNumber': booking.v_FPBookingNumber}
+                return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
+        except Bookings.DoesNotExist:
+            return JsonResponse({'booking': {}})
     if request.method == 'POST':
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def booking(request):
-    idBookingNumber = request.GET['id']
-    filterName = request.GET['filter']
-    try:
-        if filterName == 'id':
-            booking = Bookings.objects.get(id = idBookingNumber)
-        else:
-            booking = Bookings.objects.get(v_FPBookingNumber = idBookingNumber)
-        nextBooking = (Bookings.objects.filter(id__gt=booking.id).order_by('id').first())
-        prevBooking = (Bookings.objects.filter(id__lt=booking.id).order_by('-id').first())
-
-        nextBookingId = -1
-        prevBookingId = -1
-        if nextBooking is not None:
-            nextBookingId = nextBooking.id
-        if prevBooking is not None:
-            prevBookingId = prevBooking.id
-        return_data = []
-        if booking is not None:
-            return_data = {'puCompany': booking.puCompany,'pu_Address_Street_1': booking.pu_Address_Street_1, 'pu_Address_street_2': booking.pu_Address_street_2, 'pu_Address_PostalCode': booking.pu_Address_PostalCode, 'pu_Address_Suburb': booking.pu_Address_Suburb, 'pu_Address_Country': booking.pu_Address_Country, 'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name, 'pu_Phone_Main': booking.pu_Phone_Main, 'pu_Email': booking.pu_Email,'de_To_Address_Street_1': booking.de_To_Address_Street_1, 'de_To_Address_Street_2':booking.de_To_Address_Street_2, 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode, 'de_To_Address_Suburb': booking.de_To_Address_Suburb, 'de_To_Address_Country': booking.de_To_Address_Country, 'de_to_Contact_F_LName': booking.de_to_Contact_F_LName, 'de_to_Phone_Main':booking.de_to_Phone_Main,  'de_Email': booking.de_Email, 'deToCompanyName': booking.deToCompanyName}
-            return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
-    except Bookings.DoesNotExist:
-        return JsonResponse({'booking': {}})
 
 class WarehouseViewSet(viewsets.ModelViewSet):
     serializer_class = WarehouseSerializer
