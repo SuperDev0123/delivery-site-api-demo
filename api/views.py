@@ -240,7 +240,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'pu_Address_State': booking.pu_Address_State,
                 'pu_Address_PostalCode': booking.pu_Address_PostalCode,
                 'pu_Address_Country': booking.pu_Address_Country,
-                'de_To_Address_street_1': booking.de_To_Address_street_1,
+                'de_To_Address_street_1': booking.de_To_Address_Street_1,
                 'de_To_Address_street_2': booking.de_To_Address_street_2,
                 'de_To_Address_Suburb': booking.de_To_Address_Suburb,
                 'de_To_Address_City': booking.de_To_Address_City,
