@@ -676,7 +676,7 @@ def get_label_allied_fn(bid):
         data = {}
 
         data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
-                                    "accountKey": "11e328f646051c3decc4b2bb4584530b"}
+                                    "accountKey": "ce0d58fd22ae8619974958e65302a715"}
         data['serviceProvider'] = "ALLIED"
         data['consignmentNumber'] = booking.v_FPBookingNumber
         data['destinationPostcode'] = booking.deToAddressPostalCode
@@ -684,7 +684,7 @@ def get_label_allied_fn(bid):
         data['labelType'] = "1"
         print(data)
 
-        url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
+        url = "http://35.161.204.104:8081/dme-api/labelling/getlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -837,7 +837,7 @@ def booking_allied(request):
 
             data = {}
             data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
-                                        "accountKey": "11e328f646051c3decc4b2bb4584530b"}
+                                        "accountKey": "ce0d58fd22ae8619974958e65302a715"}
             data['serviceProvider'] = "ALLIED"
             data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
             data['referenceNumber'] = "" if booking.b_clientReference_RA_Numbers is None else booking.b_clientReference_RA_Numbers
@@ -888,7 +888,7 @@ def booking_allied(request):
             data['items'] = items
             print(data)
 
-            url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
+            url = "http://35.161.204.104:8081/dme-api/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
