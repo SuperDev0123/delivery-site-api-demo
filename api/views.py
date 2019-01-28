@@ -94,6 +94,7 @@ class BookingViewSet(viewsets.ViewSet):
         sort_field = self.request.query_params.get('sortField', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
         prefilter = json.loads(self.request.query_params.get('prefilterInd', None))
+        simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         print('@01 - Client filter: ', client.dme_account_num)
@@ -102,6 +103,7 @@ class BookingViewSet(viewsets.ViewSet):
         print('@04 - Sort field: ', sort_field)
         print('@05 - Company name: ', client.company_name)
         print('@06 - Prefilter: ', prefilter)
+        print('@07 - Simple search keyword: ', simple_search_keyword)
 
         # Client filter
         queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
@@ -112,82 +114,97 @@ class BookingViewSet(viewsets.ViewSet):
         elif client.company_name == 'BioPak':
             queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
 
-        # Warehouse filter
-        if int(warehouse_id) is not 0:
-            queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+        if len(simple_search_keyword) > 0:
+            queryset = queryset.filter(
+                Q(b_bookingID_Visual__contains=simple_search_keyword) | 
+                Q(b_dateBookedDate__contains=simple_search_keyword) | 
+                Q(puPickUpAvailFrom_Date__contains=simple_search_keyword) | 
+                Q(b_clientReference_RA_Numbers__contains=simple_search_keyword) | 
+                Q(b_status__contains=simple_search_keyword) | 
+                Q(vx_freight_provider__contains=simple_search_keyword) | 
+                Q(vx_serviceName__contains=simple_search_keyword) | 
+                Q(s_05_LatestPickUpDateTimeFinal__contains=simple_search_keyword) | 
+                Q(s_06_LatestDeliveryDateTimeFinal__contains=simple_search_keyword) | 
+                Q(v_FPBookingNumber__contains=simple_search_keyword) | 
+                Q(puCompany__contains=simple_search_keyword) | 
+                Q(deToCompanyName__contains=simple_search_keyword))
+        else:
+            # Warehouse filter
+            if int(warehouse_id) is not 0:
+                queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
-        # Column filter
-        try:
-            column_filter = column_filters['b_bookingID_Visual']
-            queryset = queryset.filter(b_bookingID_Visual__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            # Column filter
+            try:
+                column_filter = column_filters['b_bookingID_Visual']
+                queryset = queryset.filter(b_bookingID_Visual__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['b_dateBookedDate']
-            queryset = queryset.filter(b_dateBookedDate__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['b_dateBookedDate']
+                queryset = queryset.filter(b_dateBookedDate__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['b_clientReference_RA_Numbers']
-            queryset = queryset.filter(b_clientReference_RA_Numbers__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['b_clientReference_RA_Numbers']
+                queryset = queryset.filter(b_clientReference_RA_Numbers__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['puPickUpAvailFrom_Date']
-            queryset = queryset.filter(puPickUpAvailFrom_Date__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['puPickUpAvailFrom_Date']
+                queryset = queryset.filter(puPickUpAvailFrom_Date__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['b_status']
-            queryset = queryset.filter(b_status__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['b_status']
+                queryset = queryset.filter(b_status__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['vx_freight_provider']
-            queryset = queryset.filter(vx_freight_provider__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['vx_freight_provider']
+                queryset = queryset.filter(vx_freight_provider__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['vx_serviceName']
-            queryset = queryset.filter(vx_serviceName__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['vx_serviceName']
+                queryset = queryset.filter(vx_serviceName__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
-            queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
+                queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
-            queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__contains=column_filter)
-        except KeyError:
-            column_filter = ''
-            
-        try:
-            column_filter = column_filters['v_FPBookingNumber']
-            queryset = queryset.filter(v_FPBookingNumber__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
+                queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__contains=column_filter)
+            except KeyError:
+                column_filter = ''
+                
+            try:
+                column_filter = column_filters['v_FPBookingNumber']
+                queryset = queryset.filter(v_FPBookingNumber__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
-        try:
-            column_filter = column_filters['puCompany']
-            queryset = queryset.filter(puCompany__contains=column_filter)
-        except KeyError:
-            column_filter = ''
-            
-        try:
-            column_filter = column_filters['deToCompanyName']
-            queryset = queryset.filter(deToCompanyName__contains=column_filter)
-        except KeyError:
-            column_filter = ''
+            try:
+                column_filter = column_filters['puCompany']
+                queryset = queryset.filter(puCompany__contains=column_filter)
+            except KeyError:
+                column_filter = ''
+                
+            try:
+                column_filter = column_filters['deToCompanyName']
+                queryset = queryset.filter(deToCompanyName__contains=column_filter)
+            except KeyError:
+                column_filter = ''
 
         # Prefilter count
         errors_to_correct = 0
@@ -279,14 +296,6 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # searchType = self.request.query_params.get('searchType', None)
-        # keyword = str(self.request.query_params.get('keyword', None))
-
-        # if searchType is not None:
-        #     queryset = Bookings.objects.filter(Q(id__contains=keyword) | Q(b_bookingID_Visual__contains=keyword) | Q(b_dateBookedDate__contains=keyword) | Q(puPickUpAvailFrom_Date__contains=keyword) | Q(b_clientReference_RA_Numbers__contains=keyword) | Q(b_status__contains=keyword) | Q(vx_freight_provider__contains=keyword) | Q(vx_serviceName__contains=keyword) | Q(s_05_LatestPickUpDateTimeFinal__contains=keyword) | Q(s_06_LatestDeliveryDateTimeFinal__contains=keyword) | Q(v_FPBookingNumber__contains=keyword) | Q(puCompany__contains=keyword) | Q(deToCompanyName__contains=keyword))
-        # else:
-        #     queryset = Bookings.objects.all()
 
 @api_view(['POST', 'GET'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
