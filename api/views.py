@@ -233,7 +233,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'b_error_Capture': booking.b_error_Capture,
                 'z_downloaded_shipping_label_timestamp': booking.z_downloaded_shipping_label_timestamp,
                 'pk_booking_id': booking.pk_booking_id,
-                'pu_Address_street_1': booking.pu_Address_street_1,
+                'pu_Address_street_1': booking.pu_Address_Street_1,
                 'pu_Address_street_2': booking.pu_Address_street_2,
                 'pu_Address_Suburb': booking.pu_Address_Suburb,
                 'pu_Address_City': booking.pu_Address_City,
