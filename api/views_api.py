@@ -773,7 +773,8 @@ def get_label_st_fn(bid):
 
         try:
             # id = data0['stLabelRequestId']
-            id = "4c055984-2831-49b8-aca3-bf381a8315b8"
+            # id = "4c055984-2831-49b8-aca3-bf381a8315b8"
+            id = "f35af59f-6c05-4e5a-a397-4e689599c7ca"
             data['consignmentNumber'] = id
 
             data['labelType'] = "PRINT"
