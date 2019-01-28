@@ -307,31 +307,25 @@ class BookingViewSet(viewsets.ViewSet):
 
         user_id = request.user.id
 
-        print('@filterName--', filterName)
         try:
             clientEmployeeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
             if clientEmployeeObject is None:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
-            print('@clientEmployeeObject--', filterName)
 
             clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeeObject.fk_id_dme_client_id)
             if clientObject is None:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
             bookings = Bookings.objects.filter(kf_client_id=clientObject.dme_account_num)
-            print('@clientObject--', idBookingNumber)
 
             if filterName == 'dme':
                 booking = bookings.get(b_bookingID_Visual=idBookingNumber)
-                print('@dme--')
             elif filterName == 'con':
-                print('@con--', bookings[0].id, bookings[0].v_FPBookingNumber, idBookingNumber)
                 booking = bookings.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == 'id':
                 booking = bookings.get(id=idBookingNumber)
             else:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
-            print('@booking--', booking)
             if booking is not None:
                 nextBooking = (bookings.filter(id__gt=booking.id).order_by('id').first())
                 prevBooking = (bookings.filter(id__lt=booking.id).order_by('-id').first())
@@ -351,7 +345,6 @@ class BookingViewSet(viewsets.ViewSet):
             else:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
         except Bookings.DoesNotExist:
-            print('@except--')
             return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
     @action(detail=True, methods=['post'])
