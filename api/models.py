@@ -271,9 +271,9 @@ class Booking_lines(models.Model):
 	e_weightUOM = models.CharField(verbose_name=_('Weight UOM'), max_length=56, blank=True, null=True)
 	e_weightPerEach = models.IntegerField(verbose_name=_('Weight Per Each'), blank=True, null=True)
 	e_dimUOM = models.CharField(verbose_name=_('Dim UOM'), max_length=10, blank=True, null=True)
-	e_dimLength = models.IntegerField(verbose_name=_('Dim Length'), blank=True, null=True)
-	e_dimWidth = models.IntegerField(verbose_name=_('Dim Width'), blank=True, null=True)
-	e_dimHeight = models.IntegerField(verbose_name=_('Dim Height'), blank=True, null=True)
+	e_dimLength = models.FloatField(verbose_name=_('Dim Length'), blank=True, null=True)
+	e_dimWidth = models.FloatField(verbose_name=_('Dim Width'), blank=True, null=True)
+	e_dimHeight = models.FloatField(verbose_name=_('Dim Height'), blank=True, null=True)
 	e_dangerousGoods = models.IntegerField(verbose_name=_('Dangerous Goods'), blank=True, null=True)
 	e_insuranceValueEach = models.IntegerField(verbose_name=_('Insurance Value Each'), blank=True, null=True)
 	discount_rate = models.IntegerField(verbose_name=_('Discount Rate'), blank=True, null=True)
@@ -523,3 +523,29 @@ class Log(models.Model):
 
 	class Meta:
 		db_table = 'dme_log'
+
+class Api_booking_confirmation_lines(models.Model):
+	id = models.AutoField(primary_key=True)
+	fk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True)
+	fk_booking_line_id = models.CharField(verbose_name=_('Booking Line ID'), max_length=64, blank=True, null=True)
+	kf_booking_confirmation_id = models.CharField(verbose_name=_('Booking Confimration ID'), max_length=64, blank=True, null=True)
+	pk_booking_confirmation_lines = models.IntegerField(verbose_name=_('Booking confirmation lines'), blank=True, null=True)
+	fk_api_results_id = models.IntegerField(verbose_name=_('Result ID'), blank=True, null=True)
+	service_provider = models.CharField(verbose_name=_('Service Provider'), max_length=64, blank=True, null=True)
+	api_artical_id = models.CharField(verbose_name=_('Artical ID'), max_length=64, blank=True, null=True)
+	api_consignment_id = models.CharField(verbose_name=_('Consignment ID'), max_length=64, blank=True, null=True)
+	api_cost = models.CharField(verbose_name=_('Cost'), max_length=64, blank=True, null=True)
+	api_gst = models.CharField(verbose_name=_('GST'), max_length=64, blank=True, null=True)
+	api_item_id = models.CharField(verbose_name=_('Item ID'), max_length=64, blank=True, null=True)
+	api_item_reference = models.CharField(verbose_name=_('Item Reference'), max_length=64, blank=True, null=True)
+	api_product_id = models.CharField(verbose_name=_('Product ID'), max_length=64, blank=True, null=True)
+	api_status = models.CharField(verbose_name=_('Status'), max_length=64, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'api_booking_confirmation_lines'
+
+
