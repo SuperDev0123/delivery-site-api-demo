@@ -93,6 +93,7 @@ class BookingViewSet(viewsets.ViewSet):
         warehouse_id = self.request.query_params.get('warehouseId', None)
         sort_field = self.request.query_params.get('sortField', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
+        prefilter = json.loads(self.request.query_params.get('prefilterInd', None))
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         print('@01 - Client filter: ', client.dme_account_num)
@@ -100,7 +101,7 @@ class BookingViewSet(viewsets.ViewSet):
         print('@03 - Warehouse ID filter: ', warehouse_id)
         print('@04 - Sort field: ', sort_field)
         print('@05 - Company name: ', client.company_name)
-
+        print('@06 - Prefilter: ', prefilter)
 
         # Client filter
         queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
@@ -188,6 +189,12 @@ class BookingViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ''
 
+        # Prefilter 0 -> all, 1 -> errors_to_correct
+        if prefilter == 1:
+            queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(b_error_Capture__exact='')
+        elif prefilter == 3:
+            queryset = queryset.filter(b_status__contains='booked')
+
         # Sort
         if sort_field is None:
             queryset = queryset.order_by('id')
@@ -196,11 +203,19 @@ class BookingViewSet(viewsets.ViewSet):
 
         # Count
         bookings_cnt = queryset.count()
+        errors_to_correct = 0
+        to_manifest = 0
+
         # bookings = queryset[0:int(item_count_per_page)]
         bookings = queryset
         ret_data = [];
 
         for booking in bookings:
+            if booking.b_error_Capture is not None and len(booking.b_error_Capture) > 0:
+                errors_to_correct += 1
+            if booking.b_status == 'booked':
+                to_manifest += 1
+
             ret_data.append({
                 'id': booking.id, 
                 'b_bookingID_Visual': booking.b_bookingID_Visual, 
@@ -220,7 +235,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'pk_booking_id': booking.pk_booking_id,
             })
         
-        return JsonResponse({'bookings': ret_data, 'count': bookings_cnt})
+        return JsonResponse({'bookings': ret_data, 'count': bookings_cnt, 'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest})
 
     @action(detail=True, methods=['PUT'])
     def update_booking(self, request, pk, format=None):
@@ -275,6 +290,7 @@ def booking(request):
                 return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
         except Bookings.DoesNotExist:
             return JsonResponse({'booking': {}})
+
     if request.method == 'POST':
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
@@ -333,7 +349,6 @@ def upload_status(request):
 def download_pdf(request):
     filename = request.GET['filename']
     updatedId = request.GET['id']
-    print('@01 - Download Api ', datetime.now())
     file = open('/var/www/html/dme_api/static/pdfs/{}'.format(filename), "rb")
 
     response = HttpResponse(
