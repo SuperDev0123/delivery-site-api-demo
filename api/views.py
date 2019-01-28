@@ -79,7 +79,7 @@ class BookingLineDetailsView(APIView):
 
             return JsonResponse({'booking_line_details': return_data})
 
-class BookingViewSet(viewsets.ViewSet):
+class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
     
     @action(detail=False, methods=['get'])
@@ -297,42 +297,65 @@ class BookingViewSet(viewsets.ViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST', 'GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def booking(request):
-    if request.method == 'GET':
+class BookingViewSet(viewsets.ViewSet):
+    serializer_class = BookingSerializer
+    
+    @action(detail=False, methods=['get'])
+    def get_booking(self, request, format=None):
         idBookingNumber = request.GET['id']
         filterName = request.GET['filter']
 
+        user_id = request.user.id
+
+        print('@filterName--', filterName)
         try:
+            clientEmployeeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            if clientEmployeeObject is None:
+                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+            print('@clientEmployeeObject--', filterName)
+
+            clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeeObject.fk_id_dme_client_id)
+            if clientObject is None:
+                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+            bookings = Bookings.objects.filter(kf_client_id=clientObject.dme_account_num)
+            print('@clientObject--', idBookingNumber)
+
             if filterName == 'dme':
-                booking = Bookings.objects.get(b_bookingID_Visual=idBookingNumber)
+                booking = bookings.get(b_bookingID_Visual=idBookingNumber)
+                print('@dme--')
             elif filterName == 'con':
-                booking = Bookings.objects.get(v_FPBookingNumber=idBookingNumber)
+                print('@con--', bookings[0].id, bookings[0].v_FPBookingNumber, idBookingNumber)
+                booking = bookings.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == 'id':
-                booking = Bookings.objects.get(id=idBookingNumber)
-            else: 
-                return JsonResponse({'booking': {}})
-            nextBooking = (Bookings.objects.filter(id__gt=booking.id).order_by('id').first())
-            prevBooking = (Bookings.objects.filter(id__lt=booking.id).order_by('-id').first())
-            nextBookingId = -1
-            prevBookingId = -1
+                booking = bookings.get(id=idBookingNumber)
+            else:
+                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
-            if nextBooking is not None:
-                nextBookingId = nextBooking.id
-            if prevBooking is not None:
-                prevBookingId = prevBooking.id
-
-            return_data = []
-
+            print('@booking--', booking)
             if booking is not None:
-                return_data = {'id': booking.id, 'puCompany': booking.puCompany,'pu_Address_Street_1': booking.pu_Address_Street_1, 'pu_Address_street_2': booking.pu_Address_street_2, 'pu_Address_PostalCode': booking.pu_Address_PostalCode, 'pu_Address_Suburb': booking.pu_Address_Suburb, 'pu_Address_Country': booking.pu_Address_Country, 'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name, 'pu_Phone_Main': booking.pu_Phone_Main, 'pu_Email': booking.pu_Email,'de_To_Address_Street_1': booking.de_To_Address_Street_1, 'de_To_Address_Street_2':booking.de_To_Address_Street_2, 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode, 'de_To_Address_Suburb': booking.de_To_Address_Suburb, 'de_To_Address_Country': booking.de_To_Address_Country, 'de_to_Contact_F_LName': booking.de_to_Contact_F_LName, 'de_to_Phone_Main':booking.de_to_Phone_Main,  'de_Email': booking.de_Email, 'deToCompanyName': booking.deToCompanyName, 'b_bookingID_Visual': booking.b_bookingID_Visual, 'v_FPBookingNumber': booking.v_FPBookingNumber, 'pk_booking_id': booking.pk_booking_id,'vx_freight_provider': booking.vx_freight_provider}
-                return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
-        except Bookings.DoesNotExist:
-            return JsonResponse({'booking': {}})
+                nextBooking = (bookings.filter(id__gt=booking.id).order_by('id').first())
+                prevBooking = (bookings.filter(id__lt=booking.id).order_by('-id').first())
+                nextBookingId = 0
+                prevBookingId = 0
 
-    if request.method == 'POST':
+                if nextBooking is not None:
+                    nextBookingId = nextBooking.id
+                if prevBooking is not None:
+                    prevBookingId = prevBooking.id
+
+                return_data = []
+
+                if booking is not None:
+                    return_data = {'id': booking.id, 'puCompany': booking.puCompany,'pu_Address_Street_1': booking.pu_Address_Street_1, 'pu_Address_street_2': booking.pu_Address_street_2, 'pu_Address_PostalCode': booking.pu_Address_PostalCode, 'pu_Address_Suburb': booking.pu_Address_Suburb, 'pu_Address_Country': booking.pu_Address_Country, 'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name, 'pu_Phone_Main': booking.pu_Phone_Main, 'pu_Email': booking.pu_Email,'de_To_Address_Street_1': booking.de_To_Address_Street_1, 'de_To_Address_Street_2':booking.de_To_Address_Street_2, 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode, 'de_To_Address_Suburb': booking.de_To_Address_Suburb, 'de_To_Address_Country': booking.de_To_Address_Country, 'de_to_Contact_F_LName': booking.de_to_Contact_F_LName, 'de_to_Phone_Main':booking.de_to_Phone_Main,  'de_Email': booking.de_Email, 'deToCompanyName': booking.deToCompanyName, 'b_bookingID_Visual': booking.b_bookingID_Visual, 'v_FPBookingNumber': booking.v_FPBookingNumber, 'pk_booking_id': booking.pk_booking_id,'vx_freight_provider': booking.vx_freight_provider}
+                    return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
+            else:
+                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+        except Bookings.DoesNotExist:
+            print('@except--')
+            return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+
+    @action(detail=True, methods=['post'])
+    def post_booking(self, request, pk, format=None):
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

@@ -6,7 +6,8 @@ from .views_api import *
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
-router.register(r'bookings', BookingViewSet, basename='bookings')
+router.register(r'bookings', BookingsViewSet, basename='bookings')
+router.register(r'booking', BookingViewSet, basename='booking')
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -14,7 +15,6 @@ urlpatterns += [
     url(r'^api-token-verify/', verify_jwt_token),
     url(r'^bookinglines/', BookingLinesView.as_view()),
     url(r'^bookinglinedetails/', BookingLineDetailsView.as_view()),
-    url(r'^booking/$', booking),
     url(r'^warehouses/', WarehouseViewSet.as_view({'get': 'list'})),
     url(r'^share/upload/(?P<filename>[^/]+)$', FileUploadView.as_view()),
     url(r'^share/upload-status/', upload_status),
