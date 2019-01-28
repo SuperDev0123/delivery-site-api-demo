@@ -176,7 +176,7 @@ class Bookings(models.Model):
 	booked_for_comm_communicate_via =  models.CharField(verbose_name=_('Booked Communicate Via'), max_length=120, blank=True, null=True, default='')
 	booking_Created_For = models.CharField(verbose_name=_('Booking Created For'), max_length=20, blank=True, null=True, default='')
 	b_order_created = models.CharField(verbose_name=_('Order Created'), max_length=45, blank=True, null=True, default='')
-	b_error_Capture = models.CharField(verbose_name=_('Error Capture'), max_length=20, blank=True, null=True, default='')
+	b_error_Capture = models.TextField(verbose_name=_('Error Capture'), max_length=1000, blank=True, null=True, default='')
 	b_error_code = models.CharField(verbose_name=_('Error Code'), max_length=20, blank=True, null=True, default='')
 	b_booking_Category = models.TextField(verbose_name=_('Booking Categroy'), max_length=400, blank=True, null=True, default='')
 	pu_PickUp_By_Time_Hours = models.IntegerField(verbose_name=_('PU By Time Hours'), blank=True, default=0, null=True)
@@ -255,7 +255,8 @@ class Bookings(models.Model):
 	b_client_order_num = models.CharField(verbose_name=_('Order Num'), max_length=64, blank=True, null=True, default='')
 	b_client_del_note_num = models.CharField(verbose_name=_('Del Note Num'), max_length=64, blank=True, null=True, default='')
 	b_client_warehouse_code = models.CharField(verbose_name=_('Warehouse code'), max_length=64, blank=True, null=True, default='')
-	z_downloaded_shipping_label_timestamp = models.DateTimeField(verbose_name=_('downloaded_shipping_label_timestamp'),blank=True, null=True)
+	z_downloaded_shipping_label_timestamp = models.DateTimeField(verbose_name=_('downloaded_shipping_label_timestamp'), default=datetime.now, blank=True, null=True)
+	
 	class Meta:
 		db_table = 'dme_bookings'
 
