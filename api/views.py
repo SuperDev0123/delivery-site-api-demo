@@ -189,11 +189,36 @@ class BookingViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ''
 
+        # Prefilter count
+        errors_to_correct = 0
+        missing_labels = 0
+        to_manifest = 0
+        to_process = 0
+        closed = 0
+
+        for booking in queryset:
+            if booking.b_error_Capture is not None and len(booking.b_error_Capture) > 0:
+                errors_to_correct += 1
+            if booking.z_label_url is None or len(booking.z_label_url) == 0:
+                missing_labels += 1
+            if booking.b_status == 'Booked':
+                to_manifest += 1
+            if booking.b_status == 'Ready to booking':
+                to_process += 1
+            if booking.b_status == 'Closed':
+                closed += 1
+
         # Prefilter 0 -> all, 1 -> errors_to_correct
         if prefilter == 1:
             queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(b_error_Capture__exact='')
+        if prefilter == 2:
+            queryset = queryset.filter(z_label_url__isnull=True).exclude(z_label_url__exact='')
         elif prefilter == 3:
-            queryset = queryset.filter(b_status__contains='booked')
+            queryset = queryset.filter(b_status__contains='Booked')
+        elif prefilter == 4:
+            queryset = queryset.filter(b_status__contains='Ready to booking')
+        elif prefilter == 5:
+            queryset = queryset.filter(b_status__contains='Closed')
 
         # Sort
         if sort_field is None:
@@ -203,19 +228,12 @@ class BookingViewSet(viewsets.ViewSet):
 
         # Count
         bookings_cnt = queryset.count()
-        errors_to_correct = 0
-        to_manifest = 0
 
         # bookings = queryset[0:int(item_count_per_page)]
         bookings = queryset
         ret_data = [];
 
         for booking in bookings:
-            if booking.b_error_Capture is not None and len(booking.b_error_Capture) > 0:
-                errors_to_correct += 1
-            if booking.b_status == 'booked':
-                to_manifest += 1
-
             ret_data.append({
                 'id': booking.id, 
                 'b_bookingID_Visual': booking.b_bookingID_Visual, 
@@ -249,7 +267,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'de_To_Address_Country': booking.de_To_Address_Country,
             })
         
-        return JsonResponse({'bookings': ret_data, 'count': bookings_cnt, 'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest})
+        return JsonResponse({'bookings': ret_data, 'count': bookings_cnt, 'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest, 'missing_labels': missing_labels, 'to_process': to_process, 'closed': closed})
 
     @action(detail=True, methods=['PUT'])
     def update_booking(self, request, pk, format=None):
