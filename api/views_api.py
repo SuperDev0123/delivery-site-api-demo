@@ -1033,6 +1033,8 @@ def booking_st(request):
                 oneLog.save()
 
                 results.append({"Created Booking ID": data0['consignmentNumber']})
+                Api_booking_confirmation_lines.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
+
                 for item in data0['items']:
                     book_con = Api_booking_confirmation_lines(fk_booking_id=booking.pk_booking_id,
                                                               api_item_id=item["itemId"])
