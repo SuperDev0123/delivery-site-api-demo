@@ -259,6 +259,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'b_clientReference_RA_Numbers': booking.b_clientReference_RA_Numbers, 
                 'b_status': booking.b_status, 
                 'vx_freight_provider': booking.vx_freight_provider, 
+                'v_FPBookingNumber': booking.v_FPBookingNumber,
                 'vx_serviceName': booking.vx_serviceName, 
                 's_05_LatestPickUpDateTimeFinal': booking.s_05_LatestPickUpDateTimeFinal, 
                 's_06_LatestDeliveryDateTimeFinal': booking.s_06_LatestDeliveryDateTimeFinal, 
