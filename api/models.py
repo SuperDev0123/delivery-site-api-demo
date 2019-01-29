@@ -548,4 +548,140 @@ class Api_booking_confirmation_lines(models.Model):
 	class Meta:
 		db_table = 'api_booking_confirmation_lines'
 
+class api_booking_quotes(models.Model):
+	id = models.AutoField(primary_key=True)
+	api_results_id = models.IntegerField(verbose_name=_('Result ID'), blank=True, null=True)
+	fk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True)
+	fk_client_id = models.CharField(verbose_name=_('Client ID'), max_length=64, blank=True, null=True)
+	fk_freight_provider_id = models.CharField(verbose_name=_('Freight Provider ID'), max_length=64, blank=True, null=True)
+	provider = models.CharField(verbose_name=_('Provider'), max_length=64, blank=True, null=True)
+	service_code = models.CharField(verbose_name=_('Service Code'), max_length=10, blank=True, null=True)
+	service_name = models.CharField(verbose_name=_('Service Name'), max_length=24, blank=True, null=True)
+	fee = models.FloatField(verbose_name=_('Fee'), blank=True, null=True)
+	etd = models.CharField(verbose_name=_('ETD'), max_length=64, blank=True, null=True)
+	tax_id_1 = models.CharField(verbose_name=_('Tax ID 1'), max_length=10, blank=True, null=True)
+	tax_value_1 = models.IntegerField(verbose_name=_('Tax Value 1'), blank=True, null=True)
+	tax_id_2 = models.CharField(verbose_name=_('Tax ID 2'), max_length=10, blank=True, null=True)
+	tax_value_2 = models.IntegerField(verbose_name=_('Tax Value 2'), blank=True, null=True)
+	tax_id_3 = models.CharField(verbose_name=_('Tax ID 3'), max_length=10, blank=True, null=True)
+	tax_value_3 = models.IntegerField(verbose_name=_('Tax Value 3'), blank=True, null=True)
+	tax_id_4 = models.CharField(verbose_name=_('Tax ID 4'), max_length=10, blank=True, null=True)
+	tax_value_4 = models.IntegerField(verbose_name=_('Tax Value 4'), blank=True, null=True)
+	tax_id_5 = models.CharField(verbose_name=_('Tax ID 5'), max_length=10, blank=True, null=True)
+	tax_value_5 = models.IntegerField(verbose_name=_('Tax Value 5'), blank=True, null=True)
+	b_client_markup2_percentage = models.FloatField(verbose_name=_('Client Markup2 Percent'), blank=True, null=True)
+	fp_01_pu_possible = models.CharField(verbose_name=_('PU possible'), max_length=64, blank=True, null=True)
+	fp_02_del_possible = models.CharField(verbose_name=_('DEL possible'), max_length=64, blank=True, null=True)
+	fp_03_del_possible_price = models.CharField(verbose_name=_('DEL possible price'), max_length=64, blank=True, null=True)
+	booking_cut_off = models.DateTimeField(verbose_name=_('Booking cut off'), default=datetime.now, blank=True, null=True)
+	collection_cut_off = models.DateTimeField(verbose_name=_('Collection cut off'), default=datetime.now, blank=True, null=True)
+	mu_percentage_fuel_levy = models.FloatField(verbose_name=_('Mu Percentage Fuel Levy'), blank=True, null=True)
+	client_mu_1_minimum_values = models.FloatField(verbose_name=_('Client MU 1 Minimum Value'), blank=True, null=True)
+	x_price_per_UOM = models.IntegerField(verbose_name=_('Price per UOM'), blank=True, null=True)
+	fp_latest_promised_pu = models.DateTimeField(verbose_name=_('Lastest Promised PU'), default=datetime.now, blank=True, null=True)
+	fp_latest_promised_del = models.DateTimeField(verbose_name=_('Lastest Timestamp DEL'), default=datetime.now, blank=True, null=True)
+	x_for_dme_price_ToxbyPricePerUOM = models.IntegerField(verbose_name=_('For DME Price ToxByPricePerUOM'), blank=True, null=True)
+	x_for_dem_price_base_price = models.IntegerField(verbose_name=_('For DEM Price Base Price'), blank=True, null=True)
+	x_fk_pricin_id = models.IntegerField(verbose_name=_('Pricin ID'), blank=True, null=True)
+	x_price_surcharge = models.IntegerField(verbose_name=_('Price Surcharge'), blank=True, null=True)
+	x_minumum_charge = models.IntegerField(verbose_name=_('Minimum Charge'), blank=True, null=True)
+	z_fp_delivery_hours = models.IntegerField(verbose_name=_('Delivery Hours'), blank=True, null=True)
+	s_05_LatestPickUpDateTimeFinal = models.DateTimeField(verbose_name=_('Latest PickUP Date Time Final'), default=datetime.now, blank=True, null=True)
+	s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(verbose_name=_('Latest Delivery Date Time Final'), default=datetime.now, blank=True, null=True)
+	z_03_selected_lowest_priced_FC_that_passed = models.FloatField(verbose_name=_('Selected Lowest Priced FC That Passed'), blank=True, null=True)
+	zc_dme_service_translation_nocalc = models.CharField(verbose_name=_('DME service translation no calc'), max_length=64, blank=True, null=True)
+	z_selected_manual_auto = models.CharField(verbose_name=_('Selected Manual Auto'), max_length=64, blank=True, null=True)
+	z_selected_timestamp = models.DateTimeField(verbose_name=_('Selected Timestamp'), default=datetime.now)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
 
+	class Meta:
+		db_table = 'api_booking_quotes'
+
+class Api_booking_quotes_confirmation(models.Model):
+	id = models.AutoField(primary_key=True)
+	api_shipment_id = models.CharField(verbose_name=_('API shipment ID'), max_length=64, blank=True, null=True)
+	fk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True)
+	kf_order_id = models.CharField(verbose_name=_('Order ID'), max_length=64, blank=True, null=True)
+	fk_freight_provider_id = models.CharField(verbose_name=_('Freight Provider ID'), max_length=64, blank=True, null=True)
+	fk_booking_quote_confirmation = models.CharField(verbose_name=_('Freight Provider ID'), max_length=64, blank=True, null=True)
+	job_date = models.DateTimeField(verbose_name=_('Job Date'), default=datetime.now, blank=True, null=True)
+	provider = models.CharField(verbose_name=_('Provider'), max_length=64, blank=True, null=True)
+	tracking_number = models.CharField(verbose_name=_('Tracking Number'), max_length=64, blank=True, null=True)
+	job_number = models.CharField(verbose_name=_('Job Number'), max_length=64, blank=True, null=True)
+	api_number_of_shipment_items = models.CharField(verbose_name=_('API Number Of Shipment Items'), max_length=64, blank=True, null=True)
+	etd = models.CharField(verbose_name=_('ETD'), max_length=64, blank=True, null=True)
+	fee = models.FloatField(verbose_name=_('Fee'), blank=True, null=True)
+	tax_id_1 = models.CharField(verbose_name=_('Tax ID 1'), max_length=10, blank=True, null=True)
+	tax_value_1 = models.IntegerField(verbose_name=_('Tax Value 1'), blank=True, null=True)
+	tax_id_2 = models.CharField(verbose_name=_('Tax ID 2'), max_length=10, blank=True, null=True)
+	tax_value_2 = models.IntegerField(verbose_name=_('Tax Value 2'), blank=True, null=True)
+	tax_id_3 = models.CharField(verbose_name=_('Tax ID 3'), max_length=10, blank=True, null=True)
+	tax_value_3 = models.IntegerField(verbose_name=_('Tax Value 3'), blank=True, null=True)
+	tax_id_4 = models.CharField(verbose_name=_('Tax ID 4'), max_length=10, blank=True, null=True)
+	tax_value_4 = models.IntegerField(verbose_name=_('Tax Value 4'), blank=True, null=True)
+	tax_id_5 = models.CharField(verbose_name=_('Tax ID 5'), max_length=10, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'api_booking_quotes_confirmation'
+
+class Utl_suburbs(models.Model):
+	id = models.AutoField(primary_key=True)
+	postal_code = models.CharField(verbose_name=_('Postal Code'), max_length=64, blank=True, null=True)
+	state = models.CharField(verbose_name=_('State'), max_length=64, blank=True, null=True)
+	suburb = models.CharField(verbose_name=_('Suburb'), max_length=64, blank=True, null=True)
+	ROUTING_ZONE = models.CharField(verbose_name=_('Routing Zone'), max_length=64, blank=True, null=True)
+	ROUTING_CODE = models.CharField(verbose_name=_('Routing Code'), max_length=64, blank=True, null=True)
+	RATING_ZONE_DIRECT = models.CharField(verbose_name=_('Rating Zone Direct'), max_length=64, blank=True, null=True)
+	RATING_ZONE_MEGA = models.CharField(verbose_name=_('Rating Zone Mega'), max_length=64, blank=True, null=True)
+	category = models.CharField(verbose_name=_('Category'), max_length=64, blank=True, null=True)
+	z_BorderExpressEmailForState = models.CharField(verbose_name=_('Border Express Email For State'), max_length=64, blank=True, null=True)
+	comment = models.CharField(verbose_name=_('Comment'), max_length=64, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'utl_suburbs'
+
+class Utl_states(models.Model):
+	id = models.AutoField(primary_key=True)
+	type = models.CharField(verbose_name=_('Type'), max_length=64, blank=True, null=True)
+	service_code = models.CharField(verbose_name=_('Service Code'), max_length=10, blank=True, null=True)
+	service_name = models.CharField(verbose_name=_('Service Name'), max_length=24, blank=True, null=True)
+	borderExpress_pu_emails	 = models.CharField(verbose_name=_('Border Express PU Emails'), max_length=64, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'utl_states'
+
+class Dme_status_history(models.Model):
+	id = models.AutoField(primary_key=True)
+	fk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True)
+	status_last = models.CharField(verbose_name=_('Status Last'), max_length=32, blank=True, null=True)
+	notes = models.CharField(verbose_name=_('Notes'), max_length=200, blank=True, null=True)
+	communicate_tick = models.BooleanField(verbose_name=_('Communicate Tick'), default=False, blank=True, null=True)
+	notes_type = models.CharField(verbose_name=_('Notes Type'), max_length=24, blank=True, null=True)
+	status_old = models.CharField(verbose_name=_('Status Old'), max_length=32, blank=True, null=True)
+	update_via_api = models.DateTimeField(verbose_name=_('Update Via Api'), default=datetime.now, blank=True, null=True)
+	api_status_time_stamp = models.DateTimeField(verbose_name=_('Api Status Time Stamp'), default=datetime.now, blank=True, null=True)
+	api_status_pretranslation = models.CharField(verbose_name=_('Api Status Pretranslation'), max_length=64, blank=True, null=True)
+	booking_request_data = models.CharField(verbose_name=_('Booking Request Data'), max_length=64, blank=True, null=True)
+	request_dates = models.CharField(verbose_name=_('Request Dates'), max_length=64, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'Dme_status_history'
