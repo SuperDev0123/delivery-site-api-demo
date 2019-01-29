@@ -684,4 +684,4 @@ class Dme_status_history(models.Model):
 	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
 
 	class Meta:
-		db_table = 'Dme_status_history'
+		db_table = 'dme_status_history'
