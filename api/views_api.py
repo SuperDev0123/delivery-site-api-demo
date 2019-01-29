@@ -23,7 +23,8 @@ import datetime
 from ast import literal_eval
 
 from .serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
-from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings, Booking_lines
+from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings, Booking_lines, \
+    Api_booking_confirmation_lines
 from .models import Log
 
 
@@ -740,12 +741,14 @@ def get_label_st_fn(bid):
         data['type'] = "PRINT"
 
         items = []
+        confirmation_items = Api_booking_confirmation_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-        temp_item = {"itemId": "_CMK0E6mwiMAAAFoYvcg7Ha9",
-                     "packagingType": "PAL",
-                     "weight": 10
-                     }
-        items.append(temp_item)
+        for ite in confirmation_items:
+            temp_item = {"itemId": ite.api_item_id,
+                         "packagingType": "PAL",
+                         "weight": 10
+                         }
+            items.append(temp_item)
 
         data['items'] = items
 
@@ -788,7 +791,7 @@ def get_label_st_fn(bid):
 
             booking.z_label_url = data0["url"]
             booking.save()
-            results.append({"Created Booking ID": data0['consignmentNumber']})
+            results.append({"Created label url ": data0["url"]})
         except KeyError:
             results.append({"Error": data0["errorMsg"]})
 
@@ -1030,6 +1033,13 @@ def booking_st(request):
                 oneLog.save()
 
                 results.append({"Created Booking ID": data0['consignmentNumber']})
+                Api_booking_confirmation_lines.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
+
+                for item in data0['items']:
+                    book_con = Api_booking_confirmation_lines(fk_booking_id=booking.pk_booking_id,
+                                                              api_item_id=item["itemId"])
+                    book_con.save()
+
                 get_label_st_fn(booking.id)
             except KeyError:
                 booking.b_error_Capture = data0["errorMsg"]
