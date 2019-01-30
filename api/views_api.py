@@ -623,7 +623,7 @@ def get_label_st_fn(bid):
             data['labelType'] = "PRINT"
 
             url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
-            time.sleep(3)
+            time.sleep(5)
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
@@ -634,7 +634,10 @@ def get_label_st_fn(bid):
             booking.save()
             results.append({"Created label url ": data0["url"]})
         except KeyError:
-            results.append({"Error": data0["errorMsg"]})
+            try:
+                results.append({"Error": data0["errorMsg"]})
+            except KeyError:
+                results.append({"Error": s0})
 
     except IndexError:
         results.append({"message": "Booking not found"})
@@ -830,18 +833,18 @@ def booking_st(request):
             items = []
 
             for line in booking_lines:
-
-                temp_item = {"dangerous": 0,
-                                "itemId": "EXP",
-                                "packagingType": "PAL",
-                                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                                "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                                "quantity": 0 if line.e_qty is None else line.e_qty,
-                                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                                "width": 0 if line.e_dimWidth is None else line.e_dimWidth
-                             }
-                items.append(temp_item)
+                for i in range(line.e_qty):
+                    temp_item = {"dangerous": 0,
+                                    "itemId": "EXP",
+                                    "packagingType": "PAL",
+                                    "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
+                                    "length": 0 if line.e_dimLength is None else line.e_dimLength,
+                                    "quantity": 0 if line.e_qty is None else line.e_qty,
+                                    "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                    "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                    "width": 0 if line.e_dimWidth is None else line.e_dimWidth
+                                 }
+                    items.append(temp_item)
 
             data['items'] = items
             print(data)
