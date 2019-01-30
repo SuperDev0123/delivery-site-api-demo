@@ -765,7 +765,7 @@ def get_label_st_fn(bid):
 
         data['pageFormat'] = items
 
-        print(data)
+        print('Payload(Get Label for ST): ', data)
 
         url = "http://52.39.202.126:8080/dme-api-sit/labelling/createlabel"
         response0 = requests.post(url, params={}, json=data)
@@ -791,7 +791,7 @@ def get_label_st_fn(bid):
 
             booking.z_label_url = data0["url"]
             booking.save()
-            results.append({"Created label url ": data0["url"]})
+            results.append({"Created label url": data0["url"]})
         except KeyError:
             results.append({"Error": data0["errorMsg"]})
 
