@@ -623,7 +623,7 @@ def get_label_st_fn(bid):
             data['labelType'] = "PRINT"
 
             url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
-            time.sleep(3)
+            time.sleep(5)
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
@@ -634,7 +634,10 @@ def get_label_st_fn(bid):
             booking.save()
             results.append({"Created label url ": data0["url"]})
         except KeyError:
-            results.append({"Error": data0["errorMsg"]})
+            try:
+                results.append({"Error": data0["errorMsg"]})
+            except KeyError:
+                results.append({"Error": s0})
 
     except IndexError:
         results.append({"message": "Booking not found"})
