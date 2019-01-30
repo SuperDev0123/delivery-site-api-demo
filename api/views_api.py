@@ -833,18 +833,18 @@ def booking_st(request):
             items = []
 
             for line in booking_lines:
-
-                temp_item = {"dangerous": 0,
-                                "itemId": "EXP",
-                                "packagingType": "PAL",
-                                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                                "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                                "quantity": 0 if line.e_qty is None else line.e_qty,
-                                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                                "width": 0 if line.e_dimWidth is None else line.e_dimWidth
-                             }
-                items.append(temp_item)
+                for i in range(line.e_qty):
+                    temp_item = {"dangerous": 0,
+                                    "itemId": "EXP",
+                                    "packagingType": "PAL",
+                                    "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
+                                    "length": 0 if line.e_dimLength is None else line.e_dimLength,
+                                    "quantity": 0 if line.e_qty is None else line.e_qty,
+                                    "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                    "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                    "width": 0 if line.e_dimWidth is None else line.e_dimWidth
+                                 }
+                    items.append(temp_item)
 
             data['items'] = items
             print(data)
