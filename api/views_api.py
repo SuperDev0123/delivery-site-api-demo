@@ -1073,3 +1073,45 @@ def returnexcel(request):
 
     workbook.close()
     return response
+
+
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def cancel_booking(request):
+    results = []
+    try:
+        bid = literal_eval(request.body.decode('utf8'))
+        bid = bid["booking_id"]
+        booking = Bookings.objects.filter(id=bid)[0]
+
+        data = {}
+        data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                    "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                    "accountPassword": "x9083d2fed4d50aa2ad5"}
+        data['serviceProvider'] = "ST"
+        data['consignmentNumber'] = booking.v_FPBookingNumber
+
+
+        url = "http://52.39.202.126:8080/dme-api-sit/booking/cancelconsignment"
+        response0 = requests.delete(url, params={}, json=data)
+        response0 = response0.content.decode('utf8').replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+        print(s0)
+
+        try:
+            a = data0["requestId"]
+            booking.b_status = "Closed"
+            booking.b_booking_Notes = "This booking has been closed vis Startrack API"
+            booking.save()
+            results.append({"message": "Booking canceled "})
+        except KeyError:
+
+            results.append({"message": "Error while canceling "})
+
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
+
+    return Response(results)
