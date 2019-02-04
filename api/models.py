@@ -425,6 +425,7 @@ class BOK_1_headers(models.Model):
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('z_createdTimeStamp'), default=datetime.now, blank=True)
 	b_client_warehouse_code = models.CharField(verbose_name=_('Warehouse code'), max_length=64, blank=True, null=True, default='')
 	fp_pu_id = models.CharField(verbose_name=_('Warehouse code'), max_length=64, blank=True, null=True, default='')
+	b_100_client_price_paid_or_quoted = models.CharField(max_length=64, blank=True, null=True, default='')
 	zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default='')
 	zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default='')
 	zb_103_text_3 = models.CharField(max_length=64, blank=True, null=True, default='')
