@@ -22,6 +22,58 @@ from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def getSuburbs(request):
+    requestType = request.GET.get('type')
+    return_data = []
+    try:
+        resultObjects = []
+        if requestType == 'state':
+            resultObjects = Utl_suburbs.objects.all()
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.state.lower(), 'label': resultObject.state}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+                    except:
+                        return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+                else:
+                    return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+        elif requestType == 'postalcode':
+            stateName = request.GET.get('name')
+            resultObjects = Utl_suburbs.objects.select_related().filter(state = stateName)
+            
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.postal_code, 'label': resultObject.postal_code}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+                    except:
+                        return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+                else:#
+                    return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+        elif requestType == 'suburb':
+            postalCode = request.GET.get('name')
+            resultObjects = Utl_suburbs.objects.select_related().filter(postal_code = postalCode)
+
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.suburb, 'label': resultObject.suburb}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+                    except:
+                        return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+                else:#
+                    return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+        return JsonResponse({'type': requestType,'suburbs': return_data})
+    except Exception as e:
+        return JsonResponse({'type': requestType,'suburbs': ''})
+
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def username(self, request, format=None):
@@ -341,7 +393,34 @@ class BookingViewSet(viewsets.ViewSet):
                 return_data = []
 
                 if booking is not None:
-                    return_data = {'id': booking.id, 'puCompany': booking.puCompany,'pu_Address_Street_1': booking.pu_Address_Street_1, 'pu_Address_street_2': booking.pu_Address_street_2, 'pu_Address_PostalCode': booking.pu_Address_PostalCode, 'pu_Address_Suburb': booking.pu_Address_Suburb, 'pu_Address_Country': booking.pu_Address_Country, 'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name, 'pu_Phone_Main': booking.pu_Phone_Main, 'pu_Email': booking.pu_Email,'de_To_Address_Street_1': booking.de_To_Address_Street_1, 'de_To_Address_Street_2':booking.de_To_Address_Street_2, 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode, 'de_To_Address_Suburb': booking.de_To_Address_Suburb, 'de_To_Address_Country': booking.de_To_Address_Country, 'de_to_Contact_F_LName': booking.de_to_Contact_F_LName, 'de_to_Phone_Main':booking.de_to_Phone_Main,  'de_Email': booking.de_Email, 'deToCompanyName': booking.deToCompanyName, 'b_bookingID_Visual': booking.b_bookingID_Visual, 'v_FPBookingNumber': booking.v_FPBookingNumber, 'pk_booking_id': booking.pk_booking_id,'vx_freight_provider': booking.vx_freight_provider,'z_label_url': booking.z_label_url}
+                    return_data = {
+                        'id': booking.id,
+                        'puCompany': booking.puCompany,
+                        'pu_Address_Street_1': booking.pu_Address_Street_1,
+                        'pu_Address_street_2': booking.pu_Address_street_2,
+                        'pu_Address_PostalCode': booking.pu_Address_PostalCode,
+                        'pu_Address_Suburb': booking.pu_Address_Suburb,
+                        'pu_Address_Country': booking.pu_Address_Country,
+                        'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name,
+                        'pu_Phone_Main': booking.pu_Phone_Main,
+                        'pu_Email': booking.pu_Email,
+                        'de_To_Address_Street_1': booking.de_To_Address_Street_1,
+                        'de_To_Address_Street_2':booking.de_To_Address_Street_2,
+                        'de_To_Address_PostalCode': booking.de_To_Address_PostalCode,
+                        'de_To_Address_Suburb': booking.de_To_Address_Suburb,
+                        'de_To_Address_Country': booking.de_To_Address_Country,
+                        'de_to_Contact_F_LName': booking.de_to_Contact_F_LName,
+                        'de_to_Phone_Main':booking.de_to_Phone_Main,
+                        'de_Email': booking.de_Email,
+                        'deToCompanyName': booking.deToCompanyName, 
+                        'b_bookingID_Visual': booking.b_bookingID_Visual,
+                        'v_FPBookingNumber': booking.v_FPBookingNumber, 
+                        'pk_booking_id': booking.pk_booking_id,
+                        'vx_freight_provider': booking.vx_freight_provider,
+                        'z_label_url': booking.z_label_url,
+                        'pu_Address_State': booking.pu_Address_State,
+                        'b_status': booking.b_status,
+                    }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
