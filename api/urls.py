@@ -39,4 +39,5 @@ urlpatterns += [
     url(r'^excel/', returnexcel),
     url(r'^get_label_st/', get_label_st),
 
+    url(r'^suburb/', getSuburbs),
 ]
