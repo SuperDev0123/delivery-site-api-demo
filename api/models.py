@@ -413,6 +413,7 @@ class BOK_1_headers(models.Model):
 	b_500_b_client_UOM = models.CharField(verbose_name=_('b_500_b_client_UOM'), max_length=20, blank=True, null=True)
 	b_501_b_client_code = models.CharField(verbose_name=_('b_501_b_client_code'), max_length=50, blank=True, null=True)
 	pu_addressed_saved = models.CharField(verbose_name=_('pu_addressed_saved'), max_length=3, blank=True, null=True)
+	de_to_addressed_saved = models.CharField(verbose_name=_('de_to_addressed_saved'), max_length=3, blank=True, null=True)
 	b_client_max_book_amount = models.IntegerField(verbose_name=_('b_client_max_book_amount'), blank=True, default=0, null=True)
 	vx_serviceType_XXX = models.CharField(verbose_name=_('vx_serviceType_XXX'), max_length=50, blank=True, null=True)
 	b_021_pu_avail_from_date = models.DateTimeField(verbose_name=_('b_021_pu_avail_from_date'), default=datetime.now, blank=True, null=True)
@@ -698,7 +699,7 @@ class Api_booking_quotes_confirmation(models.Model):
 class Utl_suburbs(models.Model):
 	id = models.AutoField(primary_key=True)
 	postal_code = models.CharField(verbose_name=_('Postal Code'), max_length=64, blank=True, null=True)
-	fk_state_id = models.IntegerField(verbose_name=_('FK State ID'), blank=True, null=False)
+	fk_state_id = models.IntegerField(verbose_name=_('FK State ID'), blank=True, null=False, default=0)
 	state = models.CharField(verbose_name=_('State'), max_length=64, blank=True, null=True)
 	suburb = models.CharField(verbose_name=_('Suburb'), max_length=64, blank=True, null=True)
 	ROUTING_ZONE = models.CharField(verbose_name=_('Routing Zone'), max_length=64, blank=True, null=True)
@@ -719,8 +720,8 @@ class Utl_suburbs(models.Model):
 class Utl_states(models.Model):
 	id = models.AutoField(primary_key=True)
 	type = models.CharField(verbose_name=_('Type'), max_length=64, blank=True, null=True)
-	fk_country_id = models.IntegerField(verbose_name=_('FK Country ID'), blank=True, null=False)
-	pk_state_id = models.IntegerField(verbose_name=_('PK State ID'), blank=True, null=False)
+	fk_country_id = models.IntegerField(verbose_name=_('FK Country ID'), blank=True, null=False, default=0)
+	pk_state_id = models.IntegerField(verbose_name=_('PK State ID'), blank=True, null=False, default=0)
 	state_code = models.CharField(verbose_name=_('State Code'), max_length=10, blank=True, null=True)
 	state_name = models.CharField(verbose_name=_('State Name'), max_length=64, blank=True, null=True)
 	borderExpress_pu_emails	 = models.CharField(verbose_name=_('Border Express PU Emails'), max_length=64, blank=True, null=True)
@@ -734,7 +735,7 @@ class Utl_states(models.Model):
 
 class Utl_country_codes(models.Model):
 	id = models.AutoField(primary_key=True)
-	pk_country_id = models.IntegerField(verbose_name=_('PK Country Id'), blank=True, null=False)
+	pk_country_id = models.IntegerField(verbose_name=_('PK Country Id'), blank=True, null=False, default=0)
 	country_code_abbr = models.CharField(verbose_name=_('Country Code Abbr'), max_length=16, blank=True, null=True)
 	country_name = models.CharField(verbose_name=_('Country Name'), max_length=36, blank=True, null=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
