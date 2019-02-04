@@ -634,6 +634,7 @@ class Api_booking_quotes_confirmation(models.Model):
 class Utl_suburbs(models.Model):
 	id = models.AutoField(primary_key=True)
 	postal_code = models.CharField(verbose_name=_('Postal Code'), max_length=64, blank=True, null=True)
+	fk_state_id = models.CharField(verbose_name=_('FK State ID'), max_length=64, blank=True, null=True)
 	state = models.CharField(verbose_name=_('State'), max_length=64, blank=True, null=True)
 	suburb = models.CharField(verbose_name=_('Suburb'), max_length=64, blank=True, null=True)
 	ROUTING_ZONE = models.CharField(verbose_name=_('Routing Zone'), max_length=64, blank=True, null=True)
@@ -654,8 +655,10 @@ class Utl_suburbs(models.Model):
 class Utl_states(models.Model):
 	id = models.AutoField(primary_key=True)
 	type = models.CharField(verbose_name=_('Type'), max_length=64, blank=True, null=True)
-	service_code = models.CharField(verbose_name=_('Service Code'), max_length=10, blank=True, null=True)
-	service_name = models.CharField(verbose_name=_('Service Name'), max_length=24, blank=True, null=True)
+	fk_country_id = models.CharField(verbose_name=_('FK Country ID'), max_length=64, blank=True, null=True)
+	pk_state_id = models.CharField(verbose_name=_('PK State ID'), max_length=64, blank=True, null=True)
+	state_code = models.CharField(verbose_name=_('State Code'), max_length=10, blank=True, null=True)
+	state_name = models.CharField(verbose_name=_('State Name'), max_length=64, blank=True, null=True)
 	borderExpress_pu_emails	 = models.CharField(verbose_name=_('Border Express PU Emails'), max_length=64, blank=True, null=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
@@ -664,6 +667,19 @@ class Utl_states(models.Model):
 
 	class Meta:
 		db_table = 'utl_states'
+
+class Utl_country_codes(models.Model):
+	id = models.AutoField(primary_key=True)
+	pk_country_id = models.CharField(verbose_name=_('PK Country Id'), max_length=11, blank=True, null=True)
+	country_code_abbr = models.CharField(verbose_name=_('Country Code Abbr'), max_length=16, blank=True, null=True)
+	country_name = models.CharField(verbose_name=_('Country Name'), max_length=36, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'utl_country_codes'
 
 class Dme_status_history(models.Model):
 	id = models.AutoField(primary_key=True)
