@@ -723,8 +723,8 @@ def booking_allied(request):
                                 "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
                                 "length": 0 if line.e_dimLength is None else line.e_dimLength,
                                 "quantity": 0 if line.e_qty is None else line.e_qty,
-                                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                "volume": 0 if line.e_1_Total_dimCubicMeter is None else line.e_1_Total_dimCubicMeter,
+                                "weight": 0 if line.e_Total_KG_weight is None else line.e_Total_KG_weight,
                                 "width": 0 if line.e_dimWidth is None else line.e_dimWidth
                              }
                 items.append(temp_item)
@@ -966,8 +966,8 @@ def edit_booking_st(request):
                                 "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
                                 "length": 0 if line.e_dimLength is None else line.e_dimLength,
                                 "quantity": 0 if line.e_qty is None else line.e_qty,
-                                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                                "volume": 0 if line.e_1_Total_dimCubicMeter is None else line.e_1_Total_dimCubicMeter,
+                                "weight": 0 if line.e_Total_KG_weight is None else line.e_Total_KG_weight,
                                 "width": 0 if line.e_dimWidth is None else line.e_dimWidth
                              }
                 items.append(temp_item)

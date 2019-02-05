@@ -40,4 +40,5 @@ urlpatterns += [
     url(r'^get_label_st/', get_label_st),
     url(r'^cancel_booking/', cancel_booking),
 
+    url(r'^suburb/', getSuburbs),
 ]
