@@ -106,7 +106,18 @@ class BookingLinesView(APIView):
             return_data = []
 
             for booking_line in booking_lines:
-                return_data.append({'pk_lines_id': booking_line.pk_lines_id, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
+                return_data.append({
+                    'pk_lines_id': booking_line.pk_lines_id, 
+                    'e_type_of_packaging': booking_line.e_type_of_packaging, 
+                    'e_item': booking_line.e_item, 
+                    'e_qty': booking_line.e_qty, 
+                    'e_weightUOM': booking_line.e_weightUOM, 
+                    'e_weightPerEach': booking_line.e_weightPerEach, 
+                    'e_dimUOM': booking_line.e_dimUOM, 
+                    'e_dimLength': booking_line.e_dimLength, 
+                    'e_dimWidth': booking_line.e_dimWidth, 
+                    'e_dimHeight': booking_line.e_dimHeight
+                })
 
             return JsonResponse({'booking_lines': return_data})
 
@@ -119,7 +130,16 @@ class BookingLineDetailsView(APIView):
             return_data = []
 
             for booking_line_detail in booking_line_details:
-                return_data.append({'modelNumber': booking_line_detail.modelNumber, 'itemDescription': booking_line_detail.itemDescription, 'quantity': booking_line_detail.quantity, 'itemFaultDescription': booking_line_detail.itemFaultDescription, 'insuranceValueEach': booking_line_detail.insuranceValueEach, 'gap_ra': booking_line_detail.gap_ra, 'clientRefNumber': booking_line_detail.clientRefNumber})
+                return_data.append({
+                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
+                    'modelNumber': booking_line_detail.modelNumber, 
+                    'itemDescription': booking_line_detail.itemDescription, 
+                    'quantity': booking_line_detail.quantity, 
+                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
+                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
+                    'gap_ra': booking_line_detail.gap_ra, 
+                    'clientRefNumber': booking_line_detail.clientRefNumber
+                })
 
             return JsonResponse({'booking_line_details': return_data})
         else:
@@ -127,7 +147,16 @@ class BookingLineDetailsView(APIView):
             return_data = []
 
             for booking_line_detail in booking_line_details:
-                return_data.append({'modelNumber': booking_line_detail.modelNumber, 'itemDescription': booking_line_detail.itemDescription, 'quantity': booking_line_detail.quantity, 'itemFaultDescription': booking_line_detail.itemFaultDescription, 'insuranceValueEach': booking_line_detail.insuranceValueEach, 'gap_ra': booking_line_detail.gap_ra, 'clientRefNumber': booking_line_detail.clientRefNumber})
+                return_data.append({
+                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
+                    'modelNumber': booking_line_detail.modelNumber, 
+                    'itemDescription': booking_line_detail.itemDescription, 
+                    'quantity': booking_line_detail.quantity, 
+                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
+                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
+                    'gap_ra': booking_line_detail.gap_ra, 
+                    'clientRefNumber': booking_line_detail.clientRefNumber
+                })
 
             return JsonResponse({'booking_line_details': return_data})
 
@@ -419,6 +448,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'vx_freight_provider': booking.vx_freight_provider,
                         'z_label_url': booking.z_label_url,
                         'pu_Address_State': booking.pu_Address_State,
+                        'de_To_Address_State': booking.de_To_Address_State,
                         'b_status': booking.b_status,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
