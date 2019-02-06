@@ -504,6 +504,13 @@ def hunter_tracking(request):
 
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
+            request_type = "TRACKING"
+            request_status = "ERROR"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
+
             results.append({"Error": "Too many request"})
 
     return Response(results)
@@ -540,8 +547,22 @@ def get_label_allied_fn(bid):
 
             booking.z_label_url = str(booking.b_bookingID_Visual) + '.pdf'
             booking.save()
+            request_type = "ALLIED GET LABEL"
+            request_status = "SUCCESS"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
+
             results.append({"Created label ID": file_url})
         except KeyError:
+            request_type = "ALLIED GET LABEL"
+            request_status = "ERROR"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
+
             results.append({"Error": data0["errorMsg"]})
 
     except IndexError:
@@ -632,9 +653,21 @@ def get_label_st_fn(bid):
 
             booking.z_label_url = data0["url"]
             booking.save()
+            request_type = "ST Label"
+            request_status = "SUCCESS"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
             results.append({"Created label url": data0["url"]})
         except KeyError:
             try:
+                request_type = "ST Label"
+                request_status = "ERROR"
+                oneLog = Log(request_payload=data, request_status=request_status,
+                             request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
                 results.append({"Error": data0["errorMsg"]})
             except KeyError:
                 results.append({"Error": s0})
@@ -764,6 +797,12 @@ def booking_allied(request):
             except KeyError:
                 booking.b_error_Capture = data0["errorMsg"]
                 booking.save()
+                request_type = "ALLIED BOOKING"
+                request_status = "ERROR"
+                oneLog = Log(request_payload=data, request_status=request_status,
+                             request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
@@ -771,6 +810,68 @@ def booking_allied(request):
 
     except SyntaxError:
         results.append({"message": "booking id is required"})
+
+    return Response(results)
+
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def st_create_order(request):
+    results = []
+    print('Date (Create Order for ST): ', datetime.datetime.now().strftime("%Y-%m-%d"))
+
+    try:
+        bookings = Bookings.objects.filter(puPickUpAvailFrom_Date=datetime.datetime.now().strftime("%Y-%m-%d"), b_status="Booked")
+
+        data = {}
+
+        data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                    "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                    "accountPassword": "x9083d2fed4d50aa2ad5"}
+        data['serviceProvider'] = "ST"
+        data['paymentMethods'] = "CHARGE_TO_ACCOUNT"
+        data['referenceNumber'] = "refer1"
+
+        booking_numbers = []
+        for booking in bookings:
+            booking_numbers.append(booking.v_FPBookingNumber)
+
+        data['consignmentNumber'] = booking_numbers
+
+        print('Payload(Create Order for ST): ', data)
+
+        url = "http://52.39.202.126:8080/dme-api-sit/order/create"
+        response0 = requests.post(url, params={}, json=data)
+        response0 = response0.content.decode('utf8').replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+        print(s0)
+
+        try:
+            results.append({"Order create Successfully ": data0["orderId"]})
+
+            request_type = "Create Order"
+            request_status = "SUCCESS"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
+
+        except KeyError:
+            try:
+                request_type = "Create Order"
+                request_status = "ERROR"
+                oneLog = Log(request_payload=data, request_status=request_status,
+                             request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
+                results.append({"Error": data0["errorMsg"]})
+            except KeyError:
+                results.append({"Error": s0})
+
+    except IndexError:
+        results.append({"message": "Booking not found"})
 
     return Response(results)
 
@@ -888,6 +989,12 @@ def booking_st(request):
             except KeyError:
                 booking.b_error_Capture = data0["errorMsg"]
                 booking.save()
+                request_type = "ST BOOKING"
+                request_status = "ERROR"
+                oneLog = Log(request_payload=data, request_status=request_status,
+                             request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
@@ -1014,6 +1121,13 @@ def edit_booking_st(request):
             except KeyError:
                 booking.b_error_Capture = data0["errorMsg"]
                 booking.save()
+                request_type = "EDIT ST BOOKING"
+                request_status = "ERROR"
+                oneLog = Log(request_payload=data, request_status=request_status,
+                             request_type=request_type,
+                             response=response0, fk_booking_id=booking.id)
+                oneLog.save()
+
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
@@ -1106,8 +1220,21 @@ def cancel_booking(request):
             booking.b_status = "Closed"
             booking.b_booking_Notes = "This booking has been closed vis Startrack API"
             booking.save()
+            request_type = "CANCEL ST BOOKING"
+            request_status = "SUCCESS"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
+
             results.append({"message": "Booking canceled "})
         except KeyError:
+            request_type = "CANCEL ST BOOKING"
+            request_status = "ERROR"
+            oneLog = Log(request_payload=data, request_status=request_status,
+                         request_type=request_type,
+                         response=response0, fk_booking_id=booking.id)
+            oneLog.save()
 
             results.append({"message": "Error while canceling "})
 
