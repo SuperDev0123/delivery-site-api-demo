@@ -38,6 +38,8 @@ urlpatterns += [
     url(r'^get_label_allied/', get_label_allied),
     url(r'^excel/', returnexcel),
     url(r'^get_label_st/', get_label_st),
+    url(r'^cancel_booking/', cancel_booking),
+    url(r'^st_create_order/', st_create_order),
 
     url(r'^suburb/', getSuburbs),
 ]
