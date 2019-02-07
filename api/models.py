@@ -9,7 +9,7 @@ from django.contrib.auth.models import BaseUserManager
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
-	dme_account_num = models.CharField(verbose_name=_('dme account num'), max_length=230)
+	dme_account_num = models.CharField(verbose_name=_('dme account num'), max_length=230, default='')
 	phone = models.IntegerField(verbose_name=_('phone number'))
 	client_filter_date_field = models.CharField(verbose_name=_('Client Filter Date Field'), max_length=64, blank=False, null=False, default="z_CreatedTimestamp")
 
@@ -768,3 +768,11 @@ class Dme_status_history(models.Model):
 
 	class Meta:
 		db_table = 'dme_status_history'
+
+class Dme_urls(models.Model):
+	id = models.AutoField(primary_key=True)
+	url = models.CharField(verbose_name=_('URL'), max_length=255, blank=True, null=True)
+	description = models.CharField(verbose_name=_('Description'), max_length=255, blank=True, null=True)
+
+	class Meta:
+		db_table = 'dme_urls'
