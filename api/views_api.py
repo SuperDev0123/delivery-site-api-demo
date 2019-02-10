@@ -710,7 +710,6 @@ def booking_allied(request):
             if booking.b_dateBookedDate is not None:
                 return Response([{"Error": "Record has already booked."}])
 
-            return Response([{"Error": "State asd."}])
             if booking.pu_Address_State is None or not booking.pu_Address_State:
                             return Response([{"Error": "State for pickup postal address is required."}])
 
