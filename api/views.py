@@ -364,6 +364,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 'de_To_Address_State': booking.de_To_Address_State,
                 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode,
                 'de_To_Address_Country': booking.de_To_Address_Country,
+                's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
+                's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
             })
         
         return JsonResponse({'bookings': ret_data, 'count': bookings_cnt, 'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest, 'missing_labels': missing_labels, 'to_process': to_process, 'closed': closed})
