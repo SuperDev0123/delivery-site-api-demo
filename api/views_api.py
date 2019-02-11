@@ -523,7 +523,7 @@ def get_label_allied_fn(bid):
 
         data = {}
 
-        data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
+        data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                     "accountKey": "ce0d58fd22ae8619974958e65302a715"}
         data['serviceProvider'] = "ALLIED"
         data['consignmentNumber'] = booking.v_FPBookingNumber
@@ -706,14 +706,18 @@ def booking_allied(request):
         try:
             booking = Bookings.objects.filter(id=bid)[0]
 
+            print(booking.b_dateBookedDate)
+            if booking.b_dateBookedDate is not None:
+                return Response([{"Error": "Record has already booked."}])
+
             if booking.pu_Address_State is None or not booking.pu_Address_State:
-                return Response([{"Error": "State for pickup postal address is required."}])
+                            return Response([{"Error": "State for pickup postal address is required."}])
 
             if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
                 return Response([{"Error": "suburb name for pickup postal address is required."}])
 
             data = {}
-            data['spAccountDetails'] = {"accountCode": "SEANSW", "accountState": "NSW",
+            data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                         "accountKey": "ce0d58fd22ae8619974958e65302a715"}
             data['serviceProvider'] = "ALLIED"
             data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
@@ -822,7 +826,8 @@ def st_create_order(request):
     print('Date (Create Order for ST): ', datetime.datetime.now().strftime("%Y-%m-%d"))
 
     try:
-        bookings = Bookings.objects.filter(puPickUpAvailFrom_Date=datetime.datetime.now().strftime("%Y-%m-%d"), b_status="Booked")
+        bookings = Bookings.objects.filter(puPickUpAvailFrom_Date=datetime.datetime.now().strftime("%Y-%m-%d"),
+                                           b_status="Booked")
 
         data = {}
 
@@ -857,9 +862,13 @@ def st_create_order(request):
                          request_type=request_type,
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
+            data['orderId'] = data0["orderId"]
+
 
         except KeyError:
             try:
+                booking.b_error_Capture = data0["errorMsg"]
+                booking.save()
                 request_type = "Create Order"
                 request_status = "ERROR"
                 oneLog = Log(request_payload=data, request_status=request_status,
@@ -874,6 +883,51 @@ def st_create_order(request):
         results.append({"message": "Booking not found"})
 
     return Response(results)
+
+
+def get_order_summary_fn(orderId):
+    results = []
+
+    data = {}
+
+    data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                "accountPassword": "x9083d2fed4d50aa2ad5"}
+    data['serviceProvider'] = "ST"
+    data['orderId'] = orderId
+
+    print(data)
+
+    url = "http://52.39.202.126:8080/dme-api-sit/order/summary"
+    response0 = requests.post(url, params={}, json=data)
+    response0 = response0.content.decode('utf8').replace("'", '"')
+    data0 = json.loads(response0)
+    s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+    print(s0)
+    try:
+        file_name = str(datetime.datetime.now()) + '_' + str(booking.b_bookingID_Visual) + '.pdf'
+        file_url = '/var/www/html/dme_api/static/pdfs/' + file_name
+
+        with open(os.path.expanduser(file_url), 'wb') as fout:
+            fout.write(base64.decodestring(data0["pdfData"].encode('utf-8')))
+
+        # booking.z_label_url = file_name
+        # booking.save()
+
+        request_type = "Order Summary"
+        request_status = "Success"
+
+        oneLog = Log(request_payload=data, request_status=request_status,
+                     request_type=request_type,
+                     response=response0, fk_booking_id=booking.id)
+        oneLog.save()
+    except KeyError:
+
+        # booking.b_error_Capture = data0["errorMsg"]
+        # booking.save()
+        results.append({"Error": data0["errorMsg"]})
+
+    return results
 
 
 @api_view(['POST'])
