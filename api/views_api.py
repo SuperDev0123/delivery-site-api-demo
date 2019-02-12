@@ -868,7 +868,8 @@ def st_create_order(request):
                 booking.vx_fp_order_id = data['orderId']
                 booking.save()
 
-            get_order_summary_fn(data0["orderId"])
+            summary_res = get_order_summary_fn(data0["orderId"])
+            results.append(summary_res)
 
         except KeyError:
             try:
@@ -918,12 +919,14 @@ def get_order_summary_fn(order_id):
 
         bookings = Bookings.objects.filter(vx_fp_order_id=order_id)
         for book in bookings:
-            book.z_label_url = file_name
+            book.z_manifest_url = file_name
             book.save()
+
+        return {"Success": "Manifest is created successfully."}
 
     except KeyError:
 
-        results.append({"Error": data0["errorMsg"]})
+        return {"Error": data0["errorMsg"]}
 
     return results
 
@@ -939,7 +942,7 @@ def get_order_summary(request):
         bid = bid["booking_id"]
         try:
             booking = Bookings.objects.filter(id=bid)[0]
-            results = get_order_summary_fn(booking.vx_fp_order_id)
+            results.append(get_order_summary_fn(booking.vx_fp_order_id))
 
         except IndexError:
             results.append({"message": "Order is not created for this booking."})
