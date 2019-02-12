@@ -826,7 +826,8 @@ def st_create_order(request):
     print('Date (Create Order for ST): ', datetime.datetime.now().strftime("%Y-%m-%d"))
 
     try:
-        bookings = Bookings.objects.filter(puPickUpAvailFrom_Date=datetime.datetime.now().strftime("%Y-%m-%d"),
+        bookings = Bookings.objects.filter(vx_freight_provider="STARTRACK",
+           puPickUpAvailFrom_Date=datetime.datetime.now().strftime("%Y-%m-%d"),
                                            b_status="Booked")
 
         data = {}
@@ -863,7 +864,12 @@ def st_create_order(request):
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
             data['orderId'] = data0["orderId"]
+            for booking in bookings:
+                booking.vx_fp_order_id = data['orderId']
+                booking.save()
 
+            summary_res = get_order_summary_fn(data0["orderId"])
+            results.append(summary_res)
 
         except KeyError:
             try:
@@ -885,7 +891,7 @@ def st_create_order(request):
     return Response(results)
 
 
-def get_order_summary_fn(orderId):
+def get_order_summary_fn(order_id):
     results = []
 
     data = {}
@@ -894,7 +900,7 @@ def get_order_summary_fn(orderId):
                                 "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
                                 "accountPassword": "x9083d2fed4d50aa2ad5"}
     data['serviceProvider'] = "ST"
-    data['orderId'] = orderId
+    data['orderId'] = order_id
 
     print(data)
 
@@ -905,29 +911,45 @@ def get_order_summary_fn(orderId):
     s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
     print(s0)
     try:
-        file_name = str(datetime.datetime.now()) + '_' + str(booking.b_bookingID_Visual) + '.pdf'
+        file_name = "biopak_manifest_" + str(order_id) + '_' + str(datetime.datetime.now()) + '.pdf'
         file_url = '/var/www/html/dme_api/static/pdfs/' + file_name
 
         with open(os.path.expanduser(file_url), 'wb') as fout:
             fout.write(base64.decodestring(data0["pdfData"].encode('utf-8')))
 
-        # booking.z_label_url = file_name
-        # booking.save()
+        bookings = Bookings.objects.filter(vx_fp_order_id=order_id)
+        for book in bookings:
+            book.z_manifest_url = file_name
+            book.save()
 
-        request_type = "Order Summary"
-        request_status = "Success"
+        return {"Success": "Manifest is created successfully."}
 
-        oneLog = Log(request_payload=data, request_status=request_status,
-                     request_type=request_type,
-                     response=response0, fk_booking_id=booking.id)
-        oneLog.save()
     except KeyError:
 
-        # booking.b_error_Capture = data0["errorMsg"]
-        # booking.save()
-        results.append({"Error": data0["errorMsg"]})
+        return {"Error": data0["errorMsg"]}
 
     return results
+
+
+
+@api_view(['POST'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def get_order_summary(request):
+    results = []
+    try:
+        bid = literal_eval(request.body.decode('utf8'))
+        bid = bid["booking_id"]
+        try:
+            booking = Bookings.objects.filter(id=bid)[0]
+            results.append(get_order_summary_fn(booking.vx_fp_order_id))
+
+        except IndexError:
+            results.append({"message": "Order is not created for this booking."})
+    except SyntaxError:
+        results.append({"message": "booking id is required"})
+
+    return Response(results)
 
 
 @api_view(['POST'])
