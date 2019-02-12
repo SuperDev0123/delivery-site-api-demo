@@ -522,11 +522,11 @@ def download_pdf(request):
 
     for id in bookingIds:
         booking = Bookings.objects.get(id=id)
-        # file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
-        file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local
+        file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
+        # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
         label_names.append(booking.z_label_url)
-        # booking.z_downloaded_shipping_label_timestamp = datetime.now()
-        # booking.save()
+        booking.z_downloaded_shipping_label_timestamp = datetime.now()
+        booking.save()
 
     zip_subdir = "labels"
     zip_filename = "%s.zip" % zip_subdir
