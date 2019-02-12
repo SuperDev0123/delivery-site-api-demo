@@ -1,23 +1,22 @@
 from django.shortcuts import render
-from rest_framework import views, status
 from django.core import serializers
 from rest_framework.response import Response
-from django.http import JsonResponse
 from rest_framework.views import APIView
-from rest_framework import viewsets
-from rest_framework import authentication, permissions
+from rest_framework import viewsets, views, status, authentication, permissions
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
-from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
-from django.http import HttpResponse
-from django.http import QueryDict
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
-import json
 from time import gmtime, strftime
+import os
+import io
+import json
+import zipfile
+
 from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
@@ -516,18 +515,31 @@ def upload_status(request):
         return JsonResponse({'status_code': 2, 'errors': result})
 
 def download_pdf(request):
-    filename = request.GET['filename']
-    updatedId = request.GET['id']
-    file = open('/var/www/html/dme_api/static/pdfs/{}'.format(filename), "rb")
+    bookingIds = request.GET['ids']
+    bookingIds = bookingIds.split(',')
+    file_paths = [];
+    label_names = [];
 
-    response = HttpResponse(
-        file,
-        content_type='application/pdf'
-    )
+    for id in bookingIds:
+        booking = Bookings.objects.get(id=id)
+        # file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
+        file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local
+        label_names.append(booking.z_label_url)
+        # booking.z_downloaded_shipping_label_timestamp = datetime.now()
+        # booking.save()
 
-    response['Content-Disposition'] = 'attachment; filename=a.pdf'
-    booking = Bookings.objects.get(pk=updatedId)
-    booking.z_downloaded_shipping_label_timestamp = datetime.now()
-    booking.save()
+    zip_subdir = "labels"
+    zip_filename = "%s.zip" % zip_subdir
+
+    s = io.BytesIO()
+    zf = zipfile.ZipFile(s, "w")
+
+    for index, file_path in enumerate(file_paths):
+        zip_path = os.path.join(zip_subdir, file_path)
+        zf.write(file_path, 'labels/' + label_names[index])
+    zf.close()
+
+    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+    response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
     return response
 
