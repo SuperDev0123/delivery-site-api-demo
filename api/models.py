@@ -6,6 +6,14 @@ from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 
+class DME_Roles(models.Model):
+	id = models.AutoField(primary_key=True)
+	role_code = models.CharField(verbose_name=_('Role Code'), max_length=32, blank=False)
+	description = models.CharField(verbose_name=_('Role Description'), max_length=255, blank=False)
+	
+	class Meta:
+		db_table = 'dme_roles'
+
 class DME_clients(models.Model):
 	pk_id_dme_client = models.AutoField(primary_key=True)
 	company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
@@ -15,6 +23,17 @@ class DME_clients(models.Model):
 
 	class Meta:
 		db_table = 'dme_clients'
+
+class DME_employees(models.Model):
+	pk_id_dme_emp = models.AutoField(primary_key=True)
+	fk_id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+	name_last = models.CharField(verbose_name=_('last name'), max_length=30, blank=False)
+	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
+	role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
+	warehouse_id = models.IntegerField(verbose_name=_('Warehouse ID'), default=1, blank=False, null=True)
+
+	class Meta:
+		db_table = 'dme_employees'
 
 class Client_warehouses(models.Model):
 	pk_id_client_warehouses = models.AutoField(primary_key=True)
@@ -33,28 +52,23 @@ class Client_warehouses(models.Model):
 	class Meta:
 		db_table = 'dme_client_warehouses'
 
-class DME_employees(models.Model):
-	pk_id_dme_emp = models.AutoField(primary_key=True)
-	fk_id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-	name_last = models.CharField(verbose_name=_('last name'), max_length=30, blank=False)
-	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
-	Role = models.TextField(verbose_name=_('Role'))
-
-	class Meta:
-		db_table = 'dme_employees'
-
 class Client_employees(models.Model):
 	pk_id_client_emp = models.AutoField(primary_key=True)
 	fk_id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 	fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-	name_last = models.CharField(verbose_name=_('last name'), max_length=30, blank=False)
-	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=False)
-	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True)
-	phone = models.IntegerField(verbose_name=_('phone number'))
-	fk_id_client_warehouses = models.ForeignKey(Client_warehouses, on_delete=models.CASCADE)
+	name_last = models.CharField(verbose_name=_('last name'), max_length=30, blank=True, null=True)
+	name_first = models.CharField(verbose_name=_('first name'), max_length=30, blank=True, null=True)
+	email = models.EmailField(verbose_name=_('email address'), max_length=254, unique=True, null=True)
+	phone = models.IntegerField(verbose_name=_('phone number'), blank=True, null=True)
+	role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
+	warehouse_id = models.IntegerField(verbose_name=_('Warehouse ID'), default=1, blank=True, null=True)
 
 	class Meta:
 		db_table = 'dme_client_employees'
+
+	def get_role(self):
+		role = DME_Roles.objects.get(id=self.role_id)
+		return role.role_code
 
 class Bookings(models.Model):
 	id = models.AutoField(primary_key=True)
