@@ -826,11 +826,14 @@ def booking_allied(request):
 @permission_classes((AllowAny,))
 def st_create_order(request):
     results = []
-    print('Date (Create Order for ST): ', datetime.datetime.now().strftime("%Y-%m-%d"))
+    date = literal_eval(request.body.decode('utf8'))
+    date = date["date"]
+    # print('Date (Create Order for ST): ', datetime.datetime.now().strftime("%Y-%m-%d"))
+    print('Date (Create Order for ST): ', date)
 
     try:
         bookings = Bookings.objects.filter(vx_freight_provider="STARTRACK",
-                                           puPickUpAvailFrom_Date=datetime.datetime.now().strftime("%Y-%m-%d"),
+                                           puPickUpAvailFrom_Date=date,
                                            b_status="Booked")
 
         data = {}
