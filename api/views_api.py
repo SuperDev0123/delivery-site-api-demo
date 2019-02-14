@@ -1321,6 +1321,9 @@ def cancel_booking(request):
 
             results.append({"message": "Error while canceling "})
 
+    except IndexError:
+        results.append({"message": "Booking not found."})
+
     except SyntaxError:
         results.append({"message": "booking id is required"})
 
