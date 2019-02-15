@@ -192,7 +192,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if prefilter == 1:
             queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(b_error_Capture__exact='')
         if prefilter == 2:
-            queryset = queryset.filter(z_label_url__isnull=True).exclude(z_label_url__exact='')
+            queryset = queryset.filter(Q(z_label_url__isnull=True) | Q(z_label_url__exact=''))
         elif prefilter == 3:
             queryset = queryset.filter(b_status__contains='Booked')
         elif prefilter == 4:
