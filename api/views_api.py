@@ -1224,6 +1224,8 @@ def edit_booking_st(request):
     return Response(results)
 
 
+
+
 @api_view(['GET'])
 @permission_classes((AllowAny,))
 def returnexcel(request):
@@ -1232,46 +1234,50 @@ def returnexcel(request):
 
     workbook = xlsxwriter.Workbook(response, {'in_memory': True})
 
-    bookings = Bookings.objects.filter(b_client_name="Seaway")
+    bookings = Bookings.objects.filter(b_client_name="Seaway",b_status="Booked").order_by('fk_client_warehouse')
 
     worksheet = workbook.add_worksheet()
 
-    worksheet.set_column(0, 10, width=20)
+    worksheet.set_column(0, 11, width=20)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
-    worksheet.write('A1', 'z_CreatedTimestamp', bold)
+    worksheet.write('A1', 'Warehouse Name', bold)
     worksheet.write('B1', 'b_client_name', bold)
     worksheet.write('C1', 'b_bookingID_Visual', bold)
     worksheet.write('D1', 'vx_freight_provider', bold)
-    worksheet.write('E1', 'v_FPBookingNumber', bold)
-    worksheet.write('F1', 'vx_serviceName', bold)
-    worksheet.write('G1', 'deToCompanyName', bold)
-    worksheet.write('H1', 'deToAddressPostalCode', bold)
-    worksheet.write('I1', 'b_status', bold)
-    worksheet.write('J1', 'b_status_API', bold)
-    worksheet.write('K1', 's_21_ActualDeliveryTimeStamp', bold)
+    worksheet.write('E1', 'pk_booking_id', bold)
+    worksheet.write('F1', 'v_FPBookingNumber', bold)
+    worksheet.write('G1', 'vx_serviceName', bold)
+    worksheet.write('H1', 'deToCompanyName', bold)
+    worksheet.write('I1', 'deToAddressPostalCode', bold)
+    worksheet.write('J1', 'b_status', bold)
+    worksheet.write('K1', 'b_status_API', bold)
+    worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
 
     row = 1
     col = 0
 
     for booking in bookings:
-        worksheet.write(row, col, booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M:%S"))
+        worksheet.write(row, col, booking.fk_client_warehouse.client_warehouse_code)
         worksheet.write(row, col + 1, booking.b_client_name)
         worksheet.write(row, col + 2, booking.b_bookingID_Visual)
         worksheet.write(row, col + 3, booking.vx_freight_provider)
-        worksheet.write(row, col + 4, booking.v_FPBookingNumber)
-        worksheet.write(row, col + 5, booking.vx_serviceName)
-        worksheet.write(row, col + 6, booking.deToCompanyName)
-        worksheet.write(row, col + 7, booking.deToAddressPostalCode)
-        worksheet.write(row, col + 8, booking.b_status)
-        worksheet.write(row, col + 9, booking.b_status_API)
+        worksheet.write(row, col + 4, booking.pk_booking_id)
+        worksheet.write(row, col + 5, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 6, booking.vx_serviceName)
+        worksheet.write(row, col + 7, booking.deToCompanyName)
+        worksheet.write(row, col + 8, booking.deToAddressPostalCode)
+        worksheet.write(row, col + 9, booking.b_status)
+        worksheet.write(row, col + 10, booking.b_status_API)
         if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
-            worksheet.write(row, col + 10, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+            worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
-            worksheet.write(row, col + 10, "")
+            worksheet.write(row, col + 11, "")
+
         row += 1
 
     workbook.close()
     return response
+
 
 
 @api_view(['POST'])
