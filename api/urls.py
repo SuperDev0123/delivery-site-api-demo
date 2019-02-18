@@ -17,6 +17,7 @@ urlpatterns += [
     url(r'^bookinglinedetails/', BookingLineDetailsView.as_view()),
     url(r'^warehouses/', WarehouseViewSet.as_view({'get': 'list'})),
     url(r'^share/upload/(?P<filename>[^/]+)$', FileUploadView.as_view()),
+    url(r'^share/attachments/(?P<filename>[^/]+)$', AttachmentsUploadView.as_view()),
     url(r'^share/upload-status/', upload_status),
     url(r'^download-pdf/', download_pdf),
 
@@ -40,4 +41,5 @@ urlpatterns += [
     url(r'^get_label_st/', get_label_st),
 
     url(r'^suburb/', getSuburbs),
+    url(r'^attachments/', getAttachmentsHistory),
 ]
