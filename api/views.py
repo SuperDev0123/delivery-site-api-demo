@@ -20,6 +20,32 @@ import zipfile
 from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
+import os
+
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def getAttachmentsHistory(request):
+    bookingId = request.GET.get('id')
+    return_data = []
+    
+    try:
+        resultObjects = []
+        resultObjects = Dme_attachments.objects.select_related().filter(fk_id_dme_booking = bookingId)
+        for resultObject in resultObjects:
+            print('@bookingID', resultObject.fk_id_dme_booking.id)
+            return_data.append({
+                'pk_id_attachment': resultObject.pk_id_attachment, 
+                'fk_id_dme_client': resultObject.fk_id_dme_client.pk_id_dme_client, 
+                'fk_id_dme_booking': resultObject.fk_id_dme_booking.id, 
+                'fileName': resultObject.fileName, 
+                'linkurl': resultObject.linkurl, 
+                'upload_Date': resultObject.upload_Date, 
+            })
+        return JsonResponse({'history': return_data})
+    except Exception as e:
+        print('@Exception', e)
+        return JsonResponse({'history': ''})
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -346,6 +372,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_To_Address_State': booking.de_To_Address_State,
                         'b_status': booking.b_status,
                     }
+                    print('@booking', booking.id)
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
@@ -459,7 +486,50 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             employee_warehouse = Client_warehouses.objects.get(pk_id_client_warehouses = employee_warehouse_id)
             queryset = [employee_warehouse]
             return queryset
+            
+class AttachmentsUploadView(views.APIView):
+    parser_classes = (MultiPartParser,)
 
+    def post(self, request, filename, format=None):
+        file_obj = request.FILES['file']
+        user_id = request.user.id
+        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+        dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
+        upload_file_name = request.FILES['file'].name
+        prepend_name = str(dme_account_num) + '_' + upload_file_name
+
+        uploadResult = handle_uploaded_file_attachments(request, request.FILES['file'])
+
+        html = prepend_name
+        return Response(uploadResult)
+
+def handle_uploaded_file_attachments(request, f):
+    # live code
+    try:
+        bookingId = request.POST.get("warehouse_id", "")
+        print('@----', bookingId)
+        if bookingId == 'undefined':
+            return 'failed'
+        now = datetime.now()
+        now1 = now.strftime("%Y%m%d_%H%M%S")
+        name, extension = os.path.splitext(f.name)
+        fileName = '/var/www/html/dme_api/media/attachments/' + name + '_' + str(now1) + extension
+        # live code
+        with open(fileName, 'wb+') as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+        user_id = request.user.id
+        print('userid--', user_id)
+        clientObject = DME_clients.objects.get(pk_id_dme_client=user_id)
+        bookingObject = Bookings.objects.get(id=bookingId)
+        saveData = Dme_attachments(fk_id_dme_client=clientObject, fk_id_dme_booking=bookingObject, fileName=fileName, linkurl='22', upload_Date=now)
+        saveData.save()
+        return 'ok'
+    except Exception as e:
+        print('@Exception----', e)
+        return 'failed'
+
+    #Save history on database.
 @api_view(['GET'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -524,8 +594,8 @@ class FileUploadView(views.APIView):
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
-        save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
-        save2Redis(prepend_name + "_b_client_name", clientEmployeObject[0].fk_id_dme_client.dme_account_num)
+        #save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
+        #save2Redis(prepend_name + "_b_client_name", clientEmployeObject[0].fk_id_dme_client.dme_account_num)
 
         handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 

@@ -333,6 +333,17 @@ class Booking_lines_data(models.Model):
 	class Meta:
 		db_table = 'dme_booking_lines_data'
 
+class Dme_attachments(models.Model):
+	pk_id_attachment = models.AutoField(primary_key=True)
+	fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
+	fk_id_dme_booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+	fileName = models.CharField(verbose_name=_('filename'), max_length=230, blank=False)
+	linkurl = models.CharField(verbose_name=_('linkurl'), max_length=430, blank=True, null=True)
+	upload_Date = models.DateField(verbose_name=_('Upload Datatime'), default=date.today, blank=True, null=True)
+
+	class Meta:
+		db_table = 'dme_attachments'
+		
 class BOK_0_BookingKeys(models.Model):
 	pk_auto_id = models.AutoField(primary_key=True)
 	client_booking_id = models.CharField(verbose_name=_('Client booking id'), max_length=64, blank=True)

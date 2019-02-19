@@ -232,7 +232,10 @@ class Migration(migrations.Migration):
                 ('b_500_b_client_UOM', models.CharField(blank=True, max_length=20, null=True, verbose_name='b_500_b_client_UOM')),
                 ('b_501_b_client_code', models.CharField(blank=True, max_length=50, null=True, verbose_name='b_501_b_client_code')),
                 ('pu_addressed_saved', models.CharField(blank=True, max_length=3, null=True, verbose_name='pu_addressed_saved')),
+<<<<<<< HEAD
+=======
                 ('de_to_addressed_saved', models.CharField(blank=True, max_length=3, null=True, verbose_name='de_to_addressed_saved')),
+>>>>>>> develop
                 ('b_client_max_book_amount', models.IntegerField(blank=True, default=0, null=True, verbose_name='b_client_max_book_amount')),
                 ('vx_serviceType_XXX', models.CharField(blank=True, max_length=50, null=True, verbose_name='vx_serviceType_XXX')),
                 ('b_021_pu_avail_from_date', models.DateTimeField(blank=True, default=datetime.datetime.now, null=True, verbose_name='b_021_pu_avail_from_date')),
@@ -243,6 +246,8 @@ class Migration(migrations.Migration):
                 ('b_client_del_note_num', models.CharField(blank=True, default='', max_length=64, null=True, verbose_name='Del Note Num')),
                 ('z_createdTimeStamp', models.DateTimeField(blank=True, default=datetime.datetime.now, verbose_name='z_createdTimeStamp')),
                 ('b_client_warehouse_code', models.CharField(blank=True, default='', max_length=64, null=True, verbose_name='Warehouse code')),
+<<<<<<< HEAD
+=======
                 ('fp_pu_id', models.CharField(blank=True, default='', max_length=64, null=True, verbose_name='Warehouse code')),
                 ('b_100_client_price_paid_or_quoted', models.FloatField(blank=True, default=0, max_length=64, null=True)),
                 ('zb_101_text_1', models.CharField(blank=True, default='', max_length=64, null=True)),
@@ -265,6 +270,7 @@ class Migration(migrations.Migration):
                 ('zb_143_date_3', models.DateField(blank=True, default=datetime.date.today, null=True)),
                 ('zb_144_date_4', models.DateField(blank=True, default=datetime.date.today, null=True)),
                 ('zb_145_date_5', models.DateField(blank=True, default=datetime.date.today, null=True)),
+>>>>>>> develop
             ],
             options={
                 'db_table': 'bok_1_headers',
@@ -298,6 +304,8 @@ class Migration(migrations.Migration):
                 ('l_009_weight_per_each_original', models.IntegerField(blank=True, null=True, verbose_name='Weight Per Each Original')),
                 ('l_500_b_client_cust_job_code', models.CharField(blank=True, max_length=32, null=True, verbose_name='Client Cust Job Code')),
                 ('z_createdTimeStamp', models.DateTimeField(blank=True, default=datetime.datetime.now, verbose_name='Created Timestamp')),
+<<<<<<< HEAD
+=======
                 ('client_item_number', models.CharField(blank=True, default='', max_length=64, null=True)),
                 ('client_item_reference', models.CharField(blank=True, default='', max_length=64, null=True)),
                 ('zbl_101_text_1', models.CharField(blank=True, default='', max_length=64, null=True)),
@@ -320,6 +328,7 @@ class Migration(migrations.Migration):
                 ('zbl_143_date_3', models.DateField(blank=True, default=datetime.date.today, null=True)),
                 ('zbl_144_date_4', models.DateField(blank=True, default=datetime.date.today, null=True)),
                 ('zbl_145_date_5', models.DateField(blank=True, default=datetime.date.today, null=True)),
+>>>>>>> develop
             ],
             options={
                 'db_table': 'bok_2_lines',
@@ -341,6 +350,8 @@ class Migration(migrations.Migration):
                 ('ld_007_gap_ra', models.TextField(blank=True, max_length=300, null=True, verbose_name='Gap Ra')),
                 ('ld_008_client_ref_number', models.CharField(blank=True, max_length=40, null=True, verbose_name='Client Ref Number')),
                 ('success', models.CharField(blank=True, default=2, max_length=1, null=True, verbose_name='Success')),
+<<<<<<< HEAD
+=======
                 ('zbld_101_text_1', models.CharField(blank=True, default='', max_length=64, null=True)),
                 ('zbld_102_text_2', models.CharField(blank=True, default='', max_length=64, null=True)),
                 ('zbld_103_text_3', models.CharField(blank=True, default='', max_length=64, null=True)),
@@ -361,6 +372,7 @@ class Migration(migrations.Migration):
                 ('zbld_143_date_3', models.DateField(blank=True, default=datetime.date.today, null=True)),
                 ('zbld_144_date_4', models.DateField(blank=True, default=datetime.date.today, null=True)),
                 ('zbld_145_date_5', models.DateField(blank=True, default=datetime.date.today, null=True)),
+>>>>>>> develop
                 ('z_createdByAccount', models.CharField(blank=True, max_length=25, null=True, verbose_name='Created By Account')),
                 ('z_createdTimeStamp', models.DateTimeField(blank=True, default=datetime.datetime.now, verbose_name='Created Timestamp')),
                 ('z_modifiedByAccount', models.CharField(blank=True, max_length=25, null=True, verbose_name='Modified By Account')),
@@ -655,6 +667,10 @@ class Migration(migrations.Migration):
                 ('DME_price_from_client', models.IntegerField(blank=True, default=0, null=True, verbose_name='DME Price From Client')),
                 ('z_label_url', models.CharField(blank=True, default='', max_length=255, null=True, verbose_name='PDF Url')),
                 ('z_lastStatusAPI_ProcessedTimeStamp', models.DateTimeField(blank=True, default=datetime.datetime.now, null=True, verbose_name='Last StatusAPI Processed Timestamp')),
+<<<<<<< HEAD
+                ('s_21_ActualDeliveryTimeStamp', models.DateTimeField(blank=True, default=datetime.datetime.now, null=True, verbose_name='Actual Delivery Timestamp')),
+=======
+>>>>>>> develop
                 ('b_client_booking_ref_num', models.CharField(blank=True, default='', max_length=64, null=True, verbose_name='Booking Ref Num')),
                 ('b_client_sales_inv_num', models.CharField(blank=True, default='', max_length=64, null=True, verbose_name='Sales Inv Num')),
                 ('b_client_order_num', models.CharField(blank=True, default='', max_length=64, null=True, verbose_name='Order Num')),
@@ -703,7 +719,11 @@ class Migration(migrations.Migration):
             fields=[
                 ('pk_id_dme_client', models.AutoField(primary_key=True, serialize=False)),
                 ('company_name', models.CharField(max_length=230, verbose_name='warehoursename')),
+<<<<<<< HEAD
+                ('dme_account_num', models.CharField(max_length=230, verbose_name='dme account num')),
+=======
                 ('dme_account_num', models.CharField(default='', max_length=230, verbose_name='dme account num')),
+>>>>>>> develop
                 ('phone', models.IntegerField(verbose_name='phone number')),
                 ('client_filter_date_field', models.CharField(default='z_CreatedTimestamp', max_length=64, verbose_name='Client Filter Date Field')),
             ],
