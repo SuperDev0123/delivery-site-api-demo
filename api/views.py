@@ -1,23 +1,22 @@
 from django.shortcuts import render
-from rest_framework import views, status
 from django.core import serializers
 from rest_framework.response import Response
-from django.http import JsonResponse
 from rest_framework.views import APIView
-from rest_framework import viewsets
-from rest_framework import authentication, permissions
+from rest_framework import viewsets, views, status, authentication, permissions
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
-from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
-from django.http import HttpResponse
-from django.http import QueryDict
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
-import json
 from time import gmtime, strftime
+import os
+import io
+import json
+import zipfile
+
 from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
@@ -48,58 +47,6 @@ def getAttachmentsHistory(request):
         print('@Exception', e)
         return JsonResponse({'history': ''})
 
-@api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def getSuburbs(request):
-    requestType = request.GET.get('type')
-    return_data = []
-    try:
-        resultObjects = []
-        if requestType == 'state':
-            resultObjects = Utl_suburbs.objects.all()
-            for resultObject in resultObjects:
-                if len(return_data) > 0:
-                    temp = {'value': resultObject.state.lower(), 'label': resultObject.state}
-                    try:
-                        if return_data.index(temp) is None:
-                            return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
-                    except:
-                        return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
-                else:
-                    return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
-        elif requestType == 'postalcode':
-            stateName = request.GET.get('name')
-            resultObjects = Utl_suburbs.objects.select_related().filter(state = stateName)
-            
-            for resultObject in resultObjects:
-                if len(return_data) > 0:
-                    temp = {'value': resultObject.postal_code, 'label': resultObject.postal_code}
-                    try:
-                        if return_data.index(temp) is None:
-                            return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
-                    except:
-                        return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
-                else:#
-                    return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
-        elif requestType == 'suburb':
-            postalCode = request.GET.get('name')
-            resultObjects = Utl_suburbs.objects.select_related().filter(postal_code = postalCode)
-
-            for resultObject in resultObjects:
-                if len(return_data) > 0:
-                    temp = {'value': resultObject.suburb, 'label': resultObject.suburb}
-                    try:
-                        if return_data.index(temp) is None:
-                            return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
-                    except:
-                        return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
-                else:#
-                    return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
-        return JsonResponse({'type': requestType,'suburbs': return_data})
-    except Exception as e:
-        return JsonResponse({'type': requestType,'suburbs': ''})
-
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def username(self, request, format=None):
@@ -115,84 +62,15 @@ class UserViewSet(viewsets.ViewSet):
         clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeObject.fk_id_dme_client_id)
         return JsonResponse({'user_date_filter_field': clientObject.client_filter_date_field})
 
-class BookingLinesView(APIView):
-    def get(self, request, format=None):
-        pk_booking_id = request.GET['pk_booking_id']
-
-        if pk_booking_id == 'undefined':
-            booking_lines = Booking_lines.objects.all()
-            return_data = []
-
-            for booking_line in booking_lines:
-                return_data.append({'pk_lines_id': booking_line.pk_lines_id, 'e_type_of_packaging': booking_line.e_type_of_packaging, 'e_item': booking_line.e_item, 'e_qty': booking_line.e_qty, 'e_weightUOM': booking_line.e_weightUOM, 'e_weightPerEach': booking_line.e_weightPerEach, 'e_dimUOM': booking_line.e_dimUOM, 'e_dimLength': booking_line.e_dimLength, 'e_dimWidth': booking_line.e_dimWidth, 'e_dimHeight': booking_line.e_dimHeight})
-
-            return JsonResponse({'booking_lines': return_data})
-        else:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-            return_data = []
-
-            for booking_line in booking_lines:
-                return_data.append({
-                    'pk_lines_id': booking_line.pk_lines_id, 
-                    'e_type_of_packaging': booking_line.e_type_of_packaging, 
-                    'e_item': booking_line.e_item, 
-                    'e_qty': booking_line.e_qty, 
-                    'e_weightUOM': booking_line.e_weightUOM, 
-                    'e_weightPerEach': booking_line.e_weightPerEach, 
-                    'e_dimUOM': booking_line.e_dimUOM, 
-                    'e_dimLength': booking_line.e_dimLength, 
-                    'e_dimWidth': booking_line.e_dimWidth, 
-                    'e_dimHeight': booking_line.e_dimHeight
-                })
-
-            return JsonResponse({'booking_lines': return_data})
-
-class BookingLineDetailsView(APIView):
-    def get(self, request, format=None):
-        pk_booking_id = request.GET['pk_booking_id']
-
-        if pk_booking_id == 'undefined':
-            booking_line_details = Booking_lines_data.objects.all()
-            return_data = []
-
-            for booking_line_detail in booking_line_details:
-                return_data.append({
-                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
-                    'modelNumber': booking_line_detail.modelNumber, 
-                    'itemDescription': booking_line_detail.itemDescription, 
-                    'quantity': booking_line_detail.quantity, 
-                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
-                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
-                    'gap_ra': booking_line_detail.gap_ra, 
-                    'clientRefNumber': booking_line_detail.clientRefNumber
-                })
-
-            return JsonResponse({'booking_line_details': return_data})
-        else:
-            booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-            return_data = []
-
-            for booking_line_detail in booking_line_details:
-                return_data.append({
-                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
-                    'modelNumber': booking_line_detail.modelNumber, 
-                    'itemDescription': booking_line_detail.itemDescription, 
-                    'quantity': booking_line_detail.quantity, 
-                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
-                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
-                    'gap_ra': booking_line_detail.gap_ra, 
-                    'clientRefNumber': booking_line_detail.clientRefNumber
-                })
-
-            return JsonResponse({'booking_line_details': return_data})
-
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
     
     @action(detail=False, methods=['get'])
     def get_bookings(self, request, format=None):
-        clientEmp = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id)).first()
-        client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(clientEmp.fk_id_dme_client_id)).first()
+        user_id = int(self.request.user.id)
+        client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+        client_employee_role = client_employee.get_role()
+        client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
         cur_date = self.request.query_params.get('date', None)
         first_date = datetime.strptime(cur_date, '%Y-%m-%d')
@@ -213,7 +91,11 @@ class BookingsViewSet(viewsets.ViewSet):
         print('@07 - Simple search keyword: ', simple_search_keyword)
 
         # Client filter
-        queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+        if client_employee_role == 'company':
+            queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+        elif client_employee_role == 'warehouse':
+            employee_warehouse_id = client_employee.warehouse_id
+            queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
 
         # Date filter
         if client.company_name  == 'Seaway':
@@ -336,7 +218,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if prefilter == 1:
             queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(b_error_Capture__exact='')
         if prefilter == 2:
-            queryset = queryset.filter(z_label_url__isnull=True).exclude(z_label_url__exact='')
+            queryset = queryset.filter(Q(z_label_url__isnull=True) | Q(z_label_url__exact=''))
         elif prefilter == 3:
             queryset = queryset.filter(b_status__contains='Booked')
         elif prefilter == 4:
@@ -390,9 +272,15 @@ class BookingsViewSet(viewsets.ViewSet):
                 'de_To_Address_State': booking.de_To_Address_State,
                 'de_To_Address_PostalCode': booking.de_To_Address_PostalCode,
                 'de_To_Address_Country': booking.de_To_Address_Country,
+                's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
+                's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
             })
         
-        return JsonResponse({'bookings': ret_data, 'count': bookings_cnt, 'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest, 'missing_labels': missing_labels, 'to_process': to_process, 'closed': closed})
+        return JsonResponse({
+            'bookings': ret_data, 'count': bookings_cnt, 
+            'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest, 
+            'missing_labels': missing_labels, 'to_process': to_process, 
+            'closed': closed})
 
     @action(detail=True, methods=['PUT'])
     def update_booking(self, request, pk, format=None):
@@ -412,19 +300,26 @@ class BookingViewSet(viewsets.ViewSet):
     def get_booking(self, request, format=None):
         idBookingNumber = request.GET['id']
         filterName = request.GET['filter']
-
         user_id = request.user.id
 
         try:
-            clientEmployeeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
-            if clientEmployeeObject is None:
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+            if client_employee is None:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
-            clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeeObject.fk_id_dme_client_id)
+            client_employee_role = client_employee.get_role()
+            clientObject = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
+
             if clientObject is None:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
-            bookings = Bookings.objects.filter(kf_client_id=clientObject.dme_account_num)
-
+            
+            if client_employee_role == 'company':
+                bookings = Bookings.objects.filter(kf_client_id=clientObject.dme_account_num)
+            elif client_employee_role == 'warehouse':
+                employee_warehouse_id = client_employee.warehouse_id
+                bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+            
             if filterName == 'dme':
                 booking = bookings.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == 'con':
@@ -492,14 +387,106 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class BookingLinesView(APIView):
+    def get(self, request, format=None):
+        pk_booking_id = request.GET['pk_booking_id']
+
+        if pk_booking_id == 'undefined':
+            booking_lines = Booking_lines.objects.all()
+            return_data = []
+
+            for booking_line in booking_lines:
+                return_data.append({
+                    'pk_lines_id': booking_line.pk_lines_id, 
+                    'e_type_of_packaging': booking_line.e_type_of_packaging, 
+                    'e_item': booking_line.e_item, 
+                    'e_qty': booking_line.e_qty, 
+                    'e_weightUOM': booking_line.e_weightUOM, 
+                    'e_weightPerEach': booking_line.e_weightPerEach, 
+                    'e_dimUOM': booking_line.e_dimUOM, 
+                    'e_dimLength': booking_line.e_dimLength, 
+                    'e_dimWidth': booking_line.e_dimWidth, 
+                    'e_dimHeight': booking_line.e_dimHeight
+                })
+
+            return JsonResponse({'booking_lines': return_data})
+        else:
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+            return_data = []
+
+            for booking_line in booking_lines:
+                return_data.append({
+                    'pk_lines_id': booking_line.pk_lines_id, 
+                    'e_type_of_packaging': booking_line.e_type_of_packaging, 
+                    'e_item': booking_line.e_item, 
+                    'e_qty': booking_line.e_qty, 
+                    'e_weightUOM': booking_line.e_weightUOM, 
+                    'e_weightPerEach': booking_line.e_weightPerEach, 
+                    'e_dimUOM': booking_line.e_dimUOM, 
+                    'e_dimLength': booking_line.e_dimLength, 
+                    'e_dimWidth': booking_line.e_dimWidth, 
+                    'e_dimHeight': booking_line.e_dimHeight
+                })
+
+            return JsonResponse({'booking_lines': return_data})
+
+class BookingLineDetailsView(APIView):
+    def get(self, request, format=None):
+        pk_booking_id = request.GET['pk_booking_id']
+
+        if pk_booking_id == 'undefined':
+            booking_line_details = Booking_lines_data.objects.all()
+            return_data = []
+
+            for booking_line_detail in booking_line_details:
+                return_data.append({
+                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
+                    'modelNumber': booking_line_detail.modelNumber, 
+                    'itemDescription': booking_line_detail.itemDescription, 
+                    'quantity': booking_line_detail.quantity, 
+                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
+                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
+                    'gap_ra': booking_line_detail.gap_ra, 
+                    'clientRefNumber': booking_line_detail.clientRefNumber
+                })
+
+            return JsonResponse({'booking_line_details': return_data})
+        else:
+            booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+            return_data = []
+
+            for booking_line_detail in booking_line_details:
+                return_data.append({
+                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
+                    'modelNumber': booking_line_detail.modelNumber, 
+                    'itemDescription': booking_line_detail.itemDescription, 
+                    'quantity': booking_line_detail.quantity, 
+                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
+                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
+                    'gap_ra': booking_line_detail.gap_ra, 
+                    'clientRefNumber': booking_line_detail.clientRefNumber
+                })
+
+            return JsonResponse({'booking_line_details': return_data})
+
 class WarehouseViewSet(viewsets.ModelViewSet):
     serializer_class = WarehouseSerializer
 
     def get_queryset(self):
-        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(self.request.user.id))
-        clientWarehouseObject_list = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(clientEmployeObject[0].fk_id_dme_client_id)).exclude(pk_id_client_warehouses = 100)
-        queryset = clientWarehouseObject_list
-        return queryset
+        user_id = int(self.request.user.id)
+        client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+        client_employee_role = client_employee.get_role()
+
+        if client_employee_role == 'company':
+            clientWarehouseObject_list = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(client_employee.fk_id_dme_client_id)).exclude(pk_id_client_warehouses = 100)
+            queryset = clientWarehouseObject_list
+            return queryset
+        elif client_employee_role == 'warehouse':
+            employee_warehouse_id = client_employee.warehouse_id
+            employee_warehouse = Client_warehouses.objects.get(pk_id_client_warehouses = employee_warehouse_id)
+            queryset = [employee_warehouse]
+            return queryset
+            
 class AttachmentsUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
 
@@ -543,6 +530,58 @@ def handle_uploaded_file_attachments(request, f):
         return 'failed'
 
     #Save history on database.
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def getSuburbs(request):
+    requestType = request.GET.get('type')
+    return_data = []
+
+    try:
+        resultObjects = []
+        if requestType == 'state':
+            resultObjects = Utl_suburbs.objects.all()
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.state.lower(), 'label': resultObject.state}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+                    except:
+                        return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+                else:
+                    return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+        elif requestType == 'postalcode':
+            stateName = request.GET.get('name')
+            resultObjects = Utl_suburbs.objects.select_related().filter(state = stateName)
+            
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.postal_code, 'label': resultObject.postal_code}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+                    except:
+                        return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+                else:
+                    return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+        elif requestType == 'suburb':
+            postalCode = request.GET.get('name')
+            resultObjects = Utl_suburbs.objects.select_related().filter(postal_code = postalCode)
+
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.suburb, 'label': resultObject.suburb}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+                    except:
+                        return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+                else:
+                    return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+        return JsonResponse({'type': requestType,'suburbs': return_data})
+    except Exception as e:
+        return JsonResponse({'type': requestType,'suburbs': ''})
 
 class FileUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
@@ -584,18 +623,31 @@ def upload_status(request):
         return JsonResponse({'status_code': 2, 'errors': result})
 
 def download_pdf(request):
-    filename = request.GET['filename']
-    updatedId = request.GET['id']
-    file = open('/var/www/html/dme_api/static/pdfs/{}'.format(filename), "rb")
+    bookingIds = request.GET['ids']
+    bookingIds = bookingIds.split(',')
+    file_paths = [];
+    label_names = [];
 
-    response = HttpResponse(
-        file,
-        content_type='application/pdf'
-    )
+    for id in bookingIds:
+        booking = Bookings.objects.get(id=id)
+        file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
+        # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
+        label_names.append(booking.z_label_url)
+        booking.z_downloaded_shipping_label_timestamp = datetime.now()
+        booking.save()
 
-    response['Content-Disposition'] = 'attachment; filename=a.pdf'
-    booking = Bookings.objects.get(pk=updatedId)
-    booking.z_downloaded_shipping_label_timestamp = datetime.now()
-    booking.save()
+    zip_subdir = "labels"
+    zip_filename = "%s.zip" % zip_subdir
+
+    s = io.BytesIO()
+    zf = zipfile.ZipFile(s, "w")
+
+    for index, file_path in enumerate(file_paths):
+        zip_path = os.path.join(zip_subdir, file_path)
+        zf.write(file_path, 'labels/' + label_names[index])
+    zf.close()
+
+    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+    response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
     return response
 
