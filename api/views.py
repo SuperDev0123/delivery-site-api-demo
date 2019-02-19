@@ -22,45 +22,30 @@ from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
 import os
 
-@api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def getAttachmentsHistory(request):
-    bookingId = request.GET.get('id')
-    return_data = []
-    
-    try:
-        resultObjects = []
-        resultObjects = Dme_attachments.objects.select_related().filter(fk_id_dme_booking = bookingId)
-        for resultObject in resultObjects:
-            print('@bookingID', resultObject.fk_id_dme_booking.id)
-            return_data.append({
-                'pk_id_attachment': resultObject.pk_id_attachment, 
-                'fk_id_dme_client': resultObject.fk_id_dme_client.pk_id_dme_client, 
-                'fk_id_dme_booking': resultObject.fk_id_dme_booking.id, 
-                'fileName': resultObject.fileName, 
-                'linkurl': resultObject.linkurl, 
-                'upload_Date': resultObject.upload_Date, 
-            })
-        return JsonResponse({'history': return_data})
-    except Exception as e:
-        print('@Exception', e)
-        return JsonResponse({'history': ''})
-
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
     def username(self, request, format=None):
         user_id = self.request.user.id
-        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
-        clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeObject.fk_id_dme_client_id)
-        return JsonResponse({'username': request.user.username, 'clientname': clientObject.company_name})
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+        
+        if dme_employee is not None:
+            return JsonResponse({'username': request.user.username, 'clientname': 'dme'})
+        else:
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            client = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
+            return JsonResponse({'username': request.user.username, 'clientname': client.company_name})
 
     @action(detail=False, methods=['get'])
     def get_user_date_filter_field(self, requst, pk=None):
         user_id = self.request.user.id
-        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
-        clientObject = DME_clients.objects.get(pk_id_dme_client=clientEmployeObject.fk_id_dme_client_id)
-        return JsonResponse({'user_date_filter_field': clientObject.client_filter_date_field})
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            return JsonResponse({'user_date_filter_field': 'z_CreatedTimestamp'})
+        else:
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            client = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
+            return JsonResponse({'user_date_filter_field': client.client_filter_date_field})
 
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
@@ -68,9 +53,15 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_bookings(self, request, format=None):
         user_id = int(self.request.user.id)
-        client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
-        client_employee_role = client_employee.get_role()
-        client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            client_employee_role = client_employee.get_role()
+            client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
         cur_date = self.request.query_params.get('date', None)
         first_date = datetime.strptime(cur_date, '%Y-%m-%d')
@@ -82,26 +73,32 @@ class BookingsViewSet(viewsets.ViewSet):
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
-        print('@01 - Client filter: ', client.dme_account_num)
+        # print('@01 - Client filter: ', client.dme_account_num)
         print('@02 - Date filter: ', cur_date, first_date, last_date)
         print('@03 - Warehouse ID filter: ', warehouse_id)
         print('@04 - Sort field: ', sort_field)
-        print('@05 - Company name: ', client.company_name)
+        # print('@05 - Company name: ', client.company_name)
         print('@06 - Prefilter: ', prefilter)
         print('@07 - Simple search keyword: ', simple_search_keyword)
 
-        # Client filter
-        if client_employee_role == 'company':
-            queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
-        elif client_employee_role == 'warehouse':
-            employee_warehouse_id = client_employee.warehouse_id
-            queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+        # DME & Client filter
+        if user_type == 'DME':
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == 'company':
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == 'warehouse':
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
 
         # Date filter
-        if client.company_name  == 'Seaway':
+        if user_type == 'DME':
             queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-        elif client.company_name == 'BioPak':
-            queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
+        else:
+            if client.company_name  == 'Seaway':
+                queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+            elif client.company_name == 'BioPak':
+                queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
 
         if len(simple_search_keyword) > 0:
             queryset = queryset.filter(
@@ -303,35 +300,45 @@ class BookingViewSet(viewsets.ViewSet):
         user_id = request.user.id
 
         try:
-            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
-            if client_employee is None:
-                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+            if dme_employee is not None:
+                user_type = 'DME'
+            else:
+                user_type = 'CLIENT'
 
-            client_employee_role = client_employee.get_role()
-            clientObject = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
+            if user_type == 'DME':
+                queryset = Bookings.objects.all()
+            else:
+                client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
-            if clientObject is None:
-                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+                if client_employee is None:
+                    return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+
+                client_employee_role = client_employee.get_role()
+                client = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
+
+                if client is None:
+                    return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
             
-            if client_employee_role == 'company':
-                bookings = Bookings.objects.filter(kf_client_id=clientObject.dme_account_num)
-            elif client_employee_role == 'warehouse':
-                employee_warehouse_id = client_employee.warehouse_id
-                bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+                if client_employee_role == 'company':
+                    queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+                elif client_employee_role == 'warehouse':
+                    employee_warehouse_id = client_employee.warehouse_id
+                    queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
             
             if filterName == 'dme':
-                booking = bookings.get(b_bookingID_Visual=idBookingNumber)
+                booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == 'con':
-                booking = bookings.filter(v_FPBookingNumber=idBookingNumber).first()
+                booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == 'id':
-                booking = bookings.get(id=idBookingNumber)
+                booking = queryset.get(id=idBookingNumber)
             else:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
             if booking is not None:
-                nextBooking = (bookings.filter(id__gt=booking.id).order_by('id').first())
-                prevBooking = (bookings.filter(id__lt=booking.id).order_by('-id').first())
+                nextBooking = (queryset.filter(id__gt=booking.id).order_by('id').first())
+                prevBooking = (queryset.filter(id__lt=booking.id).order_by('-id').first())
                 nextBookingId = 0
                 prevBookingId = 0
 
@@ -474,18 +481,30 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user_id = int(self.request.user.id)
-        client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
-        client_employee_role = client_employee.get_role()
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
-        if client_employee_role == 'company':
-            clientWarehouseObject_list = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(client_employee.fk_id_dme_client_id)).exclude(pk_id_client_warehouses = 100)
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+
+        if user_type == 'DME':
+            clientWarehouseObject_list = Client_warehouses.objects.all().exclude(pk_id_client_warehouses = 100)
             queryset = clientWarehouseObject_list
             return queryset
-        elif client_employee_role == 'warehouse':
-            employee_warehouse_id = client_employee.warehouse_id
-            employee_warehouse = Client_warehouses.objects.get(pk_id_client_warehouses = employee_warehouse_id)
-            queryset = [employee_warehouse]
-            return queryset
+        else:
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            client_employee_role = client_employee.get_role()
+
+            if client_employee_role == 'company':
+                clientWarehouseObject_list = Client_warehouses.objects.select_related().filter(fk_id_dme_client_id = int(client_employee.fk_id_dme_client_id)).exclude(pk_id_client_warehouses = 100)
+                queryset = clientWarehouseObject_list
+                return queryset
+            elif client_employee_role == 'warehouse':
+                employee_warehouse_id = client_employee.warehouse_id
+                employee_warehouse = Client_warehouses.objects.get(pk_id_client_warehouses = employee_warehouse_id)
+                queryset = [employee_warehouse]
+                return queryset
             
 class AttachmentsUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
@@ -493,8 +512,18 @@ class AttachmentsUploadView(views.APIView):
     def post(self, request, filename, format=None):
         file_obj = request.FILES['file']
         user_id = request.user.id
-        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
-        dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+
+        if user_type == 'DME':
+            dme_account_num = 'dme_user'
+        else:
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+            dme_account_num = client_employee[0].fk_id_dme_client.dme_account_num
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
@@ -520,9 +549,9 @@ def handle_uploaded_file_attachments(request, f):
                 destination.write(chunk)
         user_id = request.user.id
         print('userid--', user_id)
-        clientObject = DME_clients.objects.get(pk_id_dme_client=user_id)
+        client = DME_clients.objects.get(pk_id_dme_client=user_id)
         bookingObject = Bookings.objects.get(id=bookingId)
-        saveData = Dme_attachments(fk_id_dme_client=clientObject, fk_id_dme_booking=bookingObject, fileName=fileName, linkurl='22', upload_Date=now)
+        saveData = Dme_attachments(fk_id_dme_client=client, fk_id_dme_booking=bookingObject, fileName=fileName, linkurl='22', upload_Date=now)
         saveData.save()
         return 'ok'
     except Exception as e:
@@ -589,13 +618,24 @@ class FileUploadView(views.APIView):
     def post(self, request, filename, format=None):
         file_obj = request.FILES['file']
         user_id = request.user.id
-        clientEmployeObject = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
-        dme_account_num = clientEmployeObject[0].fk_id_dme_client.dme_account_num
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+
+        if user_type == 'DME':
+            dme_account_num = 'dme_user'
+        else: 
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
+            dme_account_num = client_employee[0].fk_id_dme_client.dme_account_num
+
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
         #save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
-        #save2Redis(prepend_name + "_b_client_name", clientEmployeObject[0].fk_id_dme_client.dme_account_num)
+        #save2Redis(prepend_name + "_b_client_name", client_employee[0].fk_id_dme_client.dme_account_num)
 
         handle_uploaded_file(request, dme_account_num, request.FILES['file'])
 
@@ -651,3 +691,27 @@ def download_pdf(request):
     response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
     return response
 
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def getAttachmentsHistory(request):
+    bookingId = request.GET.get('id')
+    return_data = []
+    
+    try:
+        resultObjects = []
+        resultObjects = Dme_attachments.objects.select_related().filter(fk_id_dme_booking = bookingId)
+        for resultObject in resultObjects:
+            print('@bookingID', resultObject.fk_id_dme_booking.id)
+            return_data.append({
+                'pk_id_attachment': resultObject.pk_id_attachment, 
+                'fk_id_dme_client': resultObject.fk_id_dme_client.pk_id_dme_client, 
+                'fk_id_dme_booking': resultObject.fk_id_dme_booking.id, 
+                'fileName': resultObject.fileName, 
+                'linkurl': resultObject.linkurl, 
+                'upload_Date': resultObject.upload_Date, 
+            })
+        return JsonResponse({'history': return_data})
+    except Exception as e:
+        print('@Exception', e)
+        return JsonResponse({'history': ''})
