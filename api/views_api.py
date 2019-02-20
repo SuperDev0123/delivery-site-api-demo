@@ -541,12 +541,12 @@ def get_label_allied_fn(bid):
         print(s0)
 
         try:
-            file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_client_booking_ref_num + "_" + str(booking.b_bookingID_Visual) + '.pdf'
+            file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(booking.b_bookingID_Visual) + '.pdf'
 
             with open(os.path.expanduser(file_url), 'wb') as fout:
                 fout.write(base64.decodestring(data0["encodedPdfData"].encode('utf-8')))
 
-            booking.z_label_url = str(booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_client_booking_ref_num + "_" + str(booking.b_bookingID_Visual) + '.pdf'
+            booking.z_label_url = str(booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(booking.b_bookingID_Visual) + '.pdf'
             booking.save()
             request_type = "ALLIED GET LABEL"
             request_status = "SUCCESS"
