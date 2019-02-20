@@ -378,6 +378,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'pu_Address_State': booking.pu_Address_State,
                         'de_To_Address_State': booking.de_To_Address_State,
                         'b_status': booking.b_status,
+                        'b_dateBookedDate': booking.b_dateBookedDate,
                     }
                     print('@booking', booking.id)
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
