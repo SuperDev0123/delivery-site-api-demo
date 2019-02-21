@@ -99,6 +99,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
             elif client.company_name == 'BioPak':
                 queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
+                
+        # Warehouse filter
+        if int(warehouse_id) is not 0:
+            queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
         if len(simple_search_keyword) > 0:
             queryset = queryset.filter(
@@ -122,10 +126,6 @@ class BookingsViewSet(viewsets.ViewSet):
                 Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
                 Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword))
         else:
-            # Warehouse filter
-            if int(warehouse_id) is not 0:
-                queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
-
             # Column filter
             try:
                 column_filter = column_filters['b_bookingID_Visual']
