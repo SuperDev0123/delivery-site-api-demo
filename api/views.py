@@ -102,25 +102,25 @@ class BookingsViewSet(viewsets.ViewSet):
 
         if len(simple_search_keyword) > 0:
             queryset = queryset.filter(
-                Q(b_bookingID_Visual__contains=simple_search_keyword) | 
-                Q(puPickUpAvailFrom_Date__contains=simple_search_keyword) | 
-                Q(puCompany__contains=simple_search_keyword) | 
-                Q(pu_Address_Suburb__contains=simple_search_keyword) |
-                Q(pu_Address_State__contains=simple_search_keyword) |
-                Q(pu_Address_PostalCode__contains=simple_search_keyword) |
-                Q(deToCompanyName__contains=simple_search_keyword) |
-                Q(de_To_Address_Suburb__contains=simple_search_keyword) |
-                Q(de_To_Address_State__contains=simple_search_keyword) |
-                Q(de_To_Address_PostalCode__contains=simple_search_keyword) |
-                Q(b_clientReference_RA_Numbers__contains=simple_search_keyword) | 
-                Q(vx_freight_provider__contains=simple_search_keyword) | 
-                Q(vx_serviceName__contains=simple_search_keyword) | 
-                Q(v_FPBookingNumber__contains=simple_search_keyword) | 
-                Q(b_status__contains=simple_search_keyword) | 
-                Q(s_05_LatestPickUpDateTimeFinal__contains=simple_search_keyword) | 
-                Q(s_06_LatestDeliveryDateTimeFinal__contains=simple_search_keyword) | 
-                Q(s_20_Actual_Pickup_TimeStamp__contains=simple_search_keyword) |
-                Q(s_21_Actual_Delivery_TimeStamp__contains=simple_search_keyword))
+                Q(b_bookingID_Visual__icontains=simple_search_keyword) | 
+                Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword) | 
+                Q(puCompany__icontains=simple_search_keyword) | 
+                Q(pu_Address_Suburb__icontains=simple_search_keyword) |
+                Q(pu_Address_State__icontains=simple_search_keyword) |
+                Q(pu_Address_PostalCode__icontains=simple_search_keyword) |
+                Q(deToCompanyName__icontains=simple_search_keyword) |
+                Q(de_To_Address_Suburb__icontains=simple_search_keyword) |
+                Q(de_To_Address_State__icontains=simple_search_keyword) |
+                Q(de_To_Address_PostalCode__icontains=simple_search_keyword) |
+                Q(b_clientReference_RA_Numbers__icontains=simple_search_keyword) | 
+                Q(vx_freight_provider__icontains=simple_search_keyword) | 
+                Q(vx_serviceName__icontains=simple_search_keyword) | 
+                Q(v_FPBookingNumber__icontains=simple_search_keyword) | 
+                Q(b_status__icontains=simple_search_keyword) | 
+                Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword) | 
+                Q(s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword) | 
+                Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
+                Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword))
         else:
             # Warehouse filter
             if int(warehouse_id) is not 0:
@@ -129,115 +129,115 @@ class BookingsViewSet(viewsets.ViewSet):
             # Column filter
             try:
                 column_filter = column_filters['b_bookingID_Visual']
-                queryset = queryset.filter(b_bookingID_Visual__contains=column_filter)
+                queryset = queryset.filter(b_bookingID_Visual__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['puPickUpAvailFrom_Date']
-                queryset = queryset.filter(puPickUpAvailFrom_Date__contains=column_filter)
+                queryset = queryset.filter(puPickUpAvailFrom_Date__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['puCompany']
-                queryset = queryset.filter(puCompany__contains=column_filter)
+                queryset = queryset.filter(puCompany__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['pu_Address_Suburb']
-                queryset = queryset.filter(pu_Address_Suburb__contains=column_filter)
+                queryset = queryset.filter(pu_Address_Suburb__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['pu_Address_State']
-                queryset = queryset.filter(pu_Address_State__contains=column_filter)
+                queryset = queryset.filter(pu_Address_State__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['pu_Address_PostalCode']
-                queryset = queryset.filter(pu_Address_PostalCode__contains=column_filter)
+                queryset = queryset.filter(pu_Address_PostalCode__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['deToCompanyName']
-                queryset = queryset.filter(deToCompanyName__contains=column_filter)
+                queryset = queryset.filter(deToCompanyName__icontains=column_filter)
             except KeyError:
                 column_filter = ''
                 
             try:
                 column_filter = column_filters['de_To_Address_Suburb']
-                queryset = queryset.filter(de_To_Address_Suburb__contains=column_filter)
+                queryset = queryset.filter(de_To_Address_Suburb__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['de_To_Address_State']
-                queryset = queryset.filter(de_To_Address_State__contains=column_filter)
+                queryset = queryset.filter(de_To_Address_State__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['de_To_Address_PostalCode']
-                queryset = queryset.filter(de_To_Address_PostalCode__contains=column_filter)
+                queryset = queryset.filter(de_To_Address_PostalCode__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['b_clientReference_RA_Numbers']
-                queryset = queryset.filter(b_clientReference_RA_Numbers__contains=column_filter)
+                queryset = queryset.filter(b_clientReference_RA_Numbers__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['vx_freight_provider']
-                queryset = queryset.filter(vx_freight_provider__contains=column_filter)
+                queryset = queryset.filter(vx_freight_provider__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['vx_serviceName']
-                queryset = queryset.filter(vx_serviceName__contains=column_filter)
+                queryset = queryset.filter(vx_serviceName__icontains=column_filter)
             except KeyError:
                 column_filter = ''
                 
             try:
                 column_filter = column_filters['v_FPBookingNumber']
-                queryset = queryset.filter(v_FPBookingNumber__contains=column_filter)
+                queryset = queryset.filter(v_FPBookingNumber__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['b_status']
-                queryset = queryset.filter(b_status__contains=column_filter)
+                queryset = queryset.filter(b_status__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
-                queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__contains=column_filter)
+                queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
-                queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__contains=column_filter)
+                queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['s_20_Actual_Pickup_TimeStamp']
-                queryset = queryset.filter(s_20_Actual_Pickup_TimeStamp__contains=column_filter)
+                queryset = queryset.filter(s_20_Actual_Pickup_TimeStamp__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
             try:
                 column_filter = column_filters['s_21_Actual_Delivery_TimeStamp']
-                queryset = queryset.filter(s_21_Actual_Delivery_TimeStamp__contains=column_filter)
+                queryset = queryset.filter(s_21_Actual_Delivery_TimeStamp__icontains=column_filter)
             except KeyError:
                 column_filter = ''
 
@@ -266,11 +266,11 @@ class BookingsViewSet(viewsets.ViewSet):
         if prefilter == 2:
             queryset = queryset.filter(Q(z_label_url__isnull=True) | Q(z_label_url__exact=''))
         elif prefilter == 3:
-            queryset = queryset.filter(b_status__contains='Booked')
+            queryset = queryset.filter(b_status__icontains='Booked')
         elif prefilter == 4:
-            queryset = queryset.filter(b_status__contains='Ready to booking')
+            queryset = queryset.filter(b_status__icontains='Ready to booking')
         elif prefilter == 5:
-            queryset = queryset.filter(b_status__contains='Closed')
+            queryset = queryset.filter(b_status__icontains='Closed')
 
         # Sort
         if sort_field is None:
