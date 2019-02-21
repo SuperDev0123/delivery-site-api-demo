@@ -108,7 +108,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 Q(pu_Address_Suburb__contains=simple_search_keyword) |
                 Q(pu_Address_State__contains=simple_search_keyword) |
                 Q(pu_Address_PostalCode__contains=simple_search_keyword) |
-                Q(deToCompanyName__contains=simple_search_keyword)) |
+                Q(deToCompanyName__contains=simple_search_keyword) |
                 Q(de_To_Address_Suburb__contains=simple_search_keyword) |
                 Q(de_To_Address_State__contains=simple_search_keyword) |
                 Q(de_To_Address_PostalCode__contains=simple_search_keyword) |
@@ -120,7 +120,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 Q(s_05_LatestPickUpDateTimeFinal__contains=simple_search_keyword) | 
                 Q(s_06_LatestDeliveryDateTimeFinal__contains=simple_search_keyword) | 
                 Q(s_20_Actual_Pickup_TimeStamp__contains=simple_search_keyword) |
-                Q(s_21_Actual_Delivery_TimeStamp__contains=simple_search_keyword)
+                Q(s_21_Actual_Delivery_TimeStamp__contains=simple_search_keyword))
         else:
             # Warehouse filter
             if int(warehouse_id) is not 0:
