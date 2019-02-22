@@ -64,8 +64,14 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
         cur_date = self.request.query_params.get('date', None)
-        first_date = datetime.strptime(cur_date, '%Y-%m-%d')
-        last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1))
+        if cur_date == '*':
+            search_type = 'ALL'
+        else:
+            search_type = 'FILTER'
+
+        if search_type == 'FILTER':
+            first_date = datetime.strptime(cur_date, '%Y-%m-%d')
+            last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1))
         warehouse_id = self.request.query_params.get('warehouseId', None)
         sort_field = self.request.query_params.get('sortField', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
@@ -73,11 +79,24 @@ class BookingsViewSet(viewsets.ViewSet):
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
-        # print('@01 - Client filter: ', client.dme_account_num)
-        print('@02 - Date filter: ', cur_date, first_date, last_date)
+        if user_type == 'CLIENT':
+            print('@01 - Client filter: ', client.dme_account_num)
+        else:
+            print('@01 - DME user')
+
+        if cur_date == '*':
+            print('@02 - Date filter: ', cur_date)
+        else:    
+            print('@02 - Date filter: ', cur_date, first_date, last_date)
+
         print('@03 - Warehouse ID filter: ', warehouse_id)
         print('@04 - Sort field: ', sort_field)
-        # print('@05 - Company name: ', client.company_name)
+
+        if user_type == 'CLIENT':
+            print('@05 - Company name: ', client.company_name)
+        else:
+            print('@05 - Company name: DME')
+        
         print('@06 - Prefilter: ', prefilter)
         print('@07 - Simple search keyword: ', simple_search_keyword)
 
@@ -91,14 +110,15 @@ class BookingsViewSet(viewsets.ViewSet):
                 employee_warehouse_id = client_employee.warehouse_id
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
 
-        # Date filter
-        if user_type == 'DME':
-            queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-        else:
-            if client.company_name  == 'Seaway':
+        if search_type == 'FILTER':
+            # Date filter
+            if user_type == 'DME':
                 queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-            elif client.company_name == 'BioPak':
-                queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
+            else:
+                if client.company_name  == 'Seaway':
+                    queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+                elif client.company_name == 'BioPak':
+                    queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
                 
         # Warehouse filter
         if int(warehouse_id) is not 0:
