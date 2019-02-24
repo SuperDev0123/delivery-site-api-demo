@@ -351,14 +351,18 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['PUT'])
     def update_booking(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
+        print('@is request', request.data)
         serializer = BookingSerializer(booking, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        try:
+            if serializer.is_valid():
+                print('@is valid serializer')
+                serializer.save()
+                return Response(serializer.data)
+            print('@not valid serializer')
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('@Exception----', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
     
