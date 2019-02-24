@@ -26,7 +26,7 @@ from ast import literal_eval
 
 from .serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
 from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings, Booking_lines, \
-    Api_booking_confirmation_lines
+    Api_booking_confirmation_lines, Booking_Status_History, Dme_status_history
 from .models import Log
 
 
@@ -271,7 +271,7 @@ def all_trigger(request):
             print("==============")
             data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                            "destinationPostcode": booking.de_To_Address_PostalCode}]
-            data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
+            data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                         "accountKey": "ce0d58fd22ae8619974958e65302a715"}
             data['serviceProvider'] = "ALLIED"
 
@@ -370,7 +370,7 @@ def trigger_allied(request):
         print(booking.de_To_Address_PostalCode)
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.de_To_Address_PostalCode}]
-        data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
+        data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                     "accountKey": "ce0d58fd22ae8619974958e65302a715"}
         data['serviceProvider'] = "ALLIED"
 
@@ -392,12 +392,21 @@ def trigger_allied(request):
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
             try:
-                booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                new_status = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                if booking.b_status_API != new_status:
+                    history = Dme_status_history(fk_booking_id=booking.id, status_old=booking.b_status_API,
+                                                 notes=str(booking.b_status_API) + " ---> " + str(new_status),
+                                                 status_last=new_status,
+                                                 api_status_time_stamp=datetime.datetime.now(),
+                                                 booking_request_data=request_payload)
+                    history.save()
+                booking.b_status_API = new_status
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
                 if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
                     booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
 
                 booking.save()
+
                 print("yes")
             except IndexError:
                 print("no")
@@ -1224,8 +1233,6 @@ def edit_booking_st(request):
     return Response(results)
 
 
-
-
 @api_view(['GET'])
 @permission_classes((AllowAny,))
 def returnexcel(request):
@@ -1234,7 +1241,7 @@ def returnexcel(request):
 
     workbook = xlsxwriter.Workbook(response, {'in_memory': True})
 
-    bookings = Bookings.objects.filter(b_client_name="Seaway",b_status="Booked").order_by('fk_client_warehouse')
+    bookings = Bookings.objects.filter(b_client_name="Seaway", b_status="Booked").order_by('fk_client_warehouse')
 
     worksheet = workbook.add_worksheet()
 
@@ -1277,7 +1284,6 @@ def returnexcel(request):
 
     workbook.close()
     return response
-
 
 
 @api_view(['POST'])
