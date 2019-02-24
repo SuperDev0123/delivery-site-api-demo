@@ -26,7 +26,7 @@ from ast import literal_eval
 
 from .serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
 from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings, Booking_lines, \
-    Api_booking_confirmation_lines
+    Api_booking_confirmation_lines, Booking_Status_History, Dme_status_history
 from .models import Log
 
 
@@ -134,7 +134,7 @@ def bok_1_to_bookings(request):
                                de_To_Address_Street_2=bok_1.b_056_b_del_address_street_2,
                                de_To_Address_State=bok_1.b_057_b_del_address_state,
                                de_To_Address_Suburb=bok_1.b_058_b_del_address_suburb,
-                               deToAddressPostalCode=bok_1.b_059_b_del_address_postalcode,
+                               de_To_Address_PostalCode=bok_1.b_059_b_del_address_postalcode,
                                de_To_Address_Country=bok_1.b_060_b_del_address_country,
                                de_to_Contact_F_LName=bok_1.b_061_b_del_contact_full_name,
                                de_Email_Group_Emails=bok_1.b_062_b_del_email_group, de_Email=bok_1.b_063_b_del_email,
@@ -221,10 +221,10 @@ def allied_tracking(request):
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
-        print(booking.deToAddressPostalCode)
+        print(booking.de_To_Address_PostalCode)
         print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
-                                       "destinationPostcode": booking.deToAddressPostalCode}]
+                                       "destinationPostcode": booking.de_To_Address_PostalCode}]
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -267,11 +267,11 @@ def all_trigger(request):
             data = {}
             print("==============")
             print(booking.v_FPBookingNumber)
-            print(booking.deToAddressPostalCode)
+            print(booking.de_To_Address_PostalCode)
             print("==============")
             data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
-                                           "destinationPostcode": booking.deToAddressPostalCode}]
-            data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
+                                           "destinationPostcode": booking.de_To_Address_PostalCode}]
+            data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                         "accountKey": "ce0d58fd22ae8619974958e65302a715"}
             data['serviceProvider'] = "ALLIED"
 
@@ -367,10 +367,10 @@ def trigger_allied(request):
         data = {}
         print("==============")
         print(booking.v_FPBookingNumber)
-        print(booking.deToAddressPostalCode)
+        print(booking.de_To_Address_PostalCode)
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
-                                       "destinationPostcode": booking.deToAddressPostalCode}]
-        data['spAccountDetails'] = {"accountCode": "DELVME", "accountState": "NSW",
+                                       "destinationPostcode": booking.de_To_Address_PostalCode}]
+        data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                     "accountKey": "ce0d58fd22ae8619974958e65302a715"}
         data['serviceProvider'] = "ALLIED"
 
@@ -392,12 +392,21 @@ def trigger_allied(request):
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
             try:
-                booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                new_status = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
+                if booking.b_status_API != new_status:
+                    history = Dme_status_history(fk_booking_id=booking.id, status_old=booking.b_status_API,
+                                                 notes=str(booking.b_status_API) + " ---> " + str(new_status),
+                                                 status_last=new_status,
+                                                 api_status_time_stamp=datetime.datetime.now(),
+                                                 booking_request_data=request_payload)
+                    history.save()
+                booking.b_status_API = new_status
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
                 if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
                     booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
 
                 booking.save()
+
                 print("yes")
             except IndexError:
                 print("no")
@@ -479,10 +488,10 @@ def hunter_tracking(request):
         data = literal_eval(request.body.decode('utf8'))
         print("==============")
         print(booking.v_FPBookingNumber)
-        print(booking.deToAddressPostalCode)
+        print(booking.de_To_Address_PostalCode)
         print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
-                                       "destinationPostcode": booking.deToAddressPostalCode}]
+                                       "destinationPostcode": booking.de_To_Address_PostalCode}]
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -528,7 +537,7 @@ def get_label_allied_fn(bid):
                                     "accountKey": "ce0d58fd22ae8619974958e65302a715"}
         data['serviceProvider'] = "ALLIED"
         data['consignmentNumber'] = booking.v_FPBookingNumber
-        data['destinationPostcode'] = booking.deToAddressPostalCode
+        data['destinationPostcode'] = booking.de_To_Address_PostalCode
 
         data['labelType'] = "1"
         print(data)
@@ -541,12 +550,16 @@ def get_label_allied_fn(bid):
         print(s0)
 
         try:
-            file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.fk_client_warehouse.client_warehouse_code) + "_"  + str(booking.b_bookingID_Visual) + '.pdf'
+            file_url = '/var/www/html/dme_api/static/pdfs/' + str(
+                booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(
+                booking.b_bookingID_Visual) + '.pdf'
 
             with open(os.path.expanduser(file_url), 'wb') as fout:
                 fout.write(base64.decodestring(data0["encodedPdfData"].encode('utf-8')))
 
-            booking.z_label_url = str(booking.fk_client_warehouse.client_warehouse_code) + "_" + str(booking.b_bookingID_Visual) + '.pdf'
+            booking.z_label_url = str(
+                booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(
+                booking.b_bookingID_Visual) + '.pdf'
             booking.save()
             request_type = "ALLIED GET LABEL"
             request_status = "SUCCESS"
@@ -749,10 +762,10 @@ def booking_allied(request):
                 "address1": "" if booking.de_To_Address_Street_1 is None else booking.de_To_Address_Street_1,
                 "address2": "" if booking.de_To_Address_Street_2 is None else booking.de_To_Address_Street_2,
                 "country": "" if booking.de_To_Address_Country is None else booking.de_To_Address_Country,
-                "postCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode,
+                "postCode": "" if booking.de_To_Address_PostalCode is None else booking.de_To_Address_PostalCode,
                 "state": "" if booking.de_To_Address_State is None else booking.de_To_Address_State,
                 "suburb": "" if booking.de_To_Address_Suburb is None else booking.de_To_Address_Suburb,
-                "sortCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode}
+                "sortCode": "" if booking.de_To_Address_PostalCode is None else booking.de_To_Address_PostalCode}
 
             booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
@@ -1008,10 +1021,10 @@ def booking_st(request):
                 "address1": "" if booking.de_To_Address_Street_1 is None else booking.de_To_Address_Street_1,
                 "address2": "" if booking.de_To_Address_Street_2 is None else booking.de_To_Address_Street_2,
                 "country": "" if booking.de_To_Address_Country is None else booking.de_To_Address_Country,
-                "postCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode,
+                "postCode": "" if booking.de_To_Address_PostalCode is None else booking.de_To_Address_PostalCode,
                 "state": "" if booking.de_To_Address_State is None else booking.de_To_Address_State,
                 "suburb": "" if booking.de_To_Address_Suburb is None else booking.de_To_Address_Suburb,
-                "sortCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode}
+                "sortCode": "" if booking.de_To_Address_PostalCode is None else booking.de_To_Address_PostalCode}
 
             booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
@@ -1142,10 +1155,10 @@ def edit_booking_st(request):
                 "address1": "" if booking.de_To_Address_Street_1 is None else booking.de_To_Address_Street_1,
                 "address2": "" if booking.de_To_Address_Street_2 is None else booking.de_To_Address_Street_2,
                 "country": "" if booking.de_To_Address_Country is None else booking.de_To_Address_Country,
-                "postCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode,
+                "postCode": "" if booking.de_To_Address_PostalCode is None else booking.de_To_Address_PostalCode,
                 "state": "" if booking.de_To_Address_State is None else booking.de_To_Address_State,
                 "suburb": "" if booking.de_To_Address_Suburb is None else booking.de_To_Address_Suburb,
-                "sortCode": "" if booking.deToAddressPostalCode is None else booking.deToAddressPostalCode}
+                "sortCode": "" if booking.de_To_Address_PostalCode is None else booking.de_To_Address_PostalCode}
 
             booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
@@ -1224,8 +1237,6 @@ def edit_booking_st(request):
     return Response(results)
 
 
-
-
 @api_view(['GET'])
 @permission_classes((AllowAny,))
 def returnexcel(request):
@@ -1234,7 +1245,7 @@ def returnexcel(request):
 
     workbook = xlsxwriter.Workbook(response, {'in_memory': True})
 
-    bookings = Bookings.objects.filter(b_client_name="Seaway",b_status="Booked").order_by('fk_client_warehouse')
+    bookings = Bookings.objects.filter(b_client_name="Seaway", b_status="Booked").order_by('fk_client_warehouse')
 
     worksheet = workbook.add_worksheet()
 
@@ -1248,7 +1259,7 @@ def returnexcel(request):
     worksheet.write('F1', 'v_FPBookingNumber', bold)
     worksheet.write('G1', 'vx_serviceName', bold)
     worksheet.write('H1', 'deToCompanyName', bold)
-    worksheet.write('I1', 'deToAddressPostalCode', bold)
+    worksheet.write('I1', 'de_To_Address_PostalCode', bold)
     worksheet.write('J1', 'b_status', bold)
     worksheet.write('K1', 'b_status_API', bold)
     worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
@@ -1265,7 +1276,7 @@ def returnexcel(request):
         worksheet.write(row, col + 5, booking.v_FPBookingNumber)
         worksheet.write(row, col + 6, booking.vx_serviceName)
         worksheet.write(row, col + 7, booking.deToCompanyName)
-        worksheet.write(row, col + 8, booking.deToAddressPostalCode)
+        worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
         worksheet.write(row, col + 9, booking.b_status)
         worksheet.write(row, col + 10, booking.b_status_API)
         if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
@@ -1277,7 +1288,6 @@ def returnexcel(request):
 
     workbook.close()
     return response
-
 
 
 @api_view(['POST'])
