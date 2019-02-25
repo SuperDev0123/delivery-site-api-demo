@@ -272,6 +272,7 @@ class Bookings(models.Model):
 	z_downloaded_shipping_label_timestamp = models.DateTimeField(verbose_name=_('downloaded_shipping_label_timestamp'), default=datetime.now, blank=True, null=True)
 	vx_fp_order_id = models.CharField(verbose_name=_('Order ID'), max_length=64, blank=True, null=True, default='')
 	z_manifest_url = models.CharField(verbose_name=_('Manifest URL'), max_length=128, blank=True, null=True, default='')
+	z_pod_url = models.CharField(max_length=255, blank=True, null=True, default='')
 	
 	class Meta:
 		db_table = 'dme_bookings'
