@@ -348,20 +348,18 @@ class BookingsViewSet(viewsets.ViewSet):
             'missing_labels': missing_labels, 'to_process': to_process, 
             'closed': closed})
 
-    @action(detail=True, methods=['PUT'])
+    @action(detail=True, methods=['put'])
     def update_booking(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
-        print('@is request', request.data)
         serializer = BookingSerializer(booking, data=request.data)
+
         try:
             if serializer.is_valid():
-                print('@is valid serializer')
                 serializer.save()
                 return Response(serializer.data)
-            print('@not valid serializer')
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('@Exception----', e)
+            print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BookingViewSet(viewsets.ViewSet):
@@ -470,8 +468,11 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class BookingLinesView(APIView):
-    def get(self, request, format=None):
+class BookingLinesViewSet(viewsets.ViewSet):
+    serializer_class = BookingLineSerializer
+
+    @action(detail=False, methods=['get'])
+    def get_booking_lines(self, request, format=None):
         pk_booking_id = request.GET['pk_booking_id']
 
         if pk_booking_id == 'undefined':
@@ -489,7 +490,9 @@ class BookingLinesView(APIView):
                     'e_dimUOM': booking_line.e_dimUOM, 
                     'e_dimLength': booking_line.e_dimLength, 
                     'e_dimWidth': booking_line.e_dimWidth, 
-                    'e_dimHeight': booking_line.e_dimHeight
+                    'e_dimHeight': booking_line.e_dimHeight,
+                    'e_Total_KG_weight': booking_line.e_Total_KG_weight,
+                    'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
                 })
 
             return JsonResponse({'booking_lines': return_data})
@@ -508,10 +511,34 @@ class BookingLinesView(APIView):
                     'e_dimUOM': booking_line.e_dimUOM, 
                     'e_dimLength': booking_line.e_dimLength, 
                     'e_dimWidth': booking_line.e_dimWidth, 
-                    'e_dimHeight': booking_line.e_dimHeight
+                    'e_dimHeight': booking_line.e_dimHeight,
+                    'e_Total_KG_weight': booking_line.e_Total_KG_weight,
+                    'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
                 })
 
             return JsonResponse({'booking_lines': return_data})
+
+    @action(detail=False, methods=['post'])
+    def create_booking_line(self, request, format=None):
+        serializer = BookingLineSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['put'])
+    def update_booking_line(self, request, pk, format=None):
+        booking = Booking_lines.objects.get(pk=pk)
+        serializer = BookingLineSerializer(booking, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BookingLineDetailsView(APIView):
     def get(self, request, format=None):
