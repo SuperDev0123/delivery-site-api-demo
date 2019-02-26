@@ -1300,43 +1300,49 @@ def cancel_booking(request):
         bid = bid["booking_id"]
         booking = Bookings.objects.filter(id=bid)[0]
 
-        data = {}
-        data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                    "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                    "accountPassword": "x9083d2fed4d50aa2ad5"}
-        data['serviceProvider'] = "ST"
-        data['consignmentNumber'] = booking.v_FPBookingNumber
-
-        url = "http://52.39.202.126:8080/dme-api-sit/booking/cancelconsignment"
-        response0 = requests.delete(url, params={}, json=data)
-        response0 = response0.content.decode('utf8').replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        print(s0)
-
-        try:
-            a = data0["requestId"]
-            booking.b_status = "Closed"
-            booking.b_booking_Notes = "This booking has been closed vis Startrack API"
-            booking.save()
-            request_type = "CANCEL ST BOOKING"
-            request_status = "SUCCESS"
-            oneLog = Log(request_payload=data, request_status=request_status,
-                         request_type=request_type,
-                         response=response0, fk_booking_id=booking.id)
-            oneLog.save()
-
-            results.append({"message": "Booking canceled "})
-        except KeyError:
-            request_type = "CANCEL ST BOOKING"
-            request_status = "ERROR"
-            oneLog = Log(request_payload=data, request_status=request_status,
-                         request_type=request_type,
-                         response=response0, fk_booking_id=booking.id)
-            oneLog.save()
-
-            results.append({"message": "Error while canceling "})
-
+        if booking.b_status != "Closed":
+            if booking.b_dateBookedDate is not None:
+                data = {}
+                data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
+                                            "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+                                            "accountPassword": "x9083d2fed4d50aa2ad5"}
+                data['serviceProvider'] = "ST"
+                data['consignmentNumber'] = booking.v_FPBookingNumber
+        
+                url = "http://52.39.202.126:8080/dme-api-sit/booking/cancelconsignment"
+                response0 = requests.delete(url, params={}, json=data)
+                response0 = response0.content.decode('utf8').replace("'", '"')
+                data0 = json.loads(response0)
+                s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+                print(s0)
+        
+                try:
+                    a = data0["requestId"]
+                    booking.b_status = "Closed"
+                    booking.b_booking_Notes = "This booking has been closed vis Startrack API"
+                    booking.save()
+                    request_type = "CANCEL ST BOOKING"
+                    request_status = "SUCCESS"
+                    oneLog = Log(request_payload=data, request_status=request_status,
+                                 request_type=request_type,
+                                 response=response0, fk_booking_id=booking.id)
+                    oneLog.save()
+        
+                    results.append({"message": "Booking canceled "})
+                except KeyError:
+                    request_type = "CANCEL ST BOOKING"
+                    request_status = "ERROR"
+                    oneLog = Log(request_payload=data, request_status=request_status,
+                                 request_type=request_type,
+                                 response=response0, fk_booking_id=booking.id)
+                    oneLog.save()
+        
+                    results.append({"message": "Error while canceling "})
+            else:
+                results.append({"message": "Booking is not booked yet."})
+        else:
+            results.append({"message": "Booking is closed."})
+    
     except IndexError:
         results.append({"message": "Booking not found."})
 
