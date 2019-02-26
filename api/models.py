@@ -307,6 +307,7 @@ class Booking_lines(models.Model):
 	taxable = models.BooleanField(verbose_name=_('Taxable'), default=False, blank=True, null=True)
 	e_Total_KG_weight = models.FloatField(verbose_name=_('Total KG Weight'), blank=True, default=0, null=True)
 	e_1_Total_dimCubicMeter = models.FloatField(verbose_name=_('Total Dim Cubic Meter'), blank=True, default=0, null=True)
+	client_item_reference = models.CharField(max_length=64, blank=True, null=True, default='')
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now, blank=True)
 	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now, blank=True)
 

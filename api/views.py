@@ -363,6 +363,7 @@ class BookingsViewSet(viewsets.ViewSet):
         except Exception as e:
             print('@Exception----', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
     
@@ -452,8 +453,9 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_To_Address_State': booking.de_To_Address_State,
                         'b_status': booking.b_status,
                         'b_dateBookedDate': booking.b_dateBookedDate,
+                        's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
+                        's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
                     }
-                    print('@booking', booking.id)
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
                 return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
@@ -607,29 +609,28 @@ class AttachmentsUploadView(views.APIView):
         return Response(uploadResult)
 
 def handle_uploaded_file_attachments(request, f):
-    # live code
     try:
         bookingId = request.POST.get("warehouse_id", "")
-        print('@----', bookingId)
+
         if bookingId == 'undefined':
             return 'failed'
         now = datetime.now()
         now1 = now.strftime("%Y%m%d_%H%M%S")
         name, extension = os.path.splitext(f.name)
         fileName = '/var/www/html/dme_api/media/attachments/' + name + '_' + str(now1) + extension
-        # live code
+
         with open(fileName, 'wb+') as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
+
         user_id = request.user.id
-        print('userid--', user_id)
         client = DME_clients.objects.get(pk_id_dme_client=user_id)
         bookingObject = Bookings.objects.get(id=bookingId)
         saveData = Dme_attachments(fk_id_dme_client=client, fk_id_dme_booking=bookingObject, fileName=fileName, linkurl='22', upload_Date=now)
         saveData.save()
         return 'ok'
     except Exception as e:
-        print('@Exception----', e)
+        print('Exception: ', e)
         return 'failed'
 
     #Save history on database.
