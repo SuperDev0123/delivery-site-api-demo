@@ -520,7 +520,22 @@ class BookingLinesViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def create_booking_line(self, request, format=None):
-        serializer = BookingLineSerializer(data=request.data)
+        booking_line = Booking_lines.objects.get(pk=request.data['pk_lines_id'])
+        newbooking_line = {
+            'fk_booking_id': booking_line.fk_booking_id,
+            'e_type_of_packaging': booking_line.e_type_of_packaging, 
+            'e_item': booking_line.e_item, 
+            'e_qty': booking_line.e_qty, 
+            'e_weightUOM': booking_line.e_weightUOM, 
+            'e_weightPerEach': booking_line.e_weightPerEach, 
+            'e_dimUOM': booking_line.e_dimUOM, 
+            'e_dimLength': booking_line.e_dimLength, 
+            'e_dimWidth': booking_line.e_dimWidth, 
+            'e_dimHeight': booking_line.e_dimHeight,
+            'e_Total_KG_weight': booking_line.e_Total_KG_weight,
+            'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
+        }
+        serializer = BookingLineSerializer(data=newbooking_line)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -528,8 +543,8 @@ class BookingLinesViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['put'])
     def update_booking_line(self, request, pk, format=None):
-        booking = Booking_lines.objects.get(pk=pk)
-        serializer = BookingLineSerializer(booking, data=request.data)
+        booking_line = Booking_lines.objects.get(pk=pk)
+        serializer = BookingLineSerializer(booking_line, data=request.data)
 
         try:
             if serializer.is_valid():
@@ -540,8 +555,22 @@ class BookingLinesViewSet(viewsets.ViewSet):
             print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class BookingLineDetailsView(APIView):
-    def get(self, request, format=None):
+    @action(detail=True, methods=['delete'])
+    def delete_booking_line(self, request, pk, format=None):
+        booking_line = Booking_lines.objects.get(pk=pk)
+
+        try:
+            booking_line.delete()
+            return JsonResponse({'Deleted BookingLine': booking_line})
+        except Exception as e:
+            print('Exception: ', e)
+            return JsonResponse({'error': 'Can not delete BookingLine'})
+
+class BookingLineDetailsViewSet(viewsets.ViewSet):
+    serializer_class = BookingLineDetailSerializer
+
+    @action(detail=False, methods=['get'])
+    def get_booking_line_details(self, request, format=None):
         pk_booking_id = request.GET['pk_booking_id']
 
         if pk_booking_id == 'undefined':
@@ -578,6 +607,51 @@ class BookingLineDetailsView(APIView):
                 })
 
             return JsonResponse({'booking_line_details': return_data})
+
+    @action(detail=False, methods=['post'])
+    def create_booking_line_detail(self, request, format=None):
+        booking_line_detail = Booking_lines_data.objects.get(pk=request.data['pk_id_lines_data'])
+        newbooking_line_detail = {
+            'fk_booking_id': booking_line_detail.fk_booking_id,
+            'modelNumber': booking_line_detail.modelNumber, 
+            'itemDescription': booking_line_detail.itemDescription, 
+            'quantity': booking_line_detail.quantity, 
+            'itemFaultDescription': booking_line_detail.itemFaultDescription, 
+            'insuranceValueEach': booking_line_detail.insuranceValueEach, 
+            'gap_ra': booking_line_detail.gap_ra, 
+            'clientRefNumber': booking_line_detail.clientRefNumber,
+        }
+        serializer = BookingLineDetailSerializer(data=newbooking_line_detail)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['put'])
+    def update_booking_line_detail(self, request, pk, format=None):
+        booking_line_detail = Booking_lines_data.objects.get(pk=pk)
+        serializer = BookingLineDetailSerializer(booking_line_detail, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['delete'])
+    def delete_booking_line_detail(self, request, pk, format=None):
+        booking_line_detail = Booking_lines_data.objects.get(pk=pk)
+
+        try:
+            booking_line_detail.delete()
+            return JsonResponse({'Deleted BookingLineDetail ': booking_line_detail})
+        except Exception as e:
+            print('Exception: ', e)
+            return JsonResponse({'error': 'Can not delete BookingLineDetail'})
 
 class WarehouseViewSet(viewsets.ModelViewSet):
     serializer_class = WarehouseSerializer

@@ -9,12 +9,12 @@ router.register(r'users', UserViewSet, basename='user')
 router.register(r'bookings', BookingsViewSet, basename='bookings')
 router.register(r'booking', BookingViewSet, basename='booking')
 router.register(r'bookinglines', BookingLinesViewSet, basename='bookinglines')
+router.register(r'bookinglinedetails', BookingLineDetailsViewSet, basename='bookinglinedetails')
 urlpatterns = router.urls
 
 urlpatterns += [
     url(r'^api-token-auth/', obtain_jwt_token),
     url(r'^api-token-verify/', verify_jwt_token),
-    url(r'^bookinglinedetails/', BookingLineDetailsView.as_view()),
     url(r'^warehouses/', WarehouseViewSet.as_view({'get': 'list'})),
     url(r'^share/upload/(?P<filename>[^/]+)$', FileUploadView.as_view()),
     url(r'^share/attachments/(?P<filename>[^/]+)$', AttachmentsUploadView.as_view()),
