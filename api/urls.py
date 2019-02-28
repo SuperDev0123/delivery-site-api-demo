@@ -45,4 +45,6 @@ urlpatterns += [
 
     url(r'^suburb/', getSuburbs),
     url(r'^attachments/', getAttachmentsHistory),
+
+    url(r'^temp_excel/', returntempexcel),
 ]
