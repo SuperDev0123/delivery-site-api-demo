@@ -1286,6 +1286,66 @@ def returnexcel(request):
     return response
 
 
+
+@api_view(['GET'])
+@permission_classes((AllowAny,))
+def returntempexcel(request):
+    response = HttpResponse(content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
+
+    workbook = xlsxwriter.Workbook(response, {'in_memory': True})
+
+    bookings = Bookings.objects.filter(b_client_name="Seaway", b_status="Booked").order_by('fk_client_warehouse')
+
+    worksheet = workbook.add_worksheet()
+
+    worksheet.set_column(0, 14, width=20)
+    bold = workbook.add_format({'bold': 1, 'align': 'left'})
+    worksheet.write('A1', 'Warehouse Name', bold)
+    worksheet.write('B1', 'b_client_name', bold)
+    worksheet.write('C1', 'b_bookingID_Visual', bold)
+    worksheet.write('D1', 'vx_freight_provider', bold)
+    worksheet.write('E1', 'pk_booking_id', bold)
+    worksheet.write('F1', 'v_FPBookingNumber', bold)
+    worksheet.write('G1', 'vx_serviceName', bold)
+    worksheet.write('H1', 'deToCompanyName', bold)
+    worksheet.write('I1', 'de_To_Address_PostalCode', bold)
+    worksheet.write('J1', 'b_status', bold)
+    worksheet.write('K1', 'b_status_API', bold)
+    worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
+    worksheet.write('M1', 'total_Cubic_Meter_override', bold)
+    worksheet.write('N1', 'total_1_KG_weight_override', bold)
+    worksheet.write('O1', 'total_lines_qty_override', bold)
+
+    row = 1
+    col = 0
+
+    for booking in bookings:
+        worksheet.write(row, col, booking.fk_client_warehouse.client_warehouse_code)
+        worksheet.write(row, col + 1, booking.b_client_name)
+        worksheet.write(row, col + 2, booking.b_bookingID_Visual)
+        worksheet.write(row, col + 3, booking.vx_freight_provider)
+        worksheet.write(row, col + 4, booking.pk_booking_id)
+        worksheet.write(row, col + 5, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 6, booking.vx_serviceName)
+        worksheet.write(row, col + 7, booking.deToCompanyName)
+        worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
+        worksheet.write(row, col + 9, booking.b_status)
+        worksheet.write(row, col + 10, booking.b_status_API)
+        if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
+            worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 11, "")
+        worksheet.write(row, col + 12, booking.total_Cubic_Meter_override)
+        worksheet.write(row, col + 13, booking.total_1_KG_weight_override)
+        worksheet.write(row, col + 14, booking.total_lines_qty_override)
+
+        row += 1
+
+    workbook.close()
+    return response
+
+
 @api_view(['POST'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
