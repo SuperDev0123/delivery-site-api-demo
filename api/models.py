@@ -184,7 +184,7 @@ class Bookings(models.Model):
 	de_Email_Group_Emails = models.CharField(verbose_name=_('DE Email Group Emails'), max_length=30, blank=True, null=True, default='')
 	de_Email_Group_Name = models.CharField(verbose_name=_('DE Email Group Name'), max_length=30, blank=True, null=True, default='')
 	de_Options = models.CharField(verbose_name=_('DE Options'), max_length=30, blank=True, null=True, default='')
-	total_lines_qty_override = models.IntegerField(verbose_name=_('Total Lines Qty Override'), blank=True, default=0, null=True)
+	total_lines_qty_override = models.FloatField(verbose_name=_('Total Lines Qty Override'), blank=True, default=0, null=True)
 	total_1_KG_weight_override = models.FloatField(verbose_name=_('Total 1Kg Weight Override'), default=0, blank=True, null=True)
 	total_Cubic_Meter_override = models.FloatField(verbose_name=_('Total Cubic Meter Override'), default=0, blank=True, null=True)
 	booked_for_comm_communicate_via =  models.CharField(verbose_name=_('Booked Communicate Via'), max_length=120, blank=True, null=True, default='')
