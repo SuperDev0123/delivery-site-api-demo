@@ -1245,7 +1245,7 @@ def returnexcel(request):
 
     worksheet = workbook.add_worksheet()
 
-    worksheet.set_column(0, 11, width=20)
+    worksheet.set_column(0, 13, width=20)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
     worksheet.write('A1', 'Warehouse Name', bold)
     worksheet.write('B1', 'b_client_name', bold)
@@ -1259,6 +1259,8 @@ def returnexcel(request):
     worksheet.write('J1', 'b_status', bold)
     worksheet.write('K1', 'b_status_API', bold)
     worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
+    worksheet.write('M1', 'scheduled delivery date', bold)
+    worksheet.write('N1', 'scheduled delivery time', bold)
 
     row = 1
     col = 0
@@ -1279,12 +1281,13 @@ def returnexcel(request):
             worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 11, "")
+        worksheet.write(row, col + 12, booking.vx_FP_ETA_Date)
+        worksheet.write(row, col + 13, booking.vx_FP_ETA_Time)
 
         row += 1
 
     workbook.close()
     return response
-
 
 
 @api_view(['GET'])

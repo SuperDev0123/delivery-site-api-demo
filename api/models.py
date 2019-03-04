@@ -273,7 +273,8 @@ class Bookings(models.Model):
 	vx_fp_order_id = models.CharField(verbose_name=_('Order ID'), max_length=64, blank=True, null=True, default='')
 	z_manifest_url = models.CharField(verbose_name=_('Manifest URL'), max_length=128, blank=True, null=True, default='')
 	z_pod_url = models.CharField(max_length=255, blank=True, null=True, default='')
-	
+	z_pod_signed_url = models.CharField(max_length=255, blank=True, null=True, default='')
+
 	class Meta:
 		db_table = 'dme_bookings'
 
@@ -594,6 +595,7 @@ class Booking_Status_History(models.Model):
 	freightProvider = models.CharField(verbose_name=_('Freight Provider'), max_length=30, blank=True, default='')
 	status_api = models.CharField(verbose_name=_('Status API'), max_length=40, blank=True, default='')
 	depotName = models.CharField(verbose_name=_('Depot Name'), max_length=30, blank=True, default='')
+	event_time_stamp = models.DateTimeField(verbose_name=_('Event Timestamp'), default=datetime.now, blank=True)
 
 	class Meta:
 		db_table = 'dme_booking_status_history'
