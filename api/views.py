@@ -63,15 +63,16 @@ class BookingsViewSet(viewsets.ViewSet):
             client_employee_role = client_employee.get_role()
             client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
-        cur_date = self.request.query_params.get('date', None)
-        if cur_date == '*':
+        start_date = self.request.query_params.get('startDate', None)
+        end_date = self.request.query_params.get('endDate', None)
+        if start_date == '*':
             search_type = 'ALL'
         else:
             search_type = 'FILTER'
 
         if search_type == 'FILTER':
-            first_date = datetime.strptime(cur_date, '%Y-%m-%d')
-            last_date = (datetime.strptime(cur_date, '%Y-%m-%d')+timedelta(days=1))
+            first_date = datetime.strptime(start_date, '%Y-%m-%d')
+            last_date = (datetime.strptime(end_date, '%Y-%m-%d')+timedelta(days=1))
         warehouse_id = self.request.query_params.get('warehouseId', None)
         sort_field = self.request.query_params.get('sortField', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
@@ -84,10 +85,10 @@ class BookingsViewSet(viewsets.ViewSet):
         else:
             print('@01 - DME user')
 
-        if cur_date == '*':
-            print('@02 - Date filter: ', cur_date)
+        if start_date == '*':
+            print('@02 - Date filter: ', start_date, end_date)
         else:    
-            print('@02 - Date filter: ', cur_date, first_date, last_date)
+            print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
 
         print('@03 - Warehouse ID filter: ', warehouse_id)
         print('@04 - Sort field: ', sort_field)
@@ -118,7 +119,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 if client.company_name  == 'Seaway':
                     queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
                 elif client.company_name == 'BioPak':
-                    queryset = queryset.filter(puPickUpAvailFrom_Date=cur_date)
+                    queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
                 
         # Warehouse filter
         if int(warehouse_id) is not 0:
