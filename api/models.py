@@ -217,8 +217,8 @@ class Bookings(models.Model):
 	vx_price_Booking = models.FloatField(verbose_name=_('VX Price Booking'), default=0, blank=True, null=True)
 	vx_price_Tax = models.FloatField(verbose_name=_('VX Price Tax'), default=0, blank=True, null=True)
 	vx_price_Total_Sell_Price_Override = models.FloatField(verbose_name=_('VX Price Total Sell Price Override'), default=0, blank=True, null=True)
-	vx_FP_ETA_Date = models.DateField(verbose_name=_('FP ETA Date'), default=date.today, blank=True, null=True)
-	vx_FP_ETA_Time = models.TimeField(verbose_name=_('FP ETA Time'), auto_now_add=True, blank=True, null=True)
+	vx_fp_pu_eta_time = models.DateTimeField(verbose_name=_('FP PickUp ETA Time'), auto_now_add=True, blank=True, null=True)
+	vx_fp_del_eta_time = models.DateTimeField(verbose_name=_('FP Delivery ETA Time'), auto_now_add=True, blank=True, null=True)
 	vx_service_Name_ID = models.CharField(verbose_name=_('Service Name ID'), max_length=64, blank=True, null=True, default='')
 	vx_futile_Booking_Notes = models.CharField(verbose_name=_('Futile Booking Notes'), max_length=200, blank=True, null=True, default='')
 	z_CreatedByAccount = models.TextField(verbose_name=_('Created By Account'), max_length=30, blank=True, null=True, default='')
@@ -607,6 +607,7 @@ class Log(models.Model):
 	request_status = models.CharField(verbose_name=_('Request Status'), max_length=20, blank=True, default='')
 	request_type = models.CharField(verbose_name=_('Request Type'), max_length=30, blank=True, default='')
 	fk_service_provider_id = models.CharField(verbose_name=_('Service Provider ID'), max_length=36, blank=True, default='')
+	z_temp_success_seaway_history = models.BooleanField(verbose_name=_('Passed by log script'), default=False, blank=True, null=True)
 	z_createdBy = models.CharField(verbose_name=_('Created By'), max_length=40, blank=True, default='')
 	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=40, blank=True, default='')
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now, blank=True)
@@ -802,3 +803,16 @@ class Dme_urls(models.Model):
 
 	class Meta:
 		db_table = 'dme_urls'
+
+class Dme_log_addr(models.Model):
+	id = models.AutoField(primary_key=True)
+	addresses = models.TextField(verbose_name=_('Address Info'), blank=True, null=True, default='')
+	fk_booking_id = models.CharField(verbose_name=_('Description'), max_length=255, blank=True, null=True, default='')
+	consignmentNumber = models.CharField(verbose_name=_('Consignment Number'), max_length=255, blank=True, null=True, default='')
+	length = models.FloatField(verbose_name=_('Length'), blank=True, null=True, default=0)
+	width = models.FloatField(verbose_name=_('Width'), blank=True, null=True, default=0)
+	height = models.FloatField(verbose_name=_('Height'), blank=True, null=True, default=0)
+	weight = models.FloatField(verbose_name=_('Height'), blank=True, null=True, default=0)
+
+	class Meta:
+		db_table = 'dme_log_addr'
