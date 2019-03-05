@@ -1281,8 +1281,8 @@ def returnexcel(request):
             worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 11, "")
-        worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time)
-        worksheet.write(row, col + 13, booking.vx_fp_del_eta_time)
+        worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        worksheet.write(row, col + 13, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         row += 1
 
