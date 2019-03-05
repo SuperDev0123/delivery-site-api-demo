@@ -1259,8 +1259,8 @@ def returnexcel(request):
     worksheet.write('J1', 'b_status', bold)
     worksheet.write('K1', 'b_status_API', bold)
     worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
-    worksheet.write('M1', 'scheduled delivery date', bold)
-    worksheet.write('N1', 'scheduled delivery time', bold)
+    worksheet.write('M1', 'scheduled pickup datetime', bold)
+    worksheet.write('N1', 'scheduled delivery datetime', bold)
 
     row = 1
     col = 0
@@ -1281,8 +1281,8 @@ def returnexcel(request):
             worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 11, "")
-        worksheet.write(row, col + 12, booking.vx_FP_ETA_Date)
-        worksheet.write(row, col + 13, booking.vx_FP_ETA_Time)
+        worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time)
+        worksheet.write(row, col + 13, booking.vx_fp_del_eta_time)
 
         row += 1
 
