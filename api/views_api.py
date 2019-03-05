@@ -1279,12 +1279,22 @@ def returnexcel(request):
         worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
         worksheet.write(row, col + 9, booking.b_status)
         worksheet.write(row, col + 10, booking.b_status_API)
+        
         if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
             worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 11, "")
-        worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
-        worksheet.write(row, col + 13, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+
+        if booking.vx_fp_pu_eta_time and booking.vx_fp_pu_eta_time:
+            worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 12, "")
+
+        if booking.vx_fp_del_eta_time and booking.vx_fp_del_eta_time:
+            worksheet.write(row, col + 13, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 13, "")
+        
         worksheet.write(row, col + 14, booking.z_pod_url)
         worksheet.write(row, col + 15, booking.z_pod_signed_url)
 
