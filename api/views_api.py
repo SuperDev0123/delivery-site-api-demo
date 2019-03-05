@@ -1261,6 +1261,8 @@ def returnexcel(request):
     worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
     worksheet.write('M1', 'scheduled pickup datetime', bold)
     worksheet.write('N1', 'scheduled delivery datetime', bold)
+    worksheet.write('O1', 'POD url', bold)
+    worksheet.write('P1', 'PoD Signed url', bold)
 
     row = 1
     col = 0
@@ -1283,6 +1285,8 @@ def returnexcel(request):
             worksheet.write(row, col + 11, "")
         worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
         worksheet.write(row, col + 13, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        worksheet.write(row, col + 14, booking.z_pod_url)
+        worksheet.write(row, col + 15, booking.z_pod_signed_url)
 
         row += 1
 
