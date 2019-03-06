@@ -239,6 +239,12 @@ class BookingsViewSet(viewsets.ViewSet):
                 column_filter = ''
 
             try:
+                column_filter = column_filters['b_status_API']
+                queryset = queryset.filter(b_status_API__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+
+            try:
                 column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
                 queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__icontains=column_filter)
             except KeyError:
@@ -341,6 +347,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'de_To_Address_Country': booking.de_To_Address_Country,
                 's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
                 's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
+                'b_status_API': booking.b_status_API,
             })
         
         return JsonResponse({
