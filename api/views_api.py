@@ -358,10 +358,8 @@ def all_trigger(request):
 @permission_classes((AllowAny,))
 def trigger_allied(request):
     booking_list = Bookings.objects.filter(vx_freight_provider="Allied",
-                                           z_api_issue_update_flag_500=1, b_client_name="Seaway",
-                                           b_status_API__isnull=True)
+                                           z_api_issue_update_flag_500='1', b_status='Booked')
     results = []
-
     for booking in booking_list:
         url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
         data = {}
@@ -402,19 +400,60 @@ def trigger_allied(request):
                     history.save()
                 booking.b_status_API = new_status
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
-                    booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                    booking.z_api_issue_update_flag_500 = 0
+                    booking.s_21_ActualDeliveryTimeStamp = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['statusDate']
+
+                try:
+                    pod_file = data0['consignmentTrackDetails'][0]["pods"][0]['podData']
+
+                    warehouse_name = booking.fk_client_warehouse.client_warehouse_code
+                    file_name = "POD_" + \
+                                str(warehouse_name) + "_" + \
+                                booking.b_clientReference_RA_Numbers + "_" + \
+                                booking.v_FPBookingNumber + "_" + \
+                                str(booking.b_bookingID_Visual) + '.png'
+                    file_url = '/var/www/html/dme_api/static/imgs/' + file_name
+
+                    with open(os.path.expanduser(file_url), 'wb') as fout:
+                        fout.write(
+                            base64.decodestring(pod_file.encode('utf-8')))
+                    booking.z_pod_url = file_name
+                except IndexError:
+                    print("no POD.")
+
+                try:
+                    pod_file = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['signatureImage']
+                    warehouse_name = booking.fk_client_warehouse.client_warehouse_code
+                    file_name = "pod_signed_" + \
+                                str(warehouse_name) + "_" + \
+                                booking.b_clientReference_RA_Numbers + "_" + \
+                                booking.v_FPBookingNumber + "_" + \
+                                str(booking.b_bookingID_Visual) + '.png'
+                    file_url = '/var/www/html/dme_api/static/imgs/' + file_name
+
+                    with open(os.path.expanduser(file_url), 'wb') as fout:
+                        fout.write(
+                            base64.decodestring(pod_file.encode('utf-8')))
+
+                    booking.z_pod_signed_url = file_name
+                except IndexError:
+                    print("sign : ", ' empty')
+
+                booking.vx_fp_pu_eta_time = data0['consignmentTrackDetails'][0]['scheduledPickupDate']
+                booking.vx_fp_del_eta_time = data0['consignmentTrackDetails'][0]['scheduledDeliveryDate']
 
                 booking.save()
 
                 print("yes")
             except IndexError:
+                booking.save()
                 print("no")
 
             print("==============")
             results.append({"Created Log ID": oneLog.id})
-        except KeyError:
-            results.append({"Error": "Too many request"})
+        except KeyError as e:
+            results.append({"Error": e})
 
     return Response(results)
 
@@ -550,12 +589,16 @@ def get_label_allied_fn(bid):
         print(s0)
 
         try:
-            file_url = '/var/www/html/dme_api/static/pdfs/' + str(booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(booking.b_bookingID_Visual) + '.pdf'
+            file_url = '/var/www/html/dme_api/static/pdfs/' + str(
+                booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(
+                booking.b_bookingID_Visual) + '.pdf'
 
             with open(os.path.expanduser(file_url), 'wb') as fout:
                 fout.write(base64.decodestring(data0["encodedPdfData"].encode('utf-8')))
 
-            booking.z_label_url = str(booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(booking.b_bookingID_Visual) + '.pdf'
+            booking.z_label_url = str(
+                booking.fk_client_warehouse.client_warehouse_code) + "_" + booking.b_clientReference_RA_Numbers + "_" + str(
+                booking.b_bookingID_Visual) + '.pdf'
             booking.save()
             request_type = "ALLIED GET LABEL"
             request_status = "SUCCESS"
@@ -1259,8 +1302,10 @@ def returnexcel(request):
     worksheet.write('J1', 'b_status', bold)
     worksheet.write('K1', 'b_status_API', bold)
     worksheet.write('L1', 's_21_ActualDeliveryTimeStamp', bold)
-    worksheet.write('M1', 'scheduled delivery date', bold)
-    worksheet.write('N1', 'scheduled delivery time', bold)
+    worksheet.write('M1', 'scheduled pickup datetime', bold)
+    worksheet.write('N1', 'scheduled delivery datetime', bold)
+    worksheet.write('O1', 'POD url', bold)
+    worksheet.write('P1', 'PoD Signed url', bold)
 
     row = 1
     col = 0
@@ -1277,12 +1322,24 @@ def returnexcel(request):
         worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
         worksheet.write(row, col + 9, booking.b_status)
         worksheet.write(row, col + 10, booking.b_status_API)
+
         if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
             worksheet.write(row, col + 11, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 11, "")
-        worksheet.write(row, col + 12, booking.vx_FP_ETA_Date)
-        worksheet.write(row, col + 13, booking.vx_FP_ETA_Time)
+
+        if booking.vx_fp_pu_eta_time and booking.vx_fp_pu_eta_time:
+            worksheet.write(row, col + 12, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 12, "")
+
+        if booking.vx_fp_del_eta_time and booking.vx_fp_del_eta_time:
+            worksheet.write(row, col + 13, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 13, "")
+
+        worksheet.write(row, col + 14, booking.z_pod_url)
+        worksheet.write(row, col + 15, booking.z_pod_signed_url)
 
         row += 1
 
@@ -1367,14 +1424,14 @@ def cancel_booking(request):
                                             "accountPassword": "x9083d2fed4d50aa2ad5"}
                 data['serviceProvider'] = "ST"
                 data['consignmentNumber'] = booking.v_FPBookingNumber
-        
+
                 url = "http://52.39.202.126:8080/dme-api-sit/booking/cancelconsignment"
                 response0 = requests.delete(url, params={}, json=data)
                 response0 = response0.content.decode('utf8').replace("'", '"')
                 data0 = json.loads(response0)
                 s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
                 print(s0)
-        
+
                 try:
                     a = data0["requestId"]
                     booking.b_status = "Closed"
@@ -1386,7 +1443,7 @@ def cancel_booking(request):
                                  request_type=request_type,
                                  response=response0, fk_booking_id=booking.id)
                     oneLog.save()
-        
+
                     results.append({"message": "Booking canceled "})
                 except KeyError:
                     request_type = "CANCEL ST BOOKING"
@@ -1395,13 +1452,13 @@ def cancel_booking(request):
                                  request_type=request_type,
                                  response=response0, fk_booking_id=booking.id)
                     oneLog.save()
-        
+
                     results.append({"message": "Error while canceling "})
             else:
                 results.append({"message": "Booking is not booked yet."})
         else:
             results.append({"message": "Booking is closed."})
-    
+
     except IndexError:
         results.append({"message": "Booking not found."})
 
