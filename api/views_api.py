@@ -769,6 +769,14 @@ def booking_allied(request):
             if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
                 return Response([{"Error": "suburb name for pickup postal address is required."}])
 
+            if booking.booking_api_try_count == 0:
+                booking.booking_api_start_TimeStamp = datetime.datetime.now()
+                booking.booking_api_try_count = 1
+                booking.save()
+            else:
+                booking.booking_api_try_count = int(booking.booking_api_try_count) + 1
+                booking.save()
+
             data = {}
             data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
                                         "accountKey": "ce0d58fd22ae8619974958e65302a715"}
@@ -845,6 +853,7 @@ def booking_allied(request):
                 booking.b_dateBookedDate = str(datetime.datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
+                booking.booking_api_send_TimeStamp = datetime.datetime.now()
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
@@ -862,6 +871,7 @@ def booking_allied(request):
                              request_type=request_type,
                              response=response0, fk_booking_id=booking.id)
                 oneLog.save()
+                
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
