@@ -12,6 +12,8 @@ from django.db.models import Q
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 from time import gmtime, strftime
+from django.utils import timezone
+import pytz
 import os
 import io
 import json
@@ -348,6 +350,9 @@ class BookingsViewSet(viewsets.ViewSet):
                 's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
                 's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
                 'b_status_API': booking.b_status_API,
+                'z_downloaded_pod_timestamp': booking.z_downloaded_pod_timestamp,
+                'z_pod_url': booking.z_pod_url,
+                'z_pod_signed_url': booking.z_pod_signed_url,
             })
         
         return JsonResponse({
@@ -880,27 +885,46 @@ def download_pdf(request):
 
 def download_pod(request):
     bookingIds = request.GET['ids']
+    only_new = request.GET['onlyNew']
     bookingIds = bookingIds.split(',')
     file_paths = [];
-    pod_names = [];
-    pod_signed_names = [];
+    pod_and_pod_signed_names = [];
 
-    for id in bookingIds:
-        booking = Bookings.objects.get(id=id)
+    if only_new == 'ALL':
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
 
-        if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-            file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_url) # Dev & Prod
-            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_pod_url) # Local (Test Case)
-            pod_names.append(booking.z_pod_url)
-            booking.z_downloaded_pod_timestamp = datetime.now()
-            booking.save()
+            if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+                file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_url) # Dev & Prod
+                # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_url) # Local (Test Case)
+                pod_and_pod_signed_names.append(booking.z_pod_url)
+                booking.z_downloaded_pod_timestamp = timezone.now()
+                booking.save()
 
-        if booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) is not 0:
-            file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_signed_url) # Dev & Prod
-            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_pod_url) # Local (Test Case)
-            pod_names.append(booking.z_pod_signed_url)
-            booking.z_downloaded_pod_timestamp = datetime.now()
-            booking.save()
+            if booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) is not 0:
+                file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_signed_url) # Dev & Prod
+                # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
+                pod_and_pod_signed_names.append(booking.z_pod_signed_url)
+                booking.z_downloaded_pod_timestamp = timezone.now()
+                booking.save()
+    elif only_new == 'NEW':
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+
+            if booking.z_downloaded_pod_timestamp is None:
+                if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+                    file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_url) # Dev & Prod
+                    # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_url) # Local (Test Case)
+                    pod_and_pod_signed_names.append(booking.z_pod_url)
+                    booking.z_downloaded_pod_timestamp = timezone.now()
+                    booking.save()
+
+                if booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) is not 0:
+                    file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_signed_url) # Dev & Prod
+                    # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
+                    pod_and_pod_signed_names.append(booking.z_pod_signed_url)
+                    booking.z_downloaded_pod_timestamp = timezone.now()
+                    booking.save()
 
     zip_subdir = "pod_and_pod_signed"
     zip_filename = "%s.zip" % zip_subdir
@@ -910,7 +934,7 @@ def download_pod(request):
 
     for index, file_path in enumerate(file_paths):
         zip_path = os.path.join(zip_subdir, file_path)
-        zf.write(file_path, 'pod_and_pod_signed/' + pod_names[index])
+        zf.write(file_path, 'pod_and_pod_signed/' + pod_and_pod_signed_names[index])
     zf.close()
 
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
