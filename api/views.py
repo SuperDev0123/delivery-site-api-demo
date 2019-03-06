@@ -878,6 +878,45 @@ def download_pdf(request):
     response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
     return response
 
+def download_pod(request):
+    bookingIds = request.GET['ids']
+    bookingIds = bookingIds.split(',')
+    file_paths = [];
+    pod_names = [];
+    pod_signed_names = [];
+
+    for id in bookingIds:
+        booking = Bookings.objects.get(id=id)
+
+        if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+            file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_url) # Dev & Prod
+            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_pod_url) # Local (Test Case)
+            pod_names.append(booking.z_pod_url)
+            booking.z_downloaded_pod_timestamp = datetime.now()
+            booking.save()
+
+        if booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) is not 0:
+            file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_signed_url) # Dev & Prod
+            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_pod_url) # Local (Test Case)
+            pod_names.append(booking.z_pod_signed_url)
+            booking.z_downloaded_pod_timestamp = datetime.now()
+            booking.save()
+
+    zip_subdir = "pod_and_pod_signed"
+    zip_filename = "%s.zip" % zip_subdir
+
+    s = io.BytesIO()
+    zf = zipfile.ZipFile(s, "w")
+
+    for index, file_path in enumerate(file_paths):
+        zip_path = os.path.join(zip_subdir, file_path)
+        zf.write(file_path, 'pod_and_pod_signed/' + pod_names[index])
+    zf.close()
+
+    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+    response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
+    return response
+
 @api_view(['GET'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))

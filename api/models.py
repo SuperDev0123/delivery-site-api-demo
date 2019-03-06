@@ -274,6 +274,7 @@ class Bookings(models.Model):
 	z_manifest_url = models.CharField(verbose_name=_('Manifest URL'), max_length=128, blank=True, null=True, default='')
 	z_pod_url = models.CharField(max_length=255, blank=True, null=True, default='')
 	z_pod_signed_url = models.CharField(max_length=255, blank=True, null=True, default='')
+	z_downloaded_pod_timestamp = models.DateTimeField(blank=True, null=True)
 	booking_api_start_TimeStamp = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	booking_api_send_TimeStamp = models.DateTimeField(default=datetime.now, blank=True, null=True)
 	booking_api_try_count = models.IntegerField(blank=True, default=0, null=True)
