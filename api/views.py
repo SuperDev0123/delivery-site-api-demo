@@ -157,6 +157,12 @@ class BookingsViewSet(viewsets.ViewSet):
                 column_filter = ''
 
             try:
+                column_filter = column_filters['b_dateBookedDate']
+                queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+
+            try:
                 column_filter = column_filters['puPickUpAvailFrom_Date']
                 queryset = queryset.filter(puPickUpAvailFrom_Date__icontains=column_filter)
             except KeyError:
