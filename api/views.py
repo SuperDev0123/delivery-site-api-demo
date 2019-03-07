@@ -66,11 +66,11 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
         start_date = self.request.query_params.get('startDate', None)
-        end_date = self.request.query_params.get('endDate', None)
         if start_date == '*':
             search_type = 'ALL'
         else:
             search_type = 'FILTER'
+            end_date = self.request.query_params.get('endDate', None)
 
         if search_type == 'FILTER':
             first_date = datetime.strptime(start_date, '%Y-%m-%d')
