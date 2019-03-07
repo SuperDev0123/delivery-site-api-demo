@@ -88,7 +88,7 @@ class BookingsViewSet(viewsets.ViewSet):
             print('@01 - DME user')
 
         if start_date == '*':
-            print('@02 - Date filter: ', start_date, end_date)
+            print('@02 - Date filter: ', start_date)
         else:    
             print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
 
