@@ -853,7 +853,7 @@ def booking_allied(request):
                 booking.b_dateBookedDate = str(datetime.datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
-                booking.booking_api_send_TimeStamp = datetime.datetime.now()
+                booking.booking_api_end_TimeStamp = datetime.datetime.now()
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,

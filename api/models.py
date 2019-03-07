@@ -755,7 +755,7 @@ class Utl_suburbs(models.Model):
 class Utl_states(models.Model):
 	id = models.AutoField(primary_key=True)
 	type = models.CharField(verbose_name=_('Type'), max_length=64, blank=True, null=True)
-	fk_country_id = models.IntegerField(verbose_name=_('FK Country ID'), blank=True, null=False, default=0)
+	fk_country_id = models.CharField(max_length=32, blank=True, null=True, default='')
 	pk_state_id = models.IntegerField(verbose_name=_('PK State ID'), blank=True, null=False, default=0)
 	state_code = models.CharField(verbose_name=_('State Code'), max_length=10, blank=True, null=True)
 	state_name = models.CharField(verbose_name=_('State Name'), max_length=64, blank=True, null=True)
