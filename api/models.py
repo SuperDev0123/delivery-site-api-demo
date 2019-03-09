@@ -277,7 +277,7 @@ class Bookings(models.Model):
 	z_downloaded_pod_timestamp = models.DateTimeField(blank=True, null=True)
 	booking_api_start_TimeStamp = models.DateTimeField(blank=True, null=True)
 	booking_api_end_TimeStamp = models.DateTimeField(blank=True, null=True)
-	booking_api_try_count = models.IntegerField(blank=True, default=0, null=True)
+	booking_api_try_count = models.IntegerField(blank=True, default=0, null=False)
 
 	class Meta:
 		db_table = 'dme_bookings'
