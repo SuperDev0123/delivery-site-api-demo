@@ -472,6 +472,18 @@ class BookingViewSet(viewsets.ViewSet):
                         'b_dateBookedDate': booking.b_dateBookedDate,
                         's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
                         's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
+                        'b_client_name': booking.b_client_name,
+                        'b_client_warehouse_code': booking.b_client_warehouse_code,
+                        'b_clientPU_Warehouse': booking.b_clientPU_Warehouse,
+                        'booking_Created_For': booking.booking_Created_For,
+                        'booking_Created_For_Email': booking.booking_Created_For_Email,
+                        'vx_fp_pu_eta_time': booking.vx_fp_pu_eta_time,
+                        'vx_fp_del_eta_time': booking.vx_fp_del_eta_time,
+                        'b_clientReference_RA_Numbers': booking.b_clientReference_RA_Numbers,
+                        'de_to_Pick_Up_Instructions_Contact': booking.de_to_Pick_Up_Instructions_Contact,
+                        'de_to_PickUp_Instructions_Address': booking.de_to_PickUp_Instructions_Address,
+                        'pu_pickup_instructions_address': booking.pu_pickup_instructions_address,
+                        'pu_PickUp_Instructions_Contact': booking.pu_PickUp_Instructions_Contact,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
