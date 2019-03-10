@@ -144,6 +144,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 Q(vx_serviceName__icontains=simple_search_keyword) | 
                 Q(v_FPBookingNumber__icontains=simple_search_keyword) | 
                 Q(b_status__icontains=simple_search_keyword) | 
+                Q(b_status_API__icontains=simple_search_keyword) | 
                 Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword) | 
                 Q(s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword) | 
                 Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
