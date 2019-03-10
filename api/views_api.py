@@ -1297,7 +1297,10 @@ def edit_booking_st(request):
 @api_view(['GET'])
 @permission_classes((AllowAny,))
 def returnexcel(request):
-    bookings = json.loads(request.GET['bookings'])
+    bookingIds = request.GET['bookingIds']
+    bookingIds = bookingIds.split(',')
+    print('@1 - ', bookingIds)
+
     response = HttpResponse(content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
 
@@ -1331,51 +1334,53 @@ def returnexcel(request):
     row = 1
     col = 0
 
-    for booking in bookings:
-        worksheet.write(row, col, booking['b_bookingID_Visual'])
+    for id in bookingIds:
+        booking = Bookings.objects.get(id=id)
+        print('@2 - ', booking.id)
+        worksheet.write(row, col, booking.b_bookingID_Visual)
 
-        if booking['puPickUpAvailFrom_Date'] and booking['puPickUpAvailFrom_Date']:
-            worksheet.write(row, col + 1, booking['puPickUpAvailFrom_Date'])
+        if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
+            worksheet.write(row, col + 1, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 1, "")
 
-        if booking['b_dateBookedDate'] and booking['b_dateBookedDate']:
-            worksheet.write(row, col + 2, booking['b_dateBookedDate'])
+        if booking.b_dateBookedDate and booking.b_dateBookedDate:
+            worksheet.write(row, col + 2, booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 2, "")
 
-        worksheet.write(row, col + 3, booking['puCompany'])
-        worksheet.write(row, col + 4, booking['pu_Address_Suburb'])
-        worksheet.write(row, col + 5, booking['pu_Address_State'])
-        worksheet.write(row, col + 6, booking['pu_Address_PostalCode'])
-        worksheet.write(row, col + 7, booking['deToCompanyName'])
-        worksheet.write(row, col + 8, booking['de_To_Address_Suburb'])
-        worksheet.write(row, col + 9, booking['de_To_Address_State'])
-        worksheet.write(row, col + 10, booking['de_To_Address_PostalCode'])
-        worksheet.write(row, col + 11, booking['b_clientReference_RA_Numbers'])
-        worksheet.write(row, col + 12, booking['vx_freight_provider'])
-        worksheet.write(row, col + 13, booking['vx_serviceName'])
-        worksheet.write(row, col + 14, booking['v_FPBookingNumber'])
-        worksheet.write(row, col + 15, booking['b_status'])
-        worksheet.write(row, col + 16, booking['b_status_API'])
+        worksheet.write(row, col + 3, booking.puCompany)
+        worksheet.write(row, col + 4, booking.pu_Address_Suburb)
+        worksheet.write(row, col + 5, booking.pu_Address_State)
+        worksheet.write(row, col + 6, booking.pu_Address_PostalCode)
+        worksheet.write(row, col + 7, booking.deToCompanyName)
+        worksheet.write(row, col + 8, booking.de_To_Address_Suburb)
+        worksheet.write(row, col + 9, booking.de_To_Address_State)
+        worksheet.write(row, col + 10, booking.de_To_Address_PostalCode)
+        worksheet.write(row, col + 11, booking.b_clientReference_RA_Numbers)
+        worksheet.write(row, col + 12, booking.vx_freight_provider)
+        worksheet.write(row, col + 13, booking.vx_serviceName)
+        worksheet.write(row, col + 14, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 15, booking.b_status)
+        worksheet.write(row, col + 16, booking.b_status_API)
 
-        if booking['s_05_LatestPickUpDateTimeFinal'] and booking['s_05_LatestPickUpDateTimeFinal']:
-            worksheet.write(row, col + 17, booking['s_05_LatestPickUpDateTimeFinal'])
+        if booking.s_05_LatestPickUpDateTimeFinal and booking.s_05_LatestPickUpDateTimeFinal:
+            worksheet.write(row, col + 17, booking.s_05_LatestPickUpDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 17, "")
 
-        if booking['s_06_LatestDeliveryDateTimeFinal'] and booking['s_06_LatestDeliveryDateTimeFinal']:
-            worksheet.write(row, col + 18, booking['s_06_LatestDeliveryDateTimeFinal'])
+        if booking.s_06_LatestDeliveryDateTimeFinal and booking.s_06_LatestDeliveryDateTimeFinal:
+            worksheet.write(row, col + 18, booking.s_06_LatestDeliveryDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 18, "")
 
-        if booking['s_20_Actual_Pickup_TimeStamp'] and booking['s_20_Actual_Pickup_TimeStamp']:
-            worksheet.write(row, col + 19, booking['s_20_Actual_Pickup_TimeStamp'])
+        if booking.s_20_Actual_Pickup_TimeStamp and booking.s_20_Actual_Pickup_TimeStamp:
+            worksheet.write(row, col + 19, booking.s_20_Actual_Pickup_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 19, "")
 
-        if booking['s_21_Actual_Delivery_TimeStamp'] and booking['s_21_Actual_Delivery_TimeStamp']:
-            worksheet.write(row, col + 20, booking['s_21_Actual_Delivery_TimeStamp'])
+        if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
+            worksheet.write(row, col + 20, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 20, "")
 
