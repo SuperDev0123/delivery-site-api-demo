@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='utl_states',
-            name='fk_country_id',
-            field=models.CharField(blank=True, default='', max_length=32, null=True),
-        ),
+        # migrations.AlterField(
+        #     model_name='utl_states',
+        #     name='fk_country_id',
+        #     field=models.CharField(blank=True, default='', max_length=32, null=True),
+        # ),
     ]

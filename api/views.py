@@ -18,11 +18,11 @@ import os
 import io
 import json
 import zipfile
+import uuid
 
 from .serializers import *
 from .models import *
 from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
-import os
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -498,6 +498,96 @@ class BookingViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def duplicate_booking(self, request, format=None):
+        switch_info = request.GET['switchInfo']
+        dup_line_and_linedetail = request.GET['dupLineAndLineDetail']
+        booking_id = request.GET['bookingId']
+        user_id = request.user.id
+
+        booking = Bookings.objects.get(id=booking_id)
+
+        if switch_info == 'true':
+            newBooking = {
+                'b_bookingID_Visual': Bookings.get_max_b_bookingID_Visual() + 1,
+                'fk_client_warehouse': booking.fk_client_warehouse_id,
+                'b_client_warehouse_code': booking.b_client_warehouse_code,
+                'b_clientPU_Warehouse': booking.b_clientPU_Warehouse,
+                'b_client_name': booking.b_client_name,
+                'puCompany': booking.deToCompanyName,
+                'pu_Address_Street_1': booking.de_To_Address_Street_1,
+                'pu_Address_street_2': booking.de_To_Address_Street_2,
+                'pu_Address_PostalCode': booking.de_To_Address_PostalCode,
+                'pu_Address_Suburb': booking.de_To_Address_Suburb,
+                'pu_Address_Country': booking.de_To_Address_Country,
+                'pu_Contact_F_L_Name': booking.de_to_Contact_F_LName,
+                'pu_Phone_Main': booking.de_to_Phone_Main,
+                'pu_Email': booking.de_Email,
+                'pu_Address_State': booking.de_To_Address_State,
+                'deToCompanyName': booking.puCompany,
+                'de_To_Address_Street_1': booking.pu_Address_Street_1,
+                'de_To_Address_Street_2': booking.pu_Address_street_2,
+                'de_To_Address_PostalCode': booking.pu_Address_PostalCode,
+                'de_To_Address_Suburb': booking.pu_Address_Suburb,
+                'de_To_Address_Country': booking.pu_Address_Country,
+                'de_to_Contact_F_LName': booking.pu_Contact_F_L_Name,
+                'de_to_Phone_Main': booking.pu_Phone_Main,
+                'de_Email': booking.pu_Email,
+                'de_To_Address_State': booking.pu_Address_State,
+                'pk_booking_id': booking.pk_booking_id,
+            }
+        else:
+            newBooking = {
+                'b_bookingID_Visual': Bookings.get_max_b_bookingID_Visual() + 1,
+                'fk_client_warehouse': booking.fk_client_warehouse_id,
+                'b_client_warehouse_code': booking.b_client_warehouse_code,
+                'b_clientPU_Warehouse': booking.b_clientPU_Warehouse,
+                'b_client_name': booking.b_client_name,
+                'puCompany': booking.puCompany,
+                'pu_Address_Street_1': booking.pu_Address_Street_1,
+                'pu_Address_street_2': booking.pu_Address_street_2,
+                'pu_Address_PostalCode': booking.pu_Address_PostalCode,
+                'pu_Address_Suburb': booking.pu_Address_Suburb,
+                'pu_Address_Country': booking.pu_Address_Country,
+                'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name,
+                'pu_Phone_Main': booking.pu_Phone_Main,
+                'pu_Email': booking.pu_Email,
+                'pu_Address_State': booking.pu_Address_State,
+                'deToCompanyName': booking.deToCompanyName,
+                'de_To_Address_Street_1': booking.de_To_Address_Street_1,
+                'de_To_Address_Street_2': booking.de_To_Address_Street_2,
+                'de_To_Address_PostalCode': booking.de_To_Address_PostalCode,
+                'de_To_Address_Suburb': booking.de_To_Address_Suburb,
+                'de_To_Address_Country': booking.de_To_Address_Country,
+                'de_to_Contact_F_LName': booking.de_to_Contact_F_LName,
+                'de_to_Phone_Main': booking.de_to_Phone_Main,
+                'de_Email': booking.de_Email,
+                'de_To_Address_State': booking.de_To_Address_State,
+                'pk_booking_id': booking.pk_booking_id,
+            }
+
+        if dup_line_and_linedetail == 'true':
+            newBooking['pk_booking_id'] = str(uuid.uuid1())
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+            booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=booking.pk_booking_id)
+            for booking_line in booking_lines:
+                booking_line.pk_lines_id = None
+                booking_line.fk_booking_id = newBooking['pk_booking_id']
+                booking_line.save()
+            for booking_line_detail in booking_line_details:
+                booking_line_detail.pk_id_lines_data = None
+                booking_line_detail.fk_booking_id = newBooking['pk_booking_id']
+                booking_line_detail.save()
+        else:
+            newBooking['pk_booking_id'] = str(uuid.uuid1())
+
+        serializer = BookingSerializer(data=newBooking)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
