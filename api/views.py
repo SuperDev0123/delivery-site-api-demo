@@ -484,6 +484,17 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_to_PickUp_Instructions_Address': booking.de_to_PickUp_Instructions_Address,
                         'pu_pickup_instructions_address': booking.pu_pickup_instructions_address,
                         'pu_PickUp_Instructions_Contact': booking.pu_PickUp_Instructions_Contact,
+                        'vx_freight_provider': booking.vx_freight_provider,
+                        'vx_serviceName': booking.vx_serviceName,
+                        'consignment_label_link': booking.consignment_label_link,
+                        's_02_Booking_Cutoff_Time': booking.s_02_Booking_Cutoff_Time,
+                        'puPickUpAvailFrom_Date': booking.puPickUpAvailFrom_Date,
+                        'z_CreatedTimestamp': booking.z_CreatedTimestamp,
+                        'b_dateBookedDate': booking.b_dateBookedDate,
+                        'total_lines_qty_override': booking.total_lines_qty_override,
+                        'total_1_KG_weight_override': booking.total_1_KG_weight_override,
+                        'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
+
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
