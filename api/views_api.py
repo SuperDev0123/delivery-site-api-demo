@@ -400,9 +400,13 @@ def trigger_allied(request):
                     history.save()
                 booking.b_status_API = new_status
                 booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
-                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Shipment has been delivered.':
+                if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0][
+                        'status'] == 'Shipment has been delivered.':
                     booking.z_api_issue_update_flag_500 = 0
-                    booking.s_21_ActualDeliveryTimeStamp = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['statusDate']
+                    booking.s_21_ActualDeliveryTimeStamp = \
+                        data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['statusDate']
+                    booking.s_21_actual_delivery_timestamp = \
+                        data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['statusDate']
 
                 try:
                     pod_file = data0['consignmentTrackDetails'][0]["pods"][0]['podData']
@@ -421,6 +425,8 @@ def trigger_allied(request):
                     booking.z_pod_url = file_name
                 except IndexError:
                     print("no POD.")
+                except KeyError:
+                    print("sign : ", ' empty')
 
                 try:
                     pod_file = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['signatureImage']
@@ -439,6 +445,8 @@ def trigger_allied(request):
                     booking.z_pod_signed_url = file_name
                 except IndexError:
                     print("sign : ", ' empty')
+                except KeyError:
+                    print("sign : ", ' empty')
 
                 booking.vx_fp_pu_eta_time = data0['consignmentTrackDetails'][0]['scheduledPickupDate']
                 booking.vx_fp_del_eta_time = data0['consignmentTrackDetails'][0]['scheduledDeliveryDate']
@@ -453,7 +461,7 @@ def trigger_allied(request):
             print("==============")
             results.append({"Created Log ID": oneLog.id})
         except KeyError as e:
-            results.append({"Error": e})
+            results.append({"Error": str(e)})
 
     return Response(results)
 
@@ -871,7 +879,7 @@ def booking_allied(request):
                              request_type=request_type,
                              response=response0, fk_booking_id=booking.id)
                 oneLog.save()
-                
+
                 results.append({"Error": data0["errorMsg"]})
 
         except IndexError:
