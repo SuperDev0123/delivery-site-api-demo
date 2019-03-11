@@ -827,3 +827,30 @@ class Dme_log_addr(models.Model):
 
 	class Meta:
 		db_table = 'dme_log_addr'
+
+class Dme_comm_and_task(models.Model):
+	id = models.AutoField(primary_key=True)
+	fk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True)
+	assigned_to = models.CharField(verbose_name=_('Assigned To'), max_length=64, blank=True, null=True)
+	priority_of_log = models.FloatField(verbose_name=_('Priority Of Log'), blank=True, null=True)
+	dme_action = models.CharField(verbose_name=_('DME Action'), max_length=255, blank=True, null=True)
+	dme_notes_type = models.CharField(verbose_name=_('DME Notes Type'), max_length=64, blank=True, null=True)
+	dme_notes = models.TextField(verbose_name=_('DME Notes'), max_length=4096, blank=True, null=True)
+	dme_notes_external = models.TextField(verbose_name=_('DME Notes External'), max_length=4096, blank=True, null=True)
+	status = models.CharField(verbose_name=_('Status'), max_length=32, blank=True, null=True)
+	query = models.CharField(verbose_name=_('Query'), max_length=254, blank=True, null=True)
+	due_by_date = models.DateField(verbose_name=_('Due By Date'), blank=True, null=True)
+	due_by_time = models.TimeField(verbose_name=_('Due By Time'), blank=True, null=True)
+	due_by_new_date = models.DateField(verbose_name=_('Due By New Date'), blank=True, null=True)
+	due_by_new_time = models.TimeField(verbose_name=_('Due By New Time'), blank=True, null=True)
+	final_due_date_time = models.DateTimeField(verbose_name=_('Final Due Date Time'), blank=True, null=True)
+	status_log_closed_time = models.DateTimeField(verbose_name=_('Status Log Closed Time'), blank=True, null=True)
+	z_snooze_option = models.FloatField(verbose_name=_('Snooze Option'), blank=True, null=True)
+	z_time_till_due_sec = models.FloatField(verbose_name=_('Time Till Due Second'), blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'dme_comm_and_task'
