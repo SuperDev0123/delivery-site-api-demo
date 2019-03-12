@@ -600,7 +600,6 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
 
@@ -841,6 +840,84 @@ class AttachmentsUploadView(views.APIView):
 
         html = prepend_name
         return Response(uploadResult)
+
+class CommsViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_comms(self, requst, pk=None):
+        user_id = self.request.user.id
+        booking_id = self.request.GET['bookingId']
+        sort_field = self.request.query_params.get('sortField', None)
+        column_filters = json.loads(self.request.query_params.get('columnFilters', None))
+
+        print('@20 - booking_id: ', booking_id)
+        print('@21 - sort_field: ', sort_field)
+        print('@22 - column_filters: ', column_filters)
+
+        booking = Bookings.objects.get(id=booking_id)
+        comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+        # Sort
+        if sort_field is None:
+            comms = comms.order_by('id')
+        else:
+            comms = comms.order_by(sort_field)
+
+        # Column filter
+        try:
+            column_filter = column_filters['id']
+            comms = comms.filter(id__icontains=column_filter)
+        except KeyError:
+            column_filter = ''
+
+        return_datas = []
+        if len(comms) == 0:
+            return JsonResponse({'comms': []})
+        else:
+            for comm in comms:
+                return_data = {
+                    'id': comm.id,
+                    'fk_booking_id': comm.fk_booking_id,
+                    'priority_of_log': comm.priority_of_log,
+                    'assigned_to': comm.assigned_to,
+                    'dme_notes_type': comm.dme_notes_type,
+                    'query': comm.query,
+                    'dme_action': comm.dme_action,
+                    'closed': comm.closed,
+                    'status_log_closed_time': comm.status_log_closed_time,
+                    'dme_notes': comm.dme_notes,
+                    'dme_notes_external': comm.dme_notes_external,
+                    'due_by_date': comm.due_by_date,
+                    'due_by_time': comm.due_by_time,
+                }
+                return_datas.append(return_data)
+            return JsonResponse({'comms': return_datas})
+
+    @action(detail=True, methods=['put'])
+    def update_comm(self, request, pk, format=None):
+        dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
+        serializer = CommSerializer(dme_comm_and_task, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def create_comm(self, request, pk=None):
+        serializer = CommSerializer(data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def handle_uploaded_file_attachments(request, f):
     try:
