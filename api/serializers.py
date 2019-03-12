@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Bookings, Client_warehouses, DME_employees, Client_employees, Booking_lines, Booking_lines_data, Dme_comm_and_task
+from .models import Bookings, Client_warehouses, DME_employees, Client_employees, Booking_lines, Booking_lines_data, Dme_comm_and_task, Dme_comm_notes
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -24,4 +24,9 @@ class BookingLineDetailSerializer(serializers.ModelSerializer):
 class CommSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dme_comm_and_task
+        fields = '__all__'
+
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dme_comm_notes
         fields = '__all__'

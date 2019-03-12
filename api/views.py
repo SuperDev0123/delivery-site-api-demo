@@ -912,6 +912,24 @@ class CommsViewSet(viewsets.ViewSet):
         try:
             if serializer.is_valid():
                 serializer.save()
+                new_note_data = {
+                    'comm': serializer.data['id'],
+                    'dme_notes': request.data['dme_detail'],
+                    'dme_notes_type': request.data['dme_notes_type'],
+                    'dme_notes_no': 1,
+                    'username': 'Stephen',
+                }
+                note_serializer = NoteSerializer(data=new_note_data)
+                
+                try:
+                    if note_serializer.is_valid():
+                        note_serializer.save()
+                    else:
+                        return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as e:
+                    print('Exception: ', e)
+                    return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
