@@ -495,7 +495,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'total_lines_qty_override': booking.total_lines_qty_override,
                         'total_1_KG_weight_override': booking.total_1_KG_weight_override,
                         'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
-
+                        'b_status_API': booking.b_status_API,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
