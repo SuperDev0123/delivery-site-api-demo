@@ -287,6 +287,14 @@ class Bookings(models.Model):
 		max = Bookings.objects.all().aggregate(Max('b_bookingID_Visual'))['b_bookingID_Visual__max']
 		return int(max)
 
+	def has_comms(self):
+		comms = Dme_comm_and_task.objects.filter(fk_booking_id=self.pk_booking_id)
+		
+		if len(comms) == 0:
+			return False
+		else:
+			return True
+
 class Booking_lines(models.Model):
 	pk_lines_id = models.AutoField(primary_key=True)
 	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)

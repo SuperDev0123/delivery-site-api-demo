@@ -360,6 +360,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'z_downloaded_pod_timestamp': booking.z_downloaded_pod_timestamp,
                 'z_pod_url': booking.z_pod_url,
                 'z_pod_signed_url': booking.z_pod_signed_url,
+                'has_comms': booking.has_comms(),
             })
         
         return JsonResponse({
