@@ -963,19 +963,19 @@ class NotesViewSet(viewsets.ViewSet):
                 return_datas.append(return_data)
             return JsonResponse({'notes': return_datas})
 
-    # @action(detail=True, methods=['put'])
-    # def update_comm(self, request, pk, format=None):
-    #     dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
-    #     serializer = CommSerializer(dme_comm_and_task, data=request.data)
+    @action(detail=True, methods=['put'])
+    def update_note(self, request, pk, format=None):
+        dme_comm_note = Dme_comm_notes.objects.get(pk=pk)
+        serializer = NoteSerializer(dme_comm_note, data=request.data)
 
-    #     try:
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return Response(serializer.data)
-    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #     except Exception as e:
-    #         print('Exception: ', e)
-    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def create_note(self, request, pk=None):
