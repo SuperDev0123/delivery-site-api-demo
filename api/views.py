@@ -936,6 +936,59 @@ class CommsViewSet(viewsets.ViewSet):
             print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class NotesViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_notes(self, requst, pk=None):
+        user_id = self.request.user.id
+        comm_id = self.request.GET['commId']
+
+        print('@20 - comm_id: ', comm_id)
+
+        notes = Dme_comm_notes.objects.filter(comm_id=comm_id)
+
+        return_datas = []
+        if len(notes) == 0:
+            return JsonResponse({'notes': []})
+        else:
+            for note in notes:
+                return_data = {
+                    'id': note.id,
+                    'username': note.username,
+                    'dme_notes': note.dme_notes,
+                    'dme_notes_type': note.dme_notes_type,
+                    'dme_notes_no': note.dme_notes_no,
+                    'z_modifiedTimeStamp': note.z_modifiedTimeStamp,
+                }
+                return_datas.append(return_data)
+            return JsonResponse({'notes': return_datas})
+
+    # @action(detail=True, methods=['put'])
+    # def update_comm(self, request, pk, format=None):
+    #     dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
+    #     serializer = CommSerializer(dme_comm_and_task, data=request.data)
+
+    #     try:
+    #         if serializer.is_valid():
+    #             serializer.save()
+    #             return Response(serializer.data)
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     except Exception as e:
+    #         print('Exception: ', e)
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def create_note(self, request, pk=None):
+        serializer = NoteSerializer(data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 def handle_uploaded_file_attachments(request, f):
     try:
         bookingId = request.POST.get("warehouse_id", "")
