@@ -24,11 +24,8 @@ import json
 import datetime
 from ast import literal_eval
 
-from .serializers_api import BOK_0_BookingKeysSerializer, BOK_1_headersSerializer, BOK_2_linesSerializer
-from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, Bookings, Booking_lines, \
-    Api_booking_confirmation_lines, Booking_Status_History, Dme_status_history
-from .models import Log
-
+from .serializers_api import *
+from .models import *
 
 @api_view(['GET', 'POST'])
 def bok_0_bookingkeys(request):
@@ -53,7 +50,11 @@ def bok_1_headers(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
-        serializer = BOK_1_headersSerializer(data=request.data)
+        bok_1_header = request.data
+        b_client_warehouse_code = bok_1_header['b_client_warehouse_code']
+        warehouse = Client_warehouses.objects.get(client_warehouse_code=b_client_warehouse_code)
+        bok_1_header['fk_client_warehouse'] = warehouse.pk_id_client_warehouses
+        serializer = BOK_1_headersSerializer(data=bok_1_header)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
