@@ -836,6 +836,7 @@ class Dme_comm_and_task(models.Model):
 	dme_action = models.CharField(verbose_name=_('DME Action'), max_length=255, blank=True, null=True)
 	dme_com_title = models.TextField(verbose_name=_('DME Comm Title'), max_length=512, blank=True, null=True)
 	dme_detail = models.CharField(verbose_name=_('DME Detail'), max_length=255, blank=True, null=True)
+	dme_notes_type = models.CharField(verbose_name=_('DME Notes Type'), max_length=64, blank=True, null=True)
 	dme_notes_external = models.TextField(verbose_name=_('DME Notes External'), max_length=4096, blank=True, null=True)
 	status = models.CharField(verbose_name=_('Status'), max_length=32, blank=True, null=True)
 	query = models.CharField(verbose_name=_('Query'), max_length=254, blank=True, null=True)

@@ -884,6 +884,7 @@ class CommsViewSet(viewsets.ViewSet):
                     'closed': comm.closed,
                     'status_log_closed_time': comm.status_log_closed_time,
                     'dme_detail': comm.dme_detail,
+                    'dme_notes_type': comm.dme_notes_type,
                     'dme_notes_external': comm.dme_notes_external,
                     'due_by_date': comm.due_by_date,
                     'due_by_time': comm.due_by_time,
