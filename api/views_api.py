@@ -1040,6 +1040,9 @@ def booking_st(request):
         try:
             booking = Bookings.objects.filter(id=bid)[0]
 
+            if booking.b_status != 'Ready for booking':
+                return Response([{"Error": "Booking is already booked."}])
+
             if booking.pu_Address_State is None or not booking.pu_Address_State:
                 return Response([{"Error": "State for pickup postal address is required."}])
 
@@ -1154,6 +1157,10 @@ def booking_st(request):
 
         except IndexError:
             results.append({"message": "Booking not found"})
+
+        except TypeError:
+            results.append({"message": "eqty is none"})
+
 
     except SyntaxError:
         results.append({"message": "booking id is required"})
