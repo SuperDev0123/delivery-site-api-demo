@@ -779,7 +779,7 @@ def booking_allied(request):
                 return Response([{"Error": "suburb name for pickup postal address is required."}])
 
             if booking.booking_api_try_count == 0:
-                booking.booking_api_start_TimeStamp = datetime.datetime.now()
+                booking.booking_api_start_TimeStamp = datetime.now()
                 booking.booking_api_try_count = 1
                 booking.save()
             else:
