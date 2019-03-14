@@ -178,7 +178,7 @@ def st_tracking(request):
         url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
-        request_timestamp = datetime.datetime.now()
+        request_timestamp = datetime.now()
 
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
@@ -245,7 +245,7 @@ def allied_tracking(request):
                          response=response0, fk_booking_id=booking.id)
             oneLog.save()
             booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-            booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+            booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.now()
             booking.save()
 
             results.append({"Created Log ID": oneLog.id})
@@ -296,9 +296,9 @@ def all_trigger(request):
                 oneLog.save()
                 try:
                     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-                    booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                    booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.now()
                     if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
-                        booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+                        booking.s_21_ActualDeliveryTimeStamp = datetime.now()
 
                     booking.save()
                 except IndexError:
@@ -340,9 +340,9 @@ def all_trigger(request):
                 oneLog.save()
                 try:
                     booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-                    booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                    booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.now()
                     if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status'] == 'Delivered in Full':
-                        booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+                        booking.s_21_ActualDeliveryTimeStamp = datetime.now()
                     booking.save()
                 except IndexError:
                     print("asd")
@@ -396,11 +396,11 @@ def trigger_allied(request):
                     history = Dme_status_history(fk_booking_id=booking.id, status_old=booking.b_status_API,
                                                  notes=str(booking.b_status_API) + " ---> " + str(new_status),
                                                  status_last=new_status,
-                                                 api_status_time_stamp=datetime.datetime.now(),
+                                                 api_status_time_stamp=datetime.now(),
                                                  booking_request_data=request_payload)
                     history.save()
                 booking.b_status_API = new_status
-                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.now()
                 if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0][
                         'status'] == 'Shipment has been delivered.':
                     booking.z_api_issue_update_flag_500 = 0
@@ -508,10 +508,10 @@ def trigger_st(request):
             oneLog.save()
             try:
                 booking.b_status_API = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['status']
-                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.datetime.now()
+                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.now()
                 if data0['consignmentTrackDetails'][0]['consignmentStatuses'][0][
                     'status'] == 'Delivered in Full':
-                    booking.s_21_ActualDeliveryTimeStamp = datetime.datetime.now()
+                    booking.s_21_ActualDeliveryTimeStamp = datetime.now()
                 booking.save()
             except IndexError:
                 print("asd")
@@ -779,7 +779,7 @@ def booking_allied(request):
                 return Response([{"Error": "suburb name for pickup postal address is required."}])
                 
             if booking.booking_api_try_count == 0:
-                booking.booking_api_start_TimeStamp = datetime.datetime.now()
+                booking.booking_api_start_TimeStamp = datetime.now()
                 booking.booking_api_try_count = 1
                 booking.save()
             else:
@@ -859,10 +859,10 @@ def booking_allied(request):
 
                 booking.v_FPBookingNumber = data0['consignmentNumber']
                 booking.fk_fp_pickup_id = data0['requestId']
-                booking.b_dateBookedDate = str(datetime.datetime.now())
+                booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
-                booking.booking_api_end_TimeStamp = datetime.datetime.now()
+                booking.booking_api_end_TimeStamp = datetime.now()
                 booking.save()
 
                 oneLog = Log(request_payload=request_payload, request_status=request_status, request_type=request_type,
@@ -899,7 +899,7 @@ def st_create_order(request):
     results = []
     date = literal_eval(request.body.decode('utf8'))
     date = date["date"]
-    # print('Date (Create Order for ST): ', datetime.datetime.now().strftime("%Y-%m-%d"))
+    # print('Date (Create Order for ST): ', datetime.now().strftime("%Y-%m-%d"))
     print('Date (Create Order for ST): ', date)
 
     try:
@@ -988,7 +988,7 @@ def get_order_summary_fn(order_id):
     s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
     print(s0)
     try:
-        file_name = "biopak_manifest_" + str(order_id) + '_' + str(datetime.datetime.now()) + '.pdf'
+        file_name = "biopak_manifest_" + str(order_id) + '_' + str(datetime.now()) + '.pdf'
         file_url = '/var/www/html/dme_api/static/pdfs/' + file_name
 
         with open(os.path.expanduser(file_url), 'wb') as fout:
@@ -1126,7 +1126,7 @@ def booking_st(request):
 
                 booking.v_FPBookingNumber = data0['consignmentNumber']
                 booking.fk_fp_pickup_id = data0['requestId']
-                booking.b_dateBookedDate = str(datetime.datetime.now())
+                booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
                 booking.save()
@@ -1263,7 +1263,7 @@ def edit_booking_st(request):
 
                 booking.v_FPBookingNumber = data0['consignmentNumber']
                 booking.fk_fp_pickup_id = data0['requestId']
-                booking.b_dateBookedDate = str(datetime.datetime.now())
+                booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
                 booking.save()
