@@ -916,8 +916,8 @@ class CommsViewSet(viewsets.ViewSet):
                 serializer.save()
                 new_note_data = {
                     'comm': serializer.data['id'],
-                    'dme_notes': request.data['dme_detail'],
-                    'dme_notes_type': request.data['dme_notes_type'],
+                    'dme_notes': request.data['dme_notes'],
+                    'dme_notes_type': request.data['notes_type'],
                     'dme_notes_no': 1,
                     'username': 'Stephen',
                 }
