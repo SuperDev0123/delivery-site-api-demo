@@ -887,8 +887,9 @@ class CommsViewSet(viewsets.ViewSet):
                     'dme_detail': comm.dme_detail,
                     'dme_notes_type': comm.dme_notes_type,
                     'dme_notes_external': comm.dme_notes_external,
-                    'due_by_date': comm.due_by_date,
-                    'due_by_time': comm.due_by_time,
+                    'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                    'dme_action': comm.dme_action,
+                    'z_createdTimeStamp': comm.z_createdTimeStamp,
                 }
                 return_datas.append(return_data)
             return JsonResponse({'comms': return_datas})
