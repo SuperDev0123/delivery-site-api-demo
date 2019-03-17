@@ -283,9 +283,9 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # New POD filter
         if new_pod == 'true':
-            queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True).exclude(z_pod_url__isnull=True).exclude(z_pod_url__exact='') \
-                                .exclude(z_pod_signed_url__isnull=True) \
-                                .exclude(z_pod_signed_url__exact='')
+            queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
+                                .exclude((Q(z_pod_url__isnull=True) | Q(z_pod_url__exact='')), \
+                                (Q(z_pod_signed_url__isnull=True)| Q(z_pod_signed_url__exact='')))
 
         # Prefilter count
         errors_to_correct = 0
