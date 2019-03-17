@@ -1302,12 +1302,11 @@ def edit_booking_st(request):
     return Response(results)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes((AllowAny,))
 def returnexcel(request):
-    bookingIds = request.GET['bookingIds']
+    bookingIds = request.POST['bookingIds']
     bookingIds = bookingIds.split(',')
-    print('@1 - ', bookingIds)
 
     response = HttpResponse(content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
@@ -1344,7 +1343,6 @@ def returnexcel(request):
 
     for id in bookingIds:
         booking = Bookings.objects.get(id=id)
-        print('@2 - ', booking.id)
         worksheet.write(row, col, booking.b_bookingID_Visual)
 
         if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
