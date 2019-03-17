@@ -1305,9 +1305,9 @@ def edit_booking_st(request):
 @api_view(['POST'])
 @permission_classes((AllowAny,))
 def returnexcel(request):
-    bookingIds = request.POST['bookingIds']
-    bookingIds = bookingIds.split(',')
-
+    body = literal_eval(request.body.decode('utf8'))
+    bookingIds = body["bookingIds"]
+    
     response = HttpResponse(content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
 
