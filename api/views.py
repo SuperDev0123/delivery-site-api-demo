@@ -81,6 +81,7 @@ class BookingsViewSet(viewsets.ViewSet):
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
         prefilter = json.loads(self.request.query_params.get('prefilterInd', None))
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
+        new_pod = self.request.query_params.get('newPod', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         if user_type == 'CLIENT':
@@ -128,6 +129,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if int(warehouse_id) is not 0:
             queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
+        # Simple search & Column fitler
         if len(simple_search_keyword) > 0:
             queryset = queryset.filter(
                 Q(b_bookingID_Visual__icontains=simple_search_keyword) | 
@@ -277,6 +279,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(s_21_Actual_Delivery_TimeStamp__icontains=column_filter)
             except KeyError:
                 column_filter = ''
+
+        # New POD filter
+        if new_pod is True:
+            queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
+                                .exclude(z_pod_url__isnull=True) \
+                                .exclude(z_pod_url__exact='') \
+                                .exclude(z_pod_signed_url__isnull=True) \
+                                .exclude(z_pod_signed_url__exact='')
 
         # Prefilter count
         errors_to_correct = 0
