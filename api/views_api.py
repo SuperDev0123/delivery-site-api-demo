@@ -1313,7 +1313,7 @@ def returnexcel(request):
 
     workbook = xlsxwriter.Workbook(response, {'in_memory': True})
     worksheet = workbook.add_worksheet()
-    worksheet.set_column(0, 13, width=20)
+    worksheet.set_column(0, 13, width=24)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
 
     worksheet.write('A1', 'b_bookingID_Visual', bold)
@@ -1337,6 +1337,10 @@ def returnexcel(request):
     worksheet.write('S1', 's_06_LatestDeliveryDateTimeFinal', bold)
     worksheet.write('T1', 's_20_Actual_Pickup_TimeStamp', bold)
     worksheet.write('U1', 's_21_Actual_Delivery_TimeStamp', bold)
+    worksheet.write('V1', 'z_pod_url', bold)
+    worksheet.write('W1', 'z_pod_signed_url', bold)
+    worksheet.write('X1', 'vx_fp_pu_eta_time', bold)
+    worksheet.write('Y1', 'vx_fp_del_eta_time', bold)
 
     row = 1
     col = 0
@@ -1389,6 +1393,19 @@ def returnexcel(request):
             worksheet.write(row, col + 20, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
         else:
             worksheet.write(row, col + 20, "")
+
+        worksheet.write(row, col + 21, booking.z_pod_url)
+        worksheet.write(row, col + 22, booking.z_pod_signed_url)
+
+        if booking.vx_fp_pu_eta_time and booking.vx_fp_pu_eta_time:
+            worksheet.write(row, col + 23, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 23, "")
+
+        if booking.vx_fp_del_eta_time and booking.vx_fp_del_eta_time:
+            worksheet.write(row, col + 24, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 24, "")
 
         row += 1
 
