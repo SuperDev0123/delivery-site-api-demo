@@ -104,6 +104,7 @@ class BookingsViewSet(viewsets.ViewSet):
         
         print('@06 - Prefilter: ', prefilter)
         print('@07 - Simple search keyword: ', simple_search_keyword)
+        print('@08 - New POD: ', new_pod)
 
         # DME & Client filter
         if user_type == 'DME':
@@ -281,10 +282,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 column_filter = ''
 
         # New POD filter
-        if new_pod is True:
-            queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
-                                .exclude(z_pod_url__isnull=True) \
-                                .exclude(z_pod_url__exact='') \
+        if new_pod == 'true':
+            queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True).exclude(z_pod_url__isnull=True).exclude(z_pod_url__exact='') \
                                 .exclude(z_pod_signed_url__isnull=True) \
                                 .exclude(z_pod_signed_url__exact='')
 
