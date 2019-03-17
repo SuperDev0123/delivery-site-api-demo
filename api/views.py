@@ -1019,59 +1019,6 @@ def handle_uploaded_file_attachments(request, f):
 
     #Save history on database.
 
-@api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def getSuburbs(request):
-    requestType = request.GET.get('type')
-    return_data = []
-
-    try:
-        resultObjects = []
-        if requestType == 'state':
-            resultObjects = Utl_suburbs.objects.all()
-            for resultObject in resultObjects:
-                if len(return_data) > 0:
-                    temp = {'value': resultObject.state.lower(), 'label': resultObject.state}
-                    try:
-                        if return_data.index(temp) is None:
-                            return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
-                    except:
-                        return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
-                else:
-                    return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
-        elif requestType == 'postalcode':
-            stateName = request.GET.get('name')
-            resultObjects = Utl_suburbs.objects.select_related().filter(state = stateName)
-            
-            for resultObject in resultObjects:
-                if len(return_data) > 0:
-                    temp = {'value': resultObject.postal_code, 'label': resultObject.postal_code}
-                    try:
-                        if return_data.index(temp) is None:
-                            return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
-                    except:
-                        return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
-                else:
-                    return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
-        elif requestType == 'suburb':
-            postalCode = request.GET.get('name')
-            resultObjects = Utl_suburbs.objects.select_related().filter(postal_code = postalCode)
-
-            for resultObject in resultObjects:
-                if len(return_data) > 0:
-                    temp = {'value': resultObject.suburb, 'label': resultObject.suburb}
-                    try:
-                        if return_data.index(temp) is None:
-                            return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
-                    except:
-                        return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
-                else:
-                    return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
-        return JsonResponse({'type': requestType,'suburbs': return_data})
-    except Exception as e:
-        return JsonResponse({'type': requestType,'suburbs': ''})
-
 class FileUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
 
@@ -1122,9 +1069,11 @@ def upload_status(request):
     else:
         return JsonResponse({'status_code': 2, 'errors': result})
 
+@api_view(['POST'])
+@permission_classes((AllowAny,))
 def download_pdf(request):
-    bookingIds = request.GET['ids']
-    bookingIds = bookingIds.split(',')
+    body = literal_eval(request.body.decode('utf8'))
+    bookingIds = body["ids"]    
     file_paths = [];
     label_names = [];
 
@@ -1153,10 +1102,12 @@ def download_pdf(request):
     response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
     return response
 
+@api_view(['POST'])
+@permission_classes((AllowAny,))
 def download_pod(request):
-    bookingIds = request.GET['ids']
-    only_new = request.GET['onlyNew']
-    bookingIds = bookingIds.split(',')
+    body = literal_eval(request.body.decode('utf8'))
+    bookingIds = body["ids"] 
+    only_new = body["onlyNew"]
     file_paths = [];
     pod_and_pod_signed_names = [];
 
@@ -1235,3 +1186,56 @@ def getAttachmentsHistory(request):
     except Exception as e:
         print('@Exception', e)
         return JsonResponse({'history': ''})
+
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def getSuburbs(request):
+    requestType = request.GET.get('type')
+    return_data = []
+
+    try:
+        resultObjects = []
+        if requestType == 'state':
+            resultObjects = Utl_suburbs.objects.all()
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.state.lower(), 'label': resultObject.state}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+                    except:
+                        return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+                else:
+                    return_data.append({'value': resultObject.state.lower(), 'label': resultObject.state})
+        elif requestType == 'postalcode':
+            stateName = request.GET.get('name')
+            resultObjects = Utl_suburbs.objects.select_related().filter(state = stateName)
+            
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.postal_code, 'label': resultObject.postal_code}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+                    except:
+                        return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+                else:
+                    return_data.append({'value': resultObject.postal_code, 'label': resultObject.postal_code})
+        elif requestType == 'suburb':
+            postalCode = request.GET.get('name')
+            resultObjects = Utl_suburbs.objects.select_related().filter(postal_code = postalCode)
+
+            for resultObject in resultObjects:
+                if len(return_data) > 0:
+                    temp = {'value': resultObject.suburb, 'label': resultObject.suburb}
+                    try:
+                        if return_data.index(temp) is None:
+                            return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+                    except:
+                        return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+                else:
+                    return_data.append({'value': resultObject.suburb, 'label': resultObject.suburb})
+        return JsonResponse({'type': requestType,'suburbs': return_data})
+    except Exception as e:
+        return JsonResponse({'type': requestType,'suburbs': ''})
