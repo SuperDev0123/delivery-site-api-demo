@@ -169,7 +169,7 @@ class Bookings(models.Model):
 	b_handling_Instructions = models.CharField(verbose_name=_('Handling Instructions'), max_length=120, blank=True, null=True, default='')
 	v_price_Booking = models.FloatField(verbose_name=_('Price Booking'), default=0, blank=True, null=True)
 	v_service_Type_2 = models.CharField(verbose_name=_('Service Type 2'), max_length=30, blank=True, null=True, default='')
-	b_status_API = models.CharField(verbose_name=_('Status API'), max_length=30, blank=True, null=True, default='')
+	b_status_API = models.CharField(verbose_name=_('Status API'), max_length=255, blank=True, null=True, default='')
 	v_vehicle_Type = models.CharField(verbose_name=_('Vehicle Type'), max_length=30, blank=True, null=True, default='')
 	v_customer_code = models.CharField(verbose_name=_('Customer Code'), max_length=20, blank=True, null=True, default='')
 	v_service_Type_ID = models.CharField(verbose_name=_('Service Type ID'), max_length=64, blank=True, null=True, default='')
