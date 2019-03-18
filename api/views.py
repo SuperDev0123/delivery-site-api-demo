@@ -869,7 +869,7 @@ class CommsViewSet(viewsets.ViewSet):
 
         # Sort
         if sort_field is None:
-            comms = comms.order_by('id')
+            comms = comms.order_by('-id')
         else:
             comms = comms.order_by(sort_field)
 
@@ -884,8 +884,9 @@ class CommsViewSet(viewsets.ViewSet):
         if len(comms) == 0:
             return JsonResponse({'comms': []})
         else:
-            for comm in comms:
+            for index, comm in enumerate(comms):
                 return_data = {
+                    'index': index + 1,
                     'id': comm.id,
                     'fk_booking_id': comm.fk_booking_id,
                     'priority_of_log': comm.priority_of_log,
@@ -898,6 +899,8 @@ class CommsViewSet(viewsets.ViewSet):
                     'dme_notes_type': comm.dme_notes_type,
                     'dme_notes_external': comm.dme_notes_external,
                     'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                    'due_by_date': comm.due_by_date,
+                    'due_by_time': comm.due_by_time,
                     'dme_action': comm.dme_action,
                     'z_createdTimeStamp': comm.z_createdTimeStamp,
                 }
@@ -957,7 +960,7 @@ class NotesViewSet(viewsets.ViewSet):
 
         print('@20 - comm_id: ', comm_id)
 
-        notes = Dme_comm_notes.objects.filter(comm_id=comm_id).order_by('-id')
+        notes = Dme_comm_notes.objects.filter(comm_id=comm_id).order_by('id')
 
         return_datas = []
         if len(notes) == 0:
