@@ -973,7 +973,10 @@ class NotesViewSet(viewsets.ViewSet):
                     'dme_notes': note.dme_notes,
                     'dme_notes_type': note.dme_notes_type,
                     'dme_notes_no': note.dme_notes_no,
-                    'z_modifiedTimeStamp': note.z_modifiedTimeStamp,
+                    'note_date_created': note.note_date_created,
+                    'note_date_updated': note.note_date_updated,
+                    'note_time_created': note.note_time_created,
+                    'note_time_updated': note.note_time_updated,
                 }
                 return_datas.append(return_data)
             return JsonResponse({'notes': return_datas})
