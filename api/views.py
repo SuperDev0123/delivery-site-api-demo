@@ -960,7 +960,7 @@ class NotesViewSet(viewsets.ViewSet):
 
         print('@20 - comm_id: ', comm_id)
 
-        notes = Dme_comm_notes.objects.filter(comm_id=comm_id).order_by('id')
+        notes = Dme_comm_notes.objects.filter(comm_id=comm_id).order_by('-id')
 
         return_datas = []
         if len(notes) == 0:
