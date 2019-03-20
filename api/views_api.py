@@ -658,9 +658,9 @@ def get_label_st_fn(bid):
 
         data = {}
 
-        data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                    "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                    "accountPassword": "x9083d2fed4d50aa2ad5"}
+        data['spAccountDetails'] = {"accountCode": "00956684", "accountState": "NSW",
+                                    "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+                                    "accountPassword": "xab801a41e663b5cb889"}
         data['serviceProvider'] = "ST"
         data['consignmentNumber'] = booking.v_FPBookingNumber
 
@@ -1045,9 +1045,9 @@ def st_create_order(request):
 
         data = {}
 
-        data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                    "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                    "accountPassword": "x9083d2fed4d50aa2ad5"}
+        data['spAccountDetails'] = {"accountCode": "00956684", "accountState": "NSW",
+                                    "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+                                    "accountPassword": "xab801a41e663b5cb889"}
         data['serviceProvider'] = "ST"
         data['paymentMethods'] = "CHARGE_TO_ACCOUNT"
         data['referenceNumber'] = "refer1"
@@ -1109,9 +1109,9 @@ def get_order_summary_fn(order_id):
 
     data = {}
 
-    data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                "accountPassword": "x9083d2fed4d50aa2ad5"}
+    data['spAccountDetails'] = {"accountCode": "00956684", "accountState": "NSW",
+                                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+                                "accountPassword": "xab801a41e663b5cb889"}
     data['serviceProvider'] = "ST"
     data['orderId'] = order_id
 
@@ -1186,9 +1186,9 @@ def booking_st(request):
                 return Response([{"Error": "suburb name for pickup postal address is required."}])
 
             data = {}
-            data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                        "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                        "accountPassword": "x9083d2fed4d50aa2ad5"}
+            data['spAccountDetails'] = {"accountCode": "00956684", "accountState": "NSW",
+                                        "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+                                        "accountPassword": "xab801a41e663b5cb889"}
             data['serviceProvider'] = "ST"
             data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
             data[
@@ -1323,9 +1323,9 @@ def edit_booking_st(request):
                 return Response([{"Error": "suburb name for pickup postal address is required."}])
 
             data = {}
-            data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                        "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                        "accountPassword": "x9083d2fed4d50aa2ad5"}
+            data['spAccountDetails'] = {"accountCode": "00956684", "accountState": "NSW",
+                                        "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+                                        "accountPassword": "xab801a41e663b5cb889"}
             data['serviceProvider'] = "ST"
             data['consignmentNumber'] = booking.v_FPBookingNumber
             data['readyDate'] = "" if booking.puPickUpAvailFrom_Date is None else str(booking.puPickUpAvailFrom_Date)
@@ -1621,9 +1621,9 @@ def cancel_booking(request):
         if booking.b_status != "Closed":
             if booking.b_dateBookedDate is not None:
                 data = {}
-                data['spAccountDetails'] = {"accountCode": "00251522", "accountState": "NSW",
-                                            "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                                            "accountPassword": "x9083d2fed4d50aa2ad5"}
+                data['spAccountDetails'] = {"accountCode": "00956684", "accountState": "NSW",
+                                            "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+                                            "accountPassword": "xab801a41e663b5cb889"}
                 data['serviceProvider'] = "ST"
                 data['consignmentNumber'] = booking.v_FPBookingNumber
 
