@@ -45,6 +45,7 @@ urlpatterns += [
     url(r'^cancel_booking/', cancel_booking),
     url(r'^st_create_order/', st_create_order),
     url(r'^get_order_summary/', get_order_summary),
+    url(r'^pricing_allied/', pricing_allied),
 
     url(r'^suburb/', getSuburbs),
     url(r'^attachments/', getAttachmentsHistory),
