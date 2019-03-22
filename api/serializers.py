@@ -4,7 +4,7 @@ from .models import Bookings, Client_warehouses, DME_employees, Client_employees
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Client_warehouses
-        fields = ('pk_id_client_warehouses', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours')
+        fields = ('pk_id_client_warehouses', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours', 'type', 'client_warehouse_code')
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:

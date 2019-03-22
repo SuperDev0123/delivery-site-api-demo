@@ -36,7 +36,9 @@ class UserViewSet(viewsets.ViewSet):
         else:
             client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
             client = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
-            return JsonResponse({'username': request.user.username, 'clientname': client.company_name})
+            return JsonResponse({'username': request.user.username, 
+                                'clientname': client.company_name,
+                                'clientId': client.dme_account_num})
 
     @action(detail=False, methods=['get'])
     def get_user_date_filter_field(self, requst, pk=None):
@@ -514,8 +516,10 @@ class BookingViewSet(viewsets.ViewSet):
         except Bookings.DoesNotExist:
             return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
-    @action(detail=True, methods=['post'])
-    def post_booking(self, request, pk, format=None):
+    @action(detail=False, methods=['post'])
+    def create_booking(self, request, format=None):
+        bookingData = request.data;
+        bookingData['b_bookingID_Visual'] = Bookings.get_max_b_bookingID_Visual() + 1
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
