@@ -516,6 +516,115 @@ class BookingViewSet(viewsets.ViewSet):
         except Bookings.DoesNotExist:
             return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
 
+    @action(detail=False, methods=['get'])
+    def get_latest_booking(self, request, format=None):
+        user_id = request.user.id
+
+        try:
+            dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+            if dme_employee is not None:
+                user_type = 'DME'
+            else:
+                user_type = 'CLIENT'
+
+            if user_type == 'DME':
+                queryset = Bookings.objects.all()
+            else:
+                client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+                if client_employee is None:
+                    return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+
+                client_employee_role = client_employee.get_role()
+                client = DME_clients.objects.get(pk_id_dme_client=client_employee.fk_id_dme_client_id)
+
+                if client is None:
+                    return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+            
+                if client_employee_role == 'company':
+                    queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+                elif client_employee_role == 'warehouse':
+                    employee_warehouse_id = client_employee.warehouse_id
+                    queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+            
+            booking = queryset.last()
+
+            if booking is not None:
+                nextBooking = (queryset.filter(id__gt=booking.id).order_by('id').first())
+                prevBooking = (queryset.filter(id__lt=booking.id).order_by('-id').first())
+                nextBookingId = 0
+                prevBookingId = 0
+
+                if nextBooking is not None:
+                    nextBookingId = nextBooking.id
+                if prevBooking is not None:
+                    prevBookingId = prevBooking.id
+
+                return_data = []
+
+                if booking is not None:
+                    return_data = {
+                        'id': booking.id,
+                        'puCompany': booking.puCompany,
+                        'pu_Address_Street_1': booking.pu_Address_Street_1,
+                        'pu_Address_street_2': booking.pu_Address_street_2,
+                        'pu_Address_PostalCode': booking.pu_Address_PostalCode,
+                        'pu_Address_Suburb': booking.pu_Address_Suburb,
+                        'pu_Address_Country': booking.pu_Address_Country,
+                        'pu_Contact_F_L_Name': booking.pu_Contact_F_L_Name,
+                        'pu_Phone_Main': booking.pu_Phone_Main,
+                        'pu_Email': booking.pu_Email,
+                        'de_To_Address_Street_1': booking.de_To_Address_Street_1,
+                        'de_To_Address_Street_2':booking.de_To_Address_Street_2,
+                        'de_To_Address_PostalCode': booking.de_To_Address_PostalCode,
+                        'de_To_Address_Suburb': booking.de_To_Address_Suburb,
+                        'de_To_Address_Country': booking.de_To_Address_Country,
+                        'de_to_Contact_F_LName': booking.de_to_Contact_F_LName,
+                        'de_to_Phone_Main':booking.de_to_Phone_Main,
+                        'de_Email': booking.de_Email,
+                        'deToCompanyName': booking.deToCompanyName, 
+                        'b_bookingID_Visual': booking.b_bookingID_Visual,
+                        'v_FPBookingNumber': booking.v_FPBookingNumber, 
+                        'pk_booking_id': booking.pk_booking_id,
+                        'vx_freight_provider': booking.vx_freight_provider,
+                        'z_label_url': booking.z_label_url,
+                        'pu_Address_State': booking.pu_Address_State,
+                        'de_To_Address_State': booking.de_To_Address_State,
+                        'b_status': booking.b_status,
+                        'b_dateBookedDate': booking.b_dateBookedDate,
+                        's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
+                        's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
+                        'b_client_name': booking.b_client_name,
+                        'b_client_warehouse_code': booking.b_client_warehouse_code,
+                        'b_clientPU_Warehouse': booking.b_clientPU_Warehouse,
+                        'booking_Created_For': booking.booking_Created_For,
+                        'booking_Created_For_Email': booking.booking_Created_For_Email,
+                        'vx_fp_pu_eta_time': booking.vx_fp_pu_eta_time,
+                        'vx_fp_del_eta_time': booking.vx_fp_del_eta_time,
+                        'b_clientReference_RA_Numbers': booking.b_clientReference_RA_Numbers,
+                        'de_to_Pick_Up_Instructions_Contact': booking.de_to_Pick_Up_Instructions_Contact,
+                        'de_to_PickUp_Instructions_Address': booking.de_to_PickUp_Instructions_Address,
+                        'pu_pickup_instructions_address': booking.pu_pickup_instructions_address,
+                        'pu_PickUp_Instructions_Contact': booking.pu_PickUp_Instructions_Contact,
+                        'vx_freight_provider': booking.vx_freight_provider,
+                        'vx_serviceName': booking.vx_serviceName,
+                        'consignment_label_link': booking.consignment_label_link,
+                        's_02_Booking_Cutoff_Time': booking.s_02_Booking_Cutoff_Time,
+                        'puPickUpAvailFrom_Date': booking.puPickUpAvailFrom_Date,
+                        'z_CreatedTimestamp': booking.z_CreatedTimestamp,
+                        'b_dateBookedDate': booking.b_dateBookedDate,
+                        'total_lines_qty_override': booking.total_lines_qty_override,
+                        'total_1_KG_weight_override': booking.total_1_KG_weight_override,
+                        'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
+                        'b_status_API': booking.b_status_API,
+                    }
+                    return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
+            else:
+                return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+        except Bookings.DoesNotExist:
+            return JsonResponse({'booking': {}, 'nextid': 0, 'previd': 0})
+
     @action(detail=False, methods=['post'])
     def create_booking(self, request, format=None):
         bookingData = request.data;
