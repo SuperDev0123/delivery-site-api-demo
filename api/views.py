@@ -41,6 +41,24 @@ class UserViewSet(viewsets.ViewSet):
                                 'clientId': client.dme_account_num})
 
     @action(detail=False, methods=['get'])
+    def get_clients(self, request, format=None):
+        user = self.request.user
+
+        if user.username != 'dme':
+            return JsonResponse(status=400, data={'error': 'Current user can not access to this api'})
+        else:
+            dme_clients = DME_clients.objects.all()
+
+            if len(dme_clients) is 0:
+                return JsonResponse({'dme_clients': []})
+            else:
+                return_data = [{'pk_id_dme_client': 0, 'company_name': 'dme', 'dme_account_num': 'dme_account_num'}]
+                for client in dme_clients:
+                    return_data.append({'pk_id_dme_client': client.pk_id_dme_client, 'company_name': client.company_name, 'dme_account_num': client.dme_account_num})
+
+                return JsonResponse({'dme_clients': return_data})
+
+    @action(detail=False, methods=['get'])
     def get_user_date_filter_field(self, requst, pk=None):
         user_id = self.request.user.id
         dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
@@ -84,6 +102,7 @@ class BookingsViewSet(viewsets.ViewSet):
         prefilter = json.loads(self.request.query_params.get('prefilterInd', None))
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
         new_pod = self.request.query_params.get('newPod', None)
+        client_pk = self.request.query_params.get('clientPK', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
         if user_type == 'CLIENT':
@@ -107,6 +126,7 @@ class BookingsViewSet(viewsets.ViewSet):
         print('@06 - Prefilter: ', prefilter)
         print('@07 - Simple search keyword: ', simple_search_keyword)
         print('@08 - New POD: ', new_pod)
+        print('@09 - Client PK: ', client_pk)
 
         # DME & Client filter
         if user_type == 'DME':
@@ -117,6 +137,11 @@ class BookingsViewSet(viewsets.ViewSet):
             elif client_employee_role == 'warehouse':
                 employee_warehouse_id = client_employee.warehouse_id
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+
+        # Client filter
+        if client_pk is not '0':
+            client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         if search_type == 'FILTER':
             # Date filter
