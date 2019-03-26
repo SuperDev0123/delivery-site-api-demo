@@ -303,7 +303,7 @@ def all_trigger(request):
 
                     booking.save()
                 except IndexError:
-                    # print("asd")
+                    results.append({"Error": "Index Error"})
 
                 results.append({"Created Log ID": oneLog.id})
             except KeyError:
@@ -346,7 +346,7 @@ def all_trigger(request):
                         booking.s_21_ActualDeliveryTimeStamp = datetime.now()
                     booking.save()
                 except IndexError:
-                    # print("asd")
+                    results.append({"Error": "Index Error"})
 
                 results.append({"Created Log ID": oneLog.id})
             except KeyError:
@@ -427,9 +427,9 @@ def trigger_allied(request):
                             base64.decodestring(pod_file.encode('utf-8')))
                     booking.z_pod_url = file_name
                 except IndexError:
-                    # print("no POD.")
+                    results.append({"Error": "Index Error"})
                 except KeyError:
-                    # print("sign : ", ' empty')
+                    results.append({"Error": "Key Error"})
 
                 try:
                     pod_file = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['signatureImage']
@@ -447,9 +447,9 @@ def trigger_allied(request):
 
                     booking.z_pod_signed_url = file_name
                 except IndexError:
-                    # print("sign : ", ' empty')
+                    results.append({"Error": "Index Error"})
                 except KeyError:
-                    # print("sign : ", ' empty')
+                    results.append({"Error": "Key Error"})
 
                 booking.vx_fp_pu_eta_time = data0['consignmentTrackDetails'][0]['scheduledPickupDate']
                 booking.vx_fp_del_eta_time = data0['consignmentTrackDetails'][0]['scheduledDeliveryDate']
@@ -516,7 +516,7 @@ def trigger_st(request):
                     booking.s_21_ActualDeliveryTimeStamp = datetime.now()
                 booking.save()
             except IndexError:
-                # print("asd")
+                results.append({"Error": "Index Error"})
 
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
