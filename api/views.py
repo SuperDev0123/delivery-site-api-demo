@@ -105,28 +105,28 @@ class BookingsViewSet(viewsets.ViewSet):
         client_pk = self.request.query_params.get('clientPK', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
-        if user_type == 'CLIENT':
-            print('@01 - Client filter: ', client.dme_account_num)
-        else:
-            print('@01 - DME user')
+        # if user_type == 'CLIENT':
+        #     print('@01 - Client filter: ', client.dme_account_num)
+        # else:
+        #     print('@01 - DME user')
 
-        if start_date == '*':
-            print('@02 - Date filter: ', start_date)
-        else:    
-            print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
+        # if start_date == '*':
+        #     print('@02 - Date filter: ', start_date)
+        # else:    
+        #     print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
 
-        print('@03 - Warehouse ID filter: ', warehouse_id)
-        print('@04 - Sort field: ', sort_field)
+        # print('@03 - Warehouse ID filter: ', warehouse_id)
+        # print('@04 - Sort field: ', sort_field)
 
-        if user_type == 'CLIENT':
-            print('@05 - Company name: ', client.company_name)
-        else:
-            print('@05 - Company name: DME')
+        # if user_type == 'CLIENT':
+        #     print('@05 - Company name: ', client.company_name)
+        # else:
+        #     print('@05 - Company name: DME')
         
-        print('@06 - Prefilter: ', prefilter)
-        print('@07 - Simple search keyword: ', simple_search_keyword)
-        print('@08 - New POD: ', new_pod)
-        print('@09 - Client PK: ', client_pk)
+        # print('@06 - Prefilter: ', prefilter)
+        # print('@07 - Simple search keyword: ', simple_search_keyword)
+        # print('@08 - New POD: ', new_pod)
+        # print('@09 - Client PK: ', client_pk)
 
         # DME & Client filter
         if user_type == 'DME':
@@ -417,7 +417,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BookingViewSet(viewsets.ViewSet):
@@ -833,7 +833,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['delete'])
@@ -844,7 +844,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             booking_line.delete()
             return JsonResponse({'Deleted BookingLine': booking_line})
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({'error': 'Can not delete BookingLine'})
 
 class BookingLineDetailsViewSet(viewsets.ViewSet):
@@ -920,7 +920,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['delete'])
@@ -931,7 +931,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             booking_line_detail.delete()
             return JsonResponse({'Deleted BookingLineDetail ': booking_line_detail})
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({'error': 'Can not delete BookingLineDetail'})
 
 class WarehouseViewSet(viewsets.ModelViewSet):
@@ -998,9 +998,9 @@ class CommsViewSet(viewsets.ViewSet):
         sort_field = self.request.query_params.get('sortField', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
 
-        print('@20 - booking_id: ', booking_id)
-        print('@21 - sort_field: ', sort_field)
-        print('@22 - column_filters: ', column_filters)
+        # print('@20 - booking_id: ', booking_id)
+        # print('@21 - sort_field: ', sort_field)
+        # print('@22 - column_filters: ', column_filters)
 
         booking = Bookings.objects.get(id=booking_id)
         comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -1056,7 +1056,7 @@ class CommsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
@@ -1081,13 +1081,13 @@ class CommsViewSet(viewsets.ViewSet):
                     else:
                         return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 except Exception as e:
-                    print('Exception: ', e)
+                    # print('Exception: ', e)
                     return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class NotesViewSet(viewsets.ViewSet):
@@ -1096,7 +1096,7 @@ class NotesViewSet(viewsets.ViewSet):
         user_id = self.request.user.id
         comm_id = self.request.GET['commId']
 
-        print('@20 - comm_id: ', comm_id)
+        # print('@20 - comm_id: ', comm_id)
 
         notes = Dme_comm_notes.objects.filter(comm_id=comm_id).order_by('-id')
 
@@ -1130,7 +1130,7 @@ class NotesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
@@ -1143,7 +1143,7 @@ class NotesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def handle_uploaded_file_attachments(request, f):
@@ -1168,7 +1168,7 @@ def handle_uploaded_file_attachments(request, f):
         saveData.save()
         return 'ok'
     except Exception as e:
-        print('Exception: ', e)
+        # print('Exception: ', e)
         return 'failed'
 
     #Save history on database.
@@ -1327,7 +1327,7 @@ def getAttachmentsHistory(request):
         resultObjects = []
         resultObjects = Dme_attachments.objects.select_related().filter(fk_id_dme_booking = bookingId)
         for resultObject in resultObjects:
-            print('@bookingID', resultObject.fk_id_dme_booking.id)
+            # print('@bookingID', resultObject.fk_id_dme_booking.id)
             return_data.append({
                 'pk_id_attachment': resultObject.pk_id_attachment, 
                 'fk_id_dme_client': resultObject.fk_id_dme_client.pk_id_dme_client, 
@@ -1338,7 +1338,7 @@ def getAttachmentsHistory(request):
             })
         return JsonResponse({'history': return_data})
     except Exception as e:
-        print('@Exception', e)
+        # print('@Exception', e)
         return JsonResponse({'history': ''})
 
 @api_view(['GET'])

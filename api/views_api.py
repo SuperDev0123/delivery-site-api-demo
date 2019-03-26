@@ -173,9 +173,9 @@ def st_tracking(request):
     booking_list = Bookings.objects.filter(vx_freight_provider="STARTRACK",
                                            z_api_issue_update_flag_500=1)  # add z_api_status_update_flag_500 check
     results = []
-    print("Response ", booking_list)
+    # print("Response ", booking_list)
     for booking in booking_list:
-        print("booking", booking)
+        # print("booking", booking)
         url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
@@ -185,7 +185,7 @@ def st_tracking(request):
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             request_id = data0['requestId']
@@ -221,17 +221,17 @@ def allied_tracking(request):
     for booking in booking_list:
         url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
-        print("==============")
-        print(booking.v_FPBookingNumber)
-        print(booking.de_To_Address_PostalCode)
-        print("==============")
+        # print("==============")
+        # print(booking.v_FPBookingNumber)
+        # print(booking.de_To_Address_PostalCode)
+        # print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.de_To_Address_PostalCode}]
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -267,10 +267,10 @@ def all_trigger(request):
         if booking.vx_freight_provider == "Allied" and booking.b_client_name == "Seaway":
             url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
             data = {}
-            print("==============")
-            print(booking.v_FPBookingNumber)
-            print(booking.de_To_Address_PostalCode)
-            print("==============")
+            # print("==============")
+            # print(booking.v_FPBookingNumber)
+            # print(booking.de_To_Address_PostalCode)
+            # print("==============")
             data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                            "destinationPostcode": booking.de_To_Address_PostalCode}]
             data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
@@ -281,7 +281,7 @@ def all_trigger(request):
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-            print(s0)
+            # print(s0)
 
             try:
                 request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -303,7 +303,7 @@ def all_trigger(request):
 
                     booking.save()
                 except IndexError:
-                    print("asd")
+                    # print("asd")
 
                 results.append({"Created Log ID": oneLog.id})
             except KeyError:
@@ -311,21 +311,21 @@ def all_trigger(request):
         elif booking.vx_freight_provider == "STARTRACK":
             url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
             data = {}
-            print("==============")
-            print(booking.v_FPBookingNumber)
+            # print("==============")
+            # print(booking.v_FPBookingNumber)
             data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
             data['spAccountDetails'] = {"accountCode": "10149943", "accountState": "NSW",
                                         "accountPassword": "x81775935aece65541c9",
                                         "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134"}
             data['serviceProvider'] = "ST"
 
-            print(data)
-            print("==============")
+            # print(data)
+            # print("==============")
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-            print(s0)
+            # print(s0)
 
             try:
                 request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -346,7 +346,7 @@ def all_trigger(request):
                         booking.s_21_ActualDeliveryTimeStamp = datetime.now()
                     booking.save()
                 except IndexError:
-                    print("asd")
+                    # print("asd")
 
                 results.append({"Created Log ID": oneLog.id})
             except KeyError:
@@ -365,9 +365,9 @@ def trigger_allied(request):
     for booking in booking_list:
         url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
         data = {}
-        print("==============")
-        print(booking.v_FPBookingNumber)
-        print(booking.de_To_Address_PostalCode)
+        # print("==============")
+        # print(booking.v_FPBookingNumber)
+        # print(booking.de_To_Address_PostalCode)
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.de_To_Address_PostalCode}]
         data['spAccountDetails'] = {"accountCode": "SEATEM", "accountState": "NSW",
@@ -427,9 +427,9 @@ def trigger_allied(request):
                             base64.decodestring(pod_file.encode('utf-8')))
                     booking.z_pod_url = file_name
                 except IndexError:
-                    print("no POD.")
+                    # print("no POD.")
                 except KeyError:
-                    print("sign : ", ' empty')
+                    # print("sign : ", ' empty')
 
                 try:
                     pod_file = data0['consignmentTrackDetails'][0]['consignmentStatuses'][0]['signatureImage']
@@ -447,21 +447,21 @@ def trigger_allied(request):
 
                     booking.z_pod_signed_url = file_name
                 except IndexError:
-                    print("sign : ", ' empty')
+                    # print("sign : ", ' empty')
                 except KeyError:
-                    print("sign : ", ' empty')
+                    # print("sign : ", ' empty')
 
                 booking.vx_fp_pu_eta_time = data0['consignmentTrackDetails'][0]['scheduledPickupDate']
                 booking.vx_fp_del_eta_time = data0['consignmentTrackDetails'][0]['scheduledDeliveryDate']
 
                 booking.save()
 
-                print("yes")
+                # print("yes")
             except IndexError:
                 booking.save()
-                print("no")
+                # print("no")
 
-            print("==============")
+            # print("==============")
             results.append({"Created Log ID": oneLog.id})
         except KeyError as e:
             results.append({"Error": str(e)})
@@ -480,21 +480,21 @@ def trigger_st(request):
     for booking in booking_list:
         url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
         data = {}
-        print("==============")
-        print(booking.v_FPBookingNumber)
+        # print("==============")
+        # print(booking.v_FPBookingNumber)
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
         data['spAccountDetails'] = {"accountCode": "10149943", "accountState": "NSW",
                                     "accountPassword": "x81775935aece65541c9",
                                     "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134"}
         data['serviceProvider'] = "ST"
 
-        print(data)
-        print("==============")
+        # print(data)
+        # print("==============")
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -516,7 +516,7 @@ def trigger_st(request):
                     booking.s_21_ActualDeliveryTimeStamp = datetime.now()
                 booking.save()
             except IndexError:
-                print("asd")
+                # print("asd")
 
             results.append({"Created Log ID": oneLog.id})
         except KeyError:
@@ -536,17 +536,17 @@ def hunter_tracking(request):
     for booking in booking_list:
         url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
-        print("==============")
-        print(booking.v_FPBookingNumber)
-        print(booking.de_To_Address_PostalCode)
-        print("==============")
+        # print("==============")
+        # print(booking.v_FPBookingNumber)
+        # print(booking.de_To_Address_PostalCode)
+        # print("==============")
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber,
                                        "destinationPostcode": booking.de_To_Address_PostalCode}]
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -590,14 +590,14 @@ def get_label_allied_fn(bid):
         data['destinationPostcode'] = booking.de_To_Address_PostalCode
 
         data['labelType'] = "1"
-        print(data)
+        # print(data)
 
         url = "http://35.161.204.104:8081/dme-api/labelling/getlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             file_url = '/var/www/html/dme_api/static/pdfs/' + str(
@@ -664,7 +664,7 @@ def get_label_st_fn(bid):
         data['serviceProvider'] = "ST"
         data['consignmentNumber'] = booking.v_FPBookingNumber
 
-        data['type'] = "PRINT"
+        data['type'] = "# print"
 
         items = []
         confirmation_items = Api_booking_confirmation_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -690,14 +690,14 @@ def get_label_st_fn(bid):
 
         data['pageFormat'] = items
 
-        print('Payload(Get Label for ST): ', data)
+        # print('Payload(Get Label for ST): ', data)
 
         url = "http://52.39.202.126:8080/dme-api-sit/labelling/createlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             id = data0['stLabelRequestId']
@@ -705,7 +705,7 @@ def get_label_st_fn(bid):
             # id = "f35af59f-6c05-4e5a-a397-4e689599c7ca"
             data['consignmentNumber'] = id
 
-            data['labelType'] = "PRINT"
+            data['labelType'] = "# print"
 
             url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
             time.sleep(5)
@@ -713,7 +713,7 @@ def get_label_st_fn(bid):
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-            print(s0)
+            # print(s0)
 
             booking.z_label_url = data0["url"]
             booking.save()
@@ -770,7 +770,7 @@ def booking_allied(request):
         try:
             booking = Bookings.objects.filter(id=bid)[0]
 
-            print(booking.b_dateBookedDate)
+            # print(booking.b_dateBookedDate)
             if booking.b_dateBookedDate is not None:
                 return Response([{"Error": "Record has already booked."}])
 
@@ -841,14 +841,14 @@ def booking_allied(request):
                 items.append(temp_item)
 
             data['items'] = items
-            print(data)
+            # print(data)
 
             url = "http://35.161.204.104:8081/dme-api/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-            print(s0)
+            # print(s0)
 
             try:
                 request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -907,7 +907,7 @@ def pricing_allied(request):
         try:
             booking = Bookings.objects.filter(id=bid)[0]
 
-            print(booking.b_dateBookedDate)
+            # print(booking.b_dateBookedDate)
             if booking.pu_Address_State is None or not booking.pu_Address_State:
                 return Response([{"Error": "State for pickup postal address is required."}])
 
@@ -975,14 +975,14 @@ def pricing_allied(request):
                 items.append(temp_item)
 
             data['items'] = items
-            print(data)
+            # print(data)
 
             url = "http://35.161.204.104:8081/dme-api/pricing/calculateprice"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-            print(s0)
+            # print(s0)
 
             try:
                 request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -1035,8 +1035,8 @@ def st_create_order(request):
     results = []
     date = literal_eval(request.body.decode('utf8'))
     date = date["date"]
-    # print('Date (Create Order for ST): ', datetime.now().strftime("%Y-%m-%d"))
-    print('Date (Create Order for ST): ', date)
+    # # print('Date (Create Order for ST): ', datetime.now().strftime("%Y-%m-%d"))
+    # print('Date (Create Order for ST): ', date)
 
     try:
         bookings = Bookings.objects.filter(vx_freight_provider="STARTRACK",
@@ -1058,14 +1058,14 @@ def st_create_order(request):
 
         data['consignmentNumber'] = booking_numbers
 
-        print('Payload(Create Order for ST): ', data)
+        # print('Payload(Create Order for ST): ', data)
 
         url = "http://52.39.202.126:8080/dme-api-sit/order/create"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        print(s0)
+        # print(s0)
 
         try:
             results.append({"Order create Successfully ": data0["orderId"]})
@@ -1115,14 +1115,14 @@ def get_order_summary_fn(order_id):
     data['serviceProvider'] = "ST"
     data['orderId'] = order_id
 
-    print(data)
+    # print(data)
 
     url = "http://52.39.202.126:8080/dme-api-sit/order/summary"
     response0 = requests.post(url, params={}, json=data)
     response0 = response0.content.decode('utf8').replace("'", '"')
     data0 = json.loads(response0)
     s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-    print(s0)
+    # print(s0)
     try:
         file_name = "biopak_manifest_" + str(order_id) + '_' + str(datetime.now()) + '.pdf'
         file_url = '/var/www/html/dme_api/static/pdfs/' + file_name
@@ -1242,14 +1242,14 @@ def booking_st(request):
                     items.append(temp_item)
 
             data['items'] = items
-            print(data)
+            # print(data)
 
             url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-            print(s0)
+            # print(s0)
 
             try:
                 request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -1379,14 +1379,14 @@ def edit_booking_st(request):
                 items.append(temp_item)
 
             data['items'] = items
-            print(data)
+            # print(data)
 
             url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-            print(s0)
+            # print(s0)
 
             try:
                 request_payload = {"apiUrl": '', 'accountCode': '', 'authKey': '', 'trackingId': ''};
@@ -1632,7 +1632,7 @@ def cancel_booking(request):
                 response0 = response0.content.decode('utf8').replace("'", '"')
                 data0 = json.loads(response0)
                 s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-                print(s0)
+                # print(s0)
 
                 try:
                     a = data0["requestId"]

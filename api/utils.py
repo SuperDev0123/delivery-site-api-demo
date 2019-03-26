@@ -8,7 +8,7 @@ def redis_con():
 	try:
 		redisCon = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password)
 	except:
-		print('Redis DB connection error!')
+		# print('Redis DB connection error!')
 		exit(1)
 
 	return redisCon
