@@ -179,7 +179,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword) | 
                 Q(s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword) | 
                 Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
-                Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword))
+                Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword) |
+                Q(pu_Contact_F_L_Name__icontains=simple_search_keyword))
         else:
             # Column filter
             try:
