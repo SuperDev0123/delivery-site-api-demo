@@ -44,19 +44,19 @@ class UserViewSet(viewsets.ViewSet):
     def get_clients(self, request, format=None):
         user = self.request.user
 
-        if user.username != 'dme':
-            return JsonResponse(status=400, data={'error': 'Current user can not access to this api'})
+        # if user.username != 'dme':
+        #     return JsonResponse(status=400, data={'error': 'Current user can not access to this api'})
+        # else:
+        dme_clients = DME_clients.objects.all()
+
+        if len(dme_clients) is 0:
+            return JsonResponse({'dme_clients': []})
         else:
-            dme_clients = DME_clients.objects.all()
+            return_data = [{'pk_id_dme_client': 0, 'company_name': 'dme', 'dme_account_num': 'dme_account_num'}]
+            for client in dme_clients:
+                return_data.append({'pk_id_dme_client': client.pk_id_dme_client, 'company_name': client.company_name, 'dme_account_num': client.dme_account_num})
 
-            if len(dme_clients) is 0:
-                return JsonResponse({'dme_clients': []})
-            else:
-                return_data = [{'pk_id_dme_client': 0, 'company_name': 'dme', 'dme_account_num': 'dme_account_num'}]
-                for client in dme_clients:
-                    return_data.append({'pk_id_dme_client': client.pk_id_dme_client, 'company_name': client.company_name, 'dme_account_num': client.dme_account_num})
-
-                return JsonResponse({'dme_clients': return_data})
+            return JsonResponse({'dme_clients': return_data})
 
     @action(detail=False, methods=['get'])
     def get_user_date_filter_field(self, requst, pk=None):
