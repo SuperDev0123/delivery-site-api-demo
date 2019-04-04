@@ -1394,3 +1394,48 @@ def getSuburbs(request):
         return JsonResponse({'type': requestType,'suburbs': return_data})
     except Exception as e:
         return JsonResponse({'type': requestType,'suburbs': ''})
+
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def get_booking_history(request):
+    bookingId = request.GET.get('id')
+    return_data = []
+
+    try:
+        resultObjects = []
+        resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=bookingId)
+        for resultObject in resultObjects:
+            # print('@bookingID', resultObject.fk_id_dme_booking.id)
+            return_data.append({
+                'notes': resultObject.notes,
+                'status_last': resultObject.status_last,
+                'api_status_time_stamp': resultObject.api_status_time_stamp,
+            })
+        return JsonResponse({'history': return_data})
+    except Exception as e:
+        # print('@Exception', e)
+        return JsonResponse({'history': ''})
+
+
+@api_view(['GET'])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def get_all_statuses(request):
+    # bookingId = request.GET.get('id')
+    return_data = []
+
+    try:
+        resultObjects = []
+        resultObjects = Dme_status_notes.objects.all()
+        for resultObject in resultObjects:
+            # print('@bookingID', resultObject.fk_id_dme_booking.id)
+            return_data.append({
+                'id': resultObject.id,
+                'status': resultObject.status,
+            })
+        return JsonResponse({'status': return_data})
+    except Exception as e:
+        # print('@Exception', e)
+        return JsonResponse({'status': ''})
+
