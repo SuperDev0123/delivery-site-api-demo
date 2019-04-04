@@ -51,4 +51,8 @@ urlpatterns += [
     url(r'^attachments/', getAttachmentsHistory),
 
     url(r'^temp_excel/', returntempexcel),
+
+
+    url(r'^get_booking_history/', get_booking_history),
+    url(r'^get_all_statuses/', get_all_statuses),
 ]
