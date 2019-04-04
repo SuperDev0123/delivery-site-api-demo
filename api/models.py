@@ -883,3 +883,10 @@ class Dme_comm_notes(models.Model):
 
 	class Meta:
 		db_table = 'dme_comm_notes'
+
+class Dme_status_notes(models.Model):
+	id = models.AutoField(primary_key=True)
+	status = models.CharField(verbose_name=_('status'), max_length=64, blank=True, null=True)
+
+	class Meta:
+		db_table = 'dme_status_notes'
