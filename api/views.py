@@ -756,49 +756,30 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_booking_lines(self, request, format=None):
         pk_booking_id = request.GET['pk_booking_id']
+        return_data = []
 
         if pk_booking_id == 'undefined':
             booking_lines = Booking_lines.objects.all()
-            return_data = []
-
-            for booking_line in booking_lines:
-                return_data.append({
-                    'pk_lines_id': booking_line.pk_lines_id, 
-                    'e_type_of_packaging': booking_line.e_type_of_packaging, 
-                    'e_item': booking_line.e_item, 
-                    'e_qty': booking_line.e_qty, 
-                    'e_weightUOM': booking_line.e_weightUOM, 
-                    'e_weightPerEach': booking_line.e_weightPerEach, 
-                    'e_dimUOM': booking_line.e_dimUOM, 
-                    'e_dimLength': booking_line.e_dimLength, 
-                    'e_dimWidth': booking_line.e_dimWidth, 
-                    'e_dimHeight': booking_line.e_dimHeight,
-                    'e_Total_KG_weight': booking_line.e_Total_KG_weight,
-                    'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
-                })
-
-            return JsonResponse({'booking_lines': return_data})
         else:
             booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-            return_data = []
 
-            for booking_line in booking_lines:
-                return_data.append({
-                    'pk_lines_id': booking_line.pk_lines_id, 
-                    'e_type_of_packaging': booking_line.e_type_of_packaging, 
-                    'e_item': booking_line.e_item, 
-                    'e_qty': booking_line.e_qty, 
-                    'e_weightUOM': booking_line.e_weightUOM, 
-                    'e_weightPerEach': booking_line.e_weightPerEach, 
-                    'e_dimUOM': booking_line.e_dimUOM, 
-                    'e_dimLength': booking_line.e_dimLength, 
-                    'e_dimWidth': booking_line.e_dimWidth, 
-                    'e_dimHeight': booking_line.e_dimHeight,
-                    'e_Total_KG_weight': booking_line.e_Total_KG_weight,
-                    'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
-                })
+        for booking_line in booking_lines:
+            return_data.append({
+                'pk_lines_id': booking_line.pk_lines_id, 
+                'e_type_of_packaging': booking_line.e_type_of_packaging, 
+                'e_item': booking_line.e_item, 
+                'e_qty': booking_line.e_qty, 
+                'e_weightUOM': booking_line.e_weightUOM, 
+                'e_weightPerEach': booking_line.e_weightPerEach, 
+                'e_dimUOM': booking_line.e_dimUOM, 
+                'e_dimLength': booking_line.e_dimLength, 
+                'e_dimWidth': booking_line.e_dimWidth, 
+                'e_dimHeight': booking_line.e_dimHeight,
+                'e_Total_KG_weight': booking_line.e_Total_KG_weight,
+                'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
+            })
 
-            return JsonResponse({'booking_lines': return_data})
+        return JsonResponse({'booking_lines': return_data})
 
     @action(detail=False, methods=['post'])
     def create_booking_line(self, request, format=None):
@@ -854,41 +835,27 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_booking_line_details(self, request, format=None):
         pk_booking_id = request.GET['pk_booking_id']
+        return_data = []
 
         if pk_booking_id == 'undefined':
             booking_line_details = Booking_lines_data.objects.all()
-            return_data = []
-
-            for booking_line_detail in booking_line_details:
-                return_data.append({
-                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
-                    'modelNumber': booking_line_detail.modelNumber, 
-                    'itemDescription': booking_line_detail.itemDescription, 
-                    'quantity': booking_line_detail.quantity, 
-                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
-                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
-                    'gap_ra': booking_line_detail.gap_ra, 
-                    'clientRefNumber': booking_line_detail.clientRefNumber
-                })
-
-            return JsonResponse({'booking_line_details': return_data})
         else:
             booking_line_details = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-            return_data = []
 
-            for booking_line_detail in booking_line_details:
-                return_data.append({
-                    'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
-                    'modelNumber': booking_line_detail.modelNumber, 
-                    'itemDescription': booking_line_detail.itemDescription, 
-                    'quantity': booking_line_detail.quantity, 
-                    'itemFaultDescription': booking_line_detail.itemFaultDescription, 
-                    'insuranceValueEach': booking_line_detail.insuranceValueEach, 
-                    'gap_ra': booking_line_detail.gap_ra, 
-                    'clientRefNumber': booking_line_detail.clientRefNumber
-                })
+        for booking_line_detail in booking_line_details:
+            return_data.append({
+                'pk_id_lines_data': booking_line_detail.pk_id_lines_data,
+                'modelNumber': booking_line_detail.modelNumber, 
+                'itemDescription': booking_line_detail.itemDescription, 
+                'quantity': booking_line_detail.quantity, 
+                'itemFaultDescription': booking_line_detail.itemFaultDescription, 
+                'insuranceValueEach': booking_line_detail.insuranceValueEach, 
+                'gap_ra': booking_line_detail.gap_ra, 
+                'clientRefNumber': booking_line_detail.clientRefNumber,
+                'fk_id_booking_lines': booking_line_detail.fk_id_booking_lines,
+            })
 
-            return JsonResponse({'booking_line_details': return_data})
+        return JsonResponse({'booking_line_details': return_data})
 
     @action(detail=False, methods=['post'])
     def create_booking_line_detail(self, request, format=None):
