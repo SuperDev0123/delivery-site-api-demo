@@ -653,7 +653,7 @@ class BookingViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def create_booking(self, request, format=None):
-        bookingData = request.data;
+        bookingData = request.data
         bookingData['b_bookingID_Visual'] = Bookings.get_max_b_bookingID_Visual() + 1
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
@@ -783,6 +783,15 @@ class BookingLinesViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def create_booking_line(self, request, format=None):
+        serializer = BookingLineSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def duplicate_booking_line(self, request, format=None):
         booking_line = Booking_lines.objects.get(pk=request.data['pk_lines_id'])
         newbooking_line = {
             'fk_booking_id': booking_line.fk_booking_id,
@@ -799,6 +808,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
         }
         serializer = BookingLineSerializer(data=newbooking_line)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -859,6 +869,15 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def create_booking_line_detail(self, request, format=None):
+        serializer = BookingLineDetailSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def duplicate_booking_line_detail(self, request, format=None):
         booking_line_detail = Booking_lines_data.objects.get(pk=request.data['pk_id_lines_data'])
         newbooking_line_detail = {
             'fk_booking_id': booking_line_detail.fk_booking_id,
@@ -869,6 +888,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             'insuranceValueEach': booking_line_detail.insuranceValueEach, 
             'gap_ra': booking_line_detail.gap_ra, 
             'clientRefNumber': booking_line_detail.clientRefNumber,
+            'fk_id_booking_lines': booking_line_detail.fk_id_booking_lines,
         }
         serializer = BookingLineDetailSerializer(data=newbooking_line_detail)
 
