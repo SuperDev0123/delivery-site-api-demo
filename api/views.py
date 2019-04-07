@@ -20,6 +20,7 @@ import io
 import json
 import zipfile
 import uuid
+import time
 
 from .serializers import *
 from .models import *
@@ -655,6 +656,7 @@ class BookingViewSet(viewsets.ViewSet):
     def create_booking(self, request, format=None):
         bookingData = request.data
         bookingData['b_bookingID_Visual'] = Bookings.get_max_b_bookingID_Visual() + 1
+        bookingData['pk_booking_id'] = str(uuid.uuid1()) + '_' + str(time.time())
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
