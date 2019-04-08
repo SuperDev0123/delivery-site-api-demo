@@ -1138,6 +1138,25 @@ class NotesViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class PackageTypesViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_packagetypes(self, requst, pk=None):
+        packageTypes = Dme_package_types.objects.all()
+
+        return_datas = []
+        if len(packageTypes) == 0:
+            return JsonResponse({'packageTypes': []})
+        else:
+            for packageType in packageTypes:
+                return_data = {
+                    'id': packageType.id,
+                    'dmePackageTypeCode': packageType.dmePackageTypeCode,
+                    'dmePackageCategory': packageType.dmePackageCategory,
+                    'dmePackageTypeDesc': packageType.dmePackageTypeDesc,
+                }
+                return_datas.append(return_data)
+            return JsonResponse({'packageTypes': return_datas})
+
 def handle_uploaded_file_attachments(request, f):
     try:
         bookingId = request.POST.get("warehouse_id", "")

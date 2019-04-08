@@ -891,3 +891,16 @@ class Dme_status_notes(models.Model):
 
 	class Meta:
 		db_table = 'dme_status_notes'
+
+class Dme_package_types(models.Model):
+	id = models.AutoField(primary_key=True)
+	dmePackageTypeCode = models.CharField(verbose_name=_('DME Package Type Code'), max_length=25, blank=True, null=True)
+	dmePackageCategory = models.CharField(verbose_name=_('DME Package Category'), max_length=25, blank=True, null=True)
+	dmePackageTypeDesc = models.CharField(verbose_name=_('DME Package Type Desc'), max_length=50, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'dme_package_types'

@@ -12,6 +12,7 @@ router.register(r'bookinglines', BookingLinesViewSet, basename='bookinglines')
 router.register(r'bookinglinedetails', BookingLineDetailsViewSet, basename='bookinglinedetails')
 router.register(r'comm', CommsViewSet, basename='comm')
 router.register(r'note', NotesViewSet, basename='note')
+router.register(r'packagetype', PackageTypesViewSet, basename='packagetype')
 urlpatterns = router.urls
 
 urlpatterns += [
