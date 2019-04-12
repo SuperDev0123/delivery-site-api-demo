@@ -109,7 +109,7 @@ DATABASES = {       # Local
 #         'NAME': 'dme_db_dev',
 #         'USER': 'fmadmin',
 #         'PASSWORD': 'Fmadmin1',
-#         'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com',
+#         'HOST': 'fm-prod-database.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com',
 #         'PORT': '3306',
 #    }
 # }
