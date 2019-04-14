@@ -24,7 +24,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -1326,6 +1326,26 @@ def download_pod(request):
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
     response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
     return response
+
+@api_view(['POST'])
+@permission_classes((AllowAny,))
+def download_csv(request):
+    body = literal_eval(request.body.decode('utf8'))
+    booking_ids = body["bookingIds"]
+    file_paths = [];
+    label_names = [];
+
+    csv_name = generate_csv(booking_ids)
+
+    # file_path = '/var/www/html/dme_api/static/csvs/' + csv_name # Dev & Prod
+    file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
+
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="text/csv")
+            # response['Content-Disposition'] = 'inline; filename=' + csv_name
+            response['Content-Disposition'] = 'attachment; filename= "%s"' % csv_name
+            return response
 
 @api_view(['GET'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))

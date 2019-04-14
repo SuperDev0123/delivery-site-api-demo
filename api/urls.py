@@ -24,6 +24,7 @@ urlpatterns += [
     url(r'^share/upload-status/', upload_status),
     url(r'^download-pdf/', download_pdf),
     url(r'^download-pod/', download_pod),
+    url(r'^download-csv/', download_csv),
 
     url(r'^bok_0_bookingskeys/', bok_0_bookingkeys),
     url(r'^bok_1_headers/', bok_1_headers),
