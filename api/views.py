@@ -1337,8 +1337,8 @@ def download_csv(request):
 
     csv_name = generate_csv(booking_ids)
 
-    # file_path = '/var/www/html/dme_api/static/csvs/' + csv_name # Dev & Prod
-    file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
+    file_path = '/var/www/html/dme_api/static/csvs/' + csv_name # Dev & Prod
+    # file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
 
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
