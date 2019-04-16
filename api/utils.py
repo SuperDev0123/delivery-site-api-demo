@@ -114,7 +114,7 @@ def csv_write(fileHandler, bookings, mysqlcon):
 
             if booking['b_bookingID_Visual'] is None: h0 = ''
             else:
-                h0 = wrap_in_quote('DME_' + str(booking.get('b_bookingID_Visual')))
+                h0 = wrap_in_quote('DME' + str(booking.get('b_bookingID_Visual')))
 
             if booking['puPickUpAvailFrom_Date'] is None: h1 = ''
             else:
@@ -245,7 +245,7 @@ def csv_write(fileHandler, bookings, mysqlcon):
             else:
                 h55 = wrap_in_quote(booking.get('de_Email'))
 
-            h56 = ''
+            h56 = 'N'
 
             h30 = ''
             h31 = ''
