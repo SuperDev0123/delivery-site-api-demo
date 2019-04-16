@@ -110,95 +110,95 @@ def csv_write(fileHandler, bookings, mysqlcon):
     if len(bookings) > 0:
         for booking in bookings:
             booking_lines = get_available_booking_lines(mysqlcon, booking)
-            eachLineText = 'DELIME'
+            eachLineText = 'DVM0001'
 
-            if booking['b_bookingID_Visual'] is None: h0 = 'NULL'
+            if booking['b_bookingID_Visual'] is None: h0 = ''
             else:
                 h0 = wrap_in_quote('DME_' + str(booking.get('b_bookingID_Visual')))
 
-            if booking['puPickUpAvailFrom_Date'] is None: h1 = 'NULL'
+            if booking['puPickUpAvailFrom_Date'] is None: h1 = ''
             else:
                 h1 = wrap_in_quote(str(booking.get('puPickUpAvailFrom_Date')))
 
             h2 = '009790'
 
-            if booking['puCompany'] is None: h00 = 'NULL'
+            if booking['puCompany'] is None: h00 = ''
             else:
                 h00 = wrap_in_quote(booking.get('puCompany'))
 
-            if booking['pu_Address_Street_1'] is None: h01 = 'NULL'
+            if booking['pu_Address_Street_1'] is None: h01 = ''
             else:
                 h01 = wrap_in_quote(booking.get('pu_Address_Street_1'))
 
-            if booking['pu_Address_street_2'] is None: h02 = 'NULL'
+            if booking['pu_Address_street_2'] is None: h02 = ''
             else:
                 h02 = wrap_in_quote(booking.get('pu_Address_street_2'))
 
-            if booking['pu_Address_Suburb'] is None: h03 = 'NULL'
+            if booking['pu_Address_Suburb'] is None: h03 = ''
             else:
                 h03 = wrap_in_quote(booking.get('pu_Address_Suburb'))
 
-            if booking['pu_Address_PostalCode'] is None: h04 = 'NULL'
+            if booking['pu_Address_PostalCode'] is None: h04 = ''
             else:
                 h04 = wrap_in_quote(booking.get('pu_Address_PostalCode'))
 
-            if booking['pu_Address_State'] is None: h05 = 'NULL'
+            if booking['pu_Address_State'] is None: h05 = ''
             else:
                 h05 = wrap_in_quote(booking.get('pu_Address_State'))
 
-            if booking['pu_Contact_F_L_Name'] is None: h06 = 'NULL'
+            if booking['pu_Contact_F_L_Name'] is None: h06 = ''
             else:
                 h06 = wrap_in_quote(booking.get('pu_Contact_F_L_Name'))
 
-            if booking['pu_Phone_Main'] is None: h07 = 'NULL'
+            if booking['pu_Phone_Main'] is None: h07 = ''
             else:
                 h07 = str(booking.get('pu_Phone_Main'))
 
-            if booking['pu_PickUp_Avail_From_Date_DME'] is None: h08 = 'NULL'
+            if booking['pu_PickUp_Avail_From_Date_DME'] is None: h08 = ''
             else:
                 h08 = wrap_in_quote(booking.get('pu_PickUp_Avail_From_Date_DME'))
 
-            if booking['pu_PickUp_Avail_Time_Hours_DME'] is None: h09 = 'NULL'
+            if booking['pu_PickUp_Avail_Time_Hours_DME'] is None: h09 = ''
             else:
                 h09 = str(booking.get('pu_PickUp_Avail_Time_Hours_DME'))
 
-            if booking['deToCompanyName'] is None: h10 = 'NULL'
+            if booking['deToCompanyName'] is None: h10 = ''
             else:
                 h10 = wrap_in_quote(booking.get('deToCompanyName'))
 
-            if booking['de_To_Address_Street_1'] is None: h11 = 'NULL'
+            if booking['de_To_Address_Street_1'] is None: h11 = ''
             else:
                 h11 = wrap_in_quote(booking.get('de_To_Address_Street_1'))
 
-            if booking['de_To_Address_Street_2'] is None: h12 = 'NULL'
+            if booking['de_To_Address_Street_2'] is None: h12 = ''
             else:
                 h12 = wrap_in_quote(booking.get('de_To_Address_Street_2'))
 
-            if booking['de_To_Address_Suburb'] is None: h13 = 'NULL'
+            if booking['de_To_Address_Suburb'] is None: h13 = ''
             else:
                 h13 = wrap_in_quote(booking.get('de_To_Address_Suburb'))
 
-            if booking['de_To_Address_PostalCode'] is None: h14 = 'NULL'
+            if booking['de_To_Address_PostalCode'] is None: h14 = ''
             else:
                 h14 = wrap_in_quote(booking.get('de_To_Address_PostalCode'))
 
-            if booking['de_To_Address_State'] is None: h15 = 'NULL'
+            if booking['de_To_Address_State'] is None: h15 = ''
             else:
                 h15 = wrap_in_quote(booking.get('de_To_Address_State'))
 
-            if booking['de_to_Contact_F_LName'] is None: h16 = 'NULL'
+            if booking['de_to_Contact_F_LName'] is None: h16 = ''
             else:
                 h16 = wrap_in_quote(booking.get('de_to_Contact_F_LName'))
 
-            if booking['de_to_Phone_Main'] is None: h17 = 'NULL'
+            if booking['de_to_Phone_Main'] is None: h17 = ''
             else:
                 h17 = str(booking.get('de_to_Phone_Main'))
 
-            if booking['de_Deliver_From_Date'] is None: h18 = 'NULL'
+            if booking['de_Deliver_From_Date'] is None: h18 = ''
             else:
                 h18 = wrap_in_quote(booking.get('de_Deliver_From_Date'))
 
-            if booking['de_Deliver_From_Hours'] is None: h19 = 'NULL'
+            if booking['de_Deliver_From_Hours'] is None: h19 = ''
             else:
                 h19 = str(booking.get('de_Deliver_From_Hours'))
 
@@ -207,41 +207,41 @@ def csv_write(fileHandler, bookings, mysqlcon):
             h22 = ''
             h23 = ''
 
-            if booking['b_client_sales_inv_num'] is None: h24 = 'NULL'
+            if booking['b_client_sales_inv_num'] is None: h24 = ''
             else:
                 h24 = wrap_in_quote(booking.get('b_client_sales_inv_num'))
             
-            if booking['b_client_order_num'] is None: h25 = 'NULL'
+            if booking['b_client_order_num'] is None: h25 = ''
             else:
                 h25 = wrap_in_quote(booking.get('b_client_order_num'))
             
-            if booking['de_to_PickUp_Instructions_Address'] is None: h26 = 'NULL'
+            if booking['de_to_PickUp_Instructions_Address'] is None: h26 = ''
             else:
                 h26 = wrap_in_quote(booking.get('de_to_PickUp_Instructions_Address'))
             
             h27 = ''
 
-            if booking['vx_serviceName'] is None: h28 = 'NULL'
+            if booking['vx_serviceName'] is None: h28 = ''
             else:
                 h28 = wrap_in_quote(booking.get('vx_serviceName'))
             
-            if booking['v_service_Type'] is None: h29 = 'NULL'
+            if booking['v_service_Type'] is None: h29 = ''
             else:
                 h29 = wrap_in_quote(booking.get('v_service_Type'))
 
             h50 = h25
             h51 = ''
 
-            if booking['pu_pickup_instructions_address'] is None: h52 = 'NULL'
+            if booking['pu_pickup_instructions_address'] is None: h52 = ''
             else:
                 h52 = wrap_in_quote(booking.get('pu_pickup_instructions_address'))
 
             h53 = ''
 
-            if booking['pu_Email'] is None: h54 = 'NULL'
+            if booking['pu_Email'] is None: h54 = ''
             else:
                 h54 = wrap_in_quote(booking.get('pu_Email'))
-            if booking['de_Email'] is None: h55 = 'NULL'
+            if booking['de_Email'] is None: h55 = ''
             else:
                 h55 = wrap_in_quote(booking.get('de_Email'))
 
@@ -251,42 +251,42 @@ def csv_write(fileHandler, bookings, mysqlcon):
             h31 = ''
             if (len(booking_lines) > 0):
                 for booking_line in booking_lines:
-                    if booking['b_clientReference_RA_Numbers'] is None: h32 = 'NULL'
+                    if booking['b_clientReference_RA_Numbers'] is None: h32 = ''
                     else:
                         h32 = str(booking.get('b_clientReference_RA_Numbers'))
 
                     h33 = ''
-                    if booking_line['e_type_of_packaging'] is None: h34 = 'NULL'
+                    if booking_line['e_type_of_packaging'] is None: h34 = ''
                     else:
                         h34 = wrap_in_quote(booking_line.get('e_type_of_packaging'))
-                    if booking_line['client_item_reference'] is None: h35 = 'NULL'
+                    if booking_line['client_item_reference'] is None: h35 = ''
                     else:
                         h35 = wrap_in_quote(booking_line.get('client_item_reference'))
-                    if booking_line['e_item'] is None: h36 = 'NULL'
+                    if booking_line['e_item'] is None: h36 = ''
                     else:
                         h36 = wrap_in_quote(booking_line.get('e_item'))
-                    if booking_line['e_qty'] is None: h37 = 'NULL'
+                    if booking_line['e_qty'] is None: h37 = ''
                     else:
                         h37 = str(booking_line.get('e_qty'))
-                    if booking_line['e_qty'] is None: h38 = 'NULL'
-                    else:
-                        h38 = str(booking_line.get('e_qty'))
-                    if booking_line['e_qty'] is None: h39 = 'NULL'
+                    
+                    h38 = ''
+                    
+                    if booking_line['e_qty'] is None: h39 = ''
                     else:
                         h39 = str(booking_line.get('e_qty'))
 
                     h40 = ''
                     h41 = ''
-                    if booking_line['e_dimLength'] is None: h42 = 'NULL'
+                    if booking_line['e_dimLength'] is None: h42 = ''
                     else:
                         h42 = str(booking_line.get('e_dimLength'))
-                    if booking_line['e_dimWidth'] is None: h43 = 'NULL'
+                    if booking_line['e_dimWidth'] is None: h43 = ''
                     else:
                         h43 = str(booking_line.get('e_dimWidth'))
-                    if booking_line['e_dimHeight'] is None: h44 = 'NULL'
+                    if booking_line['e_dimHeight'] is None: h44 = ''
                     else:
                         h44 = str(booking_line.get('e_dimHeight'))
-                    if booking_line['e_weightPerEach'] is None: h45 = 'NULL'
+                    if booking_line['e_weightPerEach'] is None: h45 = ''
                     else:
                         h45 = str(booking_line.get('e_weightPerEach'))
                     h46 = ''
@@ -331,7 +331,7 @@ def csv_write(fileHandler, bookings, mysqlcon):
                 eachLineText += comma + h40 + comma + h41 + comma + h42 + comma + h43 + comma + h44 + comma + h45 + comma + h46 + comma + h47 + comma + h48 + comma + h49
                 eachLineText += comma + h50 + comma + h51 + comma + h52 + comma + h53 + comma + h54 + comma + h55 + comma + h56
                 fileHandler.write(newLine + eachLineText)
-                eachLineText = 'DELIME'
+                eachLineText = 'DVM0001'
 
 def generate_csv(booking_ids):
     # print('#900 - Running %s' % datetime.datetime.now())
