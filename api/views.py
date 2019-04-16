@@ -181,6 +181,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 Q(s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword) | 
                 Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
                 Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword) |
+                Q(b_client_sales_inv_num__icontains=simple_search_keyword) |
                 Q(pu_Contact_F_L_Name__icontains=simple_search_keyword))
         else:
             # Column filter
@@ -310,6 +311,12 @@ class BookingsViewSet(viewsets.ViewSet):
             except KeyError:
                 column_filter = ''
 
+            try:
+                column_filter = column_filters['b_client_sales_inv_num']
+                queryset = queryset.filter(b_client_sales_inv_num__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+
         # New POD filter
         if new_pod == 'true':
             queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
@@ -400,6 +407,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'z_pod_url': booking.z_pod_url,
                 'z_pod_signed_url': booking.z_pod_signed_url,
                 'has_comms': booking.has_comms(),
+                'b_client_sales_inv_num': booking.b_client_sales_inv_num,
             })
         
         return JsonResponse({
