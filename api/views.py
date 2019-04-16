@@ -1337,6 +1337,12 @@ def download_csv(request):
 
     csv_name = generate_csv(booking_ids)
 
+    for booking_id in booking_ids:
+        booking = Bookings.objects.get(id=booking_id)
+        booking.b_dateBookedDate = datetime.now()
+        booking.b_status = 'Booked CSV'
+        booking.save()
+
     file_path = '/home/cope_au/dme_sftp/cope_au/pickup_ext/' + csv_name # Dev & Prod
     # file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
 
