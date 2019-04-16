@@ -302,7 +302,7 @@ def csv_write(fileHandler, bookings, mysqlcon):
                     eachLineText += comma + h40 + comma + h41 + comma + h42 + comma + h43 + comma + h44 + comma + h45 + comma + h46 + comma + h47 + comma + h48 + comma + h49
                     eachLineText += comma + h50 + comma + h51 + comma + h52 + comma + h53 + comma + h54 + comma + h55 + comma + h56
                     fileHandler.write(newLine + eachLineText)
-                    eachLineText = 'DELIME'
+                    eachLineText = 'DVM0001'
             else:
                 h32 = ''
                 h33 = ''
