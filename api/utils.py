@@ -13,8 +13,8 @@ redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
-# production = True  # Dev
-production = False # Local
+production = True  # Dev
+# production = False # Local
 
 if production:
     DB_HOST = 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com'
