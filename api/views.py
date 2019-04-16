@@ -1349,6 +1349,7 @@ def download_csv(request):
         booking = Bookings.objects.get(id=booking_id)
         booking.b_dateBookedDate = datetime.now()
         booking.b_status = 'Booked CSV'
+        booking.v_FPBookingNumber = booking.b_bookingID_Visual
         booking.save()
 
     file_path = '/home/cope_au/dme_sftp/cope_au/pickup_ext/' + csv_name # Dev & Prod
