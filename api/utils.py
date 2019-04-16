@@ -351,7 +351,7 @@ def generate_csv(booking_ids):
     bookings = get_available_bookings(mysqlcon, booking_ids)
 
     csv_name = 'SEATEMP_' + str(len(booking_ids)) + "_" + str(datetime.datetime.utcnow()) + ".csv"
-    f = open("./static/csvs/" + csv_name, "w")
+    f = open("/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name, "w")
     csv_write(f, bookings, mysqlcon)
     f.close()
 
