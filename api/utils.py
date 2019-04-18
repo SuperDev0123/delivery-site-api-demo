@@ -508,8 +508,8 @@ def build_xml(booking_ids):
             #     #end copying xml files to sftp server
 
             #start update booking status in dme_booking table
-            sql2 = "UPDATE dme_bookings set b_status = %s WHERE pk_booking_id = %s"
-            adr2 = ('Booked XML', booking['pk_booking_id'])
+            sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
+            adr2 = ('Booked XML', str(datetime.datetime.utcnow()), booking['pk_booking_id'])
             mycursor.execute(sql2, adr2)
             mysqlcon.commit()
         except Exception as e:
