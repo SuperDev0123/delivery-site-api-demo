@@ -8,13 +8,14 @@ import urllib, requests
 import json
 import pymysql, pymysql.cursors
 import redis
+import xml.etree.ElementTree as xml
 
 redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
-production = True  # Dev
-# production = False # Local
+# production = True  # Dev
+production = False # Local
 
 if production:
     DB_HOST = 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com'
@@ -359,3 +360,156 @@ def generate_csv(booking_ids):
     mysqlcon.close()
 
     return csv_name
+
+def build_xml(booking_ids):
+    try:
+        mysqlcon = pymysql.connect(host=DB_HOST,
+                                   port=DB_PORT,
+                                   user=DB_USER,
+                                   password=DB_PASS,
+                                   db=DB_NAME,
+                                   charset='utf8mb4',
+                                   cursorclass=pymysql.cursors.DictCursor)
+    except:
+        exit(1)
+    mycursor = mysqlcon.cursor()
+
+    bookings = get_available_bookings(mysqlcon, booking_ids)
+
+    # sql = "SELECT pk_booking_id, pu_Address_Street_1, pu_Address_Suburb, pu_Address_State, \
+    #             pu_Address_PostalCode, v_FPBookingNumber, puPickUpAvailFrom_Date, vx_serviceName, \
+    #             total_1_KG_weight_override, deToCompanyName, de_To_Address_Street_1, de_To_Address_Suburb,\
+    #             de_To_Address_State, de_To_Address_PostalCode \
+    #             FROM dme_bookings \
+    #             WHERE b_client_name = %s AND b_status='Ready for XML' \
+    #             GROUP BY dme_bookings.pk_booking_id"
+    adr = ("Seaway", )
+    
+    #start check if xmls folder exists
+    filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
+    #filepath = "/var/www/html/dme_api/static/xmls/"
+    if not os.path.exists(filepath):
+            os.makedirs(filepath)
+    #end check if xmls folder exists
+
+    i = 1
+    for booking in bookings:
+        try:
+            #start db query for fetching data from dme_booking_lines table
+            sql1 = "SELECT e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
+                    FROM dme_booking_lines \
+                    WHERE fk_booking_id = %s"
+            adr1 = (booking['pk_booking_id'], )
+            mycursor.execute(sql1, adr1)
+            booking_lines = mycursor.fetchall() 
+
+            #start calculate total item quantity and total item weight
+            totalQty = 0
+            totalWght = 0
+            for booking_line in booking_lines:
+                totalQty = totalQty + booking_line['e_qty']
+                totalWght = totalWght + booking_line['e_Total_KG_weight']
+            #start calculate total item quantity and total item weight
+
+            #start xml file name using naming convention
+            date = datetime.datetime.now().strftime("%Y%m%d")+"_"+datetime.datetime.now().strftime("%H%M%S")
+            filename = "AL_HANALT_"+date+"_"+str(i)+".xml"
+            i+= 1
+            #end xml file name using naming convention
+
+            #start formatting xml file and putting data from db tables
+            root = xml.Element("AlTransportData", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'})
+            consignmentHeader = xml.Element("ConsignmentHeader")
+            root.append(consignmentHeader)
+            chargeAccount = xml.SubElement(consignmentHeader, "ChargeAccount")
+            chargeAccount.text = "HANALT"
+            senderName = xml.SubElement(consignmentHeader, "SenderName")
+            senderName.text = "Hankook"
+            senderAddressLine1 = xml.SubElement(consignmentHeader, "SenderAddressLine1")
+            senderAddressLine1.text = booking['pu_Address_Street_1']
+            senderLocality = xml.SubElement(consignmentHeader, "SenderLocality")
+            senderLocality.text = booking['pu_Address_Suburb']
+            senderState = xml.SubElement(consignmentHeader, "SenderState")
+            senderState.text = booking['pu_Address_State']
+            senderPostcode = xml.SubElement(consignmentHeader, "SenderPostcode")
+            senderPostcode.text = booking['pu_Address_PostalCode']
+
+            companyName = booking['deToCompanyName'].replace("<", "")
+            companyName = companyName.replace(">", "")
+            companyName = companyName.replace("\"", "")
+            companyName = companyName.replace("'", "")
+            companyName = companyName.replace("&", "and")
+            
+            consignmentShipments = xml.Element("ConsignmentShipments")
+            root.append(consignmentShipments)
+            consignmentShipment = xml.SubElement(consignmentShipments, "ConsignmentShipment")
+            ConsignmentNumber = xml.SubElement(consignmentShipment, "ConsignmentNumber")
+            ConsignmentNumber.text = booking['pk_booking_id']
+            DespatchDate = xml.SubElement(consignmentShipment, "DespatchDate")
+            DespatchDate.text = str(booking['puPickUpAvailFrom_Date'])
+            CarrierService = xml.SubElement(consignmentShipment, "CarrierService")
+            CarrierService.text = booking['vx_serviceName']
+            totalQuantity = xml.SubElement(consignmentShipment, "totalQuantity")
+            totalQuantity.text = str(totalQty)
+            totalWeight = xml.SubElement(consignmentShipment, "totalWeight")
+            totalWeight.text = str(totalWght)
+            ReceiverName = xml.SubElement(consignmentShipment, "ReceiverName")
+            ReceiverName.text = companyName
+            ReceiverAddressLine1 = xml.SubElement(consignmentShipment, "ReceiverAddressLine1")
+            ReceiverAddressLine1.text = booking['de_To_Address_Street_1']
+            ReceiverLocality = xml.SubElement(consignmentShipment, "ReceiverLocality")
+            ReceiverLocality.text = booking['de_To_Address_Suburb']
+            ReceiverState = xml.SubElement(consignmentShipment, "ReceiverState")
+            ReceiverState.text = booking['de_To_Address_State']
+            ReceiverPostcode = xml.SubElement(consignmentShipment, "ReceiverPostcode")
+            ReceiverPostcode.text = booking['de_To_Address_PostalCode']
+            ItemsShipment = xml.SubElement(consignmentShipment, "ItemsShipment")
+
+            for booking_line in booking_lines:
+                Item = xml.SubElement(ItemsShipment, "Item")
+                Quantity = xml.SubElement(Item, "Quantity")
+                Quantity.text = str(booking_line['e_qty'])
+                ItemType = xml.SubElement(Item, "ItemType")
+                ItemType.text = str(booking_line['e_item_type'])
+                ItemDescription = xml.SubElement(Item, "ItemDescription")
+                ItemDescription.text = booking_line['e_item']
+                Width = xml.SubElement(Item, "Width")
+                Width.text = str(booking_line['e_dimWidth'])
+                Length = xml.SubElement(Item, "Length")
+                Length.text = str(booking_line['e_dimLength'])
+                Height = xml.SubElement(Item, "Height")
+                Height.text = str(booking_line['e_dimHeight'])
+                DeadWeight = xml.SubElement(Item, "DeadWeight")
+                DeadWeight.text = str(booking_line['e_Total_KG_weight']/booking_line['e_qty'])
+
+                SSCCs = xml.SubElement(Item, "SSCCs")
+                SSCC = xml.SubElement(SSCCs, "SSCC")
+                SSCC.text = booking['pk_booking_id']
+            #end formatting xml file and putting data from db tables
+
+            # start writting data into xml files
+            tree = xml.ElementTree(root)
+            with open(filepath+filename, "wb") as fh:
+                tree.write(fh, encoding='UTF-8', xml_declaration=True)
+
+            #     #start copying xml files to sftp server
+            #     srv = pysftp.Connection(host="localhost", username="tapas", password="tapas@123", cnopts=cnopts)
+            #     #srv = pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts)
+            #     path = 'www'
+            #     #path = 'indata'
+            #     with srv.cd(path):
+            #         srv.put(filepath+filename) 
+
+            #     # Closes the connection
+            #     srv.close()
+            #     #end copying xml files to sftp server
+
+            #start update booking status in dme_booking table
+            sql2 = "UPDATE dme_bookings set b_status = %s WHERE pk_booking_id = %s"
+            adr2 = ('Booked XML', booking['pk_booking_id'])
+            mycursor.execute(sql2, adr2)
+            mysqlcon.commit()
+        except Exception as e:
+            return e
+        
+    mysqlcon.close()

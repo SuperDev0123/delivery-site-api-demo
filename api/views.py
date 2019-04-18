@@ -24,7 +24,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -1361,6 +1361,18 @@ def download_csv(request):
             # response['Content-Disposition'] = 'inline; filename=' + csv_name
             response['Content-Disposition'] = 'attachment; filename= "%s"' % csv_name
             return response
+
+@api_view(['POST'])
+@permission_classes((AllowAny,))
+def generate_xml(request):
+    body = literal_eval(request.body.decode('utf8'))
+    booking_ids = body["bookingIds"]
+
+    try:
+        build_xml(booking_ids)
+        return JsonResponse({'success': 'success'})
+    except Exception as e:
+        return JsonResponse({'error': 'error'})
 
 @api_view(['GET'])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
