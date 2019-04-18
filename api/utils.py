@@ -386,8 +386,11 @@ def build_xml(booking_ids):
     adr = ("Seaway", )
     
     #start check if xmls folder exists
-    filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
-    #filepath = "/var/www/html/dme_api/static/xmls/"
+    if production:
+        filepath = "/var/www/html/dme_api/static/xmls/"
+    else:
+        filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
+    
     if not os.path.exists(filepath):
             os.makedirs(filepath)
     #end check if xmls folder exists
