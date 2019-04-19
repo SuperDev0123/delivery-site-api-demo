@@ -613,33 +613,6 @@ class BOK_3_lines_data(models.Model):
 	class Meta:
 		db_table = 'bok_3_lines_data'
 
-class Booking_Status_History(models.Model):
-	id = models.AutoField(primary_key=True)
-	fk_booking_id = models.ForeignKey(Bookings, on_delete=models.CASCADE, default='1')
-	status_from_api = models.CharField(verbose_name=_('Status From API'), max_length=32, blank=True, default='')
-	status_date = models.DateTimeField(verbose_name=_('Status Date'), default=datetime.now, blank=True, null=True)
-	notes = models.TextField(verbose_name=_('Notes'), max_length=500, blank=True, null=True, default='')
-	status_date_modified = models.DateTimeField(verbose_name=_('Status Date'), default=datetime.now, blank=True, null=True)
-	status_code = models.CharField(verbose_name=_('Status code'), max_length=20, blank=True, default='')
-	z_createdBy = models.CharField(verbose_name=_('Created By'), max_length=40, blank=True, default='')
-	z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=40, blank=True, default='')
-	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now, blank=True)
-	z_modifiedBy = models.CharField(verbose_name=_('Modified By'), max_length=40, blank=True, default='')
-	z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=40, blank=True, default='')
-	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now, blank=True)
-	status_preTranslation = models.CharField(verbose_name=_('Status Pre-translation'), max_length=30, blank=True, null=True, default='')
-	pod_signed_by = models.CharField(verbose_name=_('Pod Signed By'), max_length=30, blank=True, null=True, default='')
-	Responsible_Person = models.CharField(verbose_name=_('Responsible Person'), max_length=40, blank=True, null=True, default='')
-	updateViaAPI = models.DateTimeField(verbose_name=_('Updated via API'), default=datetime.now, blank=True, null=True)
-	fk_fpID = models.CharField(verbose_name=_('FP ID'), max_length=36, blank=True, default='')
-	freightProvider = models.CharField(verbose_name=_('Freight Provider'), max_length=30, blank=True, default='')
-	status_api = models.CharField(verbose_name=_('Status API'), max_length=40, blank=True, default='')
-	depotName = models.CharField(verbose_name=_('Depot Name'), max_length=30, blank=True, default='')
-	event_time_stamp = models.DateTimeField(verbose_name=_('Event Timestamp'), default=datetime.now, blank=True)
-
-	class Meta:
-		db_table = 'dme_booking_status_history'
-
 class Log(models.Model):
 	id = models.AutoField(primary_key=True)
 	fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)
@@ -820,6 +793,8 @@ class Utl_country_codes(models.Model):
 class Dme_status_history(models.Model):
 	id = models.AutoField(primary_key=True)
 	fk_booking_id = models.CharField(verbose_name=_('Booking ID'), max_length=64, blank=True, null=True)
+	status_from_api = models.CharField(verbose_name=_('Status From API'), max_length=50, blank=True, default='')
+	status_code_api = models.CharField(verbose_name=_('Status Code API'), max_length=50, blank=True, default='')
 	status_last = models.CharField(verbose_name=_('Status Last'), max_length=32, blank=True, null=True)
 	notes = models.CharField(verbose_name=_('Notes'), max_length=200, blank=True, null=True)
 	communicate_tick = models.BooleanField(verbose_name=_('Communicate Tick'), default=False, blank=True, null=True)
@@ -830,6 +805,11 @@ class Dme_status_history(models.Model):
 	api_status_pretranslation = models.CharField(verbose_name=_('Api Status Pretranslation'), max_length=64, blank=True, null=True)
 	booking_request_data = models.CharField(verbose_name=_('Booking Request Data'), max_length=64, blank=True, null=True)
 	request_dates = models.CharField(verbose_name=_('Request Dates'), max_length=64, blank=True, null=True)
+	responsible_person = models.CharField(verbose_name=_('Responsible Person'), max_length=40, blank=True, null=True, default='')
+	updateViaAPI = models.DateTimeField(verbose_name=_('Updated via API'), default=datetime.now, blank=True, null=True)
+	fk_fp_id = models.CharField(verbose_name=_('FP ID'), max_length=64, blank=True, default='')
+	depot_name = models.CharField(verbose_name=_('Depot Name'), max_length=64, blank=True, default='')
+	event_time_stamp = models.DateTimeField(verbose_name=_('Event Timestamp'), default=datetime.now, blank=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
 	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
