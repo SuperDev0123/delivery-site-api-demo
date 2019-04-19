@@ -1456,7 +1456,7 @@ def getSuburbs(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def get_booking_history(request):
-    bookingId = request.GET.get('id')
+    bookingId = request.GET.get('b_clientReference_RA_Numbers')
     return_data = []
 
     try:
