@@ -809,6 +809,7 @@ class Dme_status_history(models.Model):
 	updateViaAPI = models.DateTimeField(verbose_name=_('Updated via API'), default=datetime.now, blank=True, null=True)
 	fk_fp_id = models.CharField(verbose_name=_('FP ID'), max_length=64, blank=True, default='')
 	depot_name = models.CharField(verbose_name=_('Depot Name'), max_length=64, blank=True, default='')
+	dme_notes = models.TextField(verbose_name=_('DME notes'), max_length=500, blank=True, default='')
 	event_time_stamp = models.DateTimeField(verbose_name=_('Event Timestamp'), default=datetime.now, blank=True)
 	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
@@ -906,3 +907,18 @@ class Dme_package_types(models.Model):
 
 	class Meta:
 		db_table = 'dme_package_types'
+
+class Utl_dme_status(models.Model):
+	id = models.AutoField(primary_key=True)
+	phone = models.IntegerField(verbose_name=_('phone number'), null=True, blank=True)
+	dme_delivery_status_category = models.CharField(max_length=64, blank=True, null=True)
+	dme_delivery_status = models.CharField(max_length=64, blank=True, null=True)
+	dev_notes = models.TextField(max_length=400, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'utl_dme_status'
+
