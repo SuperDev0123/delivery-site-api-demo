@@ -545,6 +545,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'total_1_KG_weight_override': booking.total_1_KG_weight_override,
                         'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
                         'b_status_API': booking.b_status_API,
+                        'z_lock_status': booking.z_lock_status,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
@@ -1183,6 +1184,42 @@ class BookingStatusViewSet(viewsets.ViewSet):
                 return_datas.append(return_data)
             return JsonResponse({'all_booking_status': return_datas})
 
+class StatusHistoryViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_all(self, requst, pk=None):
+        pk_booking_id = self.request.GET.get('pk_booking_id')
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=pk_booking_id).order_by('-id')
+            for resultObject in resultObjects:
+                return_data.append({
+                    'notes': resultObject.notes,
+                    'status_last': resultObject.status_last,
+                    'api_status_time_stamp': resultObject.api_status_time_stamp,
+                    'event_time_stamp': resultObject.event_time_stamp,
+                    'dme_notes': resultObject.dme_notes,
+                })
+            return JsonResponse({'history': return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({'history': ''})
+
+    @action(detail=False, methods=['post'])
+    def save_status_history(self, request, pk=None):
+        serializer = StatusHistorySerializer(data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 def handle_uploaded_file_attachments(request, f):
     try:
         bookingId = request.POST.get("warehouse_id", "")
@@ -1469,27 +1506,3 @@ def getSuburbs(request):
         return JsonResponse({'type': requestType,'suburbs': return_data})
     except Exception as e:
         return JsonResponse({'type': requestType,'suburbs': ''})
-
-@api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def get_booking_history(request):
-    pk_booking_id = request.GET.get('pk_booking_id')
-    return_data = []
-
-    try:
-        resultObjects = []
-        resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=pk_booking_id).order_by('-id')
-        for resultObject in resultObjects:
-            # print('@bookingID', resultObject.fk_id_dme_booking.id)
-            return_data.append({
-                'notes': resultObject.notes,
-                'status_last': resultObject.status_last,
-                'api_status_time_stamp': resultObject.api_status_time_stamp,
-                'event_time_stamp': resultObject.event_time_stamp,
-                'dme_notes': resultObject.dme_notes,
-            })
-        return JsonResponse({'history': return_data})
-    except Exception as e:
-        # print('@Exception', e)
-        return JsonResponse({'history': ''})

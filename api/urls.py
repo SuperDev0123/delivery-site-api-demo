@@ -14,6 +14,7 @@ router.register(r'comm', CommsViewSet, basename='comm')
 router.register(r'note', NotesViewSet, basename='note')
 router.register(r'packagetype', PackageTypesViewSet, basename='packagetype')
 router.register(r'bookingstatus', BookingStatusViewSet, basename='bookingstatus')
+router.register(r'statushistory', StatusHistoryViewSet, basename='statushistory')
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -53,9 +54,5 @@ urlpatterns += [
 
     url(r'^suburb/', getSuburbs),
     url(r'^attachments/', getAttachmentsHistory),
-
     url(r'^temp_excel/', returntempexcel),
-
-
-    url(r'^get_booking_history/', get_booking_history),
 ]
