@@ -13,6 +13,7 @@ router.register(r'bookinglinedetails', BookingLineDetailsViewSet, basename='book
 router.register(r'comm', CommsViewSet, basename='comm')
 router.register(r'note', NotesViewSet, basename='note')
 router.register(r'packagetype', PackageTypesViewSet, basename='packagetype')
+router.register(r'bookingstatus', BookingStatusViewSet, basename='bookingstatus')
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -57,5 +58,4 @@ urlpatterns += [
 
 
     url(r'^get_booking_history/', get_booking_history),
-    url(r'^get_all_statuses/', get_all_statuses),
 ]

@@ -1165,6 +1165,23 @@ class PackageTypesViewSet(viewsets.ViewSet):
                 return_datas.append(return_data)
             return JsonResponse({'packageTypes': return_datas})
 
+class BookingStatusViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_all_booking_status(self, requst, pk=None):
+        all_booking_status = Utl_dme_status.objects.all()
+
+        return_datas = []
+        if len(all_booking_status) == 0:
+            return JsonResponse({'all_booking_status': []})
+        else:
+            for booking_status in all_booking_status:
+                return_data = {
+                    'id': booking_status.id,
+                    'dme_delivery_status': booking_status.dme_delivery_status,
+                }
+                return_datas.append(return_data)
+            return JsonResponse({'all_booking_status': return_datas})
+
 def handle_uploaded_file_attachments(request, f):
     try:
         bookingId = request.POST.get("warehouse_id", "")
@@ -1468,31 +1485,10 @@ def get_booking_history(request):
                 'notes': resultObject.notes,
                 'status_last': resultObject.status_last,
                 'api_status_time_stamp': resultObject.api_status_time_stamp,
+                'event_time_stamp': resultObject.event_time_stamp,
+                'dme_notes': resultObject.dme_notes,
             })
         return JsonResponse({'history': return_data})
     except Exception as e:
         # print('@Exception', e)
         return JsonResponse({'history': ''})
-
-
-@api_view(['GET'])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def get_all_statuses(request):
-    # bookingId = request.GET.get('id')
-    return_data = []
-
-    try:
-        resultObjects = []
-        resultObjects = Dme_status_notes.objects.all()
-        for resultObject in resultObjects:
-            # print('@bookingID', resultObject.fk_id_dme_booking.id)
-            return_data.append({
-                'id': resultObject.id,
-                'status': resultObject.status,
-            })
-        return JsonResponse({'status': return_data})
-    except Exception as e:
-        # print('@Exception', e)
-        return JsonResponse({'status': ''})
-
