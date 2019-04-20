@@ -1478,7 +1478,7 @@ def get_booking_history(request):
 
     try:
         resultObjects = []
-        resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=bookingId)
+        resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=bookingId).order_by('-id')
         for resultObject in resultObjects:
             # print('@bookingID', resultObject.fk_id_dme_booking.id)
             return_data.append({
