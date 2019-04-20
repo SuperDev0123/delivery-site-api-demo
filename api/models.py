@@ -301,6 +301,8 @@ class Bookings(models.Model):
 	booking_api_try_count = models.IntegerField(blank=True, default=0, null=False)
 	z_manual_booking_set_to_confirm = models.DateTimeField(blank=True, null=True)
 	z_manual_booking_set_time_push_to_fm = models.DateTimeField(blank=True, null=True)
+	z_lock_status = models.BooleanField(default=False, blank=True, null=True)
+	z_locked_status_time = models.DateTimeField(blank=True, null=True)
 
 	class Meta:
 		db_table = 'dme_bookings'

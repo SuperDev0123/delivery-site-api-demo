@@ -408,6 +408,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'z_pod_signed_url': booking.z_pod_signed_url,
                 'has_comms': booking.has_comms(),
                 'b_client_sales_inv_num': booking.b_client_sales_inv_num,
+                'z_lock_status': booking.z_lock_status,
             })
         
         return JsonResponse({
