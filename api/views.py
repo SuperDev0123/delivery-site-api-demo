@@ -1473,12 +1473,12 @@ def getSuburbs(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def get_booking_history(request):
-    bookingId = request.GET.get('b_clientReference_RA_Numbers')
+    pk_booking_id = request.GET.get('pk_booking_id')
     return_data = []
 
     try:
         resultObjects = []
-        resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=bookingId).order_by('-id')
+        resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=pk_booking_id).order_by('-id')
         for resultObject in resultObjects:
             # print('@bookingID', resultObject.fk_id_dme_booking.id)
             return_data.append({
