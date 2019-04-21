@@ -1197,7 +1197,6 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 return_data.append({
                     'notes': resultObject.notes,
                     'status_last': resultObject.status_last,
-                    'api_status_time_stamp': resultObject.api_status_time_stamp,
                     'event_time_stamp': resultObject.event_time_stamp,
                     'dme_notes': resultObject.dme_notes,
                 })
