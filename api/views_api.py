@@ -1461,7 +1461,7 @@ def returnexcel(request):
     worksheet.write('G1', 'b_client_sales_inv_num', bold)
     worksheet.write('H1', 'b_client_order_num', bold)
     worksheet.write('I1', 'v_FPBookingNumber', bold)
-    worksheet.write('J1', 'b_status_API', bold)
+    worksheet.write('J1', 'b_status', bold)
     worksheet.write('K1', 's_21_Actual_Delivery_TimeStamp', bold)
     worksheet.write('L1', 'zc_pod_or_no_pod', bold)
 
