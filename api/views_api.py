@@ -1449,104 +1449,163 @@ def returnexcel(request):
 
     workbook = xlsxwriter.Workbook(response, {'in_memory': True})
     worksheet = workbook.add_worksheet()
-    worksheet.set_column(0, 13, width=24)
+    worksheet.set_column(0, 12, width=24)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
 
-    worksheet.write('A1', 'b_bookingID_Visual', bold)
-    worksheet.write('B1', 'puPickUpAvailFrom_Date', bold)
-    worksheet.write('C1', 'b_dateBookedDate', bold)
-    worksheet.write('D1', 'puCompany', bold)
-    worksheet.write('E1', 'pu_Address_Suburb', bold)
-    worksheet.write('F1', 'pu_Address_State', bold)
-    worksheet.write('G1', 'pu_Address_PostalCode', bold)
-    worksheet.write('H1', 'deToCompanyName', bold)
-    worksheet.write('I1', 'de_To_Address_Suburb', bold)
-    worksheet.write('J1', 'de_To_Address_State', bold)
-    worksheet.write('K1', 'de_To_Address_PostalCode', bold)
-    worksheet.write('L1', 'b_clientReference_RA_Numbers', bold)
-    worksheet.write('M1', 'vx_freight_provider', bold)
-    worksheet.write('N1', 'vx_serviceName', bold)
-    worksheet.write('O1', 'v_FPBookingNumber', bold)
-    worksheet.write('P1', 'b_status', bold)
-    worksheet.write('Q1', 'b_status_API', bold)
-    worksheet.write('R1', 's_05_LatestPickUpDateTimeFinal', bold)
-    worksheet.write('S1', 's_06_LatestDeliveryDateTimeFinal', bold)
-    worksheet.write('T1', 's_20_Actual_Pickup_TimeStamp', bold)
-    worksheet.write('U1', 's_21_Actual_Delivery_TimeStamp', bold)
-    worksheet.write('V1', 'z_pod_url', bold)
-    worksheet.write('W1', 'z_pod_signed_url', bold)
-    worksheet.write('X1', 'vx_fp_pu_eta_time', bold)
-    worksheet.write('Y1', 'vx_fp_del_eta_time', bold)
+    worksheet.write('A1', 'b_dateBookedDate', bold)
+    worksheet.write('B1', 'pu_Address_State', bold)
+    worksheet.write('C1', 'deToCompanyName', bold)
+    worksheet.write('D1', 'de_To_Address_Suburb', bold)
+    worksheet.write('E1', 'de_To_Address_State', bold)
+    worksheet.write('F1', 'de_To_Address_PostalCode', bold)
+    worksheet.write('G1', 'b_client_sales_inv_num', bold)
+    worksheet.write('H1', 'b_client_order_num', bold)
+    worksheet.write('I1', 'v_FPBookingNumber', bold)
+    worksheet.write('J1', 'b_status_API', bold)
+    worksheet.write('K1', 's_21_Actual_Delivery_TimeStamp', bold)
+    worksheet.write('L1', 'zc_pod_or_no_pod', bold)
 
     row = 1
     col = 0
 
     for id in bookingIds:
         booking = Bookings.objects.get(id=id)
-        worksheet.write(row, col, booking.b_bookingID_Visual)
 
         if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
-            worksheet.write(row, col + 1, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
+            worksheet.write(row, col + 0, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
         else:
-            worksheet.write(row, col + 1, "")
+            worksheet.write(row, col + 0, "")
 
-        if booking.b_dateBookedDate and booking.b_dateBookedDate:
-            worksheet.write(row, col + 2, booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S"))
-        else:
-            worksheet.write(row, col + 2, "")
-
-        worksheet.write(row, col + 3, booking.puCompany)
-        worksheet.write(row, col + 4, booking.pu_Address_Suburb)
-        worksheet.write(row, col + 5, booking.pu_Address_State)
-        worksheet.write(row, col + 6, booking.pu_Address_PostalCode)
-        worksheet.write(row, col + 7, booking.deToCompanyName)
-        worksheet.write(row, col + 8, booking.de_To_Address_Suburb)
-        worksheet.write(row, col + 9, booking.de_To_Address_State)
-        worksheet.write(row, col + 10, booking.de_To_Address_PostalCode)
-        worksheet.write(row, col + 11, booking.b_clientReference_RA_Numbers)
-        worksheet.write(row, col + 12, booking.vx_freight_provider)
-        worksheet.write(row, col + 13, booking.vx_serviceName)
-        worksheet.write(row, col + 14, booking.v_FPBookingNumber)
-        worksheet.write(row, col + 15, booking.b_status)
-        worksheet.write(row, col + 16, booking.b_status_API)
-
-        if booking.s_05_LatestPickUpDateTimeFinal and booking.s_05_LatestPickUpDateTimeFinal:
-            worksheet.write(row, col + 17, booking.s_05_LatestPickUpDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
-        else:
-            worksheet.write(row, col + 17, "")
-
-        if booking.s_06_LatestDeliveryDateTimeFinal and booking.s_06_LatestDeliveryDateTimeFinal:
-            worksheet.write(row, col + 18, booking.s_06_LatestDeliveryDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
-        else:
-            worksheet.write(row, col + 18, "")
-
-        if booking.s_20_Actual_Pickup_TimeStamp and booking.s_20_Actual_Pickup_TimeStamp:
-            worksheet.write(row, col + 19, booking.s_20_Actual_Pickup_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
-        else:
-            worksheet.write(row, col + 19, "")
+        worksheet.write(row, col + 1, booking.pu_Address_State)
+        worksheet.write(row, col + 2, booking.deToCompanyName)
+        worksheet.write(row, col + 3, booking.de_To_Address_Suburb)
+        worksheet.write(row, col + 4, booking.de_To_Address_State)
+        worksheet.write(row, col + 5, booking.de_To_Address_PostalCode)
+        worksheet.write(row, col + 6, booking.b_client_sales_inv_num)
+        worksheet.write(row, col + 7, booking.b_client_order_num)
+        worksheet.write(row, col + 8, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 9, booking.b_status_API)
 
         if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
-            worksheet.write(row, col + 20, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+            worksheet.write(row, col + 10, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
         else:
-            worksheet.write(row, col + 20, "")
+            worksheet.write(row, col + 10, "")
 
-        worksheet.write(row, col + 21, booking.z_pod_url)
-        worksheet.write(row, col + 22, booking.z_pod_signed_url)
-
-        if booking.vx_fp_pu_eta_time and booking.vx_fp_pu_eta_time:
-            worksheet.write(row, col + 23, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+        if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+          worksheet.write(row, col + 11, "Y")
         else:
-            worksheet.write(row, col + 23, "")
-
-        if booking.vx_fp_del_eta_time and booking.vx_fp_del_eta_time:
-            worksheet.write(row, col + 24, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
-        else:
-            worksheet.write(row, col + 24, "")
+          worksheet.write(row, col + 11, "N")
 
         row += 1
 
     workbook.close()
     return response
+    # body = literal_eval(request.body.decode('utf8'))
+    # bookingIds = body["bookingIds"]
+
+    # response = HttpResponse(content_type='application/vnd.ms-excel')
+    # response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
+
+    # workbook = xlsxwriter.Workbook(response, {'in_memory': True})
+    # worksheet = workbook.add_worksheet()
+    # worksheet.set_column(0, 13, width=24)
+    # bold = workbook.add_format({'bold': 1, 'align': 'left'})
+
+    # worksheet.write('A1', 'b_bookingID_Visual', bold)
+    # worksheet.write('B1', 'puPickUpAvailFrom_Date', bold)
+    # worksheet.write('C1', 'b_dateBookedDate', bold)
+    # worksheet.write('D1', 'puCompany', bold)
+    # worksheet.write('E1', 'pu_Address_Suburb', bold)
+    # worksheet.write('F1', 'pu_Address_State', bold)
+    # worksheet.write('G1', 'pu_Address_PostalCode', bold)
+    # worksheet.write('H1', 'deToCompanyName', bold)
+    # worksheet.write('I1', 'de_To_Address_Suburb', bold)
+    # worksheet.write('J1', 'de_To_Address_State', bold)
+    # worksheet.write('K1', 'de_To_Address_PostalCode', bold)
+    # worksheet.write('L1', 'b_clientReference_RA_Numbers', bold)
+    # worksheet.write('M1', 'vx_freight_provider', bold)
+    # worksheet.write('N1', 'vx_serviceName', bold)
+    # worksheet.write('O1', 'v_FPBookingNumber', bold)
+    # worksheet.write('P1', 'b_status', bold)
+    # worksheet.write('Q1', 'b_status_API', bold)
+    # worksheet.write('R1', 's_05_LatestPickUpDateTimeFinal', bold)
+    # worksheet.write('S1', 's_06_LatestDeliveryDateTimeFinal', bold)
+    # worksheet.write('T1', 's_20_Actual_Pickup_TimeStamp', bold)
+    # worksheet.write('U1', 's_21_Actual_Delivery_TimeStamp', bold)
+    # worksheet.write('V1', 'z_pod_url', bold)
+    # worksheet.write('W1', 'z_pod_signed_url', bold)
+    # worksheet.write('X1', 'vx_fp_pu_eta_time', bold)
+    # worksheet.write('Y1', 'vx_fp_del_eta_time', bold)
+
+    # row = 1
+    # col = 0
+
+    # for id in bookingIds:
+    #     booking = Bookings.objects.get(id=id)
+    #     worksheet.write(row, col, booking.b_bookingID_Visual)
+
+    #     if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
+    #         worksheet.write(row, col + 1, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 1, "")
+
+    #     if booking.b_dateBookedDate and booking.b_dateBookedDate:
+    #         worksheet.write(row, col + 2, booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 2, "")
+
+    #     worksheet.write(row, col + 3, booking.puCompany)
+    #     worksheet.write(row, col + 4, booking.pu_Address_Suburb)
+    #     worksheet.write(row, col + 5, booking.pu_Address_State)
+    #     worksheet.write(row, col + 6, booking.pu_Address_PostalCode)
+    #     worksheet.write(row, col + 7, booking.deToCompanyName)
+    #     worksheet.write(row, col + 8, booking.de_To_Address_Suburb)
+    #     worksheet.write(row, col + 9, booking.de_To_Address_State)
+    #     worksheet.write(row, col + 10, booking.de_To_Address_PostalCode)
+    #     worksheet.write(row, col + 11, booking.b_clientReference_RA_Numbers)
+    #     worksheet.write(row, col + 12, booking.vx_freight_provider)
+    #     worksheet.write(row, col + 13, booking.vx_serviceName)
+    #     worksheet.write(row, col + 14, booking.v_FPBookingNumber)
+    #     worksheet.write(row, col + 15, booking.b_status)
+    #     worksheet.write(row, col + 16, booking.b_status_API)
+
+    #     if booking.s_05_LatestPickUpDateTimeFinal and booking.s_05_LatestPickUpDateTimeFinal:
+    #         worksheet.write(row, col + 17, booking.s_05_LatestPickUpDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 17, "")
+
+    #     if booking.s_06_LatestDeliveryDateTimeFinal and booking.s_06_LatestDeliveryDateTimeFinal:
+    #         worksheet.write(row, col + 18, booking.s_06_LatestDeliveryDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 18, "")
+
+    #     if booking.s_20_Actual_Pickup_TimeStamp and booking.s_20_Actual_Pickup_TimeStamp:
+    #         worksheet.write(row, col + 19, booking.s_20_Actual_Pickup_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 19, "")
+
+    #     if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
+    #         worksheet.write(row, col + 20, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 20, "")
+
+    #     worksheet.write(row, col + 21, booking.z_pod_url)
+    #     worksheet.write(row, col + 22, booking.z_pod_signed_url)
+
+    #     if booking.vx_fp_pu_eta_time and booking.vx_fp_pu_eta_time:
+    #         worksheet.write(row, col + 23, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 23, "")
+
+    #     if booking.vx_fp_del_eta_time and booking.vx_fp_del_eta_time:
+    #         worksheet.write(row, col + 24, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 24, "")
+
+    #     row += 1
+
+    # workbook.close()
+    # return response
 
 
 @api_view(['GET'])
