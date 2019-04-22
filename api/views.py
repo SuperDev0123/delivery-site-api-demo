@@ -655,6 +655,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'total_1_KG_weight_override': booking.total_1_KG_weight_override,
                         'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
                         'b_status_API': booking.b_status_API,
+                        'z_lock_status': booking.z_lock_status,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
@@ -1262,7 +1263,6 @@ class FileUploadView(views.APIView):
             client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
             dme_account_num = client_employee.fk_id_dme_client.dme_account_num
 
-        print('@1 - ', dme_account_num)
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
