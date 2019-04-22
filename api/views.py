@@ -1253,19 +1253,16 @@ class FileUploadView(views.APIView):
     def post(self, request, filename, format=None):
         file_obj = request.FILES['file']
         user_id = request.user.id
-        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+        username = request.user.username
 
-        if dme_employee is not None:
-            user_type = 'DME'
+        if username == 'dme':
+            uploader = request.POST['uploader']
+            dme_account_num = DME_clients.objects.get(company_name=uploader).dme_account_num
         else:
-            user_type = 'CLIENT'
+            client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
+            dme_account_num = client_employee.fk_id_dme_client.dme_account_num
 
-        if user_type == 'DME':
-            dme_account_num = 'dme_user'
-        else: 
-            client_employee = Client_employees.objects.select_related().filter(fk_id_user = int(user_id))
-            dme_account_num = client_employee[0].fk_id_dme_client.dme_account_num
-
+        print('@1 - ', dme_account_num)
         upload_file_name = request.FILES['file'].name
         prepend_name = str(dme_account_num) + '_' + upload_file_name
 
