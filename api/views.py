@@ -711,6 +711,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'de_Email': booking.pu_Email,
                 'de_To_Address_State': booking.pu_Address_State,
                 'pk_booking_id': booking.pk_booking_id,
+                'z_lock_status': booking.z_lock_status,
             }
         else:
             newBooking = {
@@ -740,6 +741,7 @@ class BookingViewSet(viewsets.ViewSet):
                 'de_Email': booking.de_Email,
                 'de_To_Address_State': booking.de_To_Address_State,
                 'pk_booking_id': booking.pk_booking_id,
+                'z_lock_status': booking.z_lock_status,
             }
 
         if dup_line_and_linedetail == 'true':
