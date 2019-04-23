@@ -120,7 +120,7 @@ def csv_write(fileHandler, bookings, mysqlcon):
             # Populate `v_FPBookingNumber`
             with mysqlcon.cursor() as cursor:
                 sql = "Update `dme_bookings` set v_FPBookingNumber=%s where id=%s"
-                cursor.execute(sql, (h0, booking.id))
+                cursor.execute(sql, (h0, booking.get('id')))
                 mysqlcon.commit()
 
             if booking['puPickUpAvailFrom_Date'] is None: h1 = ''
