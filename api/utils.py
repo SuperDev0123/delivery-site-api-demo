@@ -117,12 +117,6 @@ def csv_write(fileHandler, bookings, mysqlcon):
             else:
                 h0 = wrap_in_quote('DME' + str(booking.get('b_bookingID_Visual')))
 
-            # Populate `v_FPBookingNumber`
-            with mysqlcon.cursor() as cursor:
-                sql = "Update `dme_bookings` set v_FPBookingNumber=%s where id=%s"
-                cursor.execute(sql, ('DME' + str(booking.get('b_bookingID_Visual')), booking.get('id')))
-                mysqlcon.commit()
-
             if booking['puPickUpAvailFrom_Date'] is None: h1 = ''
             else:
                 h1 = wrap_in_quote(str(booking.get('puPickUpAvailFrom_Date')))
@@ -358,7 +352,12 @@ def generate_csv(booking_ids):
     bookings = get_available_bookings(mysqlcon, booking_ids)
 
     csv_name = 'SEATEMP_' + str(len(booking_ids)) + "_" + str(datetime.datetime.utcnow()) + ".csv"
-    f = open("/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name, "w")
+    
+    if production:
+        f = open("/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name, "w")
+    else:
+        f = open("/Users/admin/Documents/" + csv_name, "w")
+
     csv_write(f, bookings, mysqlcon)
     f.close()
 
