@@ -14,7 +14,7 @@ redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
-production = True  # Dev
+# production = True  # Dev
 production = False # Local
 
 if production:
@@ -118,9 +118,10 @@ def csv_write(fileHandler, bookings, mysqlcon):
                 h0 = wrap_in_quote('DME' + str(booking.get('b_bookingID_Visual')))
 
             # Populate `v_FPBookingNumber`
-            sql = "Update `dme_bookings` set v_FPBookingNumber=%s where id=%s"
-            cursor.execute(sql, (h0, booking.id))
-            mysqlcon.commit()
+            with mysqlcon.cursor() as cursor:
+                sql = "Update `dme_bookings` set v_FPBookingNumber=%s where id=%s"
+                cursor.execute(sql, (h0, booking.id))
+                mysqlcon.commit()
 
             if booking['puPickUpAvailFrom_Date'] is None: h1 = ''
             else:
