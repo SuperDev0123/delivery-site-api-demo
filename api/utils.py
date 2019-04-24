@@ -395,7 +395,7 @@ def build_xml(booking_ids):
     #start check if xmls folder exists
     if production:
         local_filepath = "/var/www/html/dme_api/static/xmls/"
-        local_filepath_dup = "/var/www/html/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d"))
+        local_filepath_dup = "/var/www/html/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d")) + "/"
     else:
         local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
         local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d")) + "/"
