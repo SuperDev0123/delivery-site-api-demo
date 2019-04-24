@@ -9,6 +9,8 @@ import json
 import pymysql, pymysql.cursors
 import redis
 import xml.etree.ElementTree as xml
+import pysftp
+import shutil
 
 redis_host = "localhost"
 redis_port = 6379
@@ -392,12 +394,14 @@ def build_xml(booking_ids):
     
     #start check if xmls folder exists
     if production:
-        filepath = "/var/www/html/dme_api/static/xmls/"
+        local_filepath = "/var/www/html/dme_api/static/xmls/"
+        local_filepath_dup = "/var/www/html/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d"))
     else:
-        filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
+        local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
+        local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d")) + "/"
     
-    if not os.path.exists(filepath):
-            os.makedirs(filepath)
+    if not os.path.exists(local_filepath):
+        os.makedirs(local_filepath)
     #end check if xmls folder exists
 
     i = 1
@@ -497,20 +501,26 @@ def build_xml(booking_ids):
 
             # start writting data into xml files
             tree = xml.ElementTree(root)
-            with open(filepath+filename, "wb") as fh:
+            with open(local_filepath + filename, "wb") as fh:
                 tree.write(fh, encoding='UTF-8', xml_declaration=True)
 
-            #     #start copying xml files to sftp server
-            #     srv = pysftp.Connection(host="localhost", username="tapas", password="tapas@123", cnopts=cnopts)
-            #     #srv = pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts)
-            #     path = 'www'
-            #     #path = 'indata'
-            #     with srv.cd(path):
-            #         srv.put(filepath+filename) 
+            #start copying xml files to sftp server
+            sftp_filepath = "/home/NSW/delvme.external/indata/archive/"
+            cnopts = pysftp.CnOpts()
+            cnopts.hostkeys = None
+            with pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts) as sftp_con:
+                with sftp_con.cd(sftp_filepath):
+                    sftp_con.put(local_filepath + filename)
+                    sftp_file_size = sftp_con.lstat(sftp_filepath + filename).st_size
+                    local_file_size = os.stat(local_filepath + filename).st_size
 
-            #     # Closes the connection
-            #     srv.close()
-            #     #end copying xml files to sftp server
+                    if sftp_file_size == local_file_size:
+                        if not os.path.exists(local_filepath_dup):
+                            os.makedirs(local_filepath_dup)
+                        shutil.copy(local_filepath + filename, local_filepath_dup + filename)
+
+                sftp_con.close()
+            #end copying xml files to sftp server
 
             #start update booking status in dme_booking table
             sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
