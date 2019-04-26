@@ -1452,18 +1452,20 @@ def returnexcel(request):
     worksheet.set_column(0, 12, width=24)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
 
-    worksheet.write('A1', 'b_dateBookedDate', bold)
-    worksheet.write('B1', 'pu_Address_State', bold)
-    worksheet.write('C1', 'deToCompanyName', bold)
-    worksheet.write('D1', 'de_To_Address_Suburb', bold)
-    worksheet.write('E1', 'de_To_Address_State', bold)
-    worksheet.write('F1', 'de_To_Address_PostalCode', bold)
-    worksheet.write('G1', 'b_client_sales_inv_num', bold)
-    worksheet.write('H1', 'b_client_order_num', bold)
-    worksheet.write('I1', 'v_FPBookingNumber', bold)
-    worksheet.write('J1', 'b_status', bold)
-    worksheet.write('K1', 's_21_Actual_Delivery_TimeStamp', bold)
-    worksheet.write('L1', 'zc_pod_or_no_pod', bold)
+    worksheet.write('A1', 'b_bookingID_Visual', bold)
+    worksheet.write('B1', 'b_dateBookedDate', bold)
+    worksheet.write('C1', 'puPickUpAvailFrom_Date', bold)
+    worksheet.write('D1', 'pu_Address_State', bold)
+    worksheet.write('E1', 'deToCompanyName', bold)
+    worksheet.write('F1', 'de_To_Address_Suburb', bold)
+    worksheet.write('G1', 'de_To_Address_State', bold)
+    worksheet.write('H1', 'de_To_Address_PostalCode', bold)
+    worksheet.write('I1', 'b_client_sales_inv_num', bold)
+    worksheet.write('J1', 'b_client_order_num', bold)
+    worksheet.write('K1', 'v_FPBookingNumber', bold)
+    worksheet.write('L1', 'b_status', bold)
+    worksheet.write('M1', 's_21_Actual_Delivery_TimeStamp', bold)
+    worksheet.write('N1', 'zc_pod_or_no_pod', bold)
 
     row = 1
     col = 0
@@ -1471,30 +1473,37 @@ def returnexcel(request):
     for id in bookingIds:
         booking = Bookings.objects.get(id=id)
 
-        if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
-            worksheet.write(row, col + 0, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
-        else:
-            worksheet.write(row, col + 0, "")
+        worksheet.write(row, col, booking.b_bookingID_Visual)
 
-        worksheet.write(row, col + 1, booking.pu_Address_State)
-        worksheet.write(row, col + 2, booking.deToCompanyName)
-        worksheet.write(row, col + 3, booking.de_To_Address_Suburb)
-        worksheet.write(row, col + 4, booking.de_To_Address_State)
-        worksheet.write(row, col + 5, booking.de_To_Address_PostalCode)
-        worksheet.write(row, col + 6, booking.b_client_sales_inv_num)
-        worksheet.write(row, col + 7, booking.b_client_order_num)
-        worksheet.write(row, col + 8, booking.v_FPBookingNumber)
-        worksheet.write(row, col + 9, booking.b_status_API)
+        if booking.b_dateBookedDate and booking.b_dateBookedDate:
+            worksheet.write(row, col + 1, booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 1, "")
+
+        if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
+            worksheet.write(row, col + 2, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 2, "")
+
+        worksheet.write(row, col + 3, booking.pu_Address_State)
+        worksheet.write(row, col + 4, booking.deToCompanyName)
+        worksheet.write(row, col + 5, booking.de_To_Address_Suburb)
+        worksheet.write(row, col + 6, booking.de_To_Address_State)
+        worksheet.write(row, col + 7, booking.de_To_Address_PostalCode)
+        worksheet.write(row, col + 8, booking.b_client_sales_inv_num)
+        worksheet.write(row, col + 9, booking.b_client_order_num)
+        worksheet.write(row, col + 10, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 11, booking.b_status_API)
 
         if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
-            worksheet.write(row, col + 10, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
+            worksheet.write(row, col + 12, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
         else:
-            worksheet.write(row, col + 10, "")
+            worksheet.write(row, col + 12, "")
 
         if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-          worksheet.write(row, col + 11, "Y")
+          worksheet.write(row, col + 13, "Y")
         else:
-          worksheet.write(row, col + 11, "N")
+          worksheet.write(row, col + 13, "N")
 
         row += 1
 
