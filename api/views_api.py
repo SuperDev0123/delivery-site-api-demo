@@ -176,7 +176,7 @@ def st_tracking(request):
     # print("Response ", booking_list)
     for booking in booking_list:
         # print("booking", booking)
-        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
+        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         data['consignmentDetails'] = [{"consignmentNumber": booking.v_FPBookingNumber}]
         request_timestamp = datetime.now()
@@ -219,7 +219,7 @@ def allied_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
+        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -534,7 +534,7 @@ def hunter_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.39.202.126:8080/dme-api-sit/tracking/trackconsignment"
+        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
         data = literal_eval(request.body.decode('utf8'))
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -692,7 +692,7 @@ def get_label_st_fn(bid):
 
         # print('Payload(Get Label for ST): ', data)
 
-        url = "http://52.39.202.126:8080/dme-api-sit/labelling/createlabel"
+        url = "http://52.62.102.72:8080/dme-api-sit/labelling/createlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -707,7 +707,7 @@ def get_label_st_fn(bid):
 
             data['labelType'] = "# print"
 
-            url = "http://52.39.202.126:8080/dme-api-sit/labelling/getlabel"
+            url = "http://52.62.102.72:8080/dme-api-sit/labelling/getlabel"
             time.sleep(5)
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
@@ -1060,7 +1060,7 @@ def st_create_order(request):
 
         # print('Payload(Create Order for ST): ', data)
 
-        url = "http://52.39.202.126:8080/dme-api-sit/order/create"
+        url = "http://52.62.102.72:8080/dme-api-sit/order/create"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode('utf8').replace("'", '"')
         data0 = json.loads(response0)
@@ -1117,7 +1117,7 @@ def get_order_summary_fn(order_id):
 
     # print(data)
 
-    url = "http://52.39.202.126:8080/dme-api-sit/order/summary"
+    url = "http://52.62.102.72:8080/dme-api-sit/order/summary"
     response0 = requests.post(url, params={}, json=data)
     response0 = response0.content.decode('utf8').replace("'", '"')
     data0 = json.loads(response0)
@@ -1244,7 +1244,7 @@ def booking_st(request):
             data['items'] = items
             # print(data)
 
-            url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
+            url = "http://52.62.102.72:8080/dme-api-sit/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
@@ -1381,7 +1381,7 @@ def edit_booking_st(request):
             data['items'] = items
             # print(data)
 
-            url = "http://52.39.202.126:8080/dme-api-sit/booking/bookconsignment"
+            url = "http://52.62.102.72:8080/dme-api-sit/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode('utf8').replace("'", '"')
             data0 = json.loads(response0)
@@ -1695,7 +1695,7 @@ def cancel_booking(request):
                 data['serviceProvider'] = "ST"
                 data['consignmentNumber'] = booking.v_FPBookingNumber
 
-                url = "http://52.39.202.126:8080/dme-api-sit/booking/cancelconsignment"
+                url = "http://52.62.102.72:8080/dme-api-sit/booking/cancelconsignment"
                 response0 = requests.delete(url, params={}, json=data)
                 response0 = response0.content.decode('utf8').replace("'", '"')
                 data0 = json.loads(response0)
