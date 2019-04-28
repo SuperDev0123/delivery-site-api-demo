@@ -1173,7 +1173,7 @@ class PackageTypesViewSet(viewsets.ViewSet):
 class BookingStatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_all_booking_status(self, requst, pk=None):
-        all_booking_status = Utl_dme_status.objects.all()
+        all_booking_status = Utl_dme_status.objects.all().order_by('sort_order')
 
         return_datas = []
         if len(all_booking_status) == 0:
