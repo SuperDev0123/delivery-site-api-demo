@@ -914,6 +914,7 @@ class Utl_dme_status(models.Model):
 	dme_delivery_status_category = models.CharField(max_length=64, blank=True, null=True)
 	dme_delivery_status = models.CharField(max_length=64, blank=True, null=True)
 	dev_notes = models.TextField(max_length=400, blank=True, null=True)
+	sort_order = models.IntegerField(verbose_name=_('phone number'), default=1)
 	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
 	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
 	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
