@@ -20,9 +20,9 @@ redis_password = ""
 production = False # Local
 
 if production:
-    DB_HOST = 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com'
+    DB_HOST = 'deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com'
     DB_USER = 'fmadmin'
-    DB_PASS = 'Fmadmin1'
+    DB_PASS = 'oU8pPQxh'
     DB_PORT = 3306
     DB_NAME = 'dme_db_dev'  # Dev
     # DB_NAME = 'dme_db_prod'  # Prod
@@ -368,6 +368,16 @@ def generate_csv(booking_ids):
 
     return csv_name
 
+def get_booked_list(bookings):
+    booked_list = []
+
+    for booking in bookings:
+        if booking.b_dateBookedDate and len(booking.b_dateBookedDate):
+            booked_list.append(booking.b_bookingID_Visual)
+
+    return booked_list
+
+
 def build_xml(booking_ids):
     try:
         mysqlcon = pymysql.connect(host=DB_HOST,
@@ -382,6 +392,10 @@ def build_xml(booking_ids):
     mycursor = mysqlcon.cursor()
 
     bookings = get_available_bookings(mysqlcon, booking_ids)
+    booked_list = get_booked_list(bookings)
+
+    if len(booked_list) > 0:
+        return booked_list
 
     # sql = "SELECT pk_booking_id, pu_Address_Street_1, pu_Address_Suburb, pu_Address_State, \
     #             pu_Address_PostalCode, v_FPBookingNumber, puPickUpAvailFrom_Date, vx_serviceName, \

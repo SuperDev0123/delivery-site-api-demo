@@ -1423,8 +1423,12 @@ def generate_xml(request):
     booking_ids = body["bookingIds"]
 
     try:
-        build_xml(booking_ids)
-        return JsonResponse({'success': 'success'})
+        booked_list = build_xml(booking_ids)
+
+        if len(booked_list) > 0:
+            return JsonResponse({'success': 'success'})
+        else:
+            return JsonResponse({'error': 'Found set has booked bookings'})
     except Exception as e:
         return JsonResponse({'error': 'error'})
 
