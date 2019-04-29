@@ -372,11 +372,10 @@ def get_booked_list(bookings):
     booked_list = []
 
     for booking in bookings:
-        if booking.b_dateBookedDate and len(booking.b_dateBookedDate):
-            booked_list.append(booking.b_bookingID_Visual)
+        if booking['b_dateBookedDate']:
+            booked_list.append(booking['b_bookingID_Visual'])
 
     return booked_list
-
 
 def build_xml(booking_ids):
     try:

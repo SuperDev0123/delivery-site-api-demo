@@ -1425,11 +1425,12 @@ def generate_xml(request):
     try:
         booked_list = build_xml(booking_ids)
 
-        if len(booked_list) > 0:
+        if len(booked_list) == 0:
             return JsonResponse({'success': 'success'})
         else:
-            return JsonResponse({'error': 'Found set has booked bookings'})
+            return JsonResponse({'error': 'Found set has booked bookings', 'booked_list': booked_list})
     except Exception as e:
+        print('generate_xml error: ', e)
         return JsonResponse({'error': 'error'})
 
 @api_view(['GET'])
