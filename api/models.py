@@ -923,3 +923,30 @@ class Utl_dme_status(models.Model):
 	class Meta:
 		db_table = 'utl_dme_status'
 
+class Dme_utl_fp_statuses(models.Model):
+	id = models.AutoField(primary_key=True)
+	fk_fp_id = models.IntegerField(default=1, blank=True, null=True)
+	fp_name = models.CharField(max_length=50, blank=True, null=True)
+	fp_original_status = models.TextField(max_length=400, blank=True, null=True)
+	fp_lookup_status = models.TextField(max_length=400, blank=True, null=True)
+	dme_status = models.CharField(max_length=150, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'dme_utl_fp_statuses'
+
+class Dme_utl_client_customer_group(models.Model):
+	id = models.AutoField(primary_key=True)
+	fk_client_id = models.CharField(max_length=11, blank=True, null=True)
+	name_lookup = models.CharField(max_length=50, blank=True, null=True)
+	group_name = models.CharField(max_length=64, blank=True, null=True)
+	z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+	z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+	z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+	z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+	class Meta:
+		db_table = 'dme_utl_client_customer_group'
