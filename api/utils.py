@@ -517,7 +517,7 @@ def build_xml(booking_ids):
                     if sftp_file_size == local_file_size:
                         if not os.path.exists(local_filepath_dup):
                             os.makedirs(local_filepath_dup)
-                        shutil.copy(local_filepath + filename, local_filepath_dup + filename)
+                        shutil.move(local_filepath + filename, local_filepath_dup + filename)
 
                 sftp_con.close()
             #end copying xml files to sftp server
