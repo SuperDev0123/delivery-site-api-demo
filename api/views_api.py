@@ -1456,17 +1456,17 @@ def returnexcel(request):
     worksheet.write('B1', 'b_dateBookedDate', bold)
     worksheet.write('C1', 'puPickUpAvailFrom_Date', bold)
     worksheet.write('D1', 'pu_Address_State', bold)
-    worksheet.write('E1', 'deToCompanyName', bold)
-    worksheet.write('F1', 'de_To_Address_Suburb', bold)
-    worksheet.write('G1', 'de_To_Address_State', bold)
-    worksheet.write('H1', 'de_To_Address_PostalCode', bold)
-    worksheet.write('I1', 'b_client_sales_inv_num', bold)
-    worksheet.write('J1', 'b_client_order_num', bold)
-    worksheet.write('K1', 'v_FPBookingNumber', bold)
-    worksheet.write('L1', 'b_status', bold)
-    worksheet.write('M1', 's_21_Actual_Delivery_TimeStamp', bold)
-    worksheet.write('N1', 'zc_pod_or_no_pod', bold)
-    worksheet.write('O1', 'business group', bold)
+    worksheet.write('E1', 'business_group', bold)
+    worksheet.write('F1', 'deToCompanyName', bold)
+    worksheet.write('G1', 'de_To_Address_Suburb', bold)
+    worksheet.write('H1', 'de_To_Address_State', bold)
+    worksheet.write('I1', 'de_To_Address_PostalCode', bold)
+    worksheet.write('J1', 'b_client_sales_inv_num', bold)
+    worksheet.write('K1', 'b_client_order_num', bold)
+    worksheet.write('L1', 'v_FPBookingNumber', bold)
+    worksheet.write('M1', 'b_status', bold)
+    worksheet.write('N1', 's_21_Actual_Delivery_TimeStamp', bold)
+    worksheet.write('O1', 'zc_pod_or_no_pod', bold)
 
     row = 1
     col = 0
@@ -1487,24 +1487,6 @@ def returnexcel(request):
             worksheet.write(row, col + 2, "")
 
         worksheet.write(row, col + 3, booking.pu_Address_State)
-        worksheet.write(row, col + 4, booking.deToCompanyName)
-        worksheet.write(row, col + 5, booking.de_To_Address_Suburb)
-        worksheet.write(row, col + 6, booking.de_To_Address_State)
-        worksheet.write(row, col + 7, booking.de_To_Address_PostalCode)
-        worksheet.write(row, col + 8, booking.b_client_sales_inv_num)
-        worksheet.write(row, col + 9, booking.b_client_order_num)
-        worksheet.write(row, col + 10, booking.v_FPBookingNumber)
-        worksheet.write(row, col + 11, booking.b_status_API)
-
-        if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
-            worksheet.write(row, col + 12, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
-        else:
-            worksheet.write(row, col + 12, "")
-
-        if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-          worksheet.write(row, col + 13, "Y")
-        else:
-          worksheet.write(row, col + 13, "N")
 
         customer_group_name = ''
         customer_groups = Dme_utl_client_customer_group.objects.all()
@@ -1512,7 +1494,26 @@ def returnexcel(request):
           if customer_group.name_lookup.lower() in booking.deToCompanyName.lower():
             customer_group_name = customer_group.group_name
 
-        worksheet.write(row, col + 14, customer_group_name)
+        worksheet.write(row, col + 4, customer_group_name)
+
+        worksheet.write(row, col + 5, booking.deToCompanyName)
+        worksheet.write(row, col + 6, booking.de_To_Address_Suburb)
+        worksheet.write(row, col + 7, booking.de_To_Address_State)
+        worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
+        worksheet.write(row, col + 9, booking.b_client_sales_inv_num)
+        worksheet.write(row, col + 10, booking.b_client_order_num)
+        worksheet.write(row, col + 11, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 12, booking.b_status_API)
+
+        if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
+            worksheet.write(row, col + 13, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
+        else:
+            worksheet.write(row, col + 13, "")
+
+        if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+          worksheet.write(row, col + 14, "Y")
+        else:
+          worksheet.write(row, col + 14, "N")
 
         row += 1
 
