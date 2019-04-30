@@ -1509,7 +1509,7 @@ def returnexcel(request):
         customer_group_name = ''
         customer_groups = Dme_utl_client_customer_group.objects.all()
         for customer_group in customer_groups:
-          if customer_group.name_lookup in booking.deToCompanyName:
+          if customer_group.name_lookup.lower() in booking.deToCompanyName.lower():
             customer_group_name = customer_group.group_name
 
         worksheet.write(row, col + 14, customer_group_name)
