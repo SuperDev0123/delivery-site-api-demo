@@ -1466,6 +1466,7 @@ def returnexcel(request):
     worksheet.write('L1', 'b_status', bold)
     worksheet.write('M1', 's_21_Actual_Delivery_TimeStamp', bold)
     worksheet.write('N1', 'zc_pod_or_no_pod', bold)
+    worksheet.write('O1', 'business group', bold)
 
     row = 1
     col = 0
@@ -1504,6 +1505,14 @@ def returnexcel(request):
           worksheet.write(row, col + 13, "Y")
         else:
           worksheet.write(row, col + 13, "N")
+
+        customer_group_name = ''
+        customer_groups = Dme_utl_client_customer_group.objects.all()
+        for customer_group in customer_groups:
+          if customer_group.name_lookup in booking.deToCompanyName:
+            customer_group_name = customer_group.group_name
+
+        worksheet.write(row, col + 14, customer_group_name)
 
         row += 1
 
