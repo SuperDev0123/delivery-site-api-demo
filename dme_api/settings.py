@@ -106,7 +106,7 @@ DATABASES = {       # Local
 # DATABASES = {     # Dev
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'dme_db_dev',
+#         'NAME': 'dme_db_prod',
 #         'USER': 'fmadmin',
 #         # 'PASSWORD': 'Fmadmin1', # Old db password
 #         'PASSWORD': 'oU8pPQxh', # Old db password
@@ -183,3 +183,5 @@ CORS_ALLOW_HEADERS = (
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=36000),  # Test case
 }
+
+ENV = 'local' # local, dev, prod

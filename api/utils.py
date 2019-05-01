@@ -11,27 +11,33 @@ import redis
 import xml.etree.ElementTree as xml
 import pysftp
 import shutil
+from django.conf import settings
 
-redis_host = "localhost"
-redis_port = 6379
-redis_password = ""
-
-# production = True  # Dev
-production = False # Local
+if settings.ENV == 'local':
+    production = False # Local
+else:
+    production = True  # Dev
 
 if production:
     DB_HOST = 'deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com'
     DB_USER = 'fmadmin'
     DB_PASS = 'oU8pPQxh'
     DB_PORT = 3306
-    DB_NAME = 'dme_db_dev'  # Dev
-    # DB_NAME = 'dme_db_prod'  # Prod
+
+    if settings.ENV == 'dev':
+        DB_NAME = 'dme_db_dev'  # Dev
+    elif settings.ENV == 'prod':
+        DB_NAME = 'dme_db_prod'  # Prod
 else:
     DB_HOST = 'localhost'
     DB_USER = 'root'
     DB_PASS = 'root'
     DB_PORT = 3306
     DB_NAME = 'deliver_me'
+
+redis_host = "localhost"
+redis_port = 6379
+redis_password = ""
 
 def redis_con():
     try:

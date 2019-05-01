@@ -26,7 +26,7 @@ from ast import literal_eval
 
 from .serializers_api import *
 from .models import *
-
+from django.conf import settings
 
 @api_view(['GET', 'POST'])
 def bok_0_bookingkeys(request):
@@ -1514,6 +1514,19 @@ def returnexcel(request):
           worksheet.write(row, col + 14, "Y")
         else:
           worksheet.write(row, col + 14, "N")
+
+        if settings.ENV == 'dev':
+          if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
+            worksheet.write_url(row, col + 15, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
+
+          if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+            worksheet.write_url(row, col + 16, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+        elif settings.ENV == 'prod':
+          if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
+            worksheet.write_url(row, col + 15, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
+
+          if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+            worksheet.write_url(row, col + 16, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
 
         row += 1
 
