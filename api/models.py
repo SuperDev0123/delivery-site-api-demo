@@ -298,11 +298,14 @@ class Bookings(models.Model):
     z_downloaded_pod_timestamp = models.DateTimeField(blank=True, null=True)
     booking_api_start_TimeStamp = models.DateTimeField(blank=True, null=True)
     booking_api_end_TimeStamp = models.DateTimeField(blank=True, null=True)
-    booking_api_try_count = models.IntegerField(blank=True, default=0, null=False)
+    booking_api_try_count = models.IntegerField(blank=True, default=0, null=True)
     z_manual_booking_set_to_confirm = models.DateTimeField(blank=True, null=True)
     z_manual_booking_set_time_push_to_fm = models.DateTimeField(blank=True, null=True)
     z_lock_status = models.BooleanField(default=False, blank=True, null=True)
     z_locked_status_time = models.DateTimeField(blank=True, null=True)
+    delivery_kpi_days = models.IntegerField(blank=True, default=0, null=True)
+    delivery_days_from_booked = models.IntegerField(blank=True, default=0, null=True)
+    delivery_actual_kpi_days = models.IntegerField(blank=True, default=0, null=True)
 
     class Meta:
         db_table = 'dme_bookings'
@@ -961,3 +964,18 @@ class Dme_utl_client_customer_group(models.Model):
 
     class Meta:
         db_table = 'dme_utl_client_customer_group'
+
+class Utl_fp_delivery_times(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_fp_id = models.IntegerField(default=1, blank=True, null=True)
+    fp_name = models.CharField(max_length=50, blank=True, null=True)
+    postal_code_from = models.IntegerField(default=1, blank=True, null=True)
+    postal_code_to = models.IntegerField(default=1, blank=True, null=True)
+    delivery_days = models.FloatField(default=7, blank=True, null=True)
+    z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+    z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+    z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+    z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+    class Meta:
+        db_table = 'utl_fp_delivery_times'
