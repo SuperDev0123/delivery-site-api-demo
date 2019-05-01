@@ -1466,9 +1466,10 @@ def returnexcel(request):
     worksheet.write('L1', 'v_FPBookingNumber', bold)
     worksheet.write('M1', 'b_status', bold)
     worksheet.write('N1', 's_21_Actual_Delivery_TimeStamp', bold)
-    worksheet.write('O1', 'zc_pod_or_no_pod', bold)
-    worksheet.write('P1', 'z_pod_url', bold)
-    worksheet.write('Q1', 'z_pod_signed_url', bold)
+    worksheet.write('O1', 'event_time_stamp', bold)
+    worksheet.write('P1', 'zc_pod_or_no_pod', bold)
+    worksheet.write('Q1', 'z_pod_url', bold)
+    worksheet.write('R1', 'z_pod_signed_url', bold)
 
     row = 1
     col = 0
@@ -1512,23 +1513,30 @@ def returnexcel(request):
         else:
             worksheet.write(row, col + 13, "")
 
+        if booking.b_status.lower() != 'delivered':
+          status_histories = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).order_by('-id')
+
+          if status_histories and len(status_histories) > 0:
+            event_time_stamp = status_histories[0].event_time_stamp
+            worksheet.write(row, col + 14, event_time_stamp.strftime("%Y-%m-%d %H:%M:%S"))
+
         if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-          worksheet.write(row, col + 14, "Y")
+          worksheet.write(row, col + 15, "Y")
         else:
-          worksheet.write(row, col + 14, "N")
+          worksheet.write(row, col + 15, "N")
 
         if settings.ENV == 'dev':
           if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
-            worksheet.write_url(row, col + 15, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
+            worksheet.write_url(row, col + 16, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
 
           if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-            worksheet.write_url(row, col + 16, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+            worksheet.write_url(row, col + 17, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
         elif settings.ENV == 'prod':
           if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
-            worksheet.write_url(row, col + 15, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
+            worksheet.write_url(row, col + 16, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
 
           if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-            worksheet.write_url(row, col + 16, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+            worksheet.write_url(row, col + 17, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
 
         row += 1
 
