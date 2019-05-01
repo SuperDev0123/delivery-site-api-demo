@@ -1508,12 +1508,12 @@ def returnexcel(request):
         worksheet.write(row, col + 11, booking.v_FPBookingNumber)
         worksheet.write(row, col + 12, booking.b_status)
 
-        if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
-            worksheet.write(row, col + 13, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
+        if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
+            worksheet.write(row, col + 13, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d"))
         else:
             worksheet.write(row, col + 13, "")
 
-        if booking.b_status.lower() != 'delivered':
+        if booking.b_status != 'Delivered':
           status_histories = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).order_by('-id')
 
           if status_histories and len(status_histories) > 0:
