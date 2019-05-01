@@ -409,6 +409,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'has_comms': booking.has_comms(),
                 'b_client_sales_inv_num': booking.b_client_sales_inv_num,
                 'z_lock_status': booking.z_lock_status,
+                'business_group': booking.get_group_name(),
             })
         
         return JsonResponse({
