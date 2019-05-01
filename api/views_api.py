@@ -1467,6 +1467,8 @@ def returnexcel(request):
     worksheet.write('M1', 'b_status', bold)
     worksheet.write('N1', 's_21_Actual_Delivery_TimeStamp', bold)
     worksheet.write('O1', 'zc_pod_or_no_pod', bold)
+    worksheet.write('P1', 'z_pod_url', bold)
+    worksheet.write('Q1', 'z_pod_signed_url', bold)
 
     row = 1
     col = 0
