@@ -1506,7 +1506,7 @@ def returnexcel(request):
         worksheet.write(row, col + 9, booking.b_client_sales_inv_num)
         worksheet.write(row, col + 10, booking.b_client_order_num)
         worksheet.write(row, col + 11, booking.v_FPBookingNumber)
-        worksheet.write(row, col + 12, booking.b_status_API)
+        worksheet.write(row, col + 12, booking.b_status)
 
         if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
             worksheet.write(row, col + 13, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d"))
@@ -1527,16 +1527,16 @@ def returnexcel(request):
 
         if settings.ENV == 'dev':
           if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
-            worksheet.write_url(row, col + 16, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
+            worksheet.write_url(row, col + 16, 'http://3.105.62.128/static/imgs/' + booking.z_pod_url, string=booking.z_pod_url)
 
           if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-            worksheet.write_url(row, col + 17, 'http://3.105.62.128/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+            worksheet.write_url(row, col + 17, 'http://3.105.62.128/static/imgs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
         elif settings.ENV == 'prod':
           if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
-            worksheet.write_url(row, col + 16, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_url, string=booking.z_pod_url)
+            worksheet.write_url(row, col + 16, 'http://13.55.64.102/static/imgs/' + booking.z_pod_url, string=booking.z_pod_url)
 
           if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
-            worksheet.write_url(row, col + 17, 'http://13.55.64.102/static/pdfs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+            worksheet.write_url(row, col + 17, 'http://13.55.64.102/static/imgs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
 
         row += 1
 
