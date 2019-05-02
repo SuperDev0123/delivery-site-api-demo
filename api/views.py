@@ -1408,7 +1408,7 @@ def download_csv(request):
         booking.save()
 
         booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-        index = 0
+        index = 1
 
         for booking_line in booking_lines:
             api_booking_confirmation_line = Api_booking_confirmation_lines(
