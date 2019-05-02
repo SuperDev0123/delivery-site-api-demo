@@ -378,10 +378,25 @@ def get_booked_list(bookings):
     booked_list = []
 
     for booking in bookings:
-        if booking['b_dateBookedDate']:
+        if booking['b_dateBookedDate'] and booking['b_dateBookedDate'] != '':
             booked_list.append(booking['b_bookingID_Visual'])
 
     return booked_list
+
+def get_item_type(i):
+    if i:
+        if "UHP" in i:
+            return 'PCR'
+        elif "PCR" in i:
+            return 'PCR'
+        elif "LTR" in i:
+            return 'LTR'
+        elif "TBR" in i:
+            return 'TBR'
+        else:
+            return 'ERROR'
+    else:
+        return 'ERROR'
 
 def build_xml(booking_ids):
     try:
@@ -501,15 +516,28 @@ def build_xml(booking_ids):
                 Quantity = xml.SubElement(Item, "Quantity")
                 Quantity.text = str(booking_line['e_qty'])
                 ItemType = xml.SubElement(Item, "ItemType")
-                ItemType.text = str(booking_line['e_item_type'])
+                ItemType.text = get_item_type(booking_line['e_item_type'])
                 ItemDescription = xml.SubElement(Item, "ItemDescription")
                 ItemDescription.text = booking_line['e_item']
+
                 Width = xml.SubElement(Item, "Width")
-                Width.text = str(booking_line['e_dimWidth'])
+                if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '':
+                    Width.text = str('1')
+                else:
+                    Width.text = str(booking_line['e_dimWidth'])
+
                 Length = xml.SubElement(Item, "Length")
-                Length.text = str(booking_line['e_dimLength'])
+                if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '':
+                    Length.text = str('1')
+                else:
+                    Length.text = str(booking_line['e_dimLength'])
+
                 Height = xml.SubElement(Item, "Height")
-                Height.text = str(booking_line['e_dimHeight'])
+                if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '':
+                    Height.text = str('1')
+                else:
+                    Height.text = str(booking_line['e_dimHeight'])
+
                 DeadWeight = xml.SubElement(Item, "DeadWeight")
                 DeadWeight.text = str(booking_line['e_Total_KG_weight']/booking_line['e_qty'])
 
@@ -524,21 +552,21 @@ def build_xml(booking_ids):
                 tree.write(fh, encoding='UTF-8', xml_declaration=True)
 
             #start copying xml files to sftp server
-            sftp_filepath = "/home/NSW/delvme.external/indata/archive/"
-            cnopts = pysftp.CnOpts()
-            cnopts.hostkeys = None
-            with pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts) as sftp_con:
-                with sftp_con.cd(sftp_filepath):
-                    sftp_con.put(local_filepath + filename)
-                    sftp_file_size = sftp_con.lstat(sftp_filepath + filename).st_size
-                    local_file_size = os.stat(local_filepath + filename).st_size
+            # sftp_filepath = "/home/NSW/delvme.external/indata/"
+            # cnopts = pysftp.CnOpts()
+            # cnopts.hostkeys = None
+            # with pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts) as sftp_con:
+            #     with sftp_con.cd(sftp_filepath):
+            #         sftp_con.put(local_filepath + filename)
+            #         sftp_file_size = sftp_con.lstat(sftp_filepath + filename).st_size
+            #         local_file_size = os.stat(local_filepath + filename).st_size
 
-                    if sftp_file_size == local_file_size:
-                        if not os.path.exists(local_filepath_dup):
-                            os.makedirs(local_filepath_dup)
-                        shutil.move(local_filepath + filename, local_filepath_dup + filename)
+            #         if sftp_file_size == local_file_size:
+            #             if not os.path.exists(local_filepath_dup):
+            #                 os.makedirs(local_filepath_dup)
+            #             shutil.move(local_filepath + filename, local_filepath_dup + filename)
 
-                sftp_con.close()
+            #     sftp_con.close()
             #end copying xml files to sftp server
 
             #start update booking status in dme_booking table
@@ -550,3 +578,4 @@ def build_xml(booking_ids):
             return e
         
     mysqlcon.close()
+
