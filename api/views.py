@@ -1407,6 +1407,17 @@ def download_csv(request):
         booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
         booking.save()
 
+        booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+        index = 0
+
+        for booking_line in booking_lines:
+            api_booking_confirmation_line = Api_booking_confirmation_lines(
+                fk_booking_id = booking.pk_booking_id, 
+                fk_booking_line_id = booking_line.pk_lines_id, 
+                api_item_id = str('COPDME') + str(booking.b_bookingID_Visual) + '00' + str(index))
+            index = index + 1
+
+
     file_path = '/home/cope_au/dme_sftp/cope_au/pickup_ext/' + csv_name # Dev & Prod
     # file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
 
