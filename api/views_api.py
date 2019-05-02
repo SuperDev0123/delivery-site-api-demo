@@ -1470,6 +1470,9 @@ def returnexcel(request):
     worksheet.write('P1', 'zc_pod_or_no_pod', bold)
     worksheet.write('Q1', 'z_pod_url', bold)
     worksheet.write('R1', 'z_pod_signed_url', bold)
+    worksheet.write('S1', 'delivery_kpi_days', bold)
+    worksheet.write('T1', 'delivery_days_from_booked', bold)
+    worksheet.write('U1', 'delivery_actual_kpi_days', bold)
 
     row = 1
     col = 0
@@ -1537,6 +1540,10 @@ def returnexcel(request):
 
           if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
             worksheet.write_url(row, col + 17, 'http://13.55.64.102/static/imgs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+
+        worksheet.write(row, col + 18, booking.delivery_kpi_days)
+        worksheet.write(row, col + 19, booking.delivery_days_from_booked)
+        worksheet.write(row, col + 20, booking.delivery_actual_kpi_days)
 
         row += 1
 
