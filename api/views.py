@@ -1415,6 +1415,7 @@ def download_csv(request):
                 fk_booking_id = booking.pk_booking_id, 
                 fk_booking_line_id = booking_line.pk_lines_id, 
                 api_item_id = str('COPDME') + str(booking.b_bookingID_Visual) + '00' + str(index))
+            api_booking_confirmation_line.save()
             index = index + 1
 
 
