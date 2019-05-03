@@ -149,7 +149,7 @@ class BookingsViewSet(viewsets.ViewSet):
             if user_type == 'DME':
                 queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
             else:
-                if client.company_name  == 'Seaway':
+                if client.company_name == 'Seaway' or client.company_name =='Seaway-Hanalt' or client.company_name == 'Tempo':
                     queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
                 elif client.company_name == 'BioPak':
                     queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
