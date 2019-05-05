@@ -306,6 +306,7 @@ class Bookings(models.Model):
     delivery_kpi_days = models.IntegerField(blank=True, default=0, null=True)
     delivery_days_from_booked = models.IntegerField(blank=True, default=0, null=True)
     delivery_actual_kpi_days = models.IntegerField(blank=True, default=0, null=True)
+    b_status_sub = models.CharField(max_length=50, blank=True, null=True, default='')
 
     class Meta:
         db_table = 'dme_bookings'
