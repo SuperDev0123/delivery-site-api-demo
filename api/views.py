@@ -793,7 +793,15 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 'e_dimHeight': booking_line.e_dimHeight,
                 'e_Total_KG_weight': booking_line.e_Total_KG_weight,
                 'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
-                'total_2_cubic_mass_factor_calc': booking_line.total_2_cubic_mass_factor_calc
+                'total_2_cubic_mass_factor_calc': booking_line.total_2_cubic_mass_factor_calc,
+                'e_qty_awaiting_inventory': booking_line.e_qty_awaiting_inventory,
+                'e_qty_collected': booking_line.e_qty_collected,
+                'e_qty_scanned_depot': booking_line.e_qty_scanned_depot,
+                'e_qty_delivered': booking_line.e_qty_delivered,
+                'e_qty_adjusted_delivered': booking_line.e_qty_adjusted_delivered,
+                'e_qty_damaged': booking_line.e_qty_damaged,
+                'e_qty_returned': booking_line.e_qty_returned,
+                'e_qty_shortages': booking_line.e_qty_shortages,
             })
 
         return JsonResponse({'booking_lines': return_data})
