@@ -1443,7 +1443,7 @@ def generate_xml(request):
         else:
             return JsonResponse({'error': 'Found set has booked bookings', 'booked_list': booked_list})
     except Exception as e:
-        print('generate_xml error: ', e)
+        # print('generate_xml error: ', e)
         return JsonResponse({'error': 'error'})
 
 @api_view(['GET'])
