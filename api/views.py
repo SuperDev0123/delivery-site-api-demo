@@ -492,8 +492,8 @@ class BookingsViewSet(viewsets.ViewSet):
         filepath = build_xls(bookings)
         send_email(
             [self.request.query_params.get('emailAddr', None)], # Recipient email address(list)
-            'Excel file', # Subject of email
-            'Your request for the xls report has started and will be emailed to you when completed.', # Message of email
+            'XLS Report from Deliver-Me', # Subject of email
+            'Here is the excel report you generated from Deliver-Me.', # Message of email
             [filepath] # Attachment file path(list)
         )
 
