@@ -106,7 +106,7 @@ DATABASES = {       # Local
 # DATABASES = {     # Dev
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'dme_db_prod',
+#         'NAME': 'dme_db_dev',
 #         'USER': 'fmadmin',
 #         # 'PASSWORD': 'Fmadmin1', # Old db password
 #         'PASSWORD': 'oU8pPQxh', # Old db password
@@ -184,4 +184,13 @@ JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=36000),  # Test case
 }
 
+# Env setting
 ENV = 'local' # local, dev, prod
+
+# Email setting
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'your@gmail.com'
+EMAIL_HOST_PASSWORD = 'pwd'
