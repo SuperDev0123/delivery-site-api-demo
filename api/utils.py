@@ -11,7 +11,19 @@ import redis
 import xml.etree.ElementTree as xml
 import pysftp
 import shutil
+import xlsxwriter as xlsxwriter
+import smtplib
+from os.path import basename
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import COMMASPACE, formatdate
+
+from django.core.mail import send_mail
 from django.conf import settings
+
+from django.conf import settings
+from .models import *
 
 if settings.ENV == 'local':
     production = False # Local
@@ -579,3 +591,257 @@ def build_xml(booking_ids):
         
     mysqlcon.close()
 
+def build_xls(bookings):
+    if settings.ENV == 'local':
+        production = False # Local
+    else:
+        production = True  # Dev
+
+    #start check if xmls folder exists
+    if production:
+        local_filepath = "/var/www/html/dme_api/static/xlss/"
+    else:
+        local_filepath = "/Users/admin/work/goldmine/dme_api/static/xlss/"
+    
+    if not os.path.exists(local_filepath):
+        os.makedirs(local_filepath)
+    #end check if xmls folder exists
+
+    filename = "bookings_seaway_" + str(datetime.now().strftime("%Y-%m-%d")) + "_" + str(uuid.uuid1()) + ".xlsx"
+    workbook = xlsxwriter.Workbook(filename)
+    worksheet = workbook.add_worksheet()
+    worksheet.set_column(0, 12, width=24)
+    bold = workbook.add_format({'bold': 1, 'align': 'left'})
+
+    worksheet.write('A1', 'b_bookingID_Visual', bold)
+    worksheet.write('B1', 'b_dateBookedDate', bold)
+    worksheet.write('C1', 'puPickUpAvailFrom_Date', bold)
+    worksheet.write('D1', 'pu_Address_State', bold)
+    worksheet.write('E1', 'business_group', bold)
+    worksheet.write('F1', 'deToCompanyName', bold)
+    worksheet.write('G1', 'de_To_Address_Suburb', bold)
+    worksheet.write('H1', 'de_To_Address_State', bold)
+    worksheet.write('I1', 'de_To_Address_PostalCode', bold)
+    worksheet.write('J1', 'b_client_sales_inv_num', bold)
+    worksheet.write('K1', 'b_client_order_num', bold)
+    worksheet.write('L1', 'v_FPBookingNumber', bold)
+    worksheet.write('M1', 'b_status', bold)
+    worksheet.write('N1', 's_21_Actual_Delivery_TimeStamp', bold)
+    worksheet.write('O1', 'event_time_stamp', bold)
+    worksheet.write('P1', 'zc_pod_or_no_pod', bold)
+    worksheet.write('Q1', 'z_pod_url', bold)
+    worksheet.write('R1', 'z_pod_signed_url', bold)
+    worksheet.write('S1', 'delivery_kpi_days', bold)
+    worksheet.write('T1', 'delivery_days_from_booked', bold)
+    worksheet.write('U1', 'delivery_actual_kpi_days', bold)
+
+    row = 1
+    col = 0
+
+    for booking in bookings:
+        worksheet.write(row, col, booking.b_bookingID_Visual)
+
+        if booking.b_dateBookedDate and booking.b_dateBookedDate:
+            worksheet.write(row, col + 1, booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 1, "")
+
+        if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
+            worksheet.write(row, col + 2, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 2, "")
+
+        worksheet.write(row, col + 3, booking.pu_Address_State)
+
+        customer_group_name = ''
+        customer_groups = Dme_utl_client_customer_group.objects.all()
+        for customer_group in customer_groups:
+          if customer_group.name_lookup.lower() in booking.deToCompanyName.lower():
+            customer_group_name = customer_group.group_name
+
+        worksheet.write(row, col + 4, customer_group_name)
+
+        worksheet.write(row, col + 5, booking.deToCompanyName)
+        worksheet.write(row, col + 6, booking.de_To_Address_Suburb)
+        worksheet.write(row, col + 7, booking.de_To_Address_State)
+        worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
+        worksheet.write(row, col + 9, booking.b_client_sales_inv_num)
+        worksheet.write(row, col + 10, booking.b_client_order_num)
+        worksheet.write(row, col + 11, booking.v_FPBookingNumber)
+        worksheet.write(row, col + 12, booking.b_status)
+
+        if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
+            worksheet.write(row, col + 13, booking.s_21_ActualDeliveryTimeStamp.strftime("%Y-%m-%d"))
+        else:
+            worksheet.write(row, col + 13, "")
+
+        if booking.b_status != 'Delivered':
+          status_histories = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).order_by('-id')
+
+          if status_histories and len(status_histories) > 0:
+            event_time_stamp = status_histories[0].event_time_stamp
+            worksheet.write(row, col + 14, event_time_stamp.strftime("%Y-%m-%d %H:%M:%S"))
+
+        if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+          worksheet.write(row, col + 15, "Y")
+        else:
+          worksheet.write(row, col + 15, "N")
+
+        if settings.ENV == 'dev':
+          if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
+            worksheet.write_url(row, col + 16, 'http://3.105.62.128/static/imgs/' + booking.z_pod_url, string=booking.z_pod_url)
+
+          if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+            worksheet.write_url(row, col + 17, 'http://3.105.62.128/static/imgs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+        elif settings.ENV == 'prod':
+          if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0):
+            worksheet.write_url(row, col + 16, 'http://13.55.64.102/static/imgs/' + booking.z_pod_url, string=booking.z_pod_url)
+
+          if (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
+            worksheet.write_url(row, col + 17, 'http://13.55.64.102/static/imgs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
+
+        worksheet.write(row, col + 18, booking.delivery_kpi_days)
+        worksheet.write(row, col + 19, booking.delivery_days_from_booked)
+        worksheet.write(row, col + 20, booking.delivery_actual_kpi_days)
+
+        row += 1
+
+    workbook.close()
+    shutil.move(filename, local_filepath + filename)
+
+    return local_filepath + filename
+    # body = literal_eval(request.body.decode('utf8'))
+    # bookingIds = body["bookingIds"]
+
+    # response = HttpResponse(content_type='application/vnd.ms-excel')
+    # response['Content-Disposition'] = 'attachment; filename="bookings_seaway.xlsx"'
+
+    # workbook = xlsxwriter.Workbook(response, {'in_memory': True})
+    # worksheet = workbook.add_worksheet()
+    # worksheet.set_column(0, 13, width=24)
+    # bold = workbook.add_format({'bold': 1, 'align': 'left'})
+
+    # worksheet.write('A1', 'b_bookingID_Visual', bold)
+    # worksheet.write('B1', 'puPickUpAvailFrom_Date', bold)
+    # worksheet.write('C1', 'b_dateBookedDate', bold)
+    # worksheet.write('D1', 'puCompany', bold)
+    # worksheet.write('E1', 'pu_Address_Suburb', bold)
+    # worksheet.write('F1', 'pu_Address_State', bold)
+    # worksheet.write('G1', 'pu_Address_PostalCode', bold)
+    # worksheet.write('H1', 'deToCompanyName', bold)
+    # worksheet.write('I1', 'de_To_Address_Suburb', bold)
+    # worksheet.write('J1', 'de_To_Address_State', bold)
+    # worksheet.write('K1', 'de_To_Address_PostalCode', bold)
+    # worksheet.write('L1', 'b_clientReference_RA_Numbers', bold)
+    # worksheet.write('M1', 'vx_freight_provider', bold)
+    # worksheet.write('N1', 'vx_serviceName', bold)
+    # worksheet.write('O1', 'v_FPBookingNumber', bold)
+    # worksheet.write('P1', 'b_status', bold)
+    # worksheet.write('Q1', 'b_status_API', bold)
+    # worksheet.write('R1', 's_05_LatestPickUpDateTimeFinal', bold)
+    # worksheet.write('S1', 's_06_LatestDeliveryDateTimeFinal', bold)
+    # worksheet.write('T1', 's_20_Actual_Pickup_TimeStamp', bold)
+    # worksheet.write('U1', 's_21_Actual_Delivery_TimeStamp', bold)
+    # worksheet.write('V1', 'z_pod_url', bold)
+    # worksheet.write('W1', 'z_pod_signed_url', bold)
+    # worksheet.write('X1', 'vx_fp_pu_eta_time', bold)
+    # worksheet.write('Y1', 'vx_fp_del_eta_time', bold)
+
+    # row = 1
+    # col = 0
+
+    # for id in bookingIds:
+    #     booking = Bookings.objects.get(id=id)
+    #     worksheet.write(row, col, booking.b_bookingID_Visual)
+
+    #     if booking.puPickUpAvailFrom_Date and booking.puPickUpAvailFrom_Date:
+    #         worksheet.write(row, col + 1, booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 1, "")
+
+    #     if booking.b_dateBookedDate and booking.b_dateBookedDate:
+    #         worksheet.write(row, col + 2, booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 2, "")
+
+    #     worksheet.write(row, col + 3, booking.puCompany)
+    #     worksheet.write(row, col + 4, booking.pu_Address_Suburb)
+    #     worksheet.write(row, col + 5, booking.pu_Address_State)
+    #     worksheet.write(row, col + 6, booking.pu_Address_PostalCode)
+    #     worksheet.write(row, col + 7, booking.deToCompanyName)
+    #     worksheet.write(row, col + 8, booking.de_To_Address_Suburb)
+    #     worksheet.write(row, col + 9, booking.de_To_Address_State)
+    #     worksheet.write(row, col + 10, booking.de_To_Address_PostalCode)
+    #     worksheet.write(row, col + 11, booking.b_clientReference_RA_Numbers)
+    #     worksheet.write(row, col + 12, booking.vx_freight_provider)
+    #     worksheet.write(row, col + 13, booking.vx_serviceName)
+    #     worksheet.write(row, col + 14, booking.v_FPBookingNumber)
+    #     worksheet.write(row, col + 15, booking.b_status)
+    #     worksheet.write(row, col + 16, booking.b_status_API)
+
+    #     if booking.s_05_LatestPickUpDateTimeFinal and booking.s_05_LatestPickUpDateTimeFinal:
+    #         worksheet.write(row, col + 17, booking.s_05_LatestPickUpDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 17, "")
+
+    #     if booking.s_06_LatestDeliveryDateTimeFinal and booking.s_06_LatestDeliveryDateTimeFinal:
+    #         worksheet.write(row, col + 18, booking.s_06_LatestDeliveryDateTimeFinal.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 18, "")
+
+    #     if booking.s_20_Actual_Pickup_TimeStamp and booking.s_20_Actual_Pickup_TimeStamp:
+    #         worksheet.write(row, col + 19, booking.s_20_Actual_Pickup_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 19, "")
+
+    #     if booking.s_21_Actual_Delivery_TimeStamp and booking.s_21_Actual_Delivery_TimeStamp:
+    #         worksheet.write(row, col + 20, booking.s_21_Actual_Delivery_TimeStamp.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 20, "")
+
+    #     worksheet.write(row, col + 21, booking.z_pod_url)
+    #     worksheet.write(row, col + 22, booking.z_pod_signed_url)
+
+    #     if booking.vx_fp_pu_eta_time and booking.vx_fp_pu_eta_time:
+    #         worksheet.write(row, col + 23, booking.vx_fp_pu_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 23, "")
+
+    #     if booking.vx_fp_del_eta_time and booking.vx_fp_del_eta_time:
+    #         worksheet.write(row, col + 24, booking.vx_fp_del_eta_time.strftime("%Y-%m-%d %H:%M:%S"))
+    #     else:
+    #         worksheet.write(row, col + 24, "")
+
+    #     row += 1
+
+    # workbook.close()
+    # return respons
+
+def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
+    assert isinstance(send_to, list)
+
+    msg = MIMEMultipart()
+    msg['From'] = settings.EMAIL_HOST_USER
+    msg['To'] = COMMASPACE.join(send_to)
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(text))
+
+    for f in files or []:
+        with open(f, "rb") as fil:
+            part = MIMEApplication(
+                fil.read(),
+                Name=basename(f)
+            )
+        part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
+        msg.attach(part)
+
+    smtp = smtplib.SMTP('smtp.gmail.com', 587)
+
+    if use_tls:
+        smtp.starttls()
+
+    smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+    smtp.sendmail(settings.EMAIL_HOST_USER, send_to, msg.as_string())
+    smtp.close()

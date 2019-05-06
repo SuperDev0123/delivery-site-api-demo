@@ -45,7 +45,6 @@ urlpatterns += [
     url(r'^booking_allied/', booking_allied),
     url(r'^booking_st/', booking_st),
     url(r'^get_label_allied/', get_label_allied),
-    url(r'^excel/', returnexcel),
     url(r'^get_label_st/', get_label_st),
     url(r'^cancel_booking/', cancel_booking),
     url(r'^st_create_order/', st_create_order),
@@ -54,5 +53,4 @@ urlpatterns += [
 
     url(r'^suburb/', getSuburbs),
     url(r'^attachments/', getAttachmentsHistory),
-    url(r'^temp_excel/', returntempexcel),
 ]

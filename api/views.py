@@ -24,7 +24,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_xls, send_email
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -431,6 +431,73 @@ class BookingsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'])
+    def generate_xls(self, request, format=None):
+        user_id = int(self.request.user.id)
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            client_employee_role = client_employee.get_role()
+            client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
+
+        start_date = self.request.query_params.get('startDate', None)
+        if start_date == '*':
+            search_type = 'ALL'
+        else:
+            search_type = 'FILTER'
+            end_date = self.request.query_params.get('endDate', None)
+
+        if search_type == 'FILTER':
+            first_date = datetime.strptime(start_date, '%Y-%m-%d')
+            last_date = (datetime.strptime(end_date, '%Y-%m-%d')+timedelta(days=1))
+        
+        if user_type == 'CLIENT':
+            print('@01 - Client filter: ', client.dme_account_num)
+        else:
+            print('@01 - DME user')
+
+        if start_date == '*':
+            print('@02 - Date filter: ', start_date)
+        else:    
+            print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
+
+        # DME & Client filter
+        if user_type == 'DME':
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == 'company':
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == 'warehouse':
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+
+        if search_type == 'FILTER':
+            # Date filter
+            if user_type == 'DME':
+                queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+            else:
+                if client.company_name == 'Seaway' or client.company_name =='Seaway-Hanalt' or client.company_name == 'Tempo':
+                    queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+                elif client.company_name == 'BioPak':
+                    queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
+
+        bookings = queryset
+        ret_data = [];
+
+        filepath = build_xls(bookings)
+        send_email(
+            [self.request.query_params.get('emailAddr', None)], 
+            'Excel file', 
+            'Your request for the xls report has started and will be emailed to you when completed.', 
+            [filepath]
+        )
+
+        return JsonResponse({'status': 'started generate xml'})
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
@@ -1230,7 +1297,6 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 def handle_uploaded_file_attachments(request, f):
     try:
