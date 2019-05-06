@@ -837,7 +837,7 @@ def send_email(send_to, subject, text, files=None, server="localhost", use_tls=T
         part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
         msg.attach(part)
 
-    smtp = smtplib.SMTP('smtp.gmail.com', 587)
+    smtp = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
 
     if use_tls:
         smtp.starttls()
