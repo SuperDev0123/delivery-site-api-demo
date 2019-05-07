@@ -634,6 +634,11 @@ def build_xls(bookings):
     worksheet.write('S1', 'delivery_kpi_days', bold)
     worksheet.write('T1', 'delivery_days_from_booked', bold)
     worksheet.write('U1', 'delivery_actual_kpi_days', bold)
+    worksheet.write('V1', 'de_Deliver_From_Date', bold)
+    worksheet.write('W1', 'de_Deliver_By_Date', bold)
+    worksheet.write('X1', 'store_booking_date', bold)
+    worksheet.write('Y1', 'store_booking_time', bold)
+    worksheet.write('Z1', 'vx_freight_provider', bold)
 
     row = 1
     col = 0
@@ -706,6 +711,28 @@ def build_xls(bookings):
         worksheet.write(row, col + 18, booking.delivery_kpi_days)
         worksheet.write(row, col + 19, booking.delivery_days_from_booked)
         worksheet.write(row, col + 20, booking.delivery_actual_kpi_days)
+
+        if booking.de_Deliver_From_Date and booking.de_Deliver_From_Date:
+            worksheet.write(row, col + 21, booking.de_Deliver_From_Date.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 21, "")
+
+        if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            worksheet.write(row, col + 22, booking.de_Deliver_By_Date.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            worksheet.write(row, col + 22, "")
+
+        if booking.store_booking_date and booking.store_booking_date:
+            worksheet.write(row, col + 23, booking.store_booking_date.strftime("%Y-%m-%d"))
+        else:
+            worksheet.write(row, col + 23, "")
+
+        if booking.store_booking_time and booking.store_booking_time:
+            worksheet.write(row, col + 24, booking.store_booking_time.strftime("%H:%M:%S"))
+        else:
+            worksheet.write(row, col + 24, "")
+
+        worksheet.write(row, col + 25, booking.vx_freight_provider)
 
         row += 1
 
