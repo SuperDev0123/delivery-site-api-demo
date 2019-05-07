@@ -432,6 +432,28 @@ class BookingsViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['put'])
+    def change_bookings_status(self, request, format=None):
+        status = request.data['status']
+        booking_ids = request.data['bookingIds']
+
+        try:
+            for booking_id in booking_ids:
+                booking = Bookings.objects.get(pk=booking_id)
+                booking.b_status = status
+
+                if status == 'Collected':
+                    booking_lines = Booking_lines.objects.filter(fk_booking_id = booking.pk_booking_id)
+                    for booking_line in booking_lines:
+                        booking_line.e_qty_collected = booking_line.e_qty - booking_line.e_qty_awaiting_inventory  
+                        booking_line.save()
+
+                booking.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response({'status': 'error'})
+
     @action(detail=False, methods=['get'])
     def generate_xls(self, request, format=None):
         user_id = int(self.request.user.id)
