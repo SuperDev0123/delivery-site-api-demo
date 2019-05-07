@@ -1512,10 +1512,13 @@ def download_csv(request):
             api_booking_confirmation_line = Api_booking_confirmation_lines(
                 fk_booking_id = booking.pk_booking_id, 
                 fk_booking_line_id = booking_line.pk_lines_id, 
-                api_item_id = str('COPDME') + str(booking.b_bookingID_Visual) + '00' + str(index))
+                api_item_id = str('COPDME') + str(booking.b_bookingID_Visual) + '_00' + str(index),
+                service_provider = booking.vx_freight_provider,
+                label_code = str('COPDME') + str(booking.b_bookingID_Visual) + '_00' + str(index),
+                client_item_reference = booking_line.client_item_reference
+            )
             api_booking_confirmation_line.save()
             index = index + 1
-
 
     file_path = '/home/cope_au/dme_sftp/cope_au/pickup_ext/' + csv_name # Dev & Prod
     # file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)

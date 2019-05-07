@@ -308,6 +308,8 @@ class Bookings(models.Model):
     delivery_actual_kpi_days = models.IntegerField(blank=True, default=0, null=True)
     b_status_sub_client = models.CharField(max_length=50, blank=True, null=True, default='')
     b_status_sub_fp = models.CharField(max_length=50, blank=True, null=True, default='')
+    store_booking_date = models.DateField(blank=True, null=True)
+    store_booking_time = models.TimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'dme_bookings'
@@ -675,6 +677,8 @@ class Api_booking_confirmation_lines(models.Model):
     api_item_reference = models.CharField(verbose_name=_('Item Reference'), max_length=64, blank=True, null=True)
     api_product_id = models.CharField(verbose_name=_('Product ID'), max_length=64, blank=True, null=True)
     api_status = models.CharField(verbose_name=_('Status'), max_length=64, blank=True, null=True)
+    label_code = models.CharField(max_length=64, blank=True, null=True)
+    client_item_reference = models.CharField(max_length=64, blank=True, null=True, default='')
     z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=64, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
     z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=64, blank=True, null=True)
