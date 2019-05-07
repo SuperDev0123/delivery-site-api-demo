@@ -371,7 +371,7 @@ def generate_csv(booking_ids):
 
     bookings = get_available_bookings(mysqlcon, booking_ids)
 
-    csv_name = 'SEATEMP_' + str(len(booking_ids)) + "_" + str(datetime.datetime.utcnow()) + ".csv"
+    csv_name = 'SEATEMP_' + str(len(booking_ids)) + "_" + str(datetime.utcnow()) + ".csv"
     
     if production:
         f = open("/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name, "w")
@@ -441,10 +441,10 @@ def build_xml(booking_ids):
     #start check if xmls folder exists
     if production:
         local_filepath = "/var/www/html/dme_api/static/xmls/"
-        local_filepath_dup = "/var/www/html/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d")) + "/"
+        local_filepath_dup = "/var/www/html/dme_api/static/xmls/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
     else:
         local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/"
-        local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/xmls/archive/" + str(datetime.datetime.now().strftime("%Y_%m_%d")) + "/"
+        local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/xmls/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
     
     if not os.path.exists(local_filepath):
         os.makedirs(local_filepath)
@@ -470,7 +470,7 @@ def build_xml(booking_ids):
             #start calculate total item quantity and total item weight
 
             #start xml file name using naming convention
-            date = datetime.datetime.now().strftime("%Y%m%d")+"_"+datetime.datetime.now().strftime("%H%M%S")
+            date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
             filename = "AL_HANALT_"+date+"_"+str(i)+".xml"
             i+= 1
             #end xml file name using naming convention
@@ -583,7 +583,7 @@ def build_xml(booking_ids):
 
             #start update booking status in dme_booking table
             sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-            adr2 = ('Booked XML', str(datetime.datetime.utcnow()), booking['pk_booking_id'])
+            adr2 = ('Booked XML', str(datetime.utcnow()), booking['pk_booking_id'])
             mycursor.execute(sql2, adr2)
             mysqlcon.commit()
         except Exception as e:
