@@ -410,6 +410,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 'b_client_sales_inv_num': booking.b_client_sales_inv_num,
                 'z_lock_status': booking.z_lock_status,
                 'business_group': booking.get_group_name(),
+                'de_Deliver_By_Date': booking.de_Deliver_By_Date,
+                'de_Deliver_From_Date': booking.de_Deliver_From_Date,
             })
         
         return JsonResponse({
@@ -478,15 +480,15 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date = datetime.strptime(start_date, '%Y-%m-%d')
             last_date = (datetime.strptime(end_date, '%Y-%m-%d')+timedelta(days=1))
         
-        if user_type == 'CLIENT':
-            print('@01 - Client filter: ', client.dme_account_num)
-        else:
-            print('@01 - DME user')
+        # if user_type == 'CLIENT':
+        #     print('@01 - Client filter: ', client.dme_account_num)
+        # else:
+        #     print('@01 - DME user')
 
-        if start_date == '*':
-            print('@02 - Date filter: ', start_date)
-        else:    
-            print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
+        # if start_date == '*':
+        #     print('@02 - Date filter: ', start_date)
+        # else:    
+        #     print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
 
         # DME & Client filter
         if user_type == 'DME':
