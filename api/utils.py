@@ -680,7 +680,10 @@ def build_xls(bookings):
 
           if status_histories and len(status_histories) > 0:
             event_time_stamp = status_histories[0].event_time_stamp
-            worksheet.write(row, col + 14, event_time_stamp.strftime("%Y-%m-%d %H:%M:%S"))
+            if event_time_stamp and event_time_stamp:
+                worksheet.write(row, col + 14, event_time_stamp.strftime("%Y-%m-%d %H:%M:%S"))
+            else:
+                worksheet.write(row, col + 14, "")
 
         if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
           worksheet.write(row, col + 15, "Y")
