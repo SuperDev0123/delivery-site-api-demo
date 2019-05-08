@@ -112,6 +112,16 @@ def get_available_booking_lines(mysqlcon, booking):
         # print('Avaliable Booking Lines cnt: ', len(result))
         return result
 
+def make_3digit(num):
+    if num > 0 and num < 10:
+        return '00' + str(num)
+    elif num > 9 and num < 100:
+        return '0' + str(num)
+    elif num > 99 and num < 1000:
+        return str(num)
+    else:
+        return str('ERROR: Number is bigger than 999')
+
 def wrap_in_quote(string):
     return '"' + str(string) + '"'
 

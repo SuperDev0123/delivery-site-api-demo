@@ -24,7 +24,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_xls, send_email
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_xls, send_email, make_3digit
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -1505,10 +1505,10 @@ def download_csv(request):
 
     for booking_id in booking_ids:
         booking = Bookings.objects.get(id=booking_id)
-        booking.b_dateBookedDate = datetime.now()
-        booking.b_status = 'Booked CSV'
-        booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
-        booking.save()
+        # booking.b_dateBookedDate = datetime.now()
+        # booking.b_status = 'Booked CSV'
+        # booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
+        # booking.save()
 
         booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
         index = 1
@@ -1517,9 +1517,9 @@ def download_csv(request):
             api_booking_confirmation_line = Api_booking_confirmation_lines(
                 fk_booking_id = booking.pk_booking_id, 
                 fk_booking_line_id = booking_line.pk_lines_id, 
-                api_item_id = str('COPDME') + str(booking.b_bookingID_Visual) + '_00' + str(index),
+                api_item_id = str('COPDME') + str(booking.b_bookingID_Visual) + make_3digit(index),
                 service_provider = booking.vx_freight_provider,
-                label_code = str('COPDME') + str(booking.b_bookingID_Visual) + '_00' + str(index),
+                label_code = str('COPDME') + str(booking.b_bookingID_Visual) + make_3digit(index),
                 client_item_reference = booking_line.client_item_reference
             )
             api_booking_confirmation_line.save()
