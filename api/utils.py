@@ -113,7 +113,7 @@ def get_available_booking_lines(mysqlcon, booking):
         return result
 
 def wrap_in_quote(string):
-    return '"' + string + '"'
+    return '"' + str(string) + '"'
 
 def csv_write(fileHandler, bookings, mysqlcon):
     # Write Header
