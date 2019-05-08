@@ -1505,10 +1505,14 @@ def download_csv(request):
 
     for booking_id in booking_ids:
         booking = Bookings.objects.get(id=booking_id)
-        booking.b_dateBookedDate = datetime.now()
-        booking.b_status = 'Booked CSV'
-        booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
-        booking.save()
+
+        ############################################################################################
+        # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
+        ############################################################################################
+        # booking.b_dateBookedDate = datetime.now()
+        # booking.b_status = 'Booked CSV'
+        # booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
+        # booking.save()
 
         booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
         index = 1
