@@ -103,6 +103,7 @@ class BookingsViewSet(viewsets.ViewSet):
         prefilter = json.loads(self.request.query_params.get('prefilterInd', None))
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
         new_pod = self.request.query_params.get('newPod', None)
+        new_label = self.request.query_params.get('newLabel', None)
         client_pk = self.request.query_params.get('clientPK', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
@@ -322,6 +323,11 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
                                 .exclude((Q(z_pod_url__isnull=True) | Q(z_pod_url__exact='')), \
                                 (Q(z_pod_signed_url__isnull=True)| Q(z_pod_signed_url__exact='')))
+
+        # New POD filter
+        if new_label == 'true':
+            queryset = queryset.filter(z_downloaded_shipping_label_timestamp__isnull=True) \
+                                .exclude((Q(z_label_url__isnull=True) | Q(z_label_url__exact='')))
 
         # Prefilter count
         errors_to_correct = 0
@@ -1399,16 +1405,17 @@ def upload_status(request):
 @permission_classes((AllowAny,))
 def download_pdf(request):
     body = literal_eval(request.body.decode('utf8'))
-    bookingIds = body["ids"]    
+    bookingIds = body["ids"]
+    print(bookingIds)
     file_paths = [];
     label_names = [];
 
     for id in bookingIds:
         booking = Bookings.objects.get(id=id)
-
+        print('@111 - ', id)
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
-            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
+            # file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
+            file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
             booking.save()
