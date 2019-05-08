@@ -154,7 +154,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
                 elif client.company_name == 'BioPak':
                     queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
-                
+    
         # Warehouse filter
         if int(warehouse_id) is not 0:
             queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
@@ -369,7 +369,6 @@ class BookingsViewSet(viewsets.ViewSet):
         # Count
         bookings_cnt = queryset.count()
 
-        # bookings = queryset[0:int(item_count_per_page)]
         bookings = queryset
         ret_data = [];
 
@@ -1506,10 +1505,10 @@ def download_csv(request):
 
     for booking_id in booking_ids:
         booking = Bookings.objects.get(id=booking_id)
-        booking.b_dateBookedDate = datetime.now()
-        booking.b_status = 'Booked CSV'
-        booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
-        booking.save()
+        # booking.b_dateBookedDate = datetime.now()
+        # booking.b_status = 'Booked CSV'
+        # booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
+        # booking.save()
 
         booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
         index = 1
