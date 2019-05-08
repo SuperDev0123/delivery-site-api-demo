@@ -1406,13 +1406,12 @@ def upload_status(request):
 def download_pdf(request):
     body = literal_eval(request.body.decode('utf8'))
     bookingIds = body["ids"]
-    print(bookingIds)
     file_paths = [];
     label_names = [];
 
     for id in bookingIds:
         booking = Bookings.objects.get(id=id)
-        
+
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
             file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
             # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
