@@ -474,6 +474,7 @@ class BookingsViewSet(viewsets.ViewSet):
             client_employee_role = client_employee.get_role()
             client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
+        vx_freight_provider = self.request.query_params.get('vx_freight_provider', None)
         start_date = self.request.query_params.get('startDate', None)
         if start_date == '*':
             search_type = 'ALL'
@@ -514,6 +515,9 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
                 elif client.company_name == 'BioPak':
                     queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
+
+        # Freight Provider filter
+        queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
 
         bookings = queryset
         ret_data = [];
