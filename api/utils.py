@@ -701,8 +701,8 @@ def build_xls(bookings):
     worksheet.write('U1', 'delivery_actual_kpi_days', bold)
     worksheet.write('V1', 'de_Deliver_From_Date', bold)
     worksheet.write('W1', 'de_Deliver_By_Date', bold)
-    worksheet.write('X1', 'store_booking_date', bold)
-    worksheet.write('Y1', 'store_booking_time', bold)
+    worksheet.write('X1', 'fp_store_event_date', bold)
+    worksheet.write('Y1', 'fp_store_event_time', bold)
     worksheet.write('Z1', 'vx_freight_provider', bold)
 
     row = 1
@@ -787,13 +787,13 @@ def build_xls(bookings):
         else:
             worksheet.write(row, col + 22, "")
 
-        if booking.store_booking_date and booking.store_booking_date:
-            worksheet.write(row, col + 23, booking.store_booking_date.strftime("%Y-%m-%d"))
+        if booking.fp_store_event_date and booking.fp_store_event_date:
+            worksheet.write(row, col + 23, booking.fp_store_event_date.strftime("%Y-%m-%d"))
         else:
             worksheet.write(row, col + 23, "")
 
-        if booking.store_booking_time and booking.store_booking_time:
-            worksheet.write(row, col + 24, booking.store_booking_time.strftime("%H:%M:%S"))
+        if booking.fp_store_event_time and booking.fp_store_event_time:
+            worksheet.write(row, col + 24, booking.fp_store_event_time.strftime("%H:%M:%S"))
         else:
             worksheet.write(row, col + 24, "")
 
