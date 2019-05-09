@@ -445,7 +445,7 @@ def generate_csv(booking_ids):
     local_filepath_dup = '/home/cope_au/dme_sftp/cope_au/pickup_ext/'
     filename = csv_name
 
-    upload_sftp(host, username, password, sftp_filepath, local_filepath, local_filepath_dup, filename)
+    # upload_sftp(host, username, password, sftp_filepath, local_filepath, local_filepath_dup, filename)
 
     # print('#901 - Finished %s' % datetime.datetime.now())
     mysqlcon.close()
