@@ -308,8 +308,8 @@ class Bookings(models.Model):
     delivery_actual_kpi_days = models.IntegerField(blank=True, default=0, null=True)
     b_status_sub_client = models.CharField(max_length=50, blank=True, null=True, default='')
     b_status_sub_fp = models.CharField(max_length=50, blank=True, null=True, default='')
-    store_booking_date = models.DateField(blank=True, null=True)
-    store_booking_time = models.TimeField(blank=True, null=True)
+    fp_store_event_date = models.DateField(blank=True, null=True)
+    fp_store_event_time = models.TimeField(blank=True, null=True)
     e_qty_scanned_fp_total = models.IntegerField(blank=True, null=True, default=0)
 
     class Meta:
