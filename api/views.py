@@ -1538,11 +1538,12 @@ def download_csv(request):
     # file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
 
     if os.path.exists(file_path):
-        with open(file_path, 'rb') as fh:
-            response = HttpResponse(fh.read(), content_type="text/csv")
-            # response['Content-Disposition'] = 'inline; filename=' + csv_name
-            response['Content-Disposition'] = 'attachment; filename= "%s"' % csv_name
-            return response
+        return JsonResponse({'filename': csv_name, 'status': 'Created CSV'})
+        # with open(file_path, 'rb') as fh:
+        #     response = HttpResponse(fh.read(), content_type="text/csv")
+        #     # response['Content-Disposition'] = 'inline; filename=' + csv_name
+        #     response['Content-Disposition'] = 'attachment; filename= "%s"' % csv_name
+        #     return response
 
 @api_view(['POST'])
 @permission_classes((AllowAny,))

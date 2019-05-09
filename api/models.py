@@ -310,6 +310,7 @@ class Bookings(models.Model):
     b_status_sub_fp = models.CharField(max_length=50, blank=True, null=True, default='')
     store_booking_date = models.DateField(blank=True, null=True)
     store_booking_time = models.TimeField(blank=True, null=True)
+    e_qty_scanned_fp_total = models.IntegerField(blank=True, null=True, default=0)
 
     class Meta:
         db_table = 'dme_bookings'
@@ -377,6 +378,7 @@ class Booking_lines(models.Model):
     e_qty_damaged = models.IntegerField(blank=True, null=True, default=0)
     e_qty_returned = models.IntegerField(blank=True, null=True, default=0)
     e_qty_shortages = models.IntegerField(blank=True, null=True, default=0)
+    e_qty_scanned_fp = models.IntegerField(blank=True, null=True, default=0)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now, blank=True)
     z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now, blank=True)
 
@@ -682,6 +684,7 @@ class Api_booking_confirmation_lines(models.Model):
     fp_event_date = models.DateField(blank=True, null=True)
     fp_event_time = models.TimeField(blank=True, null=True)
     fp_scan_data = models.CharField(max_length=64, blank=True, null=True, default='')
+    tally = models.IntegerField(blank=True, null=True, default=0)
     z_createdByAccount = models.CharField(verbose_name=_('Created By Account'), max_length=64, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
     z_modifiedByAccount = models.CharField(verbose_name=_('Modified By Account'), max_length=64, blank=True, null=True)

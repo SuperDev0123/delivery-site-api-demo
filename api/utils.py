@@ -89,6 +89,51 @@ def getFileCheckHistory(filename):
 
         return error
 
+def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
+    assert isinstance(send_to, list)
+
+    msg = MIMEMultipart()
+    msg['From'] = settings.EMAIL_HOST_USER
+    msg['To'] = COMMASPACE.join(send_to)
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(text))
+
+    for f in files or []:
+        with open(f, "rb") as fil:
+            part = MIMEApplication(
+                fil.read(),
+                Name=basename(f)
+            )
+        part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
+        msg.attach(part)
+
+    smtp = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
+
+    if use_tls:
+        smtp.starttls()
+
+    smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+    smtp.sendmail(settings.EMAIL_HOST_USER, send_to, msg.as_string())
+    smtp.close()
+
+def upload_sftp(host, username, password, sftp_filepath, local_filepath, local_filepath_dup, filename):
+    cnopts = pysftp.CnOpts()
+    cnopts.hostkeys = None
+    with pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts) as sftp_con:
+        with sftp_con.cd(sftp_filepath):
+            sftp_con.put(local_filepath + filename)
+            sftp_file_size = sftp_con.lstat(sftp_filepath + filename).st_size
+            local_file_size = os.stat(local_filepath + filename).st_size
+
+            if sftp_file_size == local_file_size:
+                if not os.path.exists(local_filepath_dup):
+                    os.makedirs(local_filepath_dup)
+                shutil.move(local_filepath + filename, local_filepath_dup + filename)
+
+        sftp_con.close()
+
 def get_available_bookings(mysqlcon, booking_ids):
     where_clause = ' WHERE '
     for id in booking_ids:
@@ -391,9 +436,19 @@ def generate_csv(booking_ids):
     csv_write(f, bookings, mysqlcon)
     f.close()
 
+    # CSV sftp server info
+    host = 'esmart.cope.com.au'
+    username = 'deliverme'
+    password = 'C3n?7u4f'
+    sftp_filepath = '/home/import/csvimport/upload or csvimport/upload/'
+    local_filepath = '/home/cope_au/dme_sftp/cope_au/pickup_ext/'
+    local_filepath_dup = '/home/cope_au/dme_sftp/cope_au/pickup_ext/'
+    filename = csv_name
+
+    upload_sftp(host, username, password, sftp_filepath, local_filepath, local_filepath_dup, filename)
+
     # print('#901 - Finished %s' % datetime.datetime.now())
     mysqlcon.close()
-
     return csv_name
 
 def get_booked_list(bookings):
@@ -856,32 +911,3 @@ def build_xls(bookings):
 
     # workbook.close()
     # return respons
-
-def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
-    assert isinstance(send_to, list)
-
-    msg = MIMEMultipart()
-    msg['From'] = settings.EMAIL_HOST_USER
-    msg['To'] = COMMASPACE.join(send_to)
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
-
-    msg.attach(MIMEText(text))
-
-    for f in files or []:
-        with open(f, "rb") as fil:
-            part = MIMEApplication(
-                fil.read(),
-                Name=basename(f)
-            )
-        part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
-        msg.attach(part)
-
-    smtp = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
-
-    if use_tls:
-        smtp.starttls()
-
-    smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-    smtp.sendmail(settings.EMAIL_HOST_USER, send_to, msg.as_string())
-    smtp.close()
