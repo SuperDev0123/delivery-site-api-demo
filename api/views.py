@@ -1110,54 +1110,208 @@ class CommsViewSet(viewsets.ViewSet):
         user_id = self.request.user.id
         booking_id = self.request.GET['bookingId']
         sort_field = self.request.query_params.get('sortField', None)
+        sort_type = self.request.query_params.get('sortType', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
 
-        # print('@20 - booking_id: ', booking_id)
-        # print('@21 - sort_field: ', sort_field)
-        # print('@22 - column_filters: ', column_filters)
+        if booking_id == '':
+            user_id = int(self.request.user.id)
+            dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
-        booking = Bookings.objects.get(id=booking_id)
-        comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
+            if dme_employee is not None:
+                user_type = 'DME'
+            else:
+                user_type = 'CLIENT'
+                client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+                client_employee_role = client_employee.get_role()
+                client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
-        # Sort
-        if sort_field is None:
-            comms = comms.order_by('-id')
-        else:
-            comms = comms.order_by(sort_field)
+            # DME & Client filter
+            if user_type == 'DME':
+                bookings = Bookings.objects.all()
+            else:
+                if client_employee_role == 'company':
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+                elif client_employee_role == 'warehouse':
+                    employee_warehouse_id = client_employee.warehouse_id
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
 
-        # Column filter
-        try:
-            column_filter = column_filters['id']
-            comms = comms.filter(id__icontains=column_filter)
-        except KeyError:
-            column_filter = ''
+            # Sort Comms
+            if sort_type == 'bookings':
+                if sort_field is None:
+                    bookings = bookings.order_by('-id')
+                else:
+                    bookings = bookings.order_by(sort_field)
 
-        return_datas = []
-        if len(comms) == 0:
-            return JsonResponse({'comms': []})
-        else:
-            for index, comm in enumerate(comms):
-                return_data = {
-                    'index': index + 1,
-                    'id': comm.id,
-                    'fk_booking_id': comm.fk_booking_id,
-                    'priority_of_log': comm.priority_of_log,
-                    'assigned_to': comm.assigned_to,
-                    'query': comm.query,
-                    'dme_com_title': comm.dme_com_title,
-                    'closed': comm.closed,
-                    'status_log_closed_time': comm.status_log_closed_time,
-                    'dme_detail': comm.dme_detail,
-                    'dme_notes_type': comm.dme_notes_type,
-                    'dme_notes_external': comm.dme_notes_external,
-                    'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
-                    'due_by_date': comm.due_by_date,
-                    'due_by_time': comm.due_by_time,
-                    'dme_action': comm.dme_action,
-                    'z_createdTimeStamp': comm.z_createdTimeStamp,
-                }
-                return_datas.append(return_data)
+            # Column Bookings filter
+            try:
+                column_filter = column_filters['b_bookingID_Visual']
+                bookings = bookings.filter(b_bookingID_Visual__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+            try:
+                column_filter = column_filters['b_status']
+                bookings = bookings.filter(b_status__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+            try:
+                column_filter = column_filters['vx_freight_Provider']
+                bookings = bookings.filter(vx_freight_Provider__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+            try:
+                column_filter = column_filters['puCompany']
+                bookings = bookings.filter(puCompany__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+            try:
+                column_filter = column_filters['deToCompanyName']
+                bookings = bookings.filter(deToCompanyName__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+            try:
+                column_filter = column_filters['v_FPBookingNumber']
+                bookings = bookings.filter(v_FPBookingNumber__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+
+            return_datas = []
+            for booking in bookings:
+                comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+                # Sort Comms
+                if sort_type == 'comms':
+                    if sort_field is None:
+                        comms = comms.order_by('-id')
+                    else:
+                        comms = comms.order_by(sort_field)
+
+                # Column Comms filter
+                try:
+                    column_filter = column_filters['id']
+                    comms = comms.filter(id__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['priority_of_log']
+                    comms = comms.filter(priority_of_log__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['assigned_to']
+                    comms = comms.filter(assigned_to__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['dme_notes_type']
+                    comms = comms.filter(dme_notes_type__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['query']
+                    comms = comms.filter(query__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['dme_action']
+                    comms = comms.filter(dme_action__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['status_log_closed_time']
+                    comms = comms.filter(status_log_closed_time__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['dme_detail']
+                    comms = comms.filter(dme_detail__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['dme_notes_external']
+                    comms = comms.filter(dme_notes_external__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['due_by_date']
+                    comms = comms.filter(due_by_date__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['due_by_time']
+                    comms = comms.filter(due_by_time__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+
+                for index, comm in enumerate(comms):
+                    return_data = {
+                        'b_bookingID_Visual': booking.b_bookingID_Visual,
+                        'b_status': booking.b_status,
+                        'vx_freight_Provider': booking.vx_freight_provider,
+                        'puCompany': booking.puCompany,
+                        'deToCompanyName': booking.deToCompanyName,
+                        'v_FPBookingNumber': booking.v_FPBookingNumber,
+                        'id': comm.id,
+                        'fk_booking_id': comm.fk_booking_id,
+                        'priority_of_log': comm.priority_of_log,
+                        'assigned_to': comm.assigned_to,
+                        'query': comm.query,
+                        'dme_com_title': comm.dme_com_title,
+                        'closed': comm.closed,
+                        'status_log_closed_time': comm.status_log_closed_time,
+                        'dme_detail': comm.dme_detail,
+                        'dme_notes_type': comm.dme_notes_type,
+                        'dme_notes_external': comm.dme_notes_external,
+                        'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                        'due_by_date': comm.due_by_date,
+                        'due_by_time': comm.due_by_time,
+                        'dme_action': comm.dme_action,
+                        'z_createdTimeStamp': comm.z_createdTimeStamp,
+                    }
+                    return_datas.append(return_data)
             return JsonResponse({'comms': return_datas})
+        else:
+            booking = Bookings.objects.get(id=booking_id)
+            comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+            # Sort
+            if sort_field is None:
+                comms = comms.order_by('-id')
+            else:
+                comms = comms.order_by(sort_field)
+
+            # Column filter
+            try:
+                column_filter = column_filters['id']
+                comms = comms.filter(id__icontains=column_filter)
+            except KeyError:
+                column_filter = ''
+
+            return_datas = []
+            if len(comms) == 0:
+                return JsonResponse({'comms': []})
+            else:
+                for index, comm in enumerate(comms):
+                    return_data = {
+                        'index': index + 1,
+                        'id': comm.id,
+                        'fk_booking_id': comm.fk_booking_id,
+                        'priority_of_log': comm.priority_of_log,
+                        'assigned_to': comm.assigned_to,
+                        'query': comm.query,
+                        'dme_com_title': comm.dme_com_title,
+                        'closed': comm.closed,
+                        'status_log_closed_time': comm.status_log_closed_time,
+                        'dme_detail': comm.dme_detail,
+                        'dme_notes_type': comm.dme_notes_type,
+                        'dme_notes_external': comm.dme_notes_external,
+                        'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                        'due_by_date': comm.due_by_date,
+                        'due_by_time': comm.due_by_time,
+                        'dme_action': comm.dme_action,
+                        'z_createdTimeStamp': comm.z_createdTimeStamp,
+                    }
+                    return_datas.append(return_data)
+                return JsonResponse({'comms': return_datas})
 
     @action(detail=True, methods=['put'])
     def update_comm(self, request, pk, format=None):
@@ -1195,13 +1349,13 @@ class CommsViewSet(viewsets.ViewSet):
                     else:
                         return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 except Exception as e:
-                    # print('Exception: ', e)
+                    print('Exception 01: ', e)
                     return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            print('Exception 02: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class NotesViewSet(viewsets.ViewSet):
