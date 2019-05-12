@@ -417,6 +417,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'business_group': booking.get_group_name(),
                 'de_Deliver_By_Date': booking.de_Deliver_By_Date,
                 'de_Deliver_From_Date': booking.de_Deliver_From_Date,
+                'dme_delivery_status_category': booking.get_dme_delivery_status_category(),
             })
         
         return JsonResponse({

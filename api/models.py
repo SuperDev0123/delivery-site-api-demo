@@ -337,6 +337,14 @@ class Bookings(models.Model):
 
         return customer_group_name
 
+    def get_dme_delivery_status_category(self):
+        try:
+            utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=self.b_status)
+            return utl_dme_status.dme_delivery_status_category
+        except Exception as e:
+            # print('Exception: ', e)
+            return ''
+
 
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
