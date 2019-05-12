@@ -457,6 +457,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 dme_status_history.event_time_stamp = datetime.now()
                 dme_status_history.recipient_name = ''
                 dme_status_history.status_update_via = ''
+                dme_status_history.z_createdByAccount = request.user.username
                 dme_status_history.save()
 
                 # When new status is `Collected`
