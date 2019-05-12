@@ -447,14 +447,25 @@ class BookingsViewSet(viewsets.ViewSet):
         try:
             for booking_id in booking_ids:
                 booking = Bookings.objects.get(pk=booking_id)
-                booking.b_status = status
 
+                # Create new status_history
+                dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
+                dme_status_history.status_old = booking.b_status
+                dme_status_history.notes = str(booking.b_status) + " ---> " + str(status)
+                dme_status_history.status_last = status
+                dme_status_history.event_time_stamp = datetime.now()
+                dme_status_history.recipient_name = ''
+                dme_status_history.status_update_via = ''
+                dme_status_history.save()
+
+                # When new status is `Collected`
                 if status == 'Collected':
                     booking_lines = Booking_lines.objects.filter(fk_booking_id = booking.pk_booking_id)
                     for booking_line in booking_lines:
                         booking_line.e_qty_collected = booking_line.e_qty - booking_line.e_qty_awaiting_inventory  
                         booking_line.save()
 
+                booking.b_status = status
                 booking.save()
             return JsonResponse({'status': 'success'})
         except Exception as e:
@@ -1077,7 +1088,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                 employee_warehouse = Client_warehouses.objects.get(pk_id_client_warehouses = employee_warehouse_id)
                 queryset = [employee_warehouse]
                 return queryset
-            
+
 class AttachmentsUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
 
