@@ -808,7 +808,7 @@ def build_xls(bookings, xls_type):
         filename = "booking_lines_seaway_" + str(datetime.now().strftime("%Y-%m-%d")) + "_" + str(uuid.uuid1()) + ".xlsx"
         workbook = xlsxwriter.Workbook(filename)
         worksheet = workbook.add_worksheet()
-        worksheet.set_column(0, 12, width=24)
+        worksheet.set_column(0, 25, width=24)
         bold = workbook.add_format({'bold': 1, 'align': 'left'})
 
         worksheet.write('A1', 'Retailer PO #', bold)
@@ -825,15 +825,16 @@ def build_xls(bookings, xls_type):
         worksheet.write('L1', 'Dispatch Date', bold)
         worksheet.write('M1', 'ETA Into Store', bold)
         worksheet.write('N1', 'Status', bold)
-        worksheet.write('O1', 'e_qty_awaiting_inventory', bold)
-        worksheet.write('P1', 'e_qty_scanned_fp', bold)
-        worksheet.write('Q1', 'e_qty_collected', bold)
-        worksheet.write('R1', 'e_qty_scanned_depot', bold)
-        worksheet.write('S1', 'e_qty_delivered', bold)
-        worksheet.write('T1', 'e_qty_adjusted_delivered', bold)
-        worksheet.write('U1', 'e_qty_damaged', bold)
-        worksheet.write('V1', 'e_qty_returned', bold)
-        worksheet.write('X1', 'e_qty_shortages', bold)
+        worksheet.write('O1', 'POD Available', bold)
+        worksheet.write('P1', 'e_qty_awaiting_inventory', bold)
+        worksheet.write('Q1', 'e_qty_scanned_fp', bold)
+        worksheet.write('R1', 'e_qty_collected', bold)
+        worksheet.write('S1', 'e_qty_scanned_depot', bold)
+        worksheet.write('T1', 'e_qty_delivered', bold)
+        worksheet.write('U1', 'e_qty_adjusted_delivered', bold)
+        worksheet.write('V1', 'e_qty_damaged', bold)
+        worksheet.write('X1', 'e_qty_returned', bold)
+        worksheet.write('Y1', 'e_qty_shortages', bold)
 
         row = 1
         col = 0
