@@ -1101,6 +1101,7 @@ class CommsViewSet(viewsets.ViewSet):
         sort_field = self.request.query_params.get('sortField', None)
         sort_type = self.request.query_params.get('sortType', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
+        simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None) 
 
         if booking_id == '':
             user_id = int(self.request.user.id)
@@ -1131,37 +1132,54 @@ class CommsViewSet(viewsets.ViewSet):
                 else:
                     bookings = bookings.order_by(sort_field)
 
-            # Column Bookings filter
-            try:
-                column_filter = column_filters['b_bookingID_Visual']
-                bookings = bookings.filter(b_bookingID_Visual__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-            try:
-                column_filter = column_filters['b_status']
-                bookings = bookings.filter(b_status__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-            try:
-                column_filter = column_filters['vx_freight_Provider']
-                bookings = bookings.filter(vx_freight_Provider__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-            try:
-                column_filter = column_filters['puCompany']
-                bookings = bookings.filter(puCompany__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-            try:
-                column_filter = column_filters['deToCompanyName']
-                bookings = bookings.filter(deToCompanyName__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-            try:
-                column_filter = column_filters['v_FPBookingNumber']
-                bookings = bookings.filter(v_FPBookingNumber__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+            # Simple search & Column fitler
+            is_booking_filtered = True
+            if len(simple_search_keyword) > 0:
+                filtered_bookings = bookings.filter(
+                    Q(b_bookingID_Visual__icontains=simple_search_keyword) | 
+                    Q(b_status__icontains=simple_search_keyword) | 
+                    Q(vx_freight_provider__icontains=simple_search_keyword) | 
+                    Q(puCompany__icontains=simple_search_keyword) |
+                    Q(deToCompanyName__icontains=simple_search_keyword) |
+                    Q(v_FPBookingNumber__icontains=simple_search_keyword))
+
+                if len(filtered_bookings) == 0:
+                    is_booking_filtered = False
+                else:
+                    is_booking_filtered = True
+                    bookings = filtered_bookings
+            else:
+                # Column Bookings filter
+                try:
+                    column_filter = column_filters['b_bookingID_Visual']
+                    bookings = bookings.filter(b_bookingID_Visual__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['b_status']
+                    bookings = bookings.filter(b_status__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['vx_freight_Provider']
+                    bookings = bookings.filter(vx_freight_provider__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['puCompany']
+                    bookings = bookings.filter(puCompany__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['deToCompanyName']
+                    bookings = bookings.filter(deToCompanyName__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                try:
+                    column_filter = column_filters['v_FPBookingNumber']
+                    bookings = bookings.filter(v_FPBookingNumber__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
             return_datas = []
             for booking in bookings:
@@ -1174,62 +1192,83 @@ class CommsViewSet(viewsets.ViewSet):
                     else:
                         comms = comms.order_by(sort_field)
 
-                # Column Comms filter
-                try:
-                    column_filter = column_filters['id']
-                    comms = comms.filter(id__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['priority_of_log']
-                    comms = comms.filter(priority_of_log__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['assigned_to']
-                    comms = comms.filter(assigned_to__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['dme_notes_type']
-                    comms = comms.filter(dme_notes_type__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['query']
-                    comms = comms.filter(query__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['dme_action']
-                    comms = comms.filter(dme_action__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['status_log_closed_time']
-                    comms = comms.filter(status_log_closed_time__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['dme_detail']
-                    comms = comms.filter(dme_detail__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['dme_notes_external']
-                    comms = comms.filter(dme_notes_external__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['due_by_date']
-                    comms = comms.filter(due_by_date__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
-                try:
-                    column_filter = column_filters['due_by_time']
-                    comms = comms.filter(due_by_time__icontains=column_filter)
-                except KeyError:
-                    column_filter = ''
+                # Simple search & Column fitler
+                if len(simple_search_keyword) > 0:
+                    new_comms = comms.filter(
+                        Q(id__icontains=simple_search_keyword) | 
+                        Q(priority_of_log__icontains=simple_search_keyword) | 
+                        Q(assigned_to__icontains=simple_search_keyword) | 
+                        Q(dme_notes_type__icontains=simple_search_keyword) |
+                        Q(query__icontains=simple_search_keyword) |
+                        Q(dme_action__icontains=simple_search_keyword) | 
+                        Q(status_log_closed_time__icontains=simple_search_keyword) | 
+                        Q(dme_detail__icontains=simple_search_keyword) |
+                        Q(dme_notes_external__icontains=simple_search_keyword) |
+                        Q(due_by_date__icontains=simple_search_keyword) |
+                        Q(due_by_time__icontains=simple_search_keyword))
+
+                    if len(new_comms) == 0 and is_booking_filtered == False:
+                        comms = []
+                    elif len(new_comms) > 0:
+                        comms = new_comms
+
+                else:
+                    # Column Comms filter
+                    try:
+                        column_filter = column_filters['id']
+                        comms = comms.filter(id__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['priority_of_log']
+                        comms = comms.filter(priority_of_log__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['assigned_to']
+                        comms = comms.filter(assigned_to__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['dme_notes_type']
+                        comms = comms.filter(dme_notes_type__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['query']
+                        comms = comms.filter(query__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['dme_action']
+                        comms = comms.filter(dme_action__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['status_log_closed_time']
+                        comms = comms.filter(status_log_closed_time__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['dme_detail']
+                        comms = comms.filter(dme_detail__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['dme_notes_external']
+                        comms = comms.filter(dme_notes_external__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['due_by_date']
+                        comms = comms.filter(due_by_date__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
+                    try:
+                        column_filter = column_filters['due_by_time']
+                        comms = comms.filter(due_by_time__icontains=column_filter)
+                    except KeyError:
+                        column_filter = ''
 
                 for index, comm in enumerate(comms):
                     return_data = {
