@@ -826,13 +826,14 @@ def build_xls(bookings, xls_type):
         worksheet.write('M1', 'ETA Into Store', bold)
         worksheet.write('N1', 'Status', bold)
         worksheet.write('O1', 'e_qty_awaiting_inventory', bold)
-        worksheet.write('P1', 'e_qty_collected', bold)
-        worksheet.write('Q1', 'e_qty_scanned_depot', bold)
-        worksheet.write('R1', 'e_qty_delivered', bold)
-        worksheet.write('S1', 'e_qty_adjusted_delivered', bold)
-        worksheet.write('T1', 'e_qty_damaged', bold)
-        worksheet.write('U1', 'e_qty_returned', bold)
-        worksheet.write('V1', 'e_qty_shortages', bold)
+        worksheet.write('P1', 'e_qty_scanned_fp', bold)
+        worksheet.write('Q1', 'e_qty_collected', bold)
+        worksheet.write('R1', 'e_qty_scanned_depot', bold)
+        worksheet.write('S1', 'e_qty_delivered', bold)
+        worksheet.write('T1', 'e_qty_adjusted_delivered', bold)
+        worksheet.write('U1', 'e_qty_damaged', bold)
+        worksheet.write('V1', 'e_qty_returned', bold)
+        worksheet.write('X1', 'e_qty_shortages', bold)
 
         row = 1
         col = 0
@@ -863,13 +864,14 @@ def build_xls(bookings, xls_type):
                       worksheet.write(row, col + 14, "N")
 
                     worksheet.write(row, col + 15, booking_line.e_qty_awaiting_inventory)
-                    worksheet.write(row, col + 16, booking_line.e_qty_collected)
-                    worksheet.write(row, col + 17, booking_line.e_qty_scanned_depot)
-                    worksheet.write(row, col + 18, booking_line.e_qty_delivered)
-                    worksheet.write(row, col + 19, booking_line.e_qty_adjusted_delivered)
-                    worksheet.write(row, col + 20, booking_line.e_qty_damaged)
-                    worksheet.write(row, col + 21, booking_line.e_qty_returned)
-                    worksheet.write(row, col + 22, booking_line.e_qty_shortages)
+                    worksheet.write(row, col + 16, booking_line.e_qty_scanned_fp)
+                    worksheet.write(row, col + 17, booking_line.e_qty_collected)
+                    worksheet.write(row, col + 18, booking_line.e_qty_scanned_depot)
+                    worksheet.write(row, col + 19, booking_line.e_qty_delivered)
+                    worksheet.write(row, col + 20, booking_line.e_qty_adjusted_delivered)
+                    worksheet.write(row, col + 21, booking_line.e_qty_damaged)
+                    worksheet.write(row, col + 22, booking_line.e_qty_returned)
+                    worksheet.write(row, col + 23, booking_line.e_qty_shortages)
 
                     row += 1
             except Booking_lines.DoesNotExist:
