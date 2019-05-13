@@ -24,7 +24,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_xls, send_email, make_3digit
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_xls_and_send, send_email, make_3digit
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -488,27 +488,14 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
 
         vx_freight_provider = self.request.query_params.get('vx_freight_provider', None)
+        report_type = self.request.query_params.get('report_type', None)
+        email_addr = self.request.query_params.get('emailAddr', None)
         start_date = self.request.query_params.get('startDate', None)
-        if start_date == '*':
-            search_type = 'ALL'
-        else:
-            search_type = 'FILTER'
-            end_date = self.request.query_params.get('endDate', None)
+        end_date = self.request.query_params.get('endDate', None)
 
-        if search_type == 'FILTER':
-            first_date = datetime.strptime(start_date, '%Y-%m-%d')
-            last_date = (datetime.strptime(end_date, '%Y-%m-%d')+timedelta(days=1))
+        first_date = datetime.strptime(start_date, '%Y-%m-%d')
+        last_date = (datetime.strptime(end_date, '%Y-%m-%d')+timedelta(days=1))
         
-        # if user_type == 'CLIENT':
-        #     print('@01 - Client filter: ', client.dme_account_num)
-        # else:
-        #     print('@01 - DME user')
-
-        # if start_date == '*':
-        #     print('@02 - Date filter: ', start_date)
-        # else:    
-        #     print('@02 - Date filter: ', start_date, end_date, first_date, last_date)
-
         # DME & Client filter
         if user_type == 'DME':
             queryset = Bookings.objects.all()
@@ -519,30 +506,19 @@ class BookingsViewSet(viewsets.ViewSet):
                 employee_warehouse_id = client_employee.warehouse_id
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
 
-        if search_type == 'FILTER':
-            # Date filter
-            if user_type == 'DME':
+        # Date filter
+        if user_type == 'DME':
+            queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+        else:
+            if client.company_name == 'Seaway' or client.company_name =='Seaway-Hanalt' or client.company_name == 'Tempo':
                 queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-            else:
-                if client.company_name == 'Seaway' or client.company_name =='Seaway-Hanalt' or client.company_name == 'Tempo':
-                    queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-                elif client.company_name == 'BioPak':
-                    queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
+            elif client.company_name == 'BioPak':
+                queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
 
         # Freight Provider filter
         queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
 
-        bookings = queryset
-        ret_data = [];
-
-        filepath = build_xls(bookings)
-        send_email(
-            [self.request.query_params.get('emailAddr', None)], # Recipient email address(list)
-            'XLS Report from Deliver-Me', # Subject of email
-            'Here is the excel report you generated from Deliver-Me.', # Message of email
-            [filepath] # Attachment file path(list)
-        )
-
+        build_xls_and_send(queryset, email_addr, report_type)
         return JsonResponse({'status': 'started generate xml'})
 
 class BookingViewSet(viewsets.ViewSet):
