@@ -833,8 +833,8 @@ def build_xls(bookings, xls_type):
         worksheet.write('T1', 'e_qty_delivered', bold)
         worksheet.write('U1', 'e_qty_adjusted_delivered', bold)
         worksheet.write('V1', 'e_qty_damaged', bold)
-        worksheet.write('X1', 'e_qty_returned', bold)
-        worksheet.write('Y1', 'e_qty_shortages', bold)
+        worksheet.write('W1', 'e_qty_returned', bold)
+        worksheet.write('X1', 'e_qty_shortages', bold)
 
         row = 1
         col = 0
@@ -844,19 +844,39 @@ def build_xls(bookings, xls_type):
                 booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
                 for booking_line in booking_lines:
+                    api_bcl = Api_booking_confirmation_lines.filter(fk_booking_line_id=booking_line.pk_lines_id).first()
                     worksheet.write(row, col, booking.b_client_order_num)
                     worksheet.write(row, col + 1, booking.b_client_sales_inv_num)
                     worksheet.write(row, col + 2, booking.puCompany)
                     worksheet.write(row, col + 3, booking.pu_Address_Suburb)
-                    worksheet.write(row, col + 4, 'Will get from line table')
-                    worksheet.write(row, col + 5, 'Will get from line table')
-                    worksheet.write(row, col + 6, 'Will get from line table')
+                    worksheet.write(row, col + 4, booking_line.client_item_reference)
+                    worksheet.write(row, col + 5, booking_line.e_item)
+                    worksheet.write(row, col + 6, booking_line.e_item)
                     worksheet.write(row, col + 7, booking_line.e_qty)
                     worksheet.write(row, col + 8, booking.vx_freight_provider)
                     worksheet.write(row, col + 9, booking.b_bookingID_Visual)
-                    worksheet.write(row, col + 10, 'From the CSV file received')
-                    worksheet.write(row, col + 11, "We'll need this date from you")
-                    worksheet.write(row, col + 12, 'This will be column L + the KPI of 7 or 14 days')
+
+                    if api_bcl.fp_event_date and booking.fp_event_time:
+                        worksheet.write(row, col + 10, str(api_bcl.fp_event_date + ' ' + api_bcl.fp_event_time).strftime("%Y-%m-%d %H:%M:%S"))
+                    else:
+                        worksheet.write(row, col + 10, "")
+
+                    if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+                        worksheet.write(row, col + 11, booking.de_Deliver_By_Date.strftime("%Y-%m-%d"))
+                    else:
+                        worksheet.write(row, col + 11, "")
+
+
+                    if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+                        delivery_kpi_days = 0
+
+                        if booking.delivery_kpi_days:
+                            delivery_kpi_days = booking.delivery_kpi_days
+
+                        worksheet.write(row, col + 11, datetime.strptime(booking.de_Deliver_By_Date, '%Y-%m-%d')+timedelta(days=int(delivery_kpi_days)))
+                    else:
+                        worksheet.write(row, col + 11, "")
+
                     worksheet.write(row, col + 13, booking.b_status)
 
                     if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
