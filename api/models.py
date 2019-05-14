@@ -311,6 +311,9 @@ class Bookings(models.Model):
     fp_store_event_date = models.DateField(blank=True, null=True)
     fp_store_event_time = models.TimeField(blank=True, null=True)
     e_qty_scanned_fp_total = models.IntegerField(blank=True, null=True, default=0)
+    dme_status_reason = models.TextField(max_length=500, blank=True, null=True, default='')
+    dme_status_action = models.TextField(max_length=500, blank=True, null=True, default='')
+    dme_status_linked_reference_from_fp = models.TextField(max_length=150, blank=True, null=True, default='')
 
     class Meta:
         db_table = 'dme_bookings'
@@ -1008,3 +1011,16 @@ class Utl_fp_delivery_times(models.Model):
 
     class Meta:
         db_table = 'utl_fp_delivery_times'
+
+class Fp_freight_providers(models.Model):
+    id = models.AutoField(primary_key=True)
+    fp_company_name = models.CharField(max_length=64, blank=True, null=True)
+    fp_address_country = models.CharField(max_length=32, blank=True, null=True)
+    fp_inactive_date = models.DateField(blank=True, null=True)
+    z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+    z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+    z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+    z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+    class Meta:
+        db_table = 'fp_freight_providers'
