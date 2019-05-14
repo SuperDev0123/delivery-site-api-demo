@@ -858,7 +858,7 @@ def build_xls(bookings, xls_type):
                     worksheet.write(row, col + 9, booking.b_bookingID_Visual)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
-                        worksheet.write(row, col + 10, str(api_bcl.fp_event_date + ' ' + api_bcl.fp_event_time).strftime("%Y-%m-%d %H:%M:%S"))
+                        worksheet.write(row, col + 10, api_bcl.fp_event_date.strftime("%Y-%m-%d") + ' ' + api_bcl.fp_event_time.strftime("%H:%M:%S"))
                     else:
                         worksheet.write(row, col + 10, "")
 
