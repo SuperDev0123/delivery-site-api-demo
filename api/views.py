@@ -516,7 +516,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
 
         # Freight Provider filter
-        queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+        if vx_freight_provider != 'All':
+            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
 
         build_xls_and_send(queryset, email_addr, report_type)
         return JsonResponse({'status': 'started generate xml'})
@@ -1512,6 +1513,25 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FPViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_all(self, requst, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.all()
+            for resultObject in resultObjects:
+                if not resultObject.fp_inactive_date:
+                    return_data.append({
+                        'id': resultObject.id,
+                        'fp_company_name': resultObject.fp_company_name,
+                    })
+            return JsonResponse({'results': return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({'results': ''})
 
 def handle_uploaded_file_attachments(request, f):
     try:
