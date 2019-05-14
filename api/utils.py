@@ -674,10 +674,10 @@ def build_xls(bookings, xls_type):
     #end check if xmls folder exists
 
     if xls_type == 'booking':
-        filename = "bookings_seaway_" + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ".xlsx"
+        filename = "bookings_seaway_" + str(datetime.now().strftime("%Y-%m-%d %H_%M_%S")) + ".xlsx"
         workbook = xlsxwriter.Workbook(filename)
         worksheet = workbook.add_worksheet()
-        worksheet.set_column(0, 12, width=24)
+        worksheet.set_column(0, 25, width=24)
         bold = workbook.add_format({'bold': 1, 'align': 'left'})
 
         worksheet.write('A1', 'b_bookingID_Visual', bold)
@@ -806,7 +806,7 @@ def build_xls(bookings, xls_type):
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'booking_line':
-        filename = "booking_lines_seaway_" + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ".xlsx"
+        filename = "booking_lines_seaway_" + str(datetime.now().strftime("%Y-%m-%d %H_%M_%S")) + ".xlsx"
         workbook = xlsxwriter.Workbook(filename)
         worksheet = workbook.add_worksheet()
         worksheet.set_column(0, 25, width=24)
