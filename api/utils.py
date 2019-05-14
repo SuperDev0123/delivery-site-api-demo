@@ -673,7 +673,7 @@ def build_xls(bookings, xls_type):
     #end check if xmls folder exists
 
     if xls_type == 'booking':
-        filename = "bookings_seaway_" + str(datetime.now().strftime("%Y-%m-%d")) + "_" + str(uuid.uuid1()) + ".xlsx"
+        filename = "bookings_seaway_" + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ".xlsx"
         workbook = xlsxwriter.Workbook(filename)
         worksheet = workbook.add_worksheet()
         worksheet.set_column(0, 12, width=24)
@@ -805,7 +805,7 @@ def build_xls(bookings, xls_type):
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'booking_line':
-        filename = "booking_lines_seaway_" + str(datetime.now().strftime("%Y-%m-%d")) + "_" + str(uuid.uuid1()) + ".xlsx"
+        filename = "booking_lines_seaway_" + str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) + ".xlsx"
         workbook = xlsxwriter.Workbook(filename)
         worksheet = workbook.add_worksheet()
         worksheet.set_column(0, 25, width=24)
@@ -844,7 +844,7 @@ def build_xls(bookings, xls_type):
                 booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
                 for booking_line in booking_lines:
-                    api_bcl = Api_booking_confirmation_lines.filter(fk_booking_line_id=booking_line.pk_lines_id).first()
+                    api_bcl = Api_booking_confirmation_lines.objects.filter(fk_booking_line_id=booking_line.pk_lines_id).first()
                     worksheet.write(row, col, booking.b_client_order_num)
                     worksheet.write(row, col + 1, booking.b_client_sales_inv_num)
                     worksheet.write(row, col + 2, booking.puCompany)
