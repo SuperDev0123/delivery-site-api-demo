@@ -396,6 +396,16 @@ class Booking_lines(models.Model):
     class Meta:
         db_table = 'dme_booking_lines'
 
+    def get_is_scanned(self):
+        try:
+            api_bcl = Api_booking_confirmation_lines.objects.filter(fk_booking_line_id=self.pk_lines_id).first()
+            if api_bcl.tally is not 0:
+                return True
+            return False
+        except Exception as e:
+            # print('Exception: ', e)
+            return False
+
 class Booking_lines_data(models.Model):
     pk_id_lines_data = models.AutoField(primary_key=True)
     fk_id_booking_lines = models.CharField(verbose_name=_('FK Booking Lines Id'), max_length=64, blank=True, null=True)
