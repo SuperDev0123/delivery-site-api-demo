@@ -873,7 +873,7 @@ def build_xls(bookings, xls_type):
                         if booking.delivery_kpi_days:
                             delivery_kpi_days = booking.delivery_kpi_days
 
-                        worksheet.write(row, col + 11, datetime.strptime(booking.de_Deliver_By_Date, '%Y-%m-%d')+timedelta(days=int(delivery_kpi_days)))
+                        worksheet.write(row, col + 11, (booking.de_Deliver_By_Date+timedelta(days=int(delivery_kpi_days))).strftime("%Y-%m-%d"))
                     else:
                         worksheet.write(row, col + 11, "")
 
