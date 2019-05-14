@@ -1,7 +1,8 @@
 import sys, time
 import os
 import errno
-import datetime, date, timedelta
+import datetime
+from datetime import timedelta
 import uuid
 import redis
 import urllib, requests
