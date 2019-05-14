@@ -892,6 +892,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 'e_qty_damaged': booking_line.e_qty_damaged,
                 'e_qty_returned': booking_line.e_qty_returned,
                 'e_qty_shortages': booking_line.e_qty_shortages,
+                'e_qty_scanned_fp': booking_line.e_qty_scanned_fp,
             })
 
         return JsonResponse({'booking_lines': return_data})
@@ -921,7 +922,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             'e_dimHeight': booking_line.e_dimHeight,
             'e_Total_KG_weight': booking_line.e_Total_KG_weight,
             'e_1_Total_dimCubicMeter': booking_line.e_1_Total_dimCubicMeter,
-            'total_2_cubic_mass_factor_calc': booking_line.total_2_cubic_mass_factor_calc
+            'total_2_cubic_mass_factor_calc': booking_line.total_2_cubic_mass_factor_calc,
         }
         serializer = BookingLineSerializer(data=newbooking_line)
         
