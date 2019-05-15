@@ -1509,16 +1509,11 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
-                booking = Bookings.objects.get(pk_booking_id=request.data['fk_booking_id'])
-                booking.dme_status_action = request.data['dme_status_action']
-                booking.dme_status_detail = request.data['dme_status_detail']
-                booking.dme_status_linked_reference_from_fp = request.data['dme_status_linked_reference_from_fp']
-                booking.save()
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FPViewSet(viewsets.ViewSet):
