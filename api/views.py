@@ -420,6 +420,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'dme_delivery_status_category': booking.get_dme_delivery_status_category(),
                 'dme_status_detail': booking.dme_status_detail,
                 'dme_status_action': booking.dme_status_action,
+                'vx_fp_del_eta_time': booking.vx_fp_del_eta_time,
             })
         
         return JsonResponse({
