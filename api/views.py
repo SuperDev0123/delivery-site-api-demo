@@ -1497,6 +1497,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     'event_time_stamp': resultObject.event_time_stamp,
                     'dme_notes': resultObject.dme_notes,
                     'z_createdTimeStamp': resultObject.z_createdTimeStamp,
+                    'dme_status_detail': resultObject.dme_status_detail,
+                    'dme_status_action': resultObject.dme_status_action,
+                    'dme_status_linked_reference_from_fp': resultObject.dme_status_linked_reference_from_fp,
                 })
             return JsonResponse({'history': return_data})
         except Exception as e:
