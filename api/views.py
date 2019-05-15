@@ -1496,7 +1496,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     'status_last': resultObject.status_last,
                     'event_time_stamp': resultObject.event_time_stamp,
                     'dme_notes': resultObject.dme_notes,
-                    'z_CreatedTimestamp': resultObject.z_createdTimeStamp,
+                    'z_createdTimeStamp': resultObject.z_createdTimeStamp,
                 })
             return JsonResponse({'history': return_data})
         except Exception as e:
@@ -1509,6 +1509,11 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
+                booking = Bookings.objects.get(pk_booking_id=request.data['fk_booking_id'])
+                booking.dme_status_action = request.data['dme_status_action']
+                booking.dme_status_detail = request.data['dme_status_detail']
+                booking.dme_status_linked_reference_from_fp = request.data['dme_status_linked_reference_from_fp']
+                booking.save()
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1530,6 +1535,41 @@ class FPViewSet(viewsets.ViewSet):
                         'id': resultObject.id,
                         'fp_company_name': resultObject.fp_company_name,
                     })
+            return JsonResponse({'results': return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({'results': ''})
+
+class StatusViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_status_actions(self, requst, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Utl_dme_status_actions.objects.all()
+            for resultObject in resultObjects:
+                return_data.append({
+                    'id': resultObject.id,
+                    'dme_status_action': resultObject.dme_status_action,
+                })
+            return JsonResponse({'results': return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({'results': ''})
+
+    @action(detail=False, methods=['get'])
+    def get_status_details(self, requst, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Utl_dme_status_details.objects.all()
+            for resultObject in resultObjects:
+                return_data.append({
+                    'id': resultObject.id,
+                    'dme_status_detail': resultObject.dme_status_detail,
+                })
             return JsonResponse({'results': return_data})
         except Exception as e:
             # print('@Exception', e)

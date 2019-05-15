@@ -311,7 +311,7 @@ class Bookings(models.Model):
     fp_store_event_date = models.DateField(blank=True, null=True)
     fp_store_event_time = models.TimeField(blank=True, null=True)
     e_qty_scanned_fp_total = models.IntegerField(blank=True, null=True, default=0)
-    dme_status_reason = models.TextField(max_length=500, blank=True, null=True, default='')
+    dme_status_detail = models.TextField(max_length=500, blank=True, null=True, default='')
     dme_status_action = models.TextField(max_length=500, blank=True, null=True, default='')
     dme_status_linked_reference_from_fp = models.TextField(max_length=150, blank=True, null=True, default='')
 
@@ -866,6 +866,9 @@ class Dme_status_history(models.Model):
     dme_notes = models.TextField(verbose_name=_('DME notes'), max_length=500, blank=True, default='', null=True)
     event_time_stamp = models.DateTimeField(verbose_name=_('Event Timestamp'), default=datetime.now, blank=True, null=True)
     status_update_via = models.CharField(verbose_name=_('Status Updated Via'), max_length=64, blank=True, null=True) # one of 3 - fp api, manual, excel
+    dme_status_detail = models.TextField(max_length=500, blank=True, null=True, default='')
+    dme_status_action = models.TextField(max_length=500, blank=True, null=True, default='')
+    dme_status_linked_reference_from_fp = models.TextField(max_length=150, blank=True, null=True, default='')
     z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
     z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
@@ -1034,3 +1037,25 @@ class Fp_freight_providers(models.Model):
 
     class Meta:
         db_table = 'fp_freight_providers'
+
+class Utl_dme_status_details(models.Model):
+    id = models.AutoField(primary_key=True)
+    dme_status_detail = models.TextField(max_length=500, blank=True, null=True)
+    z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+    z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+    z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+    z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+    class Meta:
+        db_table = 'utl_dme_status_details'
+
+class Utl_dme_status_actions(models.Model):
+    id = models.AutoField(primary_key=True)
+    dme_status_action = models.TextField(max_length=500, blank=True, null=True)
+    z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+    z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+    z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+    z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+    class Meta:
+        db_table = 'utl_dme_status_actions'

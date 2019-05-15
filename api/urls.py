@@ -16,6 +16,7 @@ router.register(r'packagetype', PackageTypesViewSet, basename='packagetype')
 router.register(r'bookingstatus', BookingStatusViewSet, basename='bookingstatus')
 router.register(r'statushistory', StatusHistoryViewSet, basename='statushistory')
 router.register(r'fp', FPViewSet, basename='fp')
+router.register(r'status', StatusViewSet, basename='status')
 urlpatterns = router.urls
 
 urlpatterns += [
