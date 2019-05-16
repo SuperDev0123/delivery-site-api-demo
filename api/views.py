@@ -1532,6 +1532,20 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['put'])
+    def update_status_history(self, request, pk=None):
+        status_history = Dme_status_history.objects.get(pk=pk)
+        serializer = StatusHistorySerializer(status_history, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class FPViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_all(self, requst, pk=None):
