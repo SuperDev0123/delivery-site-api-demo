@@ -493,6 +493,13 @@ class BookingsViewSet(viewsets.ViewSet):
         vx_freight_provider = self.request.query_params.get('vx_freight_provider', None)
         report_type = self.request.query_params.get('report_type', None)
         email_addr = self.request.query_params.get('emailAddr', None)
+        show_field_name = self.request.query_params.get('showFieldName', None)
+
+        if show_field_name == 'true':
+            show_field_name = True
+        else:
+            show_field_name = False
+
         start_date = self.request.query_params.get('startDate', None)
         end_date = self.request.query_params.get('endDate', None)
 
@@ -522,7 +529,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if vx_freight_provider != 'All':
             queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
 
-        build_xls_and_send(queryset, email_addr, report_type)
+        build_xls_and_send(queryset, email_addr, report_type, str(self.request.user), first_date, last_date, show_field_name)
         return JsonResponse({'status': 'started generate xml'})
 
 class BookingViewSet(viewsets.ViewSet):
