@@ -1477,7 +1477,10 @@ class PackageTypesViewSet(viewsets.ViewSet):
 class BookingStatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_all_booking_status(self, requst, pk=None):
-        all_booking_status = Utl_dme_status.objects.filter(z_show_client_option=1).order_by('sort_order')
+        if requst.user.username == 'dme':
+            all_booking_status = Utl_dme_status.objects.all().order_by('sort_order')
+        else:
+            all_booking_status = Utl_dme_status.objects.filter(z_show_client_option=1).order_by('sort_order')
 
         return_datas = []
         if len(all_booking_status) == 0:
