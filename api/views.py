@@ -1819,9 +1819,10 @@ def download_csv(request):
 def generate_xml(request):
     body = literal_eval(request.body.decode('utf8'))
     booking_ids = body["bookingIds"]
+    vx_freight_provider = body["vx_freight_provider"]
 
     try:
-        booked_list = build_xml(booking_ids)
+        booked_list = build_xml(booking_ids, vx_freight_provider)
 
         if len(booked_list) == 0:
             return JsonResponse({'success': 'success'})
