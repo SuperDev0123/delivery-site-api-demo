@@ -1583,6 +1583,16 @@ class StatusViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({'results': ''})
 
+    @action(detail=False, methods=['post'])
+    def create_status_action(self, request, pk=None):
+        try:
+            utl_dme_status_action = Utl_dme_status_actions(dme_status_action=request.data['newStatusAction'])
+            utl_dme_status_action.save()
+            return JsonResponse({'error': 'Created new status action'});
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({'error': 'Can not create new status action'});
+
     @action(detail=False, methods=['get'])
     def get_status_details(self, requst, pk=None):
         return_data = []
@@ -1599,6 +1609,16 @@ class StatusViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({'results': ''})
+
+    @action(detail=False, methods=['post'])
+    def create_status_detail(self, request, pk=None):
+        try:
+            utl_dme_status_action = Utl_dme_status_details(dme_status_detail=request.data['newStatusDetail'])
+            utl_dme_status_action.save()
+            return JsonResponse({'success': 'Created new status detail'});
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({'error': 'Can not create new status action'});
 
 def handle_uploaded_file_attachments(request, f):
     try:
