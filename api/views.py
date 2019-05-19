@@ -61,7 +61,7 @@ class UserViewSet(viewsets.ViewSet):
             return JsonResponse({'dme_clients': return_data})
 
     @action(detail=False, methods=['get'])
-    def get_user_date_filter_field(self, requst, pk=None):
+    def get_user_date_filter_field(self, request, pk=None):
         user_id = self.request.user.id
         dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
@@ -1109,7 +1109,7 @@ class AttachmentsUploadView(views.APIView):
 
 class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_comms(self, requst, pk=None):
+    def get_comms(self, request, pk=None):
         user_id = self.request.user.id
         booking_id = self.request.GET['bookingId']
         sort_field = self.request.query_params.get('sortField', None)
@@ -1402,7 +1402,7 @@ class CommsViewSet(viewsets.ViewSet):
 
 class NotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_notes(self, requst, pk=None):
+    def get_notes(self, request, pk=None):
         user_id = self.request.user.id
         comm_id = self.request.GET['commId']
 
@@ -1458,7 +1458,7 @@ class NotesViewSet(viewsets.ViewSet):
 
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_packagetypes(self, requst, pk=None):
+    def get_packagetypes(self, request, pk=None):
         packageTypes = Dme_package_types.objects.all()
 
         return_datas = []
@@ -1477,7 +1477,8 @@ class PackageTypesViewSet(viewsets.ViewSet):
 
 class BookingStatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_all_booking_status(self, requst, pk=None):
+    def get_all_booking_status(self, request, pk=None):
+        user_id = request.user.id
         dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
         if dme_employee is not None:
@@ -1504,7 +1505,7 @@ class BookingStatusViewSet(viewsets.ViewSet):
 
 class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_all(self, requst, pk=None):
+    def get_all(self, request, pk=None):
         pk_booking_id = self.request.GET.get('pk_booking_id')
         return_data = []
 
@@ -1556,7 +1557,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
 class FPViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_all(self, requst, pk=None):
+    def get_all(self, request, pk=None):
         return_data = []
 
         try:
@@ -1575,7 +1576,7 @@ class FPViewSet(viewsets.ViewSet):
 
 class StatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
-    def get_status_actions(self, requst, pk=None):
+    def get_status_actions(self, request, pk=None):
         return_data = []
 
         try:
@@ -1602,7 +1603,7 @@ class StatusViewSet(viewsets.ViewSet):
             return JsonResponse({'error': 'Can not create new status action'});
 
     @action(detail=False, methods=['get'])
-    def get_status_details(self, requst, pk=None):
+    def get_status_details(self, request, pk=None):
         return_data = []
 
         try:
@@ -1688,7 +1689,7 @@ class FileUploadView(views.APIView):
         html = prepend_name
         return Response(prepend_name)
 
-def handle_uploaded_file(requst, dme_account_num, f):
+def handle_uploaded_file(request, dme_account_num, f):
     # live code
     with open('/var/www/html/dme_api/media/onedrive/' + str(dme_account_num) + '_' + f.name, 'wb+') as destination:
     # local code(local url)
