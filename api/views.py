@@ -31,6 +31,7 @@ class UserViewSet(viewsets.ViewSet):
     def username(self, request, format=None):
         user_id = self.request.user.id
         dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
         
         if dme_employee is not None:
             return JsonResponse({'username': request.user.username, 'clientname': 'dme'})
@@ -1477,7 +1478,14 @@ class PackageTypesViewSet(viewsets.ViewSet):
 class BookingStatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_all_booking_status(self, requst, pk=None):
-        if requst.user.username == 'dme':
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+
+        if user_type == 'DME':
             all_booking_status = Utl_dme_status.objects.all().order_by('sort_order')
         else:
             all_booking_status = Utl_dme_status.objects.filter(z_show_client_option=1).order_by('sort_order')
@@ -1655,7 +1663,14 @@ class FileUploadView(views.APIView):
         user_id = request.user.id
         username = request.user.username
 
-        if username == 'dme':
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+
+        if user_type == 'dme':
             uploader = request.POST['uploader']
             dme_account_num = DME_clients.objects.get(company_name=uploader).dme_account_num
         else:
