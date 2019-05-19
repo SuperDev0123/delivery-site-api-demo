@@ -1588,9 +1588,9 @@ class StatusViewSet(viewsets.ViewSet):
         try:
             utl_dme_status_action = Utl_dme_status_actions(dme_status_action=request.data['newStatusAction'])
             utl_dme_status_action.save()
-            return JsonResponse({'error': 'Created new status action'});
+            return JsonResponse({'success': 'Created new status action'});
         except Exception as e:
-            print('@Exception', e)
+            # print('@Exception', e)
             return JsonResponse({'error': 'Can not create new status action'});
 
     @action(detail=False, methods=['get'])
@@ -1617,7 +1617,7 @@ class StatusViewSet(viewsets.ViewSet):
             utl_dme_status_action.save()
             return JsonResponse({'success': 'Created new status detail'});
         except Exception as e:
-            print('@Exception', e)
+            # print('@Exception', e)
             return JsonResponse({'error': 'Can not create new status action'});
 
 def handle_uploaded_file_attachments(request, f):
