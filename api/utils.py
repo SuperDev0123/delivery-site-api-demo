@@ -50,7 +50,7 @@ redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
-ACCOUNT_CODE = "SEAWAP"
+ACCOUNT_CODE = "AATEST"
 
 def redis_con():
     try:
