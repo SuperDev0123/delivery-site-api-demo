@@ -1683,7 +1683,7 @@ class FileUploadView(views.APIView):
         else:
             user_type = 'CLIENT'
 
-        if user_type == 'dme':
+        if user_type == 'DME':
             uploader = request.POST['uploader']
             dme_account_num = DME_clients.objects.get(company_name=uploader).dme_account_num
         else:
