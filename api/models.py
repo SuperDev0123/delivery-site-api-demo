@@ -6,6 +6,15 @@ from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Max
+from django.contrib.auth.models import User
+
+class UserPermissions(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
+    can_create_comm = models.BooleanField(blank=True, null=True, default=False)
+
+    class Meta:
+        db_table = 'user_permissions'
 
 class DME_Roles(models.Model):
     id = models.AutoField(primary_key=True)
@@ -314,6 +323,8 @@ class Bookings(models.Model):
     dme_status_detail = models.TextField(max_length=500, blank=True, null=True, default='')
     dme_status_action = models.TextField(max_length=500, blank=True, null=True, default='')
     dme_status_linked_reference_from_fp = models.TextField(max_length=150, blank=True, null=True, default='')
+    rpt_pod_from_file_time = models.DateTimeField(blank=True, null=True)
+    rpt_proof_of_del_from_csv_time = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'dme_bookings'

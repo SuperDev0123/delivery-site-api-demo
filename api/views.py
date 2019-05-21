@@ -1400,6 +1400,18 @@ class CommsViewSet(viewsets.ViewSet):
             print('Exception 02: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['get'])
+    def get_available_creators(self, request, pk=None):
+        users = User.objects.all()
+        creators = []
+
+        for user in users:
+            user_permission = UserPermissions.objects.filter(user_id=user.id).first()
+            if user_permission and user_permission.can_create_comm:
+                creators.append({'username': user.username, 'first_name': user.first_name, 'last_name': user.last_name})
+        
+        return JsonResponse({'creators': creators})
+
 class NotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_notes(self, request, pk=None):
