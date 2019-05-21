@@ -325,6 +325,7 @@ class Bookings(models.Model):
     dme_status_linked_reference_from_fp = models.TextField(max_length=150, blank=True, null=True, default='')
     rpt_pod_from_file_time = models.DateTimeField(blank=True, null=True)
     rpt_proof_of_del_from_csv_time = models.DateTimeField(blank=True, null=True)
+    dev_notes = models.TextField(max_length=1000, blank=True, null=True, default='')
 
     class Meta:
         db_table = 'dme_bookings'
