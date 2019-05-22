@@ -325,7 +325,7 @@ class Bookings(models.Model):
     dme_status_linked_reference_from_fp = models.TextField(max_length=150, blank=True, null=True, default='')
     rpt_pod_from_file_time = models.DateTimeField(blank=True, null=True)
     rpt_proof_of_del_from_csv_time = models.DateTimeField(blank=True, null=True)
-    dev_notes = models.TextField(max_length=1000, blank=True, null=True, default='')
+    z_status_process_notes = models.TextField(max_length=1000, blank=True, null=True, default='')
 
     class Meta:
         db_table = 'dme_bookings'
@@ -1005,6 +1005,7 @@ class Dme_utl_fp_statuses(models.Model):
     fp_lookup_status = models.TextField(max_length=400, blank=True, null=True)
     dme_status = models.CharField(max_length=150, blank=True, null=True)
     if_scan_total_in_booking_greaterthanzero = models.CharField(max_length=32, blank=True, null=True)
+    pod_delivery_override = models.BooleanField(blank=True, null=True, default=False)
     z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
     z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
