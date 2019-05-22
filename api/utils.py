@@ -50,7 +50,7 @@ redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
-ACCOUNT_CODE = "SEAWAP"
+ACCOUNT_CODE = "AATEST"
 
 def redis_con():
     try:
@@ -685,9 +685,9 @@ def build_xml(booking_ids, vx_freight_provider):
                 #start formatting xml file and putting data from db tables
                 root = xml.Element("fd:Manifest", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xmlns:fd': "http://www.ezysend.com/FreightDescription/2.0", 'Version': "2.0", 'Action': "Submit", 'Number': "M"+ ACCOUNT_CODE + str(i).zfill(4), 'Type': "Outbound", 'xsi:schemaLocation': "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd"})
 
-                IndependentContainers = xml.Element("fd:IndependentContainers")
-                root.append(IndependentContainers)
-                xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})                
+                #IndependentContainers = xml.Element("fd:IndependentContainers")
+                #root.append(IndependentContainers)
+                #xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})                
                 cannote_number = ACCOUNT_CODE +str(i).zfill(5)
 
                 #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
