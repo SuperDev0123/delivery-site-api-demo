@@ -778,7 +778,7 @@ def build_xml(booking_ids, vx_freight_provider):
 
                     Items = xml.SubElement(FreightDetails, "fd:Items")
                     for j in range(1, booking_line['e_qty']+1):
-                        Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(j).zfill(5) })
+                        Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(i).zfill(5) })
                         Item.text = "S" + cannote_number + str(j).zfill(3)
 
                 i+= 1
