@@ -1526,6 +1526,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             resultObjects = Dme_status_history.objects.select_related().filter(fk_booking_id=pk_booking_id).order_by('-id')
             for resultObject in resultObjects:
                 return_data.append({
+                    'id': resultObject.id,
                     'notes': resultObject.notes,
                     'status_last': resultObject.status_last,
                     'event_time_stamp': resultObject.event_time_stamp,
@@ -1553,8 +1554,8 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['put'])
-    def update_status_history(self, request, pk=None):
+    @action(detail=True, methods=['put'])
+    def update_status_history(self, request, pk, format=None):
         status_history = Dme_status_history.objects.get(pk=pk)
         serializer = StatusHistorySerializer(status_history, data=request.data)
 
