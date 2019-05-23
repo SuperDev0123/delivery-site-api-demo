@@ -533,6 +533,34 @@ class BookingsViewSet(viewsets.ViewSet):
         build_xls_and_send(queryset, email_addr, report_type, str(self.request.user), first_date, last_date, show_field_name)
         return JsonResponse({'status': 'started generate xml'})
 
+    @action(detail=False, methods=['post'])
+    def calc_collected(self, request, format=None):
+        booking_ids = request.data["bookignIds"]
+        type = request.data["type"]
+
+        try:
+            for id in booking_ids:
+                booking = Bookings.objects.get(id=int(id))
+                booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+                for booking_line in booking_lines:
+                    if type == 'Calc':
+                        if not booking_line.e_qty:
+                            booking_line.e_qty = 0
+                        if not booking_line.e_qty_awaiting_inventory:
+                            booking_line.e_qty_awaiting_inventory = 0
+
+                        booking_line.e_qty_collected = int(booking_line.e_qty) - int(booking_line.e_qty_awaiting_inventory)
+                        booking_line.save()
+                    elif type == 'Clear':
+                        booking_line.e_qty_collected = 0
+                        booking_line.save()
+            return JsonResponse({'success': 'All bookings e_qty_collected has been calculated'})
+        except Exception as e:
+            # print('Exception: ', e)
+            return JsonResponse({'error': 'Got error, please contact support center'})
+
+
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
     
