@@ -996,6 +996,31 @@ class BookingLinesViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return JsonResponse({'error': 'Can not delete BookingLine'})
 
+    @action(detail=False, methods=['post'])
+    def calc_collected(self, request, format=None):
+        ids = request.data["ids"]
+        type = request.data["type"]
+
+        try:
+            for id in ids:
+                booking_line = Booking_lines.objects.get(pk_lines_id=id)
+
+                if type == 'Calc':
+                    if not booking_line.e_qty:
+                        booking_line.e_qty = 0
+                    if not booking_line.e_qty_awaiting_inventory:
+                        booking_line.e_qty_awaiting_inventory = 0
+
+                    booking_line.e_qty_collected = int(booking_line.e_qty) - int(booking_line.e_qty_awaiting_inventory)
+                    booking_line.save()
+                elif type == 'Clear':
+                    booking_line.e_qty_collected = 0
+                    booking_line.save()
+            return JsonResponse({'success': 'All bookings e_qty_collected has been calculated'})
+        except Exception as e:
+            print('Exception: ', e)
+            return JsonResponse({'error': 'Got error, please contact support center'})
+
 class BookingLineDetailsViewSet(viewsets.ViewSet):
     serializer_class = BookingLineDetailSerializer
 
