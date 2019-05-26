@@ -676,6 +676,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
                         'b_status_API': booking.b_status_API,
                         'z_lock_status': booking.z_lock_status,
+                        'tally_delivered': booking.tally_delivered,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
@@ -786,6 +787,7 @@ class BookingViewSet(viewsets.ViewSet):
                         'total_Cubic_Meter_override': booking.total_Cubic_Meter_override,
                         'b_status_API': booking.b_status_API,
                         'z_lock_status': booking.z_lock_status,
+                        'tally_delivered': booking.tally_delivered,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:

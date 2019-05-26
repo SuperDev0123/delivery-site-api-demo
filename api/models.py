@@ -326,6 +326,7 @@ class Bookings(models.Model):
     rpt_pod_from_file_time = models.DateTimeField(blank=True, null=True)
     rpt_proof_of_del_from_csv_time = models.DateTimeField(blank=True, null=True)
     z_status_process_notes = models.TextField(max_length=1000, blank=True, null=True, default='')
+    tally_delivered = models.IntegerField(blank=True, default=0, null=True)
 
     class Meta:
         db_table = 'dme_bookings'
