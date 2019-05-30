@@ -1081,6 +1081,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('AI1', 'Adjusted Delivered Qty', bold)
             row = 1
 
+        e_qty_total = 0
+        e_qty_scanned_fp_total = 0
+
         for booking in bookings:
             try:
                 booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -1158,9 +1161,16 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 33, booking_line.e_qty_shortages)
                     worksheet.write(row, col + 34, booking_line.e_qty_adjusted_delivered)
 
+                    e_qty_total = e_qty_total + booking_line.e_qty
+                    e_qty_scanned_fp_total = e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
+
                     row += 1
+
             except Booking_lines.DoesNotExist:
                 continue
+
+        worksheet.write(row, col + 16, e_qty_total)
+        worksheet.write(row, col + 28, e_qty_scanned_fp_total)
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
