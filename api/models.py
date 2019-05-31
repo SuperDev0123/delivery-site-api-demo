@@ -947,7 +947,7 @@ class Dme_comm_notes(models.Model):
     id = models.AutoField(primary_key=True)
     comm = models.ForeignKey(Dme_comm_and_task, on_delete=models.CASCADE)
     username = models.CharField(verbose_name=_('User'), max_length=64, blank=True, null=True)
-    dme_notes = models.TextField(verbose_name=_('DME Notes'), max_length=4096, blank=True, null=True)
+    dme_notes = models.TextField(verbose_name=_('DME Notes'), blank=True, null=True)
     dme_notes_type = models.CharField(verbose_name=_('DME Notes Type'), max_length=64, blank=True, null=True)
     dme_notes_no = models.IntegerField(verbose_name=_('DME Notes No'), blank=False, null=False, default=1)
     note_date_created = models.DateField(verbose_name=_('Date First'), blank=True, null=True)
