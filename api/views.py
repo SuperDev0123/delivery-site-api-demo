@@ -1435,6 +1435,8 @@ class CommsViewSet(viewsets.ViewSet):
                     'comm': serializer.data['id'],
                     'dme_notes': request.data['dme_notes'],
                     'dme_notes_type': request.data['notes_type'],
+                    'note_date_updated': request.data['due_by_date'],
+                    'note_time_updated': request.data['due_by_time'],
                     'dme_notes_no': 1,
                     'username': 'Stephen',
                 }
@@ -1446,13 +1448,13 @@ class CommsViewSet(viewsets.ViewSet):
                     else:
                         return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 except Exception as e:
-                    print('Exception 01: ', e)
+                    # print('Exception 01: ', e)
                     return Response(note_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception 02: ', e)
+            # print('Exception 02: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
@@ -1522,6 +1524,17 @@ class NotesViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['delete'])
+    def delete_note(self, request, pk, format=None):
+        note = Dme_comm_notes.objects.get(pk=pk)
+
+        try:
+            note.delete()
+            return JsonResponse({'status': 'Successfully deleted a note'})
+        except Exception as e:
+            print('Exception: ', e)
+            return JsonResponse({'error': 'Can not delete Note'})
 
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
