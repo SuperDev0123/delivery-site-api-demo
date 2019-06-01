@@ -14,6 +14,7 @@ from datetime import datetime, date, timedelta
 from time import gmtime, strftime
 from django.utils import timezone
 from ast import literal_eval
+from pydash import _
 import pytz
 import os
 import io
@@ -1171,6 +1172,8 @@ class CommsViewSet(viewsets.ViewSet):
         sort_type = self.request.query_params.get('sortType', None)
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None) 
+        sort_by_date = self.request.query_params.get('sortByDate', None) 
+        dropdown_filter = self.request.query_params.get('dropdownFilter', None) 
 
         if booking_id == '':
             user_id = int(self.request.user.id)
@@ -1339,6 +1342,9 @@ class CommsViewSet(viewsets.ViewSet):
                     except KeyError:
                         column_filter = ''
 
+                if dropdown_filter == 'Opened' and len(comms) > 0:
+                    comms = comms.filter(closed=False)
+
                 for index, comm in enumerate(comms):
                     return_data = {
                         'b_bookingID_Visual': booking.b_bookingID_Visual,
@@ -1365,6 +1371,10 @@ class CommsViewSet(viewsets.ViewSet):
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
                     }
                     return_datas.append(return_data)
+
+            if sort_by_date == 'true':
+                return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
+
             return JsonResponse({'comms': return_datas})
         else:
             booking = Bookings.objects.get(id=booking_id)
