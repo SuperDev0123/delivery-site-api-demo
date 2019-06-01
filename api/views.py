@@ -678,6 +678,10 @@ class BookingViewSet(viewsets.ViewSet):
                         'b_status_API': booking.b_status_API,
                         'z_lock_status': booking.z_lock_status,
                         'tally_delivered': booking.tally_delivered,
+                        'dme_status_history_notes': booking.dme_status_history_notes,
+                        'dme_status_detail': booking.dme_status_detail,
+                        'dme_status_action': booking.dme_status_action,
+                        'dme_status_linked_reference_from_fp': booking.dme_status_linked_reference_from_fp,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
@@ -789,6 +793,10 @@ class BookingViewSet(viewsets.ViewSet):
                         'b_status_API': booking.b_status_API,
                         'z_lock_status': booking.z_lock_status,
                         'tally_delivered': booking.tally_delivered,
+                        'dme_status_history_notes': booking.dme_status_history_notes,
+                        'dme_status_detail': booking.dme_status_detail,
+                        'dme_status_action': booking.dme_status_action,
+                        'dme_status_linked_reference_from_fp': booking.dme_status_linked_reference_from_fp,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
