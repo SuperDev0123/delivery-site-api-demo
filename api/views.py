@@ -1486,6 +1486,22 @@ class CommsViewSet(viewsets.ViewSet):
         
         return JsonResponse({'creators': creators})
 
+    @action(detail=True, methods=['delete'])
+    def delete_comm(self, request, pk, format=None):
+        comm = Dme_comm_and_task.objects.get(pk=pk)
+
+        try:
+            notes = Dme_comm_notes.objects.filter(comm=comm)
+
+            for note in notes:
+                note.delete()
+
+            comm.delete()
+            return JsonResponse({'status': 'Successfully deleted a comm'})
+        except Exception as e:
+            print('Exception: ', e)
+            return JsonResponse({'error': 'Can not delete Comm'})
+
 class NotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_notes(self, request, pk=None):
