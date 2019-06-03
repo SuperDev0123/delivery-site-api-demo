@@ -17,6 +17,7 @@ router.register(r'bookingstatus', BookingStatusViewSet, basename='bookingstatus'
 router.register(r'statushistory', StatusHistoryViewSet, basename='statushistory')
 router.register(r'fp', FPViewSet, basename='fp')
 router.register(r'status', StatusViewSet, basename='status')
+router.register(r'api_bcl', ApiBCLViewSet, basename='api_bcl')
 urlpatterns = router.urls
 
 urlpatterns += [

@@ -561,7 +561,6 @@ class BookingsViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return JsonResponse({'error': 'Got error, please contact support center'})
 
-
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
     
@@ -1727,6 +1726,31 @@ class StatusViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({'error': 'Can not create new status action'});
+
+class ApiBCLViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['get'])
+    def get_api_bcls(self, request, pk=None):
+        booking_id = request.GET['bookingId']
+        booking = Bookings.objects.get(id=int(booking_id))
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Api_booking_confirmation_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+            for resultObject in resultObjects:
+                return_data.append({
+                    'id': resultObject.id,
+                    'fk_booking_id': resultObject.fk_booking_id,
+                    'fk_booking_line_id': resultObject.fk_booking_line_id,
+                    'label_code': resultObject.label_code,
+                    'client_item_reference': resultObject.client_item_reference,
+                    'fp_event_date': resultObject.fp_event_date,
+                    'fp_event_time': resultObject.fp_event_time,
+                })
+            return JsonResponse({'results': return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({'results': ''})
 
 def handle_uploaded_file_attachments(request, f):
     try:
