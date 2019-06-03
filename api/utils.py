@@ -823,7 +823,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     filename = username + '_' + xls_type + '_' + str(len(bookings)) + '_' + str(start_date.strftime("%d-%m-%Y")) + '_' + str(end_date.strftime("%d-%m-%Y")) + '_' + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S")) + ".xlsx"
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
-    worksheet.set_column(0, 21, width=25)
+    worksheet.set_column(0, 25, width=25)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
     col = 0
 
@@ -852,6 +852,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('U1', 'delivery_actual_kpi_days', bold)
             worksheet.write('V1', 'de_Deliver_By_Date(Date)', bold)
             worksheet.write('W1', 'de_Deliver_By_Date(Time)', bold)
+            worksheet.write('X1', 'dme_status_history_notes', bold)
+            worksheet.write('Y1', 'Total Qty', bold)
+            worksheet.write('Z1', 'Total Scanned Qty', bold)
 
             worksheet.write('A2', 'Booked Date', bold)
             worksheet.write('B2', 'Booked Time', bold)
@@ -876,6 +879,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('U2', 'Actual Delivery KPI (Days)', bold)
             worksheet.write('V2', 'Store Booking Date', bold)
             worksheet.write('W2', 'Store Booking Time', bold)
+            worksheet.write('X1', 'Status History Note', bold)
+            worksheet.write('Y1', 'Total Qty', bold)
+            worksheet.write('Z1', 'Total Scanned Qty', bold)
             row = 2
         else:
             worksheet.write('A1', 'Booked Date', bold)
@@ -904,6 +910,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 1
 
         for booking in bookings:
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+            e_qty_total = 0
+            e_qty_scanned_fp_total = 0
+
+            for booking_line in booking_lines:
+                if booking_line.e_qty is not None:
+                    e_qty_total = e_qty_total + booking_line.e_qty
+
+                if booking_line.e_qty_scanned_fp is not None:
+                    e_qty_scanned_fp_total = e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
+
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write(row, col + 0, booking.b_dateBookedDate.strftime("%d-%m-%Y"))
                 worksheet.write(row, col + 1, booking.b_dateBookedDate.strftime("%H:%M:%S"))
@@ -964,6 +981,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             else:
                 worksheet.write(row, col + 21, "")
                 worksheet.write(row, col + 22, "")
+
+            worksheet.write(row, col + 23, booking.dme_status_history_notes)
+            worksheet.write(row, col + 24, e_qty_total)
+            worksheet.write(row, col + 25, e_qty_scanned_fp_total)
 
             row += 1
 
