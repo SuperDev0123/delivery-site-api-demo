@@ -1499,7 +1499,7 @@ class CommsViewSet(viewsets.ViewSet):
             comm.delete()
             return JsonResponse({'status': 'Successfully deleted a comm'})
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({'error': 'Can not delete Comm'})
 
 class NotesViewSet(viewsets.ViewSet):
@@ -1566,7 +1566,7 @@ class NotesViewSet(viewsets.ViewSet):
             note.delete()
             return JsonResponse({'status': 'Successfully deleted a note'})
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({'error': 'Can not delete Note'})
 
 class PackageTypesViewSet(viewsets.ViewSet):
@@ -1652,7 +1652,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['put'])
@@ -1666,7 +1666,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print('Exception: ', e)
+            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FPViewSet(viewsets.ViewSet):
