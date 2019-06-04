@@ -1173,6 +1173,18 @@ class AttachmentsUploadView(views.APIView):
 class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def get_comms(self, request, pk=None):
+        def convert_date(date):
+            if not date:
+                date = datetime(2100, 1, 1).date()
+
+            return date
+
+        def reverse_date(object):
+            if object['due_by_date'] == datetime(2100, 1, 1).date():
+                object['due_by_date'] = None
+
+            return object
+
         user_id = self.request.user.id
         booking_id = self.request.GET['bookingId']
         sort_field = self.request.query_params.get('sortField', None)
@@ -1180,7 +1192,10 @@ class CommsViewSet(viewsets.ViewSet):
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None) 
         sort_by_date = self.request.query_params.get('sortByDate', None) 
-        dropdown_filter = self.request.query_params.get('dropdownFilter', None) 
+        active_tab_ind = int(self.request.query_params.get('activeTabInd', None))
+
+        if not sort_field:
+            sort_by_date = 'true'
 
         if booking_id == '':
             user_id = int(self.request.user.id)
@@ -1240,7 +1255,7 @@ class CommsViewSet(viewsets.ViewSet):
                 except KeyError:
                     column_filter = ''
                 try:
-                    column_filter = column_filters['vx_freight_Provider']
+                    column_filter = column_filters['vx_freight_provider']
                     bookings = bookings.filter(vx_freight_provider__icontains=column_filter)
                 except KeyError:
                     column_filter = ''
@@ -1349,14 +1364,21 @@ class CommsViewSet(viewsets.ViewSet):
                     except KeyError:
                         column_filter = ''
 
-                if dropdown_filter == 'Opened' and len(comms) > 0:
+                opened_comms = comms.filter(closed=False)
+                closed_comms = comms.filter(closed=True)
+                opened_cnt = len(opened_comms)
+                closed_cnt = len(closed_comms)
+
+                if active_tab_ind == 1 and len(comms) > 0:
                     comms = comms.filter(closed=False)
+                elif active_tab_ind == 2 and len(comms) > 0:
+                    comms = comms.filter(closed=True)
 
                 for index, comm in enumerate(comms):
                     return_data = {
                         'b_bookingID_Visual': booking.b_bookingID_Visual,
                         'b_status': booking.b_status,
-                        'vx_freight_Provider': booking.vx_freight_provider,
+                        'vx_freight_provider': booking.vx_freight_provider,
                         'puCompany': booking.puCompany,
                         'deToCompanyName': booking.deToCompanyName,
                         'v_FPBookingNumber': booking.v_FPBookingNumber,
@@ -1372,7 +1394,7 @@ class CommsViewSet(viewsets.ViewSet):
                         'dme_notes_type': comm.dme_notes_type,
                         'dme_notes_external': comm.dme_notes_external,
                         'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
-                        'due_by_date': comm.due_by_date,
+                        'due_by_date': convert_date(comm.due_by_date),
                         'due_by_time': comm.due_by_time,
                         'dme_action': comm.dme_action,
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
@@ -1382,7 +1404,9 @@ class CommsViewSet(viewsets.ViewSet):
             if sort_by_date == 'true':
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
 
-            return JsonResponse({'comms': return_datas})
+            return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
+
+            return JsonResponse({'comms': return_datas, 'opened_cnt': opened_cnt, 'closed_cnt': closed_cnt})
         else:
             booking = Bookings.objects.get(id=booking_id)
             comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -1399,6 +1423,16 @@ class CommsViewSet(viewsets.ViewSet):
                 comms = comms.filter(id__icontains=column_filter)
             except KeyError:
                 column_filter = ''
+
+            opened_comms = comms.filter(closed=False)
+            closed_comms = comms.filter(closed=True)
+            opened_cnt = len(opened_comms)
+            closed_cnt = len(closed_comms)
+
+            if active_tab_ind == 1 and len(comms) > 0:
+                comms = comms.filter(closed=False)
+            elif active_tab_ind == 2 and len(comms) > 0:
+                comms = comms.filter(closed=True)
 
             return_datas = []
             if len(comms) == 0:
@@ -1419,13 +1453,19 @@ class CommsViewSet(viewsets.ViewSet):
                         'dme_notes_type': comm.dme_notes_type,
                         'dme_notes_external': comm.dme_notes_external,
                         'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
-                        'due_by_date': comm.due_by_date,
+                        'due_by_date': convert_date(comm.due_by_date),
                         'due_by_time': comm.due_by_time,
                         'dme_action': comm.dme_action,
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
                     }
                     return_datas.append(return_data)
-                return JsonResponse({'comms': return_datas})
+
+                if sort_by_date == 'true':
+                    return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
+
+                return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
+
+                return JsonResponse({'comms': return_datas, 'opened_cnt': opened_cnt, 'closed_cnt': closed_cnt})
 
     @action(detail=True, methods=['put'])
     def update_comm(self, request, pk, format=None):
