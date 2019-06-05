@@ -1441,6 +1441,12 @@ class CommsViewSet(viewsets.ViewSet):
                 for index, comm in enumerate(comms):
                     return_data = {
                         'index': index + 1,
+                        'b_bookingID_Visual': booking.b_bookingID_Visual,
+                        'b_status': booking.b_status,
+                        'vx_freight_provider': booking.vx_freight_provider,
+                        'puCompany': booking.puCompany,
+                        'deToCompanyName': booking.deToCompanyName,
+                        'v_FPBookingNumber': booking.v_FPBookingNumber,
                         'id': comm.id,
                         'fk_booking_id': comm.fk_booking_id,
                         'priority_of_log': comm.priority_of_log,
