@@ -833,9 +833,10 @@ class BookingViewSet(viewsets.ViewSet):
         bookingData = request.data
         bookingData['b_bookingID_Visual'] = Bookings.get_max_b_bookingID_Visual() + 1
         bookingData['pk_booking_id'] = str(uuid.uuid1()) + '_' + str(time.time())
+
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.data['client_item_references']
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

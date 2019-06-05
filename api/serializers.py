@@ -7,6 +7,11 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('pk_id_client_warehouses', 'warehousename', 'warehouse_address1', 'warehouse_address2', 'warehouse_state', 'warehouse_suburb', 'warehouse_phone_main', 'warehouse_hours', 'type', 'client_warehouse_code')
 
 class BookingSerializer(serializers.ModelSerializer):
+    client_item_references = serializers.SerializerMethodField()
+
+    def get_client_item_references(self, obj):
+        return Bookings.get_client_item_references(obj) 
+
     class Meta:
         model = Bookings
         fields = '__all__'
