@@ -362,6 +362,22 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ''
 
+    def get_client_item_references(self):
+        try:
+            client_item_references = ''
+            booking_lines = Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
+
+            for booking_line in booking_lines:
+                if booking_line.client_item_reference is not None:
+                    if len(client_item_references) == 0:
+                        client_item_references = client_item_references + booking_line.client_item_reference
+                    else:
+                        client_item_references = client_item_references + ", " + booking_line.client_item_reference
+
+            return client_item_references
+        except Exception as e:
+            # print('Exception: ', e)
+            return ''
 
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)

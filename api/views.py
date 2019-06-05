@@ -619,7 +619,6 @@ class BookingViewSet(viewsets.ViewSet):
                     prevBookingId = prevBooking.id
 
                 return_data = []
-
                 if booking is not None:
                     return_data = {
                         'id': booking.id,
@@ -681,6 +680,19 @@ class BookingViewSet(viewsets.ViewSet):
                         'dme_status_detail': booking.dme_status_detail,
                         'dme_status_action': booking.dme_status_action,
                         'dme_status_linked_reference_from_fp': booking.dme_status_linked_reference_from_fp,
+                        'pu_PickUp_Avail_From_Date_DME': booking.pu_PickUp_Avail_From_Date_DME,
+                        'pu_PickUp_Avail_Time_Hours': booking.pu_PickUp_Avail_Time_Hours,
+                        'pu_PickUp_Avail_Time_Minutes': booking.pu_PickUp_Avail_Time_Minutes,
+                        'pu_PickUp_By_Date_DME': booking.pu_PickUp_By_Date_DME,
+                        'pu_PickUp_By_Time_Hours_DME': booking.pu_PickUp_By_Time_Hours_DME,
+                        'pu_PickUp_By_Time_Minutes_DME': booking.pu_PickUp_By_Time_Minutes_DME,
+                        'de_Deliver_From_Date': booking.de_Deliver_From_Date,
+                        'de_Deliver_From_Hours': booking.de_Deliver_From_Hours,
+                        'de_Deliver_From_Minutes': booking.de_Deliver_From_Minutes,
+                        'de_Deliver_By_Date': booking.de_Deliver_By_Date,
+                        'de_Deliver_By_Hours': booking.de_Deliver_By_Hours,
+                        'de_Deliver_By_Minutes': booking.de_Deliver_By_Minutes,
+                        'client_item_references': booking.get_client_item_references(),
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
@@ -796,6 +808,19 @@ class BookingViewSet(viewsets.ViewSet):
                         'dme_status_detail': booking.dme_status_detail,
                         'dme_status_action': booking.dme_status_action,
                         'dme_status_linked_reference_from_fp': booking.dme_status_linked_reference_from_fp,
+                        'pu_PickUp_Avail_From_Date_DME': booking.pu_PickUp_Avail_From_Date_DME,
+                        'pu_PickUp_Avail_Time_Hours': booking.pu_PickUp_Avail_Time_Hours,
+                        'pu_PickUp_Avail_Time_Minutes': booking.pu_PickUp_Avail_Time_Minutes,
+                        'pu_PickUp_By_Date_DME': booking.pu_PickUp_By_Date_DME,
+                        'pu_PickUp_By_Time_Hours_DME': booking.pu_PickUp_By_Time_Hours_DME,
+                        'pu_PickUp_By_Time_Minutes_DME': booking.pu_PickUp_By_Time_Minutes_DME,
+                        'de_Deliver_From_Date': booking.de_Deliver_From_Date,
+                        'de_Deliver_From_Hours': booking.de_Deliver_From_Hours,
+                        'de_Deliver_From_Minutes': booking.de_Deliver_From_Minutes,
+                        'de_Deliver_By_Date': booking.de_Deliver_By_Date,
+                        'de_Deliver_By_Hours': booking.de_Deliver_By_Hours,
+                        'de_Deliver_By_Minutes': booking.de_Deliver_By_Minutes,
+                        'client_item_references': booking.get_client_item_references(),
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
