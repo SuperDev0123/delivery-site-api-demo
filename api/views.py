@@ -1276,6 +1276,8 @@ class CommsViewSet(viewsets.ViewSet):
                     column_filter = ''
 
             return_datas = []
+            opened_comms_cnt = 0
+            closed_comms_cnt = 0
             for booking in bookings:
                 comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
 
@@ -1366,8 +1368,8 @@ class CommsViewSet(viewsets.ViewSet):
 
                 opened_comms = comms.filter(closed=False)
                 closed_comms = comms.filter(closed=True)
-                opened_cnt = len(opened_comms)
-                closed_cnt = len(closed_comms)
+                opened_comms_cnt = opened_comms_cnt + len(opened_comms)
+                closed_comms_cnt = closed_comms_cnt + len(closed_comms)
 
                 if active_tab_ind == 1 and len(comms) > 0:
                     comms = comms.filter(closed=False)
@@ -1406,7 +1408,7 @@ class CommsViewSet(viewsets.ViewSet):
 
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
 
-            return JsonResponse({'comms': return_datas, 'opened_cnt': opened_cnt, 'closed_cnt': closed_cnt})
+            return JsonResponse({'comms': return_datas, 'cnts': { 'opened_cnt': opened_comms_cnt, 'closed_cnt': closed_comms_cnt, 'all_cnt': len(return_datas), 'selected_cnt': -1}})
         else:
             booking = Bookings.objects.get(id=booking_id)
             comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -1426,17 +1428,43 @@ class CommsViewSet(viewsets.ViewSet):
 
             opened_comms = comms.filter(closed=False)
             closed_comms = comms.filter(closed=True)
-            opened_cnt = len(opened_comms)
-            closed_cnt = len(closed_comms)
 
             if active_tab_ind == 1 and len(comms) > 0:
                 comms = comms.filter(closed=False)
             elif active_tab_ind == 2 and len(comms) > 0:
                 comms = comms.filter(closed=True)
 
+            # Get All Comms Count #
+            all_comms_cnt = 0
+            user_id = int(self.request.user.id)
+            dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            if dme_employee is not None:
+                user_type = 'DME'
+            else:
+                user_type = 'CLIENT'
+                client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+                client_employee_role = client_employee.get_role()
+                client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
+
+            # DME & Client filter
+            if user_type == 'DME':
+                bookings = Bookings.objects.all()
+            else:
+                if client_employee_role == 'company':
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+                elif client_employee_role == 'warehouse':
+                    employee_warehouse_id = client_employee.warehouse_id
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+
+            for each_booking in bookings:
+                all_comms = Dme_comm_and_task.objects.filter(fk_booking_id=each_booking.pk_booking_id)
+                all_comms_cnt = all_comms_cnt + len(all_comms)
+            #########################
+
+
             return_datas = []
             if len(comms) == 0:
-                return JsonResponse({'comms': []})
+                return JsonResponse({'comms': [], 'cnts': {'opened_cnt': 0, 'closed_cnt': 0, 'selected_cnt': 0, 'all_cnt': len(all_comms)}})
             else:
                 for index, comm in enumerate(comms):
                     return_data = {
@@ -1471,7 +1499,7 @@ class CommsViewSet(viewsets.ViewSet):
 
                 return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
 
-                return JsonResponse({'comms': return_datas, 'opened_cnt': opened_cnt, 'closed_cnt': closed_cnt})
+                return JsonResponse({'comms': return_datas, 'cnts': {'opened_cnt': len(opened_comms), 'closed_cnt': len(closed_comms), 'selected_cnt': len(comms), 'all_cnt': all_comms_cnt}})
 
     @action(detail=True, methods=['put'])
     def update_comm(self, request, pk, format=None):
