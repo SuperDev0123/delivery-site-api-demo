@@ -1848,7 +1848,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             else:
                 worksheet.write(row, col + 27, "")
 
-            worksheet.write(1, col + 28, sydney_today.strftime("%d-%m-%Y"))
+            worksheet.write(0, col + 28, sydney_today.strftime("%d-%m-%Y"))
 
             row += 1
 
