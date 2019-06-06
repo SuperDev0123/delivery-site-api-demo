@@ -2006,6 +2006,6 @@ def build_xls_and_send(bookings, email_addr, report_type, username, start_date, 
         send_email(
             [email_addr], # Recipient email address(list)
             'XLS Report from Deliver-Me', # Subject of email
-            'Here is the excel report(Bookings & Booking Lines & Booking With Gaps) you generated from Deliver-Me.', # Message of email
+            'Here is the excel report(Bookings & Booking Lines & Booking With Gaps & Whse) you generated from Deliver-Me.', # Message of email
             [filepath_booking, filepath_booking_line, filepath_booking_with_gaps, filepath_whse] # Attachment file path(list)
         )
