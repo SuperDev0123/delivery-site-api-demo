@@ -25,7 +25,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_xls_and_send, send_email, make_3digit
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_pdf, build_xls_and_send, send_email, make_3digit
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -2105,6 +2105,24 @@ def generate_xml(request):
             return JsonResponse({'error': 'Found set has booked bookings', 'booked_list': booked_list})
     except Exception as e:
         # print('generate_xml error: ', e)
+        return JsonResponse({'error': 'error'})
+
+@api_view(['POST'])
+@permission_classes((AllowAny,))
+def generate_pdf(request):
+    body = literal_eval(request.body.decode('utf8'))
+    booking_ids = body["bookingIds"]
+    vx_freight_provider = body["vx_freight_provider"]
+
+    try:
+        results_cnt = build_pdf(booking_ids, vx_freight_provider)
+
+        if results_cnt > 0:
+            return JsonResponse({'success': 'success'})
+        else:
+            return JsonResponse({'error': 'No one has been generated'})
+    except Exception as e:
+        # print('generate_pdf error: ', e)
         return JsonResponse({'error': 'error'})
 
 @api_view(['GET'])
