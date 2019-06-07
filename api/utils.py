@@ -1767,7 +1767,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             query_with = ''
             if e_qty_total == e_qty_scanned_fp_total:
-                query_with = 'Freight Provider Name'
+                query_with = booking.vx_freight_provider
             elif e_qty_scanned_fp_total == 0:
                 query_with = 'Warehouse: Nothing sent yet, warehouse to send ' + str(e_qty_total) + ' for the row'
             else:
