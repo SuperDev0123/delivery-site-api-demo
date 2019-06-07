@@ -1230,7 +1230,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 17, booking.dme_status_history_notes)
 
             if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
-                worksheet.write_datetime(row, col + 0, booking.s_21_ActualDeliveryTimeStamp, date_format)
+                worksheet.write_datetime(row, col + 18, booking.s_21_ActualDeliveryTimeStamp, date_format)
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
               worksheet.write(row, col + 19, "Y")
@@ -1410,8 +1410,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 17, booking.b_bookingID_Visual)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
-                        worksheet.write_datetime(row, col + 18, booking.fp_event_date, date_format)
-                        worksheet.write_datetime(row, col + 19, booking.fp_event_time, time_format)
+                        worksheet.write_datetime(row, col + 18, api_bcl.fp_event_date, date_format)
+                        worksheet.write_datetime(row, col + 19, api_bcl.fp_event_time, time_format)
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                         worksheet.write_datetime(row, col + 20, booking.de_Deliver_By_Date, date_format)
