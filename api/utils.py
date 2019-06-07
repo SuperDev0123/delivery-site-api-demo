@@ -1096,6 +1096,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     worksheet.set_column(0, 27, width=25)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
     date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
+    time_format = workbook.add_format({'num_format': 'hh:mm:ss'})
     col = 0
 
     if xls_type == 'Bookings':
@@ -1201,11 +1202,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     e_qty_scanned_fp_total = e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                worksheet.write(row, col + 0, booking.b_dateBookedDate.strftime("%d-%m-%Y"))
-                worksheet.write(row, col + 1, booking.b_dateBookedDate.strftime("%H:%M:%S"))
-            else:
-                worksheet.write(row, col + 0, "")
-                worksheet.write(row, col + 1, "")
+                worksheet.write_datetime(row, col + 0, booking.b_dateBookedDate, date_format)
+                worksheet.write_datetime(row, col + 1, booking.b_dateBookedDate, time_format)
 
             worksheet.write(row, col + 2, booking.pu_Address_State)
 
@@ -1232,9 +1230,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 17, booking.dme_status_history_notes)
 
             if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
-                worksheet.write(row, col + 18, booking.s_21_ActualDeliveryTimeStamp.strftime("%d-%m-%Y"))
-            else:
-                worksheet.write(row, col + 18, "")
+                worksheet.write_datetime(row, col + 0, booking.s_21_ActualDeliveryTimeStamp, date_format)
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
               worksheet.write(row, col + 19, "Y")
@@ -1259,11 +1255,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 24, booking.delivery_actual_kpi_days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
-                worksheet.write(row, col + 25, booking.de_Deliver_By_Date.strftime("%d-%m-%Y"))
-                worksheet.write(row, col + 26, booking.de_Deliver_By_Date.strftime("%H:%M:%S"))
-            else:
-                worksheet.write(row, col + 25, "")
-                worksheet.write(row, col + 26, "")
+                worksheet.write_datetime(row, col + 25, booking.de_Deliver_By_Date, date_format)
+                worksheet.write_datetime(row, col + 26, booking.de_Deliver_By_Date, time_format)
 
             row += 1
 
@@ -1394,17 +1387,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 0, booking.v_FPBookingNumber)
 
                     if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                        worksheet.write(row, col + 1, booking.b_dateBookedDate.strftime("%d-%m-%Y"))
-                        worksheet.write(row, col + 2, booking.b_dateBookedDate.strftime("%H:%M:%S"))
-                    else:
-                        worksheet.write(row, col + 1, "")
-                        worksheet.write(row, col + 2, "")
+                        worksheet.write_datetime(row, col + 1, booking.b_dateBookedDate, date_format)
+                        worksheet.write_datetime(row, col + 2, booking.b_dateBookedDate, time_format)
 
                     api_bcl = Api_booking_confirmation_lines.objects.filter(fk_booking_line_id=booking_line.pk_lines_id).first()
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write(row, col + 3, api_bcl.fp_event_date.strftime("%d-%m-%Y") + ' ' + api_bcl.fp_event_time.strftime("%H:%M:%S"))
-                    else:
-                        worksheet.write(row, col + 3, "")
 
                     worksheet.write(row, col + 4, booking.vx_freight_provider)
                     worksheet.write(row, col + 5, booking.puCompany)
@@ -1422,16 +1410,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 17, booking.b_bookingID_Visual)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
-                        worksheet.write(row, col + 18, api_bcl.fp_event_date.strftime("%d-%m-%Y"))
-                        worksheet.write(row, col + 19, api_bcl.fp_event_time.strftime("%H:%M:%S"))
-                    else:
-                        worksheet.write(row, col + 18, "")
-                        worksheet.write(row, col + 19, "")
+                        worksheet.write_datetime(row, col + 18, booking.fp_event_date, date_format)
+                        worksheet.write_datetime(row, col + 19, booking.fp_event_time, time_format)
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
-                        worksheet.write(row, col + 20, booking.de_Deliver_By_Date.strftime("%d-%m-%Y"))
-                    else:
-                        worksheet.write(row, col + 20, "")
+                        worksheet.write_datetime(row, col + 20, booking.de_Deliver_By_Date, date_format)
 
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
@@ -1592,11 +1575,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         gaps = gaps + ", " + booking_line.client_item_reference
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                worksheet.write(row, col + 0, booking.b_dateBookedDate.strftime("%d-%m-%Y"))
-                worksheet.write(row, col + 1, booking.b_dateBookedDate.strftime("%H:%M:%S"))
-            else:
-                worksheet.write(row, col + 0, "")
-                worksheet.write(row, col + 1, "")
+                worksheet.write_datetime(row, col + 0, booking.b_dateBookedDate, date_format)
+                worksheet.write_datetime(row, col + 1, booking.b_dateBookedDate, time_format)
 
             worksheet.write(row, col + 2, booking.pu_Address_State)
 
@@ -1623,9 +1603,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 17, booking.dme_status_history_notes)
 
             if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
-                worksheet.write(row, col + 18, booking.s_21_ActualDeliveryTimeStamp.strftime("%d-%m-%Y"))
-            else:
-                worksheet.write(row, col + 18, "")
+                worksheet.write_datetime(row, col + 18, booking.s_21_ActualDeliveryTimeStamp, date_format)
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
               worksheet.write(row, col + 19, "Y")
@@ -1650,11 +1628,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 24, booking.delivery_actual_kpi_days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
-                worksheet.write(row, col + 25, booking.de_Deliver_By_Date.strftime("%d-%m-%Y"))
-                worksheet.write(row, col + 26, booking.de_Deliver_By_Date.strftime("%H:%M:%S"))
-            else:
-                worksheet.write(row, col + 25, "")
-                worksheet.write(row, col + 26, "")
+                worksheet.write_datetime(row, col + 25, booking.de_Deliver_By_Date, date_format)
+                worksheet.write_datetime(row, col + 26, booking.de_Deliver_By_Date, time_format)
 
             worksheet.write(row, col + 27, gaps)
 
@@ -1771,17 +1746,23 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(row, col + 0, booking.b_dateBookedDate, date_format)
 
-            delivery_kpi_days = 0
-            days_early_late = 'None - not booked'
-            if booking.delivery_kpi_days is not None:
-                delivery_kpi_days = int(booking.delivery_kpi_days)
-            sydney = pytz.timezone('Australia/Sydney')
-            sydney_today = sydney.localize(datetime.now())
-            sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
-            if booking.b_dateBookedDate is not None:
-                days_early_late = (booking.b_dateBookedDate + timedelta(days=delivery_kpi_days) - sydney_today).days
+            if (
+                booking.b_status is not None
+                and'delivered' in booking.b_status.lower()
+                and booking.s_21_ActualDeliveryTimeStamp is not None
+                and booking.b_dateBookedDate is not None
+            ):
+                delivery_kpi_days = 0
+                days_early_late = 'None - not booked'
+                if booking.delivery_kpi_days is not None:
+                    delivery_kpi_days = int(booking.delivery_kpi_days)
+                sydney = pytz.timezone('Australia/Sydney')
+                sydney_today = sydney.localize(datetime.now())
+                sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
+                if booking.b_dateBookedDate is not None:
+                    days_early_late = (booking.b_dateBookedDate + timedelta(days=delivery_kpi_days) - sydney_today).days
 
-            worksheet.write(row, col + 1, days_early_late)
+                worksheet.write(row, col + 1, days_early_late)
 
             query_with = ''
             if e_qty_total == e_qty_scanned_fp_total:
