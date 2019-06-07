@@ -797,11 +797,11 @@ def build_xml(booking_ids, vx_freight_provider):
                     ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions",  **{ 'Length': str(booking_line['e_dimLength']), 'Width': str(booking_line['e_dimWidth']), 'Height': str(booking_line['e_dimHeight']) })
 
                     ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
-                    ItemWeight.text = (str(format(booking_line['e_Total_KG_weight']/booking_line['e_qty']), '.2f') if booking_line['e_qty'] > 0 else 0)
+                    ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
 
                     ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
                     if booking_line['e_1_Total_dimCubicMeter'] is not None:
-                        ItemVolume.text = (str(format(booking_line['e_1_Total_dimCubicMeter'], '.2f')))
+                        ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
 
                     Items = xml.SubElement(FreightDetails, "fd:Items")
                     for j in range(1, booking_line['e_qty']+1):
@@ -817,15 +817,14 @@ def build_xml(booking_ids, vx_freight_provider):
                 with open(local_filepath + filename, "wb") as fh:
                     tree.write(fh, encoding='UTF-8', xml_declaration=True)
                     
-                #start update booking status in dme_booking table
-                sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                adr2 = ('Booked XML', str(datetime.utcnow()), booking['pk_booking_id'])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                # start update booking status in dme_booking table
+                # sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
+                # adr2 = ('Booked XML', str(datetime.utcnow()), booking['pk_booking_id'])
+                # mycursor.execute(sql2, adr2)
+                # mysqlcon.commit()
             except Exception as e:
                 print('@300 TAZ XML - ', e)
                 return e
-        #end loop through data fetched from dme_bookings table 
 
     mysqlcon.close()
 
