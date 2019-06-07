@@ -1091,7 +1091,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     #end check if xmls folder exists
 
     filename = username + '_' + xls_type + '_' + str(len(bookings)) + '_' + str(start_date.strftime("%d-%m-%Y")) + '_' + str(end_date.strftime("%d-%m-%Y")) + '_' + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S")) + ".xlsx"
-    workbook = xlsxwriter.Workbook(filename)
+    workbook = xlsxwriter.Workbook(filename, {'remove_timezone': True})
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 27, width=25)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
