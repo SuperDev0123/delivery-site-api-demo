@@ -632,7 +632,7 @@ def build_xml(booking_ids, vx_freight_provider):
                         Height.text = str(booking_line['e_dimHeight'])
 
                     DeadWeight = xml.SubElement(Item, "DeadWeight")
-                    DeadWeight.text = (str(format(booking_line['e_Total_KG_weight']/booking_line['e_qty']), '.2f') if booking_line['e_qty'] > 0 else 0)
+                    DeadWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
 
                     SSCCs = xml.SubElement(Item, "SSCCs")
                     SSCC = xml.SubElement(SSCCs, "SSCC")
