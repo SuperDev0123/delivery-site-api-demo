@@ -632,7 +632,7 @@ def build_xml(booking_ids, vx_freight_provider):
                         Height.text = str(booking_line['e_dimHeight'])
 
                     DeadWeight = xml.SubElement(Item, "DeadWeight")
-                    DeadWeight.text = str(booking_line['e_Total_KG_weight']/booking_line['e_qty'])
+                    DeadWeight.text = (str(format(booking_line['e_Total_KG_weight']/booking_line['e_qty']), '.2f') if booking_line['e_qty'] > 0 else 0)
 
                     SSCCs = xml.SubElement(Item, "SSCCs")
                     SSCC = xml.SubElement(SSCCs, "SSCC")
@@ -783,6 +783,9 @@ def build_xml(booking_ids, vx_freight_provider):
                 DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
                 DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
 
+                FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
+                FPBookingNumber.text = booking['vx_FPBookingNumber']
+
                 #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
                 #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
                 
@@ -794,10 +797,11 @@ def build_xml(booking_ids, vx_freight_provider):
                     ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions",  **{ 'Length': str(booking_line['e_dimLength']), 'Width': str(booking_line['e_dimWidth']), 'Height': str(booking_line['e_dimHeight']) })
 
                     ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
-                    ItemWeight.text = (str(booking_line['e_Total_KG_weight']/booking_line['e_qty']) if booking_line['e_qty'] > 0 else 0)
+                    ItemWeight.text = (str(format(booking_line['e_Total_KG_weight']/booking_line['e_qty']), '.2f') if booking_line['e_qty'] > 0 else 0)
 
                     ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
-                    ItemVolume.text = (str(booking_line['e_1_Total_dimCubicMeter']))
+                    if booking_line['e_1_Total_dimCubicMeter'] is not None:
+                        ItemVolume.text = (str(format(booking_line['e_1_Total_dimCubicMeter'], '.2f')))
 
                     Items = xml.SubElement(FreightDetails, "fd:Items")
                     for j in range(1, booking_line['e_qty']+1):
