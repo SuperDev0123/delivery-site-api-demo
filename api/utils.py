@@ -1073,7 +1073,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         # print(dir(exc_type), fname, exc_tb.tb_lineno)
-        # print("Error: " + str(e))
+        print("Error: " + str(e))
 
     mysqlcon.close()
     return i - 1
