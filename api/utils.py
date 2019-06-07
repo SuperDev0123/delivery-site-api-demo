@@ -1763,6 +1763,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     days_early_late = (booking.b_dateBookedDate + timedelta(days=delivery_kpi_days) - sydney_today).days
 
                 worksheet.write(row, col + 1, days_early_late)
+                worksheet.write(0, col + 28, sydney_today.strftime("%d/%m/%Y"))
 
             query_with = ''
             if e_qty_total == e_qty_scanned_fp_total:
@@ -1832,8 +1833,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write_datetime(row, col + 27, booking.de_Deliver_By_Date, date_format)
-
-            worksheet.write(0, col + 28, sydney_today.strftime("%d/%m/%Y"))
 
             row += 1
 
