@@ -973,6 +973,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     Story.append(Spacer(1, 35))
 
                     barcode = 'S'+booking["v_FPBookingNumber"]+str(j).zfill(3)
+                    print('@1 - ', barcode)
                     barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.3)
                     
                     tbl_data = [
