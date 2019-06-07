@@ -818,12 +818,12 @@ def build_xml(booking_ids, vx_freight_provider):
                     tree.write(fh, encoding='UTF-8', xml_declaration=True)
                     
                 # start update booking status in dme_booking table
-                sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                adr2 = ('Booked XML', str(datetime.utcnow()), booking['pk_booking_id'])
+                sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
+                adr2 = ('Booked XML', str(datetime.utcnow()), cannote_number, booking['pk_booking_id'])
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
             except Exception as e:
-                print('@300 TAZ XML - ', e)
+                # print('@300 TAZ XML - ', e)
                 return e
 
     mysqlcon.close()
@@ -973,7 +973,6 @@ def build_pdf(booking_ids, vx_freight_provider):
                     Story.append(Spacer(1, 35))
 
                     barcode = 'S'+booking["v_FPBookingNumber"]+str(j).zfill(3)
-                    print('@1 - ', barcode)
                     barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.3)
                     
                     tbl_data = [
