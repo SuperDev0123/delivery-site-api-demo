@@ -1842,8 +1842,15 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_url(row, col + 23, 'http://13.55.64.102/static/imgs/' + booking.z_pod_signed_url, string=booking.z_pod_signed_url)
 
             worksheet.write(row, col + 24, booking.delivery_kpi_days)
-            worksheet.write(row, col + 25, booking.delivery_days_from_booked)
-            worksheet.write(row, col + 26, booking.delivery_actual_kpi_days)
+
+            if (
+                booking.b_status is not None
+                and'delivered' in booking.b_status.lower()
+                and booking.s_21_ActualDeliveryTimeStamp is not None
+                and booking.b_dateBookedDate is not None
+            ):
+                worksheet.write(row, col + 25, booking.delivery_days_from_booked)
+                worksheet.write(row, col + 26, (booking.b_dateBookedDate - booking.s_21_ActualDeliveryTimeStamp).days())
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write(row, col + 27, booking.de_Deliver_By_Date.strftime("%d-%m-%Y"))
