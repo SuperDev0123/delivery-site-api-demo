@@ -1095,6 +1095,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     worksheet = workbook.add_worksheet()
     worksheet.set_column(0, 27, width=25)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
+    date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
     col = 0
 
     if xls_type == 'Bookings':
@@ -1768,9 +1769,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     e_qty_scanned_fp_total = e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                worksheet.write(row, col + 0, booking.b_dateBookedDate.strftime("%d-%m-%Y"))
-            else:
-                worksheet.write(row, col + 0, "")
+                date_val = booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                worksheet.write_datetime(row, col + 0, date_val, date_format)
 
             delivery_kpi_days = 0
             days_early_late = 'None - not booked'
@@ -1819,9 +1819,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 19, booking.b_client_order_num)
             
             if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
-                worksheet.write(row, col + 20, booking.s_21_ActualDeliveryTimeStamp.strftime("%d-%m-%Y"))
-            else:
-                worksheet.write(row, col + 20, "")
+                date_val = booking.s_21_ActualDeliveryTimeStamp.strftime("%d/%m/%Y")
+                worksheet.write_datetime(row, col + 20, date_val, date_format)
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) > 0):
               worksheet.write(row, col + 21, "Y")
@@ -1853,9 +1852,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write(row, col + 26, (booking.b_dateBookedDate - booking.s_21_ActualDeliveryTimeStamp).days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
-                worksheet.write(row, col + 27, booking.de_Deliver_By_Date.strftime("%d-%m-%Y"))
-            else:
-                worksheet.write(row, col + 27, "")
+                date_val = booking.de_Deliver_By_Date.strftime("%d/%m/%Y")
+                worksheet.write_datetime(row, col + 27, date_val, date_format)
 
             worksheet.write(0, col + 28, sydney_today.strftime("%d-%m-%Y"))
 
