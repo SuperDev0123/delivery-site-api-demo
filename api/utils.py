@@ -1850,7 +1850,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.b_dateBookedDate is not None
             ):
                 worksheet.write(row, col + 25, booking.delivery_days_from_booked)
-                worksheet.write(row, col + 26, (booking.b_dateBookedDate - booking.s_21_ActualDeliveryTimeStamp).days())
+                worksheet.write(row, col + 26, (booking.b_dateBookedDate - booking.s_21_ActualDeliveryTimeStamp).days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write(row, col + 27, booking.de_Deliver_By_Date.strftime("%d-%m-%Y"))
