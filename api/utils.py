@@ -784,7 +784,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
 
                 FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
-                FPBookingNumber.text = booking['vx_FPBookingNumber']
+                FPBookingNumber.text = booking['v_FPBookingNumber']
 
                 #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
                 #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
@@ -823,7 +823,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
             except Exception as e:
-                # print('@300 TAZ XML - ', e)
+                print('@300 TAZ XML - ', e)
                 return e
         #end loop through data fetched from dme_bookings table 
 
