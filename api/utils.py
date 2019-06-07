@@ -853,7 +853,7 @@ def build_pdf(booking_ids, vx_freight_provider):
             local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
         
         if not os.path.exists(local_filepath):
-                os.makedirs(local_filepath)
+            os.makedirs(local_filepath)
         #end check if pdfs folder exists
 
         #start loop through data fetched from dme_bookings table         
@@ -1055,6 +1055,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                 # fh = open(path+'/'+filename, 'r')
                 # Store configuration file values
                 # if(os.stat(path+'/'+filename).st_size > 0 and os.path.isfile(path+'/'+filename)):
+            print('@1 - ', filename)
             sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
             adr2 = (filename, booking['pk_booking_id'])
             mycursor.execute(sql2, adr2)
