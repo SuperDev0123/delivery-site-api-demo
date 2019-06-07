@@ -818,10 +818,10 @@ def build_xml(booking_ids, vx_freight_provider):
                     tree.write(fh, encoding='UTF-8', xml_declaration=True)
                     
                 # start update booking status in dme_booking table
-                # sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                # adr2 = ('Booked XML', str(datetime.utcnow()), booking['pk_booking_id'])
-                # mycursor.execute(sql2, adr2)
-                # mysqlcon.commit()
+                sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
+                adr2 = ('Booked XML', str(datetime.utcnow()), booking['pk_booking_id'])
+                mycursor.execute(sql2, adr2)
+                mysqlcon.commit()
             except Exception as e:
                 print('@300 TAZ XML - ', e)
                 return e
