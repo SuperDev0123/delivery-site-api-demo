@@ -1055,10 +1055,10 @@ def build_pdf(booking_ids, vx_freight_provider):
                 # fh = open(path+'/'+filename, 'r')
                 # Store configuration file values
                 # if(os.stat(path+'/'+filename).st_size > 0 and os.path.isfile(path+'/'+filename)):
-            print('@1 - ', filename)
             sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
             adr2 = (filename, booking['pk_booking_id'])
             mycursor.execute(sql2, adr2)
+            mysqlcon.commit()
             # except FileNotFoundError as e:
                 # print("Error1: "+str(e))
                 # Keep preset values
