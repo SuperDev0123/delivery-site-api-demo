@@ -1751,7 +1751,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if (
                 booking.b_status is not None
-                and b_status == 'Delivered'
+                and booking.b_status == 'Delivered'
                 and booking.s_21_ActualDeliveryTimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
