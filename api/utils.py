@@ -1957,7 +1957,7 @@ def build_xls_and_send(bookings, email_addr, report_type, username, start_date, 
         filepath = build_xls(bookings, 'Bookings', username, start_date, end_date, show_field_name)
         send_email(
             [email_addr], # Recipient email address(list)
-            'XLS Report from Deliver-Me', # Subject of email
+            'Bookings XLS Report from Deliver-Me', # Subject of email
             'Here is the excel report(Bookings) you generated from Deliver-Me.', # Message of email
             [filepath] # Attachment file path(list)
         )
@@ -1965,7 +1965,7 @@ def build_xls_and_send(bookings, email_addr, report_type, username, start_date, 
         filepath = build_xls(bookings, 'BookingLines', username, start_date, end_date, show_field_name)
         send_email(
             [email_addr], # Recipient email address(list)
-            'XLS Report from Deliver-Me', # Subject of email
+            'BookingLines XLS Report from Deliver-Me', # Subject of email
             'Here is the excel report(Booking Lines) you generated from Deliver-Me.', # Message of email
             [filepath] # Attachment file path(list)
         )
@@ -1973,7 +1973,7 @@ def build_xls_and_send(bookings, email_addr, report_type, username, start_date, 
         filepath = build_xls(bookings, 'BookingsWithGaps', username, start_date, end_date, show_field_name)
         send_email(
             [email_addr], # Recipient email address(list)
-            'XLS Report from Deliver-Me', # Subject of email
+            'Bookings with Gaps XLS Report from Deliver-Me', # Subject of email
             'Here is the excel report(Booking With Gaps) you generated from Deliver-Me.', # Message of email
             [filepath] # Attachment file path(list)
         )
@@ -1981,7 +1981,7 @@ def build_xls_and_send(bookings, email_addr, report_type, username, start_date, 
         filepath = build_xls(bookings, 'Whse', username, start_date, end_date, show_field_name)
         send_email(
             [email_addr], # Recipient email address(list)
-            'XLS Report from Deliver-Me', # Subject of email
+            'Whse XLS Report from Deliver-Me', # Subject of email
             'Here is the excel report(Whse) you generated from Deliver-Me.', # Message of email
             [filepath] # Attachment file path(list)
         )
@@ -1992,7 +1992,7 @@ def build_xls_and_send(bookings, email_addr, report_type, username, start_date, 
         filepath_whse = build_xls(bookings, 'Whse', username, start_date, end_date, show_field_name)
         send_email(
             [email_addr], # Recipient email address(list)
-            'XLS Report from Deliver-Me', # Subject of email
+            'All XLS Report from Deliver-Me', # Subject of email
             'Here is the excel report(Bookings & Booking Lines & Booking With Gaps & Whse) you generated from Deliver-Me.', # Message of email
             [filepath_booking, filepath_booking_line, filepath_booking_with_gaps, filepath_whse] # Attachment file path(list)
         )
