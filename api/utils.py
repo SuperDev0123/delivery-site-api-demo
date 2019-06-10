@@ -1793,7 +1793,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 elif e_qty_scanned_fp_total is not 0:
                     query_with = 'Warehouse: Partial qty of ' + str(e_qty_total - e_qty_scanned_fp_total) + ' short, warehouse to send'
             else:
-                query_with = dme_status_action
+                query_with = booking.dme_status_action
 
             worksheet.write(row, col + 2, query_with)
             worksheet.write(row, col + 3, booking.b_client_sales_inv_num)
