@@ -1751,7 +1751,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if (
                 booking.b_status is not None
-                and'delivered' in booking.b_status.lower()
+                and b_status == 'Delivered'
                 and booking.s_21_ActualDeliveryTimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
@@ -1832,12 +1832,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if (
                 booking.b_status is not None
-                and'delivered' in booking.b_status.lower()
+                and booking.b_status == 'Delivered'
                 and booking.s_21_ActualDeliveryTimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
-                worksheet.write(row, col + 25, booking.delivery_days_from_booked)
-                worksheet.write(row, col + 26, (booking.b_dateBookedDate - booking.s_21_ActualDeliveryTimeStamp).days)
+                worksheet.write(row, col + 25, (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
+                worksheet.write(row, col + 26, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write_datetime(row, col + 27, booking.de_Deliver_By_Date, date_format)
