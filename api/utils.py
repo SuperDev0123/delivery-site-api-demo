@@ -1769,12 +1769,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write(0, col + 28, sydney_today.strftime("%d/%m/%Y"))
 
             query_with = ''
-            if e_qty_total == e_qty_scanned_fp_total:
+            if (booking.dme_status_action is None or booking.dme_status_action == ''):
                 query_with = booking.vx_freight_provider
-            elif e_qty_scanned_fp_total == 0:
-                query_with = 'Warehouse: Nothing sent yet, warehouse to send ' + str(e_qty_total) + ' for the row'
+
+                if e_qty_total == e_qty_scanned_fp_total:
+                    query_with = 'Freight Provider'
+                elif e_qty_scanned_fp_total == 0:
+                    query_with = 'Warehouse: Nothing sent yet, warehouse to send ' + str(e_qty_total)
+                elif e_qty_scanned_fp_total is not 0:
+                    query_with = 'Warehouse: Partial qty of ' + str(e_qty_total - e_qty_scanned_fp_total) + ' short, warehouse to send'
             else:
-                query_with = 'Warehouse: Partial qty of ' + str(e_qty_total - e_qty_scanned_fp_total) + ' short, warehouse to send'
+                query_with = dme_status_action
 
             worksheet.write(row, col + 2, query_with)
             worksheet.write(row, col + 3, booking.b_client_sales_inv_num)
