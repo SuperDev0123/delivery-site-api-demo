@@ -25,7 +25,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_pdf, build_xls_and_send, send_email, make_3digit
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_pdf, build_xls_and_send, send_email, make_3digit, build_manifest
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -560,6 +560,121 @@ class BookingsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return JsonResponse({'error': 'Got error, please contact support center'})
+
+    @action(detail=False, methods=['get'])
+    def get_bookings_4_manifest(self, request, format=None):
+        user_id = int(self.request.user.id)
+        dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
+
+        if dme_employee is not None:
+            user_type = 'DME'
+        else:
+            user_type = 'CLIENT'
+            client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
+            client_employee_role = client_employee.get_role()
+            client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
+
+        puPickUpAvailFrom_Date = request.GET['puPickUpAvailFrom_Date']
+        vx_freight_provider = request.GET['vx_freight_provider']
+
+        # DME & Client filter
+        if user_type == 'DME':
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == 'company':
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == 'warehouse':
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+
+        queryset = queryset.filter(puPickUpAvailFrom_Date=puPickUpAvailFrom_Date)
+        queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+        queryset = queryset.filter(b_status__icontains='booked')
+
+        # Prefilter count
+        errors_to_correct = 0
+        missing_labels = 0
+        to_manifest = 0
+        to_process = 0
+        closed = 0
+
+        for booking in queryset:
+            if booking.b_error_Capture is not None and len(booking.b_error_Capture) > 0:
+                errors_to_correct += 1
+            if booking.z_label_url is None or len(booking.z_label_url) == 0:
+                missing_labels += 1
+            if booking.b_status == 'Booked':
+                to_manifest += 1
+            if booking.b_status == 'Ready to booking':
+                to_process += 1
+            if booking.b_status == 'Closed':
+                closed += 1
+
+        # Sort
+        queryset = queryset.order_by('-id')
+
+        # Count
+        bookings_cnt = queryset.count()
+
+        bookings = queryset
+        ret_data = [];
+
+        for booking in bookings:
+            ret_data.append({
+                'id': booking.id, 
+                'b_bookingID_Visual': booking.b_bookingID_Visual, 
+                'b_dateBookedDate': booking.b_dateBookedDate, 
+                'puPickUpAvailFrom_Date': booking.puPickUpAvailFrom_Date, 
+                'b_clientReference_RA_Numbers': booking.b_clientReference_RA_Numbers, 
+                'b_status': booking.b_status, 
+                'vx_freight_provider': booking.vx_freight_provider, 
+                'v_FPBookingNumber': booking.v_FPBookingNumber,
+                'vx_serviceName': booking.vx_serviceName, 
+                's_05_LatestPickUpDateTimeFinal': booking.s_05_LatestPickUpDateTimeFinal, 
+                's_06_LatestDeliveryDateTimeFinal': booking.s_06_LatestDeliveryDateTimeFinal, 
+                'puCompany': booking.puCompany,
+                'deToCompanyName': booking.deToCompanyName,
+                'z_label_url': booking.z_label_url,
+                'b_error_Capture': booking.b_error_Capture,
+                'z_downloaded_shipping_label_timestamp': booking.z_downloaded_shipping_label_timestamp,
+                'pk_booking_id': booking.pk_booking_id,
+                'pu_Address_street_1': booking.pu_Address_Street_1,
+                'pu_Address_street_2': booking.pu_Address_street_2,
+                'pu_Address_Suburb': booking.pu_Address_Suburb,
+                'pu_Address_City': booking.pu_Address_City,
+                'pu_Address_State': booking.pu_Address_State,
+                'pu_Address_PostalCode': booking.pu_Address_PostalCode,
+                'pu_Address_Country': booking.pu_Address_Country,
+                'de_To_Address_street_1': booking.de_To_Address_Street_1,
+                'de_To_Address_street_2': booking.de_To_Address_Street_2,
+                'de_To_Address_Suburb': booking.de_To_Address_Suburb,
+                'de_To_Address_City': booking.de_To_Address_City,
+                'de_To_Address_State': booking.de_To_Address_State,
+                'de_To_Address_PostalCode': booking.de_To_Address_PostalCode,
+                'de_To_Address_Country': booking.de_To_Address_Country,
+                's_20_Actual_Pickup_TimeStamp': booking.s_20_Actual_Pickup_TimeStamp,
+                's_21_Actual_Delivery_TimeStamp': booking.s_21_Actual_Delivery_TimeStamp,
+                'b_status_API': booking.b_status_API,
+                'z_downloaded_pod_timestamp': booking.z_downloaded_pod_timestamp,
+                'z_pod_url': booking.z_pod_url,
+                'z_pod_signed_url': booking.z_pod_signed_url,
+                'has_comms': booking.has_comms(),
+                'b_client_sales_inv_num': booking.b_client_sales_inv_num,
+                'z_lock_status': booking.z_lock_status,
+                'business_group': booking.get_group_name(),
+                'de_Deliver_By_Date': booking.de_Deliver_By_Date,
+                'de_Deliver_From_Date': booking.de_Deliver_From_Date,
+                'dme_delivery_status_category': booking.get_dme_delivery_status_category(),
+                'dme_status_detail': booking.dme_status_detail,
+                'dme_status_action': booking.dme_status_action,
+                'vx_fp_del_eta_time': booking.vx_fp_del_eta_time,
+            })
+        
+        return JsonResponse({
+            'bookings': ret_data, 'count': bookings_cnt, 
+            'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest, 
+            'missing_labels': missing_labels, 'to_process': to_process, 
+            'closed': closed})
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
@@ -2106,6 +2221,24 @@ def generate_xml(request):
     except Exception as e:
         # print('generate_xml error: ', e)
         return JsonResponse({'error': 'error'})
+
+@api_view(['POST'])
+@permission_classes((AllowAny,))
+def generate_mainifest(request):
+    body = literal_eval(request.body.decode('utf8'))
+    booking_ids = body["bookingIds"]
+
+    try:
+        result = build_manifest(booking_ids)
+
+        if type(result) == 'int' and result > 0:
+            return JsonResponse({'success': 'success'})
+        else:
+            return JsonResponse({'error': 'Found set has manifested bookings', 'manifested_list': result})
+    except Exception as e:
+        print('generate_mainifest error: ', e)
+        return JsonResponse({'error': 'error'})
+
 
 @api_view(['POST'])
 @permission_classes((AllowAny,))

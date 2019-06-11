@@ -328,6 +328,7 @@ class Bookings(models.Model):
     rpt_proof_of_del_from_csv_time = models.DateTimeField(blank=True, null=True)
     z_status_process_notes = models.TextField(max_length=1000, blank=True, null=True, default='')
     tally_delivered = models.IntegerField(blank=True, default=0, null=True)
+    manifest_timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'dme_bookings'
@@ -1094,3 +1095,15 @@ class Utl_dme_status_actions(models.Model):
 
     class Meta:
         db_table = 'utl_dme_status_actions'
+
+class Dme_maifest_log(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True) 
+    manifest_url = models.CharField(max_length=200, blank=True, null=True)
+    z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
+    z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
+    z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
+    z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
+
+    class Meta:
+        db_table = 'dme_maifest_log'
