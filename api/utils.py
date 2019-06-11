@@ -1261,8 +1261,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
-                worksheet.write(row, col + 23, (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
-                worksheet.write(row, col + 24, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
+                worksheet.write(row, col + 23, (booking.s_21_ActualDeliveryTimeStamp.date() - booking.b_dateBookedDate.date()).days)
+                worksheet.write(row, col + 24, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp.date() - booking.b_dateBookedDate.date()).days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write_datetime(row, col + 25, booking.de_Deliver_By_Date, date_format)
@@ -1641,8 +1641,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
-                worksheet.write(row, col + 23, (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
-                worksheet.write(row, col + 24, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
+                worksheet.write(row, col + 23, (booking.s_21_ActualDeliveryTimeStamp.date() - booking.b_dateBookedDate.date()).days)
+                worksheet.write(row, col + 24, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp.date() - booking.b_dateBookedDate.date()).days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write_datetime(row, col + 25, booking.de_Deliver_By_Date, date_format)
@@ -1851,7 +1851,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.b_dateBookedDate is not None
             ):
                 worksheet.write(row, col + 25, (booking.s_21_ActualDeliveryTimeStamp.date() - booking.b_dateBookedDate.date()).days)
-                worksheet.write(row, col + 26, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp - booking.b_dateBookedDate).days)
+                worksheet.write(row, col + 26, booking.delivery_kpi_days - (booking.s_21_ActualDeliveryTimeStamp.date() - booking.b_dateBookedDate.date()).days)
 
             if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                 worksheet.write_datetime(row, col + 27, booking.de_Deliver_By_Date, date_format)
