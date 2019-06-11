@@ -541,7 +541,7 @@ def build_xml(booking_ids, vx_freight_provider):
         for booking in bookings:
             try:
                 #start db query for fetching data from dme_booking_lines table
-                sql1 = "SELECT e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
+                sql1 = "SELECT pk_lines_id, e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
                         FROM dme_booking_lines \
                         WHERE fk_booking_id = %s"
                 adr1 = (booking['pk_booking_id'], )
@@ -622,18 +622,33 @@ def build_xml(booking_ids, vx_freight_provider):
                     Width = xml.SubElement(Item, "Width")
                     if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '':
                         Width.text = str('1')
+
+                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
+                        adr2 = (1, booking_line['pk_lines_id'])
+                        mycursor.execute(sql2, adr2)
+                        mysqlcon.commit()
                     else:
                         Width.text = str(booking_line['e_dimWidth'])
 
                     Length = xml.SubElement(Item, "Length")
                     if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '':
                         Length.text = str('1')
+
+                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
+                        adr2 = (1, booking_line['pk_lines_id'])
+                        mycursor.execute(sql2, adr2)
+                        mysqlcon.commit()
                     else:
                         Length.text = str(booking_line['e_dimLength'])
 
                     Height = xml.SubElement(Item, "Height")
                     if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '':
                         Height.text = str('1')
+
+                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
+                        adr2 = (1, booking_line['pk_lines_id'])
+                        mycursor.execute(sql2, adr2)
+                        mysqlcon.commit()
                     else:
                         Height.text = str(booking_line['e_dimHeight'])
 
@@ -796,11 +811,38 @@ def build_xml(booking_ids, vx_freight_provider):
                 #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
                 
                 for booking_line in booking_lines:
-                    FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ 'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', 'Quantity': str(booking_line['e_qty']), 'Commodity': (item_type(booking_line['e_item_type']) if booking_line['e_item_type'] else ''), 'CustomDescription': str(booking_line['e_item']) if booking_line['e_item'] else '' })
+                    FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ \
+                        'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', \
+                        'Quantity': str(booking_line['e_qty']), \
+                        'Commodity': (item_type(booking_line['e_item_type']) if booking_line['e_item_type'] else ''), \
+                        'CustomDescription': str(booking_line['e_item']) if booking_line['e_item'] else '' \
+                    })
                     if booking_line['e_dangerousGoods']:
                         DangerousGoods = xml.SubElement(FreightDetails, "fd:DangerousGoods",  **{ 'Class': "1", 'UNNumber': "1003" })
                     
-                    ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions",  **{ 'Length': str(booking_line['e_dimLength']), 'Width': str(booking_line['e_dimWidth']), 'Height': str(booking_line['e_dimHeight']) })
+                    ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions", **{ \
+                        'Length': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' else str(booking_line['e_dimLength']), \
+                        'Width': str('1') if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' else str(booking_line['e_dimWidth']), \
+                        'Height': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' else str(booking_line['e_dimHeight']) \
+                    })
+
+                    if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '':
+                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
+                        adr2 = (1, booking_line['pk_lines_id'])
+                        mycursor.execute(sql2, adr2)
+                        mysqlcon.commit()
+
+                    if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '':
+                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
+                        adr2 = (1, booking_line['pk_lines_id'])
+                        mycursor.execute(sql2, adr2)
+                        mysqlcon.commit()
+
+                    if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '':
+                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
+                        adr2 = (1, booking_line['pk_lines_id'])
+                        mycursor.execute(sql2, adr2)
+                        mysqlcon.commit()
 
                     ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
                     ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
