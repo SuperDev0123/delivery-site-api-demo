@@ -874,7 +874,7 @@ def build_pdf(booking_ids, vx_freight_provider):
             #end pdf file name using naming convention
 
             date = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
-            doc = SimpleDocTemplate(local_filepath+filename,pagesize=(6*inch, 4*inch), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
+            doc = SimpleDocTemplate(local_filepath + filename, pagesize=(6*inch, 4*inch), rightMargin=10, leftMargin=10, topMargin=10, bottomMargin=10)
             Story=[]
 
             j = 1
@@ -923,9 +923,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                         ('RIGHTPADDING',(0,0),(-1,-1), 0)
                         ])
                     Story.append(shell_table)
-
                     Story.append(Spacer(1, 10))
-
                     Story.append(HRFlowable(
                         width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=0, spaceAfter=0, hAlign='CENTER', vAlign='MIDDLE', dash=None
                     ))
@@ -974,7 +972,7 @@ def build_pdf(booking_ids, vx_freight_provider):
 
                     barcode = 'S'+booking["v_FPBookingNumber"]+str(j).zfill(3)
                     barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.3)
-                    
+
                     tbl_data = [
                         [Paragraph('<font size=8>Item: </font>', styles["Normal"]), Paragraph('<font size=12><b>%s of %s</b></font>' % (j, totalQty), style_left) ]
                     ]
@@ -986,7 +984,6 @@ def build_pdf(booking_ids, vx_freight_provider):
                     ]
                     tbl = Table(tbl_data, colWidths=(180, 500), rowHeights=(12), hAlign='LEFT', style = [("VALIGN", (0,0), (-1,-1), "MIDDLE"),('TOPPADDING',(0,0),(-1,-1), 0),('BOTTOMPADDING',(0,0),(-1,-1), 0),('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
                     Story.append(tbl)                
-                    
                     Story.append(HRFlowable(
                         width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
                     ))
@@ -1005,7 +1002,6 @@ def build_pdf(booking_ids, vx_freight_provider):
                         ('RIGHTPADDING',(0,0),(-1,-1), 0)
                     ])
                     Story.append(tbl)
-
                     Story.append(HRFlowable(
                         width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=2, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
                     ))
@@ -1023,6 +1019,13 @@ def build_pdf(booking_ids, vx_freight_provider):
                         ('LEFTPADDING',(0,0),(-1,-1), 0),
                         ('RIGHTPADDING',(0,0),(-1,-1), 0)
                     ])
+                    Story.append(tbl)
+
+                    tbl_data = [
+                        [Paragraph('<font size=8>Client Item Reference: </font>', styles["Normal"]),
+                        Paragraph('<font size=8><b>%s</b></font>' % booking_line['client_item_reference'], style_left)]
+                    ]
+                    tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
                     Story.append(tbl)
 
                     Story.append(PageBreak())
@@ -1055,10 +1058,10 @@ def build_pdf(booking_ids, vx_freight_provider):
                 # fh = open(path+'/'+filename, 'r')
                 # Store configuration file values
                 # if(os.stat(path+'/'+filename).st_size > 0 and os.path.isfile(path+'/'+filename)):
-            sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
-            adr2 = (filename, booking['pk_booking_id'])
-            mycursor.execute(sql2, adr2)
-            mysqlcon.commit()
+            #sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
+            #adr2 = (filename, booking['pk_booking_id'])
+            #mycursor.execute(sql2, adr2)
+            #mysqlcon.commit()
             # except FileNotFoundError as e:
                 # print("Error1: "+str(e))
                 # Keep preset values
