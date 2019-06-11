@@ -1096,7 +1096,7 @@ class Utl_dme_status_actions(models.Model):
     class Meta:
         db_table = 'utl_dme_status_actions'
 
-class Dme_maifest_log(models.Model):
+class Dme_manifest_log(models.Model):
     id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True) 
     manifest_url = models.CharField(max_length=200, blank=True, null=True)

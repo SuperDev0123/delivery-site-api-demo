@@ -67,7 +67,8 @@ redis_port = 6379
 redis_password = ""
 
 ### TAZ constants ###
-ACCOUNT_CODE = "AATEST"
+# ACCOUNT_CODE = "AATEST"
+ACCOUNT_CODE = "SEAWAPO"
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 style_left = ParagraphStyle(name='left', parent=styles['Normal'], alignment=TA_LEFT)
@@ -744,10 +745,10 @@ def build_xml(booking_ids, vx_freight_provider):
                 #IndependentContainers = xml.Element("fd:IndependentContainers")
                 #root.append(IndependentContainers)
                 #xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})                
-                cannote_number = ACCOUNT_CODE +str(i).zfill(5)
+                connote_number = ACCOUNT_CODE + str(i).zfill(5)
 
                 #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
-                consignment = xml.Element("fd:Consignment", **{'Number': cannote_number })
+                consignment = xml.Element("fd:Consignment", **{'Number': connote_number })
                 root.append(consignment)
 
                 Carrier = xml.SubElement(consignment, "fd:Carrier")
@@ -866,7 +867,7 @@ def build_xml(booking_ids, vx_freight_provider):
                     Items = xml.SubElement(FreightDetails, "fd:Items")
                     for j in range(1, booking_line['e_qty']+1):
                         Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(i).zfill(5) })
-                        Item.text = "S" + cannote_number + str(j).zfill(3)
+                        Item.text = "S" + connote_number + str(j).zfill(3)
 
                 i+= 1
                 #end formatting xml file and putting data from db tables
@@ -879,7 +880,7 @@ def build_xml(booking_ids, vx_freight_provider):
                     
                 # start update booking status in dme_booking table
                 sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                adr2 = ('Booked XML', str(datetime.utcnow()), cannote_number, booking['pk_booking_id'])
+                adr2 = ('Booked XML', str(datetime.utcnow()), connote_number, booking['pk_booking_id'])
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
             except Exception as e:
@@ -935,9 +936,9 @@ def build_manifest(booking_ids):
             #end pdf file name using naming convention
 
             carrierName = "TAS FREIGHT"         
-            senderName = "AATEST"
-            manifest = "M"+senderName+str(i).zfill(1)
-            ConNote = "AATEST"+str(i).zfill(2)
+            senderName = ACCOUNT_CODE
+            manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
+            ConNote = ACCOUNT_CODE + str(i).zfill(5)
             Reference = "TEST123"
             date = datetime.now().strftime("%d/%m/%Y")
             date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
@@ -1126,7 +1127,7 @@ def build_manifest(booking_ids):
             adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
             mycursor.execute(sql2, adr2)
 
-            sql = "INSERT INTO `dme_maifest_log` \
+            sql = "INSERT INTO `dme_manifest_log` \
                 (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
                 VALUES (%s, %s, %s, %s)"
             mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
