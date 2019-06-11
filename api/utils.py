@@ -620,7 +620,11 @@ def build_xml(booking_ids, vx_freight_provider):
                     ItemDescription.text = booking_line['e_item']
 
                     Width = xml.SubElement(Item, "Width")
-                    if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '':
+                    if (
+                        booking_line['e_dimWidth'] == None
+                        or booking_line['e_dimWidth'] == ''
+                        or booking_line['e_dimWidth'] == 0
+                    ):
                         Width.text = str('1')
 
                         sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
@@ -631,7 +635,11 @@ def build_xml(booking_ids, vx_freight_provider):
                         Width.text = str(booking_line['e_dimWidth'])
 
                     Length = xml.SubElement(Item, "Length")
-                    if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '':
+                    if (
+                        booking_line['e_dimLength'] == None
+                        or booking_line['e_dimLength'] == ''
+                        or booking_line['e_dimLength'] == 0
+                    ):
                         Length.text = str('1')
 
                         sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
@@ -642,7 +650,11 @@ def build_xml(booking_ids, vx_freight_provider):
                         Length.text = str(booking_line['e_dimLength'])
 
                     Height = xml.SubElement(Item, "Height")
-                    if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '':
+                    if (
+                        booking_line['e_dimHeight'] == None
+                        or booking_line['e_dimHeight'] == ''
+                        or booking_line['e_dimHeight'] == 0
+                    ):
                         Height.text = str('1')
 
                         sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
@@ -821,24 +833,24 @@ def build_xml(booking_ids, vx_freight_provider):
                         DangerousGoods = xml.SubElement(FreightDetails, "fd:DangerousGoods",  **{ 'Class': "1", 'UNNumber': "1003" })
                     
                     ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions", **{ \
-                        'Length': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' else str(booking_line['e_dimLength']), \
-                        'Width': str('1') if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' else str(booking_line['e_dimWidth']), \
-                        'Height': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' else str(booking_line['e_dimHeight']) \
+                        'Length': str('1') if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0 else str(booking_line['e_dimLength']), \
+                        'Width': str('1') if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0 else str(booking_line['e_dimWidth']), \
+                        'Height': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0 else str(booking_line['e_dimHeight']) \
                     })
 
-                    if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '':
+                    if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0:
                         sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
                         adr2 = (1, booking_line['pk_lines_id'])
                         mycursor.execute(sql2, adr2)
                         mysqlcon.commit()
 
-                    if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '':
+                    if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0:
                         sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
                         adr2 = (1, booking_line['pk_lines_id'])
                         mycursor.execute(sql2, adr2)
                         mysqlcon.commit()
 
-                    if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '':
+                    if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0:
                         sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
                         adr2 = (1, booking_line['pk_lines_id'])
                         mycursor.execute(sql2, adr2)
