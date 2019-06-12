@@ -2094,7 +2094,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if (
                 booking.b_status is not None
-                and 'booked' is in booking.b_status.lower()
+                and 'booked' in booking.b_status.lower()
             ):
                 pickup_days_late = (booking.b_dateBookedDate.date() + timedelta(days=2) - sydney_today.date()).days
 
