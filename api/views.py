@@ -1349,7 +1349,7 @@ class CommsViewSet(viewsets.ViewSet):
                 client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
                 client_employee_role = client_employee.get_role()
                 client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
-            print('@10')
+
             # DME & Client filter
             if user_type == 'DME':
                 bookings = Bookings.objects.all()
@@ -1543,7 +1543,7 @@ class CommsViewSet(viewsets.ViewSet):
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
                     }
                     return_datas.append(return_data)
-
+            print('@13')
             if sort_by_date == 'true':
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
 
