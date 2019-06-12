@@ -1145,7 +1145,7 @@ def build_manifest(booking_ids):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             # print(dir(exc_type), fname, exc_tb.tb_lineno)
             # print("Error: unable to fecth data")
-            # print("Error1: "+str(e))
+            print("Error1: "+str(e))
 
     mysqlcon.close()
     return filenames
@@ -1203,7 +1203,7 @@ def build_pdf(booking_ids, vx_freight_provider):
             for booking_line in booking_lines:
                 for k in range(booking_line["e_qty"]):
                     tbl_data = [
-                        [Paragraph('<font size=10><b>%s FREIGHT<br /></b></font>' % booking["vx_freight_provider"], style_left)],
+                        [Paragraph('<font size=10><b>%s FREIGHT<br /></b></font>' % booking["vx_freight_provider"].upper(), style_left)],
                         [Paragraph('<font size=8>C/N:</font>', style_left), Paragraph('<font size=10><b>%s</b></font>' % booking["v_FPBookingNumber"], styles["BodyText"])],
                         [Paragraph('<font size=8>Date:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking["b_dateBookedDate"].strftime("%d/%m/%Y %I:%M:%S %p"), styles["BodyText"])],
                         [Paragraph('<font size=8>Reference:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking_line["client_item_reference"], styles["BodyText"])],
