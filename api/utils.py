@@ -1140,7 +1140,7 @@ def build_manifest(booking_ids):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             # print(dir(exc_type), fname, exc_tb.tb_lineno)
             # print("Error: unable to fecth data")
-            print("Error1: "+str(e))
+            # print("Error1: "+str(e))
 
     mysqlcon.close()
     return file_paths
