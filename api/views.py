@@ -2230,7 +2230,7 @@ def generate_mainifest(request):
         file_paths = []
 
         for filename in filenames:
-            file_paths.appned("/var/www/html/dme_api/static/pdfs/taz_au/" + filename)
+            file_paths.append("/var/www/html/dme_api/static/pdfs/taz_au/" + filename)
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
