@@ -1312,20 +1312,20 @@ class AttachmentsUploadView(views.APIView):
         return Response(uploadResult)
 
 class CommsViewSet(viewsets.ViewSet):
+    def convert_date(date):
+        if not date:
+            date = datetime(2100, 1, 1).date()
+
+        return date
+
+    def reverse_date(object):
+        if object['due_by_date'] == datetime(2100, 1, 1).date():
+            object['due_by_date'] = None
+
+        return object
+
     @action(detail=False, methods=['get'])
     def get_comms(self, request, pk=None):
-        def convert_date(date):
-            if not date:
-                date = datetime(2100, 1, 1).date()
-
-            return date
-
-        def reverse_date(object):
-            if object['due_by_date'] == datetime(2100, 1, 1).date():
-                object['due_by_date'] = None
-
-            return object
-
         user_id = self.request.user.id
         booking_id = self.request.GET['bookingId']
         sort_field = self.request.query_params.get('sortField', None)
