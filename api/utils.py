@@ -937,7 +937,7 @@ def build_manifest(booking_ids):
             #file.write("Your text goes here") 
             #end pdf file name using naming convention
 
-            carrierName = "TAS FREIGHT"         
+            carrierName = "TAZ FREIGHT"         
             senderName = ACCOUNT_CODE
             manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
             ConNote = ACCOUNT_CODE + str(i).zfill(5)
@@ -982,12 +982,16 @@ def build_manifest(booking_ids):
                 ])
 
                 tbl_data = [
-                        [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
-                        [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
-                        [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]), Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
-                        [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]), Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
-                        [Paragraph('<font size=8><b></b></font>', styles["BodyText"]), Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
-                        ]
+                    [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
+                    [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
+                    Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
+                    [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
+                    Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
+                    [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
+                    Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
+                    [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
+                    Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
+                ]
                 t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
                     ('BACKGROUND',(0,0),(0,0),colors.black),
                     ('COLOR',(0,0),(-1,-1),colors.white),
@@ -1012,9 +1016,9 @@ def build_manifest(booking_ids):
                 col1_w = 20
                 col2_w = 70
                 col3_w = 70
-                col4_w = 120
+                col4_w = 140
                 col5_w = 100
-                col6_w = 100
+                col6_w = 80
                 col7_w = 60
                 col8_w = 60
                 col9_w = 40
@@ -1025,9 +1029,9 @@ def build_manifest(booking_ids):
                 tbl_data = [
                     [
                     Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
+                    Paragraph('<font size=6 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
+                    Paragraph('<font size=6 color="white"><b>REF</b></font>', styles["Normal"]),
+                    Paragraph('<font size=6 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
                     Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
                     Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
                     Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
