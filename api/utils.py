@@ -1143,7 +1143,7 @@ def build_manifest(booking_ids):
             # print("Error1: "+str(e))
 
     mysqlcon.close()
-    return file_paths
+    return filenames
 
 def build_pdf(booking_ids, vx_freight_provider):
     try:
