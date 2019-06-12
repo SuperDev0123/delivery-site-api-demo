@@ -1359,7 +1359,7 @@ class CommsViewSet(viewsets.ViewSet):
                 elif client_employee_role == 'warehouse':
                     employee_warehouse_id = client_employee.warehouse_id
                     bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
-            print('@11')
+
             # Sort Comms
             if sort_type == 'bookings':
                 if sort_field is None:
@@ -1415,7 +1415,7 @@ class CommsViewSet(viewsets.ViewSet):
                     bookings = bookings.filter(v_FPBookingNumber__icontains=column_filter)
                 except KeyError:
                     column_filter = ''
-            print('@12')
+
             return_datas = []
             opened_comms_cnt = 0
             closed_comms_cnt = 0
@@ -1543,7 +1543,7 @@ class CommsViewSet(viewsets.ViewSet):
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
                     }
                     return_datas.append(return_data)
-            print('@13')
+
             if sort_by_date == 'true':
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
 
@@ -1574,7 +1574,7 @@ class CommsViewSet(viewsets.ViewSet):
                 comms = comms.filter(closed=False)
             elif active_tab_ind == 2 and len(comms) > 0:
                 comms = comms.filter(closed=True)
-            print('@1 - ')
+
             # Get All Comms Count #
             all_comms_cnt = 0
             user_id = int(self.request.user.id)
@@ -1586,7 +1586,7 @@ class CommsViewSet(viewsets.ViewSet):
                 client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
                 client_employee_role = client_employee.get_role()
                 client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
-            print('@2 - ')
+
             # DME & Client filter
             if user_type == 'DME':
                 bookings = Bookings.objects.all()
@@ -1602,7 +1602,6 @@ class CommsViewSet(viewsets.ViewSet):
                 all_comms_cnt = all_comms_cnt + len(all_comms)
             #########################
 
-            print('@3 - ')
             return_datas = []
             if len(comms) == 0:
                 return JsonResponse({'comms': [], 'cnts': {'opened_cnt': 0, 'closed_cnt': 0, 'selected_cnt': 0, 'all_cnt': len(all_comms)}})
