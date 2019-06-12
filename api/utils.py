@@ -828,7 +828,7 @@ def build_xml(booking_ids, vx_freight_provider):
                     FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ \
                         'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', \
                         'Quantity': str(booking_line['e_qty']), \
-                        'Commodity': (get_item_type(booking_line['e_item_type'])) if booking_line['e_item_type'] else ''), \
+                        'Commodity': (get_item_type(booking_line['e_item_type']) if booking_line['e_item_type'] else ''), \
                         'CustomDescription': str(booking_line['e_item']) if booking_line['e_item'] else '' \
                     })
                     if booking_line['e_dangerousGoods']:
