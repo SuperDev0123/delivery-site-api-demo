@@ -73,7 +73,7 @@ styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name='right', parent=styles['Normal'], alignment=TA_RIGHT)
 style_left = ParagraphStyle(name='left', parent=styles['Normal'], alignment=TA_LEFT)
 style_center = ParagraphStyle(name='center', parent=styles['Normal'], alignment=TA_CENTER)
-cell_style = ParagraphStyle('smallcell', fontSize=6, leading=6)
+style_cell = ParagraphStyle(name='smallcell', fontSize=6, leading=6)
 styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
 #####################
 
@@ -1062,9 +1062,9 @@ def build_manifest(booking_ids):
                     tbl_data = [
                         [
                         Paragraph('<font size=10>%s</font>' % j, styles["Normal"]),
-                        Paragraph('<font size=6>%s</font>' % ConNote, syle_cell),
-                        Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), syle_cell),
-                        Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), syle_cell),
+                        Paragraph('<font size=6>%s</font>' % ConNote, style_cell),
+                        Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), style_cell),
+                        Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_cell),
                         Paragraph('<font size=10>%s</font>' % booking["de_to_Contact_F_LName"], styles["Normal"]), 
                         Paragraph('<font size=10>%s</font>' % booking["de_To_Address_Suburb"], styles["Normal"]),
                         Paragraph('<font size=10>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
