@@ -1198,7 +1198,7 @@ def build_pdf(booking_ids, vx_freight_provider):
             date = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
             doc = SimpleDocTemplate(local_filepath + filename, pagesize=(6*inch, 4*inch), rightMargin=10, leftMargin=10, topMargin=10, bottomMargin=10)
             Story=[]
-
+            print('@2 - ')
             j = 1
             for booking_line in booking_lines:
                 for k in range(booking_line["e_qty"]):
@@ -1223,7 +1223,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     ]
                     t2 = Table(tbl_data, colWidths=(150), style = [
                         ])
-
+                    print('@20 - ')
                     tbl_data = [
                         [Paragraph('<font size=34><b>%s</b></font>' % booking["de_To_Address_PostalCode"], style_right)],
                         [''],
@@ -1251,7 +1251,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     ))
 
                     # Story.append(Spacer(1, 3))
-
+                    print('@21 - ')
                     tbl_data = [
                         [Paragraph('<font size=10><b>%s</b></font>' % booking["de_to_Contact_F_LName"], style_left)],
                         [Paragraph('<font size=10><b>%s</b></font>' % booking["de_To_Address_Street_1"], style_left)],
@@ -1276,7 +1276,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                         # ('LEFTPADDING',(0,0),(-1,-1), 0),
                         # ('RIGHTPADDING',(0,0),(-1,-1), 0)
                         ])
-                    
+                    print('@22 - ')
                     data = [[t1, t2]]
                     # adjust the length of tables
                     t1_w = 2.35 * inch
@@ -1300,7 +1300,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     ]
                     tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
                     Story.append(tbl)
-
+                    print('@23 - ')
                     tbl_data = [
                         [Paragraph('<font size=8><b>Desc</b>: %s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_left), barcode128]
                     ]
@@ -1309,7 +1309,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     Story.append(HRFlowable(
                         width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
                     ))
-
+                    print('@24 - ')
                     tbl_data = [
                         [Paragraph('<font size=8>L</font>', style_center), Paragraph('<font size=8>W</font>', style_center), Paragraph('<font size=8>H</font>', style_center)],
                         [Paragraph('<font size=10><b>%s</b></font>' % (str(booking_line['e_dimLength'])), style_center), Paragraph('<font size=10><b>%s</b></font>' % str(booking_line['e_dimWidth']), style_center), Paragraph('<font size=10><b>%s</b></font>' % str(booking_line['e_dimHeight']), style_center)]
@@ -1327,7 +1327,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     Story.append(HRFlowable(
                         width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=2, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
                     ))
-
+                    print('@25 - ')
                     tbl_data = [
                         [Paragraph('<font size=8>KG</font>', style_center), Paragraph('<font size=8>VOL</font>', style_center)],
                         [Paragraph('<font size=10><b>%s</b></font>' % str("{0:.2f}".format(booking_line['e_Total_KG_weight'])), style_center), Paragraph('<font size=10><b>%s</b></font>' % str("{0:.2f}".format(booking_line['e_1_Total_dimCubicMeter'])), style_center), Paragraph('<font size=8>%s</font>' % barcode, style_center)]
@@ -1349,7 +1349,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     ]
                     tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
                     Story.append(tbl)
-
+                    print('@26 - ')
                     Story.append(PageBreak())
                 
                     j = j + 1
