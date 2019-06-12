@@ -1163,241 +1163,241 @@ def build_pdf(booking_ids, vx_freight_provider):
         exit(1)
     mycursor = mysqlcon.cursor()
 
-    try:
-        bookings = get_available_bookings(mysqlcon, booking_ids)
+    # try:
+    bookings = get_available_bookings(mysqlcon, booking_ids)
 
-        #start check if pdfs folder exists
-        if production:
-            local_filepath = "/var/www/html/dme_api/static/pdfs/taz_au/"
-            local_filepath_dup = "/var/www/html/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
-        else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/"
-            local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+    #start check if pdfs folder exists
+    if production:
+        local_filepath = "/var/www/html/dme_api/static/pdfs/taz_au/"
+        local_filepath_dup = "/var/www/html/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+    else:
+        local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/"
+        local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+    
+    if not os.path.exists(local_filepath):
+        os.makedirs(local_filepath)
+    #end check if pdfs folder exists
+
+    #start loop through data fetched from dme_bookings table         
+    i = 1
+    for booking in bookings:
+
+        #start db query for fetching data from dme_booking_lines table
+        booking_lines = get_available_booking_lines(mysqlcon, booking)
+        #end db query for fetching data from dme_booking_lines table
+
+        totalQty = 0
+        for booking_line in booking_lines:
+            totalQty = totalQty + booking_line['e_qty']
+
+        #start pdf file name using naming convention
+        filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + ".pdf"
+        file = open(local_filepath+filename, "w")
+        #end pdf file name using naming convention
+
+        date = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+        doc = SimpleDocTemplate(local_filepath + filename, pagesize=(6*inch, 4*inch), rightMargin=10, leftMargin=10, topMargin=10, bottomMargin=10)
+        Story=[]
+
+        j = 1
+        for booking_line in booking_lines:
+            for k in range(booking_line["e_qty"]):
+                tbl_data = [
+                    [Paragraph('<font size=10><b>%s FREIGHT<br /></b></font>' % booking["vx_freight_provider"], style_left)],
+                    [Paragraph('<font size=8>C/N:</font>', style_left), Paragraph('<font size=10><b>%s</b></font>' % booking["v_FPBookingNumber"], styles["BodyText"])],
+                    [Paragraph('<font size=8>Date:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking["b_dateBookedDate"].strftime("%d/%m/%Y %I:%M:%S %p"), styles["BodyText"])],
+                    [Paragraph('<font size=8>Reference:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking_line["client_item_reference"], styles["BodyText"])],
+                    [Paragraph('<font size=8>Service:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking["vx_serviceName"], styles["BodyText"])],
+                ]
+                t1 = Table(tbl_data, colWidths=(45, 220), rowHeights=(12), hAlign='LEFT', style = [
+                    ('SPAN',(0,0),(1,0)),
+                    ('TOPPADDING',(0,0),(-1,-1), 0),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                    ])
+
+                tbl_data = [
+                    [Paragraph('<font size=34><b>%s</b></font>' % booking["de_To_Address_State"], styles["Normal"])],
+                    [Paragraph("<font size=8><br /><br />%s, %s\n%s, %s, %s</font>" % (ACCOUNT_CODE, booking['pu_Address_Street_1'], booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])],
+                ]
+                t2 = Table(tbl_data, colWidths=(150), style = [
+                    ])
+
+                tbl_data = [
+                    [Paragraph('<font size=34><b>%s</b></font>' % booking["de_To_Address_PostalCode"], style_right)],
+                    [''],
+                    [''],
+                    [''],
+                ]
+                t3 = Table(tbl_data, colWidths=(150), style = [
+                    ])
+
+                data = [[t1, t2, t3]]
+                # adjust the length of tables
+                t1_w = 2.35 * inch
+                t2_w = 1.2 * inch
+                t3_w = 2 * inch
+                shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
+                    ('TOPPADDING',(0,0),(-1,-1), 0),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                    ])
+                Story.append(shell_table)
+                Story.append(Spacer(1, 10))
+                Story.append(HRFlowable(
+                    width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=0, spaceAfter=0, hAlign='CENTER', vAlign='MIDDLE', dash=None
+                ))
+
+                # Story.append(Spacer(1, 3))
+
+                tbl_data = [
+                    [Paragraph('<font size=10><b>%s</b></font>' % booking["de_to_Contact_F_LName"], style_left)],
+                    [Paragraph('<font size=10><b>%s</b></font>' % booking["de_To_Address_Street_1"], style_left)],
+                    [Paragraph('<font size=10><b>%s, %s, %s</b></font> ' % (booking["de_To_Address_Suburb"], booking["de_To_Address_PostalCode"], booking["de_To_Address_State"]), style_left)]
+                ]
+                t1 = Table(tbl_data, colWidths=(180), style = [
+                    ('TOPPADDING',(0,0),(-1,-1), 0),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                    ])
+
+                tbl_data = [
+                    [Paragraph('<font size=8>%s %s</font>' % (str(booking['de_to_PickUp_Instructions_Address']), str(booking['de_to_Pick_Up_Instructions_Contact'])), styles["Normal"])],
+                    # [''],
+                    # [''],
+                    [''],
+                ]
+                t2 = Table(tbl_data, colWidths=(160), style = [
+                    # ('TOPPADDING',(0,0),(-1,-1), 0),
+                    # ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    # ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    # ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                    ])
+                
+                data = [[t1, t2]]
+                # adjust the length of tables
+                t1_w = 2.35 * inch
+                t2_w = 3.2 * inch
+                # t3_w = 2 * inch
+                shell_table = Table(data, colWidths=[t1_w, t2_w], style = [
+                    ('TOPPADDING',(0,0),(-1,-1), 0),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                    ])
+                Story.append(shell_table)
+
+                Story.append(Spacer(1, 35))
+
+                barcode = 'S'+booking["v_FPBookingNumber"]+str(j).zfill(3)
+                barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.3)
+
+                tbl_data = [
+                    [Paragraph('<font size=8>Item: </font>', styles["Normal"]), Paragraph('<font size=12><b>%s of %s</b></font>' % (j, totalQty), style_left) ]
+                ]
+                tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
+                Story.append(tbl)
+
+                tbl_data = [
+                    [Paragraph('<font size=8><b>Desc</b>: %s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_left), barcode128]
+                ]
+                tbl = Table(tbl_data, colWidths=(180, 500), rowHeights=(12), hAlign='LEFT', style = [("VALIGN", (0,0), (-1,-1), "MIDDLE"),('TOPPADDING',(0,0),(-1,-1), 0),('BOTTOMPADDING',(0,0),(-1,-1), 0),('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
+                Story.append(tbl)                
+                Story.append(HRFlowable(
+                    width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
+                ))
+
+                tbl_data = [
+                    [Paragraph('<font size=8>L</font>', style_center), Paragraph('<font size=8>W</font>', style_center), Paragraph('<font size=8>H</font>', style_center)],
+                    [Paragraph('<font size=10><b>%s</b></font>' % (str(booking_line['e_dimLength'])), style_center), Paragraph('<font size=10><b>%s</b></font>' % str(booking_line['e_dimWidth']), style_center), Paragraph('<font size=10><b>%s</b></font>' % str(booking_line['e_dimHeight']), style_center)]
+                ]
+                tbl = Table(tbl_data, colWidths=(60, 60, 60), rowHeights=10, hAlign='LEFT')
+                tbl.setStyle([
+                    ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                    ("ALIGN", (0,0), (0,0), "CENTER"),
+                    ('TOPPADDING',(0,0),(-1,-1), 0),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                ])
+                Story.append(tbl)
+                Story.append(HRFlowable(
+                    width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=2, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
+                ))
+
+                tbl_data = [
+                    [Paragraph('<font size=8>KG</font>', style_center), Paragraph('<font size=8>VOL</font>', style_center)],
+                    [Paragraph('<font size=10><b>%s</b></font>' % str("{0:.2f}".format(booking_line['e_Total_KG_weight'])), style_center), Paragraph('<font size=10><b>%s</b></font>' % str("{0:.2f}".format(booking_line['e_1_Total_dimCubicMeter'])), style_center), Paragraph('<font size=8>%s</font>' % barcode, style_center)]
+                ]
+                tbl = Table(tbl_data, colWidths=(90, 90, 220), rowHeights=10, hAlign='LEFT')
+                tbl.setStyle([
+                    ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                    ("ALIGN", (0,0), (0,0), "CENTER"),
+                    ('TOPPADDING',(0,0),(-1,-1), 0),
+                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                    ('LEFTPADDING',(0,0),(-1,-1), 0),
+                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                ])
+                Story.append(tbl)
+
+                tbl_data = [
+                    [Paragraph('<font size=8>Client Item Reference: </font>', styles["Normal"]),
+                    Paragraph('<font size=8><b>%s</b></font>' % booking_line['client_item_reference'], style_left)]
+                ]
+                tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
+                Story.append(tbl)
+
+                Story.append(PageBreak())
+            
+                j = j + 1
+
+        i = i + 1
+        doc.build(Story)
+        # doc.build(Story, onFirstPage = myFirstPage, onLaterPages=myLaterPages)
         
-        if not os.path.exists(local_filepath):
-            os.makedirs(local_filepath)
-        #end check if pdfs folder exists
+        #end formatting pdf file and putting data from db tables
 
-        #start loop through data fetched from dme_bookings table         
-        i = 1
-        for booking in bookings:
-
-            #start db query for fetching data from dme_booking_lines table
-            booking_lines = get_available_booking_lines(mysqlcon, booking)
-            #end db query for fetching data from dme_booking_lines table
-
-            totalQty = 0
-            for booking_line in booking_lines:
-                totalQty = totalQty + booking_line['e_qty']
-
-            #start pdf file name using naming convention
-            filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + ".pdf"
-            file = open(local_filepath+filename, "w")
-            #end pdf file name using naming convention
-
-            date = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
-            doc = SimpleDocTemplate(local_filepath + filename, pagesize=(6*inch, 4*inch), rightMargin=10, leftMargin=10, topMargin=10, bottomMargin=10)
-            Story=[]
-
-            j = 1
-            for booking_line in booking_lines:
-                for k in range(booking_line["e_qty"]):
-                    tbl_data = [
-                        [Paragraph('<font size=10><b>%s FREIGHT<br /></b></font>' % booking["vx_freight_provider"], style_left)],
-                        [Paragraph('<font size=8>C/N:</font>', style_left), Paragraph('<font size=10><b>%s</b></font>' % booking["v_FPBookingNumber"], styles["BodyText"])],
-                        [Paragraph('<font size=8>Date:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking["b_dateBookedDate"].strftime("%d/%m/%Y %I:%M:%S %p"), styles["BodyText"])],
-                        [Paragraph('<font size=8>Reference:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking_line["client_item_reference"], styles["BodyText"])],
-                        [Paragraph('<font size=8>Service:</font>', style_left), Paragraph('<font size=8><b>%s</b></font>' % booking["vx_serviceName"], styles["BodyText"])],
-                    ]
-                    t1 = Table(tbl_data, colWidths=(45, 220), rowHeights=(12), hAlign='LEFT', style = [
-                        ('SPAN',(0,0),(1,0)),
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-
-                    tbl_data = [
-                        [Paragraph('<font size=34><b>%s</b></font>' % booking["de_To_Address_State"], styles["Normal"])],
-                        [Paragraph("<font size=8><br /><br />%s, %s\n%s, %s, %s</font>" % (ACCOUNT_CODE, booking['pu_Address_Street_1'], booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])],
-                    ]
-                    t2 = Table(tbl_data, colWidths=(150), style = [
-                        ])
-
-                    tbl_data = [
-                        [Paragraph('<font size=34><b>%s</b></font>' % booking["de_To_Address_PostalCode"], style_right)],
-                        [''],
-                        [''],
-                        [''],
-                    ]
-                    t3 = Table(tbl_data, colWidths=(150), style = [
-                        ])
-
-                    data = [[t1, t2, t3]]
-                    # adjust the length of tables
-                    t1_w = 2.35 * inch
-                    t2_w = 1.2 * inch
-                    t3_w = 2 * inch
-                    shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-                    Story.append(shell_table)
-                    Story.append(Spacer(1, 10))
-                    Story.append(HRFlowable(
-                        width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=0, spaceAfter=0, hAlign='CENTER', vAlign='MIDDLE', dash=None
-                    ))
-
-                    # Story.append(Spacer(1, 3))
-
-                    tbl_data = [
-                        [Paragraph('<font size=10><b>%s</b></font>' % booking["de_to_Contact_F_LName"], style_left)],
-                        [Paragraph('<font size=10><b>%s</b></font>' % booking["de_To_Address_Street_1"], style_left)],
-                        [Paragraph('<font size=10><b>%s, %s, %s</b></font> ' % (booking["de_To_Address_Suburb"], booking["de_To_Address_PostalCode"], booking["de_To_Address_State"]), style_left)]
-                    ]
-                    t1 = Table(tbl_data, colWidths=(180), style = [
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-
-                    tbl_data = [
-                        [Paragraph('<font size=8>%s %s</font>' % (str(booking['de_to_PickUp_Instructions_Address']), str(booking['de_to_Pick_Up_Instructions_Contact'])), styles["Normal"])],
-                        # [''],
-                        # [''],
-                        [''],
-                    ]
-                    t2 = Table(tbl_data, colWidths=(160), style = [
-                        # ('TOPPADDING',(0,0),(-1,-1), 0),
-                        # ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        # ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        # ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-                    
-                    data = [[t1, t2]]
-                    # adjust the length of tables
-                    t1_w = 2.35 * inch
-                    t2_w = 3.2 * inch
-                    # t3_w = 2 * inch
-                    shell_table = Table(data, colWidths=[t1_w, t2_w], style = [
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-                    Story.append(shell_table)
-
-                    Story.append(Spacer(1, 35))
-
-                    barcode = 'S'+booking["v_FPBookingNumber"]+str(j).zfill(3)
-                    barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.3)
-
-                    tbl_data = [
-                        [Paragraph('<font size=8>Item: </font>', styles["Normal"]), Paragraph('<font size=12><b>%s of %s</b></font>' % (j, totalQty), style_left) ]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
-                    Story.append(tbl)
-
-                    tbl_data = [
-                        [Paragraph('<font size=8><b>Desc</b>: %s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_left), barcode128]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(180, 500), rowHeights=(12), hAlign='LEFT', style = [("VALIGN", (0,0), (-1,-1), "MIDDLE"),('TOPPADDING',(0,0),(-1,-1), 0),('BOTTOMPADDING',(0,0),(-1,-1), 0),('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
-                    Story.append(tbl)                
-                    Story.append(HRFlowable(
-                        width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
-                    ))
-
-                    tbl_data = [
-                        [Paragraph('<font size=8>L</font>', style_center), Paragraph('<font size=8>W</font>', style_center), Paragraph('<font size=8>H</font>', style_center)],
-                        [Paragraph('<font size=10><b>%s</b></font>' % (str(booking_line['e_dimLength'])), style_center), Paragraph('<font size=10><b>%s</b></font>' % str(booking_line['e_dimWidth']), style_center), Paragraph('<font size=10><b>%s</b></font>' % str(booking_line['e_dimHeight']), style_center)]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(60, 60, 60), rowHeights=10, hAlign='LEFT')
-                    tbl.setStyle([
-                        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-                        ("ALIGN", (0,0), (0,0), "CENTER"),
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                    ])
-                    Story.append(tbl)
-                    Story.append(HRFlowable(
-                        width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=2, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
-                    ))
-
-                    tbl_data = [
-                        [Paragraph('<font size=8>KG</font>', style_center), Paragraph('<font size=8>VOL</font>', style_center)],
-                        [Paragraph('<font size=10><b>%s</b></font>' % str("{0:.2f}".format(booking_line['e_Total_KG_weight'])), style_center), Paragraph('<font size=10><b>%s</b></font>' % str("{0:.2f}".format(booking_line['e_1_Total_dimCubicMeter'])), style_center), Paragraph('<font size=8>%s</font>' % barcode, style_center)]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(90, 90, 220), rowHeights=10, hAlign='LEFT')
-                    tbl.setStyle([
-                        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-                        ("ALIGN", (0,0), (0,0), "CENTER"),
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                    ])
-                    Story.append(tbl)
-
-                    tbl_data = [
-                        [Paragraph('<font size=8>Client Item Reference: </font>', styles["Normal"]),
-                        Paragraph('<font size=8><b>%s</b></font>' % booking_line['client_item_reference'], style_left)]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(80, 140), rowHeights=(20), hAlign='LEFT', style = [('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
-                    Story.append(tbl)
-
-                    Story.append(PageBreak())
-                
-                    j = j + 1
-
-            i = i + 1
-            doc.build(Story)
-            # doc.build(Story, onFirstPage = myFirstPage, onLaterPages=myLaterPages)
+        #with open(filepath+filename, "wb") as fh:
+            #tree.write(fh, encoding='UTF-8', xml_declaration=True)
             
-            #end formatting pdf file and putting data from db tables
-
-            #with open(filepath+filename, "wb") as fh:
-                #tree.write(fh, encoding='UTF-8', xml_declaration=True)
-                
-                #start copying pdf files to sftp server
-                #srv = pysftp.Connection(host="localhost", username="tapas", password="tapas@123", cnopts=cnopts)
-                #srv = pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts)
-                #path = 'www'
-                #path = 'indata'
-                #with srv.cd(path):
-                    #srv.put(filepath+filename) 
-                
-                # Closes the connection
-                #srv.close()
-                #end copying pdf files to sftp server
+            #start copying pdf files to sftp server
+            #srv = pysftp.Connection(host="localhost", username="tapas", password="tapas@123", cnopts=cnopts)
+            #srv = pysftp.Connection(host="edi.alliedexpress.com.au", username="delvme.external", password="987899e64", cnopts=cnopts)
+            #path = 'www'
+            #path = 'indata'
+            #with srv.cd(path):
+                #srv.put(filepath+filename) 
             
-            #start update booking status in dme_booking table
-            # try:
-                # fh = open(path+'/'+filename, 'r')
-                # Store configuration file values
-                # if(os.stat(path+'/'+filename).st_size > 0 and os.path.isfile(path+'/'+filename)):
-            #sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
-            #adr2 = (filename, booking['pk_booking_id'])
-            #mycursor.execute(sql2, adr2)
-            #mysqlcon.commit()
-            # except FileNotFoundError as e:
-                # print("Error1: "+str(e))
-                # Keep preset values
-            #end update booking status in dme_booking table
+            # Closes the connection
+            #srv.close()
+            #end copying pdf files to sftp server
+        
+        #start update booking status in dme_booking table
+        # try:
+            # fh = open(path+'/'+filename, 'r')
+            # Store configuration file values
+            # if(os.stat(path+'/'+filename).st_size > 0 and os.path.isfile(path+'/'+filename)):
+        #sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
+        #adr2 = (filename, booking['pk_booking_id'])
+        #mycursor.execute(sql2, adr2)
+        #mysqlcon.commit()
+        # except FileNotFoundError as e:
+            # print("Error1: "+str(e))
+            # Keep preset values
+        #end update booking status in dme_booking table
 
-            #exit()   
-            #end writting data into pdf file
-            file.close() 
+        #exit()   
+        #end writting data into pdf file
+        file.close() 
         #end loop through data fetched from dme_bookings table
-    except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        # print(dir(exc_type), fname, exc_tb.tb_lineno)
-        print("Error: " + str(e))
+    # except Exception as e:
+    #     exc_type, exc_obj, exc_tb = sys.exc_info()
+    #     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    #     # print(dir(exc_type), fname, exc_tb.tb_lineno)
+    #     print("Error: " + str(e))
 
     mysqlcon.close()
     return i - 1
