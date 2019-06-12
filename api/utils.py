@@ -903,10 +903,10 @@ def build_manifest(booking_ids):
     mycursor = mysqlcon.cursor()
 
     bookings = get_available_bookings(mysqlcon, booking_ids)
-    manifested_list = get_manifested_list(bookings)
+    # manifested_list = get_manifested_list(bookings)
 
-    if len(manifested_list) > 0:
-        return manifested_list
+    # if len(manifested_list) > 0:
+    #     return manifested_list
 
     #start check if pdfs folder exists
     if production:
@@ -2104,7 +2104,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 pickup_days_late = (booking.b_dateBookedDate.date() + timedelta(days=2) - sydney_today.date()).days
 
                 if pickup_days_late < 0:
-                    cell_format = workbook.add_format({'fg_color': '#ffbbbb'})
+                    cell_format = workbook.add_format({'font_color': 'red'})
                     worksheet.write(row, col + 1, pickup_days_late, cell_format)
                 else:
                     worksheet.write(row, col + 1, pickup_days_late)
@@ -2122,7 +2122,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_dateBookedDate is not None:
                     days_early_late = (booking.b_dateBookedDate.date() + timedelta(days=delivery_kpi_days) - sydney_today.date()).days
 
-                cell_format = workbook.add_format({'fg_color': '#ffbbbb'})
+                cell_format = workbook.add_format({'font_color': 'red'})
                 worksheet.write(row, col + 2, days_early_late, cell_format)
                 # worksheet.write(0, col + 29, sydney_today.strftime("%d/%m/%Y"))
 
