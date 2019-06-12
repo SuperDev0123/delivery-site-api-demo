@@ -1421,6 +1421,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == 'Bookings':
+        worksheet.set_column(7, 8, width=40)
+        worksheet.set_column(9, 9, width=53)
+        worksheet.set_column(10, 10, width=70)
+
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
             worksheet.write('B1', 'b_dateBookedDate(Time)', bold)
@@ -1547,12 +1551,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 13, e_qty_scanned_fp_total)
             worksheet.write(row, col + 14, e_qty_total - e_qty_scanned_fp_total)
 
-            worksheet.set_column(15, 16, width=40)
             cell_format = workbook.add_format({'text_wrap': True})
             worksheet.write(row, col + 15, booking.dme_status_detail, cell_format)
             worksheet.write(row, col + 16, booking.dme_status_action, cell_format)
-
-            worksheet.set_column(17, 17, width=53)
             worksheet.write(row, col + 17, booking.dme_status_history_notes, cell_format)
 
             if booking.s_21_ActualDeliveryTimeStamp and booking.s_21_ActualDeliveryTimeStamp:
@@ -1978,6 +1979,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'Whse':
+        worksheet.set_column(7, 8, width=40)
+        worksheet.set_column(9, 9, width=53)
+        worksheet.set_column(10, 10, width=70)
+
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
             worksheet.write('B1', 'Pickup Days Late', bold)
@@ -2067,9 +2072,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('X1', 'POD LINK', bold)
             worksheet.write('Y1', 'POD Signed on Glass Link', bold)
             worksheet.write('Z1', 'Target Delivery KPI (Days)', bold)
-            worksheet.write('AA2', 'Delivery Days from Booked', bold)
-            worksheet.write('AB2', 'Actual Delivery KPI (Days)', bold)
-            worksheet.write('AC2', 'Store Booking Date', bold)
+            worksheet.write('AA1', 'Delivery Days from Booked', bold)
+            worksheet.write('AB1', 'Actual Delivery KPI (Days)', bold)
+            worksheet.write('AC1', 'Store Booking Date', bold)
             
             row = 1
 
@@ -2139,15 +2144,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 5, booking.v_FPBookingNumber)
             worksheet.write(row, col + 6, booking.b_status)
 
-            worksheet.set_column(7, 8, width=40)
             cell_format = workbook.add_format({'text_wrap': True})
             worksheet.write(row, col + 7, booking.dme_status_detail, cell_format)
             worksheet.write(row, col + 8, booking.dme_status_action, cell_format)
-
-            worksheet.set_column(9, 9, width=53)
             worksheet.write(row, col + 9, booking.dme_status_history_notes, cell_format)
-
-            worksheet.set_column(10, 10, width=70)
             worksheet.write(row, col + 10, "", cell_format)
             worksheet.write(row, col + 11, e_qty_total)
             worksheet.write(row, col + 12, e_qty_scanned_fp_total)
