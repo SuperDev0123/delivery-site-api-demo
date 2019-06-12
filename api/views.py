@@ -1551,6 +1551,7 @@ class CommsViewSet(viewsets.ViewSet):
 
             return JsonResponse({'comms': return_datas, 'cnts': { 'opened_cnt': opened_comms_cnt, 'closed_cnt': closed_comms_cnt, 'all_cnt': len(return_datas), 'selected_cnt': -1}})
         else:
+            print('@1 - ')
             booking = Bookings.objects.get(id=booking_id)
             comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
 
@@ -1574,7 +1575,7 @@ class CommsViewSet(viewsets.ViewSet):
                 comms = comms.filter(closed=False)
             elif active_tab_ind == 2 and len(comms) > 0:
                 comms = comms.filter(closed=True)
-
+            print('@2 - ')
             # Get All Comms Count #
             all_comms_cnt = 0
             user_id = int(self.request.user.id)
@@ -1602,7 +1603,7 @@ class CommsViewSet(viewsets.ViewSet):
                 all_comms_cnt = all_comms_cnt + len(all_comms)
             #########################
 
-
+            print('@3 - ')
             return_datas = []
             if len(comms) == 0:
                 return JsonResponse({'comms': [], 'cnts': {'opened_cnt': 0, 'closed_cnt': 0, 'selected_cnt': 0, 'all_cnt': len(all_comms)}})
@@ -1634,12 +1635,12 @@ class CommsViewSet(viewsets.ViewSet):
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
                     }
                     return_datas.append(return_data)
-
+                print('@4 - ')
                 if sort_by_date == 'true':
                     return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
-
+                print('@5 - ')
                 return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
-
+                print('@6 - ')
                 return JsonResponse({'comms': return_datas, 'cnts': {'opened_cnt': len(opened_comms), 'closed_cnt': len(closed_comms), 'selected_cnt': len(comms), 'all_cnt': all_comms_cnt}})
 
     @action(detail=True, methods=['put'])
