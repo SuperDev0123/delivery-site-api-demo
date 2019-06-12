@@ -1349,7 +1349,7 @@ class CommsViewSet(viewsets.ViewSet):
                 client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
                 client_employee_role = client_employee.get_role()
                 client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
-
+            print('@10')
             # DME & Client filter
             if user_type == 'DME':
                 bookings = Bookings.objects.all()
@@ -1359,7 +1359,7 @@ class CommsViewSet(viewsets.ViewSet):
                 elif client_employee_role == 'warehouse':
                     employee_warehouse_id = client_employee.warehouse_id
                     bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
-
+            print('@11')
             # Sort Comms
             if sort_type == 'bookings':
                 if sort_field is None:
@@ -1415,7 +1415,7 @@ class CommsViewSet(viewsets.ViewSet):
                     bookings = bookings.filter(v_FPBookingNumber__icontains=column_filter)
                 except KeyError:
                     column_filter = ''
-
+            print('@12')
             return_datas = []
             opened_comms_cnt = 0
             closed_comms_cnt = 0
@@ -1550,8 +1550,7 @@ class CommsViewSet(viewsets.ViewSet):
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
 
             return JsonResponse({'comms': return_datas, 'cnts': { 'opened_cnt': opened_comms_cnt, 'closed_cnt': closed_comms_cnt, 'all_cnt': len(return_datas), 'selected_cnt': -1}})
-        else:
-            print('@1 - ')
+        else
             booking = Bookings.objects.get(id=booking_id)
             comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
 
@@ -1575,7 +1574,7 @@ class CommsViewSet(viewsets.ViewSet):
                 comms = comms.filter(closed=False)
             elif active_tab_ind == 2 and len(comms) > 0:
                 comms = comms.filter(closed=True)
-            print('@2 - ')
+            print('@1 - ')
             # Get All Comms Count #
             all_comms_cnt = 0
             user_id = int(self.request.user.id)
@@ -1587,7 +1586,7 @@ class CommsViewSet(viewsets.ViewSet):
                 client_employee = Client_employees.objects.select_related().filter(fk_id_user = user_id).first()
                 client_employee_role = client_employee.get_role()
                 client = DME_clients.objects.select_related().filter(pk_id_dme_client = int(client_employee.fk_id_dme_client_id)).first()
-
+            print('@2 - ')
             # DME & Client filter
             if user_type == 'DME':
                 bookings = Bookings.objects.all().only("pk_booking_id")
@@ -1635,12 +1634,10 @@ class CommsViewSet(viewsets.ViewSet):
                         'z_createdTimeStamp': comm.z_createdTimeStamp,
                     }
                     return_datas.append(return_data)
-                print('@4 - ')
+
                 if sort_by_date == 'true':
                     return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
-                print('@5 - ')
                 return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
-                print('@6 - ')
                 return JsonResponse({'comms': return_datas, 'cnts': {'opened_cnt': len(opened_comms), 'closed_cnt': len(closed_comms), 'selected_cnt': len(comms), 'all_cnt': all_comms_cnt}})
 
     @action(detail=True, methods=['put'])
