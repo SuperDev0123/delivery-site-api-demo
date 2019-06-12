@@ -1590,13 +1590,13 @@ class CommsViewSet(viewsets.ViewSet):
 
             # DME & Client filter
             if user_type == 'DME':
-                bookings = Bookings.objects.all()
+                bookings = Bookings.objects.all().only("pk_booking_id")
             else:
                 if client_employee_role == 'company':
-                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num).only("pk_booking_id")
                 elif client_employee_role == 'warehouse':
                     employee_warehouse_id = client_employee.warehouse_id
-                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id).only("pk_booking_id")
 
             for each_booking in bookings:
                 all_comms = Dme_comm_and_task.objects.filter(fk_booking_id=each_booking.pk_booking_id)
