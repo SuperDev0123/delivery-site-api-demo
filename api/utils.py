@@ -1029,9 +1029,9 @@ def build_manifest(booking_ids):
                 tbl_data = [
                     [
                     Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
-                    Paragraph('<font size=6 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
-                    Paragraph('<font size=6 color="white"><b>REF</b></font>', styles["Normal"]),
-                    Paragraph('<font size=6 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
+                    Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
+                    Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
+                    Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
                     Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
                     Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
                     Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
@@ -1061,9 +1061,9 @@ def build_manifest(booking_ids):
                     tbl_data = [
                         [
                         Paragraph('<font size=10>%s</font>' % j, styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % ConNote, styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % ConNote, styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), styles["Normal"]),
                         Paragraph('<font size=10>%s</font>' % booking["de_to_Contact_F_LName"], styles["Normal"]), 
                         Paragraph('<font size=10>%s</font>' % booking["de_To_Address_Suburb"], styles["Normal"]),
                         Paragraph('<font size=10>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
