@@ -885,7 +885,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
             except Exception as e:
-                # print('@300 TAZ XML - ', e)
+                print('@300 TAZ XML - ', e)
                 return e
 
     mysqlcon.close()
