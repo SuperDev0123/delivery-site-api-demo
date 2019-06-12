@@ -2236,7 +2236,7 @@ def generate_mainifest(request):
 
         for index, booking_id in enumerate(booking_ids):
             zip_path = os.path.join(zip_subdir, file_paths[index])
-            zf.write(file_path[index], 'manifest_files/' + str(booking_id))
+            zf.write(file_paths[index], 'manifest_files/' + str(booking_id) + '.pdf')
         zf.close()
 
         response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
