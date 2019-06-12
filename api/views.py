@@ -1550,7 +1550,7 @@ class CommsViewSet(viewsets.ViewSet):
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
 
             return JsonResponse({'comms': return_datas, 'cnts': { 'opened_cnt': opened_comms_cnt, 'closed_cnt': closed_comms_cnt, 'all_cnt': len(return_datas), 'selected_cnt': -1}})
-        else
+        else:
             booking = Bookings.objects.get(id=booking_id)
             comms = Dme_comm_and_task.objects.filter(fk_booking_id=booking.pk_booking_id)
 
