@@ -1325,7 +1325,7 @@ class CommsViewSet(viewsets.ViewSet):
                 object['due_by_date'] = None
 
             return object
-        
+
         user_id = self.request.user.id
         booking_id = self.request.GET['bookingId']
         sort_field = self.request.query_params.get('sortField', None)
@@ -1589,13 +1589,13 @@ class CommsViewSet(viewsets.ViewSet):
             print('@2 - ')
             # DME & Client filter
             if user_type == 'DME':
-                bookings = Bookings.objects.all().only("pk_booking_id")
+                bookings = Bookings.objects.all()
             else:
                 if client_employee_role == 'company':
-                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num).only("pk_booking_id")
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num)
                 elif client_employee_role == 'warehouse':
                     employee_warehouse_id = client_employee.warehouse_id
-                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id).only("pk_booking_id")
+                    bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
 
             for each_booking in bookings:
                 all_comms = Dme_comm_and_task.objects.filter(fk_booking_id=each_booking.pk_booking_id)
