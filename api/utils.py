@@ -2095,7 +2095,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 sydney_today = sydney.localize(datetime.now())
                 sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
                 if booking.b_dateBookedDate is not None:
-                    days_early_late = (booking.b_dateBookedDate + timedelta(days=delivery_kpi_days) - sydney_today).days
+                    days_early_late = (booking.b_dateBookedDate.date() + timedelta(days=delivery_kpi_days) - sydney_today.date()).days
 
                 worksheet.write(row, col + 1, days_early_late)
                 worksheet.write(0, col + 28, sydney_today.strftime("%d/%m/%Y"))
