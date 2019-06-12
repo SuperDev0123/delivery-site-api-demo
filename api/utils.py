@@ -1332,9 +1332,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                         [Paragraph('<font size=8>KG</font>', style_center), 
                         Paragraph('<font size=8>VOL</font>', style_center)],
                         [Paragraph('<font size=10><b>%s</b></font>' % \
-                            str("{0:.2f}".format(booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else '0')), style_center), 
+                            str("{0:.2f}".format(booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0)), style_center), 
                         Paragraph('<font size=10><b>%s</b></font>' % \
-                            str("{0:.2f}".format(booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else '0')), style_center), 
+                            str("{0:.2f}".format(booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0)), style_center), 
                         Paragraph('<font size=8>%s</font>' % barcode, style_center)]
                     ]
                     tbl = Table(tbl_data, colWidths=(90, 90, 220), rowHeights=10, hAlign='LEFT')
