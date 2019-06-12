@@ -2019,7 +2019,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('H2', 'Status Detail', bold)
             worksheet.write('I2', 'Status Action', bold)
             worksheet.write('J2', 'Status History Note', bold)
-            worksheet.write('K2', 'Please put your Feedback or Proposed Updates to any Columns in this report, here only', bold)
+            worksheet.write('K2', 'Please put your Feedback / updates in the column if different to Column G, H and / or I', bold)
             worksheet.write('L2', 'Qty Booked', bold)
             worksheet.write('M2', 'Qty Scanned', bold)
             worksheet.write('N2', 'Booked to Scanned Variance', bold)
@@ -2051,7 +2051,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('H1', 'Status Detail', bold)
             worksheet.write('I1', 'Status Action', bold)
             worksheet.write('J1', 'Status History Note', bold)
-            worksheet.write('K1', 'Please put your Feedback or Proposed Updates to any Columns in this report, here only', bold)
+            worksheet.write('K1', 'Please put your Feedback / updates in the column if different to Column G, H and / or I', bold)
             worksheet.write('L1', 'Qty Booked', bold)
             worksheet.write('M1', 'Qty Scanned', bold)
             worksheet.write('N1', 'Booked to Scanned Variance', bold)
@@ -2099,7 +2099,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 pickup_days_late = (booking.b_dateBookedDate.date() + timedelta(days=2) - sydney_today.date()).days
 
                 if pickup_days_late < 0:
-                    cell_format = workbook.add_format({'fg_color': '#a00'})
+                    cell_format = workbook.add_format({'fg_color': '#090'})
                     worksheet.write(row, col + 1, pickup_days_late, cell_format)
                 else:
                     worksheet.write(row, col + 1, pickup_days_late)
@@ -2117,7 +2117,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_dateBookedDate is not None:
                     days_early_late = (booking.b_dateBookedDate.date() + timedelta(days=delivery_kpi_days) - sydney_today.date()).days
 
-                cell_format = workbook.add_format({'fg_color': '#a00'})
+                cell_format = workbook.add_format({'fg_color': '#090'})
                 worksheet.write(row, col + 2, days_early_late, cell_format)
                 # worksheet.write(0, col + 29, sydney_today.strftime("%d/%m/%Y"))
 
