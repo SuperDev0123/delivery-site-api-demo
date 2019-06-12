@@ -1414,7 +1414,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     filename = username + '__' + xls_type + '__' + str(len(bookings)) + '__' + str(start_date.strftime("%d-%m-%Y")) + '__' + str(end_date.strftime("%d-%m-%Y")) + '__' + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S")) + ".xlsx"
     workbook = xlsxwriter.Workbook(filename, {'remove_timezone': True})
     worksheet = workbook.add_worksheet()
-    worksheet.set_column(0, 27, width=25)
     bold = workbook.add_format({'bold': 1, 'align': 'left'})
     date_format = workbook.add_format({'num_format': 'dd/mm/yyyy'})
     time_format = workbook.add_format({'num_format': 'hh:mm:ss'})
@@ -1424,6 +1423,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         worksheet.set_column(7, 8, width=40)
         worksheet.set_column(9, 9, width=53)
         worksheet.set_column(10, 10, width=70)
+        worksheet.set_column(0, 27, width=25)
 
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
@@ -1597,6 +1597,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'BookingLines':
+        worksheet.set_column(0, 27, width=25)
+
         if show_field_name:
             worksheet.write('A1', 'dme_bookings:v_FPBookingNumber', bold)
             worksheet.write('B1', 'dme_bookings:b_dateBookedDate(Date)', bold)
@@ -1797,6 +1799,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'BookingsWithGaps':
+        worksheet.set_column(0, 27, width=25)
+
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
             worksheet.write('B1', 'b_dateBookedDate(Time)', bold)
@@ -1982,6 +1986,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         worksheet.set_column(7, 8, width=40)
         worksheet.set_column(9, 9, width=53)
         worksheet.set_column(10, 10, width=70)
+        worksheet.set_column(0, 27, width=25)
 
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
