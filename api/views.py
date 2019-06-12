@@ -2226,16 +2226,25 @@ def generate_mainifest(request):
     booking_ids = body["bookingIds"]
 
     try:
-        result = build_manifest(booking_ids)
+        file_paths = build_manifest(booking_ids)
 
-        if type(result) == 'int' and result > 0:
-            return JsonResponse({'success': 'success'})
-        else:
-            return JsonResponse({'error': 'Found set has manifested bookings', 'manifested_list': result})
+        zip_subdir = "manifest_files"
+        zip_filename = "%s.zip" % zip_subdir
+
+        s = io.BytesIO()
+        zf = zipfile.ZipFile(s, "w")
+
+        for index, booking_id in enumerate(booking_ids):
+            zip_path = os.path.join(zip_subdir, file_paths[index])
+            zf.write(file_path[index], 'manifest_files/' + str(booking_id))
+        zf.close()
+
+        response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+        response['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
+        return response
     except Exception as e:
         print('generate_mainifest error: ', e)
         return JsonResponse({'error': 'error'})
-
 
 @api_view(['POST'])
 @permission_classes((AllowAny,))
