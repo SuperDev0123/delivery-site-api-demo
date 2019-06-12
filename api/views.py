@@ -2226,7 +2226,11 @@ def generate_mainifest(request):
     booking_ids = body["bookingIds"]
 
     try:
-        file_paths = build_manifest(booking_ids)
+        filenames = build_manifest(booking_ids)
+        file_paths = []
+
+        for filename in filenames:
+            file_paths.appned("/var/www/html/dme_api/static/pdfs/taz_au/" + filename)
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
@@ -2234,9 +2238,9 @@ def generate_mainifest(request):
         s = io.BytesIO()
         zf = zipfile.ZipFile(s, "w")
 
-        for index, booking_id in enumerate(booking_ids):
+        for index, filename in enumerate(filenames):
             zip_path = os.path.join(zip_subdir, file_paths[index])
-            zf.write(file_paths[index], 'manifest_files/' + str(booking_id) + '.pdf')
+            zf.write(file_paths[index], 'manifest_files/' + filename)
         zf.close()
 
         response = HttpResponse(s.getvalue(), "application/x-zip-compressed")

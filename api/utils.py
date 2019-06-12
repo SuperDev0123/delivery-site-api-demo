@@ -921,7 +921,7 @@ def build_manifest(booking_ids):
     #end check if pdfs folder exists
 
     #start loop through data fetched from dme_bookings table
-    file_paths = []
+    filenames = []
     i = 1
     for booking in bookings:
         try:
@@ -932,7 +932,7 @@ def build_manifest(booking_ids):
             #start pdf file name using naming convention
             #date = datetime.datetime.now().strftime("%Y%m%d")+"_"+datetime.datetime.now().strftime("")
             filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + "_m.pdf"
-            file_paths.append(local_filepath + filename)
+            filenames.append(filename)
             file = open(local_filepath+filename, "w") 
             #file.write("Your text goes here") 
             #end pdf file name using naming convention
