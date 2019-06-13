@@ -1293,7 +1293,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     Story.append(Spacer(1, 35))
 
                     barcode = 'S'+booking["v_FPBookingNumber"]+str(j).zfill(3)
-                    barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.3)
+                    barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = 1.2)
 
                     tbl_data = [
                         [Paragraph('<font size=8>Item: </font>', styles["Normal"]), Paragraph('<font size=12><b>%s of %s</b></font>' % (j, totalQty), style_left) ]
