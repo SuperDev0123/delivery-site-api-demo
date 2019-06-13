@@ -1431,11 +1431,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == 'Bookings':
-        worksheet.set_column(7, 8, width=40)
-        worksheet.set_column(9, 9, width=53)
-        worksheet.set_column(10, 10, width=70)
-        worksheet.set_column(0, 6, width=25)
-        worksheet.set_column(11, 28, width=25)
+        worksheet.set_column(15, 16, width=40)
+        worksheet.set_column(17, 17, width=53)
+        worksheet.set_column(0, 14, width=25)
+        worksheet.set_column(18, 28, width=25)
 
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
