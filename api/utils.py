@@ -2059,6 +2059,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 2
         else:
             worksheet.write('A1', 'Booked Date', bold)
+            cell_format = workbook.add_format({'font_color': 'red', 'bold': 1, 'align': 'left'})
             worksheet.write('B1', 'Pickup Days Late', cell_format)
             worksheet.write('C1', 'Delivery Days Early / Late', cell_format)
             worksheet.write('D1', 'Query With', bold)
