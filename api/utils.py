@@ -1061,18 +1061,18 @@ def build_manifest(booking_ids):
 
                     tbl_data = [
                         [
-                        Paragraph('<font size=10>%s</font>' % j, styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % j, styles["Normal"]),
                         Paragraph('<font size=6>%s</font>' % ConNote, style_cell),
                         Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), style_cell),
                         Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_cell),
-                        Paragraph('<font size=10>%s</font>' % booking["de_to_Contact_F_LName"], styles["Normal"]), 
-                        Paragraph('<font size=10>%s</font>' % booking["de_To_Address_Suburb"], styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % str(booking_line['e_Total_KG_weight']), styles["Normal"]), 
-                        Paragraph('<font size=10>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
-                        Paragraph('<font size=10></font>', styles["Normal"])
+                        Paragraph('<font size=6>%s</font>' % booking["de_to_Contact_F_LName"], style_cell), 
+                        Paragraph('<font size=6>%s</font>' % booking["de_To_Address_Suburb"], style_cell),
+                        Paragraph('<font size=6>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
+                        Paragraph('<font size=6>%s</font>' % str(booking_line['e_Total_KG_weight']), styles["Normal"]), 
+                        Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
+                        Paragraph('<font size=6></font>', styles["Normal"])
                         ]
                     ]
                     tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
