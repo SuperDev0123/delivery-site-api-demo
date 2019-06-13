@@ -2135,7 +2135,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_dateBookedDate is not None:
                     days_early_late = (booking.b_dateBookedDate.date() + timedelta(days=delivery_kpi_days) - sydney_today.date()).days
 
-                if pickup_days_late < 0:
+                if days_early_late < 0:
                     cell_format = workbook.add_format({'font_color': 'red'})
                     worksheet.write(row, col + 2, '(' + str(days_early_late * -1) + ')', cell_format)
                 else:
