@@ -1055,9 +1055,9 @@ def build_manifest(booking_ids):
 
                 for booking_line in booking_lines:
                     
-                    totalQty = totalQty + booking_line['e_qty']
-                    totalWght = totalWght + booking_line['e_Total_KG_weight']
-                    totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter']
+                    totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
+                    totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
+                    totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
 
                     tbl_data = [
                         [
