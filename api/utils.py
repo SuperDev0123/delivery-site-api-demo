@@ -1996,8 +1996,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
-            worksheet.write('B1', 'Pickup Days Late', bold)
-            worksheet.write('C1', 'Delivery Days Early / Late', bold)
+            cell_format = workbook.add_format({'font_color': 'red', 'bold': 1, 'align': 'left'})
+            worksheet.write('B1', 'Pickup Days Late', cell_format)
+            worksheet.write('C1', 'Delivery Days Early / Late', cell_format)
             worksheet.write('D1', 'Query With', bold)
             worksheet.write('E1', 'b_client_sales_inv_num', bold)
             worksheet.write('F1', 'v_FPBookingNumber', bold)
@@ -2005,7 +2006,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('H1', 'dme_status_detail', bold)
             worksheet.write('I1', 'dme_status_action', bold)
             worksheet.write('J1', 'dme_status_history_notes', bold)
-            worksheet.write('K1', '', bold)
+            worksheet.write('K1', '', cell_format)
             worksheet.write('L1', 'e_qty', bold)
             worksheet.write('M1', 'e_qty_scanned_fp_total', bold)
             worksheet.write('N1', 'Booked to Scanned Variance', bold)
@@ -2026,8 +2027,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('AC1', 'de_Deliver_By_Date(Date)', bold)
 
             worksheet.write('A2', 'Booked Date', bold)
-            worksheet.write('B2', 'Pickup Days Late', bold)
-            worksheet.write('C2', 'Delivery Days Early / Late', bold)
+            worksheet.write('B2', 'Pickup Days Late', cell_format)
+            worksheet.write('C2', 'Delivery Days Early / Late', cell_format)
             worksheet.write('D2', 'Query With', bold)
             worksheet.write('E2', 'Client Sales Invoice', bold)
             worksheet.write('F2', 'Consignment No', bold)
@@ -2035,7 +2036,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('H2', 'Status Detail', bold)
             worksheet.write('I2', 'Status Action', bold)
             worksheet.write('J2', 'Status History Note', bold)
-            worksheet.write('K2', 'Please put your Feedback / updates in the column if different to Column G, H and / or I', bold)
+            worksheet.write('K2', 'Please put your Feedback / updates in the column if different to Column G, H and / or I', cell_format)
             worksheet.write('L2', 'Qty Booked', bold)
             worksheet.write('M2', 'Qty Scanned', bold)
             worksheet.write('N2', 'Booked to Scanned Variance', bold)
@@ -2058,8 +2059,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 2
         else:
             worksheet.write('A1', 'Booked Date', bold)
-            worksheet.write('B1', 'Pickup Days Late', bold)
-            worksheet.write('C1', 'Delivery Days Early / Late', bold)
+            worksheet.write('B1', 'Pickup Days Late', cell_format)
+            worksheet.write('C1', 'Delivery Days Early / Late', cell_format)
             worksheet.write('D1', 'Query With', bold)
             worksheet.write('E1', 'Client Sales Invoice', bold)
             worksheet.write('F1', 'Consignment No', bold)
@@ -2067,7 +2068,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write('H1', 'Status Detail', bold)
             worksheet.write('I1', 'Status Action', bold)
             worksheet.write('J1', 'Status History Note', bold)
-            worksheet.write('K1', 'Please put your Feedback / updates in the column if different to Column G, H and / or I', bold)
+            worksheet.write('K1', 'Please put your Feedback / updates in the column if different to Column G, H and / or I', cell_format)
             worksheet.write('L1', 'Qty Booked', bold)
             worksheet.write('M1', 'Qty Scanned', bold)
             worksheet.write('N1', 'Booked to Scanned Variance', bold)
@@ -2116,7 +2117,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 if pickup_days_late < 0:
                     cell_format = workbook.add_format({'font_color': 'red'})
-                    worksheet.write(row, col + 1, pickup_days_late, cell_format)
+                    worksheet.write(row, col + 1, '(' + str(pickup_days_late * -1) + ')', cell_format)
                 else:
                     worksheet.write(row, col + 1, pickup_days_late)
 
@@ -2133,9 +2134,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_dateBookedDate is not None:
                     days_early_late = (booking.b_dateBookedDate.date() + timedelta(days=delivery_kpi_days) - sydney_today.date()).days
 
-                cell_format = workbook.add_format({'font_color': 'red'})
-                worksheet.write(row, col + 2, days_early_late, cell_format)
-                # worksheet.write(0, col + 29, sydney_today.strftime("%d/%m/%Y"))
+                if pickup_days_late < 0:
+                    cell_format = workbook.add_format({'font_color': 'red'})
+                    worksheet.write(row, col + 2, '(' + str(days_early_late * -1) + ')', cell_format)
+                else:
+                    worksheet.write(row, col + 2, days_early_late)
 
             query_with = ''
             if (booking.dme_status_action is None or booking.dme_status_action == ''):
