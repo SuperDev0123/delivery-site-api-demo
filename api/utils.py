@@ -1304,7 +1304,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     tbl_data = [
                         [Paragraph('<font size=8><b>Desc</b>: %s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_left), barcode128]
                     ]
-                    tbl = Table(tbl_data, colWidths=(170, 350), rowHeights=(12), hAlign='LEFT', style = [("VALIGN", (0,0), (-1,-1), "MIDDLE"),('TOPPADDING',(0,0),(-1,-1), 0),('BOTTOMPADDING',(0,0),(-1,-1), 0),('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
+                    tbl = Table(tbl_data, colWidths=(170, 250), rowHeights=(12), hAlign='LEFT', style = [("VALIGN", (0,0), (-1,-1), "MIDDLE"),('TOPPADDING',(0,0),(-1,-1), 0),('BOTTOMPADDING',(0,0),(-1,-1), 0),('LEFTPADDING',(0,0),(-1,-1), 0),('RIGHTPADDING',(0,0),(-1,-1), 0)])
                     Story.append(tbl)                
                     Story.append(HRFlowable(
                         width="45%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=2, hAlign='LEFT', vAlign='BOTTOM', dash=None
