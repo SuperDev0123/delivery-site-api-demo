@@ -1207,11 +1207,12 @@ def build_manifest(booking_ids, one_manifest_file):
                                 [Paragraph('<font size=8><b>Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
                         ]
-                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=12, hAlign='LEFT', vAlign='BOTTOM', style=[
-                            ('BACKGROUND',(0,0),(0,0),colors.black),
-                            ('COLOR',(0,0),(-1,-1),colors.white),
-                            ('SPAN',(0,0),(1,0)),
-                            ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=15, hAlign='LEFT', vAlign='BOTTOM', 
+                            style=[
+                                ('BACKGROUND',(0,0),(0,0),colors.black),
+                                ('COLOR',(0,0),(-1,-1),colors.white),
+                                ('SPAN',(0,0),(1,0)),
+                                ('BOX',(0,0),(-1,-1),.5,(0,0,0))
                             ])
 
                         tbl_data = [
