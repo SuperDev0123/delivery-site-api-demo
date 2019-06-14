@@ -1157,6 +1157,7 @@ def build_manifest(booking_ids, one_manifest_file):
         for k in range(2):
             i = 1
             for booking in bookings:
+                print('@1 - ', i, '-', k)
                 try:
                     #start db query for fetching data from dme_booking_lines table
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
