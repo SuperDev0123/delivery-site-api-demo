@@ -1138,7 +1138,7 @@ def build_manifest(booking_ids, one_manifest_file, username):
 
                 sql = "INSERT INTO `dme_manifest_log` \
                     (`fk_booking_id`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
-                    VALUES (%s, %s, %s, %s, %s, %s)"
+                    VALUES (%s, %s, %s)"
                 mycursor.execute(sql, (booking['pk_booking_id'], str(datetime.utcnow()), str(datetime.utcnow())))
 
                 mysqlcon.commit()
