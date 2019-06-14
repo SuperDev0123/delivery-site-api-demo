@@ -1154,7 +1154,6 @@ def build_manifest(booking_ids, one_manifest_file):
         Story=[]
         manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
 
-
         for k in range(2):
             for booking in bookings:
                 try:
@@ -1176,104 +1175,104 @@ def build_manifest(booking_ids, one_manifest_file):
                     else:
                         ptext = 'Driver Copy - Detail'
 
-                    paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
-                    Story.append(paragraph)
-                    Story.append(Spacer(1, 5))
+                    if i == 1:
+                        paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
+                        Story.append(paragraph)
+                        Story.append(Spacer(1, 5))
 
-                    tbl_data = [
-                            [Paragraph('<font size=8 color="white"><b>MANIFEST DETAILS</b></font>', style_left)],
-                            [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
-                            [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
-                            [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
-                            ['', Paragraph('<font size=8></font>', styles["BodyText"])],
-                    ]
-                    t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='LEFT', vAlign='MIDDLE', style=[
-                        ('BACKGROUND',(0,0),(0,0),colors.black),
-                        ('COLOR',(0,0),(-1,-1),colors.white),
-                        ('SPAN',(0,0),(1,0)),
-                        ('BOX',(0,0),(-1,-1),.5,(0,0,0))
-                        ])
-
-                    tbl_data = [
-                        [ barcode128 ],
-                    ]
-                    t2 = Table(tbl_data, colWidths=(127*mm), rowHeights=(30*mm), hAlign='CENTER', vAlign='BOTTOM', style=[
-                    ("ALIGN", (0,0), (0,0), "CENTER")
-                    ])
-
-                    tbl_data = [
-                        [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
-                        [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
-                        Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
-                        [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
-                        Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
-                        [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
-                        Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
-                        [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
-                        Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
-                    ]
-                    t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
-                        ('BACKGROUND',(0,0),(0,0),colors.black),
-                        ('COLOR',(0,0),(-1,-1),colors.white),
-                        ('SPAN',(0,0),(1,0)),
-                        ('BOX',(0,0),(-1,-1),.5,(0,0,0))
-                        ])
-
-                    data = [[t1, t2, t3]]
-                    # adjust the length of tables
-                    t1_w = 80 * mm
-                    t2_w = 127 * mm
-                    t3_w = 80 * mm
-                    shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-                    Story.append(shell_table)
-                    Story.append(Spacer(1, 10))
-
-                    col1_w = 20
-                    col2_w = 70
-                    col3_w = 70
-                    col4_w = 140
-                    col5_w = 100
-                    col6_w = 80
-                    col7_w = 60
-                    col8_w = 60
-                    col9_w = 40
-                    col10_w = 55
-                    col11_w = 55
-                    col12_w = 60
-
-                    tbl_data = [
-                        [
-                        Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
+                        tbl_data = [
+                                [Paragraph('<font size=8 color="white"><b>MANIFEST DETAILS</b></font>', style_left)],
+                                [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
+                                ['', Paragraph('<font size=8></font>', styles["BodyText"])],
                         ]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
-                        ('BACKGROUND',(0,0),(11,1),colors.black),
+                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='LEFT', vAlign='MIDDLE', style=[
+                            ('BACKGROUND',(0,0),(0,0),colors.black),
+                            ('COLOR',(0,0),(-1,-1),colors.white),
+                            ('SPAN',(0,0),(1,0)),
+                            ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                            ])
+
+                        tbl_data = [
+                            [ barcode128 ],
+                        ]
+                        t2 = Table(tbl_data, colWidths=(127*mm), rowHeights=(30*mm), hAlign='CENTER', vAlign='BOTTOM', style=[
+                        ("ALIGN", (0,0), (0,0), "CENTER")
                         ])
-                    Story.append(tbl)
-                
+
+                        tbl_data = [
+                            [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
+                            [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
+                            Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
+                            [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
+                            Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
+                            [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
+                            Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
+                            [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
+                            Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
+                        ]
+                        t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
+                            ('BACKGROUND',(0,0),(0,0),colors.black),
+                            ('COLOR',(0,0),(-1,-1),colors.white),
+                            ('SPAN',(0,0),(1,0)),
+                            ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                            ])
+
+                        data = [[t1, t2, t3]]
+                        # adjust the length of tables
+                        t1_w = 80 * mm
+                        t2_w = 127 * mm
+                        t3_w = 80 * mm
+                        shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
+                            ('TOPPADDING',(0,0),(-1,-1), 0),
+                            ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                            ('LEFTPADDING',(0,0),(-1,-1), 0),
+                            ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                            ])
+                        Story.append(shell_table)
+                        Story.append(Spacer(1, 10))
+
+                        col1_w = 20
+                        col2_w = 70
+                        col3_w = 70
+                        col4_w = 140
+                        col5_w = 100
+                        col6_w = 80
+                        col7_w = 60
+                        col8_w = 60
+                        col9_w = 40
+                        col10_w = 55
+                        col11_w = 55
+                        col12_w = 60
+
+                        tbl_data = [
+                            [
+                            Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
+                            ]
+                        ]
+                        tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
+                            ('BACKGROUND',(0,0),(11,1),colors.black),
+                            ])
+                        Story.append(tbl)
+                    
                     j = 1
                     totalQty = 0
                     totalWght = 0
                     totalVol = 0
 
                     for booking_line in booking_lines:
-                        
                         totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
                         totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
                         totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
