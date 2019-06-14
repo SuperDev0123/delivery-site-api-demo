@@ -890,7 +890,7 @@ def build_xml(booking_ids, vx_freight_provider):
 
     mysqlcon.close()
 
-def build_manifest(booking_ids):
+def build_manifest(booking_ids, one_manifest_file):
     try:
         mysqlcon = pymysql.connect(host=DB_HOST,
                                    port=DB_PORT,
@@ -923,6 +923,11 @@ def build_manifest(booking_ids):
 
     #start loop through data fetched from dme_bookings table
     filenames = []
+    if one_manifest_file == '1':
+        date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
+        filename = "TAZ_MANIFEST_" + date + "_m.pdf"
+        filenames.append(filename)
+
     i = 1
     for booking in bookings:
         try:
@@ -931,11 +936,12 @@ def build_manifest(booking_ids):
             #end db query for fetching data from dme_booking_lines table
 
             #start pdf file name using naming convention
-            #date = datetime.datetime.now().strftime("%Y%m%d")+"_"+datetime.datetime.now().strftime("")
-            filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + "_m.pdf"
-            filenames.append(filename)
-            file = open(local_filepath+filename, "w") 
-            #file.write("Your text goes here") 
+            if one_manifest_file == '0':
+                filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + "_m.pdf"
+                filenames.append(filename)
+                file = open(local_filepath+filename, "w")
+            else:
+                file = open(local_filepath+filenames[0], "a")
             #end pdf file name using naming convention
 
             carrierName = "TAZ FREIGHT"         

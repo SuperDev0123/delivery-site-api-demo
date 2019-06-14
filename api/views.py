@@ -2221,12 +2221,13 @@ def generate_xml(request):
 
 @api_view(['POST'])
 @permission_classes((AllowAny,))
-def generate_mainifest(request):
+def generate_manifest(request):
     body = literal_eval(request.body.decode('utf8'))
     booking_ids = body["bookingIds"]
+    one_manifest_file = body["one_manifest_file"]
 
     try:
-        filenames = build_manifest(booking_ids)
+        filenames = build_manifest(booking_ids, one_manifest_file)
         file_paths = []
 
         for filename in filenames:
