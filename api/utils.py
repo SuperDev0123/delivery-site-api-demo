@@ -1140,17 +1140,16 @@ def build_manifest(booking_ids, one_manifest_file):
             #end loop through data fetched from dme_bookings table
 
             # start update booking status in dme_booking table
-            if one_manifest_file == 0:
-                sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
-                adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
-                mycursor.execute(sql2, adr2)
+            sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
+            adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
+            mycursor.execute(sql2, adr2)
 
-                sql = "INSERT INTO `dme_manifest_log` \
-                    (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
-                    VALUES (%s, %s, %s, %s)"
-                mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
+            sql = "INSERT INTO `dme_manifest_log` \
+                (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
+                VALUES (%s, %s, %s, %s)"
+            mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
 
-                mysqlcon.commit()
+            mysqlcon.commit()
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
