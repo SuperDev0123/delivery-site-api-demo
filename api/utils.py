@@ -890,7 +890,7 @@ def build_xml(booking_ids, vx_freight_provider):
 
     mysqlcon.close()
 
-def build_manifest(booking_ids, one_manifest_file, username):
+def build_manifest(booking_ids, one_manifest_file, user_name):
     try:
         mysqlcon = pymysql.connect(host=DB_HOST,
                                    port=DB_PORT,
@@ -1137,9 +1137,9 @@ def build_manifest(booking_ids, one_manifest_file, username):
                 mycursor.execute(sql2, adr2)
 
                 sql = "INSERT INTO `dme_manifest_log` \
-                    (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
+                    (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
                     VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, '1', '0', str(datetime.utcnow()), str(datetime.utcnow())))
+                mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, '1', '0', user_name, str(datetime.utcnow()), str(datetime.utcnow())))
 
                 mysqlcon.commit()
             except Exception as e:
