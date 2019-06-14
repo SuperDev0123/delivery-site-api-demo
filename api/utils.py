@@ -1160,6 +1160,19 @@ def build_manifest(booking_ids, one_manifest_file):
             ent_weight = 0
             ent_vol = 0
             for booking in bookings:
+                totalQty = 0
+                totalWght = 0
+                totalVol = 0
+
+                for booking_line in booking_lines:
+                    totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
+                    totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
+                    totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
+                ent_qty = ent_qty + totalQty
+                ent_weight = ent_weight + totalWght
+                ent_vol = ent_vol + totalVol
+
+            for booking in bookings:
                 try:
                     #start db query for fetching data from dme_booking_lines table
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
@@ -1189,9 +1202,11 @@ def build_manifest(booking_ids, one_manifest_file):
                                 [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
-                                ['', Paragraph('<font size=8></font>', styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Manifest Total Qty:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_qty), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Manifest Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_weight), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Manifest Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
                         ]
-                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='LEFT', vAlign='MIDDLE', style=[
+                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=10, hAlign='LEFT', vAlign='MIDDLE', style=[
                             ('BACKGROUND',(0,0),(0,0),colors.black),
                             ('COLOR',(0,0),(-1,-1),colors.white),
                             ('SPAN',(0,0),(1,0)),
@@ -1317,9 +1332,6 @@ def build_manifest(booking_ids, one_manifest_file):
                             ('GRID',(1,0),(-2,0),0.5,colors.black),
                             ])
                     Story.append(tbl)
-                    ent_qty = ent_qty + totalQty
-                    ent_weight = ent_weight + totalWght
-                    ent_vol = ent_vol + totalVol
 
                     i+= 1
                     #end formatting pdf file and putting data from db tables
@@ -1342,19 +1354,6 @@ def build_manifest(booking_ids, one_manifest_file):
                     # print("Error: unable to fecth data")
                     print("Error1: "+str(e))
 
-            tbl_data = [
-                [
-                Paragraph('<font size=10><b>Total:</b></font>', style_right),
-                Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
-                Paragraph('<font size=10>%s</font>' % str(ent_weight), styles["Normal"]), 
-                Paragraph('<font size=10>%s</font>' % str(ent_vol), styles["Normal"])
-                ]
-            ]
-            tbl = Table(tbl_data,
-                colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w),
-                rowHeights=18, hAlign='LEFT',
-                style=[('GRID',(1,0),(-1,0),0.5,colors.black),])
-            Story.append(tbl)
             if k == 0:
                 tbl_data = [
                     [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
