@@ -1157,7 +1157,6 @@ def build_manifest(booking_ids, one_manifest_file):
         for k in range(2):
             i = 1
             for booking in bookings:
-                print('@1 - ', i, '-', k)
                 try:
                     #start db query for fetching data from dme_booking_lines table
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
@@ -1317,29 +1316,6 @@ def build_manifest(booking_ids, one_manifest_file):
                     Story.append(tbl)
                     # Story.append(Spacer(1, 50))
 
-                    if k == 0:
-                        tbl_data = [
-                            [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
-                        ]
-                    else:
-                        tbl_data = [
-                            [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
-                        ]
-
-                    tbl = Table(tbl_data, colWidths=350, rowHeights=(250), hAlign='LEFT', vAlign='BOTTOM', style = [
-                        ('TOPPADDING',(0,0),(-1,-1), 0),
-                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                        ('LEFTPADDING',(0,0),(-1,-1), 0),
-                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                        ])
-                    Story.append(tbl)
-                    Story.append(Spacer(1, 5))
-
-                    Story.append(HRFlowable(
-                        width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
-                    ))
-                    Story.append(Spacer(1, 3))
-
                     i+= 1
                     #end formatting pdf file and putting data from db tables
 
@@ -1360,7 +1336,29 @@ def build_manifest(booking_ids, one_manifest_file):
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
                     print("Error1: "+str(e))
-            # Story.append(PageBreak())
+
+            if k == 0:
+                tbl_data = [
+                    [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                ]
+            else:
+                tbl_data = [
+                    [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                ]
+
+            tbl = Table(tbl_data, colWidths=350, rowHeights=(250), hAlign='LEFT', vAlign='BOTTOM', style = [
+                ('TOPPADDING',(0,0),(-1,-1), 0),
+                ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                ('LEFTPADDING',(0,0),(-1,-1), 0),
+                ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                ])
+            Story.append(tbl)
+            # Story.append(Spacer(1, 5))
+
+            Story.append(HRFlowable(
+                width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
+            ))
+            Story.append(PageBreak())
             k+= 1
         doc.build(Story)
         file.close()
