@@ -1152,6 +1152,8 @@ def build_manifest(booking_ids, one_manifest_file):
         file = open(local_filepath+filenames[0], "a")
         doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
         Story=[]
+        manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
+
 
         for k in range(2):
             for booking in bookings:
@@ -1162,7 +1164,6 @@ def build_manifest(booking_ids, one_manifest_file):
 
                     carrierName = "TAZ FREIGHT"         
                     senderName = ACCOUNT_CODE
-                    manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
                     ConNote = ACCOUNT_CODE + str(i).zfill(5)
                     Reference = "TEST123"
                     date = datetime.now().strftime("%d/%m/%Y")
@@ -1337,7 +1338,6 @@ def build_manifest(booking_ids, one_manifest_file):
                         width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
                     ))
                     Story.append(Spacer(1, 3))
-                    Story.append(PageBreak())
 
                     i+= 1
                     #end formatting pdf file and putting data from db tables
@@ -1359,6 +1359,7 @@ def build_manifest(booking_ids, one_manifest_file):
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
                     # print("Error1: "+str(e))
+            Story.append(PageBreak())
             k+= 1
         doc.build(Story)
         file.close()
