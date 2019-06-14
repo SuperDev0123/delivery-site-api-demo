@@ -1348,11 +1348,13 @@ def build_manifest(booking_ids, one_manifest_file):
                 Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
                 Paragraph('<font size=10>%s</font>' % str(ent_weight), styles["Normal"]), 
                 Paragraph('<font size=10>%s</font>' % str(ent_vol), styles["Normal"]),
+                Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
                 ]
             ]
-            tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                    ('GRID',(1,0),(-2,0),0.5,colors.black),
-                    ])
+            tbl = Table(tbl_data,
+                colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w),
+                rowHeights=18, hAlign='LEFT',
+                style=[('GRID',(1,0),(-2,0),0.5,colors.black),])
             Story.append(tbl)
             if k == 0:
                 tbl_data = [
