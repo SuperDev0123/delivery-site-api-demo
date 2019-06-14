@@ -1152,7 +1152,7 @@ def build_manifest(booking_ids, one_manifest_file):
         file = open(local_filepath+filenames[0], "a")
         doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
         Story=[]
-        manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
+        manifest = "M" + ACCOUNT_CODE + str(1).zfill(4)
 
         for k in range(2):
             i = 1
