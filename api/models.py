@@ -1066,6 +1066,7 @@ class Fp_freight_providers(models.Model):
     fp_company_name = models.CharField(max_length=64, blank=True, null=True)
     fp_address_country = models.CharField(max_length=32, blank=True, null=True)
     fp_inactive_date = models.DateField(blank=True, null=True)
+    fp_manifest_cnt = models.IntegerField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
     z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)

@@ -909,6 +909,9 @@ def build_manifest(booking_ids, one_manifest_file):
     # if len(manifested_list) > 0:
     #     return manifested_list
 
+    fp_info = Fp_freight_providers.get(fp_company_name=bookings[0]['vx_freight_provider'])
+    last_manifest_number = fp_info.fp_manifest_cnt
+
     #start check if pdfs folder exists
     if production:
         local_filepath = "/var/www/html/dme_api/static/pdfs/taz_au/"
@@ -925,7 +928,7 @@ def build_manifest(booking_ids, one_manifest_file):
     filenames = []
 
     if one_manifest_file == 0:
-        i = 1
+        i = last_manifest_number
         for booking in bookings:
             try:
                 #start db query for fetching data from dme_booking_lines table
@@ -1145,6 +1148,8 @@ def build_manifest(booking_ids, one_manifest_file):
                 # print(dir(exc_type), fname, exc_tb.tb_lineno)
                 # print("Error: unable to fecth data")
                 # print("Error1: "+str(e))
+        fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + bookings.length
+        fp_info.save()
     elif one_manifest_file == 1:
         date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
         filename = "TAZ_MANIFEST_" + date + "_m.pdf"
@@ -1152,7 +1157,9 @@ def build_manifest(booking_ids, one_manifest_file):
         file = open(local_filepath+filenames[0], "a")
         doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
         Story=[]
-        manifest = "M" + ACCOUNT_CODE + str(1).zfill(4)
+        manifest = "M" + ACCOUNT_CODE + str(last_manifest_number).zfill(4)
+        fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
+        fp_info.save()
 
         for k in range(2):
             i = 1
