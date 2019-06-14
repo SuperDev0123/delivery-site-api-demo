@@ -1160,6 +1160,7 @@ def build_manifest(booking_ids, one_manifest_file):
             ent_weight = 0
             ent_vol = 0
             for booking in bookings:
+                booking_lines = get_available_booking_lines(mysqlcon, booking)
                 totalQty = 0
                 totalWght = 0
                 totalVol = 0
