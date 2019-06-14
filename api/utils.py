@@ -1353,7 +1353,7 @@ def build_manifest(booking_ids, one_manifest_file):
             tbl = Table(tbl_data,
                 colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w),
                 rowHeights=18, hAlign='LEFT',
-                style=[('GRID',(1,0),(-2,0),0.5,colors.black),])
+                style=[('GRID',(1,0),(-1,0),0.5,colors.black),])
             Story.append(tbl)
             if k == 0:
                 tbl_data = [
