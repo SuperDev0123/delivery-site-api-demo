@@ -1359,7 +1359,7 @@ def build_manifest(booking_ids, one_manifest_file):
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
                     print("Error1: "+str(e))
-            Story.append(PageBreak())
+            # Story.append(PageBreak())
             k+= 1
         doc.build(Story)
         file.close()
