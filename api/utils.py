@@ -1306,7 +1306,7 @@ def build_manifest(booking_ids, one_manifest_file):
 
                     tbl_data = [
                         [
-                        Paragraph('<font size=10><b>Total Per Page:</b></font>', style_right),
+                        Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
                         Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
                         Paragraph('<font size=10>%s</font>' % str(totalWght), styles["Normal"]), 
                         Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
@@ -1347,8 +1347,7 @@ def build_manifest(booking_ids, one_manifest_file):
                 Paragraph('<font size=10><b>Total:</b></font>', style_right),
                 Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
                 Paragraph('<font size=10>%s</font>' % str(ent_weight), styles["Normal"]), 
-                Paragraph('<font size=10>%s</font>' % str(ent_vol), styles["Normal"]),
-                Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                Paragraph('<font size=10>%s</font>' % str(ent_vol), styles["Normal"])
                 ]
             ]
             tbl = Table(tbl_data,
