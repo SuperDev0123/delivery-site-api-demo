@@ -924,8 +924,8 @@ def build_manifest(booking_ids, one_manifest_file):
     #start loop through data fetched from dme_bookings table
     filenames = []
 
-    i = 1
     if one_manifest_file == 0:
+        i = 1
         for booking in bookings:
             try:
                 #start db query for fetching data from dme_booking_lines table
@@ -1155,6 +1155,7 @@ def build_manifest(booking_ids, one_manifest_file):
         manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
 
         for k in range(2):
+            i = 1
             for booking in bookings:
                 try:
                     #start db query for fetching data from dme_booking_lines table
@@ -1313,7 +1314,7 @@ def build_manifest(booking_ids, one_manifest_file):
                             ('GRID',(1,0),(-2,0),0.5,colors.black),
                             ])
                     Story.append(tbl)
-                    Story.append(Spacer(1, 50))
+                    # Story.append(Spacer(1, 50))
 
                     if k == 0:
                         tbl_data = [
@@ -1357,7 +1358,7 @@ def build_manifest(booking_ids, one_manifest_file):
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
-                    # print("Error1: "+str(e))
+                    print("Error1: "+str(e))
             Story.append(PageBreak())
             k+= 1
         doc.build(Story)
