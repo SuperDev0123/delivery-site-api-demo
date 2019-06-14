@@ -923,7 +923,229 @@ def build_manifest(booking_ids, one_manifest_file):
 
     #start loop through data fetched from dme_bookings table
     filenames = []
-    if one_manifest_file == 1:
+
+    i = 1
+    if one_manifest_file == 0:
+        for booking in bookings:
+            try:
+                #start db query for fetching data from dme_booking_lines table
+                booking_lines = get_available_booking_lines(mysqlcon, booking)
+                #end db query for fetching data from dme_booking_lines table
+
+                #start pdf file name using naming convention
+                filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + "_m.pdf"
+                filenames.append(filename)
+                file = open(local_filepath+filename, "w")
+                doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
+                Story=[]
+                #end pdf file name using naming convention
+
+                carrierName = "TAZ FREIGHT"         
+                senderName = ACCOUNT_CODE
+                manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
+                ConNote = ACCOUNT_CODE + str(i).zfill(5)
+                Reference = "TEST123"
+                date = datetime.now().strftime("%d/%m/%Y")
+                date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+                barcode = manifest
+                barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = .8)
+
+                for k in range(2):
+                    if k == 0:
+                        ptext = 'Customer Copy - Detail'
+                    else:
+                        ptext = 'Driver Copy - Detail'
+
+                    paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
+                    Story.append(paragraph)
+                    Story.append(Spacer(1, 5))
+
+                    tbl_data = [
+                            [Paragraph('<font size=8 color="white"><b>MANIFEST DETAILS</b></font>', style_left)],
+                            [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
+                            [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
+                            [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
+                            ['', Paragraph('<font size=8></font>', styles["BodyText"])],
+                    ]
+                    t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='LEFT', vAlign='MIDDLE', style=[
+                        ('BACKGROUND',(0,0),(0,0),colors.black),
+                        ('COLOR',(0,0),(-1,-1),colors.white),
+                        ('SPAN',(0,0),(1,0)),
+                        ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                        ])
+
+                    tbl_data = [
+                        [ barcode128 ],
+                    ]
+                    t2 = Table(tbl_data, colWidths=(127*mm), rowHeights=(30*mm), hAlign='CENTER', vAlign='BOTTOM', style=[
+                    ("ALIGN", (0,0), (0,0), "CENTER")
+                    ])
+
+                    tbl_data = [
+                        [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
+                        [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
+                        Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
+                        [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
+                        Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
+                        [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
+                        Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
+                        [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
+                        Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
+                    ]
+                    t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
+                        ('BACKGROUND',(0,0),(0,0),colors.black),
+                        ('COLOR',(0,0),(-1,-1),colors.white),
+                        ('SPAN',(0,0),(1,0)),
+                        ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                        ])
+
+                    data = [[t1, t2, t3]]
+                    # adjust the length of tables
+                    t1_w = 80 * mm
+                    t2_w = 127 * mm
+                    t3_w = 80 * mm
+                    shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
+                        ('TOPPADDING',(0,0),(-1,-1), 0),
+                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                        ('LEFTPADDING',(0,0),(-1,-1), 0),
+                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                        ])
+                    Story.append(shell_table)
+                    Story.append(Spacer(1, 10))
+
+                    col1_w = 20
+                    col2_w = 70
+                    col3_w = 70
+                    col4_w = 140
+                    col5_w = 100
+                    col6_w = 80
+                    col7_w = 60
+                    col8_w = 60
+                    col9_w = 40
+                    col10_w = 55
+                    col11_w = 55
+                    col12_w = 60
+
+                    tbl_data = [
+                        [
+                        Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
+                        ]
+                    ]
+                    tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
+                        ('BACKGROUND',(0,0),(11,1),colors.black),
+                        ])
+                    Story.append(tbl)
+                
+                    j = 1
+                    totalQty = 0
+                    totalWght = 0
+                    totalVol = 0
+
+                    for booking_line in booking_lines:
+                        
+                        totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
+                        totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
+                        totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
+
+                        tbl_data = [
+                            [
+                            Paragraph('<font size=6>%s</font>' % j, styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % ConNote, style_cell),
+                            Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), style_cell),
+                            Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_cell),
+                            Paragraph('<font size=6>%s</font>' % booking["de_to_Contact_F_LName"], style_cell), 
+                            Paragraph('<font size=6>%s</font>' % booking["de_To_Address_Suburb"], style_cell),
+                            Paragraph('<font size=6>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_Total_KG_weight']), styles["Normal"]), 
+                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
+                            Paragraph('<font size=6></font>', styles["Normal"])
+                            ]
+                        ]
+                        tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                            ('GRID',(0,0),(-1,-1),0.5,colors.black),
+                            ])
+                        Story.append(tbl)
+                        
+                        j+= 1
+
+                    tbl_data = [
+                        [
+                        Paragraph('<font size=10><b>Total Per Page:</b></font>', style_right),
+                        Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
+                        Paragraph('<font size=10>%s</font>' % str(totalWght), styles["Normal"]), 
+                        Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
+                        Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                        ]
+                    ]
+                    tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                            ('GRID',(1,0),(-2,0),0.5,colors.black),
+                            ])
+                    Story.append(tbl)
+                    Story.append(Spacer(1, 50))
+
+                    if k == 0:
+                        tbl_data = [
+                            [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                        ]
+                    else:
+                        tbl_data = [
+                            [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                        ]
+
+                    tbl = Table(tbl_data, colWidths=350, rowHeights=(250), hAlign='LEFT', vAlign='BOTTOM', style = [
+                        ('TOPPADDING',(0,0),(-1,-1), 0),
+                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                        ('LEFTPADDING',(0,0),(-1,-1), 0),
+                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                        ])
+                    Story.append(tbl)
+                    Story.append(Spacer(1, 5))
+
+                    Story.append(HRFlowable(
+                        width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
+                    ))
+                    Story.append(Spacer(1, 3))
+                    Story.append(PageBreak())
+                    k+= 1   
+
+                i+= 1
+                doc.build(Story)
+                #end formatting pdf file and putting data from db tables
+
+                file.close()
+                #end loop through data fetched from dme_bookings table
+
+                # start update booking status in dme_booking table
+                sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
+                adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
+                mycursor.execute(sql2, adr2)
+
+                sql = "INSERT INTO `dme_manifest_log` \
+                    (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
+                    VALUES (%s, %s, %s, %s)"
+                mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
+
+                mysqlcon.commit()
+            except Exception as e:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                # print(dir(exc_type), fname, exc_tb.tb_lineno)
+                # print("Error: unable to fecth data")
+                # print("Error1: "+str(e))
+    elif one_manifest_file == 1:
         date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
         filename = "TAZ_MANIFEST_" + date + "_m.pdf"
         filenames.append(filename)
@@ -931,232 +1153,213 @@ def build_manifest(booking_ids, one_manifest_file):
         doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
         Story=[]
 
-    i = 1
-    for booking in bookings:
-        try:
-            #start db query for fetching data from dme_booking_lines table
-            booking_lines = get_available_booking_lines(mysqlcon, booking)
-            #end db query for fetching data from dme_booking_lines table
+        for k in range(2):
+            for booking in bookings:
+                try:
+                    #start db query for fetching data from dme_booking_lines table
+                    booking_lines = get_available_booking_lines(mysqlcon, booking)
+                    #end db query for fetching data from dme_booking_lines table
 
-            #start pdf file name using naming convention
-            if one_manifest_file == 0:
-                filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + "_m.pdf"
-                filenames.append(filename)
-                file = open(local_filepath+filename, "w")
-                doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
-                Story=[]
-            #end pdf file name using naming convention
-
-            carrierName = "TAZ FREIGHT"         
-            senderName = ACCOUNT_CODE
-            manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
-            ConNote = ACCOUNT_CODE + str(i).zfill(5)
-            Reference = "TEST123"
-            date = datetime.now().strftime("%d/%m/%Y")
-            date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
-            barcode = manifest
-            barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = .8)
-
-            for k in range(2):
-
-                if k == 0:
-                    ptext = 'Customer Copy - Detail'
-                else:
-                    ptext = 'Driver Copy - Detail'
-
-                paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
-                Story.append(paragraph)
-                Story.append(Spacer(1, 5))
-
-                tbl_data = [
-                        [Paragraph('<font size=8 color="white"><b>MANIFEST DETAILS</b></font>', style_left)],
-                        [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
-                        [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
-                        [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
-                        ['', Paragraph('<font size=8></font>', styles["BodyText"])],
-                ]
-                t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='LEFT', vAlign='MIDDLE', style=[
-                    ('BACKGROUND',(0,0),(0,0),colors.black),
-                    ('COLOR',(0,0),(-1,-1),colors.white),
-                    ('SPAN',(0,0),(1,0)),
-                    ('BOX',(0,0),(-1,-1),.5,(0,0,0))
-                    ])
-
-                tbl_data = [
-                    [ barcode128 ],
-                ]
-                t2 = Table(tbl_data, colWidths=(127*mm), rowHeights=(30*mm), hAlign='CENTER', vAlign='BOTTOM', style=[
-                ("ALIGN", (0,0), (0,0), "CENTER")
-                ])
-
-                tbl_data = [
-                    [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
-                    [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
-                    Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
-                    [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
-                    Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
-                    [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
-                    Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
-                    [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
-                    Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
-                ]
-                t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
-                    ('BACKGROUND',(0,0),(0,0),colors.black),
-                    ('COLOR',(0,0),(-1,-1),colors.white),
-                    ('SPAN',(0,0),(1,0)),
-                    ('BOX',(0,0),(-1,-1),.5,(0,0,0))
-                    ])
-
-                data = [[t1, t2, t3]]
-                # adjust the length of tables
-                t1_w = 80 * mm
-                t2_w = 127 * mm
-                t3_w = 80 * mm
-                shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
-                    ('TOPPADDING',(0,0),(-1,-1), 0),
-                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                    ('LEFTPADDING',(0,0),(-1,-1), 0),
-                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                    ])
-                Story.append(shell_table)
-                Story.append(Spacer(1, 10))
-
-                col1_w = 20
-                col2_w = 70
-                col3_w = 70
-                col4_w = 140
-                col5_w = 100
-                col6_w = 80
-                col7_w = 60
-                col8_w = 60
-                col9_w = 40
-                col10_w = 55
-                col11_w = 55
-                col12_w = 60
-
-                tbl_data = [
-                    [
-                    Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
-                    Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
-                    ]
-                ]
-                tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
-                    ('BACKGROUND',(0,0),(11,1),colors.black),
-                    ])
-                Story.append(tbl)
-            
-                j = 1
-                totalQty = 0
-                totalWght = 0
-                totalVol = 0
-
-                for booking_line in booking_lines:
+                    carrierName = "TAZ FREIGHT"         
+                    senderName = ACCOUNT_CODE
+                    manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
+                    ConNote = ACCOUNT_CODE + str(i).zfill(5)
+                    Reference = "TEST123"
+                    date = datetime.now().strftime("%d/%m/%Y")
+                    date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+                    barcode = manifest
+                    barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = .8)
                     
-                    totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
-                    totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
-                    totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
+                    if k == 0:
+                        ptext = 'Customer Copy - Detail'
+                    else:
+                        ptext = 'Driver Copy - Detail'
+
+                    paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
+                    Story.append(paragraph)
+                    Story.append(Spacer(1, 5))
+
+                    tbl_data = [
+                            [Paragraph('<font size=8 color="white"><b>MANIFEST DETAILS</b></font>', style_left)],
+                            [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
+                            [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
+                            [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
+                            ['', Paragraph('<font size=8></font>', styles["BodyText"])],
+                    ]
+                    t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='LEFT', vAlign='MIDDLE', style=[
+                        ('BACKGROUND',(0,0),(0,0),colors.black),
+                        ('COLOR',(0,0),(-1,-1),colors.white),
+                        ('SPAN',(0,0),(1,0)),
+                        ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                        ])
+
+                    tbl_data = [
+                        [ barcode128 ],
+                    ]
+                    t2 = Table(tbl_data, colWidths=(127*mm), rowHeights=(30*mm), hAlign='CENTER', vAlign='BOTTOM', style=[
+                    ("ALIGN", (0,0), (0,0), "CENTER")
+                    ])
+
+                    tbl_data = [
+                        [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
+                        [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
+                        Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
+                        [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
+                        Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
+                        [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
+                        Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
+                        [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
+                        Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
+                    ]
+                    t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
+                        ('BACKGROUND',(0,0),(0,0),colors.black),
+                        ('COLOR',(0,0),(-1,-1),colors.white),
+                        ('SPAN',(0,0),(1,0)),
+                        ('BOX',(0,0),(-1,-1),.5,(0,0,0))
+                        ])
+
+                    data = [[t1, t2, t3]]
+                    # adjust the length of tables
+                    t1_w = 80 * mm
+                    t2_w = 127 * mm
+                    t3_w = 80 * mm
+                    shell_table = Table(data, colWidths=[t1_w, t2_w, t3_w], style = [
+                        ('TOPPADDING',(0,0),(-1,-1), 0),
+                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                        ('LEFTPADDING',(0,0),(-1,-1), 0),
+                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                        ])
+                    Story.append(shell_table)
+                    Story.append(Spacer(1, 10))
+
+                    col1_w = 20
+                    col2_w = 70
+                    col3_w = 70
+                    col4_w = 140
+                    col5_w = 100
+                    col6_w = 80
+                    col7_w = 60
+                    col8_w = 60
+                    col9_w = 40
+                    col10_w = 55
+                    col11_w = 55
+                    col12_w = 60
 
                     tbl_data = [
                         [
-                        Paragraph('<font size=6>%s</font>' % j, styles["Normal"]),
-                        Paragraph('<font size=6>%s</font>' % ConNote, style_cell),
-                        Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), style_cell),
-                        Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_cell),
-                        Paragraph('<font size=6>%s</font>' % booking["de_to_Contact_F_LName"], style_cell), 
-                        Paragraph('<font size=6>%s</font>' % booking["de_To_Address_Suburb"], style_cell),
-                        Paragraph('<font size=6>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
-                        Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
-                        Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
-                        Paragraph('<font size=6>%s</font>' % str(booking_line['e_Total_KG_weight']), styles["Normal"]), 
-                        Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
-                        Paragraph('<font size=6></font>', styles["Normal"])
+                        Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
+                        Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
                         ]
                     ]
-                    tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                        ('GRID',(0,0),(-1,-1),0.5,colors.black),
+                    tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
+                        ('BACKGROUND',(0,0),(11,1),colors.black),
                         ])
                     Story.append(tbl)
-                    
-                    j+= 1
+                
+                    j = 1
+                    totalQty = 0
+                    totalWght = 0
+                    totalVol = 0
 
-                tbl_data = [
-                    [
-                    Paragraph('<font size=10><b>Total Per Page:</b></font>', style_right),
-                    Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
-                    Paragraph('<font size=10>%s</font>' % str(totalWght), styles["Normal"]), 
-                    Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
-                    Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                    for booking_line in booking_lines:
+                        
+                        totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
+                        totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
+                        totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
+
+                        tbl_data = [
+                            [
+                            Paragraph('<font size=6>%s</font>' % j, styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % ConNote, style_cell),
+                            Paragraph('<font size=6>%s</font>' % (str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else ''), style_cell),
+                            Paragraph('<font size=6>%s</font>' % (str(booking_line['e_item']) if booking_line['e_item'] else ''), style_cell),
+                            Paragraph('<font size=6>%s</font>' % booking["de_to_Contact_F_LName"], style_cell), 
+                            Paragraph('<font size=6>%s</font>' % booking["de_To_Address_Suburb"], style_cell),
+                            Paragraph('<font size=6>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_Total_KG_weight']), styles["Normal"]), 
+                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
+                            Paragraph('<font size=6></font>', styles["Normal"])
+                            ]
+                        ]
+                        tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                            ('GRID',(0,0),(-1,-1),0.5,colors.black),
+                            ])
+                        Story.append(tbl)
+                        
+                        j+= 1
+
+                    tbl_data = [
+                        [
+                        Paragraph('<font size=10><b>Total Per Page:</b></font>', style_right),
+                        Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
+                        Paragraph('<font size=10>%s</font>' % str(totalWght), styles["Normal"]), 
+                        Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
+                        Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                        ]
                     ]
-                ]
-                tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                        ('GRID',(1,0),(-2,0),0.5,colors.black),
+                    tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                            ('GRID',(1,0),(-2,0),0.5,colors.black),
+                            ])
+                    Story.append(tbl)
+                    Story.append(Spacer(1, 50))
+
+                    if k == 0:
+                        tbl_data = [
+                            [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                        ]
+                    else:
+                        tbl_data = [
+                            [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                        ]
+
+                    tbl = Table(tbl_data, colWidths=350, rowHeights=(250), hAlign='LEFT', vAlign='BOTTOM', style = [
+                        ('TOPPADDING',(0,0),(-1,-1), 0),
+                        ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                        ('LEFTPADDING',(0,0),(-1,-1), 0),
+                        ('RIGHTPADDING',(0,0),(-1,-1), 0)
                         ])
-                Story.append(tbl)
-                Story.append(Spacer(1, 50))
+                    Story.append(tbl)
+                    Story.append(Spacer(1, 5))
 
-                if k == 0:
-                    tbl_data = [
-                        [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
-                    ]
-                else:
-                    tbl_data = [
-                        [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
-                    ]
+                    Story.append(HRFlowable(
+                        width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
+                    ))
+                    Story.append(Spacer(1, 3))
+                    Story.append(PageBreak())
 
-                tbl = Table(tbl_data, colWidths=350, rowHeights=(250), hAlign='LEFT', vAlign='BOTTOM', style = [
-                    ('TOPPADDING',(0,0),(-1,-1), 0),
-                    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                    ('LEFTPADDING',(0,0),(-1,-1), 0),
-                    ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                    ])
-                Story.append(tbl)
-                Story.append(Spacer(1, 5))
+                    i+= 1
+                    #end formatting pdf file and putting data from db tables
 
-                Story.append(HRFlowable(
-                    width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
-                ))
-                Story.append(Spacer(1, 3))
-                Story.append(PageBreak())
-                k+= 1   
+                    # start update booking status in dme_booking table
+                    sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
+                    adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
+                    mycursor.execute(sql2, adr2)
 
-            i+= 1
-            if one_manifest_file == 0:
-                doc.build(Story)
-            #end formatting pdf file and putting data from db tables
+                    sql = "INSERT INTO `dme_manifest_log` \
+                        (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
+                        VALUES (%s, %s, %s, %s)"
+                    mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
 
-            if one_manifest_file == 0:
-                file.close()
-            #end loop through data fetched from dme_bookings table
-
-            # start update booking status in dme_booking table
-            sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
-            adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
-            mycursor.execute(sql2, adr2)
-
-            sql = "INSERT INTO `dme_manifest_log` \
-                (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
-                VALUES (%s, %s, %s, %s)"
-            mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
-
-            mysqlcon.commit()
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            # print(dir(exc_type), fname, exc_tb.tb_lineno)
-            # print("Error: unable to fecth data")
-            # print("Error1: "+str(e))
-
-    if one_manifest_file == 1:
+                    mysqlcon.commit()
+                except Exception as e:
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    # print(dir(exc_type), fname, exc_tb.tb_lineno)
+                    # print("Error: unable to fecth data")
+                    # print("Error1: "+str(e))
+            k+= 1
         doc.build(Story)
         file.close()
 
