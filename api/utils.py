@@ -1137,9 +1137,9 @@ def build_manifest(booking_ids, one_manifest_file, username):
                 mycursor.execute(sql2, adr2)
 
                 sql = "INSERT INTO `dme_manifest_log` \
-                    (`fk_booking_id`, `manifest_url`, `manifest_number`, `z_createdTimeStamp`, `z_modifiedTimeStamp`, `z_createdByAccount`) \
+                    (`fk_booking_id`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
                     VALUES (%s, %s, %s, %s, %s, %s)"
-                mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, str(datetime.utcnow()), str(datetime.utcnow()), username))
+                mycursor.execute(sql, (booking['pk_booking_id'], str(datetime.utcnow()), str(datetime.utcnow())))
 
                 mysqlcon.commit()
             except Exception as e:
