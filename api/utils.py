@@ -932,7 +932,6 @@ def build_manifest(booking_ids, one_manifest_file):
         Story=[]
 
     i = 1
-    if one_manifest_file == 0:
     for booking in bookings:
         try:
             #start db query for fetching data from dme_booking_lines table
