@@ -2228,6 +2228,7 @@ def generate_manifest(request):
 
     try:
         filenames = build_manifest(booking_ids, one_manifest_file)
+        print('@1 - ', filenames, one_manifest_file)
         file_paths = []
 
         for filename in filenames:
