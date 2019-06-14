@@ -890,7 +890,7 @@ def build_xml(booking_ids, vx_freight_provider):
 
     mysqlcon.close()
 
-def build_manifest(booking_ids, one_manifest_file):
+def build_manifest(booking_ids, one_manifest_file, username):
     try:
         mysqlcon = pymysql.connect(host=DB_HOST,
                                    port=DB_PORT,
@@ -1137,9 +1137,9 @@ def build_manifest(booking_ids, one_manifest_file):
                 mycursor.execute(sql2, adr2)
 
                 sql = "INSERT INTO `dme_manifest_log` \
-                    (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
-                    VALUES (%s, %s, %s, %s)"
-                mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
+                    (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking, `z_createdTimeStamp`, `z_modifiedTimeStamp`, `z_createdByAccount`) \
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, 1, False, str(datetime.utcnow()), str(datetime.utcnow()), username))
 
                 mysqlcon.commit()
             except Exception as e:
@@ -1379,7 +1379,6 @@ def build_manifest(booking_ids, one_manifest_file):
                 ('RIGHTPADDING',(0,0),(-1,-1), 0)
                 ])
             Story.append(tbl)
-            # Story.append(Spacer(1, 5))
 
             Story.append(HRFlowable(
                 width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
@@ -1388,6 +1387,16 @@ def build_manifest(booking_ids, one_manifest_file):
             k+= 1
         doc.build(Story)
         file.close()
+        sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
+        adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
+        mycursor.execute(sql2, adr2)
+        mysqlcon.commit()
+
+        sql = "INSERT INTO `dme_manifest_log` \
+            (`manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking, `z_createdTimeStamp`, `z_modifiedTimeStamp`, `z_createdByAccount`) \
+            VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        mycursor.execute(sql, (filename, manifest, len(bookings), True, str(datetime.utcnow()), str(datetime.utcnow()), username))
+        mysqlcon.commit()
 
     mysqlcon.close()
     return filenames
