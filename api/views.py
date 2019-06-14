@@ -2228,7 +2228,7 @@ def generate_manifest(request):
     username = body["bookingIds"]
 
     try:
-        filenames = build_manifest(booking_ids, one_manifest_file)
+        filenames = build_manifest(booking_ids, one_manifest_file, username)
         file_paths = []
 
         for filename in filenames:
