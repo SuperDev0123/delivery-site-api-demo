@@ -1156,6 +1156,9 @@ def build_manifest(booking_ids, one_manifest_file):
 
         for k in range(2):
             i = 1
+            ent_qty = 0
+            ent_weight = 0
+            ent_vol = 0
             for booking in bookings:
                 try:
                     #start db query for fetching data from dme_booking_lines table
@@ -1314,7 +1317,9 @@ def build_manifest(booking_ids, one_manifest_file):
                             ('GRID',(1,0),(-2,0),0.5,colors.black),
                             ])
                     Story.append(tbl)
-                    # Story.append(Spacer(1, 50))
+                    ent_qty = ent_qty + totalQty
+                    ent_weight = ent_weight + totalWght
+                    ent_vol = ent_vol + totalVol
 
                     i+= 1
                     #end formatting pdf file and putting data from db tables
@@ -1337,6 +1342,18 @@ def build_manifest(booking_ids, one_manifest_file):
                     # print("Error: unable to fecth data")
                     print("Error1: "+str(e))
 
+            tbl_data = [
+                [
+                Paragraph('<font size=10><b>Total:</b></font>', style_right),
+                Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
+                Paragraph('<font size=10>%s</font>' % str(ent_weight), styles["Normal"]), 
+                Paragraph('<font size=10>%s</font>' % str(ent_vol), styles["Normal"]),
+                ]
+            ]
+            tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                    ('GRID',(1,0),(-2,0),0.5,colors.black),
+                    ])
+            Story.append(tbl)
             if k == 0:
                 tbl_data = [
                     [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
