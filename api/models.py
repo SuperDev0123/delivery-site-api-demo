@@ -1099,12 +1099,15 @@ class Utl_dme_status_actions(models.Model):
 
 class Dme_manifest_log(models.Model):
     id = models.AutoField(primary_key=True)
-    fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True) 
+    fk_booking_id = models.CharField(verbose_name=_('FK Booking Id'), max_length=64, blank=True, null=True)
+    manifest_number = models.CharField(max_length=32, blank=True, null=True)
     manifest_url = models.CharField(max_length=200, blank=True, null=True)
+    is_one_booking = models.BooleanField(blank=True, null=True, default=False)
+    bookings_cnt = models.IntegerField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(verbose_name=_('Created by account'), max_length=64, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(verbose_name=_('Created Timestamp'), default=datetime.now)
     z_modifiedByAccount = models.CharField(verbose_name=_('Modified by account'), max_length=64, blank=True, null=True)
     z_modifiedTimeStamp = models.DateTimeField(verbose_name=_('Modified Timestamp'), default=datetime.now)
 
     class Meta:
-        db_table = 'dme_maifest_log'
+        db_table = 'dme_manifest_log'
