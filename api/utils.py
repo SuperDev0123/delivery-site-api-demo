@@ -1203,9 +1203,9 @@ def build_manifest(booking_ids, one_manifest_file):
                                 [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Manifest Total Qty:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_qty), styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Manifest Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_weight), styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Manifest Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Total Qty:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' %  str(ent_qty), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
                         ]
                         t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=10, hAlign='LEFT', vAlign='MIDDLE', style=[
                             ('BACKGROUND',(0,0),(0,0),colors.black),
@@ -1308,7 +1308,7 @@ def build_manifest(booking_ids, one_manifest_file):
                             Paragraph('<font size=6>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
                             Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
                             Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
-                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_Total_KG_weight']), styles["Normal"]), 
+                            Paragraph('<font size=6>%s</font>' % str("{0:.2f}".format(booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0)), styles["Normal"]), 
                             Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
                             Paragraph('<font size=6></font>', styles["Normal"])
                             ]
@@ -1324,7 +1324,7 @@ def build_manifest(booking_ids, one_manifest_file):
                         [
                         Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
                         Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % str(totalWght), styles["Normal"]), 
+                        Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(totalWght)), styles["Normal"]), 
                         Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
                         Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
                         ]
