@@ -927,8 +927,12 @@ def build_manifest(booking_ids, one_manifest_file):
         date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
         filename = "TAZ_MANIFEST_" + date + "_m.pdf"
         filenames.append(filename)
+        file = open(local_filepath+filenames[0], "a")
+        doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
+        Story=[]
 
     i = 1
+    if one_manifest_file == 0:
     for booking in bookings:
         try:
             #start db query for fetching data from dme_booking_lines table
@@ -940,8 +944,8 @@ def build_manifest(booking_ids, one_manifest_file):
                 filename = booking['pu_Address_State'] + "_" + str(booking['pk_booking_id']) + "_" + "DME_" + str(booking['b_bookingID_Visual']) + "_m.pdf"
                 filenames.append(filename)
                 file = open(local_filepath+filename, "w")
-            else:
-                file = open(local_filepath+filenames[0], "a")
+                doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
+                Story=[]
             #end pdf file name using naming convention
 
             carrierName = "TAZ FREIGHT"         
@@ -953,8 +957,6 @@ def build_manifest(booking_ids, one_manifest_file):
             date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
             barcode = manifest
             barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = .8)
-            doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
-            Story=[]
 
             for k in range(2):
 
@@ -1129,29 +1131,36 @@ def build_manifest(booking_ids, one_manifest_file):
                 k+= 1   
 
             i+= 1
-            doc.build(Story)
+            if one_manifest_file == 0:
+                doc.build(Story)
             #end formatting pdf file and putting data from db tables
 
-            file.close() 
+            if one_manifest_file == 0:
+                file.close()
             #end loop through data fetched from dme_bookings table
 
             # start update booking status in dme_booking table
-            sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
-            adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
-            mycursor.execute(sql2, adr2)
+            if one_manifest_file == 0:
+                sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
+                adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
+                mycursor.execute(sql2, adr2)
 
-            sql = "INSERT INTO `dme_manifest_log` \
-                (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
-                VALUES (%s, %s, %s, %s)"
-            mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
+                sql = "INSERT INTO `dme_manifest_log` \
+                    (`fk_booking_id`, `manifest_url`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
+                    VALUES (%s, %s, %s, %s)"
+                mycursor.execute(sql, (booking['pk_booking_id'], filename, str(datetime.utcnow()), str(datetime.utcnow())))
 
-            mysqlcon.commit()
+                mysqlcon.commit()
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             # print(dir(exc_type), fname, exc_tb.tb_lineno)
             # print("Error: unable to fecth data")
             print("Error1: "+str(e))
+
+    if one_manifest_file == 1:
+        doc.build(Story)
+        file.close()
 
     mysqlcon.close()
     return filenames

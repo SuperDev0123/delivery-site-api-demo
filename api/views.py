@@ -2224,7 +2224,7 @@ def generate_xml(request):
 def generate_manifest(request):
     body = literal_eval(request.body.decode('utf8'))
     booking_ids = body["bookingIds"]
-    one_manifest_file = body["one_manifest_file"]
+    one_manifest_file = int(body["one_manifest_file"])
 
     try:
         filenames = build_manifest(booking_ids, one_manifest_file)
