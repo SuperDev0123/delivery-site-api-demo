@@ -1387,7 +1387,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
         sql = "INSERT INTO `dme_manifest_log` \
             (`manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdTimeStamp`, `z_modifiedTimeStamp`, `z_createdByAccount`) \
             VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        mycursor.execute(sql, (filename, manifest, str(len(bookings)), '1', str(datetime.utcnow()), str(datetime.utcnow()), username))
+        mycursor.execute(sql, (filename, manifest, str(len(bookings)), '1', str(datetime.utcnow()), str(datetime.utcnow()), user_name))
         mysqlcon.commit()
 
     mysqlcon.close()
