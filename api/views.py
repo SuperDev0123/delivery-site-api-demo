@@ -2074,7 +2074,10 @@ def download_pdf(request):
         booking = Bookings.objects.get(id=id)
 
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
+            if (booking.vx_freight_provider == 'TASFR'):
+                file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
+            else:
+                file_paths.append('/var/www/html/dme_api/static/pdfs/' + booking.z_label_url) # Dev & Prod
             # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()

@@ -812,7 +812,11 @@ def build_xml(booking_ids, vx_freight_provider):
                 ServiceType = xml.SubElement(consignment, "fd:ServiceType")
                 ServiceType.text = booking['vx_serviceName']
 
-                DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", **{'From': booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['puPickUpAvailFrom_Date'] else '0000-00-00T00:00:00', 'To': booking['pu_PickUp_By_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'})
+                DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
+                    **{
+                        'From': booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['puPickUpAvailFrom_Date'] else '0000-00-00T00:00:00', 
+                        'To': booking['pu_PickUp_By_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'
+                    })
 
                 DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
                 DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
@@ -942,7 +946,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 Story=[]
                 #end pdf file name using naming convention
 
-                carrierName = "TAZ FREIGHT"         
+                carrierName = "TAS FREIGHT"         
                 senderName = ACCOUNT_CODE
                 manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
                 ConNote = ACCOUNT_CODE + str(i).zfill(5)
@@ -1191,7 +1195,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
                     #end db query for fetching data from dme_booking_lines table
 
-                    carrierName = "TAZ FREIGHT"         
+                    carrierName = "TAS FREIGHT"         
                     senderName = ACCOUNT_CODE
                     ConNote = ACCOUNT_CODE + str(i).zfill(5)
                     Reference = "TEST123"
