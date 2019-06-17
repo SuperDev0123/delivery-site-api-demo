@@ -735,7 +735,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 #start calculate total item quantity and total item weight
 
                 #start xml file name using naming convention
-                filename = "TAZ_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_"+str(i)+".xml"
+                filename = "TAS_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_"+str(i)+".xml"
                 
                 #end xml file name using naming convention
 
