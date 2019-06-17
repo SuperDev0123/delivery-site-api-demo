@@ -1227,12 +1227,12 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 [Paragraph('<font size=8 color="white"><b>MANIFEST DETAILS</b></font>', style_left)],
                                 [Paragraph('<font size=8><b>Carrier:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % carrierName, styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Manifest:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % manifest, styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Total Qty:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' %  str(ent_qty), styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["BodyText"])],
-                                [Paragraph('<font size=8><b>Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Accounts:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % senderName, styles["BodyText"])]
+                                # [Paragraph('<font size=8><b>Total Qty:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' %  str(ent_qty), styles["BodyText"])],
+                                # [Paragraph('<font size=8><b>Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["BodyText"])],
+                                # [Paragraph('<font size=8><b>Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
                         ]
-                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=15, hAlign='LEFT', vAlign='BOTTOM', 
+                        t1 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=18, hAlign='LEFT', vAlign='BOTTOM', 
                             style=[
                                 ('BACKGROUND',(0,0),(0,0),colors.black),
                                 ('COLOR',(0,0),(-1,-1),colors.white),
@@ -1331,7 +1331,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             ])
                         Story.append(tbl)
                         
-                        j+= 1
+                        j += 1
+                        i += 1
 
                     # tbl_data = [
                     #     [
@@ -1346,8 +1347,6 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     #         ('GRID',(1,0),(-2,0),0.5,colors.black),
                     #         ])
                     # Story.append(tbl)
-
-                    i+= 1
                     #end formatting pdf file and putting data from db tables
 
                 except Exception as e:
@@ -1356,6 +1355,20 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
                     print("Error1: "+str(e))
+
+            tbl_data = [
+                [
+                Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
+                Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
+                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["Normal"]), 
+                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_vol)), styles["Normal"]),
+                Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                ]
+            ]
+            tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                    ('GRID',(1,0),(-2,0),0.5,colors.black),
+                    ])
+            Story.append(tbl)
 
             if k == 0:
                 tbl_data = [
