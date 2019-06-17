@@ -705,7 +705,7 @@ def build_xml(booking_ids, vx_freight_provider):
             except Exception as e:
                 # print('@300 Allied XML - ', e)
                 return e
-    elif vx_freight_provider == 'taz':
+    elif vx_freight_provider == 'TASFR':
         #start check if xmls folder exists
         if production:
             local_filepath = "/var/www/html/dme_api/static/xmls/taz_au/"
@@ -1205,6 +1205,19 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     else:
                         ptext = 'Driver Copy - Detail'
 
+                    col1_w = 20
+                    col2_w = 70
+                    col3_w = 70
+                    col4_w = 140
+                    col5_w = 100
+                    col6_w = 80
+                    col7_w = 60
+                    col8_w = 60
+                    col9_w = 40
+                    col10_w = 55
+                    col11_w = 55
+                    col12_w = 60
+
                     if i == 1:
                         paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
                         Story.append(paragraph)
@@ -1266,39 +1279,26 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         Story.append(shell_table)
                         Story.append(Spacer(1, 10))
 
-                    col1_w = 20
-                    col2_w = 70
-                    col3_w = 70
-                    col4_w = 140
-                    col5_w = 100
-                    col6_w = 80
-                    col7_w = 60
-                    col8_w = 60
-                    col9_w = 40
-                    col10_w = 55
-                    col11_w = 55
-                    col12_w = 60
-
-                    tbl_data = [
-                        [
-                        Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
-                        Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
+                        tbl_data = [
+                            [
+                            Paragraph('<font size=10 color="white"></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>CONNOTE</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>REF</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>DESCRIPTION</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>RECEIVER</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>SUBURB</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>STATE</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>PCODE</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>QTY</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>KG</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>VOL</b></font>', styles["Normal"]),
+                            Paragraph('<font size=10 color="white"><b>ROUTE</b></font>', styles["Normal"]),
+                            ]
                         ]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
-                        ('BACKGROUND',(0,0),(11,1),colors.black),
-                        ])
-                    Story.append(tbl)
+                        tbl = Table(tbl_data, colWidths=(col1_w, col2_w, col3_w, col4_w, col5_w, col6_w, col7_w, col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=20, hAlign='LEFT', style=[
+                            ('BACKGROUND',(0,0),(11,1),colors.black),
+                            ])
+                        Story.append(tbl)
                     
                     j = 1
                     totalQty = 0
