@@ -721,9 +721,9 @@ def build_xml(booking_ids, vx_freight_provider):
         #start loop through data fetched from dme_bookings table         
         i = 1
         for booking in bookings:
-            dme_manifest_log = Dme_manifest_log.objects.get(fk_booking_id=booking.pk_booking_id)
-            manifest_number = dme_manifest_log.manifest_number
             try:
+                dme_manifest_log = Dme_manifest_log.objects.get(fk_booking_id=booking.pk_booking_id)
+                manifest_number = dme_manifest_log.manifest_number
                 #start db query for fetching data from dme_booking_lines table
                 booking_lines = get_available_booking_lines(mysqlcon, booking)
                 #end db query for fetching data from dme_booking_lines table
