@@ -718,12 +718,11 @@ def build_xml(booking_ids, vx_freight_provider):
             os.makedirs(local_filepath)
         #end check if xmls folder exists
         
-        fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
-        last_manifest_number = fp_info.fp_manifest_cnt
-
         #start loop through data fetched from dme_bookings table         
         i = 1
         for booking in bookings:
+            dme_manifest_log = Dme_manifest_log.objects.get(fk_booking_id=booking.pk_booking_id)
+            manifest_number = dme_manifest_log.manifest_number
             try:
                 #start db query for fetching data from dme_booking_lines table
                 booking_lines = get_available_booking_lines(mysqlcon, booking)
@@ -743,7 +742,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 #end xml file name using naming convention
 
                 #start formatting xml file and putting data from db tables
-                root = xml.Element("fd:Manifest", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xmlns:fd': "http://www.ezysend.com/FreightDescription/2.0", 'Version': "2.0", 'Action': "Submit", 'Number': "M"+ ACCOUNT_CODE + str(i + last_manifest_number - 1).zfill(4), 'Type': "Outbound", 'xsi:schemaLocation': "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd"})
+                root = xml.Element("fd:Manifest", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xmlns:fd': "http://www.ezysend.com/FreightDescription/2.0", 'Version': "2.0", 'Action': "Submit", 'Number': manifest_number, 'Type': "Outbound", 'xsi:schemaLocation': "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd"})
 
                 #IndependentContainers = xml.Element("fd:IndependentContainers")
                 #root.append(IndependentContainers)
@@ -1145,7 +1144,6 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 sql = "INSERT INTO `dme_manifest_log` \
                     (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                print('@1 - ', booking['pk_booking_id'], filename, manifest, '1', '0', user_name, str(datetime.utcnow()), str(datetime.utcnow()))
                 mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, '1', '0', user_name, str(datetime.utcnow()), str(datetime.utcnow())))
 
                 mysqlcon.commit()
