@@ -594,7 +594,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
         queryset = queryset.filter(puPickUpAvailFrom_Date=puPickUpAvailFrom_Date)
         queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
-        queryset = queryset.filter(b_status__icontains='booked')
+        queryset = queryset.filter(b_status__icontains='Ready for XML')
 
         # Prefilter count
         errors_to_correct = 0
