@@ -1333,19 +1333,19 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         
                         j+= 1
 
-                    tbl_data = [
-                        [
-                        Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
-                        Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
-                        Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(totalWght)), styles["Normal"]), 
-                        Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
-                        Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
-                        ]
-                    ]
-                    tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                            ('GRID',(1,0),(-2,0),0.5,colors.black),
-                            ])
-                    Story.append(tbl)
+                    # tbl_data = [
+                    #     [
+                    #     Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
+                    #     Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
+                    #     Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(totalWght)), styles["Normal"]), 
+                    #     Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
+                    #     Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                    #     ]
+                    # ]
+                    # tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                    #         ('GRID',(1,0),(-2,0),0.5,colors.black),
+                    #         ])
+                    # Story.append(tbl)
 
                     i+= 1
                     #end formatting pdf file and putting data from db tables
