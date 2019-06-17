@@ -717,6 +717,9 @@ def build_xml(booking_ids, vx_freight_provider):
         if not os.path.exists(local_filepath):
             os.makedirs(local_filepath)
         #end check if xmls folder exists
+        
+        fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
+        last_manifest_number = fp_info.fp_manifest_cnt
 
         #start loop through data fetched from dme_bookings table         
         i = 1
@@ -740,7 +743,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 #end xml file name using naming convention
 
                 #start formatting xml file and putting data from db tables
-                root = xml.Element("fd:Manifest", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xmlns:fd': "http://www.ezysend.com/FreightDescription/2.0", 'Version': "2.0", 'Action': "Submit", 'Number': "M"+ ACCOUNT_CODE + str(i).zfill(4), 'Type': "Outbound", 'xsi:schemaLocation': "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd"})
+                root = xml.Element("fd:Manifest", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xmlns:fd': "http://www.ezysend.com/FreightDescription/2.0", 'Version': "2.0", 'Action': "Submit", 'Number': "M"+ ACCOUNT_CODE + str(i + last_manifest_number - 1).zfill(4), 'Type': "Outbound", 'xsi:schemaLocation': "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd"})
 
                 #IndependentContainers = xml.Element("fd:IndependentContainers")
                 #root.append(IndependentContainers)
@@ -815,7 +818,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
                     **{
                         'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:09:00') if booking['puPickUpAvailFrom_Date'] else (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:09:00'), 
-                        'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:09:00') if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'
+                        'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:17:00') if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'
                     })
 
                 DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
@@ -931,7 +934,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
     filenames = []
 
     if one_manifest_file == 0:
-        i = last_manifest_number
+        i = 1
         for booking in bookings:
             try:
                 #start db query for fetching data from dme_booking_lines table
@@ -948,7 +951,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
                 carrierName = "TAS FREIGHT"         
                 senderName = ACCOUNT_CODE
-                manifest = "M" + ACCOUNT_CODE + str(i).zfill(4)
+                manifest = "M" + ACCOUNT_CODE + str(last_manifest_number + i - 1).zfill(4)
                 ConNote = ACCOUNT_CODE + str(i).zfill(5)
                 Reference = "TEST123"
                 date = datetime.now().strftime("%d/%m/%Y")
