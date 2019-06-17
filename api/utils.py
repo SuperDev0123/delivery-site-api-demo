@@ -814,8 +814,8 @@ def build_xml(booking_ids, vx_freight_provider):
 
                 DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
                     **{
-                        'From': booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['puPickUpAvailFrom_Date'] else '0000-00-00T00:00:00', 
-                        'To': booking['pu_PickUp_By_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'
+                        'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:09:00') if booking['puPickUpAvailFrom_Date'] else (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:09:00'), 
+                        'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:09:00') if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'
                     })
 
                 DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
