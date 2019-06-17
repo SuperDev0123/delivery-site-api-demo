@@ -753,7 +753,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 root.append(consignment)
 
                 Carrier = xml.SubElement(consignment, "fd:Carrier")
-                Carrier.text = booking['vx_serviceName']
+                Carrier.text = 'TASFR'
                 AccountCode = xml.SubElement(consignment, "fd:AccountCode")
                 AccountCode.text = ACCOUNT_CODE
 
@@ -811,7 +811,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 Fragile.text = 'true'
 
                 ServiceType = xml.SubElement(consignment, "fd:ServiceType")
-                ServiceType.text = booking['vx_serviceName']
+                ServiceType.text = 'GENERAL'
 
                 DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", **{'From': booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['puPickUpAvailFrom_Date'] else '0000-00-00T00:00:00', 'To': booking['pu_PickUp_By_Date'].strftime("%Y-%m-%dT%H:%M:%S") if booking['pu_PickUp_By_Date'] else '0000-00-00T00:00:00'})
 
