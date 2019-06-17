@@ -735,8 +735,7 @@ def build_xml(booking_ids, vx_freight_provider):
                 #start calculate total item quantity and total item weight
 
                 #start xml file name using naming convention
-                date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
-                filename = "TAZ_FP_"+date+"_"+str(i)+".xml"
+                filename = "TAZ_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_"+str(i)+".xml"
                 
                 #end xml file name using naming convention
 
@@ -818,8 +817,8 @@ def build_xml(booking_ids, vx_freight_provider):
                 DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
                 DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
 
-                FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
-                FPBookingNumber.text = booking['v_FPBookingNumber']
+                # FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
+                # FPBookingNumber.text = booking['v_FPBookingNumber']
 
                 #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
                 #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 

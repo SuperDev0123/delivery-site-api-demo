@@ -576,6 +576,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         puPickUpAvailFrom_Date = request.GET['puPickUpAvailFrom_Date']
         vx_freight_provider = request.GET['vx_freight_provider']
+        if vx_freight_provider == 'Taz':
+            vx_freight_provider = 'TASFR'
 
         # DME & Client filter
         if user_type == 'DME':
