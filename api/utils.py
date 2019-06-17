@@ -1353,6 +1353,12 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     #         ])
                     # Story.append(tbl)
                     #end formatting pdf file and putting data from db tables
+                    sql = "INSERT INTO `dme_manifest_log` \
+                    (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                    mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, '1', '1', user_name, str(datetime.utcnow()), str(datetime.utcnow())))
+
+                    mysqlcon.commit()
 
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
