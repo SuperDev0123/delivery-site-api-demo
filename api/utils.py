@@ -908,7 +908,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
     # if len(manifested_list) > 0:
     #     return manifested_list
 
-    fp_info = Fp_freight_providers.objects.get(fp_company_name=bookings[0]['vx_freight_provider'])
+    fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
     last_manifest_number = fp_info.fp_manifest_cnt
 
     #start check if pdfs folder exists
