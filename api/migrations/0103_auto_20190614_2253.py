@@ -10,24 +10,24 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelTable(
-            name='dme_manifest_log',
-            table='dme_manifest_log',
-        ),
+        # migrations.AlterModelTable(
+        #     name='dme_manifest_log',
+        #     table='dme_manifest_log',
+        # ),
 
-        migrations.AddField(
-            model_name='dme_manifest_log',
-            name='bookings_cnt',
-            field=models.IntegerField(blank=True, default=0, null=True),
-        ),
-        migrations.AddField(
-            model_name='dme_manifest_log',
-            name='is_one_booking',
-            field=models.BooleanField(blank=True, default=False, null=True),
-        ),
-        migrations.AddField(
-            model_name='dme_manifest_log',
-            name='manifest_number',
-            field=models.CharField(blank=True, max_length=32, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name='dme_manifest_log',
+        #     name='bookings_cnt',
+        #     field=models.IntegerField(blank=True, default=0, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name='dme_manifest_log',
+        #     name='is_one_booking',
+        #     field=models.BooleanField(blank=True, default=False, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name='dme_manifest_log',
+        #     name='manifest_number',
+        #     field=models.CharField(blank=True, max_length=32, null=True),
+        # ),
     ]

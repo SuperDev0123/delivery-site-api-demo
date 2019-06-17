@@ -104,8 +104,7 @@ class BookingsViewSet(viewsets.ViewSet):
         column_filters = json.loads(self.request.query_params.get('columnFilters', None))
         prefilter = json.loads(self.request.query_params.get('prefilterInd', None))
         simple_search_keyword = self.request.query_params.get('simpleSearchKeyword', None)
-        new_pod = self.request.query_params.get('newPod', None)
-        new_label = self.request.query_params.get('newLabel', None)
+        download_option = self.request.query_params.get('downloadOption', None)
         client_pk = self.request.query_params.get('clientPK', None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
         
@@ -129,7 +128,7 @@ class BookingsViewSet(viewsets.ViewSet):
         
         # print('@06 - Prefilter: ', prefilter)
         # print('@07 - Simple search keyword: ', simple_search_keyword)
-        # print('@08 - New POD: ', new_pod)
+        # print('@08 - Download Option: ', download_option)
         # print('@09 - Client PK: ', client_pk)
 
         # DME & Client filter
@@ -321,15 +320,19 @@ class BookingsViewSet(viewsets.ViewSet):
                 column_filter = ''
 
         # New POD filter
-        if new_pod == 'true':
+        if download_option == 'new_pod':
             queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
-                                .exclude((Q(z_pod_url__isnull=True) | Q(z_pod_url__exact='')), \
-                                (Q(z_pod_signed_url__isnull=True)| Q(z_pod_signed_url__exact='')))
+                                .exclude(Q(z_pod_url__isnull=True) | Q(z_pod_url__exact=''))
 
-        # New POD filter
-        if new_label == 'true':
+        # New POD_SOG filter
+        if download_option == 'new_pod_sog':
+            queryset = queryset.filter(z_downloaded_pod_sog_timestamp__isnull=True) \
+                                .exclude(Q(z_pod_signed_url__isnull=True) | Q(z_pod_signed_url__exact=''))
+
+        # New Lable filter
+        if download_option == 'new_label':
             queryset = queryset.filter(z_downloaded_shipping_label_timestamp__isnull=True) \
-                                .exclude((Q(z_label_url__isnull=True) | Q(z_label_url__exact='')))
+                                .exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=''))
 
         # Prefilter count
         errors_to_correct = 0
@@ -2103,11 +2106,12 @@ def download_pdf(request):
 def download_pod(request):
     body = literal_eval(request.body.decode('utf8'))
     bookingIds = body["ids"] 
-    only_new = body["onlyNew"]
+    download_option = body["downloadOption"]
+
     file_paths = [];
     pod_and_pod_signed_names = [];
 
-    if only_new == 'ALL':
+    if download_option == 'pod':
         for id in bookingIds:
             booking = Bookings.objects.get(id=id)
 
@@ -2118,13 +2122,18 @@ def download_pod(request):
                 booking.z_downloaded_pod_timestamp = timezone.now()
                 booking.save()
 
+    elif download_option == 'pod_sog':
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+
             if booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) is not 0:
                 file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_signed_url) # Dev & Prod
                 # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_signed_url)
-                booking.z_downloaded_pod_timestamp = timezone.now()
+                booking.z_downloaded_pod_sog_timestamp = timezone.now()
                 booking.save()
-    elif only_new == 'NEW':
+
+    elif download_option == 'new_pod':
         for id in bookingIds:
             booking = Bookings.objects.get(id=id)
 
@@ -2136,11 +2145,15 @@ def download_pod(request):
                     booking.z_downloaded_pod_timestamp = timezone.now()
                     booking.save()
 
+    elif download_option == 'new_pod_sog':
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+            if booking.z_downloaded_pod_sog_timestamp is None:
                 if booking.z_pod_signed_url is not None and len(booking.z_pod_signed_url) is not 0:
                     file_paths.append('/var/www/html/dme_api/static/imgs/' + booking.z_pod_signed_url) # Dev & Prod
                     # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_signed_url)
-                    booking.z_downloaded_pod_timestamp = timezone.now()
+                    booking.z_downloaded_pod_sog_timestamp = timezone.now()
                     booking.save()
 
     zip_subdir = "pod_and_pod_signed"
