@@ -1005,6 +1005,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
                     #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
                     
+                    serial_index = 0
                     for booking_line in booking_lines:
                         FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ \
                             'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', \
@@ -1042,16 +1043,17 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
                         ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
 
-                        # ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
-                        # if booking_line['e_1_Total_dimCubicMeter'] is not None:
-                        #     ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
+                        ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
+                        if booking_line['e_1_Total_dimCubicMeter'] is not None:
+                            ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
 
                         Items = xml.SubElement(FreightDetails, "fd:Items")
                         for j in range(1, booking_line['e_qty']+1):
+                            serial_index += 1
                             Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(i).zfill(5) })
-                            Item.text = "S" + connote_number + str(j).zfill(3)
+                            Item.text = "S" + connote_number + str(serial_index).zfill(3)
 
-                    i+= 1
+                    i += 1
                     #end formatting xml file and putting data from db tables
 
                     #start writting data into xml files
