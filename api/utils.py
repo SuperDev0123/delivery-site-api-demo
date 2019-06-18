@@ -1549,13 +1549,17 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                     [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
                                 ]
 
-                            tbl = Table(tbl_data, colWidths=350, rowHeights=30, hAlign='LEFT', vAlign='BOTTOM', style = [
+                            tbl = Table(tbl_data, colWidths=350, rowHeights=(ROWS_PER_PAGE - row_cnt) * 20, hAlign='LEFT', vAlign='BOTTOM', style = [
                                 ('TOPPADDING',(0,0),(-1,-1), 0),
                                 ('BOTTOMPADDING',(0,0),(-1,-1), 0),
                                 ('LEFTPADDING',(0,0),(-1,-1), 0),
                                 ('RIGHTPADDING',(0,0),(-1,-1), 0)
                                 ])
                             Story.append(tbl)
+                            Story.append(HRFlowable(
+                                width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
+                            ))
+
                             Story.append(PageBreak())
 
                         if row_cnt == ROWS_PER_PAGE: # Add Sign area
