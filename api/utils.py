@@ -75,7 +75,7 @@ style_left = ParagraphStyle(name='left', parent=styles['Normal'], alignment=TA_L
 style_center = ParagraphStyle(name='center', parent=styles['Normal'], alignment=TA_CENTER)
 style_cell = ParagraphStyle(name='smallcell', fontSize=6, leading=6)
 styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
-ROW_PER_PAGE = 20
+ROWS_PER_PAGE = 20
 #####################
 
 def redis_con():
