@@ -1267,7 +1267,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
                                 Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
-                                Paragraph('<font size=8>%s of %s/</font>', % (page_cnt, int(ent_rows/ROWS_PER_PAGE)), styles["BodyText"])],
+                                Paragraph('<font size=8>%s of %s/</font>' % (page_cnt, int(ent_rows/ROWS_PER_PAGE)), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
                                 Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
                                 [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
