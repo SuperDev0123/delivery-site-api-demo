@@ -1175,7 +1175,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
             ent_qty = 0
             ent_weight = 0
             ent_vol = 0
-            ent_row = 0
+            ent_rows = 0
             for booking in bookings:
                 booking_lines = get_available_booking_lines(mysqlcon, booking)
                 totalQty = 0
@@ -1189,7 +1189,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 ent_qty = ent_qty + totalQty
                 ent_weight = ent_weight + totalWght
                 ent_vol = ent_vol + totalVol
-                ent_row = ent_row + len(booking_lines)
+                ent_rows = ent_rows + len(booking_lines)
 
                 sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
                 adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
