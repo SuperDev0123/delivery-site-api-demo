@@ -1363,7 +1363,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             )
                             Story.append(tbl)
 
-                        if row_cnt == ROW_PER_PAGE: # Add Sign area
+                        if row_cnt == ROWS_PER_PAGE: # Add Sign area
                             if k == 0:
                                 tbl_data = [
                                     [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
