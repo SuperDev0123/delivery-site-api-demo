@@ -1341,7 +1341,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         row_cnt += 1
 
                         if booking_ind == len(bookings) and booking_line_ind == len(booking_lines): # Add Total
-                            Story.append(tbl)tbl_data = [
+                            tbl_data = [
                                 [
                                 Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
                                 Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
@@ -1350,9 +1350,14 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
                                 ]
                             ]
-                            tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                                    ('GRID',(1,0),(-2,0),0.5,colors.black),
-                                    ])
+                            tbl = Table(
+                                tbl_data, 
+                                colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w),
+                                rowHeights=18,
+                                hAlign='LEFT', 
+                                style=[('GRID',(1,0),(-2,0),0.5,colors.black),]
+                            )
+                            Story.append(tbl)
 
                         if row_cnt == 20: # Add Sign area
                             if k == 0:
