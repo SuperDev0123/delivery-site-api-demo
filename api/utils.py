@@ -1192,7 +1192,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
 
-            for booking in bookings:
+            for booking_ind, booking in enumerate(bookings):
                 try:
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
 
@@ -1228,8 +1228,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     totalWght = 0
                     totalVol = 0
 
-                    for booking_line in booking_lines:
-                        if row_cnt == 0:
+                    for booking_line_ind, booking_line in enumerate(booking_lines):
+                        if row_cnt == 0: # Add page header and table header
                             paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
                             Story.append(paragraph)
                             Story.append(Spacer(1, 5))
@@ -1310,7 +1310,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 ('BACKGROUND',(0,0),(11,1),colors.black),
                                 ])
                             Story.append(tbl)
-                        
+
                         totalQty = totalQty + booking_line['e_qty'] if booking_line['e_qty'] is not None else 0
                         totalWght = totalWght + booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0
                         totalVol = totalVol + booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else 0
@@ -1340,7 +1340,21 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         i += 1
                         row_cnt += 1
 
-                        if row_cnt == 20:
+                        if booking_ind == len(bookings) and booking_line_ind == len(booking_lines): # Add Total
+                            Story.append(tbl)tbl_data = [
+                                [
+                                Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
+                                Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
+                                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["Normal"]), 
+                                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_vol)), styles["Normal"]),
+                                Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
+                                ]
+                            ]
+                            tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
+                                    ('GRID',(1,0),(-2,0),0.5,colors.black),
+                                    ])
+
+                        if row_cnt == 20: # Add Sign area
                             if k == 0:
                                 tbl_data = [
                                     [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
@@ -1378,22 +1392,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     # print("Error: unable to fecth data")
                     print("Error1: "+str(e))
 
-            tbl_data = [
-                [
-                Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
-                Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
-                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["Normal"]), 
-                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_vol)), styles["Normal"]),
-                Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
-                ]
-            ]
-            tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                    ('GRID',(1,0),(-2,0),0.5,colors.black),
-                    ])
-            Story.append(tbl)
-
             k+= 1
-        
         doc.build(Story)
         file.close()
 
