@@ -1264,8 +1264,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
                             tbl_data = [
                                 [Paragraph('<font size=8 color="white"><b>GENERAL DETAILS</b></font>', style_left)],
-                                [Paragraph('<font size=6><b>Created:</b></font>', styles["BodyText"]),
-                                Paragraph('<font size=6>%s <b>Printed:</b> %s</font>' % (created_date, printed_timestamp), styles["BodyText"])],
+                                [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
+                                Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (created_date, printed_timestamp), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
                                 Paragraph('<font size=8>%s of %s</font>' % (page_cnt, int(ent_rows/ROWS_PER_PAGE)), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
@@ -1273,7 +1273,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
                                 Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
                             ]
-                            t3 = Table(tbl_data, colWidths=(20*mm, 60*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
+                            t3 = Table(tbl_data, colWidths=(15*mm, 65*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
                                 ('BACKGROUND',(0,0),(0,0),colors.black),
                                 ('COLOR',(0,0),(-1,-1),colors.white),
                                 ('SPAN',(0,0),(1,0)),
