@@ -75,6 +75,7 @@ style_left = ParagraphStyle(name='left', parent=styles['Normal'], alignment=TA_L
 style_center = ParagraphStyle(name='center', parent=styles['Normal'], alignment=TA_CENTER)
 style_cell = ParagraphStyle(name='smallcell', fontSize=6, leading=6)
 styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
+ROW_PER_PAGE = 20
 #####################
 
 def redis_con():
@@ -1169,10 +1170,12 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
         for k in range(2):
             i = 1
             row_cnt = 0
+            page_cnt = 1
 
             ent_qty = 0
             ent_weight = 0
             ent_vol = 0
+            ent_row = 0
             for booking in bookings:
                 booking_lines = get_available_booking_lines(mysqlcon, booking)
                 totalQty = 0
@@ -1186,6 +1189,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 ent_qty = ent_qty + totalQty
                 ent_weight = ent_weight + totalWght
                 ent_vol = ent_vol + totalVol
+                ent_row = ent_row + len(booking_lines)
 
                 sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
                 adr2 = (str(datetime.utcnow()), booking['pk_booking_id'])
@@ -1200,8 +1204,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     senderName = ACCOUNT_CODE
                     ConNote = ACCOUNT_CODE + str(i).zfill(5)
                     Reference = "TEST123"
-                    date = datetime.now().strftime("%d/%m/%Y")
-                    date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+                    date = str(datetime.now().strftime("%d/%m/%Y"))
+                    date1 = str(datetime.now().strftime("%d/%m/%Y %I:%M:%S %p"))
                     barcode = manifest
                     barcode128 = code128.Code128(barcode, barHeight=30*mm, barWidth = .8)
                     
@@ -1263,7 +1267,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
                                 Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (date, date1), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
-                                Paragraph('<font size=8>1 of 1</font>', styles["BodyText"])],
+                                Paragraph('<font size=8>%s of %s/</font>', % (page_cnt, int(ent_rows/ROWS_PER_PAGE)), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
                                 Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
                                 [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
@@ -1359,7 +1363,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             )
                             Story.append(tbl)
 
-                        if row_cnt == 20: # Add Sign area
+                        if row_cnt == ROW_PER_PAGE: # Add Sign area
                             if k == 0:
                                 tbl_data = [
                                     [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
@@ -1382,6 +1386,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             ))
                             Story.append(PageBreak())
                             row_cnt = 0
+                            page_cnt += 1
 
                     sql = "INSERT INTO `dme_manifest_log` \
                     (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
