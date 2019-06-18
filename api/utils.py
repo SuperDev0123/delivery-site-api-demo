@@ -508,7 +508,7 @@ def get_item_type(i):
     else:
         return 'ERROR'
 
-def build_xml(booking_ids, vx_freight_provider):
+def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     try:
         mysqlcon = pymysql.connect(host=DB_HOST,
                                    port=DB_PORT,
@@ -721,25 +721,186 @@ def build_xml(booking_ids, vx_freight_provider):
         
         #start loop through data fetched from dme_bookings table         
         i = 1
-        for booking in bookings:
-            try:
-                dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=booking['pk_booking_id']).last()
-                manifest_number = dme_manifest_log.manifest_number
-                #start db query for fetching data from dme_booking_lines table
-                booking_lines = get_available_booking_lines(mysqlcon, booking)
-                #end db query for fetching data from dme_booking_lines table
+        if one_manifest_file == 0:
+            for booking in bookings:
+                try:
+                    dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=booking['pk_booking_id']).last()
+                    manifest_number = dme_manifest_log.manifest_number
+                    #start db query for fetching data from dme_booking_lines table
+                    booking_lines = get_available_booking_lines(mysqlcon, booking)
+                    #end db query for fetching data from dme_booking_lines table
 
-                #start calculate total item quantity and total item weight
-                totalQty = 0
-                totalWght = 0
-                for booking_line in booking_lines:
-                    totalQty = totalQty + booking_line['e_qty']
-                    totalWght = totalWght + booking_line['e_Total_KG_weight']
-                #start calculate total item quantity and total item weight
+                    #start calculate total item quantity and total item weight
+                    totalQty = 0
+                    totalWght = 0
+                    for booking_line in booking_lines:
+                        totalQty = totalQty + booking_line['e_qty']
+                        totalWght = totalWght + booking_line['e_Total_KG_weight']
+                    #start calculate total item quantity and total item weight
+
+                    #start xml file name using naming convention
+                    filename = "TAS_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_"+str(i)+".xml"
+                    
+                    #end xml file name using naming convention
+
+                    #start formatting xml file and putting data from db tables
+                    root = xml.Element("fd:Manifest", **{'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance', 'xmlns:fd': "http://www.ezysend.com/FreightDescription/2.0", 'Version': "2.0", 'Action': "Submit", 'Number': manifest_number, 'Type': "Outbound", 'xsi:schemaLocation': "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd"})
+
+                    #IndependentContainers = xml.Element("fd:IndependentContainers")
+                    #root.append(IndependentContainers)
+                    #xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})                
+                    connote_number = ACCOUNT_CODE + str(i).zfill(5)
+
+                    #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
+                    consignment = xml.Element("fd:Consignment", **{'Number': connote_number })
+                    root.append(consignment)
+
+                    Carrier = xml.SubElement(consignment, "fd:Carrier")
+                    Carrier.text = booking['vx_freight_provider']
+                    AccountCode = xml.SubElement(consignment, "fd:AccountCode")
+                    AccountCode.text = ACCOUNT_CODE
+
+                    senderName = xml.SubElement(consignment, "fd:Sender", **{'Name': ACCOUNT_CODE})
+                    senderAddress = xml.SubElement(senderName, "fd:Address")
+                    senderAddressLine1 = xml.SubElement(senderAddress, "fd:Address1")
+                    senderAddressLine1.text = booking['pu_Address_Street_1']
+                    senderLocality = xml.SubElement(senderAddress, "fd:Locality")
+                    senderLocality.text = booking['pu_Address_Suburb']
+                    senderState = xml.SubElement(senderAddress, "fd:Territory")
+                    senderState.text = booking['pu_Address_State']
+                    senderPostcode = xml.SubElement(senderAddress, "fd:PostCode")
+                    senderPostcode.text = booking['pu_Address_PostalCode']
+                    senderCountry = xml.SubElement(senderAddress, "fd:Country")
+                    senderCountry.text = booking['pu_Address_Country']
+
+                    companyName = booking['deToCompanyName'].replace("<", "")
+                    companyName = companyName.replace(">", "")
+                    companyName = companyName.replace("\"", "")
+                    companyName = companyName.replace("'", "")
+                    companyName = companyName.replace("&", "and")
+
+                    ReceiverName = xml.SubElement(consignment, "fd:Receiver", **{'Name': companyName, 'Reference': 'CUST0001'})
+                    ReceiverAddress = xml.SubElement(ReceiverName, "fd:Address")
+                    ReceiverAddressLine1 = xml.SubElement(ReceiverAddress, "fd:Address1")
+                    ReceiverAddressLine1.text = booking['de_To_Address_Street_1']
+                    ReceiverLocality = xml.SubElement(ReceiverAddress, "fd:Locality")
+                    ReceiverLocality.text = booking['de_To_Address_Suburb']
+                    ReceiverState = xml.SubElement(ReceiverAddress, "fd:Territory")
+                    ReceiverState.text = booking['de_To_Address_State']
+                    ReceiverPostcode = xml.SubElement(ReceiverAddress, "fd:PostCode")
+                    ReceiverPostcode.text = booking['de_To_Address_PostalCode']
+                    ReceiverCountry = xml.SubElement(ReceiverAddress, "fd:Country")
+                    ReceiverCountry.text = booking['de_To_Address_Country']
+
+                    ContactName = xml.SubElement(ReceiverName, "fd:ContactName")
+                    ContactName.text = (str(booking['de_to_Contact_FName']) if booking['de_to_Contact_FName'] else '') + (' ' + str(booking['de_to_Contact_Lname']) if booking['de_to_Contact_Lname'] else '')
+                    PhoneNumber = xml.SubElement(ReceiverName, "fd:PhoneNumber")
+                    PhoneNumber.text = (str(booking['de_to_Phone_Main']) if booking['de_to_Phone_Main'] else '')
+
+                    FreightForwarderName = xml.SubElement(consignment, "fd:FreightForwarder", **{'Name': companyName})
+                    FreightForwarderAddress = xml.SubElement(FreightForwarderName, "fd:Address")
+                    FreightForwarderAddressLine1 = xml.SubElement(FreightForwarderAddress, "fd:Address1")
+                    FreightForwarderAddressLine1.text = booking['de_To_Address_Street_1']
+                    FreightForwarderLocality = xml.SubElement(FreightForwarderAddress, "fd:Locality")
+                    FreightForwarderLocality.text = booking['de_To_Address_Suburb']
+                    FreightForwarderState = xml.SubElement(FreightForwarderAddress, "fd:Territory")
+                    FreightForwarderState.text = booking['de_To_Address_State']
+                    FreightForwarderPostcode = xml.SubElement(FreightForwarderAddress, "fd:PostCode")
+                    FreightForwarderPostcode.text = booking['de_To_Address_PostalCode']
+                    FreightForwarderCountry = xml.SubElement(FreightForwarderAddress, "fd:Country")
+                    FreightForwarderCountry.text = booking['de_To_Address_Country']
+
+                    Fragile = xml.SubElement(consignment, "fd:Fragile")
+                    Fragile.text = 'true'
+
+                    ServiceType = xml.SubElement(consignment, "fd:ServiceType")
+                    ServiceType.text = booking['vx_serviceName']
+
+                    DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
+                        **{
+                            'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:09:00'),
+                            'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:17:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:17:00')
+                        })
+
+                    DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
+                    DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
+
+                    # FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
+                    # FPBookingNumber.text = booking['v_FPBookingNumber']
+
+                    #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
+                    #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
+                    
+                    for booking_line in booking_lines:
+                        FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ \
+                            'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', \
+                            'Quantity': str(booking_line['e_qty']), \
+                            'Commodity': (get_item_type(booking_line['e_item_type']) if booking_line['e_item_type'] else ''), \
+                            'CustomDescription': str(booking_line['e_item']) if booking_line['e_item'] else '' \
+                        })
+                        if booking_line['e_dangerousGoods']:
+                            DangerousGoods = xml.SubElement(FreightDetails, "fd:DangerousGoods",  **{ 'Class': "1", 'UNNumber': "1003" })
+                        
+                        ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions", **{ \
+                            'Length': str('1') if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0 else str(booking_line['e_dimLength']), \
+                            'Width': str('1') if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0 else str(booking_line['e_dimWidth']), \
+                            'Height': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0 else str(booking_line['e_dimHeight']) \
+                        })
+
+                        if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0:
+                            sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
+                            adr2 = (1, booking_line['pk_lines_id'])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
+
+                        if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0:
+                            sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
+                            adr2 = (1, booking_line['pk_lines_id'])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
+
+                        if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0:
+                            sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
+                            adr2 = (1, booking_line['pk_lines_id'])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
+
+                        ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
+                        ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
+
+                        # ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
+                        # if booking_line['e_1_Total_dimCubicMeter'] is not None:
+                        #     ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
+
+                        Items = xml.SubElement(FreightDetails, "fd:Items")
+                        for j in range(1, booking_line['e_qty']+1):
+                            Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(i).zfill(5) })
+                            Item.text = "S" + connote_number + str(j).zfill(3)
+
+                    i+= 1
+                    #end formatting xml file and putting data from db tables
+
+                    #start writting data into xml files
+                    tree = xml.ElementTree(root)
+                    
+                    with open(local_filepath + filename, "wb") as fh:
+                        tree.write(fh, encoding='UTF-8', xml_declaration=True)
+                        
+                    # start update booking status in dme_booking table
+                    sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
+                    adr2 = ('Booked XML', str(datetime.utcnow()), connote_number, booking['pk_booking_id'])
+                    mycursor.execute(sql2, adr2)
+                    mysqlcon.commit()
+                except Exception as e:
+                    print('@300 TAZ XML - ', e)
+                    return e
+        elif one_manifest_file == 1:
+            try:
+                dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=bookings[0]['pk_booking_id']).last()
+                manifest_number = dme_manifest_log.manifest_number
 
                 #start xml file name using naming convention
-                filename = "TAS_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_"+str(i)+".xml"
-                
+                filename = "TAS_FP_"+str(datetime.now().strftime("%d/%m/%Y %H_%M_%S"))+"_multiple connots in one.xml"
                 #end xml file name using naming convention
 
                 #start formatting xml file and putting data from db tables
@@ -747,149 +908,163 @@ def build_xml(booking_ids, vx_freight_provider):
 
                 #IndependentContainers = xml.Element("fd:IndependentContainers")
                 #root.append(IndependentContainers)
-                #xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})                
-                connote_number = ACCOUNT_CODE + str(i).zfill(5)
+                #xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})
 
-                #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
-                consignment = xml.Element("fd:Consignment", **{'Number': connote_number })
-                root.append(consignment)
+                for booking in bookings:
+                    #start db query for fetching data from dme_booking_lines table
+                    booking_lines = get_available_booking_lines(mysqlcon, booking)
+                    #end db query for fetching data from dme_booking_lines table
 
-                Carrier = xml.SubElement(consignment, "fd:Carrier")
-                Carrier.text = booking['vx_freight_provider']
-                AccountCode = xml.SubElement(consignment, "fd:AccountCode")
-                AccountCode.text = ACCOUNT_CODE
+                    #start calculate total item quantity and total item weight
+                    totalQty = 0
+                    totalWght = 0
+                    for booking_line in booking_lines:
+                        totalQty = totalQty + booking_line['e_qty']
+                        totalWght = totalWght + booking_line['e_Total_KG_weight']
+                    #start calculate total item quantity and total item weight
 
-                senderName = xml.SubElement(consignment, "fd:Sender", **{'Name': ACCOUNT_CODE})
-                senderAddress = xml.SubElement(senderName, "fd:Address")
-                senderAddressLine1 = xml.SubElement(senderAddress, "fd:Address1")
-                senderAddressLine1.text = booking['pu_Address_Street_1']
-                senderLocality = xml.SubElement(senderAddress, "fd:Locality")
-                senderLocality.text = booking['pu_Address_Suburb']
-                senderState = xml.SubElement(senderAddress, "fd:Territory")
-                senderState.text = booking['pu_Address_State']
-                senderPostcode = xml.SubElement(senderAddress, "fd:PostCode")
-                senderPostcode.text = booking['pu_Address_PostalCode']
-                senderCountry = xml.SubElement(senderAddress, "fd:Country")
-                senderCountry.text = booking['pu_Address_Country']
+                    connote_number = ACCOUNT_CODE + str(i).zfill(5)
 
-                companyName = booking['deToCompanyName'].replace("<", "")
-                companyName = companyName.replace(">", "")
-                companyName = companyName.replace("\"", "")
-                companyName = companyName.replace("'", "")
-                companyName = companyName.replace("&", "and")
+                    #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
+                    consignment = xml.Element("fd:Consignment", **{'Number': connote_number })
+                    root.append(consignment)
 
-                ReceiverName = xml.SubElement(consignment, "fd:Receiver", **{'Name': companyName, 'Reference': 'CUST0001'})
-                ReceiverAddress = xml.SubElement(ReceiverName, "fd:Address")
-                ReceiverAddressLine1 = xml.SubElement(ReceiverAddress, "fd:Address1")
-                ReceiverAddressLine1.text = booking['de_To_Address_Street_1']
-                ReceiverLocality = xml.SubElement(ReceiverAddress, "fd:Locality")
-                ReceiverLocality.text = booking['de_To_Address_Suburb']
-                ReceiverState = xml.SubElement(ReceiverAddress, "fd:Territory")
-                ReceiverState.text = booking['de_To_Address_State']
-                ReceiverPostcode = xml.SubElement(ReceiverAddress, "fd:PostCode")
-                ReceiverPostcode.text = booking['de_To_Address_PostalCode']
-                ReceiverCountry = xml.SubElement(ReceiverAddress, "fd:Country")
-                ReceiverCountry.text = booking['de_To_Address_Country']
+                    Carrier = xml.SubElement(consignment, "fd:Carrier")
+                    Carrier.text = booking['vx_freight_provider']
+                    AccountCode = xml.SubElement(consignment, "fd:AccountCode")
+                    AccountCode.text = ACCOUNT_CODE
 
-                ContactName = xml.SubElement(ReceiverName, "fd:ContactName")
-                ContactName.text = (str(booking['de_to_Contact_FName']) if booking['de_to_Contact_FName'] else '') + (' ' + str(booking['de_to_Contact_Lname']) if booking['de_to_Contact_Lname'] else '')
-                PhoneNumber = xml.SubElement(ReceiverName, "fd:PhoneNumber")
-                PhoneNumber.text = (str(booking['de_to_Phone_Main']) if booking['de_to_Phone_Main'] else '')
+                    senderName = xml.SubElement(consignment, "fd:Sender", **{'Name': ACCOUNT_CODE})
+                    senderAddress = xml.SubElement(senderName, "fd:Address")
+                    senderAddressLine1 = xml.SubElement(senderAddress, "fd:Address1")
+                    senderAddressLine1.text = booking['pu_Address_Street_1']
+                    senderLocality = xml.SubElement(senderAddress, "fd:Locality")
+                    senderLocality.text = booking['pu_Address_Suburb']
+                    senderState = xml.SubElement(senderAddress, "fd:Territory")
+                    senderState.text = booking['pu_Address_State']
+                    senderPostcode = xml.SubElement(senderAddress, "fd:PostCode")
+                    senderPostcode.text = booking['pu_Address_PostalCode']
+                    senderCountry = xml.SubElement(senderAddress, "fd:Country")
+                    senderCountry.text = booking['pu_Address_Country']
 
-                FreightForwarderName = xml.SubElement(consignment, "fd:FreightForwarder", **{'Name': companyName})
-                FreightForwarderAddress = xml.SubElement(FreightForwarderName, "fd:Address")
-                FreightForwarderAddressLine1 = xml.SubElement(FreightForwarderAddress, "fd:Address1")
-                FreightForwarderAddressLine1.text = booking['de_To_Address_Street_1']
-                FreightForwarderLocality = xml.SubElement(FreightForwarderAddress, "fd:Locality")
-                FreightForwarderLocality.text = booking['de_To_Address_Suburb']
-                FreightForwarderState = xml.SubElement(FreightForwarderAddress, "fd:Territory")
-                FreightForwarderState.text = booking['de_To_Address_State']
-                FreightForwarderPostcode = xml.SubElement(FreightForwarderAddress, "fd:PostCode")
-                FreightForwarderPostcode.text = booking['de_To_Address_PostalCode']
-                FreightForwarderCountry = xml.SubElement(FreightForwarderAddress, "fd:Country")
-                FreightForwarderCountry.text = booking['de_To_Address_Country']
+                    companyName = booking['deToCompanyName'].replace("<", "")
+                    companyName = companyName.replace(">", "")
+                    companyName = companyName.replace("\"", "")
+                    companyName = companyName.replace("'", "")
+                    companyName = companyName.replace("&", "and")
 
-                Fragile = xml.SubElement(consignment, "fd:Fragile")
-                Fragile.text = 'true'
+                    ReceiverName = xml.SubElement(consignment, "fd:Receiver", **{'Name': companyName, 'Reference': 'CUST0001'})
+                    ReceiverAddress = xml.SubElement(ReceiverName, "fd:Address")
+                    ReceiverAddressLine1 = xml.SubElement(ReceiverAddress, "fd:Address1")
+                    ReceiverAddressLine1.text = booking['de_To_Address_Street_1']
+                    ReceiverLocality = xml.SubElement(ReceiverAddress, "fd:Locality")
+                    ReceiverLocality.text = booking['de_To_Address_Suburb']
+                    ReceiverState = xml.SubElement(ReceiverAddress, "fd:Territory")
+                    ReceiverState.text = booking['de_To_Address_State']
+                    ReceiverPostcode = xml.SubElement(ReceiverAddress, "fd:PostCode")
+                    ReceiverPostcode.text = booking['de_To_Address_PostalCode']
+                    ReceiverCountry = xml.SubElement(ReceiverAddress, "fd:Country")
+                    ReceiverCountry.text = booking['de_To_Address_Country']
 
-                ServiceType = xml.SubElement(consignment, "fd:ServiceType")
-                ServiceType.text = booking['vx_serviceName']
+                    ContactName = xml.SubElement(ReceiverName, "fd:ContactName")
+                    ContactName.text = (str(booking['de_to_Contact_FName']) if booking['de_to_Contact_FName'] else '') + (' ' + str(booking['de_to_Contact_Lname']) if booking['de_to_Contact_Lname'] else '')
+                    PhoneNumber = xml.SubElement(ReceiverName, "fd:PhoneNumber")
+                    PhoneNumber.text = (str(booking['de_to_Phone_Main']) if booking['de_to_Phone_Main'] else '')
 
-                DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
-                    **{
-                        'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:09:00'),
-                        'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:17:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:17:00')
-                    })
+                    FreightForwarderName = xml.SubElement(consignment, "fd:FreightForwarder", **{'Name': companyName})
+                    FreightForwarderAddress = xml.SubElement(FreightForwarderName, "fd:Address")
+                    FreightForwarderAddressLine1 = xml.SubElement(FreightForwarderAddress, "fd:Address1")
+                    FreightForwarderAddressLine1.text = booking['de_To_Address_Street_1']
+                    FreightForwarderLocality = xml.SubElement(FreightForwarderAddress, "fd:Locality")
+                    FreightForwarderLocality.text = booking['de_To_Address_Suburb']
+                    FreightForwarderState = xml.SubElement(FreightForwarderAddress, "fd:Territory")
+                    FreightForwarderState.text = booking['de_To_Address_State']
+                    FreightForwarderPostcode = xml.SubElement(FreightForwarderAddress, "fd:PostCode")
+                    FreightForwarderPostcode.text = booking['de_To_Address_PostalCode']
+                    FreightForwarderCountry = xml.SubElement(FreightForwarderAddress, "fd:Country")
+                    FreightForwarderCountry.text = booking['de_To_Address_Country']
 
-                DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
-                DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
+                    Fragile = xml.SubElement(consignment, "fd:Fragile")
+                    Fragile.text = 'true'
 
-                # FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
-                # FPBookingNumber.text = booking['v_FPBookingNumber']
+                    ServiceType = xml.SubElement(consignment, "fd:ServiceType")
+                    ServiceType.text = booking['vx_serviceName']
 
-                #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
-                #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
-                
-                for booking_line in booking_lines:
-                    FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ \
-                        'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', \
-                        'Quantity': str(booking_line['e_qty']), \
-                        'Commodity': (get_item_type(booking_line['e_item_type']) if booking_line['e_item_type'] else ''), \
-                        'CustomDescription': str(booking_line['e_item']) if booking_line['e_item'] else '' \
-                    })
-                    if booking_line['e_dangerousGoods']:
-                        DangerousGoods = xml.SubElement(FreightDetails, "fd:DangerousGoods",  **{ 'Class': "1", 'UNNumber': "1003" })
+                    DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
+                        **{
+                            'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:09:00'),
+                            'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + ' 00:17:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + ' 00:17:00')
+                        })
+
+                    DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
+                    DeliveryInstructions.text = str(booking['de_to_PickUp_Instructions_Address']) + ' ' + str(booking['de_to_Pick_Up_Instructions_Contact'])
+
+                    # FPBookingNumber = xml.SubElement(consignment, "fd:FPBookingNumber")
+                    # FPBookingNumber.text = booking['v_FPBookingNumber']
+
+                    #BulkPricing = xml.SubElement(consignment, "fd:BulkPricing")
+                    #xml.SubElement(BulkPricing, "fd:Container", **{ 'Weight': "500", 'Identifier': "C"+ ACCOUNT_CODE +"00003", 'Volume': "0.001", 'Commodity': "PALLET" }) 
                     
-                    ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions", **{ \
-                        'Length': str('1') if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0 else str(booking_line['e_dimLength']), \
-                        'Width': str('1') if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0 else str(booking_line['e_dimWidth']), \
-                        'Height': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0 else str(booking_line['e_dimHeight']) \
-                    })
+                    for booking_line in booking_lines:
+                        FreightDetails = xml.SubElement(consignment, "fd:FreightDetails", **{ \
+                            'Reference': str(booking_line['client_item_reference']) if booking_line['client_item_reference'] else '', \
+                            'Quantity': str(booking_line['e_qty']), \
+                            'Commodity': (get_item_type(booking_line['e_item_type']) if booking_line['e_item_type'] else ''), \
+                            'CustomDescription': str(booking_line['e_item']) if booking_line['e_item'] else '' \
+                        })
+                        if booking_line['e_dangerousGoods']:
+                            DangerousGoods = xml.SubElement(FreightDetails, "fd:DangerousGoods",  **{ 'Class': "1", 'UNNumber': "1003" })
+                        
+                        ItemDimensions = xml.SubElement(FreightDetails, "fd:ItemDimensions", **{ \
+                            'Length': str('1') if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0 else str(booking_line['e_dimLength']), \
+                            'Width': str('1') if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0 else str(booking_line['e_dimWidth']), \
+                            'Height': str('1') if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0 else str(booking_line['e_dimHeight']) \
+                        })
 
-                    if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0:
-                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line['pk_lines_id'])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        if booking_line['e_dimWidth'] == None or booking_line['e_dimWidth'] == '' or booking_line['e_dimWidth'] == 0:
+                            sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
+                            adr2 = (1, booking_line['pk_lines_id'])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
 
-                    if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0:
-                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line['pk_lines_id'])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        if booking_line['e_dimLength'] == None or booking_line['e_dimLength'] == '' or booking_line['e_dimLength'] == 0:
+                            sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
+                            adr2 = (1, booking_line['pk_lines_id'])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
 
-                    if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0:
-                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line['pk_lines_id'])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        if booking_line['e_dimHeight'] == None or booking_line['e_dimHeight'] == '' or booking_line['e_dimHeight'] == 0:
+                            sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
+                            adr2 = (1, booking_line['pk_lines_id'])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
 
-                    ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
-                    ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
+                        ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
+                        ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
 
-                    ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
-                    if booking_line['e_1_Total_dimCubicMeter'] is not None:
-                        ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
+                        # ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
+                        # if booking_line['e_1_Total_dimCubicMeter'] is not None:
+                        #     ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
 
-                    Items = xml.SubElement(FreightDetails, "fd:Items")
-                    for j in range(1, booking_line['e_qty']+1):
-                        Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(i).zfill(5) })
-                        Item.text = "S" + connote_number + str(j).zfill(3)
+                        Items = xml.SubElement(FreightDetails, "fd:Items")
+                        for j in range(1, booking_line['e_qty']+1):
+                            Item = xml.SubElement(Items, "fd:Item", **{ ' Container': "IC" + ACCOUNT_CODE + str(i).zfill(5) })
+                            Item.text = "S" + connote_number + str(j).zfill(3)
 
-                i+= 1
-                #end formatting xml file and putting data from db tables
+                    i+= 1
+                    #end formatting xml file and putting data from db tables
 
-                #start writting data into xml files
-                tree = xml.ElementTree(root)
-                
-                with open(local_filepath + filename, "wb") as fh:
-                    tree.write(fh, encoding='UTF-8', xml_declaration=True)
+                    #start writting data into xml files
+                    tree = xml.ElementTree(root)
                     
-                # start update booking status in dme_booking table
-                sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                adr2 = ('Booked XML', str(datetime.utcnow()), connote_number, booking['pk_booking_id'])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                    with open(local_filepath + filename, "wb") as fh:
+                        tree.write(fh, encoding='UTF-8', xml_declaration=True)
+                        
+                    # start update booking status in dme_booking table
+                    sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
+                    adr2 = ('Booked XML', str(datetime.utcnow()), connote_number, booking['pk_booking_id'])
+                    mycursor.execute(sql2, adr2)
+                    mysqlcon.commit()
             except Exception as e:
                 print('@300 TAZ XML - ', e)
                 return e
