@@ -1350,7 +1350,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                     [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
                                 ]
 
-                            tbl = Table(tbl_data, colWidths=350, rowHeights=(30), hAlign='LEFT', vAlign='BOTTOM', style = [
+                            tbl = Table(tbl_data, colWidths=350, rowHeights=30, hAlign='LEFT', vAlign='BOTTOM', style = [
                                 ('TOPPADDING',(0,0),(-1,-1), 0),
                                 ('BOTTOMPADDING',(0,0),(-1,-1), 0),
                                 ('LEFTPADDING',(0,0),(-1,-1), 0),
