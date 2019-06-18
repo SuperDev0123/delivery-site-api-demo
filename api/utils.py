@@ -1043,9 +1043,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
                         ItemWeight.text = format(booking_line['e_Total_KG_weight']/booking_line['e_qty'], '.2f') if booking_line['e_qty'] > 0 else 0
 
-                        ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
-                        if booking_line['e_1_Total_dimCubicMeter'] is not None:
-                            ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
+                        # ItemVolume = xml.SubElement(FreightDetails, "fd:ItemVolume")
+                        # if booking_line['e_1_Total_dimCubicMeter'] is not None:
+                        #     ItemVolume.text = format(booking_line['e_1_Total_dimCubicMeter'], '.2f')
 
                         Items = xml.SubElement(FreightDetails, "fd:Items")
                         for j in range(1, booking_line['e_qty']+1):
@@ -1444,7 +1444,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 [Paragraph('<font size=8><b>Created:</b></font>', styles["BodyText"]),
                                 Paragraph('<font size=8>%s <b>Printed:</b> %s</font>' % (created_date, printed_timestamp), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Page:</b></font>', styles["BodyText"]),
-                                Paragraph('<font size=8>%s of %s</font>' % (page_cnt, int(ent_rows/ROWS_PER_PAGE)), styles["BodyText"])],
+                                Paragraph('<font size=8>%s of %s</font>' % (page_cnt, int(ent_rows/ROWS_PER_PAGE) + 1), styles["BodyText"])],
                                 [Paragraph('<font size=8><b>Sender:</b></font>', styles["BodyText"]),
                                 Paragraph("<font size=8>%s, %s</font>" % (senderName, booking['pu_Address_Street_1']), styles["Normal"])], 
                                 [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
@@ -1507,7 +1507,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             Paragraph('<font size=6>%s</font>' % booking["de_To_Address_State"], styles["Normal"]),
                             Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
                             Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
-                            Paragraph('<font size=6>%s</font>' % str("{0:.2f}".format(booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0)), styles["Normal"]), 
+                            Paragraph('<font size=6>%s</font>' % str("{0:,.2f}".format(booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else 0)), styles["Normal"]), 
                             Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']), styles["Normal"]),
                             Paragraph('<font size=6></font>', styles["Normal"])
                             ]
@@ -1525,9 +1525,9 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             tbl_data = [
                                 [
                                 Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
-                                Paragraph('<font size=10>%s</font>' % str(ent_qty), styles["Normal"]),
-                                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["Normal"]), 
-                                Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(ent_vol)), styles["Normal"]),
+                                Paragraph('<font size=10>%s</font>' % str("{:,}".format(ent_qty)), styles["Normal"]),
+                                Paragraph('<font size=10>%s</font>' % str("{0:,.2f}".format(ent_weight)), styles["Normal"]), 
+                                Paragraph('<font size=10>%s</font>' % str("{0:,.2f}".format(ent_vol)), styles["Normal"]),
                                 Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
                                 ]
                             ]
@@ -1539,6 +1539,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 style=[('GRID',(1,0),(-2,0),0.5,colors.black),]
                             )
                             Story.append(tbl)
+                            Story.append(PageBreak())
 
                         if row_cnt == ROWS_PER_PAGE: # Add Sign area
                             if k == 0:
