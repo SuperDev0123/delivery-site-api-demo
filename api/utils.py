@@ -1273,7 +1273,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                                 [Paragraph('<font size=8><b></b></font>', styles["BodyText"]),
                                 Paragraph("<font size=8>%s, %s, %s</font>" % (booking['pu_Address_Suburb'], booking['pu_Address_PostalCode'], booking['pu_Address_State']), styles["Normal"])]               
                             ]
-                            t3 = Table(tbl_data, colWidths=(15*mm, 65*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
+                            t3 = Table(tbl_data, colWidths=(17*mm, 63*mm), rowHeights=16, hAlign='RIGHT', vAlign='MIDDLE', style=[
                                 ('BACKGROUND',(0,0),(0,0),colors.black),
                                 ('COLOR',(0,0),(-1,-1),colors.white),
                                 ('SPAN',(0,0),(1,0)),
