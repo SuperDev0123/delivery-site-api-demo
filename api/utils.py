@@ -1340,7 +1340,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         i += 1
                         row_cnt += 1
 
-                        if booking_ind == len(bookings) and booking_line_ind == len(booking_lines): # Add Total
+                        if booking_ind == len(bookings) - 1 and booking_line_ind == len(booking_lines) - 1: # Add Total
                             tbl_data = [
                                 [
                                 Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
