@@ -1508,7 +1508,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                             Paragraph('<font size=6>%s</font>' % booking["de_To_Address_PostalCode"], styles["Normal"]),
                             Paragraph('<font size=6>%s</font>' % str(booking_line["e_qty"]), styles["Normal"]),
                             Paragraph('<font size=6>%s</font>' % str("{0:,.2f}".format(booking_line['e_Total_KG_weight'] if booking_line['e_Total_KG_weight'] is not None else ''), styles["Normal"]), 
-                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter']) if booking_line['e_1_Total_dimCubicMeter'] is not None else '', styles["Normal"]),
+                            Paragraph('<font size=6>%s</font>' % str(booking_line['e_1_Total_dimCubicMeter'] if booking_line['e_1_Total_dimCubicMeter'] is not None else ''), styles["Normal"]),
                             Paragraph('<font size=6></font>', styles["Normal"])
                             ]
                         ]
