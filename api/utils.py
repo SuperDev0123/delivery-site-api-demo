@@ -1168,6 +1168,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
         for k in range(2):
             i = 1
+            row_cnt = 0
+
             ent_qty = 0
             ent_weight = 0
             ent_vol = 0
@@ -1192,9 +1194,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
             for booking in bookings:
                 try:
-                    #start db query for fetching data from dme_booking_lines table
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
-                    #end db query for fetching data from dme_booking_lines table
 
                     carrierName = "TAS FREIGHT"         
                     senderName = ACCOUNT_CODE
@@ -1223,7 +1223,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     col11_w = 55
                     col12_w = 60
 
-                    if i == 1:
+                    if row_cnt == 0:
                         paragraph = Paragraph('<font size=12><b>%s</b></font>' % ptext, styles["Normal"])
                         Story.append(paragraph)
                         Story.append(Spacer(1, 5))
@@ -1338,21 +1338,32 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         
                         j += 1
                         i += 1
+                        row_cnt += 1
 
-                    # tbl_data = [
-                    #     [
-                    #     Paragraph('<font size=10><b>Total Per Booking:</b></font>', style_right),
-                    #     Paragraph('<font size=10>%s</font>' % str(totalQty), styles["Normal"]),
-                    #     Paragraph('<font size=10>%s</font>' % str("{0:.2f}".format(totalWght)), styles["Normal"]), 
-                    #     Paragraph('<font size=10>%s</font>' % str(totalVol), styles["Normal"]),
-                    #     Paragraph('<font size=10><b>Freight:</b></font>', styles["Normal"])
-                    #     ]
-                    # ]
-                    # tbl = Table(tbl_data, colWidths=(col1_w + col2_w + col3_w + col4_w + col5_w + col6_w + col7_w + col8_w, col9_w, col10_w, col11_w, col12_w), rowHeights=18, hAlign='LEFT', style=[
-                    #         ('GRID',(1,0),(-2,0),0.5,colors.black),
-                    #         ])
-                    # Story.append(tbl)
-                    #end formatting pdf file and putting data from db tables
+                        if row_cnt == 20:
+                            if k == 0:
+                                tbl_data = [
+                                    [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                                ]
+                            else:
+                                tbl_data = [
+                                    [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
+                                ]
+
+                            tbl = Table(tbl_data, colWidths=350, rowHeights=(30), hAlign='LEFT', vAlign='BOTTOM', style = [
+                                ('TOPPADDING',(0,0),(-1,-1), 0),
+                                ('BOTTOMPADDING',(0,0),(-1,-1), 0),
+                                ('LEFTPADDING',(0,0),(-1,-1), 0),
+                                ('RIGHTPADDING',(0,0),(-1,-1), 0)
+                                ])
+                            Story.append(tbl)
+
+                            Story.append(HRFlowable(
+                                width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
+                            ))
+                            Story.append(PageBreak())
+                            row_cnt = 0
+
                     sql = "INSERT INTO `dme_manifest_log` \
                     (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
@@ -1381,31 +1392,10 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     ])
             Story.append(tbl)
 
-            if k == 0:
-                tbl_data = [
-                    [Paragraph('<font size=12><b>Driver Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Driver Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
-                ]
-            else:
-                tbl_data = [
-                    [Paragraph('<font size=12><b>Customer Name:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Customer Sig:</b></font>', styles["BodyText"]), Paragraph('<font size=12><b>Date:</b></font>', styles["BodyText"])]
-                ]
-
-            tbl = Table(tbl_data, colWidths=350, rowHeights=(250), hAlign='LEFT', vAlign='BOTTOM', style = [
-                ('TOPPADDING',(0,0),(-1,-1), 0),
-                ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-                ('LEFTPADDING',(0,0),(-1,-1), 0),
-                ('RIGHTPADDING',(0,0),(-1,-1), 0)
-                ])
-            Story.append(tbl)
-
-            Story.append(HRFlowable(
-                width="100%", thickness=1, lineCap='round', color='#000000', spaceBefore=1, spaceAfter=1, hAlign='CENTER', vAlign='BOTTOM', dash=None
-            ))
-            Story.append(PageBreak())
             k+= 1
+        
         doc.build(Story)
         file.close()
-        
 
         sql = "INSERT INTO `dme_manifest_log` \
             (`manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdTimeStamp`, `z_modifiedTimeStamp`, `z_createdByAccount`) \
