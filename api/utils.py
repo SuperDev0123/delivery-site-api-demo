@@ -900,7 +900,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 manifest_number = dme_manifest_log.manifest_number
 
                 #start xml file name using naming convention
-                filename = "TAS_FP_"+str(datetime.now().strftime("%d/%m/%Y %H_%M_%S"))+"_multiple connots in one.xml"
+                filename = "TAS_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_multiple connots in one.xml"
                 #end xml file name using naming convention
 
                 #start formatting xml file and putting data from db tables
