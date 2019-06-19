@@ -1518,7 +1518,6 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                         Story.append(tbl)
                         
                         j += 1
-                        i += 1
                         row_cnt += 1
 
                         if booking_ind == len(bookings) - 1 and booking_line_ind == len(booking_lines) - 1: # Add Total
@@ -1591,8 +1590,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
                     mycursor.execute(sql, (booking['pk_booking_id'], filename, manifest, '1', '1', user_name, str(datetime.utcnow()), str(datetime.utcnow())))
-
                     mysqlcon.commit()
+                    i += 1
 
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
