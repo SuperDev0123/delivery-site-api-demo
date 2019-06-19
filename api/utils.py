@@ -818,8 +818,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
 
                     DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
                         **{
-                            'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T00:09:00'),
-                            'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + 'T00:17:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T00:17:00')
+                            'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T09:00:00'),
+                            'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + 'T17:00:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T17:00:00')
                         })
 
                     DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
@@ -992,8 +992,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
 
                     DeliveryWindow = xml.SubElement(consignment, "fd:DeliveryWindow", 
                         **{
-                            'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T00:09:00'),
-                            'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + 'T00:17:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T00:17:00')
+                            'From': (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T09:00:00'),
+                            'To': (booking['pu_PickUp_By_Date'].strftime("%Y-%m-%d") + 'T17:00:00') if booking['pu_PickUp_By_Date'] is not None else (booking['puPickUpAvailFrom_Date'].strftime("%Y-%m-%d") + 'T17:00:00')
                         })
 
                     DeliveryInstructions = xml.SubElement(consignment, "fd:DeliveryInstructions")
