@@ -1622,9 +1622,11 @@ class CommsViewSet(viewsets.ViewSet):
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
                         all_cnt += 1
+
                         if comm.closed:
                             closed_comms_cnt += 1
-                        if booking.id == booking_id:
+
+                        if int(booking.id) == int(booking_id):
                             return_data = {
                                 'b_bookingID_Visual': booking.b_bookingID_Visual,
                                 'b_status': booking.b_status,
