@@ -1352,12 +1352,12 @@ class CommsViewSet(viewsets.ViewSet):
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
                         return_data = {
-                            'b_bookingID_Visual': comm.b_bookingID_Visual,
-                            'b_status': comm.b_status,
-                            'vx_freight_provider': comm.vx_freight_provider,
-                            'puCompany': comm.puCompany,
-                            'deToCompanyName': comm.deToCompanyName,
-                            'v_FPBookingNumber': comm.v_FPBookingNumber,
+                            'b_bookingID_Visual': booking.b_bookingID_Visual,
+                            'b_status': booking.b_status,
+                            'vx_freight_provider': booking.vx_freight_provider,
+                            'puCompany': booking.puCompany,
+                            'deToCompanyName': booking.deToCompanyName,
+                            'v_FPBookingNumber': booking.v_FPBookingNumber,
                             'id': comm.id,
                             'fk_booking_id': comm.fk_booking_id,
                             'priority_of_log': comm.priority_of_log,
