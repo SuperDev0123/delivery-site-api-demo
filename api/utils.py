@@ -66,7 +66,7 @@ redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
-### TAZ constants ###
+### TAS constants ###
 # ACCOUNT_CODE = "AATEST"
 ACCOUNT_CODE = "SEAWAPO"
 styles = getSampleStyleSheet()
@@ -709,11 +709,11 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     elif vx_freight_provider == 'TASFR':
         #start check if xmls folder exists
         if production:
-            local_filepath = "/var/www/html/dme_api/static/xmls/taz_au/"
-            local_filepath_dup = "/var/www/html/dme_api/static/xmls/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+            local_filepath = "/var/www/html/dme_api/static/xmls/tas_au/"
+            local_filepath_dup = "/var/www/html/dme_api/static/xmls/tas_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/taz_au/"
-            local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/xmls/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/tas_au/"
+            local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/xmls/tas_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
         
         if not os.path.exists(local_filepath):
             os.makedirs(local_filepath)
@@ -726,7 +726,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 try:
                     dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=booking['pk_booking_id']).last()
                     manifest_number = dme_manifest_log.manifest_number
-                    fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
+                    fp_info = Fp_freight_providers.objects.get(fp_company_name='Tas')
                     initial_connot_index = int(fp_info.new_connot_index) - len(bookings)
                     #start db query for fetching data from dme_booking_lines table
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
@@ -894,13 +894,13 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
-                    print('@300 TAZ XML - ', e)
+                    print('@300 TAS XML - ', e)
                     return e
         elif one_manifest_file == 1:
             try:
                 dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=bookings[0]['pk_booking_id']).last()
                 manifest_number = dme_manifest_log.manifest_number
-                fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
+                fp_info = Fp_freight_providers.objects.get(fp_company_name='Tas')
                 initial_connot_index = int(fp_info.new_connot_index) - len(bookings)
                 #start xml file name using naming convention
                 filename = "TAS_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_multiple connots in one.xml"
@@ -1071,7 +1071,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:
-                print('@300 TAZ XML - ', e)
+                print('@300 TAS XML - ', e)
                 return e
 
     mysqlcon.close()
@@ -1095,17 +1095,17 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
     # if len(manifested_list) > 0:
     #     return manifested_list
 
-    fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
+    fp_info = Fp_freight_providers.objects.get(fp_company_name='Tas')
     new_manifest_index = fp_info.fp_manifest_cnt
     new_connot_index = fp_info.new_connot_index
 
     #start check if pdfs folder exists
     if production:
-        local_filepath = "/var/www/html/dme_api/static/pdfs/taz_au/"
-        local_filepath_dup = "/var/www/html/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+        local_filepath = "/var/www/html/dme_api/static/pdfs/tas_au/"
+        local_filepath_dup = "/var/www/html/dme_api/static/pdfs/tas_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
     else:
-        local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/"
-        local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+        local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/"
+        local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
     
     if not os.path.exists(local_filepath):
         os.makedirs(local_filepath)
@@ -1340,7 +1340,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
         fp_info.save()
     elif one_manifest_file == 1:
         date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
-        filename = "TAZ_MANIFEST_" + date + "_m.pdf"
+        filename = "TAS_MANIFEST_" + date + "_m.pdf"
         filenames.append(filename)
         file = open(local_filepath+filenames[0], "a")
         doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
@@ -1638,11 +1638,11 @@ def build_pdf(booking_ids, vx_freight_provider):
 
         #start check if pdfs folder exists
         if production:
-            local_filepath = "/var/www/html/dme_api/static/pdfs/taz_au/"
-            local_filepath_dup = "/var/www/html/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+            local_filepath = "/var/www/html/dme_api/static/pdfs/tas_au/"
+            local_filepath_dup = "/var/www/html/dme_api/static/pdfs/tas_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/"
-            local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/taz_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
+            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/"
+            local_filepath_dup = "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/archive/" + str(datetime.now().strftime("%Y_%m_%d")) + "/"
 
         if not os.path.exists(local_filepath):
             os.makedirs(local_filepath)
@@ -1855,7 +1855,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                 # Store configuration file values
                 # if(os.stat(path+'/'+filename).st_size > 0 and os.path.isfile(path+'/'+filename)):
             sql2 = "UPDATE dme_bookings set z_label_url = %s WHERE pk_booking_id = %s"
-            adr2 = ('taz_au/' + filename, booking['pk_booking_id'])
+            adr2 = ('tas_au/' + filename, booking['pk_booking_id'])
             mycursor.execute(sql2, adr2)
             mysqlcon.commit()
             # except FileNotFoundError as e:
