@@ -1346,43 +1346,36 @@ class CommsViewSet(viewsets.ViewSet):
         if booking_id == '':
             comms = Dme_comm_and_task.objects.all()
             bookings = Bookings.objects.all()
+            return_datas = []
 
             for comm in comms:
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
-                        comm['b_bookingID_Visual'] = booking.b_bookingID_Visual
-                        comm['b_status'] = booking.b_status
-                        comm['vx_freight_provider'] = booking.vx_freight_provider
-                        comm['puCompany'] = booking.puCompany
-                        comm['deToCompanyName'] = booking.deToCompanyName
-                        comm['v_FPBookingNumber'] = booking.v_FPBookingNumber
-
-            for comm in comms:
-                return_data = {
-                    'b_bookingID_Visual': comm.b_bookingID_Visual,
-                    'b_status': comm.b_status,
-                    'vx_freight_provider': comm.vx_freight_provider,
-                    'puCompany': comm.puCompany,
-                    'deToCompanyName': comm.deToCompanyName,
-                    'v_FPBookingNumber': comm.v_FPBookingNumber,
-                    'id': comm.id,
-                    'fk_booking_id': comm.fk_booking_id,
-                    'priority_of_log': comm.priority_of_log,
-                    'assigned_to': comm.assigned_to,
-                    'query': comm.query,
-                    'dme_com_title': comm.dme_com_title,
-                    'closed': comm.closed,
-                    'status_log_closed_time': comm.status_log_closed_time,
-                    'dme_detail': comm.dme_detail,
-                    'dme_notes_type': comm.dme_notes_type,
-                    'dme_notes_external': comm.dme_notes_external,
-                    'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
-                    'due_by_date': convert_date(comm.due_by_date),
-                    'due_by_time': comm.due_by_time,
-                    'dme_action': comm.dme_action,
-                    'z_createdTimeStamp': comm.z_createdTimeStamp,
-                }
-                return_datas.append(return_data)
+                        return_data = {
+                            'b_bookingID_Visual': comm.b_bookingID_Visual,
+                            'b_status': comm.b_status,
+                            'vx_freight_provider': comm.vx_freight_provider,
+                            'puCompany': comm.puCompany,
+                            'deToCompanyName': comm.deToCompanyName,
+                            'v_FPBookingNumber': comm.v_FPBookingNumber,
+                            'id': comm.id,
+                            'fk_booking_id': comm.fk_booking_id,
+                            'priority_of_log': comm.priority_of_log,
+                            'assigned_to': comm.assigned_to,
+                            'query': comm.query,
+                            'dme_com_title': comm.dme_com_title,
+                            'closed': comm.closed,
+                            'status_log_closed_time': comm.status_log_closed_time,
+                            'dme_detail': comm.dme_detail,
+                            'dme_notes_type': comm.dme_notes_type,
+                            'dme_notes_external': comm.dme_notes_external,
+                            'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                            'due_by_date': convert_date(comm.due_by_date),
+                            'due_by_time': comm.due_by_time,
+                            'dme_action': comm.dme_action,
+                            'z_createdTimeStamp': comm.z_createdTimeStamp,
+                        }
+                        return_datas.append(return_data)
 
             if sort_by_date == 'true':
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
