@@ -1344,6 +1344,7 @@ class CommsViewSet(viewsets.ViewSet):
             sort_by_date = 'true'
 
         if booking_id == '':
+            print('@1 - ')
             user_id = int(self.request.user.id)
             dme_employee = DME_employees.objects.select_related().filter(fk_id_user = user_id).first()
 
@@ -1364,14 +1365,14 @@ class CommsViewSet(viewsets.ViewSet):
                 elif client_employee_role == 'warehouse':
                     employee_warehouse_id = client_employee.warehouse_id
                     bookings = Bookings.objects.filter(kf_client_id=client.dme_account_num, fk_client_warehouse_id=employee_warehouse_id)
-
+            print('@2 - ')
             # Sort Comms
             if sort_type == 'bookings':
                 if sort_field is None:
                     bookings = bookings.order_by('-id')
                 else:
                     bookings = bookings.order_by(sort_field)
-
+            print('@3 - ')
             # Simple search & Column fitler
             is_booking_filtered = True
             if len(simple_search_keyword) > 0:
@@ -1388,6 +1389,7 @@ class CommsViewSet(viewsets.ViewSet):
                 else:
                     is_booking_filtered = True
                     bookings = filtered_bookings
+                print('@4 - ')
             else:
                 # Column Bookings filter
                 try:
@@ -1420,7 +1422,7 @@ class CommsViewSet(viewsets.ViewSet):
                     bookings = bookings.filter(v_FPBookingNumber__icontains=column_filter)
                 except KeyError:
                     column_filter = ''
-
+            print('@5 - ')
             return_datas = []
             opened_comms_cnt = 0
             closed_comms_cnt = 0
@@ -1453,7 +1455,7 @@ class CommsViewSet(viewsets.ViewSet):
                         comms = []
                     elif len(new_comms) > 0:
                         comms = new_comms
-
+                    print('@6 - ')
                 else:
                     # Column Comms filter
                     try:
@@ -1511,7 +1513,7 @@ class CommsViewSet(viewsets.ViewSet):
                         comms = comms.filter(due_by_time__icontains=column_filter)
                     except KeyError:
                         column_filter = ''
-
+                print('@7 - ')
                 opened_comms = comms.filter(closed=False)
                 closed_comms = comms.filter(closed=True)
                 opened_comms_cnt = opened_comms_cnt + len(opened_comms)
@@ -1521,7 +1523,7 @@ class CommsViewSet(viewsets.ViewSet):
                     comms = comms.filter(closed=False)
                 elif active_tab_ind == 2 and len(comms) > 0:
                     comms = comms.filter(closed=True)
-
+                print('@8 - ')
                 for index, comm in enumerate(comms):
                     return_data = {
                         'b_bookingID_Visual': booking.b_bookingID_Visual,
