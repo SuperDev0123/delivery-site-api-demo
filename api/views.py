@@ -1347,10 +1347,13 @@ class CommsViewSet(viewsets.ViewSet):
             comms = Dme_comm_and_task.objects.all()
             bookings = Bookings.objects.all()
             return_datas = []
+            closed_comms_cnt = 0
 
             for comm in comms:
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
+                        if comm.closed:
+                            closed_comms_cnt += 1
                         return_data = {
                             'b_bookingID_Visual': booking.b_bookingID_Visual,
                             'b_status': booking.b_status,
@@ -1383,11 +1386,11 @@ class CommsViewSet(viewsets.ViewSet):
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
 
             return JsonResponse({
-                'comms': return_datas, \
+                'comms': return_datas,
                 'cnts': {
-                    'opened_cnt': opened_comms_cnt, \
-                    'closed_cnt': closed_comms_cnt, \
-                    'all_cnt': len(return_datas), \
+                    'opened_cnt': len(return_datas) - closed_comms_cnt,
+                    'closed_cnt': closed_comms_cnt,
+                    'all_cnt': len(return_datas),
                     'selected_cnt': -1
                 }
             })
