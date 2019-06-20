@@ -726,6 +726,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 try:
                     dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=booking['pk_booking_id']).last()
                     manifest_number = dme_manifest_log.manifest_number
+                    fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
+                    initial_connot_index = int(fp_info.new_connot_index) - len(bookings)
                     #start db query for fetching data from dme_booking_lines table
                     booking_lines = get_available_booking_lines(mysqlcon, booking)
                     #end db query for fetching data from dme_booking_lines table
@@ -749,7 +751,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     #IndependentContainers = xml.Element("fd:IndependentContainers")
                     #root.append(IndependentContainers)
                     #xml.SubElement(IndependentContainers, "fd:Container", **{'Identifier': "IC"+ ACCOUNT_CODE +"00001", 'Volume': "1.02", 'Weight': "200", 'Commodity': "Pallet"})                
-                    connote_number = ACCOUNT_CODE + str(i).zfill(5)
+                    connote_number = ACCOUNT_CODE + str(initial_connot_index + i - 1).zfill(5)
 
                     #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
                     consignment = xml.Element("fd:Consignment", **{'Number': connote_number })
@@ -898,7 +900,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
             try:
                 dme_manifest_log = Dme_manifest_log.objects.filter(fk_booking_id=bookings[0]['pk_booking_id']).last()
                 manifest_number = dme_manifest_log.manifest_number
-
+                fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
+                initial_connot_index = int(fp_info.new_connot_index) - len(bookings)
                 #start xml file name using naming convention
                 filename = "TAS_FP_"+str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))+"_multiple connots in one.xml"
                 #end xml file name using naming convention
@@ -923,7 +926,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         totalWght = totalWght + booking_line['e_Total_KG_weight']
                     #start calculate total item quantity and total item weight
 
-                    connote_number = ACCOUNT_CODE + str(i).zfill(5)
+                    connote_number = ACCOUNT_CODE + str(initial_connot_index + i - 1).zfill(5)
 
                     #consignment = xml.Element("fd:Consignment", **{'Number': "DME"+str(booking['b_bookingID_Visual'])})
                     consignment = xml.Element("fd:Consignment", **{'Number': connote_number })
@@ -1093,7 +1096,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
     #     return manifested_list
 
     fp_info = Fp_freight_providers.objects.get(fp_company_name='Taz')
-    last_manifest_number = fp_info.fp_manifest_cnt
+    new_manifest_index = fp_info.fp_manifest_cnt
+    new_connot_index = fp_info.new_connot_index
 
     #start check if pdfs folder exists
     if production:
@@ -1128,8 +1132,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
                 carrierName = "TAS FREIGHT"         
                 senderName = ACCOUNT_CODE
-                manifest = "M" + ACCOUNT_CODE + str(last_manifest_number + i - 1).zfill(4)
-                ConNote = ACCOUNT_CODE + str(i).zfill(5)
+                manifest = "M" + ACCOUNT_CODE + str(new_manifest_index + i - 1).zfill(4)
+                ConNote = ACCOUNT_CODE + str(new_connot_index + i - 1).zfill(5)
                 Reference = "TEST123"
                 date = datetime.now().strftime("%d/%m/%Y")
                 date1 = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
@@ -1332,6 +1336,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 # print("Error: unable to fecth data")
                 print("Error1: "+str(e))
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + len(bookings)
+        fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
     elif one_manifest_file == 1:
         date = datetime.now().strftime("%Y%m%d")+"_"+datetime.now().strftime("%H%M%S")
@@ -1340,9 +1345,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
         file = open(local_filepath+filenames[0], "a")
         doc = SimpleDocTemplate(local_filepath+filename,pagesize=(297*mm, 210*mm), rightMargin=10,leftMargin=10, topMargin=10,bottomMargin=10)
         Story=[]
-        manifest = "M" + ACCOUNT_CODE + str(last_manifest_number).zfill(4)
-        fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
-        fp_info.save()
+        manifest = "M" + ACCOUNT_CODE + str(new_manifest_index).zfill(4)
 
         for k in range(2):
             i = 1
@@ -1379,7 +1382,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
                     carrierName = "TAS FREIGHT"         
                     senderName = ACCOUNT_CODE
-                    ConNote = ACCOUNT_CODE + str(i).zfill(5)
+                    ConNote = ACCOUNT_CODE + str(new_connot_index + i - 1).zfill(5)
                     Reference = "TEST123"
                     created_date = str(datetime.now().strftime("%d/%m/%Y"))
                     printed_timestamp = str(datetime.now().strftime("%d/%m/%Y %I:%M:%S %p"))
@@ -1609,6 +1612,10 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
             VALUES (%s, %s, %s, %s, %s, %s, %s)"
         mycursor.execute(sql, (filename, manifest, str(len(bookings)), '1', str(datetime.utcnow()), str(datetime.utcnow()), user_name))
         mysqlcon.commit()
+        
+        fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
+        fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
+        fp_info.save()
 
     mysqlcon.close()
     return filenames
