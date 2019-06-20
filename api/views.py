@@ -1345,7 +1345,7 @@ class CommsViewSet(viewsets.ViewSet):
 
         if booking_id == '':
             comms = Dme_comm_and_task.objects.all()
-            bokings = Bookings.objects.all()
+            bookings = Bookings.objects.all()
 
             for comm in comms:
                 for booking in bookings:
