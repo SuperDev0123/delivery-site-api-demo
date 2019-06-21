@@ -1692,11 +1692,74 @@ class CommsViewSet(viewsets.ViewSet):
                     if comm.fk_booking_id == booking.pk_booking_id:
                         all_cnt += 1
 
-                        if active_tab_ind == 1:
-                            if comm.closed:
-                                closed_comms_cnt += 1
+                        if (booking.id == booking_id):
+                            if active_tab_ind == 1:
+                                if comm.closed:
+                                    closed_comms_cnt += 1
+                                else:
+                                    opened_comms_cnt += 1
+
+                                    return_data = {
+                                        'b_bookingID_Visual': booking.b_bookingID_Visual,
+                                        'b_status': booking.b_status,
+                                        'vx_freight_provider': booking.vx_freight_provider,
+                                        'puCompany': booking.puCompany,
+                                        'deToCompanyName': booking.deToCompanyName,
+                                        'v_FPBookingNumber': booking.v_FPBookingNumber,
+                                        'id': comm.id,
+                                        'fk_booking_id': comm.fk_booking_id,
+                                        'priority_of_log': comm.priority_of_log,
+                                        'assigned_to': comm.assigned_to,
+                                        'query': comm.query,
+                                        'dme_com_title': comm.dme_com_title,
+                                        'closed': comm.closed,
+                                        'status_log_closed_time': comm.status_log_closed_time,
+                                        'dme_detail': comm.dme_detail,
+                                        'dme_notes_type': comm.dme_notes_type,
+                                        'dme_notes_external': comm.dme_notes_external,
+                                        'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                                        'due_by_date': convert_date(comm.due_by_date),
+                                        'due_by_time': comm.due_by_time,
+                                        'dme_action': comm.dme_action,
+                                        'z_createdTimeStamp': comm.z_createdTimeStamp,
+                                    }
+                                    return_datas.append(return_data)
+                            elif active_tab_ind == 2:
+                                if comm.closed:
+                                    closed_comms_cnt += 1
+
+                                    return_data = {
+                                        'b_bookingID_Visual': booking.b_bookingID_Visual,
+                                        'b_status': booking.b_status,
+                                        'vx_freight_provider': booking.vx_freight_provider,
+                                        'puCompany': booking.puCompany,
+                                        'deToCompanyName': booking.deToCompanyName,
+                                        'v_FPBookingNumber': booking.v_FPBookingNumber,
+                                        'id': comm.id,
+                                        'fk_booking_id': comm.fk_booking_id,
+                                        'priority_of_log': comm.priority_of_log,
+                                        'assigned_to': comm.assigned_to,
+                                        'query': comm.query,
+                                        'dme_com_title': comm.dme_com_title,
+                                        'closed': comm.closed,
+                                        'status_log_closed_time': comm.status_log_closed_time,
+                                        'dme_detail': comm.dme_detail,
+                                        'dme_notes_type': comm.dme_notes_type,
+                                        'dme_notes_external': comm.dme_notes_external,
+                                        'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
+                                        'due_by_date': convert_date(comm.due_by_date),
+                                        'due_by_time': comm.due_by_time,
+                                        'dme_action': comm.dme_action,
+                                        'z_createdTimeStamp': comm.z_createdTimeStamp,
+                                    }
+                                    return_datas.append(return_data)
+                                else:
+                                    opened_comms_cnt += 1
                             else:
-                                opened_comms_cnt += 1
+                                if comm.closed:
+                                    closed_comms_cnt += 1
+                                else:
+                                    opened_comms_cnt += 1
 
                                 return_data = {
                                     'b_bookingID_Visual': booking.b_bookingID_Visual,
@@ -1723,68 +1786,6 @@ class CommsViewSet(viewsets.ViewSet):
                                     'z_createdTimeStamp': comm.z_createdTimeStamp,
                                 }
                                 return_datas.append(return_data)
-                        elif active_tab_ind == 2:
-                            if comm.closed:
-                                closed_comms_cnt += 1
-
-                                return_data = {
-                                    'b_bookingID_Visual': booking.b_bookingID_Visual,
-                                    'b_status': booking.b_status,
-                                    'vx_freight_provider': booking.vx_freight_provider,
-                                    'puCompany': booking.puCompany,
-                                    'deToCompanyName': booking.deToCompanyName,
-                                    'v_FPBookingNumber': booking.v_FPBookingNumber,
-                                    'id': comm.id,
-                                    'fk_booking_id': comm.fk_booking_id,
-                                    'priority_of_log': comm.priority_of_log,
-                                    'assigned_to': comm.assigned_to,
-                                    'query': comm.query,
-                                    'dme_com_title': comm.dme_com_title,
-                                    'closed': comm.closed,
-                                    'status_log_closed_time': comm.status_log_closed_time,
-                                    'dme_detail': comm.dme_detail,
-                                    'dme_notes_type': comm.dme_notes_type,
-                                    'dme_notes_external': comm.dme_notes_external,
-                                    'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
-                                    'due_by_date': convert_date(comm.due_by_date),
-                                    'due_by_time': comm.due_by_time,
-                                    'dme_action': comm.dme_action,
-                                    'z_createdTimeStamp': comm.z_createdTimeStamp,
-                                }
-                                return_datas.append(return_data)
-                            else:
-                                opened_comms_cnt += 1
-                        else:
-                            if comm.closed:
-                                closed_comms_cnt += 1
-                            else:
-                                opened_comms_cnt += 1
-
-                            return_data = {
-                                'b_bookingID_Visual': booking.b_bookingID_Visual,
-                                'b_status': booking.b_status,
-                                'vx_freight_provider': booking.vx_freight_provider,
-                                'puCompany': booking.puCompany,
-                                'deToCompanyName': booking.deToCompanyName,
-                                'v_FPBookingNumber': booking.v_FPBookingNumber,
-                                'id': comm.id,
-                                'fk_booking_id': comm.fk_booking_id,
-                                'priority_of_log': comm.priority_of_log,
-                                'assigned_to': comm.assigned_to,
-                                'query': comm.query,
-                                'dme_com_title': comm.dme_com_title,
-                                'closed': comm.closed,
-                                'status_log_closed_time': comm.status_log_closed_time,
-                                'dme_detail': comm.dme_detail,
-                                'dme_notes_type': comm.dme_notes_type,
-                                'dme_notes_external': comm.dme_notes_external,
-                                'due_by_datetime': str(comm.due_by_date) + ' ' + str(comm.due_by_time),
-                                'due_by_date': convert_date(comm.due_by_date),
-                                'due_by_time': comm.due_by_time,
-                                'dme_action': comm.dme_action,
-                                'z_createdTimeStamp': comm.z_createdTimeStamp,
-                            }
-                            return_datas.append(return_data)
 
             if sort_by_date == 'true':
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
