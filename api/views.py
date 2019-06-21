@@ -1618,7 +1618,7 @@ class CommsViewSet(viewsets.ViewSet):
                 except KeyError:
                     column_filter = ''
 
-            index = 0
+            index = 1
             for comm in comms:
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
