@@ -1622,7 +1622,6 @@ class CommsViewSet(viewsets.ViewSet):
                 except KeyError:
                     column_filter = ''
 
-            index = 1
             for comm in comms:
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
@@ -1633,7 +1632,6 @@ class CommsViewSet(viewsets.ViewSet):
 
                         if int(booking.id) == int(booking_id):
                             return_data = {
-                                'index': index,
                                 'b_bookingID_Visual': booking.b_bookingID_Visual,
                                 'b_status': booking.b_status,
                                 'vx_freight_provider': booking.vx_freight_provider,
@@ -1657,14 +1655,12 @@ class CommsViewSet(viewsets.ViewSet):
                                 'dme_action': comm.dme_action,
                                 'z_createdTimeStamp': comm.z_createdTimeStamp,
                             }
-                            index += 1
                             return_datas.append(return_data)
 
             if sort_by_date == 'true':
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
 
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
-            return_datas = _.chain(return_datas).map(index, lambda x: add_index(x, index)).value()
 
             return JsonResponse({
                 'comms': return_datas,
