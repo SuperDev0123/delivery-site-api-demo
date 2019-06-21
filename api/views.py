@@ -1349,6 +1349,7 @@ class CommsViewSet(viewsets.ViewSet):
             return_datas = []
             closed_comms_cnt = 0
             opened_comms_cnt = 0
+            all_cnt = 0
 
             # Simple search & Column fitler
             is_booking_filtered = True
@@ -1486,6 +1487,7 @@ class CommsViewSet(viewsets.ViewSet):
             for comm in comms:
                 for booking in bookings:
                     if comm.fk_booking_id == booking.pk_booking_id:
+                        all_cnt += 1
 
                         if active_tab_ind == 1:
                             if comm.closed:
@@ -1591,7 +1593,7 @@ class CommsViewSet(viewsets.ViewSet):
                 'cnts': {
                     'opened_cnt': opened_comms_cnt,
                     'closed_cnt': closed_comms_cnt,
-                    'all_cnt': len(return_datas),
+                    'all_cnt': all_cnt,
                     'selected_cnt': -1
                 }
             })
@@ -1692,7 +1694,7 @@ class CommsViewSet(viewsets.ViewSet):
                     if comm.fk_booking_id == booking.pk_booking_id:
                         all_cnt += 1
 
-                        if (booking.id == booking_id):
+                        if (int)booking.id == (int)booking_id:
                             if active_tab_ind == 1:
                                 if comm.closed:
                                     closed_comms_cnt += 1
