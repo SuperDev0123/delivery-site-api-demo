@@ -1694,7 +1694,7 @@ class CommsViewSet(viewsets.ViewSet):
                     if comm.fk_booking_id == booking.pk_booking_id:
                         all_cnt += 1
 
-                        if (int)booking.id == (int)booking_id:
+                        if (int)(booking.id) == (int)(booking_id):
                             if active_tab_ind == 1:
                                 if comm.closed:
                                     closed_comms_cnt += 1
