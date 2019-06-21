@@ -1331,6 +1331,10 @@ class CommsViewSet(viewsets.ViewSet):
 
             return object
 
+        def add_index(object, index):
+            object['index'] == index
+            return object
+
         user_id = self.request.user.id
         booking_id = self.request.GET['bookingId']
         sort_field = self.request.query_params.get('sortField', None)
@@ -1660,6 +1664,7 @@ class CommsViewSet(viewsets.ViewSet):
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
 
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
+            return_datas = _.chain(return_datas).map(lambda (i, x): add_index(x, i)).value()
 
             return JsonResponse({
                 'comms': return_datas,
