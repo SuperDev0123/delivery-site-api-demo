@@ -1664,7 +1664,7 @@ class CommsViewSet(viewsets.ViewSet):
                 return_datas = _.sort_by(return_datas, 'due_by_date', reverse=True)
 
             return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
-            return_datas = _.chain(return_datas).map(lambda index, x: add_index(x, index)).value()
+            return_datas = _.chain(return_datas).map(index, lambda x: add_index(x, index)).value()
 
             return JsonResponse({
                 'comms': return_datas,
