@@ -965,7 +965,7 @@ class BookingViewSet(viewsets.ViewSet):
 
         serializer = BookingSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.data['client_item_references']
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
