@@ -155,193 +155,194 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
             queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
-        if search_type == 'FILTER':
-            # Date filter
-            if user_type == 'DME':
-                queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-            else:
-                if client.company_name == 'Seaway' or client.company_name =='Seaway-Hanalt' or client.company_name == 'Tempo':
-                    queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
-                elif client.company_name == 'BioPak':
-                    queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
-    
-        # Warehouse filter
-        if int(warehouse_id) is not 0:
-            queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+        if 'new' in download_option:
+            # New POD filter
+            if download_option == 'new_pod':
+                queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
+                                    .exclude(Q(z_pod_url__isnull=True) | Q(z_pod_url__exact=''))
 
-        # Simple search & Column fitler
-        if len(simple_search_keyword) > 0:
-            queryset = queryset.filter(
-                Q(b_bookingID_Visual__icontains=simple_search_keyword) | 
-                Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword) | 
-                Q(puCompany__icontains=simple_search_keyword) | 
-                Q(pu_Address_Suburb__icontains=simple_search_keyword) |
-                Q(pu_Address_State__icontains=simple_search_keyword) |
-                Q(pu_Address_PostalCode__icontains=simple_search_keyword) |
-                Q(deToCompanyName__icontains=simple_search_keyword) |
-                Q(de_To_Address_Suburb__icontains=simple_search_keyword) |
-                Q(de_To_Address_State__icontains=simple_search_keyword) |
-                Q(de_To_Address_PostalCode__icontains=simple_search_keyword) |
-                Q(b_clientReference_RA_Numbers__icontains=simple_search_keyword) | 
-                Q(vx_freight_provider__icontains=simple_search_keyword) | 
-                Q(vx_serviceName__icontains=simple_search_keyword) | 
-                Q(v_FPBookingNumber__icontains=simple_search_keyword) | 
-                Q(b_status__icontains=simple_search_keyword) | 
-                Q(b_status_API__icontains=simple_search_keyword) | 
-                Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword) | 
-                Q(s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword) | 
-                Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
-                Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword) |
-                Q(b_client_sales_inv_num__icontains=simple_search_keyword) |
-                Q(pu_Contact_F_L_Name__icontains=simple_search_keyword))
+            # New POD_SOG filter
+            if download_option == 'new_pod_sog':
+                queryset = queryset.filter(z_downloaded_pod_sog_timestamp__isnull=True) \
+                                    .exclude(Q(z_pod_signed_url__isnull=True) | Q(z_pod_signed_url__exact=''))
+
+            # New Lable filter
+            if download_option == 'new_label':
+                queryset = queryset.filter(z_downloaded_shipping_label_timestamp__isnull=True) \
+                                    .exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=''))   
         else:
-            # Column filter
-            try:
-                column_filter = column_filters['b_bookingID_Visual']
-                queryset = queryset.filter(b_bookingID_Visual__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+            if search_type == 'FILTER':
+                # Date filter
+                if user_type == 'DME':
+                    queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+                else:
+                    if client.company_name == 'Seaway' or client.company_name =='Seaway-Hanalt' or client.company_name == 'Tempo':
+                        queryset = queryset.filter(z_CreatedTimestamp__range=(first_date, last_date))
+                    elif client.company_name == 'BioPak':
+                        queryset = queryset.filter(puPickUpAvailFrom_Date__range=(first_date, last_date))
 
-            try:
-                column_filter = column_filters['b_dateBookedDate']
-                queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+            # Warehouse filter
+            if int(warehouse_id) is not 0:
+                queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
-            try:
-                column_filter = column_filters['puPickUpAvailFrom_Date']
-                queryset = queryset.filter(puPickUpAvailFrom_Date__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+            # Simple search & Column fitler
+            if len(simple_search_keyword) > 0:
+                queryset = queryset.filter(
+                    Q(b_bookingID_Visual__icontains=simple_search_keyword) | 
+                    Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword) | 
+                    Q(puCompany__icontains=simple_search_keyword) | 
+                    Q(pu_Address_Suburb__icontains=simple_search_keyword) |
+                    Q(pu_Address_State__icontains=simple_search_keyword) |
+                    Q(pu_Address_PostalCode__icontains=simple_search_keyword) |
+                    Q(deToCompanyName__icontains=simple_search_keyword) |
+                    Q(de_To_Address_Suburb__icontains=simple_search_keyword) |
+                    Q(de_To_Address_State__icontains=simple_search_keyword) |
+                    Q(de_To_Address_PostalCode__icontains=simple_search_keyword) |
+                    Q(b_clientReference_RA_Numbers__icontains=simple_search_keyword) | 
+                    Q(vx_freight_provider__icontains=simple_search_keyword) | 
+                    Q(vx_serviceName__icontains=simple_search_keyword) | 
+                    Q(v_FPBookingNumber__icontains=simple_search_keyword) | 
+                    Q(b_status__icontains=simple_search_keyword) | 
+                    Q(b_status_API__icontains=simple_search_keyword) | 
+                    Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword) | 
+                    Q(s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword) | 
+                    Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword) |
+                    Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword) |
+                    Q(b_client_sales_inv_num__icontains=simple_search_keyword) |
+                    Q(pu_Contact_F_L_Name__icontains=simple_search_keyword))
+            else:
+                # Column filter
+                try:
+                    column_filter = column_filters['b_bookingID_Visual']
+                    queryset = queryset.filter(b_bookingID_Visual__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['puCompany']
-                queryset = queryset.filter(puCompany__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['b_dateBookedDate']
+                    queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['pu_Address_Suburb']
-                queryset = queryset.filter(pu_Address_Suburb__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['puPickUpAvailFrom_Date']
+                    queryset = queryset.filter(puPickUpAvailFrom_Date__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['pu_Address_State']
-                queryset = queryset.filter(pu_Address_State__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['puCompany']
+                    queryset = queryset.filter(puCompany__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['pu_Address_PostalCode']
-                queryset = queryset.filter(pu_Address_PostalCode__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['pu_Address_Suburb']
+                    queryset = queryset.filter(pu_Address_Suburb__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['deToCompanyName']
-                queryset = queryset.filter(deToCompanyName__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-                
-            try:
-                column_filter = column_filters['de_To_Address_Suburb']
-                queryset = queryset.filter(de_To_Address_Suburb__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['pu_Address_State']
+                    queryset = queryset.filter(pu_Address_State__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['de_To_Address_State']
-                queryset = queryset.filter(de_To_Address_State__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['pu_Address_PostalCode']
+                    queryset = queryset.filter(pu_Address_PostalCode__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['de_To_Address_PostalCode']
-                queryset = queryset.filter(de_To_Address_PostalCode__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['deToCompanyName']
+                    queryset = queryset.filter(deToCompanyName__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                    
+                try:
+                    column_filter = column_filters['de_To_Address_Suburb']
+                    queryset = queryset.filter(de_To_Address_Suburb__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['b_clientReference_RA_Numbers']
-                queryset = queryset.filter(b_clientReference_RA_Numbers__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['de_To_Address_State']
+                    queryset = queryset.filter(de_To_Address_State__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['vx_freight_provider']
-                queryset = queryset.filter(vx_freight_provider__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['de_To_Address_PostalCode']
+                    queryset = queryset.filter(de_To_Address_PostalCode__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['vx_serviceName']
-                queryset = queryset.filter(vx_serviceName__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
-                
-            try:
-                column_filter = column_filters['v_FPBookingNumber']
-                queryset = queryset.filter(v_FPBookingNumber__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['b_clientReference_RA_Numbers']
+                    queryset = queryset.filter(b_clientReference_RA_Numbers__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['b_status']
-                queryset = queryset.filter(b_status__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['vx_freight_provider']
+                    queryset = queryset.filter(vx_freight_provider__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['b_status_API']
-                queryset = queryset.filter(b_status_API__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['vx_serviceName']
+                    queryset = queryset.filter(vx_serviceName__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
+                    
+                try:
+                    column_filter = column_filters['v_FPBookingNumber']
+                    queryset = queryset.filter(v_FPBookingNumber__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
-                queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['b_status']
+                    queryset = queryset.filter(b_status__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
-                queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['b_status_API']
+                    queryset = queryset.filter(b_status_API__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['s_20_Actual_Pickup_TimeStamp']
-                queryset = queryset.filter(s_20_Actual_Pickup_TimeStamp__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['s_05_LatestPickUpDateTimeFinal']
+                    queryset = queryset.filter(s_05_LatestPickUpDateTimeFinal__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['s_21_Actual_Delivery_TimeStamp']
-                queryset = queryset.filter(s_21_Actual_Delivery_TimeStamp__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['s_06_LatestDeliveryDateTimeFinal']
+                    queryset = queryset.filter(s_06_LatestDeliveryDateTimeFinal__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-            try:
-                column_filter = column_filters['b_client_sales_inv_num']
-                queryset = queryset.filter(b_client_sales_inv_num__icontains=column_filter)
-            except KeyError:
-                column_filter = ''
+                try:
+                    column_filter = column_filters['s_20_Actual_Pickup_TimeStamp']
+                    queryset = queryset.filter(s_20_Actual_Pickup_TimeStamp__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-        # New POD filter
-        if download_option == 'new_pod':
-            queryset = queryset.filter(z_downloaded_pod_timestamp__isnull=True) \
-                                .exclude(Q(z_pod_url__isnull=True) | Q(z_pod_url__exact=''))
+                try:
+                    column_filter = column_filters['s_21_Actual_Delivery_TimeStamp']
+                    queryset = queryset.filter(s_21_Actual_Delivery_TimeStamp__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
-        # New POD_SOG filter
-        if download_option == 'new_pod_sog':
-            queryset = queryset.filter(z_downloaded_pod_sog_timestamp__isnull=True) \
-                                .exclude(Q(z_pod_signed_url__isnull=True) | Q(z_pod_signed_url__exact=''))
-
-        # New Lable filter
-        if download_option == 'new_label':
-            queryset = queryset.filter(z_downloaded_shipping_label_timestamp__isnull=True) \
-                                .exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=''))
+                try:
+                    column_filter = column_filters['b_client_sales_inv_num']
+                    queryset = queryset.filter(b_client_sales_inv_num__icontains=column_filter)
+                except KeyError:
+                    column_filter = ''
 
         # Prefilter count
         errors_to_correct = 0
