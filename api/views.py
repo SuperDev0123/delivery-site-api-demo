@@ -60,13 +60,19 @@ class UserViewSet(viewsets.ViewSet):
         if len(dme_clients) is 0:
             return JsonResponse({'dme_clients': []})
         else:
-            return_data = []
-
             if user_type == 'DME':
-                return_data = [{'pk_id_dme_client': 0, 'company_name': 'dme', 'dme_account_num': 'dme_account_num'}]
+                return_data = [{
+                    'pk_id_dme_client': 0, 
+                    'company_name': 'dme', 
+                    'dme_account_num': 'dme_account_num', 
+                    'current_freight_provider': '*'}]
 
             for client in dme_clients:
-                return_data.append({'pk_id_dme_client': client.pk_id_dme_client, 'company_name': client.company_name, 'dme_account_num': client.dme_account_num})
+                return_data.append({
+                    'pk_id_dme_client': client.pk_id_dme_client, 
+                    'company_name': client.company_name, 
+                    'dme_account_num': client.dme_account_num,
+                    'current_freight_provider': client.current_freight_provider})
 
             return JsonResponse({'dme_clients': return_data})
 
@@ -437,6 +443,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 'dme_status_detail': booking.dme_status_detail,
                 'dme_status_action': booking.dme_status_action,
                 'vx_fp_del_eta_time': booking.vx_fp_del_eta_time,
+                'b_client_name': booking.b_client_name,
             })
         
         return JsonResponse({
@@ -691,6 +698,22 @@ class BookingsViewSet(viewsets.ViewSet):
             'errors_to_correct': errors_to_correct, 'to_manifest': to_manifest, 
             'missing_labels': missing_labels, 'to_process': to_process, 
             'closed': closed})
+
+    @action(detail=False, methods=['post'])
+    def bulk_booking_update(self, request, format=None):
+        booking_ids = request.data["bookingIds"]
+        field_name = request.data["fieldName"]
+        field_content = request.data["fieldContent"]
+
+        try:
+            for booking_id in booking_ids:
+                booking = Bookings.objects.get(id=booking_id)
+                setattr(booking, field_name, field_content)
+                booking.save()
+            return JsonResponse({'success': 'Bookings are updated'})
+        except Exception as e:
+            # print('Exception: ', e)
+            return JsonResponse({'error': 'Got error, please contact support center'})
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer

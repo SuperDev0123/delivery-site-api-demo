@@ -26,10 +26,11 @@ class DME_Roles(models.Model):
 
 class DME_clients(models.Model):
     pk_id_dme_client = models.AutoField(primary_key=True)
-    company_name = models.CharField(verbose_name=_('warehoursename'), max_length=230, blank=False)
-    dme_account_num = models.CharField(verbose_name=_('dme account num'), max_length=230, default='')
+    company_name = models.CharField(verbose_name=_('Company Name'), max_length=128, blank=False, null=False)
+    dme_account_num = models.CharField(verbose_name=_('dme account num'), max_length=64, default='', null=False)
     phone = models.IntegerField(verbose_name=_('phone number'))
     client_filter_date_field = models.CharField(verbose_name=_('Client Filter Date Field'), max_length=64, blank=False, null=False, default="z_CreatedTimestamp")
+    current_freight_provider = models.CharField(verbose_name=_('Related FP'), max_length=30, blank=False, null=True, default='*')
 
     class Meta:
         db_table = 'dme_clients'
