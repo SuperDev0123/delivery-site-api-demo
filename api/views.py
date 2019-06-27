@@ -60,7 +60,9 @@ class UserViewSet(viewsets.ViewSet):
         if len(dme_clients) is 0:
             return JsonResponse({'dme_clients': []})
         else:
+            return_data = []
             if user_type == 'DME':
+                
                 return_data = [{
                     'pk_id_dme_client': 0, 
                     'company_name': 'dme', 
