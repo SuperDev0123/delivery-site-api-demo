@@ -707,6 +707,9 @@ class BookingsViewSet(viewsets.ViewSet):
         field_name = request.data["fieldName"]
         field_content = request.data["fieldContent"]
 
+        if field_content == '':
+            field_content = None
+
         try:
             for booking_id in booking_ids:
                 booking = Bookings.objects.get(id=booking_id)
