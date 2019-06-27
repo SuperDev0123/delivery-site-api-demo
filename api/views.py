@@ -2375,6 +2375,9 @@ def download_csv(request):
     file_paths = [];
     label_names = [];
 
+    if len(booking_ids) == 0:
+        JsonResponse({'filename': '', 'status': 'No bookings to build CSV'})
+
     csv_name = generate_csv(booking_ids)
 
     for booking_id in booking_ids:
@@ -2422,6 +2425,9 @@ def generate_xml(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     one_manifest_file = int(body["one_manifest_file"])
+
+    if len(booking_ids) == 0:
+        JsonResponse({'success': 'success', 'status': 'No bookings to build XML'})
 
     try:
         booked_list = build_xml(booking_ids, vx_freight_provider, one_manifest_file)
