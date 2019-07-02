@@ -161,6 +161,15 @@ def upload_sftp(host, username, password, sftp_filepath, local_filepath, local_f
 
         sftp_con.close()
 
+def get_sydney_now_time(return_type='char'):
+    sydney_tz = pytz.timezone('Australia/Sydney')
+    sydney_now = sydney_tz.localize(datetime.now())
+
+    if return_type == 'char':
+        return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
+    elif return_type == 'datetime':
+        return sydney_now
+
 def get_available_bookings(mysqlcon, booking_ids):
     where_clause = ' WHERE '
     for id in booking_ids:
@@ -699,11 +708,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 #end copying xml files to sftp server
 
                 #start update booking status in dme_booking table
-                sydney = pytz.timezone('Australia/Sydney')
-                sydney_now = sydney.localize(datetime.now())
-
                 sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                adr2 = ('Booked', str(sydney_now), booking['pk_booking_id'])
+                adr2 = ('Booked', get_sydney_now_time(), booking['pk_booking_id'])
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
             except Exception as e:
@@ -892,11 +898,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         tree.write(fh, encoding='UTF-8', xml_declaration=True)
                         
                     # start update booking status in dme_booking table
-                    sydney = pytz.timezone('Australia/Sydney')
-                    sydney_now = sydney.localize(datetime.now())
-
                     sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                    adr2 = ('Booked', str(sydney_now), connote_number, booking['pk_booking_id'])
+                    adr2 = ('Booked', get_sydney_now_time(), connote_number, booking['pk_booking_id'])
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
@@ -1072,11 +1075,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         tree.write(fh, encoding='UTF-8', xml_declaration=True)
                         
                     # start update booking status in dme_booking table
-                    sydney = pytz.timezone('Australia/Sydney')
-                    sydney_now = sydney.localize(datetime.now())
-
                     sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                    adr2 = ('Booked', str(sydney_now), connote_number, booking['pk_booking_id'])
+                    adr2 = ('Booked', get_sydney_now_time(), connote_number, booking['pk_booking_id'])
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:

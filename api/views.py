@@ -25,7 +25,7 @@ import time
 
 from .serializers import *
 from .models import *
-from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_pdf, build_xls_and_send, send_email, make_3digit, build_manifest
+from .utils import clearFileCheckHistory, getFileCheckHistory, save2Redis, generate_csv, build_xml, build_pdf, build_xls_and_send, send_email, make_3digit, build_manifest, get_sydney_now_time
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'])
@@ -2388,10 +2388,8 @@ def download_csv(request):
 
         ############################################################################################
         # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
-        ############################################################################################
-        sydney = pytz.timezone('Australia/Sydney')
-        sydney_now = sydney.localize(datetime.now())
-        booking.b_dateBookedDate = sydney_now
+        ############################################################################################    
+        booking.b_dateBookedDate = get_sydney_now_time()
         booking.b_status = 'Booked'
         booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
         booking.save()
