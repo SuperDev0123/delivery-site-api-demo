@@ -2379,7 +2379,7 @@ def download_csv(request):
     label_names = [];
 
     if len(booking_ids) == 0:
-        JsonResponse({'filename': '', 'status': 'No bookings to build CSV'})
+        return JsonResponse({'filename': '', 'status': 'No bookings to build CSV'})
 
     csv_name = generate_csv(booking_ids)
 
