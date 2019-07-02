@@ -2432,7 +2432,7 @@ def generate_xml(request):
     one_manifest_file = int(body["one_manifest_file"])
 
     if len(booking_ids) == 0:
-        JsonResponse({'success': 'success', 'status': 'No bookings to build XML'})
+        return JsonResponse({'success': 'success', 'status': 'No bookings to build XML'})
 
     try:
         booked_list = build_xml(booking_ids, vx_freight_provider, one_manifest_file)
