@@ -703,7 +703,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 sydney_now = sydney.localize(datetime.now())
 
                 sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                adr2 = ('Booked XML', str(sydney_now), booking['pk_booking_id'])
+                adr2 = ('Booked', str(sydney_now), booking['pk_booking_id'])
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
             except Exception as e:
@@ -896,7 +896,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     sydney_now = sydney.localize(datetime.now())
 
                     sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                    adr2 = ('Booked XML', str(sydney_now), connote_number, booking['pk_booking_id'])
+                    adr2 = ('Booked', str(sydney_now), connote_number, booking['pk_booking_id'])
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
@@ -1076,7 +1076,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     sydney_now = sydney.localize(datetime.now())
 
                     sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                    adr2 = ('Booked XML', str(sydney_now), connote_number, booking['pk_booking_id'])
+                    adr2 = ('Booked', str(sydney_now), connote_number, booking['pk_booking_id'])
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:

@@ -2392,7 +2392,7 @@ def download_csv(request):
         sydney = pytz.timezone('Australia/Sydney')
         sydney_now = sydney.localize(datetime.now())
         booking.b_dateBookedDate = sydney_now
-        booking.b_status = 'Booked CSV'
+        booking.b_status = 'Booked'
         booking.v_FPBookingNumber = 'DME' + str(booking.b_bookingID_Visual)
         booking.save()
 
