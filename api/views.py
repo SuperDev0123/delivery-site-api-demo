@@ -822,7 +822,6 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_to_PickUp_Instructions_Address': booking.de_to_PickUp_Instructions_Address,
                         'pu_pickup_instructions_address': booking.pu_pickup_instructions_address,
                         'pu_PickUp_Instructions_Contact': booking.pu_PickUp_Instructions_Contact,
-                        'vx_freight_provider': booking.vx_freight_provider,
                         'vx_serviceName': booking.vx_serviceName,
                         'consignment_label_link': booking.consignment_label_link,
                         's_02_Booking_Cutoff_Time': booking.s_02_Booking_Cutoff_Time,
@@ -852,6 +851,9 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_Deliver_By_Hours': booking.de_Deliver_By_Hours,
                         'de_Deliver_By_Minutes': booking.de_Deliver_By_Minutes,
                         'client_item_references': booking.get_client_item_references(),
+                        'v_service_Type_2': booking.v_service_Type_2,
+                        'fk_fp_pickup_id': booking.fk_fp_pickup_id,
+                        'v_vehicle_Type': booking.v_vehicle_Type,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
@@ -950,7 +952,6 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_to_PickUp_Instructions_Address': booking.de_to_PickUp_Instructions_Address,
                         'pu_pickup_instructions_address': booking.pu_pickup_instructions_address,
                         'pu_PickUp_Instructions_Contact': booking.pu_PickUp_Instructions_Contact,
-                        'vx_freight_provider': booking.vx_freight_provider,
                         'vx_serviceName': booking.vx_serviceName,
                         'consignment_label_link': booking.consignment_label_link,
                         's_02_Booking_Cutoff_Time': booking.s_02_Booking_Cutoff_Time,
@@ -980,6 +981,9 @@ class BookingViewSet(viewsets.ViewSet):
                         'de_Deliver_By_Hours': booking.de_Deliver_By_Hours,
                         'de_Deliver_By_Minutes': booking.de_Deliver_By_Minutes,
                         'client_item_references': booking.get_client_item_references(),
+                        'v_service_Type_2': booking.v_service_Type_2,
+                        'fk_fp_pickup_id': booking.fk_fp_pickup_id,
+                        'v_vehicle_Type': booking.v_vehicle_Type,
                     }
                     return JsonResponse({'booking': return_data, 'nextid': nextBookingId, 'previd': prevBookingId})
             else:
