@@ -387,56 +387,56 @@ def csv_write(fileHandler, bookings, mysqlcon):
                     # Calc totalWeight
                     h40 = '0'
                     if (
-                        bookingLine['e_weightUOM'] is not None 
-                        and bookingLine['e_weightPerEach'] is not None
-                        and bookingLine['e_qty'] is not None
+                        booking_line['e_weightUOM'] is not None 
+                        and booking_line['e_weightPerEach'] is not None
+                        and booking_line['e_qty'] is not None
                     ):
                         if (
-                            bookingLine['e_weightUOM'].upper() == 'GRAM'
-                            or bookingLine['e_weightUOM'].upper() == 'GRAMS'
+                            booking_line['e_weightUOM'].upper() == 'GRAM'
+                            or booking_line['e_weightUOM'].upper() == 'GRAMS'
                         ):
-                            h40 = str(bookingLine['e_qty'] * bookingLine['e_weightPerEach'] / 1000)
+                            h40 = str(booking_line['e_qty'] * booking_line['e_weightPerEach'] / 1000)
                         elif (
-                            bookingLine['e_weightUOM'].upper() == 'KILOGRAM'
-                            or bookingLine['e_weightUOM'].upper() == 'KG'
-                            or bookingLine['e_weightUOM'].upper() == 'KGS'
-                            or bookingLine['e_weightUOM'].upper() == 'KILOGRAMS'
+                            booking_line['e_weightUOM'].upper() == 'KILOGRAM'
+                            or booking_line['e_weightUOM'].upper() == 'KG'
+                            or booking_line['e_weightUOM'].upper() == 'KGS'
+                            or booking_line['e_weightUOM'].upper() == 'KILOGRAMS'
                         ):
-                            h40 = str(bookingLine['e_qty'] * bookingLine['e_weightPerEach'])
+                            h40 = str(booking_line['e_qty'] * booking_line['e_weightPerEach'])
                         elif (
-                            bookingLine['e_weightUOM'].upper() == 'TON'
-                            or bookingLine['e_weightUOM'].upper() == 'TONS'
+                            booking_line['e_weightUOM'].upper() == 'TON'
+                            or booking_line['e_weightUOM'].upper() == 'TONS'
                         ):
-                            h40 = str(bookingLine['e_qty'] * bookingLine['e_weightPerEach'] * 1000)
+                            h40 = str(booking_line['e_qty'] * booking_line['e_weightPerEach'] * 1000)
                         else:
-                            h40 = str(bookingLine['e_qty'] * bookingLine['e_weightPerEach'])
+                            h40 = str(booking_line['e_qty'] * booking_line['e_weightPerEach'])
 
                     # Calc totalVolume
                     h41 = '0'
                     if (
-                        bookingLine['e_dimUOM'] is not None 
-                        and bookingLine['e_dimLength'] is not None
-                        and bookingLine['e_dimWidth'] is not None
-                        and bookingLine['e_dimHeight'] is not None
-                        and bookingLine['e_qty'] is not None
+                        booking_line['e_dimUOM'] is not None 
+                        and booking_line['e_dimLength'] is not None
+                        and booking_line['e_dimWidth'] is not None
+                        and booking_line['e_dimHeight'] is not None
+                        and booking_line['e_qty'] is not None
                     ):
                         if (
-                            bookingLine['e_dimUOM'].upper() == 'CM'
-                            or bookingLine['e_dimUOM'].upper() == 'CENTIMETER'
+                            booking_line['e_dimUOM'].upper() == 'CM'
+                            or booking_line['e_dimUOM'].upper() == 'CENTIMETER'
                         ):
-                            h41 = str(bookingLine['e_qty'] * bookingLine['e_dimLength'] * bookingLine['e_dimWidth'] * bookingLine['e_dimHeight'] / 1000000)
+                            h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'] / 1000000)
                         elif (
-                            bookingLine['e_dimUOM'].upper() == 'METER'
-                            or bookingLine.e_dimUOM.toUpperCase() == 'M'
+                            booking_line['e_dimUOM'].upper() == 'METER'
+                            or booking_line.e_dimUOM.toUpperCase() == 'M'
                         ):
-                            h41 = str(bookingLine['e_qty'] * bookingLine['e_dimLength'] * bookingLine['e_dimWidth'] * bookingLine['e_dimHeight'])
+                            h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'])
                         elif (
-                            bookingLine['e_dimUOM'].upper() == 'MILIMETER'
-                            or bookingLine.e_dimUOM.toUpperCase() == 'MM'
+                            booking_line['e_dimUOM'].upper() == 'MILIMETER'
+                            or booking_line.e_dimUOM.toUpperCase() == 'MM'
                         ):
-                            h41 = str(bookingLine['e_qty'] * bookingLine['e_dimLength'] * bookingLine['e_dimWidth'] * bookingLine['e_dimHeight'] / 1000000000)
+                            h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'] / 1000000000)
                         else:
-                            h41 = str(bookingLine['e_qty'] * bookingLine['e_dimLength'] * bookingLine['e_dimWidth'] * bookingLine['e_dimHeight'])
+                            h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'])
 
                     if booking_line['e_dimLength'] is None: h42 = ''
                     else:
