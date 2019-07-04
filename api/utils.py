@@ -427,12 +427,12 @@ def csv_write(fileHandler, bookings, mysqlcon):
                             h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'] / 1000000)
                         elif (
                             booking_line['e_dimUOM'].upper() == 'METER'
-                            or booking_line['e_dimUOM'].toUpperCase() == 'M'
+                            or booking_line['e_dimUOM'].upper() == 'M'
                         ):
                             h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'])
                         elif (
                             booking_line['e_dimUOM'].upper() == 'MILIMETER'
-                            or booking_line['e_dimUOM'].toUpperCase() == 'MM'
+                            or booking_line['e_dimUOM'].upper() == 'MM'
                         ):
                             h41 = str(booking_line['e_qty'] * booking_line['e_dimLength'] * booking_line['e_dimWidth'] * booking_line['e_dimHeight'] / 1000000000)
                         else:
