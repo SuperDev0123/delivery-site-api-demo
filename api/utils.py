@@ -2057,7 +2057,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 1
 
         for booking in bookings:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+            booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id').filter(fk_booking_id=booking.pk_booking_id)
             e_qty_total = 0
             e_qty_scanned_fp_total = 0
 
@@ -2258,7 +2258,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         for booking in bookings:
             try:
-                booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+                booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id', 'e_item', 'e_pallet_type' \
+                    'client_item_reference', 'e_qty_awaiting_inventory', 'e_qty_collected', 'e_qty_scanned_fp', 'e_qty_scanned_depot', \
+                    'e_qty_delivered', 'e_qty_damaged', 'e_qty_returned', 'e_qty_shortages', 'e_qty_adjusted_delivered') \
+                    .filter(fk_booking_id=booking.pk_booking_id)
 
                 for booking_line in booking_lines:
                     worksheet.write(row, col + 0, booking.v_FPBookingNumber)
@@ -2434,7 +2437,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 1
 
         for booking in bookings:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+            booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id', 'client_item_reference').filter(fk_booking_id=booking.pk_booking_id)
             e_qty_total = 0
             e_qty_scanned_fp_total = 0
             gaps = ''
@@ -2627,7 +2630,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 1
 
         for booking in bookings:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+            booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id').filter(fk_booking_id=booking.pk_booking_id)
             sydney = pytz.timezone('Australia/Sydney')
             sydney_today = sydney.localize(datetime.now())
             sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
