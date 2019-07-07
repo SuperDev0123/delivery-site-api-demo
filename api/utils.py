@@ -1962,6 +1962,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == 'Bookings':
+        print('#390 Get started to build `Bookings` XLS')
         worksheet.set_column(15, 16, width=40)
         worksheet.set_column(17, 17, width=53)
         worksheet.set_column(0, 14, width=25)
@@ -2056,7 +2057,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             
             row = 1
 
-        for booking in bookings:
+        print('#391 Total cnt:', len(bookings))
+        for booking_ind, booking in enumerate(bookings):
+            if (booking_ind % 100 == 0):
+                print('#392 Current index: ', booking_ind)
+
             booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id').filter(fk_booking_id=booking.pk_booking_id)
             e_qty_total = 0
             e_qty_scanned_fp_total = 0
@@ -2139,6 +2144,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'BookingLines':
+        print('#390 Get started to build `BookingLines` XLS')
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write('A1', 'dme_bookings:v_FPBookingNumber', bold)
@@ -2256,7 +2262,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         e_qty_total = 0
         e_qty_scanned_fp_total = 0
 
-        for booking in bookings:
+        print('#391 Total cnt:', len(bookings))
+        for booking_ind, booking in enumerate(bookings):
+            if (booking_ind % 100 == 0):
+                print('#392 Current index: ', booking_ind)
+
             try:
                 booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id', 'e_item', 'e_pallet_type', \
                     'client_item_reference', 'e_qty_awaiting_inventory', 'e_qty_collected', 'e_qty_scanned_fp', 'e_qty_scanned_depot', \
@@ -2343,6 +2353,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'BookingsWithGaps':
+        print('#390 Get started to build `BookingsWithGaps` XLS')
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write('A1', 'b_dateBookedDate(Date)', bold)
@@ -2436,7 +2447,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             
             row = 1
 
-        for booking in bookings:
+        print('#391 Total cnt:', len(bookings))
+        for booking_ind, booking in enumerate(bookings):
+            if (booking_ind % 100 == 0):
+                print('#392 Current index: ', booking_ind)
+
             booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id', 'client_item_reference').filter(fk_booking_id=booking.pk_booking_id)
             e_qty_total = 0
             e_qty_scanned_fp_total = 0
@@ -2526,6 +2541,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == 'Whse':
+        print('#390 Get started to build `Whse` XLS')
         worksheet.set_column(7, 8, width=40)
         worksheet.set_column(9, 9, width=53)
         worksheet.set_column(10, 10, width=70)
@@ -2629,7 +2645,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             
             row = 1
 
-        for booking in bookings:
+        print('#391 Total cnt:', len(bookings))
+        for booking_ind, booking in enumerate(bookings):
+            if (booking_ind % 100 == 0):
+                print('#392 Current index: ', booking_ind)
+
             booking_lines = Booking_lines.objects.only('e_qty', 'e_qty_scanned_fp', 'pk_lines_id').filter(fk_booking_id=booking.pk_booking_id)
             sydney = pytz.timezone('Australia/Sydney')
             sydney_today = sydney.localize(datetime.now())
