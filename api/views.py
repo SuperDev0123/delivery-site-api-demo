@@ -257,6 +257,12 @@ class BookingsViewSet(viewsets.ViewSet):
                     z_downloaded_shipping_label_timestamp__isnull=True
                 ).exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=""))
 
+            # New Connote filter
+            if download_option == "new_label":
+                queryset = queryset.filter(
+                    z_downloaded_shipping_label_timestamp__isnull=True
+                ).exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=""))
+
         else:
             if search_type == "FILTER":
                 # Date filter
