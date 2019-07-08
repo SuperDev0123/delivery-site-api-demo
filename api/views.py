@@ -258,10 +258,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 ).exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=""))
 
             # New Connote filter
-            if download_option == "new_label":
+            if download_option == "new_connote":
                 queryset = queryset.filter(
-                    z_downloaded_shipping_label_timestamp__isnull=True
-                ).exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=""))
+                    z_downloaded_connote_timestamp__isnull=True
+                ).exclude(Q(z_connote_url__isnull=True) | Q(z_connote_url__exact=""))
 
         else:
             if search_type == "FILTER":
@@ -568,10 +568,12 @@ class BookingsViewSet(viewsets.ViewSet):
                     "s_20_Actual_Pickup_TimeStamp": booking.s_20_Actual_Pickup_TimeStamp,
                     "s_21_Actual_Delivery_TimeStamp": booking.s_21_Actual_Delivery_TimeStamp,
                     "b_status_API": booking.b_status_API,
-                    "z_downloaded_pod_timestamp": booking.z_downloaded_pod_timestamp,
-                    "z_downloaded_pod_sog_timestamp": booking.z_downloaded_pod_sog_timestamp,
                     "z_pod_url": booking.z_pod_url,
                     "z_pod_signed_url": booking.z_pod_signed_url,
+                    "z_connote_url": booking.z_connote_url,
+                    "z_downloaded_pod_timestamp": booking.z_downloaded_pod_timestamp,
+                    "z_downloaded_pod_sog_timestamp": booking.z_downloaded_pod_sog_timestamp,
+                    "z_downloaded_connote_timestamp": booking.z_downloaded_connote_timestamp,
                     "has_comms": booking.has_comms(),
                     "b_client_sales_inv_num": booking.b_client_sales_inv_num,
                     "z_lock_status": booking.z_lock_status,
@@ -2806,6 +2808,68 @@ def download_pod(request):
     for index, file_path in enumerate(file_paths):
         zip_path = os.path.join(zip_subdir, file_path)
         zf.write(file_path, "pod_and_pod_signed/" + pod_and_pod_signed_names[index])
+    zf.close()
+
+    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+    return response
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def download_connote(request):
+    body = literal_eval(request.body.decode("utf8"))
+    bookingIds = body["ids"]
+    download_option = body["downloadOption"]
+
+    file_paths = []
+    connote_names = []
+
+    if download_option == "connote":
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+
+            if booking.z_pod_url is not None and len(booking.z_connote_url) is not 0:
+                # file_paths.append(
+                #     "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                # )  # Dev & Prod
+                file_paths.append(
+                    "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                    + booking.z_connote_url
+                )  # Local (Test Case)
+                connote_names.append(booking.z_connote_url)
+                booking.z_downloaded_connote_timestamp = timezone.now()
+                booking.save()
+
+    elif download_option == "new_connote":
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+
+            if booking.z_downloaded_pod_timestamp is None:
+                if (
+                    booking.z_connote_url is not None
+                    and len(booking.z_connote_url) is not 0
+                ):
+                    # file_paths.append(
+                    #     "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                    # )  # Dev & Prod
+                    file_paths.append(
+                        "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                        + booking.z_connote_url
+                    )  # Local (Test Case)
+                    connote_names.append(booking.z_connote_url)
+                    booking.z_downloaded_connote_timestamp = timezone.now()
+                    booking.save()
+
+    zip_subdir = "connote"
+    zip_filename = "%s.zip" % zip_subdir
+
+    s = io.BytesIO()
+    zf = zipfile.ZipFile(s, "w")
+
+    for index, file_path in enumerate(file_paths):
+        zip_path = os.path.join(zip_subdir, file_path)
+        zf.write(file_path, "connote/" + connote_names[index])
     zf.close()
 
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
