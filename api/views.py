@@ -546,7 +546,7 @@ class BookingsViewSet(viewsets.ViewSet):
                       'de_To_Address_State', 'de_To_Address_PostalCode', 'b_client_sales_inv_num', 'b_client_order_num', \
                       'v_FPBookingNumber', 'b_status', 'dme_status_detail', 'dme_status_action', 'dme_status_history_notes', \
                       's_21_ActualDeliveryTimeStamp', 'z_pod_url', 'z_pod_signed_url', 'delivery_kpi_days', 'de_Deliver_By_Date', \
-                      'vx_freight_provider', 'puCompany', 'pu_Address_Suburb', 'b_bookingID_Visual', )
+                      'vx_freight_provider', 'puCompany', 'pu_Address_Suburb', 'b_bookingID_Visual')
 
         # Date filter
         if user_type == 'DME':
