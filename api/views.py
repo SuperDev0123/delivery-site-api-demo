@@ -2923,9 +2923,15 @@ def download_csv(request):
                 api_booking_confirmation_line.save()
                 index = index + 1
 
-    file_path = "/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name  # Dev & Prod
-    # file_path = '/Users/admin/work/goldmine/dme_api/static/csvs/' + csv_name # Local (Test Case)
-
+    if settings.ENV == "local":
+        file_path = (
+            "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
+        )  # Local (Test Case)
+    else:
+        file_path = (
+            "/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name
+        )  # Dev & Prod
+    return JsonResponse({"filename": csv_name, "status": "Created CSV"})
     if os.path.exists(file_path):
         return JsonResponse({"filename": csv_name, "status": "Created CSV"})
         # with open(file_path, 'rb') as fh:
