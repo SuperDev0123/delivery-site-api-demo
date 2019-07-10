@@ -1224,6 +1224,12 @@ class Bookings(models.Model):
     )
     tally_delivered = models.IntegerField(blank=True, default=0, null=True)
     manifest_timestamp = models.DateTimeField(blank=True, null=True)
+    inv_billing_status = models.CharField(
+        max_length=32, blank=True, null=True, default=""
+    )
+    inv_billing_status_note = models.CharField(
+        max_length=255, blank=True, null=True, default=""
+    )
 
     class Meta:
         db_table = "dme_bookings"

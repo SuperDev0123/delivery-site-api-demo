@@ -1109,6 +1109,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "v_service_Type_2": booking.v_service_Type_2,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
+                        "inv_billing_status": booking.inv_billing_status,
+                        "inv_billing_status_note": booking.inv_billing_status_note,
                     }
                     return JsonResponse(
                         {
@@ -1260,6 +1262,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "v_service_Type_2": booking.v_service_Type_2,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
+                        "inv_billing_status": booking.inv_billing_status,
+                        "inv_billing_status_note": booking.inv_billing_status_note,
                     }
                     return JsonResponse(
                         {
