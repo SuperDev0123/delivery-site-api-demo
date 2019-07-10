@@ -173,6 +173,7 @@ class BookingsViewSet(viewsets.ViewSet):
             )
 
         start_date = self.request.query_params.get("startDate", None)
+
         if start_date == "*":
             search_type = "ALL"
         else:
@@ -182,6 +183,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if search_type == "FILTER":
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+
         warehouse_id = self.request.query_params.get("warehouseId", None)
         sort_field = self.request.query_params.get("sortField", None)
         column_filters = json.loads(
@@ -193,7 +195,8 @@ class BookingsViewSet(viewsets.ViewSet):
         )
         download_option = self.request.query_params.get("downloadOption", None)
         client_pk = self.request.query_params.get("clientPK", None)
-        # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
+        page_item_cnt = self.request.query_params.get("pageItemCnt", 10)
+        page_ind = self.request.query_params.get("pageInd", 0)
 
         # if user_type == 'CLIENT':
         #     print('@01 - Client filter: ', client.dme_account_num)
@@ -527,7 +530,16 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # Count
         bookings_cnt = queryset.count()
-
+        page_cnt = (
+            int(bookings_cnt / int(page_item_cnt))
+            if bookings_cnt % int(page_item_cnt) == 0
+            else int(bookings_cnt / int(page_item_cnt)) + 1
+        )
+        queryset = queryset[
+            int(page_item_cnt)
+            * int(page_ind) : int(page_item_cnt)
+            * (int(page_ind) + 1)
+        ]
         bookings = queryset
         ret_data = []
 
@@ -592,6 +604,9 @@ class BookingsViewSet(viewsets.ViewSet):
             {
                 "bookings": ret_data,
                 "count": bookings_cnt,
+                "page_cnt": page_cnt,
+                "page_ind": page_ind,
+                "page_item_cnt": page_item_cnt,
                 "errors_to_correct": errors_to_correct,
                 "to_manifest": to_manifest,
                 "missing_labels": missing_labels,
