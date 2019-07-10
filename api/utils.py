@@ -3673,7 +3673,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         worksheet.set_column(15, 16, width=40)
         worksheet.set_column(17, 17, width=53)
         worksheet.set_column(0, 14, width=25)
-        worksheet.set_column(18, 28, width=25)
+        worksheet.set_column(18, 30, width=25)
 
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
@@ -3703,6 +3703,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("Y1", "delivery_actual_kpi_days", bold)
             worksheet.write("Z1", "de_Deliver_By_Date(Date)", bold)
             worksheet.write("AA1", "de_Deliver_By_Date(Time)", bold)
+            worksheet.write("AB1", "inv_billing_status", bold)
+            worksheet.write("AC1", "inv_billing_status_note", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
@@ -3731,6 +3733,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("Y2", "Actual Delivery KPI (Days)", bold)
             worksheet.write("Z2", "Store Booking Date", bold)
             worksheet.write("AA2", "Store Booking Time", bold)
+            worksheet.write("AB2", "Invoice Billing Status", bold)
+            worksheet.write("AC2", "Invoice Billing Status Note", bold)
 
             row = 2
         else:
@@ -3761,6 +3765,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("Y1", "Actual Delivery KPI (Days)", bold)
             worksheet.write("Z1", "Store Booking Date", bold)
             worksheet.write("AA1", "Store Booking Time", bold)
+            worksheet.write("AB1", "Invoice Billing Status", bold)
+            worksheet.write("AC1", "Invoice Billing Status Note", bold)
 
             row = 1
 
@@ -3911,6 +3917,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_datetime(
                     row, col + 26, booking.de_Deliver_By_Date, time_format
                 )
+            worksheet.write(row, col + 27, booking.inv_billing_status)
+            worksheet.write(row, col + 28, booking.inv_billing_status_note)
 
             row += 1
 
