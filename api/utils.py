@@ -14,6 +14,7 @@ import shutil
 import xlsxwriter as xlsxwriter
 import smtplib
 import pytz
+import logging
 from pytz import timezone
 from datetime import timedelta
 from os.path import basename
@@ -68,6 +69,8 @@ else:
     DB_PASS = "root"
     DB_PORT = 3306
     DB_NAME = "deliver_me"
+
+logger = logging.getLogger(__name__)
 
 redis_host = "localhost"
 redis_port = 6379
@@ -1002,7 +1005,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 # start formatting xml file and putting data from db tables
                 root = xml.Element(
                     "AlTransportData",
-                    **{"xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"}
+                    **{"xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"},
                 )
                 consignmentHeader = xml.Element("ConsignmentHeader")
                 root.append(consignmentHeader)
@@ -1228,7 +1231,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                             "Number": manifest_number,
                             "Type": "Outbound",
                             "xsi:schemaLocation": "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd",
-                        }
+                        },
                     )
 
                     # IndependentContainers = xml.Element("fd:IndependentContainers")
@@ -1273,7 +1276,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ReceiverName = xml.SubElement(
                         consignment,
                         "fd:Receiver",
-                        **{"Name": companyName, "Reference": "CUST0001"}
+                        **{"Name": companyName, "Reference": "CUST0001"},
                     )
                     ReceiverAddress = xml.SubElement(ReceiverName, "fd:Address")
                     ReceiverAddressLine1 = xml.SubElement(
@@ -1358,7 +1361,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                                 booking["puPickUpAvailFrom_Date"].strftime("%Y-%m-%d")
                                 + "T17:00:00"
                             ),
-                        }
+                        },
                     )
 
                     DeliveryInstructions = xml.SubElement(
@@ -1393,13 +1396,13 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                                 "CustomDescription": str(booking_line["e_item"])
                                 if booking_line["e_item"]
                                 else "",
-                            }
+                            },
                         )
                         if booking_line["e_dangerousGoods"]:
                             DangerousGoods = xml.SubElement(
                                 FreightDetails,
                                 "fd:DangerousGoods",
-                                **{"Class": "1", "UNNumber": "1003"}
+                                **{"Class": "1", "UNNumber": "1003"},
                             )
 
                         ItemDimensions = xml.SubElement(
@@ -1421,7 +1424,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                                 or booking_line["e_dimHeight"] == ""
                                 or booking_line["e_dimHeight"] == 0
                                 else str(booking_line["e_dimHeight"]),
-                            }
+                            },
                         )
 
                         if (
@@ -1474,7 +1477,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                             Item = xml.SubElement(
                                 Items,
                                 "fd:Item",
-                                **{" Container": "IC" + ACCOUNT_CODE + str(i).zfill(5)}
+                                **{" Container": "IC" + ACCOUNT_CODE + str(i).zfill(5)},
                             )
                             Item.text = "S" + connote_number + str(j).zfill(3)
 
@@ -1498,7 +1501,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
-                    print("@300 TAS XML - ", e)
+                    logger.error(f"@300 TAS XML - {e}")
+                    # print("@300 TAS XML - ", e)
                     return e
         elif one_manifest_file == 1:
             try:
@@ -1527,7 +1531,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         "Number": manifest_number,
                         "Type": "Outbound",
                         "xsi:schemaLocation": "http://www.ezysend.com/FreightDescription/2.0 http://www.ezysend.com/EDI/FreightDescription/2.0/schema.xsd",
-                    }
+                    },
                 )
 
                 # IndependentContainers = xml.Element("fd:IndependentContainers")
@@ -1586,7 +1590,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ReceiverName = xml.SubElement(
                         consignment,
                         "fd:Receiver",
-                        **{"Name": companyName, "Reference": "CUST0001"}
+                        **{"Name": companyName, "Reference": "CUST0001"},
                     )
                     ReceiverAddress = xml.SubElement(ReceiverName, "fd:Address")
                     ReceiverAddressLine1 = xml.SubElement(
@@ -1671,7 +1675,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                                 booking["puPickUpAvailFrom_Date"].strftime("%Y-%m-%d")
                                 + "T17:00:00"
                             ),
-                        }
+                        },
                     )
 
                     DeliveryInstructions = xml.SubElement(
@@ -1707,13 +1711,13 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                                 "CustomDescription": str(booking_line["e_item"])
                                 if booking_line["e_item"]
                                 else "",
-                            }
+                            },
                         )
                         if booking_line["e_dangerousGoods"]:
                             DangerousGoods = xml.SubElement(
                                 FreightDetails,
                                 "fd:DangerousGoods",
-                                **{"Class": "1", "UNNumber": "1003"}
+                                **{"Class": "1", "UNNumber": "1003"},
                             )
 
                         ItemDimensions = xml.SubElement(
@@ -1735,7 +1739,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                                 or booking_line["e_dimHeight"] == ""
                                 or booking_line["e_dimHeight"] == 0
                                 else str(booking_line["e_dimHeight"]),
-                            }
+                            },
                         )
 
                         if (
@@ -1789,7 +1793,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                             Item = xml.SubElement(
                                 Items,
                                 "fd:Item",
-                                **{" Container": "IC" + ACCOUNT_CODE + str(i).zfill(5)}
+                                **{" Container": "IC" + ACCOUNT_CODE + str(i).zfill(5)},
                             )
                             Item.text = (
                                 "S" + connote_number + str(serial_index).zfill(3)
@@ -1815,7 +1819,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:
-                print("@300 TAS XML - ", e)
+                logger.error(f"@301 TAS XML - {e}")
+                # print("@301 TAS XML - ", e)
                 return e
 
     mysqlcon.close()
@@ -2411,7 +2416,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 # print(dir(exc_type), fname, exc_tb.tb_lineno)
                 # print("Error: unable to fecth data")
-                print("Error1: " + str(e))
+                # print("Error1: " + str(e))
+                logger.error(f"ERROR @302 - {str(e)}")
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + len(bookings)
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
@@ -3068,7 +3074,8 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
-                    print("Error1: " + str(e))
+                    # print("Error1: " + str(e))
+                    logger.error(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -3669,7 +3676,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == "Bookings":
-        print("#390 Get started to build `Bookings` XLS")
+        logger.error(f"#390 Get started to build `Bookings` XLS")
         worksheet.set_column(15, 16, width=40)
         worksheet.set_column(17, 17, width=53)
         worksheet.set_column(0, 14, width=25)
@@ -3770,10 +3777,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        print("#391 Total cnt:", len(bookings))
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if booking_ind % 100 == 0:
-                print("#392 Current index: ", booking_ind)
+            if booking_ind % 500 == 0:
+                logger.error(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -3925,7 +3932,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "BookingLines":
-        print("#390 Get started to build `BookingLines` XLS")
+        logger.error(f"#390 Get started to build `BookingLines` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "dme_bookings:v_FPBookingNumber", bold)
@@ -4047,10 +4054,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         e_qty_total = 0
         e_qty_scanned_fp_total = 0
 
-        print("#391 Total cnt:", len(bookings))
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if booking_ind % 100 == 0:
-                print("#392 Current index: ", booking_ind)
+            if booking_ind % 500 == 0:
+                logger.error(f"#392 Current index: {booking_ind}")
 
             try:
                 booking_lines = Booking_lines.objects.only(
@@ -4186,7 +4193,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "BookingsWithGaps":
-        print("#390 Get started to build `BookingsWithGaps` XLS")
+        logger.error(f"#390 Get started to build `BookingsWithGaps` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
@@ -4280,10 +4287,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        print("#391 Total cnt:", len(bookings))
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if booking_ind % 100 == 0:
-                print("#392 Current index: ", booking_ind)
+            if booking_ind % 500 == 0:
+                logger.error(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id", "client_item_reference"
@@ -4554,10 +4561,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        print("#391 Total cnt:", len(bookings))
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if booking_ind % 100 == 0:
-                print("#392 Current index: ", booking_ind)
+            if booking_ind % 500 == 0:
+                logger.error(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -4765,7 +4772,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "old":
-        print("Commented code")
+        logger.error(f"OLD")
         # body = literal_eval(request.body.decode('utf8'))
         # bookingIds = body["bookingIds"]
 
