@@ -194,7 +194,7 @@ LOGGING = {
             "formatter": "simple",
         },
         "file": {
-            "level": "ERROR",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
             if ENV == "local"
@@ -202,8 +202,5 @@ LOGGING = {
             "formatter": "simple",
         },
     },
-    "loggers": {
-        "django": {"handlers": ["file"], "level": "INFO", "propagate": True},
-        "dme_api": {"handlers": ["file"], "level": "ERROR", "propagate": True},
-    },
+    "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
 }
