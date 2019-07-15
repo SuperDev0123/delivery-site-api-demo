@@ -27,6 +27,7 @@ import json
 import zipfile
 import uuid
 import time
+import logging
 
 from .serializers import *
 from .models import *
@@ -43,6 +44,8 @@ from .utils import (
     build_manifest,
     get_sydney_now_time,
 )
+
+logger = logging.getLogger("dme_api")
 
 
 class UserViewSet(viewsets.ViewSet):

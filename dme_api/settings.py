@@ -186,36 +186,25 @@ EMAIL_HOST_PASSWORD = "Dme35718&*"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {"format": "{levelname} {asctime} {message}", "style": "{"},
+    },
     "handlers": {
         "file": {
-            "level": "DEBUG",
+            "level": "ERROR",
             "class": "logging.FileHandler",
             "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
             if ENV == "local"
             else "/var/www/html/dme_api/logs/debug.log",
+            "formatter": "simple",
         }
     },
-    "loggers": {"django": {"handlers": ["file"], "level": "DEBUG", "propagate": True}},
+    "loggers": {
+        "django": {"handlers": ["file"], "level": "ERROR", "propagate": True},
+        "dme_api": {"handlers": ["file"], "level": "ERROR", "propagate": True},
+    },
 }
-
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "formatters": {
-#         "verbose": {
-#             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-#             "style": "{",
-#         },
-#         "simple": {"format": "{levelname} {asctime} {message}", "style": "{"},
-#     },
-#     "handlers": {
-#         "file": {
-#             "level": "INFO",
-#             "class": "logging.FileHandler",
-#             "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
-#             if ENV == "local"
-#             else "/var/www/html/dme_api/logs/debug.log",
-#         }
-#     },
-#     "loggers": {"django": {"handlers": ["file"], "level": "INFO", "propagate": True}},
-# }

@@ -70,7 +70,7 @@ else:
     DB_PORT = 3306
     DB_NAME = "deliver_me"
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dme_api")
 
 redis_host = "localhost"
 redis_port = 6379
@@ -1501,7 +1501,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
-                    logger.debug(f"@300 TAS XML - {e}")
+                    logger.error(f"@300 TAS XML - {e}")
                     # print("@300 TAS XML - ", e)
                     return e
         elif one_manifest_file == 1:
@@ -1819,7 +1819,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:
-                logger.debug(f"@301 TAS XML - {e}")
+                logger.error(f"@301 TAS XML - {e}")
                 # print("@301 TAS XML - ", e)
                 return e
 
@@ -2417,7 +2417,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 # print(dir(exc_type), fname, exc_tb.tb_lineno)
                 # print("Error: unable to fecth data")
                 # print("Error1: " + str(e))
-                logger.debug(f"ERROR @302 - {str(e)}")
+                logger.error(f"ERROR @302 - {str(e)}")
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + len(bookings)
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
@@ -3075,7 +3075,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
                     # print("Error1: " + str(e))
-                    logger.debug(f"ERROR @303 - {str(e)}")
+                    logger.error(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -3676,7 +3676,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == "Bookings":
-        logger.debug("#390 Get started to build `Bookings` XLS")
+        logger.error("#390 Get started to build `Bookings` XLS")
         worksheet.set_column(15, 16, width=40)
         worksheet.set_column(17, 17, width=53)
         worksheet.set_column(0, 14, width=25)
@@ -3777,10 +3777,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        # logger.debug(f"#391 Total cnt: {len(bookings)}")
+        # logger.error(f"#391 Total cnt: {len(bookings)}")
         # for booking_ind, booking in enumerate(bookings):
         #     if booking_ind % 500 == 0:
-        #         logger.debug(f"#392 Current index: {booking_ind}")
+        #         logger.error(f"#392 Current index: {booking_ind}")
 
         #     booking_lines = Booking_lines.objects.only(
         #         "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -3932,7 +3932,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         # workbook.close()
         # shutil.move(filename, local_filepath + filename)
     elif xls_type == "BookingLines":
-        logger.debug(f"#390 Get started to build `BookingLines` XLS")
+        logger.error(f"#390 Get started to build `BookingLines` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "dme_bookings:v_FPBookingNumber", bold)
@@ -4054,10 +4054,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         e_qty_total = 0
         e_qty_scanned_fp_total = 0
 
-        logger.debug(f"#391 Total cnt: {len(bookings)}")
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.debug(f"#392 Current index: {booking_ind}")
+                logger.error(f"#392 Current index: {booking_ind}")
 
             try:
                 booking_lines = Booking_lines.objects.only(
@@ -4193,7 +4193,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "BookingsWithGaps":
-        logger.debug(f"#390 Get started to build `BookingsWithGaps` XLS")
+        logger.error(f"#390 Get started to build `BookingsWithGaps` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
@@ -4287,10 +4287,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.debug(f"#391 Total cnt: {len(bookings)}")
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.debug(f"#392 Current index: {booking_ind}")
+                logger.error(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id", "client_item_reference"
@@ -4561,10 +4561,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.debug(f"#391 Total cnt: {len(bookings)}")
+        logger.error(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.debug(f"#392 Current index: {booking_ind}")
+                logger.error(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -4772,7 +4772,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "old":
-        logger.debug(f"OLD")
+        logger.error(f"OLD")
         # body = literal_eval(request.body.decode('utf8'))
         # bookingIds = body["bookingIds"]
 
