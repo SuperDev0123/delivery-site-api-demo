@@ -193,10 +193,6 @@ LOGGING = {
         },
         "simple": {"format": "{levelname} {message}", "style": "{"},
     },
-    "filters": {
-        "special": {"()": "project.logging.SpecialFilter", "foo": "bar"},
-        "require_debug_true": {"()": "django.utils.log.RequireDebugTrue"},
-    },
     "handlers": {
         "console": {
             "level": "INFO",
@@ -215,10 +211,5 @@ LOGGING = {
     "loggers": {
         "django": {"handlers": ["console", "file"], "propagate": True},
         "django.request": {"handlers": ["file"], "level": "ERROR", "propagate": False},
-        "myproject.custom": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "filters": ["special"],
-        },
     },
 }
