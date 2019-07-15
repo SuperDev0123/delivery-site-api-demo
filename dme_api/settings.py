@@ -186,14 +186,39 @@ EMAIL_HOST_PASSWORD = "Dme35718&*"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {"format": "{levelname} {message}", "style": "{"},
+    },
+    "filters": {
+        "special": {"()": "project.logging.SpecialFilter", "foo": "bar"},
+        "require_debug_true": {"()": "django.utils.log.RequireDebugTrue"},
+    },
     "handlers": {
+        "console": {
+            "level": "INFO",
+            "filters": ["require_debug_true"],
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
         "file": {
             "level": "ERROR",
             "class": "logging.FileHandler",
             "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
             if ENV == "local"
             else "/var/www/html/dme_api/logs/debug.log",
-        }
+        },
     },
-    "loggers": {"django": {"handlers": ["file"], "level": "ERROR", "propagate": True}},
+    "loggers": {
+        "django": {"handlers": ["console", "file"], "propagate": True},
+        "django.request": {"handlers": ["file"], "level": "ERROR", "propagate": False},
+        "myproject.custom": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "filters": ["special"],
+        },
+    },
 }
