@@ -203,8 +203,5 @@ LOGGING = {
             "formatter": "simple",
         }
     },
-    "loggers": {
-        "django": {"handlers": ["file"], "level": "ERROR", "propagate": True},
-        "dme_api": {"handlers": ["file"], "level": "ERROR", "propagate": True},
-    },
+    "loggers": {"dme_api": {"handlers": ["file"], "level": "ERROR", "propagate": True}},
 }
