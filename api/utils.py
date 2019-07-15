@@ -1501,7 +1501,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
-                    logger.error(f"@300 TAS XML - {e}")
+                    logger.debug(f"@300 TAS XML - {e}")
                     # print("@300 TAS XML - ", e)
                     return e
         elif one_manifest_file == 1:
@@ -1819,7 +1819,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:
-                logger.error(f"@301 TAS XML - {e}")
+                logger.debug(f"@301 TAS XML - {e}")
                 # print("@301 TAS XML - ", e)
                 return e
 
@@ -2417,7 +2417,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                 # print(dir(exc_type), fname, exc_tb.tb_lineno)
                 # print("Error: unable to fecth data")
                 # print("Error1: " + str(e))
-                logger.error(f"ERROR @302 - {str(e)}")
+                logger.debug(f"ERROR @302 - {str(e)}")
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + len(bookings)
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
@@ -3075,7 +3075,7 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
                     # print(dir(exc_type), fname, exc_tb.tb_lineno)
                     # print("Error: unable to fecth data")
                     # print("Error1: " + str(e))
-                    logger.error(f"ERROR @303 - {str(e)}")
+                    logger.debug(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -3676,7 +3676,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == "Bookings":
-        logger.error(f"#390 Get started to build `Bookings` XLS")
+        logger.debug("#390 Get started to build `Bookings` XLS")
         worksheet.set_column(15, 16, width=40)
         worksheet.set_column(17, 17, width=53)
         worksheet.set_column(0, 14, width=25)
@@ -3777,162 +3777,162 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#391 Total cnt: {len(bookings)}")
-        for booking_ind, booking in enumerate(bookings):
-            if booking_ind % 500 == 0:
-                logger.error(f"#392 Current index: {booking_ind}")
+        # logger.debug(f"#391 Total cnt: {len(bookings)}")
+        # for booking_ind, booking in enumerate(bookings):
+        #     if booking_ind % 500 == 0:
+        #         logger.debug(f"#392 Current index: {booking_ind}")
 
-            booking_lines = Booking_lines.objects.only(
-                "e_qty", "e_qty_scanned_fp", "pk_lines_id"
-            ).filter(fk_booking_id=booking.pk_booking_id)
-            e_qty_total = 0
-            e_qty_scanned_fp_total = 0
+        #     booking_lines = Booking_lines.objects.only(
+        #         "e_qty", "e_qty_scanned_fp", "pk_lines_id"
+        #     ).filter(fk_booking_id=booking.pk_booking_id)
+        #     e_qty_total = 0
+        #     e_qty_scanned_fp_total = 0
 
-            for booking_line in booking_lines:
-                if booking_line.e_qty is not None:
-                    e_qty_total = e_qty_total + booking_line.e_qty
+        #     for booking_line in booking_lines:
+        #         if booking_line.e_qty is not None:
+        #             e_qty_total = e_qty_total + booking_line.e_qty
 
-                if booking_line.e_qty_scanned_fp is not None:
-                    e_qty_scanned_fp_total = (
-                        e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
-                    )
+        #         if booking_line.e_qty_scanned_fp is not None:
+        #             e_qty_scanned_fp_total = (
+        #                 e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
+        #             )
 
-            if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate, date_format
-                )
-                worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate, time_format
-                )
+        #     if booking.b_dateBookedDate and booking.b_dateBookedDate:
+        #         worksheet.write_datetime(
+        #             row, col + 0, booking.b_dateBookedDate, date_format
+        #         )
+        #         worksheet.write_datetime(
+        #             row, col + 1, booking.b_dateBookedDate, time_format
+        #         )
 
-            worksheet.write(row, col + 2, booking.pu_Address_State)
+        #     worksheet.write(row, col + 2, booking.pu_Address_State)
 
-            customer_group_name = ""
-            customer_groups = Dme_utl_client_customer_group.objects.all()
-            for customer_group in customer_groups:
-                if (
-                    customer_group.name_lookup.lower()
-                    in booking.deToCompanyName.lower()
-                ):
-                    customer_group_name = customer_group.group_name
-            worksheet.write(row, col + 3, customer_group_name)
+        #     customer_group_name = ""
+        #     customer_groups = Dme_utl_client_customer_group.objects.all()
+        #     for customer_group in customer_groups:
+        #         if (
+        #             customer_group.name_lookup.lower()
+        #             in booking.deToCompanyName.lower()
+        #         ):
+        #             customer_group_name = customer_group.group_name
+        #     worksheet.write(row, col + 3, customer_group_name)
 
-            worksheet.write(row, col + 4, booking.deToCompanyName)
-            worksheet.write(row, col + 5, booking.de_To_Address_Suburb)
-            worksheet.write(row, col + 6, booking.de_To_Address_State)
-            worksheet.write(row, col + 7, booking.de_To_Address_PostalCode)
-            worksheet.write(row, col + 8, booking.b_client_sales_inv_num)
-            worksheet.write(row, col + 9, booking.b_client_order_num)
-            worksheet.write(row, col + 10, booking.v_FPBookingNumber)
-            worksheet.write(row, col + 11, booking.b_status)
-            worksheet.write(row, col + 12, e_qty_total)
-            worksheet.write(row, col + 13, e_qty_scanned_fp_total)
-            worksheet.write(row, col + 14, e_qty_total - e_qty_scanned_fp_total)
+        #     worksheet.write(row, col + 4, booking.deToCompanyName)
+        #     worksheet.write(row, col + 5, booking.de_To_Address_Suburb)
+        #     worksheet.write(row, col + 6, booking.de_To_Address_State)
+        #     worksheet.write(row, col + 7, booking.de_To_Address_PostalCode)
+        #     worksheet.write(row, col + 8, booking.b_client_sales_inv_num)
+        #     worksheet.write(row, col + 9, booking.b_client_order_num)
+        #     worksheet.write(row, col + 10, booking.v_FPBookingNumber)
+        #     worksheet.write(row, col + 11, booking.b_status)
+        #     worksheet.write(row, col + 12, e_qty_total)
+        #     worksheet.write(row, col + 13, e_qty_scanned_fp_total)
+        #     worksheet.write(row, col + 14, e_qty_total - e_qty_scanned_fp_total)
 
-            cell_format = workbook.add_format({"text_wrap": True})
-            worksheet.write(row, col + 15, booking.dme_status_detail, cell_format)
-            worksheet.write(row, col + 16, booking.dme_status_action, cell_format)
-            worksheet.write(
-                row, col + 17, booking.dme_status_history_notes, cell_format
-            )
+        #     cell_format = workbook.add_format({"text_wrap": True})
+        #     worksheet.write(row, col + 15, booking.dme_status_detail, cell_format)
+        #     worksheet.write(row, col + 16, booking.dme_status_action, cell_format)
+        #     worksheet.write(
+        #         row, col + 17, booking.dme_status_history_notes, cell_format
+        #     )
 
-            if (
-                booking.s_21_ActualDeliveryTimeStamp
-                and booking.s_21_ActualDeliveryTimeStamp
-            ):
-                worksheet.write_datetime(
-                    row, col + 18, booking.s_21_ActualDeliveryTimeStamp, date_format
-                )
+        #     if (
+        #         booking.s_21_ActualDeliveryTimeStamp
+        #         and booking.s_21_ActualDeliveryTimeStamp
+        #     ):
+        #         worksheet.write_datetime(
+        #             row, col + 18, booking.s_21_ActualDeliveryTimeStamp, date_format
+        #         )
 
-            if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
-                booking.z_pod_signed_url is not None
-                and len(booking.z_pod_signed_url) > 0
-            ):
-                worksheet.write(row, col + 19, "Y")
-            else:
-                worksheet.write(row, col + 19, "")
+        #     if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
+        #         booking.z_pod_signed_url is not None
+        #         and len(booking.z_pod_signed_url) > 0
+        #     ):
+        #         worksheet.write(row, col + 19, "Y")
+        #     else:
+        #         worksheet.write(row, col + 19, "")
 
-            if settings.ENV == "dev":
-                if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
-                    worksheet.write_url(
-                        row,
-                        col + 20,
-                        "http://3.105.62.128/static/imgs/" + booking.z_pod_url,
-                        string=booking.z_pod_url,
-                    )
+        #     if settings.ENV == "dev":
+        #         if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
+        #             worksheet.write_url(
+        #                 row,
+        #                 col + 20,
+        #                 "http://3.105.62.128/static/imgs/" + booking.z_pod_url,
+        #                 string=booking.z_pod_url,
+        #             )
 
-                if (
-                    booking.z_pod_signed_url is not None
-                    and len(booking.z_pod_signed_url) > 0
-                ):
-                    worksheet.write_url(
-                        row,
-                        col + 21,
-                        "http://3.105.62.128/static/imgs/" + booking.z_pod_signed_url,
-                        string=booking.z_pod_signed_url,
-                    )
-            elif settings.ENV == "prod":
-                if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
-                    worksheet.write_url(
-                        row,
-                        col + 20,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_url,
-                        string=booking.z_pod_url,
-                    )
+        #         if (
+        #             booking.z_pod_signed_url is not None
+        #             and len(booking.z_pod_signed_url) > 0
+        #         ):
+        #             worksheet.write_url(
+        #                 row,
+        #                 col + 21,
+        #                 "http://3.105.62.128/static/imgs/" + booking.z_pod_signed_url,
+        #                 string=booking.z_pod_signed_url,
+        #             )
+        #     elif settings.ENV == "prod":
+        #         if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
+        #             worksheet.write_url(
+        #                 row,
+        #                 col + 20,
+        #                 "http://13.55.64.102/static/imgs/" + booking.z_pod_url,
+        #                 string=booking.z_pod_url,
+        #             )
 
-                if (
-                    booking.z_pod_signed_url is not None
-                    and len(booking.z_pod_signed_url) > 0
-                ):
-                    worksheet.write_url(
-                        row,
-                        col + 21,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_signed_url,
-                        string=booking.z_pod_signed_url,
-                    )
+        #         if (
+        #             booking.z_pod_signed_url is not None
+        #             and len(booking.z_pod_signed_url) > 0
+        #         ):
+        #             worksheet.write_url(
+        #                 row,
+        #                 col + 21,
+        #                 "http://13.55.64.102/static/imgs/" + booking.z_pod_signed_url,
+        #                 string=booking.z_pod_signed_url,
+        #             )
 
-            worksheet.write(row, col + 22, booking.delivery_kpi_days)
+        #     worksheet.write(row, col + 22, booking.delivery_kpi_days)
 
-            if (
-                booking.b_status is not None
-                and booking.b_status == "Delivered"
-                and booking.s_21_ActualDeliveryTimeStamp is not None
-                and booking.b_dateBookedDate is not None
-            ):
-                worksheet.write(
-                    row,
-                    col + 23,
-                    (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
-                        - booking.b_dateBookedDate.date()
-                    ).days,
-                )
-                worksheet.write(
-                    row,
-                    col + 24,
-                    booking.delivery_kpi_days
-                    - (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
-                        - booking.b_dateBookedDate.date()
-                    ).days,
-                )
+        #     if (
+        #         booking.b_status is not None
+        #         and booking.b_status == "Delivered"
+        #         and booking.s_21_ActualDeliveryTimeStamp is not None
+        #         and booking.b_dateBookedDate is not None
+        #     ):
+        #         worksheet.write(
+        #             row,
+        #             col + 23,
+        #             (
+        #                 booking.s_21_ActualDeliveryTimeStamp.date()
+        #                 - booking.b_dateBookedDate.date()
+        #             ).days,
+        #         )
+        #         worksheet.write(
+        #             row,
+        #             col + 24,
+        #             booking.delivery_kpi_days
+        #             - (
+        #                 booking.s_21_ActualDeliveryTimeStamp.date()
+        #                 - booking.b_dateBookedDate.date()
+        #             ).days,
+        #         )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
-                worksheet.write_datetime(
-                    row, col + 25, booking.de_Deliver_By_Date, date_format
-                )
-                worksheet.write_datetime(
-                    row, col + 26, booking.de_Deliver_By_Date, time_format
-                )
-            worksheet.write(row, col + 27, booking.inv_billing_status)
-            worksheet.write(row, col + 28, booking.inv_billing_status_note)
+        #     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+        #         worksheet.write_datetime(
+        #             row, col + 25, booking.de_Deliver_By_Date, date_format
+        #         )
+        #         worksheet.write_datetime(
+        #             row, col + 26, booking.de_Deliver_By_Date, time_format
+        #         )
+        #     worksheet.write(row, col + 27, booking.inv_billing_status)
+        #     worksheet.write(row, col + 28, booking.inv_billing_status_note)
 
-            row += 1
+        #     row += 1
 
-        workbook.close()
-        shutil.move(filename, local_filepath + filename)
+        # workbook.close()
+        # shutil.move(filename, local_filepath + filename)
     elif xls_type == "BookingLines":
-        logger.error(f"#390 Get started to build `BookingLines` XLS")
+        logger.debug(f"#390 Get started to build `BookingLines` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "dme_bookings:v_FPBookingNumber", bold)
@@ -4054,10 +4054,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         e_qty_total = 0
         e_qty_scanned_fp_total = 0
 
-        logger.error(f"#391 Total cnt: {len(bookings)}")
+        logger.debug(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#392 Current index: {booking_ind}")
+                logger.debug(f"#392 Current index: {booking_ind}")
 
             try:
                 booking_lines = Booking_lines.objects.only(
@@ -4193,7 +4193,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "BookingsWithGaps":
-        logger.error(f"#390 Get started to build `BookingsWithGaps` XLS")
+        logger.debug(f"#390 Get started to build `BookingsWithGaps` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
@@ -4287,10 +4287,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#391 Total cnt: {len(bookings)}")
+        logger.debug(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#392 Current index: {booking_ind}")
+                logger.debug(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id", "client_item_reference"
@@ -4561,10 +4561,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#391 Total cnt: {len(bookings)}")
+        logger.debug(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#392 Current index: {booking_ind}")
+                logger.debug(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -4772,7 +4772,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
     elif xls_type == "old":
-        logger.error(f"OLD")
+        logger.debug(f"OLD")
         # body = literal_eval(request.body.decode('utf8'))
         # bookingIds = body["bookingIds"]
 
