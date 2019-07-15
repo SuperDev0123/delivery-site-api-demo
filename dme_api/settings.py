@@ -186,14 +186,13 @@ EMAIL_HOST_PASSWORD = "Dme35718&*"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
-        },
-        "simple": {"format": "{levelname} {asctime} {message}", "style": "{"},
-    },
+    "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
     "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
         "file": {
             "level": "ERROR",
             "class": "logging.FileHandler",
@@ -201,7 +200,10 @@ LOGGING = {
             if ENV == "local"
             else "/var/www/html/dme_api/logs/debug.log",
             "formatter": "simple",
-        }
+        },
     },
-    "loggers": {"dme_api": {"handlers": ["file"], "level": "ERROR", "propagate": True}},
+    "loggers": {
+        "django": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "dme_api": {"handlers": ["file"], "level": "ERROR", "propagate": True},
+    },
 }
