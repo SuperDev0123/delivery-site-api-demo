@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "7^$d$0@sx&h&@377dtqh%z+r&#o0q#n#)m2+1vgqs(pb((ysh4"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -195,10 +195,5 @@ LOGGING = {
             else "/var/www/html/dme_api/logs/debug.log",
         }
     },
-    "loggers": {
-        "django": {
-            "handlers": ["file"],
-            "level": os.getenv("DJANGO_LOG_LEVEL", "ERROR"),
-        }
-    },
+    "loggers": {"django": {"handlers": ["file"], "level": "ERROR", "propagate": True}},
 }
