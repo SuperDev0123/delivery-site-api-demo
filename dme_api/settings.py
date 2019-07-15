@@ -191,24 +191,16 @@ LOGGING = {
             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
             "style": "{",
         },
-        "simple": {"format": "{levelname} {message}", "style": "{"},
+        "simple": {"format": "{levelname} {asctime} {message}", "style": "{"},
     },
     "handlers": {
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-        },
         "file": {
-            "level": "ERROR",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
             if ENV == "local"
             else "/var/www/html/dme_api/logs/debug.log",
-        },
+        }
     },
-    "loggers": {
-        "django": {"handlers": ["console", "file"], "propagate": True},
-        "django.request": {"handlers": ["file"], "level": "ERROR", "propagate": False},
-    },
+    "loggers": {"django": {"handlers": ["file"], "level": "INFO", "propagate": True}},
 }
