@@ -1230,6 +1230,7 @@ class Bookings(models.Model):
     inv_billing_status_note = models.CharField(
         max_length=255, blank=True, null=True, default=""
     )
+    z_first_scan_label_date = models.DateField(blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
