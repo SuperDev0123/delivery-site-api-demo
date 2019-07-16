@@ -90,29 +90,29 @@ WSGI_APPLICATION = "dme_api.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-# DATABASES = {  # Local
-#     "default": {
-#         "ENGINE": "django.db.backends.mysql",
-#         "NAME": "deliver_me",
-#         "USER": "root",
-#         "PASSWORD": "root",
-#         "HOST": "localhost",
-#         "PORT": "3306",
-#     }
-# }
-
-DATABASES = {  # Dev
+DATABASES = {  # Local
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "dme_db_dev",
-        "USER": "fmadmin",
-        # 'PASSWORD': 'Fmadmin1', # Old db password
-        "PASSWORD": "oU8pPQxh",  # New db password
-        # 'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com', # Old db
-        "HOST": "deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com",  # New db
+        "NAME": "deliver_me",
+        "USER": "root",
+        "PASSWORD": "root",
+        "HOST": "localhost",
         "PORT": "3306",
     }
 }
+
+# DATABASES = {  # Dev
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "dme_db_prod",
+#         "USER": "fmadmin",
+#         # 'PASSWORD': 'Fmadmin1', # Old db password
+#         "PASSWORD": "oU8pPQxh",  # New db password
+#         # 'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com', # Old db
+#         "HOST": "deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com",  # New db
+#         "PORT": "3306",
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -173,7 +173,7 @@ CORS_ALLOW_HEADERS = (
 JWT_AUTH = {"JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=36000)}  # Test case
 
 # Env setting
-ENV = "dev"  # local, dev, prod
+ENV = "local"  # local, dev, prod
 
 # Email setting
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
