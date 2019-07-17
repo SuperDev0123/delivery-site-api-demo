@@ -2836,14 +2836,17 @@ def download_connote(request):
         for id in bookingIds:
             booking = Bookings.objects.get(id=id)
 
-            if booking.z_pod_url is not None and len(booking.z_connote_url) is not 0:
-                # file_paths.append(
-                #     "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
-                # )  # Dev & Prod
+            if (
+                booking.z_connote_url is not None
+                and len(booking.z_connote_url) is not 0
+            ):
                 file_paths.append(
-                    "/Users/admin/work/goldmine/dme_api/static/connotes/"
-                    + booking.z_connote_url
-                )  # Local (Test Case)
+                    "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                )  # Dev & Prod
+                # file_paths.append(
+                #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                #     + booking.z_connote_url
+                # )  # Local (Test Case)
                 connote_names.append(booking.z_connote_url)
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
@@ -2857,16 +2860,46 @@ def download_connote(request):
                     booking.z_connote_url is not None
                     and len(booking.z_connote_url) is not 0
                 ):
-                    # file_paths.append(
-                    #     "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
-                    # )  # Dev & Prod
                     file_paths.append(
-                        "/Users/admin/work/goldmine/dme_api/static/connotes/"
-                        + booking.z_connote_url
-                    )  # Local (Test Case)
+                        "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                    )  # Dev & Prod
+                    # file_paths.append(
+                    #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                    #     + booking.z_connote_url
+                    # )  # Local (Test Case)
                     connote_names.append(booking.z_connote_url)
                     booking.z_downloaded_connote_timestamp = timezone.now()
                     booking.save()
+
+    elif download_option == "label_and_connote":
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+
+            if (
+                booking.z_connote_url is not None
+                and len(booking.z_connote_url) is not 0
+            ):
+                file_paths.append(
+                    "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                )  # Dev & Prod
+                # file_paths.append(
+                #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                #     + booking.z_connote_url
+                # )  # Local (Test Case)
+                connote_names.append(booking.z_connote_url)
+                # booking.z_downloaded_connote_timestamp = timezone.now()
+                # booking.save()
+            if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+                file_paths.append(
+                    "/var/www/html/dme_api/static/pdfs/" + booking.z_label_url
+                )  # Dev & Prod
+                # file_paths.append(
+                #     "/Users/admin/work/goldmine/dme_api/static/pdfs/"
+                #     + booking.z_label_url
+                # )  # Local (Test Case)
+                connote_names.append(booking.z_label_url)
+                # booking.z_downloaded_connote_timestamp = timezone.now()
+                # booking.save()
 
     zip_subdir = "connote"
     zip_filename = "%s.zip" % zip_subdir
