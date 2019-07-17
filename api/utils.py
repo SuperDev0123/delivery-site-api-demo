@@ -4456,7 +4456,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         shutil.move(filename, local_filepath + filename)
         logger.error("#375 Finished - `BookingsWithGaps` XLS")
     elif xls_type == "Whse":
-        print("#360 Get started to build `Whse` XLS")
+        logger.error("#360 Get started to build `Whse` XLS")
         worksheet.set_column(7, 8, width=40)
         worksheet.set_column(9, 9, width=53)
         worksheet.set_column(10, 10, width=70)
