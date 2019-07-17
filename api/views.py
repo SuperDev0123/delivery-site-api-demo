@@ -2887,8 +2887,8 @@ def download_connote(request):
                 #     + booking.z_connote_url
                 # )  # Local (Test Case)
                 connote_names.append(booking.z_connote_url)
-                # booking.z_downloaded_connote_timestamp = timezone.now()
-                # booking.save()
+                booking.z_downloaded_connote_timestamp = timezone.now()
+                booking.save()
             if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
                 file_paths.append(
                     "/var/www/html/dme_api/static/pdfs/" + booking.z_label_url
@@ -2898,8 +2898,8 @@ def download_connote(request):
                 #     + booking.z_label_url
                 # )  # Local (Test Case)
                 connote_names.append(booking.z_label_url)
-                # booking.z_downloaded_connote_timestamp = timezone.now()
-                # booking.save()
+                booking.z_downloaded_shipping_label_timestamp = timezone.now()
+                booking.save()
 
     zip_subdir = "connote"
     zip_filename = "%s.zip" % zip_subdir
