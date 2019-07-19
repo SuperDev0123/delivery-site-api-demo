@@ -5,19 +5,17 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('api', '0106_auto_20190626_1742'),
-    ]
+    dependencies = [("api", "0106_auto_20190626_1742")]
 
     operations = [
-        migrations.AddField(
-            model_name='bookings',
-            name='z_connote_url',
-            field=models.CharField(blank=True, default='', max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='bookings',
-            name='z_downloaded_connote_timestamp',
-            field=models.DateTimeField(blank=True, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name='bookings',
+        #     name='z_connote_url',
+        #     field=models.CharField(blank=True, default='', max_length=255, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name='bookings',
+        #     name='z_downloaded_connote_timestamp',
+        #     field=models.DateTimeField(blank=True, null=True),
+        # ),
     ]

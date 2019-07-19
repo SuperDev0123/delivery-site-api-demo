@@ -27,6 +27,7 @@ import json
 import zipfile
 import uuid
 import time
+import logging
 
 from .serializers import *
 from .models import *
@@ -43,6 +44,8 @@ from .utils import (
     build_manifest,
     get_sydney_now_time,
 )
+
+logger = logging.getLogger("dme_api")
 
 
 class UserViewSet(viewsets.ViewSet):
@@ -148,6 +151,154 @@ class UserViewSet(viewsets.ViewSet):
 
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
+
+    def _column_filter_4_get_bookings(self, queryset, column_filters):
+        # Column filter
+        try:
+            column_filter = column_filters["b_bookingID_Visual"]
+            queryset = queryset.filter(b_bookingID_Visual__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_dateBookedDate"]
+            queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["puPickUpAvailFrom_Date"]
+            queryset = queryset.filter(puPickUpAvailFrom_Date__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["puCompany"]
+            queryset = queryset.filter(puCompany__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["pu_Address_Suburb"]
+            queryset = queryset.filter(pu_Address_Suburb__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["pu_Address_State"]
+            queryset = queryset.filter(pu_Address_State__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["pu_Address_PostalCode"]
+            queryset = queryset.filter(pu_Address_PostalCode__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["deToCompanyName"]
+            queryset = queryset.filter(deToCompanyName__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["de_To_Address_Suburb"]
+            queryset = queryset.filter(de_To_Address_Suburb__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["de_To_Address_State"]
+            queryset = queryset.filter(de_To_Address_State__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["de_To_Address_PostalCode"]
+            queryset = queryset.filter(
+                de_To_Address_PostalCode__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_clientReference_RA_Numbers"]
+            queryset = queryset.filter(
+                b_clientReference_RA_Numbers__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["vx_freight_provider"]
+            queryset = queryset.filter(vx_freight_provider__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["vx_serviceName"]
+            queryset = queryset.filter(vx_serviceName__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["v_FPBookingNumber"]
+            queryset = queryset.filter(v_FPBookingNumber__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_status"]
+            queryset = queryset.filter(b_status__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_status_API"]
+            queryset = queryset.filter(b_status_API__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["s_05_LatestPickUpDateTimeFinal"]
+            queryset = queryset.filter(
+                s_05_LatestPickUpDateTimeFinal__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["s_06_LatestDeliveryDateTimeFinal"]
+            queryset = queryset.filter(
+                s_06_LatestDeliveryDateTimeFinal__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["s_20_Actual_Pickup_TimeStamp"]
+            queryset = queryset.filter(
+                s_20_Actual_Pickup_TimeStamp__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["s_21_Actual_Delivery_TimeStamp"]
+            queryset = queryset.filter(
+                s_21_Actual_Delivery_TimeStamp__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_client_sales_inv_num"]
+            queryset = queryset.filter(b_client_sales_inv_num__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        return queryset
 
     @action(detail=False, methods=["get"])
     def get_bookings(self, request, format=None):
@@ -266,6 +417,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     z_downloaded_connote_timestamp__isnull=True
                 ).exclude(Q(z_connote_url__isnull=True) | Q(z_connote_url__exact=""))
 
+            queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+
         else:
             if search_type == "FILTER":
                 # Date filter
@@ -320,172 +473,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
                 )
             else:
-                # Column filter
-                try:
-                    column_filter = column_filters["b_bookingID_Visual"]
-                    queryset = queryset.filter(
-                        b_bookingID_Visual__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["b_dateBookedDate"]
-                    queryset = queryset.filter(
-                        b_dateBookedDate__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["puPickUpAvailFrom_Date"]
-                    queryset = queryset.filter(
-                        puPickUpAvailFrom_Date__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["puCompany"]
-                    queryset = queryset.filter(puCompany__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["pu_Address_Suburb"]
-                    queryset = queryset.filter(
-                        pu_Address_Suburb__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["pu_Address_State"]
-                    queryset = queryset.filter(
-                        pu_Address_State__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["pu_Address_PostalCode"]
-                    queryset = queryset.filter(
-                        pu_Address_PostalCode__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["deToCompanyName"]
-                    queryset = queryset.filter(deToCompanyName__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["de_To_Address_Suburb"]
-                    queryset = queryset.filter(
-                        de_To_Address_Suburb__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["de_To_Address_State"]
-                    queryset = queryset.filter(
-                        de_To_Address_State__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["de_To_Address_PostalCode"]
-                    queryset = queryset.filter(
-                        de_To_Address_PostalCode__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["b_clientReference_RA_Numbers"]
-                    queryset = queryset.filter(
-                        b_clientReference_RA_Numbers__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["vx_freight_provider"]
-                    queryset = queryset.filter(
-                        vx_freight_provider__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["vx_serviceName"]
-                    queryset = queryset.filter(vx_serviceName__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["v_FPBookingNumber"]
-                    queryset = queryset.filter(
-                        v_FPBookingNumber__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["b_status"]
-                    queryset = queryset.filter(b_status__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["b_status_API"]
-                    queryset = queryset.filter(b_status_API__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["s_05_LatestPickUpDateTimeFinal"]
-                    queryset = queryset.filter(
-                        s_05_LatestPickUpDateTimeFinal__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["s_06_LatestDeliveryDateTimeFinal"]
-                    queryset = queryset.filter(
-                        s_06_LatestDeliveryDateTimeFinal__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["s_20_Actual_Pickup_TimeStamp"]
-                    queryset = queryset.filter(
-                        s_20_Actual_Pickup_TimeStamp__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["s_21_Actual_Delivery_TimeStamp"]
-                    queryset = queryset.filter(
-                        s_21_Actual_Delivery_TimeStamp__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-                try:
-                    column_filter = column_filters["b_client_sales_inv_num"]
-                    queryset = queryset.filter(
-                        b_client_sales_inv_num__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
+                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
         # Prefilter count
         errors_to_correct = 0
@@ -1124,6 +1112,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "v_service_Type_2": booking.v_service_Type_2,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
+                        "inv_billing_status": booking.inv_billing_status,
+                        "inv_billing_status_note": booking.inv_billing_status_note,
                     }
                     return JsonResponse(
                         {
@@ -1275,6 +1265,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "v_service_Type_2": booking.v_service_Type_2,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
+                        "inv_billing_status": booking.inv_billing_status,
+                        "inv_billing_status_note": booking.inv_billing_status_note,
                     }
                     return JsonResponse(
                         {
@@ -2844,14 +2836,17 @@ def download_connote(request):
         for id in bookingIds:
             booking = Bookings.objects.get(id=id)
 
-            if booking.z_pod_url is not None and len(booking.z_connote_url) is not 0:
-                # file_paths.append(
-                #     "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
-                # )  # Dev & Prod
+            if (
+                booking.z_connote_url is not None
+                and len(booking.z_connote_url) is not 0
+            ):
                 file_paths.append(
-                    "/Users/admin/work/goldmine/dme_api/static/connotes/"
-                    + booking.z_connote_url
-                )  # Local (Test Case)
+                    "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                )  # Dev & Prod
+                # file_paths.append(
+                #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                #     + booking.z_connote_url
+                # )  # Local (Test Case)
                 connote_names.append(booking.z_connote_url)
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
@@ -2865,16 +2860,46 @@ def download_connote(request):
                     booking.z_connote_url is not None
                     and len(booking.z_connote_url) is not 0
                 ):
-                    # file_paths.append(
-                    #     "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
-                    # )  # Dev & Prod
                     file_paths.append(
-                        "/Users/admin/work/goldmine/dme_api/static/connotes/"
-                        + booking.z_connote_url
-                    )  # Local (Test Case)
+                        "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                    )  # Dev & Prod
+                    # file_paths.append(
+                    #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                    #     + booking.z_connote_url
+                    # )  # Local (Test Case)
                     connote_names.append(booking.z_connote_url)
                     booking.z_downloaded_connote_timestamp = timezone.now()
                     booking.save()
+
+    elif download_option == "label_and_connote":
+        for id in bookingIds:
+            booking = Bookings.objects.get(id=id)
+
+            if (
+                booking.z_connote_url is not None
+                and len(booking.z_connote_url) is not 0
+            ):
+                file_paths.append(
+                    "/var/www/html/dme_api/static/connotes/" + booking.z_connote_url
+                )  # Dev & Prod
+                # file_paths.append(
+                #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                #     + booking.z_connote_url
+                # )  # Local (Test Case)
+                connote_names.append(booking.z_connote_url)
+                booking.z_downloaded_connote_timestamp = timezone.now()
+                booking.save()
+            if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+                file_paths.append(
+                    "/var/www/html/dme_api/static/pdfs/" + booking.z_label_url
+                )  # Dev & Prod
+                # file_paths.append(
+                #     "/Users/admin/work/goldmine/dme_api/static/pdfs/"
+                #     + booking.z_label_url
+                # )  # Local (Test Case)
+                connote_names.append(booking.z_label_url)
+                booking.z_downloaded_shipping_label_timestamp = timezone.now()
+                booking.save()
 
     zip_subdir = "connote"
     zip_filename = "%s.zip" % zip_subdir
