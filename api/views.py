@@ -152,7 +152,7 @@ class UserViewSet(viewsets.ViewSet):
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
-    def _column_filter_4_get_bookings(queryset, column_filters):
+    def _column_filter_4_get_bookings(self, queryset, column_filters):
         # Column filter
         try:
             column_filter = column_filters["b_bookingID_Visual"]
