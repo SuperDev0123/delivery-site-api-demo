@@ -266,6 +266,12 @@ class BookingsViewSet(viewsets.ViewSet):
                     z_downloaded_connote_timestamp__isnull=True
                 ).exclude(Q(z_connote_url__isnull=True) | Q(z_connote_url__exact=""))
 
+            try:
+                column_filter = column_filters["b_status"]
+                queryset = queryset.filter(b_status__icontains=column_filter)
+            except KeyError:
+                column_filter = ""
+
         else:
             if search_type == "FILTER":
                 # Date filter
