@@ -414,7 +414,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     z_downloaded_connote_timestamp__isnull=True
                 ).exclude(Q(z_connote_url__isnull=True) | Q(z_connote_url__exact=""))
 
-            _column_filter_4_get_bookings(queryset, column_filters)
+            this._column_filter_4_get_bookings(queryset, column_filters)
 
         else:
             if search_type == "FILTER":
@@ -470,7 +470,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
                 )
             else:
-                _column_filter_4_get_bookings(queryset, column_filters)
+                this._column_filter_4_get_bookings(queryset, column_filters)
 
         # Prefilter count
         errors_to_correct = 0
