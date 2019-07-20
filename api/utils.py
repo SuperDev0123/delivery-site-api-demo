@@ -3865,7 +3865,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 21,
-                        "http://3.105.62.128/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -3876,7 +3876,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 22,
-                        "http://3.105.62.128/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
             elif settings.ENV == "prod":
@@ -3884,7 +3884,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 21,
-                        settings.S3_URL + "/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -3895,7 +3895,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 22,
-                        settings.S3_URL + "/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
@@ -4399,7 +4399,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 20,
-                        settings.S3_URL + "/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -4410,7 +4410,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 21,
-                        settings.S3_URL + "/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
@@ -4732,7 +4732,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 23,
-                        settings.S3_URL + "/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -4743,7 +4743,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 24,
-                        settings.S3_URL + "/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
