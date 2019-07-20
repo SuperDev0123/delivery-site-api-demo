@@ -425,7 +425,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(z_pod_signed_url__exact="")
                         ),
                     )
-                    .order_by("check_pod")
+                    .order_by("-check_pod")
                 )
 
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
@@ -522,10 +522,11 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(b_status__icontains="Closed")
 
         # Sort
-        if sort_field is None:
-            queryset = queryset.order_by("id")
-        else:
-            queryset = queryset.order_by(sort_field)
+        if download_option != "check_pod":
+            if sort_field is None:
+                queryset = queryset.order_by("id")
+            else:
+                queryset = queryset.order_by(sort_field)
 
         # Count
         bookings_cnt = queryset.count()
