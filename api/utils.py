@@ -955,9 +955,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     if vx_freight_provider == "allied":
         # start check if xmls folder exists
         if production:
-            local_filepath = "/var/www/html/dme_api/static/xmls/allied_au/"
+            local_filepath = "/opt/static/xmls/allied_au/"
             local_filepath_dup = (
-                "/var/www/html/dme_api/static/xmls/allied_au/archive/"
+                "/opt/static/xmls/allied_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -1168,9 +1168,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     elif vx_freight_provider == "TASFR":
         # start check if xmls folder exists
         if production:
-            local_filepath = "/var/www/html/dme_api/static/xmls/tas_au/"
+            local_filepath = "/opt/static/xmls/tas_au/"
             local_filepath_dup = (
-                "/var/www/html/dme_api/static/xmls/tas_au/archive/"
+                "/opt/static/xmls/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -1853,9 +1853,9 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
     # start check if pdfs folder exists
     if production:
-        local_filepath = "/var/www/html/dme_api/static/pdfs/tas_au/"
+        local_filepath = "/opt/static/pdfs/tas_au/"
         local_filepath_dup = (
-            "/var/www/html/dme_api/static/pdfs/tas_au/archive/"
+            "/opt/static/pdfs/tas_au/archive/"
             + str(datetime.now().strftime("%Y_%m_%d"))
             + "/"
         )
@@ -3126,9 +3126,9 @@ def build_pdf(booking_ids, vx_freight_provider):
 
         # start check if pdfs folder exists
         if production:
-            local_filepath = "/var/www/html/dme_api/static/pdfs/tas_au/"
+            local_filepath = "/opt/static/pdfs/tas_au/"
             local_filepath_dup = (
-                "/var/www/html/dme_api/static/pdfs/tas_au/archive/"
+                "/opt/static/pdfs/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -3646,7 +3646,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
     # start check if xmls folder exists
     if production:
-        local_filepath = "/var/www/html/dme_api/static/xlss/"
+        local_filepath = "/opt/static/xlss/"
     else:
         local_filepath = "/Users/admin/work/goldmine/dme_api/static/xlss/"
 
@@ -3884,7 +3884,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 21,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/static/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -3895,7 +3895,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 22,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/static/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
@@ -4399,7 +4399,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 20,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/static/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -4410,7 +4410,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 21,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/static/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
@@ -4732,7 +4732,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 23,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_url,
+                        settings.S3_URL + "/static/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
 
@@ -4743,7 +4743,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write_url(
                         row,
                         col + 24,
-                        "http://13.55.64.102/static/imgs/" + booking.z_pod_signed_url,
+                        settings.S3_URL + "/static/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
