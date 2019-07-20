@@ -518,6 +518,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # Count
         bookings_cnt = queryset.count()
+
+        # Pagination
         page_cnt = (
             int(bookings_cnt / int(page_item_cnt))
             if bookings_cnt % int(page_item_cnt) == 0
@@ -528,6 +530,7 @@ class BookingsViewSet(viewsets.ViewSet):
             * int(page_ind) : int(page_item_cnt)
             * (int(page_ind) + 1)
         ]
+
         bookings = queryset
         ret_data = []
 
