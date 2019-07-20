@@ -416,12 +416,17 @@ class BookingsViewSet(viewsets.ViewSet):
 
             # Check POD
             if download_option == "check_pod":
-                queryset = queryset.exclude(
-                    Q(z_pod_url__isnull=True)
-                    | Q(z_pod_url__exact="")
-                    | Q(z_pod_signed_url__isnull=True)
-                    | Q(z_pod_signed_url__exact="")
-                ).exclude(b_status__icontains="delivered")
+                queryset = (
+                    queryset.exclude(
+                        (Q(z_pod_url__isnull=True) | Q(z_pod_url__exact=""))
+                        and (
+                            Q(z_pod_signed_url__isnull=True)
+                            | Q(z_pod_signed_url__exact="")
+                        )
+                    )
+                    .exclude(b_status__icontains="delivered")
+                    .order_by("check_pod")
+                )
 
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
