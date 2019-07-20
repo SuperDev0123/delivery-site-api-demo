@@ -387,7 +387,7 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
             queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
-        if "new" in download_option:
+        if "new" in download_option or "check_pod" in download_option:
             # New POD filter
             if download_option == "new_pod":
                 queryset = queryset.filter(
@@ -413,6 +413,15 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(
                     z_downloaded_connote_timestamp__isnull=True
                 ).exclude(Q(z_connote_url__isnull=True) | Q(z_connote_url__exact=""))
+
+            # Check POD
+            if download_option == "check_pod":
+                queryset = queryset.exclude(
+                    Q(z_pod_url__isnull=True)
+                    | Q(z_pod_url__exact="")
+                    | Q(z_pod_signed_url__isnull=True)
+                    | Q(z_pod_signed_url__exact="")
+                ).exclude(b_status__icontains="delivered")
 
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
@@ -573,6 +582,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "dme_status_action": booking.dme_status_action,
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                     "b_client_name": booking.b_client_name,
+                    "check_pod": booking.check_pod,
                 }
             )
 
