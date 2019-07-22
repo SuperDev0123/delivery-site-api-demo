@@ -2711,11 +2711,11 @@ def download_pdf(request):
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
             if booking.vx_freight_provider == "TASFR":
                 file_paths.append(
-                    "/opt/static/pdfs/" + booking.z_label_url
+                    "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
             else:
                 file_paths.append(
-                    "/opt/static/pdfs/" + booking.z_label_url
+                    "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
             # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
@@ -2753,7 +2753,9 @@ def download_pod(request):
             booking = Bookings.objects.get(id=id)
 
             if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-                file_paths.append("/opt/static/imgs/" + booking.z_pod_url)  # Dev & Prod
+                file_paths.append(
+                    "/opt/s3_public/imgs/" + booking.z_pod_url
+                )  # Dev & Prod
                 # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_url)
                 booking.z_downloaded_pod_timestamp = timezone.now()
@@ -2768,7 +2770,7 @@ def download_pod(request):
                 and len(booking.z_pod_signed_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/static/imgs/" + booking.z_pod_signed_url
+                    "/opt/s3_public/imgs/" + booking.z_pod_signed_url
                 )  # Dev & Prod
                 # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_signed_url)
@@ -2782,7 +2784,7 @@ def download_pod(request):
             if booking.z_downloaded_pod_timestamp is None:
                 if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                     file_paths.append(
-                        "/opt/static/imgs/" + booking.z_pod_url
+                        "/opt/s3_public/imgs/" + booking.z_pod_url
                     )  # Dev & Prod
                     # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_url)
@@ -2798,7 +2800,7 @@ def download_pod(request):
                     and len(booking.z_pod_signed_url) is not 0
                 ):
                     file_paths.append(
-                        "/opt/static/imgs/" + booking.z_pod_signed_url
+                        "/opt/s3_public/imgs/" + booking.z_pod_signed_url
                     )  # Dev & Prod
                     # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_signed_url)
@@ -2840,7 +2842,7 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/static/connotes/" + booking.z_connote_url
+                    "/opt/s3_private/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
@@ -2860,7 +2862,7 @@ def download_connote(request):
                     and len(booking.z_connote_url) is not 0
                 ):
                     file_paths.append(
-                        "/opt/static/connotes/" + booking.z_connote_url
+                        "/opt/s3_private/connotes/" + booking.z_connote_url
                     )  # Dev & Prod
                     # file_paths.append(
                     #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
@@ -2879,7 +2881,7 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/static/connotes/" + booking.z_connote_url
+                    "/opt/s3_private/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
@@ -2890,7 +2892,7 @@ def download_connote(request):
                 booking.save()
             if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
                 file_paths.append(
-                    "/opt/static/pdfs/" + booking.z_label_url
+                    "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "/Users/admin/work/goldmine/dme_api/static/pdfs/"
@@ -3020,7 +3022,7 @@ def generate_manifest(request):
         file_paths = []
 
         for filename in filenames:
-            file_paths.append("/opt/static/pdfs/tas_au/" + filename)
+            file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir

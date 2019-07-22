@@ -955,9 +955,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     if vx_freight_provider == "allied":
         # start check if xmls folder exists
         if production:
-            local_filepath = "/opt/static/xmls/allied_au/"
+            local_filepath = "/opt/s3_private/xmls/allied_au/"
             local_filepath_dup = (
-                "/opt/static/xmls/allied_au/archive/"
+                "/opt/s3_private/xmls/allied_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -1168,9 +1168,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     elif vx_freight_provider == "TASFR":
         # start check if xmls folder exists
         if production:
-            local_filepath = "/opt/static/xmls/tas_au/"
+            local_filepath = "/opt/s3_private/xmls/tas_au/"
             local_filepath_dup = (
-                "/opt/static/xmls/tas_au/archive/"
+                "/opt/s3_private/xmls/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -1853,9 +1853,9 @@ def build_manifest(booking_ids, one_manifest_file, user_name):
 
     # start check if pdfs folder exists
     if production:
-        local_filepath = "/opt/static/pdfs/tas_au/"
+        local_filepath = "/opt/s3_public/pdfs/tas_au/"
         local_filepath_dup = (
-            "/opt/static/pdfs/tas_au/archive/"
+            "/opt/s3_public/pdfs/tas_au/archive/"
             + str(datetime.now().strftime("%Y_%m_%d"))
             + "/"
         )
@@ -3126,9 +3126,9 @@ def build_pdf(booking_ids, vx_freight_provider):
 
         # start check if pdfs folder exists
         if production:
-            local_filepath = "/opt/static/pdfs/tas_au/"
+            local_filepath = "/opt/s3_public/pdfs/tas_au/"
             local_filepath_dup = (
-                "/opt/static/pdfs/tas_au/archive/"
+                "/opt/s3_public/pdfs/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -3646,7 +3646,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
     # start check if xmls folder exists
     if production:
-        local_filepath = "/opt/static/xlss/"
+        local_filepath = "/opt/s3_private/xlss/"
     else:
         local_filepath = "/Users/admin/work/goldmine/dme_api/static/xlss/"
 
