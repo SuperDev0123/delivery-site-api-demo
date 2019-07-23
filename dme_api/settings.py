@@ -204,3 +204,6 @@ LOGGING = {
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
 }
+
+# S3 url
+S3_URL = "https://dme-pod-api-static.s3-ap-southeast-2.amazonaws.com"

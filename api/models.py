@@ -1231,6 +1231,7 @@ class Bookings(models.Model):
         max_length=255, blank=True, null=True, default=""
     )
     z_first_scan_label_date = models.DateField(blank=True, null=True)
+    check_pod = models.BooleanField(default=False, blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
