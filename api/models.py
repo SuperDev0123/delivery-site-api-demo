@@ -1465,7 +1465,9 @@ class Booking_lines_data(models.Model):
 class Dme_attachments(models.Model):
     pk_id_attachment = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    fk_id_dme_booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    fk_id_dme_booking = models.CharField(
+        verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
+    )
     fileName = models.CharField(verbose_name=_("filename"), max_length=230, blank=False)
     linkurl = models.CharField(
         verbose_name=_("linkurl"), max_length=430, blank=True, null=True

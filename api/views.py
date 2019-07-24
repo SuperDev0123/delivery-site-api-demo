@@ -1022,6 +1022,8 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == "id":
                 booking = queryset.get(id=idBookingNumber)
+            elif filterName == "null":
+                booking = queryset.last()
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
@@ -1035,6 +1037,26 @@ class BookingViewSet(viewsets.ViewSet):
                     nextBookingId = nextBooking.id
                 if prevBooking is not None:
                     prevBookingId = prevBooking.id
+
+                # Get count for `Shipment Packages / Goods`
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+                e_qty_total = 0
+                for booking_line in booking_lines:
+                    e_qty_total += (
+                        booking_line.e_qty if booking_line.e_qty is not None else 0
+                    )
+
+                # Get count for `Communication Log`
+                comms = Dme_comm_and_task.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+
+                # Get count for 'Attachments'
+                attachments = Dme_attachments.objects.filter(
+                    fk_id_dme_booking=booking.pk_booking_id
+                )
 
                 return_data = []
                 if booking is not None:
@@ -1124,162 +1146,27 @@ class BookingViewSet(viewsets.ViewSet):
                         }
                     )
             else:
-                return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
+                return JsonResponse(
+                    {
+                        "booking": {},
+                        "nextid": 0,
+                        "previd": 0,
+                        "e_qty_total": e_qty_total,
+                        "cnt_comms": len(comms),
+                        "cnt_attachments": len(attachments),
+                    }
+                )
         except Bookings.DoesNotExist:
-            return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-
-    @action(detail=False, methods=["get"])
-    def get_latest_booking(self, request, format=None):
-        user_id = request.user.id
-
-        try:
-            dme_employee = (
-                DME_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+            return JsonResponse(
+                {
+                    "booking": {},
+                    "nextid": 0,
+                    "previd": 0,
+                    "e_qty_total": 0,
+                    "cnt_comms": 0,
+                    "cnt_attachments": 0,
+                }
             )
-
-            if dme_employee is not None:
-                user_type = "DME"
-            else:
-                user_type = "CLIENT"
-
-            if user_type == "DME":
-                queryset = Bookings.objects.all()
-            else:
-                client_employee = (
-                    Client_employees.objects.select_related()
-                    .filter(fk_id_user=user_id)
-                    .first()
-                )
-
-                if client_employee is None:
-                    return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-
-                client_employee_role = client_employee.get_role()
-                client = DME_clients.objects.get(
-                    pk_id_dme_client=client_employee.fk_id_dme_client_id
-                )
-
-                if client is None:
-                    return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-
-                if client_employee_role == "company":
-                    queryset = Bookings.objects.filter(
-                        kf_client_id=client.dme_account_num
-                    )
-                elif client_employee_role == "warehouse":
-                    employee_warehouse_id = client_employee.warehouse_id
-                    queryset = Bookings.objects.filter(
-                        kf_client_id=client.dme_account_num,
-                        fk_client_warehouse_id=employee_warehouse_id,
-                    )
-
-            booking = queryset.last()
-
-            if booking is not None:
-                nextBooking = queryset.filter(id__gt=booking.id).order_by("id").first()
-                prevBooking = queryset.filter(id__lt=booking.id).order_by("-id").first()
-                nextBookingId = 0
-                prevBookingId = 0
-
-                if nextBooking is not None:
-                    nextBookingId = nextBooking.id
-                if prevBooking is not None:
-                    prevBookingId = prevBooking.id
-
-                return_data = []
-
-                if booking is not None:
-                    return_data = {
-                        "id": booking.id,
-                        "puCompany": booking.puCompany,
-                        "pu_Address_Street_1": booking.pu_Address_Street_1,
-                        "pu_Address_street_2": booking.pu_Address_street_2,
-                        "pu_Address_PostalCode": booking.pu_Address_PostalCode,
-                        "pu_Address_Suburb": booking.pu_Address_Suburb,
-                        "pu_Address_Country": booking.pu_Address_Country,
-                        "pu_Contact_F_L_Name": booking.pu_Contact_F_L_Name,
-                        "pu_Phone_Main": booking.pu_Phone_Main,
-                        "pu_Email": booking.pu_Email,
-                        "de_To_Address_Street_1": booking.de_To_Address_Street_1,
-                        "de_To_Address_Street_2": booking.de_To_Address_Street_2,
-                        "de_To_Address_PostalCode": booking.de_To_Address_PostalCode,
-                        "de_To_Address_Suburb": booking.de_To_Address_Suburb,
-                        "de_To_Address_Country": booking.de_To_Address_Country,
-                        "de_to_Contact_F_LName": booking.de_to_Contact_F_LName,
-                        "de_to_Phone_Main": booking.de_to_Phone_Main,
-                        "de_Email": booking.de_Email,
-                        "deToCompanyName": booking.deToCompanyName,
-                        "b_bookingID_Visual": booking.b_bookingID_Visual,
-                        "v_FPBookingNumber": booking.v_FPBookingNumber,
-                        "pk_booking_id": booking.pk_booking_id,
-                        "vx_freight_provider": booking.vx_freight_provider,
-                        "z_label_url": booking.z_label_url,
-                        "pu_Address_State": booking.pu_Address_State,
-                        "de_To_Address_State": booking.de_To_Address_State,
-                        "b_status": booking.b_status,
-                        "b_dateBookedDate": booking.b_dateBookedDate,
-                        "s_20_Actual_Pickup_TimeStamp": booking.s_20_Actual_Pickup_TimeStamp,
-                        "s_21_Actual_Delivery_TimeStamp": booking.s_21_Actual_Delivery_TimeStamp,
-                        "b_client_name": booking.b_client_name,
-                        "b_client_warehouse_code": booking.b_client_warehouse_code,
-                        "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
-                        "booking_Created_For": booking.booking_Created_For,
-                        "booking_Created_For_Email": booking.booking_Created_For_Email,
-                        "vx_fp_pu_eta_time": booking.vx_fp_pu_eta_time,
-                        "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
-                        "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
-                        "de_to_Pick_Up_Instructions_Contact": booking.de_to_Pick_Up_Instructions_Contact,
-                        "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
-                        "pu_pickup_instructions_address": booking.pu_pickup_instructions_address,
-                        "pu_PickUp_Instructions_Contact": booking.pu_PickUp_Instructions_Contact,
-                        "vx_serviceName": booking.vx_serviceName,
-                        "consignment_label_link": booking.consignment_label_link,
-                        "s_02_Booking_Cutoff_Time": booking.s_02_Booking_Cutoff_Time,
-                        "puPickUpAvailFrom_Date": booking.puPickUpAvailFrom_Date,
-                        "z_CreatedTimestamp": booking.z_CreatedTimestamp,
-                        "b_dateBookedDate": booking.b_dateBookedDate,
-                        "total_lines_qty_override": booking.total_lines_qty_override,
-                        "total_1_KG_weight_override": booking.total_1_KG_weight_override,
-                        "total_Cubic_Meter_override": booking.total_Cubic_Meter_override,
-                        "b_status_API": booking.b_status_API,
-                        "z_lock_status": booking.z_lock_status,
-                        "tally_delivered": booking.tally_delivered,
-                        "dme_status_history_notes": booking.dme_status_history_notes,
-                        "dme_status_detail": booking.dme_status_detail,
-                        "dme_status_action": booking.dme_status_action,
-                        "dme_status_linked_reference_from_fp": booking.dme_status_linked_reference_from_fp,
-                        "pu_PickUp_Avail_From_Date_DME": booking.pu_PickUp_Avail_From_Date_DME,
-                        "pu_PickUp_Avail_Time_Hours": booking.pu_PickUp_Avail_Time_Hours,
-                        "pu_PickUp_Avail_Time_Minutes": booking.pu_PickUp_Avail_Time_Minutes,
-                        "pu_PickUp_By_Date_DME": booking.pu_PickUp_By_Date_DME,
-                        "pu_PickUp_By_Time_Hours_DME": booking.pu_PickUp_By_Time_Hours_DME,
-                        "pu_PickUp_By_Time_Minutes_DME": booking.pu_PickUp_By_Time_Minutes_DME,
-                        "de_Deliver_From_Date": booking.de_Deliver_From_Date,
-                        "de_Deliver_From_Hours": booking.de_Deliver_From_Hours,
-                        "de_Deliver_From_Minutes": booking.de_Deliver_From_Minutes,
-                        "de_Deliver_By_Date": booking.de_Deliver_By_Date,
-                        "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
-                        "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
-                        "client_item_references": booking.get_client_item_references(),
-                        "v_service_Type_2": booking.v_service_Type_2,
-                        "fk_fp_pickup_id": booking.fk_fp_pickup_id,
-                        "v_vehicle_Type": booking.v_vehicle_Type,
-                        "inv_billing_status": booking.inv_billing_status,
-                        "inv_billing_status_note": booking.inv_billing_status_note,
-                    }
-                    return JsonResponse(
-                        {
-                            "booking": return_data,
-                            "nextid": nextBookingId,
-                            "previd": prevBookingId,
-                        }
-                    )
-            else:
-                return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-        except Bookings.DoesNotExist:
-            return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
     @action(detail=False, methods=["post"])
     def create_booking(self, request, format=None):
@@ -2620,7 +2507,7 @@ def handle_uploaded_file_attachments(request, f):
         bookingObject = Bookings.objects.get(id=bookingId)
         saveData = Dme_attachments(
             fk_id_dme_client=client,
-            fk_id_dme_booking=bookingObject,
+            fk_id_dme_booking=bookingObject.pk_booking_id,
             fileName=fileName,
             linkurl="22",
             upload_Date=now,
