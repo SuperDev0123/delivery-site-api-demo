@@ -1143,6 +1143,9 @@ class BookingViewSet(viewsets.ViewSet):
                             "booking": return_data,
                             "nextid": nextBookingId,
                             "previd": prevBookingId,
+                            "e_qty_total": e_qty_total,
+                            "cnt_comms": len(comms),
+                            "cnt_attachments": len(attachments),
                         }
                     )
             else:
@@ -1151,9 +1154,9 @@ class BookingViewSet(viewsets.ViewSet):
                         "booking": {},
                         "nextid": 0,
                         "previd": 0,
-                        "e_qty_total": e_qty_total,
-                        "cnt_comms": len(comms),
-                        "cnt_attachments": len(attachments),
+                        "e_qty_total": 0,
+                        "cnt_comms": 0,
+                        "cnt_attachments": 0,
                     }
                 )
         except Bookings.DoesNotExist:
