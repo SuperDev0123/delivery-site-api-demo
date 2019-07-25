@@ -37,8 +37,15 @@ from reportlab.platypus import (
 from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch, mm
-from reportlab.graphics.barcode import code39, code128, code93, createBarcodeDrawing, eanbc, qr, usps
-from reportlab.graphics.barcode import 
+from reportlab.graphics.barcode import (
+    code39,
+    code128,
+    code93,
+    createBarcodeDrawing,
+    eanbc,
+    qr,
+    usps,
+)
 from reportlab.graphics.shapes import Drawing
 from reportlab.pdfgen import canvas
 from reportlab.graphics import renderPDF
