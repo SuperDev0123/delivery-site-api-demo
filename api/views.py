@@ -344,6 +344,7 @@ class BookingsViewSet(viewsets.ViewSet):
         )
         download_option = self.request.query_params.get("downloadOption", None)
         client_pk = self.request.query_params.get("clientPK", None)
+        dme_status = self.request.query_params.get("dmeStatus", None)
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
 
         # if user_type == 'CLIENT':
@@ -438,17 +439,13 @@ class BookingsViewSet(viewsets.ViewSet):
                         z_CreatedTimestamp__range=(first_date, last_date)
                     )
                 else:
-                    if (
-                        client.company_name == "Seaway"
-                        or client.company_name == "Seaway-Hanalt"
-                        or client.company_name == "Tempo"
-                    ):
-                        queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
-                        )
-                    elif client.company_name == "BioPak":
+                    if client.company_name == "BioPak":
                         queryset = queryset.filter(
                             puPickUpAvailFrom_Date__range=(first_date, last_date)
+                        )
+                    else:
+                        queryset = queryset.filter(
+                            z_CreatedTimestamp__range=(first_date, last_date)
                         )
 
             # Warehouse filter
@@ -520,6 +517,8 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(b_status__icontains="Ready to booking")
         elif prefilter == 5:
             queryset = queryset.filter(b_status__icontains="Closed")
+        elif prefilter == 6:
+            queryset = queryset.filter(b_status=dme_status)
 
         # Sort
         if download_option != "check_pod":
@@ -745,17 +744,13 @@ class BookingsViewSet(viewsets.ViewSet):
                 z_CreatedTimestamp__range=(first_date, last_date)
             )
         else:
-            if (
-                client.company_name == "Seaway"
-                or client.company_name == "Seaway-Hanalt"
-                or client.company_name == "Tempo"
-            ):
-                queryset = queryset.filter(
-                    z_CreatedTimestamp__range=(first_date, last_date)
-                )
-            elif client.company_name == "BioPak":
+            if client.company_name == "BioPak":
                 queryset = queryset.filter(
                     puPickUpAvailFrom_Date__range=(first_date, last_date)
+                )
+            else:
+                queryset = queryset.filter(
+                    z_CreatedTimestamp__range=(first_date, last_date)
                 )
 
         # Freight Provider filter
@@ -962,6 +957,87 @@ class BookingsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return JsonResponse({"error": "Got error, please contact support center"})
+
+    @action(detail=False, methods=["get"])
+    def get_status_info(self, request, format=None):
+        user_id = int(self.request.user.id)
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is not None:
+            user_type = "DME"
+        else:
+            user_type = "CLIENT"
+            client_employee = (
+                Client_employees.objects.select_related()
+                .filter(fk_id_user=user_id)
+                .first()
+            )
+            client_employee_role = client_employee.get_role()
+            client = (
+                DME_clients.objects.select_related()
+                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                .first()
+            )
+
+        start_date = self.request.query_params.get("startDate", None)
+        end_date = self.request.query_params.get("endDate", None)
+        first_date = datetime.strptime(start_date, "%Y-%m-%d")
+        last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        client_pk = self.request.query_params.get("clientPK", None)
+
+        # DME & Client filter
+        if user_type == "DME":
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == "company":
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == "warehouse":
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(
+                    kf_client_id=client.dme_account_num,
+                    fk_client_warehouse_id=employee_warehouse_id,
+                )
+
+        # Client filter
+        if client_pk is not "0":
+            client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+
+        # Date filter
+        if user_type == "DME":
+            queryset = queryset.filter(
+                z_CreatedTimestamp__range=(first_date, last_date)
+            )
+        else:
+            if client.company_name == "BioPak":
+                queryset = queryset.filter(
+                    puPickUpAvailFrom_Date__range=(first_date, last_date)
+                )
+            else:
+                queryset = queryset.filter(
+                    z_CreatedTimestamp__range=(first_date, last_date)
+                )
+
+        # Get all statuses
+        dme_statuses = Utl_dme_status.objects.all().order_by("dme_delivery_status")
+
+        ret_data = []
+        for dme_status in dme_statuses:
+            ret_data.append(
+                {
+                    "dme_delivery_status": dme_status.dme_delivery_status,
+                    "dme_status_label": dme_status.dme_status_label
+                    if dme_status.dme_status_label is not None
+                    else dme_status.dme_delivery_status,
+                    "count": queryset.filter(
+                        b_status=dme_status.dme_delivery_status
+                    ).count(),
+                }
+            )
+
+        return JsonResponse({"results": ret_data})
 
 
 class BookingViewSet(viewsets.ViewSet):

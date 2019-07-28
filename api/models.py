@@ -2869,6 +2869,7 @@ class Utl_dme_status(models.Model):
     dev_notes = models.TextField(max_length=400, blank=True, null=True)
     sort_order = models.FloatField(verbose_name=_("sort order"), default=1)
     z_show_client_option = models.BooleanField(null=True, blank=True, default=False)
+    dme_status_label = models.CharField(max_length=128, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
