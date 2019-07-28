@@ -3046,7 +3046,7 @@ def getAttachmentsHistory(request):
                 {
                     "pk_id_attachment": resultObject.pk_id_attachment,
                     "fk_id_dme_client": resultObject.fk_id_dme_client.pk_id_dme_client,
-                    "fk_id_dme_booking": resultObject.fk_id_dme_booking.id,
+                    "fk_id_dme_booking": resultObject.fk_id_dme_booking,
                     "fileName": resultObject.fileName,
                     "linkurl": resultObject.linkurl,
                     "upload_Date": resultObject.upload_Date,
