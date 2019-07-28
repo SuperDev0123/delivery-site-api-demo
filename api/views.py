@@ -3032,13 +3032,13 @@ def generate_pdf(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def getAttachmentsHistory(request):
-    bookingId = request.GET.get("id")
+    fk_booking_id = request.GET.get("fk_booking_id")
     return_data = []
 
     try:
         resultObjects = []
         resultObjects = Dme_attachments.objects.select_related().filter(
-            fk_id_dme_booking=bookingId
+            fk_id_dme_booking=fk_booking_id
         )
         for resultObject in resultObjects:
             # print('@bookingID', resultObject.fk_id_dme_booking.id)
