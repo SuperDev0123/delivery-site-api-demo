@@ -2569,13 +2569,7 @@ def handle_uploaded_file_attachments(request, f):
         now = datetime.now()
         now1 = now.strftime("%Y%m%d_%H%M%S")
         name, extension = os.path.splitext(f.name)
-        fileName = (
-            "/var/www/html/dme_api/media/attachments/"
-            + name
-            + "_"
-            + str(now1)
-            + extension
-        )
+        fileName = "/opt/s3_private/attachments/" + name + "_" + str(now1) + extension
 
         with open(fileName, "wb+") as destination:
             for chunk in f.chunks():
