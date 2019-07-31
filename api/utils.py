@@ -4788,20 +4788,20 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 14, booking_line.e_pallet_type)
                     worksheet.write(row, col + 15, booking_line.e_item)
                     worksheet.write(row, col + 16, booking_line.e_qty)
-                    worksheet.write(row, col + 16, booking_line.client_item_reference)
-                    worksheet.write(row, col + 17, booking.b_bookingID_Visual)
+                    worksheet.write(row, col + 17, booking_line.client_item_reference)
+                    worksheet.write(row, col + 18, booking.b_bookingID_Visual)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
-                            row, col + 18, api_bcl.fp_event_date, date_format
+                            row, col + 19, api_bcl.fp_event_date, date_format
                         )
                         worksheet.write_datetime(
-                            row, col + 19, api_bcl.fp_event_time, time_format
+                            row, col + 20, api_bcl.fp_event_time, time_format
                         )
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                         worksheet.write_datetime(
-                            row, col + 20, booking.de_Deliver_By_Date, date_format
+                            row, col + 21, booking.de_Deliver_By_Date, date_format
                         )
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
@@ -4812,7 +4812,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                         worksheet.write(
                             row,
-                            col + 21,
+                            col + 22,
                             (
                                 booking.de_Deliver_By_Date
                                 + timedelta(days=int(delivery_kpi_days))
@@ -4821,9 +4821,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     else:
                         worksheet.write(row, col + 21, "")
 
-                    worksheet.write(row, col + 22, booking.b_status)
-                    worksheet.write(row, col + 23, booking.dme_status_detail)
-                    worksheet.write(row, col + 24, booking.dme_status_action)
+                    worksheet.write(row, col + 23, booking.b_status)
+                    worksheet.write(row, col + 24, booking.dme_status_detail)
+                    worksheet.write(row, col + 25, booking.dme_status_action)
 
                     if (
                         booking.z_pod_url is not None and len(booking.z_pod_url) > 0
@@ -4831,22 +4831,22 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         booking.z_pod_signed_url is not None
                         and len(booking.z_pod_signed_url) > 0
                     ):
-                        worksheet.write(row, col + 25, "Y")
+                        worksheet.write(row, col + 26, "Y")
                     else:
-                        worksheet.write(row, col + 25, "")
+                        worksheet.write(row, col + 26, "")
 
                     worksheet.write(
-                        row, col + 26, booking_line.e_qty_awaiting_inventory
+                        row, col + 27, booking_line.e_qty_awaiting_inventory
                     )
-                    worksheet.write(row, col + 27, booking_line.e_qty_collected)
-                    worksheet.write(row, col + 28, booking_line.e_qty_scanned_fp)
-                    worksheet.write(row, col + 29, booking_line.e_qty_scanned_depot)
-                    worksheet.write(row, col + 30, booking_line.e_qty_delivered)
-                    worksheet.write(row, col + 31, booking_line.e_qty_damaged)
-                    worksheet.write(row, col + 32, booking_line.e_qty_returned)
-                    worksheet.write(row, col + 33, booking_line.e_qty_shortages)
+                    worksheet.write(row, col + 28, booking_line.e_qty_collected)
+                    worksheet.write(row, col + 29, booking_line.e_qty_scanned_fp)
+                    worksheet.write(row, col + 30, booking_line.e_qty_scanned_depot)
+                    worksheet.write(row, col + 31, booking_line.e_qty_delivered)
+                    worksheet.write(row, col + 32, booking_line.e_qty_damaged)
+                    worksheet.write(row, col + 33, booking_line.e_qty_returned)
+                    worksheet.write(row, col + 34, booking_line.e_qty_shortages)
                     worksheet.write(
-                        row, col + 34, booking_line.e_qty_adjusted_delivered
+                        row, col + 35, booking_line.e_qty_adjusted_delivered
                     )
 
                     if booking_line.e_qty is not None:
