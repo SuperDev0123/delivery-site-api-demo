@@ -35,7 +35,7 @@ from .utils import (
     clearFileCheckHistory,
     getFileCheckHistory,
     save2Redis,
-    generate_csv,
+    _generate_csv,
     build_xml,
     build_pdf,
     build_xls_and_send,
@@ -2880,58 +2880,66 @@ def download_connote(request):
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def download_csv(request):
+def generate_csv(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
+    vx_freight_provider = body["vx_freight_provider"]
     file_paths = []
     label_names = []
 
     if len(booking_ids) == 0:
         return JsonResponse({"filename": "", "status": "No bookings to build CSV"})
 
-    csv_name = generate_csv(booking_ids)
+    csv_name = _generate_csv(booking_ids, vx_freight_provider)
 
-    for booking_id in booking_ids:
-        booking = Bookings.objects.get(id=booking_id)
+    if vx_freight_provider == "cope":
+        for booking_id in booking_ids:
+            booking = Bookings.objects.get(id=booking_id)
 
-        ############################################################################################
-        # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
-        ############################################################################################
-        booking.b_dateBookedDate = get_sydney_now_time()
-        booking.b_status = "Booked"
-        booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
-        booking.save()
+            ############################################################################################
+            # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
+            ############################################################################################
+            booking.b_dateBookedDate = get_sydney_now_time()
+            booking.b_status = "Booked"
+            booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
+            booking.save()
 
-        booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        )
-        index = 1
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+            index = 1
 
-        for booking_line in booking_lines:
-            for i in range(int(booking_line.e_qty)):
-                api_booking_confirmation_line = Api_booking_confirmation_lines(
-                    fk_booking_id=booking.pk_booking_id,
-                    fk_booking_line_id=booking_line.pk_lines_id,
-                    api_item_id=str("COPDME")
-                    + str(booking.b_bookingID_Visual)
-                    + make_3digit(index),
-                    service_provider=booking.vx_freight_provider,
-                    label_code=str("COPDME")
-                    + str(booking.b_bookingID_Visual)
-                    + make_3digit(index),
-                    client_item_reference=booking_line.client_item_reference,
-                )
-                api_booking_confirmation_line.save()
-                index = index + 1
+            for booking_line in booking_lines:
+                for i in range(int(booking_line.e_qty)):
+                    api_booking_confirmation_line = Api_booking_confirmation_lines(
+                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_line_id=booking_line.pk_lines_id,
+                        api_item_id=str("COPDME")
+                        + str(booking.b_bookingID_Visual)
+                        + make_3digit(index),
+                        service_provider=booking.vx_freight_provider,
+                        label_code=str("COPDME")
+                        + str(booking.b_bookingID_Visual)
+                        + make_3digit(index),
+                        client_item_reference=booking_line.client_item_reference,
+                    )
+                    api_booking_confirmation_line.save()
+                    index = index + 1
 
-    if settings.ENV == "local":
-        file_path = (
-            "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
-        )  # Local (Test Case)
-    else:
-        file_path = (
-            "/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name
-        )  # Dev & Prod
+        if settings.ENV == "local":
+            file_path = (
+                "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
+            )  # Local (Test Case)
+        else:
+            if vx_freight_provider == "cope":
+                file_path = (
+                    "/home/cope_au/dme_sftp/cope_au/pickup_ext/cope_au/" + csv_name
+                )  # Dev & Prod
+            elif vx_freight_provider == "dhl":
+                file_path = (
+                    "/home/cope_au/dme_sftp/cope_au/pickup_ext/dhl_au/" + csv_name
+                )  # Dev & Prod
+
     return JsonResponse({"filename": csv_name, "status": "Created CSV"})
     if os.path.exists(file_path):
         return JsonResponse({"filename": csv_name, "status": "Created CSV"})

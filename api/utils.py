@@ -247,329 +247,485 @@ def wrap_in_quote(string):
     return '"' + str(string) + '"'
 
 
-def csv_write(fileHandler, bookings, mysqlcon):
-    # Write Header
-    fileHandler.write(
-        "userId,connoteNo,connoteDate,customer,senderName,senderAddress1,senderAddress2,senderSuburb,senderPostcode,senderState,\
-    senderContact,senderPhone,pickupDate,pickupTime,receiverName,receiverAddress1,receiverAddress2,receiverSuburb,receiverPostcode,receiverState, \
-    receiverContact,receiverPhone,deliveryDate,deliveryTime,totalQuantity,totalPallets,totalWeight,totalVolume,senderReference,description, \
-    specialInstructions,notes,jobType,serviceType,priorityType,vehicleType,itemCode,scanCode,freightCode,itemReference, \
-    description,quantity,pallets,labels,totalWeight,totalVolume,length,width,height,weight, \
-    docAmount,senderCode,receiverCode,warehouseOrderType,freightline_serialNumber,freightline_wbDocket,senderAddress3,receiverAddress3, senderEmail,receiverEmail, \
-    noConnote"
-    )
+def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
+    if vx_freight_provider == "cope":
+        # Write Header
+        fileHandler.write(
+            "userId,connoteNo,connoteDate,customer,senderName,senderAddress1,senderAddress2,senderSuburb,senderPostcode,senderState,\
+        senderContact,senderPhone,pickupDate,pickupTime,receiverName,receiverAddress1,receiverAddress2,receiverSuburb,receiverPostcode,receiverState, \
+        receiverContact,receiverPhone,deliveryDate,deliveryTime,totalQuantity,totalPallets,totalWeight,totalVolume,senderReference,description, \
+        specialInstructions,notes,jobType,serviceType,priorityType,vehicleType,itemCode,scanCode,freightCode,itemReference, \
+        description,quantity,pallets,labels,totalWeight,totalVolume,length,width,height,weight, \
+        docAmount,senderCode,receiverCode,warehouseOrderType,freightline_serialNumber,freightline_wbDocket,senderAddress3,receiverAddress3, senderEmail,receiverEmail, \
+        noConnote"
+        )
 
-    # Write Each Line
-    comma = ","
-    newLine = "\n"
-    if len(bookings) > 0:
-        for booking in bookings:
-            booking_lines = get_available_booking_lines(mysqlcon, booking)
-            eachLineText = "DVM0001"
+        # Write Each Line
+        comma = ","
+        newLine = "\n"
+        if len(bookings) > 0:
+            for booking in bookings:
+                booking_lines = get_available_booking_lines(mysqlcon, booking)
+                eachLineText = "DVM0001"
 
-            if booking["b_bookingID_Visual"] is None:
-                h0 = ""
-            else:
-                h0 = wrap_in_quote("DME" + str(booking.get("b_bookingID_Visual")))
+                if booking["b_bookingID_Visual"] is None:
+                    h0 = ""
+                else:
+                    h0 = wrap_in_quote("DME" + str(booking.get("b_bookingID_Visual")))
 
-            if booking["puPickUpAvailFrom_Date"] is None:
-                h1 = ""
-            else:
-                h1 = wrap_in_quote(str(booking.get("puPickUpAvailFrom_Date")))
+                if booking["puPickUpAvailFrom_Date"] is None:
+                    h1 = ""
+                else:
+                    h1 = wrap_in_quote(str(booking.get("puPickUpAvailFrom_Date")))
 
-            h2 = "009790"
+                h2 = "009790"
 
-            if booking["puCompany"] is None:
-                h00 = ""
-            else:
-                h00 = wrap_in_quote(booking.get("puCompany"))
+                if booking["puCompany"] is None:
+                    h00 = ""
+                else:
+                    h00 = wrap_in_quote(booking.get("puCompany"))
 
-            if booking["pu_Address_Street_1"] is None:
-                h01 = ""
-            else:
-                h01 = wrap_in_quote(booking.get("pu_Address_Street_1"))
+                if booking["pu_Address_Street_1"] is None:
+                    h01 = ""
+                else:
+                    h01 = wrap_in_quote(booking.get("pu_Address_Street_1"))
 
-            if booking["pu_Address_street_2"] is None:
-                h02 = ""
-            else:
-                h02 = wrap_in_quote(booking.get("pu_Address_street_2"))
+                if booking["pu_Address_street_2"] is None:
+                    h02 = ""
+                else:
+                    h02 = wrap_in_quote(booking.get("pu_Address_street_2"))
 
-            if booking["pu_Address_Suburb"] is None:
-                h03 = ""
-            else:
-                h03 = wrap_in_quote(booking.get("pu_Address_Suburb"))
+                if booking["pu_Address_Suburb"] is None:
+                    h03 = ""
+                else:
+                    h03 = wrap_in_quote(booking.get("pu_Address_Suburb"))
 
-            if booking["pu_Address_PostalCode"] is None:
-                h04 = ""
-            else:
-                h04 = wrap_in_quote(booking.get("pu_Address_PostalCode"))
+                if booking["pu_Address_PostalCode"] is None:
+                    h04 = ""
+                else:
+                    h04 = wrap_in_quote(booking.get("pu_Address_PostalCode"))
 
-            if booking["pu_Address_State"] is None:
-                h05 = ""
-            else:
-                h05 = wrap_in_quote(booking.get("pu_Address_State"))
+                if booking["pu_Address_State"] is None:
+                    h05 = ""
+                else:
+                    h05 = wrap_in_quote(booking.get("pu_Address_State"))
 
-            if booking["pu_Contact_F_L_Name"] is None:
-                h06 = ""
-            else:
-                h06 = wrap_in_quote(booking.get("pu_Contact_F_L_Name"))
+                if booking["pu_Contact_F_L_Name"] is None:
+                    h06 = ""
+                else:
+                    h06 = wrap_in_quote(booking.get("pu_Contact_F_L_Name"))
 
-            if booking["pu_Phone_Main"] is None:
-                h07 = ""
-            else:
-                h07 = str(booking.get("pu_Phone_Main"))
+                if booking["pu_Phone_Main"] is None:
+                    h07 = ""
+                else:
+                    h07 = str(booking.get("pu_Phone_Main"))
 
-            if booking["pu_PickUp_Avail_From_Date_DME"] is None:
-                h08 = ""
-            else:
-                h08 = wrap_in_quote(booking.get("pu_PickUp_Avail_From_Date_DME"))
+                if booking["pu_PickUp_Avail_From_Date_DME"] is None:
+                    h08 = ""
+                else:
+                    h08 = wrap_in_quote(booking.get("pu_PickUp_Avail_From_Date_DME"))
 
-            if booking["pu_PickUp_Avail_Time_Hours_DME"] is None:
-                h09 = ""
-            else:
-                h09 = str(booking.get("pu_PickUp_Avail_Time_Hours_DME"))
+                if booking["pu_PickUp_Avail_Time_Hours_DME"] is None:
+                    h09 = ""
+                else:
+                    h09 = str(booking.get("pu_PickUp_Avail_Time_Hours_DME"))
 
-            if booking["deToCompanyName"] is None:
-                h10 = ""
-            else:
-                h10 = wrap_in_quote(booking.get("deToCompanyName"))
+                if booking["deToCompanyName"] is None:
+                    h10 = ""
+                else:
+                    h10 = wrap_in_quote(booking.get("deToCompanyName"))
 
-            if booking["de_To_Address_Street_1"] is None:
-                h11 = ""
-            else:
-                h11 = wrap_in_quote(booking.get("de_To_Address_Street_1"))
+                if booking["de_To_Address_Street_1"] is None:
+                    h11 = ""
+                else:
+                    h11 = wrap_in_quote(booking.get("de_To_Address_Street_1"))
 
-            if booking["de_To_Address_Street_2"] is None:
-                h12 = ""
-            else:
-                h12 = wrap_in_quote(booking.get("de_To_Address_Street_2"))
+                if booking["de_To_Address_Street_2"] is None:
+                    h12 = ""
+                else:
+                    h12 = wrap_in_quote(booking.get("de_To_Address_Street_2"))
 
-            if booking["de_To_Address_Suburb"] is None:
-                h13 = ""
-            else:
-                h13 = wrap_in_quote(booking.get("de_To_Address_Suburb"))
+                if booking["de_To_Address_Suburb"] is None:
+                    h13 = ""
+                else:
+                    h13 = wrap_in_quote(booking.get("de_To_Address_Suburb"))
 
-            if booking["de_To_Address_PostalCode"] is None:
-                h14 = ""
-            else:
-                h14 = wrap_in_quote(booking.get("de_To_Address_PostalCode"))
+                if booking["de_To_Address_PostalCode"] is None:
+                    h14 = ""
+                else:
+                    h14 = wrap_in_quote(booking.get("de_To_Address_PostalCode"))
 
-            if booking["de_To_Address_State"] is None:
-                h15 = ""
-            else:
-                h15 = wrap_in_quote(booking.get("de_To_Address_State"))
+                if booking["de_To_Address_State"] is None:
+                    h15 = ""
+                else:
+                    h15 = wrap_in_quote(booking.get("de_To_Address_State"))
 
-            if booking["de_to_Contact_F_LName"] is None:
-                h16 = ""
-            else:
-                h16 = wrap_in_quote(booking.get("de_to_Contact_F_LName"))
+                if booking["de_to_Contact_F_LName"] is None:
+                    h16 = ""
+                else:
+                    h16 = wrap_in_quote(booking.get("de_to_Contact_F_LName"))
 
-            if booking["de_to_Phone_Main"] is None:
-                h17 = ""
-            else:
-                h17 = str(booking.get("de_to_Phone_Main"))
+                if booking["de_to_Phone_Main"] is None:
+                    h17 = ""
+                else:
+                    h17 = str(booking.get("de_to_Phone_Main"))
 
-            if booking["de_Deliver_From_Date"] is None:
-                h18 = ""
-            else:
-                h18 = wrap_in_quote(booking.get("de_Deliver_From_Date"))
+                if booking["de_Deliver_From_Date"] is None:
+                    h18 = ""
+                else:
+                    h18 = wrap_in_quote(booking.get("de_Deliver_From_Date"))
 
-            if booking["de_Deliver_From_Hours"] is None:
-                h19 = ""
-            else:
-                h19 = str(booking.get("de_Deliver_From_Hours"))
+                if booking["de_Deliver_From_Hours"] is None:
+                    h19 = ""
+                else:
+                    h19 = str(booking.get("de_Deliver_From_Hours"))
 
-            h20 = ""
-            h21 = ""
-            h22 = ""
-            h23 = ""
+                h20 = ""
+                h21 = ""
+                h22 = ""
+                h23 = ""
 
-            if booking["b_client_sales_inv_num"] is None:
-                h24 = ""
-            else:
-                h24 = wrap_in_quote(booking.get("b_client_sales_inv_num"))
+                if booking["b_client_sales_inv_num"] is None:
+                    h24 = ""
+                else:
+                    h24 = wrap_in_quote(booking.get("b_client_sales_inv_num"))
 
-            if booking["b_client_order_num"] is None:
-                h25 = ""
-            else:
-                h25 = wrap_in_quote(booking.get("b_client_order_num"))
+                if booking["b_client_order_num"] is None:
+                    h25 = ""
+                else:
+                    h25 = wrap_in_quote(booking.get("b_client_order_num"))
 
-            if booking["de_to_PickUp_Instructions_Address"] is None:
-                h26 = ""
-            else:
-                h26 = wrap_in_quote(booking.get("de_to_PickUp_Instructions_Address"))
+                if booking["de_to_PickUp_Instructions_Address"] is None:
+                    h26 = ""
+                else:
+                    h26 = wrap_in_quote(
+                        booking.get("de_to_PickUp_Instructions_Address")
+                    )
 
-            h27 = ""
+                h27 = ""
 
-            if booking["vx_serviceName"] is None:
-                h28 = ""
-            else:
-                h28 = wrap_in_quote(booking.get("vx_serviceName"))
+                if booking["vx_serviceName"] is None:
+                    h28 = ""
+                else:
+                    h28 = wrap_in_quote(booking.get("vx_serviceName"))
 
-            if booking["v_service_Type"] is None:
-                h29 = ""
-            else:
-                h29 = wrap_in_quote(booking.get("v_service_Type"))
+                if booking["v_service_Type"] is None:
+                    h29 = ""
+                else:
+                    h29 = wrap_in_quote(booking.get("v_service_Type"))
 
-            h50 = h25
-            h51 = ""
+                h50 = h25
+                h51 = ""
 
-            if booking["pu_pickup_instructions_address"] is None:
-                h52 = ""
-            else:
-                h52 = wrap_in_quote(booking.get("pu_pickup_instructions_address"))
+                if booking["pu_pickup_instructions_address"] is None:
+                    h52 = ""
+                else:
+                    h52 = wrap_in_quote(booking.get("pu_pickup_instructions_address"))
 
-            h53 = ""
+                h53 = ""
 
-            if booking["pu_Email"] is None:
-                h54 = ""
-            else:
-                h54 = wrap_in_quote(booking.get("pu_Email"))
-            if booking["de_Email"] is None:
-                h55 = ""
-            else:
-                h55 = wrap_in_quote(booking.get("de_Email"))
+                if booking["pu_Email"] is None:
+                    h54 = ""
+                else:
+                    h54 = wrap_in_quote(booking.get("pu_Email"))
+                if booking["de_Email"] is None:
+                    h55 = ""
+                else:
+                    h55 = wrap_in_quote(booking.get("de_Email"))
 
-            h56 = "N"
+                h56 = "N"
 
-            h30 = ""
-            h31 = ""
-            if len(booking_lines) > 0:
-                for booking_line in booking_lines:
-                    if booking["b_clientReference_RA_Numbers"] is None:
-                        h32 = ""
-                    else:
-                        h32 = str(booking.get("b_clientReference_RA_Numbers"))
+                h30 = ""
+                h31 = ""
+                if len(booking_lines) > 0:
+                    for booking_line in booking_lines:
+                        if booking["b_clientReference_RA_Numbers"] is None:
+                            h32 = ""
+                        else:
+                            h32 = str(booking.get("b_clientReference_RA_Numbers"))
 
+                        h33 = ""
+                        if booking_line["e_type_of_packaging"] is None:
+                            h34 = ""
+                        else:
+                            h34 = wrap_in_quote(booking_line.get("e_type_of_packaging"))
+                        if booking_line["client_item_reference"] is None:
+                            h35 = ""
+                        else:
+                            h35 = wrap_in_quote(
+                                booking_line.get("client_item_reference")
+                            )
+                        if booking_line["e_item"] is None:
+                            h36 = ""
+                        else:
+                            h36 = wrap_in_quote(booking_line.get("e_item"))
+                        if booking_line["e_qty"] is None:
+                            h37 = ""
+                        else:
+                            h37 = str(booking_line.get("e_qty"))
+
+                        h38 = ""
+
+                        if booking_line["e_qty"] is None:
+                            h39 = ""
+                        else:
+                            h39 = str(booking_line.get("e_qty"))
+
+                        # Calc totalWeight
+                        h40 = "0"
+                        if (
+                            booking_line["e_weightUOM"] is not None
+                            and booking_line["e_weightPerEach"] is not None
+                            and booking_line["e_qty"] is not None
+                        ):
+                            if (
+                                booking_line["e_weightUOM"].upper() == "GRAM"
+                                or booking_line["e_weightUOM"].upper() == "GRAMS"
+                            ):
+                                h40 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                    / 1000
+                                )
+                            elif (
+                                booking_line["e_weightUOM"].upper() == "KILOGRAM"
+                                or booking_line["e_weightUOM"].upper() == "KG"
+                                or booking_line["e_weightUOM"].upper() == "KGS"
+                                or booking_line["e_weightUOM"].upper() == "KILOGRAMS"
+                            ):
+                                h40 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                )
+                            elif (
+                                booking_line["e_weightUOM"].upper() == "TON"
+                                or booking_line["e_weightUOM"].upper() == "TONS"
+                            ):
+                                h40 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                    * 1000
+                                )
+                            else:
+                                h40 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                )
+
+                        # Calc totalVolume
+                        h41 = "0"
+                        if (
+                            booking_line["e_dimUOM"] is not None
+                            and booking_line["e_dimLength"] is not None
+                            and booking_line["e_dimWidth"] is not None
+                            and booking_line["e_dimHeight"] is not None
+                            and booking_line["e_qty"] is not None
+                        ):
+                            if (
+                                booking_line["e_dimUOM"].upper() == "CM"
+                                or booking_line["e_dimUOM"].upper() == "CENTIMETER"
+                            ):
+                                h41 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_dimLength"]
+                                    * booking_line["e_dimWidth"]
+                                    * booking_line["e_dimHeight"]
+                                    / 1000000
+                                )
+                            elif (
+                                booking_line["e_dimUOM"].upper() == "METER"
+                                or booking_line["e_dimUOM"].upper() == "M"
+                            ):
+                                h41 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_dimLength"]
+                                    * booking_line["e_dimWidth"]
+                                    * booking_line["e_dimHeight"]
+                                )
+                            elif (
+                                booking_line["e_dimUOM"].upper() == "MILIMETER"
+                                or booking_line["e_dimUOM"].upper() == "MM"
+                            ):
+                                h41 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_dimLength"]
+                                    * booking_line["e_dimWidth"]
+                                    * booking_line["e_dimHeight"]
+                                    / 1000000000
+                                )
+                            else:
+                                h41 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_dimLength"]
+                                    * booking_line["e_dimWidth"]
+                                    * booking_line["e_dimHeight"]
+                                )
+
+                        if booking_line["e_dimLength"] is None:
+                            h42 = ""
+                        else:
+                            h42 = str(booking_line.get("e_dimLength"))
+                        if booking_line["e_dimWidth"] is None:
+                            h43 = ""
+                        else:
+                            h43 = str(booking_line.get("e_dimWidth"))
+                        if booking_line["e_dimHeight"] is None:
+                            h44 = ""
+                        else:
+                            h44 = str(booking_line.get("e_dimHeight"))
+                        if booking_line["e_weightPerEach"] is None:
+                            h45 = ""
+                        else:
+                            h45 = str(booking_line.get("e_weightPerEach"))
+                        h46 = ""
+                        h47 = ""
+                        h48 = ""
+                        h49 = ""
+
+                        eachLineText += comma + h0 + comma + h1 + comma + h2
+                        eachLineText += (
+                            comma
+                            + h00
+                            + comma
+                            + h01
+                            + comma
+                            + h02
+                            + comma
+                            + h03
+                            + comma
+                            + h04
+                            + comma
+                            + h05
+                            + comma
+                            + h06
+                            + comma
+                            + h07
+                            + comma
+                            + h08
+                            + comma
+                            + h09
+                        )
+                        eachLineText += (
+                            comma
+                            + h10
+                            + comma
+                            + h11
+                            + comma
+                            + h12
+                            + comma
+                            + h13
+                            + comma
+                            + h14
+                            + comma
+                            + h15
+                            + comma
+                            + h16
+                            + comma
+                            + h17
+                            + comma
+                            + h18
+                            + comma
+                            + h19
+                        )
+                        eachLineText += (
+                            comma
+                            + h20
+                            + comma
+                            + h21
+                            + comma
+                            + h22
+                            + comma
+                            + h23
+                            + comma
+                            + h24
+                            + comma
+                            + h25
+                            + comma
+                            + h26
+                            + comma
+                            + h27
+                            + comma
+                            + h28
+                            + comma
+                            + h29
+                        )
+                        eachLineText += (
+                            comma
+                            + h30
+                            + comma
+                            + h31
+                            + comma
+                            + h32
+                            + comma
+                            + h33
+                            + comma
+                            + h34
+                            + comma
+                            + h35
+                            + comma
+                            + h36
+                            + comma
+                            + h37
+                            + comma
+                            + h38
+                            + comma
+                            + h39
+                        )
+                        eachLineText += (
+                            comma
+                            + h40
+                            + comma
+                            + h41
+                            + comma
+                            + h42
+                            + comma
+                            + h43
+                            + comma
+                            + h44
+                            + comma
+                            + h45
+                            + comma
+                            + h46
+                            + comma
+                            + h47
+                            + comma
+                            + h48
+                            + comma
+                            + h49
+                        )
+                        eachLineText += (
+                            comma
+                            + h50
+                            + comma
+                            + h51
+                            + comma
+                            + h52
+                            + comma
+                            + h53
+                            + comma
+                            + h54
+                            + comma
+                            + h55
+                            + comma
+                            + h56
+                        )
+                        fileHandler.write(newLine + eachLineText)
+                        eachLineText = "DVM0001"
+                else:
+                    h32 = ""
                     h33 = ""
-                    if booking_line["e_type_of_packaging"] is None:
-                        h34 = ""
-                    else:
-                        h34 = wrap_in_quote(booking_line.get("e_type_of_packaging"))
-                    if booking_line["client_item_reference"] is None:
-                        h35 = ""
-                    else:
-                        h35 = wrap_in_quote(booking_line.get("client_item_reference"))
-                    if booking_line["e_item"] is None:
-                        h36 = ""
-                    else:
-                        h36 = wrap_in_quote(booking_line.get("e_item"))
-                    if booking_line["e_qty"] is None:
-                        h37 = ""
-                    else:
-                        h37 = str(booking_line.get("e_qty"))
-
+                    h34 = ""
+                    h35 = ""
+                    h36 = ""
+                    h37 = ""
                     h38 = ""
-
-                    if booking_line["e_qty"] is None:
-                        h39 = ""
-                    else:
-                        h39 = str(booking_line.get("e_qty"))
-
-                    # Calc totalWeight
-                    h40 = "0"
-                    if (
-                        booking_line["e_weightUOM"] is not None
-                        and booking_line["e_weightPerEach"] is not None
-                        and booking_line["e_qty"] is not None
-                    ):
-                        if (
-                            booking_line["e_weightUOM"].upper() == "GRAM"
-                            or booking_line["e_weightUOM"].upper() == "GRAMS"
-                        ):
-                            h40 = str(
-                                booking_line["e_qty"]
-                                * booking_line["e_weightPerEach"]
-                                / 1000
-                            )
-                        elif (
-                            booking_line["e_weightUOM"].upper() == "KILOGRAM"
-                            or booking_line["e_weightUOM"].upper() == "KG"
-                            or booking_line["e_weightUOM"].upper() == "KGS"
-                            or booking_line["e_weightUOM"].upper() == "KILOGRAMS"
-                        ):
-                            h40 = str(
-                                booking_line["e_qty"] * booking_line["e_weightPerEach"]
-                            )
-                        elif (
-                            booking_line["e_weightUOM"].upper() == "TON"
-                            or booking_line["e_weightUOM"].upper() == "TONS"
-                        ):
-                            h40 = str(
-                                booking_line["e_qty"]
-                                * booking_line["e_weightPerEach"]
-                                * 1000
-                            )
-                        else:
-                            h40 = str(
-                                booking_line["e_qty"] * booking_line["e_weightPerEach"]
-                            )
-
-                    # Calc totalVolume
-                    h41 = "0"
-                    if (
-                        booking_line["e_dimUOM"] is not None
-                        and booking_line["e_dimLength"] is not None
-                        and booking_line["e_dimWidth"] is not None
-                        and booking_line["e_dimHeight"] is not None
-                        and booking_line["e_qty"] is not None
-                    ):
-                        if (
-                            booking_line["e_dimUOM"].upper() == "CM"
-                            or booking_line["e_dimUOM"].upper() == "CENTIMETER"
-                        ):
-                            h41 = str(
-                                booking_line["e_qty"]
-                                * booking_line["e_dimLength"]
-                                * booking_line["e_dimWidth"]
-                                * booking_line["e_dimHeight"]
-                                / 1000000
-                            )
-                        elif (
-                            booking_line["e_dimUOM"].upper() == "METER"
-                            or booking_line["e_dimUOM"].upper() == "M"
-                        ):
-                            h41 = str(
-                                booking_line["e_qty"]
-                                * booking_line["e_dimLength"]
-                                * booking_line["e_dimWidth"]
-                                * booking_line["e_dimHeight"]
-                            )
-                        elif (
-                            booking_line["e_dimUOM"].upper() == "MILIMETER"
-                            or booking_line["e_dimUOM"].upper() == "MM"
-                        ):
-                            h41 = str(
-                                booking_line["e_qty"]
-                                * booking_line["e_dimLength"]
-                                * booking_line["e_dimWidth"]
-                                * booking_line["e_dimHeight"]
-                                / 1000000000
-                            )
-                        else:
-                            h41 = str(
-                                booking_line["e_qty"]
-                                * booking_line["e_dimLength"]
-                                * booking_line["e_dimWidth"]
-                                * booking_line["e_dimHeight"]
-                            )
-
-                    if booking_line["e_dimLength"] is None:
-                        h42 = ""
-                    else:
-                        h42 = str(booking_line.get("e_dimLength"))
-                    if booking_line["e_dimWidth"] is None:
-                        h43 = ""
-                    else:
-                        h43 = str(booking_line.get("e_dimWidth"))
-                    if booking_line["e_dimHeight"] is None:
-                        h44 = ""
-                    else:
-                        h44 = str(booking_line.get("e_dimHeight"))
-                    if booking_line["e_weightPerEach"] is None:
-                        h45 = ""
-                    else:
-                        h45 = str(booking_line.get("e_weightPerEach"))
+                    h39 = ""
+                    h40 = ""
+                    h41 = ""
+                    h42 = ""
+                    h43 = ""
+                    h44 = ""
+                    h45 = ""
                     h46 = ""
                     h47 = ""
                     h48 = ""
@@ -704,158 +860,238 @@ def csv_write(fileHandler, bookings, mysqlcon):
                     )
                     fileHandler.write(newLine + eachLineText)
                     eachLineText = "DVM0001"
-            else:
-                h32 = ""
-                h33 = ""
-                h34 = ""
-                h35 = ""
-                h36 = ""
-                h37 = ""
-                h38 = ""
-                h39 = ""
-                h40 = ""
-                h41 = ""
-                h42 = ""
-                h43 = ""
-                h44 = ""
-                h45 = ""
-                h46 = ""
-                h47 = ""
-                h48 = ""
-                h49 = ""
+    elif vx_freight_provider == "dhl":
+        # Write Header
+        fileHandler.write(
+            "unique_identifier, ref1, ref2, receiver_name, receiver_address1, \
+            receiver_address2, receiver_address3, receiver_address4, receiver_locality, receiver_state, \
+            receiver_postcode, weight, length, width, height, \
+            receiver_contact, receiver_phone_no, receiver_email, pack_unit_code, pack_unit_description, \
+            items, special_instructions, consignment_prefix, consignment_number, transporter_code \
+            service_code, sender_code, sender_warehouse_code, freight_payer, freight_label_number, \
+            barcode"
+        )
 
-                eachLineText += comma + h0 + comma + h1 + comma + h2
-                eachLineText += (
-                    comma
-                    + h00
-                    + comma
-                    + h01
-                    + comma
-                    + h02
-                    + comma
-                    + h03
-                    + comma
-                    + h04
-                    + comma
-                    + h05
-                    + comma
-                    + h06
-                    + comma
-                    + h07
-                    + comma
-                    + h08
-                    + comma
-                    + h09
-                )
-                eachLineText += (
-                    comma
-                    + h10
-                    + comma
-                    + h11
-                    + comma
-                    + h12
-                    + comma
-                    + h13
-                    + comma
-                    + h14
-                    + comma
-                    + h15
-                    + comma
-                    + h16
-                    + comma
-                    + h17
-                    + comma
-                    + h18
-                    + comma
-                    + h19
-                )
-                eachLineText += (
-                    comma
-                    + h20
-                    + comma
-                    + h21
-                    + comma
-                    + h22
-                    + comma
-                    + h23
-                    + comma
-                    + h24
-                    + comma
-                    + h25
-                    + comma
-                    + h26
-                    + comma
-                    + h27
-                    + comma
-                    + h28
-                    + comma
-                    + h29
-                )
-                eachLineText += (
-                    comma
-                    + h30
-                    + comma
-                    + h31
-                    + comma
-                    + h32
-                    + comma
-                    + h33
-                    + comma
-                    + h34
-                    + comma
-                    + h35
-                    + comma
-                    + h36
-                    + comma
-                    + h37
-                    + comma
-                    + h38
-                    + comma
-                    + h39
-                )
-                eachLineText += (
-                    comma
-                    + h40
-                    + comma
-                    + h41
-                    + comma
-                    + h42
-                    + comma
-                    + h43
-                    + comma
-                    + h44
-                    + comma
-                    + h45
-                    + comma
-                    + h46
-                    + comma
-                    + h47
-                    + comma
-                    + h48
-                    + comma
-                    + h49
-                )
-                eachLineText += (
-                    comma
-                    + h50
-                    + comma
-                    + h51
-                    + comma
-                    + h52
-                    + comma
-                    + h53
-                    + comma
-                    + h54
-                    + comma
-                    + h55
-                    + comma
-                    + h56
-                )
-                fileHandler.write(newLine + eachLineText)
-                eachLineText = "DVM0001"
+        # Write Each Line
+        comma = ","
+        newLine = "\n"
+        if len(bookings) > 0:
+            for booking in bookings:
+                booking_lines = get_available_booking_lines(mysqlcon, booking)
+
+                if booking["b_client_order_num"] is None:
+                    h00 = ""
+                else:
+                    h00 = wrap_in_quote(str(booking.get("b_client_order_num")))
+
+                if booking["b_clientReference_RA_Numbers"] is None:
+                    h01 = ""
+                else:
+                    h01 = wrap_in_quote(
+                        str(booking.get("b_clientReference_RA_Numbers"))
+                    )
+
+                h02 = "ref2"
+
+                if booking["deToCompanyName"] is None:
+                    h03 = ""
+                else:
+                    h03 = wrap_in_quote(booking.get("deToCompanyName"))
+
+                if booking["de_To_Address_Street_1"] is None:
+                    h04 = ""
+                else:
+                    h04 = wrap_in_quote(booking.get("de_To_Address_Street_1"))
+
+                if booking["de_To_Address_Street_2"] is None:
+                    h05 = ""
+                else:
+                    h05 = wrap_in_quote(booking.get("de_To_Address_Street_2"))
+
+                h06 = ""
+                h07 = ""
+
+                if booking["de_To_Address_Suburb"] is None:
+                    h08 = ""
+                else:
+                    h08 = wrap_in_quote(booking.get("de_To_Address_Suburb"))
+
+                if booking["de_To_Address_State"] is None:
+                    h09 = ""
+                else:
+                    h09 = wrap_in_quote(booking.get("de_To_Address_State"))
+
+                if booking["de_To_Address_PostalCode"] is None:
+                    h10 = ""
+                else:
+                    h10 = wrap_in_quote(booking.get("de_To_Address_PostalCode"))
+
+                h15 = "receiver_contact"
+
+                if booking["de_to_Phone_Main"] is None:
+                    h16 = ""
+                else:
+                    h16 = wrap_in_quote(booking.get("de_to_Phone_Main"))
+
+                if booking["de_Email"] is None:
+                    h16 = ""
+                else:
+                    h16 = wrap_in_quote(booking.get("de_Email"))
+
+                if booking["de_to_PickUp_Instructions_Address"] is None:
+                    h21 = ""
+                else:
+                    h21 = wrap_in_quote(
+                        booking.get("de_to_PickUp_Instructions_Address")
+                    )
+
+                h22 = "consignment_prefix"
+
+                if booking["v_FPBookingNumber"] is None:
+                    h23 = ""
+                else:
+                    h23 = wrap_in_quote(booking.get("v_FPBookingNumber"))
+
+                h24 = "transporter_code"
+                h25 = "service_code"
+                h26 = "DELIVERS"
+                h27 = "sender_warehouse_code"
+
+                if booking["puCompany"] is None or booking["deToCompanyName"] is None:
+                    h28 = ""
+                else:
+                    h28 = wrap_in_quote(
+                        booking.get("puCompany") + "/" + booking.get("deToCompanyName")
+                    )
+
+                h29 = "freight_label_number"
+                h30 = "barcode"
+
+                if len(booking_lines) > 0:
+                    for booking_line in booking_lines:
+                        eachLineText = ""
+                        h11 = ""
+                        if (
+                            booking_line["e_weightUOM"] is not None
+                            and booking_line["e_weightPerEach"] is not None
+                        ):
+                            if (
+                                booking_line["e_weightUOM"].upper() == "GRAM"
+                                or booking_line["e_weightUOM"].upper() == "GRAMS"
+                            ):
+                                h11 = (
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                    / 1000
+                                )
+                            elif (
+                                booking_line["e_weightUOM"].upper() == "TON"
+                                or booking_line["e_weightUOM"].upper() == "TONS"
+                            ):
+                                h11 = (
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                    * 1000
+                                )
+
+                        if booking_line["e_dimLength"] is None:
+                            h12 = ""
+                        else:
+                            h12 = booking_line.get("e_dimLength")
+
+                        if booking_line["e_dimWidth"] is None:
+                            h13 = ""
+                        else:
+                            h13 = booking_line.get("e_dimWidth")
+
+                        if booking_line["e_dimHeight"] is None:
+                            h14 = ""
+                        else:
+                            h14 = booking_line.get("e_dimHeight")
+
+                        if booking_line["e_pallet_type"] is None:
+                            h18 = ""
+                        else:
+                            h18 = wrap_in_quote(booking_line.get("e_pallet_type"))
+
+                        h19 = "pack_unit_description"
+
+                        if booking_line["e_qty"] is None:
+                            h20 = ""
+                        else:
+                            h20 = booking_line.get("e_qty")
+
+                        eachLineText += (
+                            h00
+                            + comma
+                            + h01
+                            + comma
+                            + h02
+                            + comma
+                            + h03
+                            + comma
+                            + h04
+                            + comma
+                            + h05
+                            + comma
+                            + h06
+                            + comma
+                            + h07
+                            + comma
+                            + h08
+                            + comma
+                            + h09
+                        )
+                        eachLineText += (
+                            +comma
+                            + h10
+                            + comma
+                            + h11
+                            + comma
+                            + h12
+                            + comma
+                            + h13
+                            + comma
+                            + h14
+                            + comma
+                            + h15
+                            + comma
+                            + h16
+                            + comma
+                            + h17
+                            + comma
+                            + h18
+                            + comma
+                            + h19
+                        )
+                        eachLineText += (
+                            +comma
+                            + h20
+                            + comma
+                            + h21
+                            + comma
+                            + h22
+                            + comma
+                            + h23
+                            + comma
+                            + h24
+                            + comma
+                            + h25
+                            + comma
+                            + h26
+                            + comma
+                            + h27
+                            + comma
+                            + h28
+                            + comma
+                            + h29
+                            + comma
+                            + h30
+                        )
+                        fileHandler.write(newLine + eachLineText)
 
 
-def generate_csv(booking_ids):
+def _generate_csv(booking_ids, vx_freight_provider):
     # print('#900 - Running %s' % datetime.datetime.now())
 
     try:
@@ -879,22 +1115,28 @@ def generate_csv(booking_ids):
     )
 
     if production:
-        f = open("/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name, "w")
+        if vx_freight_provider == "cope":
+            f = open(
+                "/home/cope_au/dme_sftp/cope_au/pickup_ext/cope_au/" + csv_name, "w"
+            )
+        elif vx_freight_provider == "dhl":
+            f = open(
+                "/home/cope_au/dme_sftp/cope_au/pickup_ext/dhl_au/" + csv_name, "w"
+            )
     else:
         f = open("/Users/admin/Documents/" + csv_name, "w")
 
-    csv_write(f, bookings, mysqlcon)
+    csv_write(f, bookings, vx_freight_provider, mysqlcon)
     f.close()
 
-    # CSV sftp server info
-    host = "esmart.cope.com.au"
-    username = "deliverme"
-    password = "C3n?7u4f"
-    sftp_filepath = "/home/import/csvimport/upload or csvimport/upload/"
-    local_filepath = "/home/cope_au/dme_sftp/cope_au/pickup_ext/"
-    local_filepath_dup = "/home/cope_au/dme_sftp/cope_au/pickup_ext/"
-    filename = csv_name
-
+    # CSV sftp smport/csvimport/upload or csvimport/upload/"
+    # local_filepath = "/home/cope_au/dme_sftp/cope_au/pickup_ext/"
+    # local_filepath_dup = "/homeerver info
+    # host = "esmart.cope.com.au"
+    # username = "deliverme"
+    # password = "C3n?7u4f"
+    # sftp_filepath = "/home/i/cope_au/dme_sftp/cope_au/pickup_ext/"
+    # filename = csv_name
     # upload_sftp(host, username, password, sftp_filepath, local_filepath, local_filepath_dup, filename)
 
     # print('#901 - Finished %s' % datetime.datetime.now())

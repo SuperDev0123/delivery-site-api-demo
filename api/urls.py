@@ -32,7 +32,7 @@ urlpatterns += [
     url(r"^download-pdf/", download_pdf),
     url(r"^download-pod/", download_pod),
     url(r"^download-connote/", download_connote),
-    url(r"^download-csv/", download_csv),
+    url(r"^generate-csv/", generate_csv),
     url(r"^generate-xml/", generate_xml),
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
