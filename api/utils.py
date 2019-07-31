@@ -4623,29 +4623,28 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("K1", "dme_bookings:de_To_Address_PostalCode", bold)
             worksheet.write("L1", "dme_bookings:b_client_order_num", bold)
             worksheet.write("M1", "dme_bookings:b_client_sales_inv_num", bold)
-            worksheet.write("N1", "client_item_reference", bold)
-            worksheet.write("O1", "e_pallety_type", bold)
-            worksheet.write("P1", "e_item", bold)
-            worksheet.write("Q1", "e_item_qty", bold)
-            worksheet.write("R1", "client_item_reference", bold)
-            worksheet.write("S1", "Booking Ref ?? GAP", bold)
-            worksheet.write("T1", "DD Received Date(Date)", bold)
-            worksheet.write("U1", "DD Received Date(Time)", bold)
-            worksheet.write("V1", "Dispatch Date", bold)
-            worksheet.write("W1", "ETA Into Store", bold)
-            worksheet.write("X1", "b_status", bold)
-            worksheet.write("Y1", "dme_bookings: dme_status_detail", bold)
-            worksheet.write("Z1", "dme_bookings: dme_status_action", bold)
-            worksheet.write("AA1", "POD Available", bold)
-            worksheet.write("AB1", "e_qty_awaiting_inventory", bold)
-            worksheet.write("AC1", "e_qty_collected", bold)
-            worksheet.write("AD1", "e_qty_scanned_fp", bold)
-            worksheet.write("AE1", "e_qty_scanned_depot", bold)
-            worksheet.write("AF1", "e_qty_delivered", bold)
-            worksheet.write("AG1", "e_qty_damaged", bold)
-            worksheet.write("AH1", "e_qty_returned", bold)
-            worksheet.write("AI1", "e_qty_shortages", bold)
-            worksheet.write("AJ1", "e_qty_adjusted_delivered", bold)
+            worksheet.write("N1", "e_pallety_type", bold)
+            worksheet.write("O1", "e_item", bold)
+            worksheet.write("P1", "e_item_qty", bold)
+            worksheet.write("Q1", "client_item_reference", bold)
+            worksheet.write("R1", "Booking Ref ?? GAP", bold)
+            worksheet.write("S1", "DD Received Date(Date)", bold)
+            worksheet.write("T1", "DD Received Date(Time)", bold)
+            worksheet.write("U1", "Dispatch Date", bold)
+            worksheet.write("V1", "ETA Into Store", bold)
+            worksheet.write("W1", "b_status", bold)
+            worksheet.write("X1", "dme_bookings: dme_status_detail", bold)
+            worksheet.write("Y1", "dme_bookings: dme_status_action", bold)
+            worksheet.write("Z1", "POD Available", bold)
+            worksheet.write("AA1", "e_qty_awaiting_inventory", bold)
+            worksheet.write("AB1", "e_qty_collected", bold)
+            worksheet.write("AC1", "e_qty_scanned_fp", bold)
+            worksheet.write("AD1", "e_qty_scanned_depot", bold)
+            worksheet.write("AE1", "e_qty_delivered", bold)
+            worksheet.write("AF1", "e_qty_damaged", bold)
+            worksheet.write("AG1", "e_qty_returned", bold)
+            worksheet.write("AH1", "e_qty_shortages", bold)
+            worksheet.write("AI1", "e_qty_adjusted_delivered", bold)
 
             worksheet.write("A2", "Consignment No", bold)
             worksheet.write("B2", "Booked Date", bold)
@@ -4660,29 +4659,28 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("K2", "To Postal Code", bold)
             worksheet.write("L2", "Customer Client Order No", bold)
             worksheet.write("M2", "Customer Invoice No", bold)
-            worksheet.write("N2", "Client Reference No", bold)
-            worksheet.write("O2", "Model", bold)
-            worksheet.write("P2", "Product Description", bold)
-            worksheet.write("Q2", "Booked Qty", bold)
-            worksheet.write("R2", "Client Item Reference", bold)
-            worksheet.write("S2", "Booking Ref", bold)
-            worksheet.write("T2", "DD Received Date", bold)
-            worksheet.write("U2", "DD Received Time", bold)
-            worksheet.write("V2", "Dispatch Date", bold)
-            worksheet.write("W2", "ETA Into Store", bold)
-            worksheet.write("X2", "Status", bold)
-            worksheet.write("Y2", "Status Detail", bold)
-            worksheet.write("Z2", "Status Action", bold)
-            worksheet.write("AA2", "POD?", bold)
-            worksheet.write("AB2", "Inventory on Back Order", bold)
-            worksheet.write("AC2", "Qty Confimred Collected by Pickup Entity", bold)
-            worksheet.write("AD2", "Qty Scanned at Transporter Depot", bold)
-            worksheet.write("AE2", "Same as Col T?", bold)
-            worksheet.write("AF2", "Qty Delivered", bold)
-            worksheet.write("AG2", "Qty Damaged", bold)
-            worksheet.write("AH2", "Qty Returned", bold)
-            worksheet.write("AI2", "Qty Short", bold)
-            worksheet.write("AJ2", "Adjusted Delivered Qty", bold)
+            worksheet.write("N2", "Model", bold)
+            worksheet.write("O2", "Product Description", bold)
+            worksheet.write("P2", "Booked Qty", bold)
+            worksheet.write("Q2", "Client Item Reference", bold)
+            worksheet.write("R2", "Booking Ref", bold)
+            worksheet.write("S2", "DD Received Date", bold)
+            worksheet.write("T2", "DD Received Time", bold)
+            worksheet.write("U2", "Dispatch Date", bold)
+            worksheet.write("V2", "ETA Into Store", bold)
+            worksheet.write("W2", "Status", bold)
+            worksheet.write("X2", "Status Detail", bold)
+            worksheet.write("Y2", "Status Action", bold)
+            worksheet.write("Z2", "POD?", bold)
+            worksheet.write("AA2", "Inventory on Back Order", bold)
+            worksheet.write("AB2", "Qty Confimred Collected by Pickup Entity", bold)
+            worksheet.write("AC2", "Qty Scanned at Transporter Depot", bold)
+            worksheet.write("AD2", "Same as Col T?", bold)
+            worksheet.write("AE2", "Qty Delivered", bold)
+            worksheet.write("AF2", "Qty Damaged", bold)
+            worksheet.write("AG2", "Qty Returned", bold)
+            worksheet.write("AH2", "Qty Short", bold)
+            worksheet.write("AI2", "Adjusted Delivered Qty", bold)
 
             row = 2
         else:
@@ -4699,29 +4697,28 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("K1", "To Postal Code", bold)
             worksheet.write("L1", "Customer Client Order No", bold)
             worksheet.write("M1", "Customer Invoice No", bold)
-            worksheet.write("N1", "Client Reference No", bold)
-            worksheet.write("O1", "Model", bold)
-            worksheet.write("P1", "Product Description", bold)
-            worksheet.write("Q1", "Booked Qty", bold)
-            worksheet.write("R1", "Client Item Reference", bold)
-            worksheet.write("S1", "Booking Ref", bold)
-            worksheet.write("T1", "DD Received Date", bold)
-            worksheet.write("U1", "DD Received Time", bold)
-            worksheet.write("V1", "Dispatch Date", bold)
-            worksheet.write("W1", "ETA Into Store", bold)
-            worksheet.write("X1", "Status", bold)
-            worksheet.write("Y1", "Status Detail", bold)
-            worksheet.write("Z1", "Status Action", bold)
-            worksheet.write("AA1", "POD?", bold)
-            worksheet.write("AB1", "Inventory on Back Order", bold)
-            worksheet.write("AC1", "Qty Confimred Collected by Pickup Entity", bold)
-            worksheet.write("AD1", "Qty Scanned at Transporter Depot", bold)
-            worksheet.write("AE1", "Same as Col T?", bold)
-            worksheet.write("AF1", "Qty Delivered", bold)
-            worksheet.write("AG1", "Qty Damaged", bold)
-            worksheet.write("AH1", "Qty Returned", bold)
-            worksheet.write("AI1", "Qty Short", bold)
-            worksheet.write("AJ1", "Adjusted Delivered Qty", bold)
+            worksheet.write("N1", "Model", bold)
+            worksheet.write("O1", "Product Description", bold)
+            worksheet.write("P1", "Booked Qty", bold)
+            worksheet.write("Q1", "Client Item Reference", bold)
+            worksheet.write("R1", "Booking Ref", bold)
+            worksheet.write("S1", "DD Received Date", bold)
+            worksheet.write("T1", "DD Received Time", bold)
+            worksheet.write("U1", "Dispatch Date", bold)
+            worksheet.write("V1", "ETA Into Store", bold)
+            worksheet.write("W1", "Status", bold)
+            worksheet.write("X1", "Status Detail", bold)
+            worksheet.write("Y1", "Status Action", bold)
+            worksheet.write("Z1", "POD?", bold)
+            worksheet.write("AA1", "Inventory on Back Order", bold)
+            worksheet.write("AB1", "Qty Confimred Collected by Pickup Entity", bold)
+            worksheet.write("AC1", "Qty Scanned at Transporter Depot", bold)
+            worksheet.write("AD1", "Same as Col T?", bold)
+            worksheet.write("AE1", "Qty Delivered", bold)
+            worksheet.write("AF1", "Qty Damaged", bold)
+            worksheet.write("AG1", "Qty Returned", bold)
+            worksheet.write("AH1", "Qty Short", bold)
+            worksheet.write("AI1", "Adjusted Delivered Qty", bold)
 
             row = 1
 
@@ -4784,24 +4781,23 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 10, booking.de_To_Address_PostalCode)
                     worksheet.write(row, col + 11, booking.b_client_order_num)
                     worksheet.write(row, col + 12, booking.b_client_sales_inv_num)
-                    worksheet.write(row, col + 13, booking_line.client_item_reference)
-                    worksheet.write(row, col + 14, booking_line.e_pallet_type)
-                    worksheet.write(row, col + 15, booking_line.e_item)
-                    worksheet.write(row, col + 16, booking_line.e_qty)
-                    worksheet.write(row, col + 17, booking_line.client_item_reference)
-                    worksheet.write(row, col + 18, booking.b_bookingID_Visual)
+                    worksheet.write(row, col + 13, booking_line.e_pallet_type)
+                    worksheet.write(row, col + 14, booking_line.e_item)
+                    worksheet.write(row, col + 15, booking_line.e_qty)
+                    worksheet.write(row, col + 16, booking_line.client_item_reference)
+                    worksheet.write(row, col + 17, booking.b_bookingID_Visual)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
-                            row, col + 19, api_bcl.fp_event_date, date_format
+                            row, col + 18, api_bcl.fp_event_date, date_format
                         )
                         worksheet.write_datetime(
-                            row, col + 20, api_bcl.fp_event_time, time_format
+                            row, col + 19, api_bcl.fp_event_time, time_format
                         )
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
                         worksheet.write_datetime(
-                            row, col + 21, booking.de_Deliver_By_Date, date_format
+                            row, col + 20, booking.de_Deliver_By_Date, date_format
                         )
 
                     if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
@@ -4812,7 +4808,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                         worksheet.write(
                             row,
-                            col + 22,
+                            col + 21,
                             (
                                 booking.de_Deliver_By_Date
                                 + timedelta(days=int(delivery_kpi_days))
@@ -4821,9 +4817,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     else:
                         worksheet.write(row, col + 21, "")
 
-                    worksheet.write(row, col + 23, booking.b_status)
-                    worksheet.write(row, col + 24, booking.dme_status_detail)
-                    worksheet.write(row, col + 25, booking.dme_status_action)
+                    worksheet.write(row, col + 22, booking.b_status)
+                    worksheet.write(row, col + 23, booking.dme_status_detail)
+                    worksheet.write(row, col + 24, booking.dme_status_action)
 
                     if (
                         booking.z_pod_url is not None and len(booking.z_pod_url) > 0
@@ -4831,22 +4827,22 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         booking.z_pod_signed_url is not None
                         and len(booking.z_pod_signed_url) > 0
                     ):
-                        worksheet.write(row, col + 26, "Y")
+                        worksheet.write(row, col + 25, "Y")
                     else:
-                        worksheet.write(row, col + 26, "")
+                        worksheet.write(row, col + 25, "")
 
                     worksheet.write(
-                        row, col + 27, booking_line.e_qty_awaiting_inventory
+                        row, col + 26, booking_line.e_qty_awaiting_inventory
                     )
-                    worksheet.write(row, col + 28, booking_line.e_qty_collected)
-                    worksheet.write(row, col + 29, booking_line.e_qty_scanned_fp)
-                    worksheet.write(row, col + 30, booking_line.e_qty_scanned_depot)
-                    worksheet.write(row, col + 31, booking_line.e_qty_delivered)
-                    worksheet.write(row, col + 32, booking_line.e_qty_damaged)
-                    worksheet.write(row, col + 33, booking_line.e_qty_returned)
-                    worksheet.write(row, col + 34, booking_line.e_qty_shortages)
+                    worksheet.write(row, col + 27, booking_line.e_qty_collected)
+                    worksheet.write(row, col + 28, booking_line.e_qty_scanned_fp)
+                    worksheet.write(row, col + 29, booking_line.e_qty_scanned_depot)
+                    worksheet.write(row, col + 30, booking_line.e_qty_delivered)
+                    worksheet.write(row, col + 31, booking_line.e_qty_damaged)
+                    worksheet.write(row, col + 32, booking_line.e_qty_returned)
+                    worksheet.write(row, col + 33, booking_line.e_qty_shortages)
                     worksheet.write(
-                        row, col + 35, booking_line.e_qty_adjusted_delivered
+                        row, col + 34, booking_line.e_qty_adjusted_delivered
                     )
 
                     if booking_line.e_qty is not None:
