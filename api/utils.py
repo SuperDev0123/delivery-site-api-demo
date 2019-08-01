@@ -1019,7 +1019,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         if booking_line["e_qty"] is None:
                             h20 = ""
                         else:
-                            h20 = booking_line.get("e_qty")
+                            h20 = str(booking_line.get("e_qty"))
 
                         eachLineText += (
                             h00
