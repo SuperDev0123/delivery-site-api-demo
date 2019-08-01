@@ -1110,9 +1110,18 @@ def _generate_csv(booking_ids, vx_freight_provider):
 
     bookings = get_available_bookings(mysqlcon, booking_ids)
 
-    csv_name = (
-        "SEATEMP_" + str(len(booking_ids)) + "_" + str(datetime.utcnow()) + ".csv"
-    )
+    if vx_freight_provider == "cope":
+        csv_name = (
+            "SEATEMP_" + str(len(booking_ids)) + "_" + str(datetime.utcnow()) + ".csv"
+        )
+    elif vx_freight_provider == "dhl":
+        csv_name = (
+            "Seaway-Tempo-Aldi_"
+            + str(len(booking_ids))
+            + "_"
+            + str(datetime.utcnow())
+            + ".csv"
+        )
 
     if production:
         if vx_freight_provider == "cope":
