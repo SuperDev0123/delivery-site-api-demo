@@ -1043,7 +1043,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             + h09
                         )
                         eachLineText += (
-                            +comma
+                            comma
                             + h10
                             + comma
                             + h11
@@ -1065,7 +1065,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             + h19
                         )
                         eachLineText += (
-                            +comma
+                            comma
                             + h20
                             + comma
                             + h21
