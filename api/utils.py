@@ -979,7 +979,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 booking_line["e_weightUOM"].upper() == "GRAM"
                                 or booking_line["e_weightUOM"].upper() == "GRAMS"
                             ):
-                                h11 = (
+                                h11 = str(
                                     booking_line["e_qty"]
                                     * booking_line["e_weightPerEach"]
                                     / 1000
@@ -988,7 +988,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 booking_line["e_weightUOM"].upper() == "TON"
                                 or booking_line["e_weightUOM"].upper() == "TONS"
                             ):
-                                h11 = (
+                                h11 = str(
                                     booking_line["e_qty"]
                                     * booking_line["e_weightPerEach"]
                                     * 1000
@@ -997,17 +997,17 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         if booking_line["e_dimLength"] is None:
                             h12 = ""
                         else:
-                            h12 = booking_line.get("e_dimLength")
+                            h12 = str(booking_line.get("e_dimLength"))
 
                         if booking_line["e_dimWidth"] is None:
                             h13 = ""
                         else:
-                            h13 = booking_line.get("e_dimWidth")
+                            h13 = str(booking_line.get("e_dimWidth"))
 
                         if booking_line["e_dimHeight"] is None:
                             h14 = ""
                         else:
-                            h14 = booking_line.get("e_dimHeight")
+                            h14 = str(booking_line.get("e_dimHeight"))
 
                         if booking_line["e_pallet_type"] is None:
                             h18 = ""
