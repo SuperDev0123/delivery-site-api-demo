@@ -945,7 +945,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         booking.get("de_to_PickUp_Instructions_Address")
                     )
 
-                h22 = "consignment_prefix"
+                h22 = "DMS"
 
                 if booking["v_FPBookingNumber"] is None:
                     h23 = ""
@@ -953,7 +953,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                     h23 = wrap_in_quote(booking.get("v_FPBookingNumber"))
 
                 h24 = "transporter_code"
-                h25 = "service_code"
+                h25 = "HDXDEL"
                 h26 = "DELIVERS"
                 h27 = "sender_warehouse_code"
 
@@ -4099,8 +4099,9 @@ def build_pdf(booking_ids, vx_freight_provider):
 
                         barcode = (
                             booking["v_FPBookingNumber"]
-                            + str(j).zfill(6)
-                            + str(k).zfill(6)
+                            + booking["v_FPBookingNumber"][0:3]
+                            + "L"
+                            + str(int(str(k).zfill(8)) + 10000000)
                             + booking["de_To_Address_PostalCode"]
                         )
                         barcode128 = code128.Code128(
