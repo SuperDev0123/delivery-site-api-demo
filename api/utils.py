@@ -4101,7 +4101,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                             booking["v_FPBookingNumber"]
                             + booking["v_FPBookingNumber"][0:3]
                             + "L"
-                            + str(int(str(k + 1).zfill(8)) + 10000000)
+                            + str(int(str(k + 1).zfill(10)) + 1000000000)
                             + booking["de_To_Address_PostalCode"]
                         )
                         barcode128 = code128.Code128(
