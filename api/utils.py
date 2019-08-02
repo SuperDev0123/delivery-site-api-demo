@@ -1040,7 +1040,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     WHERE id = %s"
                             adr2 = (h23, fp_zone.carrier, booking["id"])
                             cursor.execute(sql2, adr2)
-                            cursor.commit()
+                            mysqlcon.commit()
 
                         h29 = h22 + "L00" + str(10000000 + index)
                         h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
