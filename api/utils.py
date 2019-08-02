@@ -875,6 +875,8 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
         # Write Each Line
         comma = ","
         newLine = "\n"
+        fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
+        index = fp_info.new_connot_index
         if len(bookings) > 0:
             for booking in bookings:
                 booking_lines = get_available_booking_lines(mysqlcon, booking)
@@ -945,17 +947,23 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         booking.get("de_to_PickUp_Instructions_Address")
                     )
 
-                h22 = "DMS"
+                if (
+                    booking["de_To_Address_Suburb"] is not None
+                    and booking["de_To_Address_State"] is not None
+                    and booking["de_To_Address_PostalCode"] is not None
+                ):
+                    fp_zone = FP_zones.objects.filter(
+                        fk_fp=fp_info.id,
+                        state=booking["de_To_Address_State"],
+                        suburb=booking["de_To_Address_Suburb"],
+                        postal_code=booking["de_To_Address_PostalCode"],
+                    ).first()
+                h22 = "DMS" if fp_zone.carrier == "DHLSFS" else "DMB"
 
-                if booking["v_FPBookingNumber"] is None:
-                    h23 = ""
-                else:
-                    h23 = wrap_in_quote(booking.get("v_FPBookingNumber"))
-
-                h24 = "transporter_code"
-                h25 = "HDXDEL"
-                h26 = "DELIVERS"
-                h27 = "sender_warehouse_code"
+                h24 = fp_zone.carrier
+                h25 = fp_zone.service
+                h26 = fp_zone.sender_code
+                h27 = OWNSITE  # HARDCODED - "sender_warehouse_code"
 
                 if booking["puCompany"] is None or booking["deToCompanyName"] is None:
                     h28 = ""
@@ -963,9 +971,6 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                     h28 = wrap_in_quote(
                         booking.get("puCompany") + "/" + booking.get("deToCompanyName")
                     )
-
-                h29 = "freight_label_number"
-                h30 = "barcode"
 
                 if len(booking_lines) > 0:
                     for booking_line in booking_lines:
@@ -993,6 +998,11 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     * booking_line["e_weightPerEach"]
                                     * 1000
                                 )
+                            else:
+                                h11 = str(
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                )
 
                         if booking_line["e_dimLength"] is None:
                             h12 = ""
@@ -1014,12 +1024,23 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         else:
                             h18 = wrap_in_quote(booking_line.get("e_pallet_type"))
 
-                        h19 = "pack_unit_description"
+                        h19 = "Carton"
 
                         if booking_line["e_qty"] is None:
                             h20 = ""
                         else:
                             h20 = str(booking_line.get("e_qty"))
+
+                        h23 = h22 + str(100000 + index)
+
+                        # Update booking while build CSV for DHL
+                        booking.v_FPBookingNumber = h23
+                        booking.vx_freight_provider_carrier = fp_zone.carrier
+                        booking.save()
+
+                        h29 = h22 + "L00" + str(10000000 + index)
+                        h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
+                        index += 1
 
                         eachLineText += (
                             h00

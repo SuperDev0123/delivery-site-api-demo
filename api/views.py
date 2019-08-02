@@ -2892,10 +2892,10 @@ def generate_csv(request):
 
     csv_name = _generate_csv(booking_ids, vx_freight_provider)
 
-    if vx_freight_provider == "cope":
-        for booking_id in booking_ids:
-            booking = Bookings.objects.get(id=booking_id)
+    for booking_id in booking_ids:
+        booking = Bookings.objects.get(id=booking_id)
 
+        if vx_freight_provider == "cope":
             ############################################################################################
             # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
             ############################################################################################
@@ -2925,20 +2925,23 @@ def generate_csv(request):
                     )
                     api_booking_confirmation_line.save()
                     index = index + 1
+        elif vx_freight_provider == "dhl":
+            booking.b_dateBookedDate = get_sydney_now_time()
+            booking.save()
 
-        if settings.ENV == "local":
+    if settings.ENV == "local":
+        file_path = (
+            "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
+        )  # Local (Test Case)
+    else:
+        if vx_freight_provider == "cope":
             file_path = (
-                "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
-            )  # Local (Test Case)
-        else:
-            if vx_freight_provider == "cope":
-                file_path = (
-                    "/home/cope_au/dme_sftp/cope_au/pickup_ext/cope_au/" + csv_name
-                )  # Dev & Prod
-            elif vx_freight_provider == "dhl":
-                file_path = (
-                    "/home/cope_au/dme_sftp/cope_au/pickup_ext/dhl_au/" + csv_name
-                )  # Dev & Prod
+                "/home/cope_au/dme_sftp/cope_au/pickup_ext/cope_au/" + csv_name
+            )  # Dev & Prod
+        elif vx_freight_provider == "dhl":
+            file_path = (
+                "/home/cope_au/dme_sftp/cope_au/pickup_ext/dhl_au/" + csv_name
+            )  # Dev & Prod
 
     return JsonResponse({"filename": csv_name, "status": "Created CSV"})
     if os.path.exists(file_path):
