@@ -963,7 +963,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 h24 = fp_zone.carrier
                 h25 = fp_zone.service
                 h26 = fp_zone.sender_code
-                h27 = OWNSITE  # HARDCODED - "sender_warehouse_code"
+                h27 = "OWNSITE"  # HARDCODED - "sender_warehouse_code"
 
                 if booking["puCompany"] is None or booking["deToCompanyName"] is None:
                     h28 = ""
