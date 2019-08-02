@@ -1034,12 +1034,13 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         h23 = h22 + str(100000 + index)
 
                         # Update booking while build CSV for DHL
-                        sql2 = "UPDATE dme_bookings \
-                                SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
-                                WHERE id = %s"
-                        adr2 = (h23, fp_zone.carrier, booking["id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        with mysqlcon.cursor() as cursor:
+                            sql2 = "UPDATE dme_bookings \
+                                    SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
+                                    WHERE id = %s"
+                            adr2 = (h23, fp_zone.carrier, booking["id"])
+                            mycursor.execute(sql2, adr2)
+                            mysqlcon.commit()
 
                         h29 = h22 + "L00" + str(10000000 + index)
                         h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
