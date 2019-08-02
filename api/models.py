@@ -3049,3 +3049,18 @@ class Dme_manifest_log(models.Model):
 
     class Meta:
         db_table = "dme_manifest_log"
+
+
+class FP_zones(models.Model):
+    id = models.AutoField(primary_key=True)
+    suburb = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    postal_code = models.CharField(max_length=16, blank=True, null=True)
+    zone = models.CharField(max_length=50, blank=True, null=True)
+    carrier = models.CharField(max_length=50, blank=True, null=True)
+    service = models.CharField(max_length=50, blank=True, null=True)
+    sender_code = models.CharField(max_length=50, blank=True, null=True)
+    fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+
+    class Meta:
+        db_table = "fp_zones"
