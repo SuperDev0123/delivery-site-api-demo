@@ -1232,6 +1232,9 @@ class Bookings(models.Model):
     )
     z_first_scan_label_date = models.DateField(blank=True, null=True)
     check_pod = models.BooleanField(default=False, blank=True, null=True)
+    vx_freight_provider_carrier = models.CharField(
+        max_length=32, blank=True, null=True, default=None
+    )
 
     class Meta:
         db_table = "dme_bookings"
