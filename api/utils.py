@@ -4036,6 +4036,14 @@ def build_pdf(booking_ids, vx_freight_provider):
                 )
                 Story = []
 
+                fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
+                fp_zone = FP_zones.objects.filter(
+                    fk_fp=fp_info.id,
+                    state=booking["de_To_Address_State"],
+                    suburb=booking["de_To_Address_Suburb"],
+                    postal_code=booking["de_To_Address_PostalCode"],
+                ).first()
+
                 j = 1
                 for booking_line in booking_lines:
                     for k in range(booking_line["e_qty"]):
@@ -4065,7 +4073,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                             [
                                 Paragraph("<font size=6>Via:</font>", style_left),
                                 Paragraph(
-                                    "<font size=6>DESC</font>", styles["BodyText"]
+                                    "<font size=6>%s</font>",
+                                    booking["vx_freighte_provider_carrier"],
+                                    styles["BodyText"],
                                 ),
                             ],
                             [
