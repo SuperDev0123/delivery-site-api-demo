@@ -942,7 +942,9 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 if booking["de_to_PickUp_Instructions_Address"] is None:
                     h21 = ""
                 else:
-                    h21 = str(booking.get("de_to_PickUp_Instructions_Address"))
+                    h21 = wrap_in_quote(
+                        booking.get("de_to_PickUp_Instructions_Address")
+                    )
 
                 if (
                     booking["de_To_Address_Suburb"] is not None
