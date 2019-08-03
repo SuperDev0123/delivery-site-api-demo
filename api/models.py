@@ -3067,3 +3067,17 @@ class FP_zones(models.Model):
 
     class Meta:
         db_table = "fp_zones"
+
+
+class FP_carriers(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+    carrier = models.CharField(max_length=50, blank=True, null=True)
+    connote_start_value = models.IntegerField(default=None, blank=True, null=True)
+    connote_end_value = models.IntegerField(default=None, blank=True, null=True)
+    label_start_value = models.IntegerField(default=None, blank=True, null=True)
+    label_end_value = models.IntegerField(default=None, blank=True, null=True)
+    current_value = models.IntegerField(default=None, blank=True, null=True)
+
+    class Meta:
+        db_table = "fp_carriers"
