@@ -867,7 +867,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
             receiver_address2, receiver_address3, receiver_address4, receiver_locality, receiver_state, \
             receiver_postcode, weight, length, width, height, \
             receiver_contact, receiver_phone_no, receiver_email, pack_unit_code, pack_unit_description, \
-            items, special_instructions, consignment_prefix, consignment_number, transporter_code \
+            items, special_instructions, consignment_prefix, consignment_number, transporter_code, \
             service_code, sender_code, sender_warehouse_code, freight_payer, freight_label_number, \
             barcode"
         )
