@@ -4072,8 +4072,8 @@ def build_pdf(booking_ids, vx_freight_provider):
                             [
                                 Paragraph("<font size=6>Via:</font>", style_left),
                                 Paragraph(
-                                    "<font size=6>%s</font>",
-                                    booking["vx_freight_provider_carrier"],
+                                    "<font size=6>%s</font>"
+                                    % booking["vx_freight_provider_carrier"],
                                     styles["BodyText"],
                                 ),
                             ],
