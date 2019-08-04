@@ -1172,16 +1172,6 @@ def _generate_csv(booking_ids, vx_freight_provider):
     csv_write(f, bookings, vx_freight_provider, mysqlcon)
     f.close()
 
-    # CSV sftp smport/csvimport/upload or csvimport/upload/"
-    # local_filepath = "/home/cope_au/dme_sftp/cope_au/pickup_ext/"
-    # local_filepath_dup = "/homeerver info
-    # host = "esmart.cope.com.au"
-    # username = "deliverme"
-    # password = "C3n?7u4f"
-    # sftp_filepath = "/home/i/cope_au/dme_sftp/cope_au/pickup_ext/"
-    # filename = csv_name
-    # upload_sftp(host, username, password, sftp_filepath, local_filepath, local_filepath_dup, filename)
-
     # print('#901 - Finished %s' % datetime.datetime.now())
     mysqlcon.close()
     return csv_name
@@ -4018,7 +4008,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                     + "_"
                     + str(booking["pk_booking_id"])
                     + "_"
-                    + "DME_"
+                    + "DME"
                     + str(booking["b_bookingID_Visual"])
                     + ".pdf"
                 )
