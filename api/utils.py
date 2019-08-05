@@ -4140,7 +4140,8 @@ def build_pdf(booking_ids, vx_freight_provider):
                             + "L"
                             + "00"
                             + str(
-                                int(booking["v_FPBookingNumber"][3:] - 100000)
+                                int(booking["v_FPBookingNumber"][3:])
+                                - 100000
                                 + 10000000
                             )
                             + booking["de_To_Address_PostalCode"]
