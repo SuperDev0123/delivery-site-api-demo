@@ -1146,14 +1146,18 @@ def _generate_csv(booking_ids, vx_freight_provider):
 
     if vx_freight_provider == "cope":
         csv_name = (
-            "SEATEMP_" + str(len(booking_ids)) + "_" + str(datetime.utcnow()) + ".csv"
+            "SEATEMP__"
+            + str(len(booking_ids))
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
+            + ".csv"
         )
     elif vx_freight_provider == "dhl":
         csv_name = (
-            "Seaway-Tempo-Aldi_"
+            "Seaway-Tempo-Aldi__"
             + str(len(booking_ids))
-            + "_"
-            + str(datetime.utcnow())
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
             + ".csv"
         )
 
