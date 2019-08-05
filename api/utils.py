@@ -869,7 +869,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
             receiver_contact, receiver_phone_no, receiver_email, pack_unit_code, pack_unit_description, \
             items, special_instructions, consignment_prefix, consignment_number, transporter_code, \
             service_code, sender_code, sender_warehouse_code, freight_payer, freight_label_number, \
-            barcode"
+            barcode\n"
         )
 
         # Write Each Line
@@ -1122,7 +1122,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             + comma
                             + h30
                         )
-                        fileHandler.write(newLine + eachLineText)
+                        fileHandler.write(eachLineText + newLine)
 
 
 def _generate_csv(booking_ids, vx_freight_provider):
@@ -4139,7 +4139,10 @@ def build_pdf(booking_ids, vx_freight_provider):
                             + booking["v_FPBookingNumber"][0:3]
                             + "L"
                             + "00"
-                            + str(int(str(k).zfill(8)) + 10000000)
+                            + str(
+                                int(booking["v_FPBookingNumber"][3:] - 100000)
+                                + 10000000
+                            )
                             + booking["de_To_Address_PostalCode"]
                         )
                         barcode128 = code128.Code128(
