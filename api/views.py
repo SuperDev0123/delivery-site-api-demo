@@ -2890,7 +2890,7 @@ def generate_csv(request):
         return JsonResponse({"filename": "", "status": "No bookings to build CSV"})
 
     first_booking = Bookings.objects.filter(pk__in=booking_ids).first()
-    csv_name = _generate_csv(booking_ids, first_booking.vx_freight_provider)
+    csv_name = _generate_csv(booking_ids, first_booking.vx_freight_provider.lower())
 
     for booking_id in booking_ids:
         booking = Bookings.objects.get(id=booking_id)
