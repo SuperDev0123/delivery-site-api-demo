@@ -200,6 +200,29 @@ class Client_employees(models.Model):
         return role.role_code
 
 
+class DME_manifests(models.Model):
+    id = models.AutoField(primary_key=True)
+    manifest_number = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
+    manifest_url = models.CharField(max_length=255, blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "dme_manifests"
+
+
 class Bookings(models.Model):
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
@@ -1234,6 +1257,9 @@ class Bookings(models.Model):
     check_pod = models.BooleanField(default=False, blank=True, null=True)
     vx_freight_provider_carrier = models.CharField(
         max_length=32, blank=True, null=True, default=None
+    )
+    fk_manifest = models.ForeignKey(
+        DME_manifests, on_delete=models.CASCADE, default=None, null=True
     )
 
     class Meta:

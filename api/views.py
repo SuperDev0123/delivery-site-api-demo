@@ -2985,15 +2985,16 @@ def generate_xml(request):
 def generate_manifest(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
-    one_manifest_file = int(body["one_manifest_file"])
+    vx_freight_provider = body["vx_freight_provider"]
     user_name = body["username"]
 
     try:
-        filenames = build_manifest(booking_ids, one_manifest_file, user_name)
+        filenames = build_manifest(booking_ids, vx_freight_provider, user_name)
         file_paths = []
 
-        for filename in filenames:
-            file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
+        if vx_freight_provider == "TASFR":
+            for filename in filenames:
+                file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
