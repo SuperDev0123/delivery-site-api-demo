@@ -957,172 +957,183 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         suburb=booking["de_To_Address_Suburb"],
                         postal_code=booking["de_To_Address_PostalCode"],
                     ).first()
-                h22 = "DMS" if fp_zone.carrier == "DHLSFS" else "DMB"
 
-                h24 = fp_zone.carrier
-                h25 = fp_zone.service
-                h26 = fp_zone.sender_code
-                h27 = "OWNSITE"  # HARDCODED - "sender_warehouse_code"
-                h28 = "S"
+                if fp is None:
+                    # Update booking with FP bug
+                    with mysqlcon.cursor() as cursor:
+                        sql2 = "UPDATE dme_bookings \
+                                SET b_error_Capture = %s \
+                                WHERE id = %s"
+                        adr2 = ('DE address and FP_zones are not matching.' booking["id"])
+                        cursor.execute(sql2, adr2)
+                        mysqlcon.commit()
+                else:
+                    h22 = "DMS" if fp_zone.carrier == "DHLSFS" else "DMB"
 
-                if len(booking_lines) > 0:
-                    for booking_line in booking_lines:
-                        eachLineText = ""
-                        h11 = ""
-                        if (
-                            booking_line["e_weightUOM"] is not None
-                            and booking_line["e_weightPerEach"] is not None
-                        ):
+                    h24 = fp_zone.carrier
+                    h25 = fp_zone.service
+                    h26 = fp_zone.sender_code
+                    h27 = "OWNSITE"  # HARDCODED - "sender_warehouse_code"
+                    h28 = "S"
+
+                    if len(booking_lines) > 0:
+                        for booking_line in booking_lines:
+                            eachLineText = ""
+                            h11 = ""
                             if (
-                                booking_line["e_weightUOM"].upper() == "GRAM"
-                                or booking_line["e_weightUOM"].upper() == "GRAMS"
+                                booking_line["e_weightUOM"] is not None
+                                and booking_line["e_weightPerEach"] is not None
                             ):
-                                h11 = str(
-                                    booking_line["e_qty"]
-                                    * booking_line["e_weightPerEach"]
-                                    / 1000
-                                )
-                            elif (
-                                booking_line["e_weightUOM"].upper() == "TON"
-                                or booking_line["e_weightUOM"].upper() == "TONS"
-                            ):
-                                h11 = str(
-                                    booking_line["e_qty"]
-                                    * booking_line["e_weightPerEach"]
-                                    * 1000
-                                )
+                                if (
+                                    booking_line["e_weightUOM"].upper() == "GRAM"
+                                    or booking_line["e_weightUOM"].upper() == "GRAMS"
+                                ):
+                                    h11 = str(
+                                        booking_line["e_qty"]
+                                        * booking_line["e_weightPerEach"]
+                                        / 1000
+                                    )
+                                elif (
+                                    booking_line["e_weightUOM"].upper() == "TON"
+                                    or booking_line["e_weightUOM"].upper() == "TONS"
+                                ):
+                                    h11 = str(
+                                        booking_line["e_qty"]
+                                        * booking_line["e_weightPerEach"]
+                                        * 1000
+                                    )
+                                else:
+                                    h11 = str(
+                                        booking_line["e_qty"]
+                                        * booking_line["e_weightPerEach"]
+                                    )
+
+                            if booking_line["e_dimLength"] is None:
+                                h12 = ""
                             else:
-                                h11 = str(
-                                    booking_line["e_qty"]
-                                    * booking_line["e_weightPerEach"]
-                                )
+                                h12 = str(booking_line.get("e_dimLength"))
 
-                        if booking_line["e_dimLength"] is None:
-                            h12 = ""
-                        else:
-                            h12 = str(booking_line.get("e_dimLength"))
+                            if booking_line["e_dimWidth"] is None:
+                                h13 = ""
+                            else:
+                                h13 = str(booking_line.get("e_dimWidth"))
 
-                        if booking_line["e_dimWidth"] is None:
-                            h13 = ""
-                        else:
-                            h13 = str(booking_line.get("e_dimWidth"))
+                            if booking_line["e_dimHeight"] is None:
+                                h14 = ""
+                            else:
+                                h14 = str(booking_line.get("e_dimHeight"))
 
-                        if booking_line["e_dimHeight"] is None:
-                            h14 = ""
-                        else:
-                            h14 = str(booking_line.get("e_dimHeight"))
+                            if booking_line["e_pallet_type"] is None:
+                                h18 = ""
+                            else:
+                                h18 = str(booking_line.get("e_pallet_type"))
 
-                        if booking_line["e_pallet_type"] is None:
-                            h18 = ""
-                        else:
-                            h18 = str(booking_line.get("e_pallet_type"))
+                            if booking_line["e_type_of_packaging"] is None:
+                                h19 = ""
+                            else:
+                                h19 = str(booking_line.get("e_type_of_packaging"))
 
-                        if booking_line["e_type_of_packaging"] is None:
-                            h19 = ""
-                        else:
-                            h19 = str(booking_line.get("e_type_of_packaging"))
+                            if booking_line["e_qty"] is None:
+                                h20 = ""
+                            else:
+                                h20 = str(booking_line.get("e_qty"))
 
-                        if booking_line["e_qty"] is None:
-                            h20 = ""
-                        else:
-                            h20 = str(booking_line.get("e_qty"))
-
-                        fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
-                        h23 = h22 + str(
-                            fp_carrier.connote_start_value + fp_carrier.current_value
-                        )
-
-                        # Update booking while build CSV for DHL
-                        with mysqlcon.cursor() as cursor:
-                            sql2 = "UPDATE dme_bookings \
-                                    SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
-                                    WHERE id = %s"
-                            adr2 = (h23, fp_zone.carrier, booking["id"])
-                            cursor.execute(sql2, adr2)
-                            mysqlcon.commit()
-
-                        h29 = (
-                            h22
-                            + "L00"
-                            + str(
-                                fp_carrier.label_start_value + fp_carrier.current_value
+                            fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
+                            h23 = h22 + str(
+                                fp_carrier.connote_start_value + fp_carrier.current_value
                             )
-                        )
 
-                        # Update fp_carrier current value
-                        fp_carrier.current_value += 1
-                        fp_carrier.save()
+                            # Update booking while build CSV for DHL
+                            with mysqlcon.cursor() as cursor:
+                                sql2 = "UPDATE dme_bookings \
+                                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
+                                        WHERE id = %s"
+                                adr2 = (h23, fp_zone.carrier, booking["id"])
+                                cursor.execute(sql2, adr2)
+                                mysqlcon.commit()
 
-                        h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
+                            h29 = (
+                                h22
+                                + "L00"
+                                + str(
+                                    fp_carrier.label_start_value + fp_carrier.current_value
+                                )
+                            )
 
-                        eachLineText += (
-                            h00
-                            + comma
-                            + h01
-                            + comma
-                            + h02
-                            + comma
-                            + h03
-                            + comma
-                            + h04
-                            + comma
-                            + h05
-                            + comma
-                            + h06
-                            + comma
-                            + h07
-                            + comma
-                            + h08
-                            + comma
-                            + h09
-                        )
-                        eachLineText += (
-                            comma
-                            + h10
-                            + comma
-                            + h11
-                            + comma
-                            + h12
-                            + comma
-                            + h13
-                            + comma
-                            + h14
-                            + comma
-                            + h15
-                            + comma
-                            + h16
-                            + comma
-                            + h17
-                            + comma
-                            + h18
-                            + comma
-                            + h19
-                        )
-                        eachLineText += (
-                            comma
-                            + h20
-                            + comma
-                            + h21
-                            + comma
-                            + h22
-                            + comma
-                            + h23
-                            + comma
-                            + h24
-                            + comma
-                            + h25
-                            + comma
-                            + h26
-                            + comma
-                            + h27
-                            + comma
-                            + h28
-                            + comma
-                            + h29
-                            + comma
-                            + h30
-                        )
-                        fileHandler.write(eachLineText + newLine)
+                            # Update fp_carrier current value
+                            fp_carrier.current_value += 1
+                            fp_carrier.save()
+
+                            h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
+
+                            eachLineText += (
+                                h00
+                                + comma
+                                + h01
+                                + comma
+                                + h02
+                                + comma
+                                + h03
+                                + comma
+                                + h04
+                                + comma
+                                + h05
+                                + comma
+                                + h06
+                                + comma
+                                + h07
+                                + comma
+                                + h08
+                                + comma
+                                + h09
+                            )
+                            eachLineText += (
+                                comma
+                                + h10
+                                + comma
+                                + h11
+                                + comma
+                                + h12
+                                + comma
+                                + h13
+                                + comma
+                                + h14
+                                + comma
+                                + h15
+                                + comma
+                                + h16
+                                + comma
+                                + h17
+                                + comma
+                                + h18
+                                + comma
+                                + h19
+                            )
+                            eachLineText += (
+                                comma
+                                + h20
+                                + comma
+                                + h21
+                                + comma
+                                + h22
+                                + comma
+                                + h23
+                                + comma
+                                + h24
+                                + comma
+                                + h25
+                                + comma
+                                + h26
+                                + comma
+                                + h27
+                                + comma
+                                + h28
+                                + comma
+                                + h29
+                                + comma
+                                + h30
+                            )
+                            fileHandler.write(eachLineText + newLine)
 
 
 def _generate_csv(booking_ids, vx_freight_provider):
