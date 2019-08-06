@@ -964,7 +964,10 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         sql2 = "UPDATE dme_bookings \
                                 SET b_error_Capture = %s \
                                 WHERE id = %s"
-                        adr2 = ('DE address and FP_zones are not matching.' booking["id"])
+                        adr2 = (
+                            "DE address and FP_zones are not matching.",
+                            booking["id"],
+                        )
                         cursor.execute(sql2, adr2)
                         mysqlcon.commit()
                 else:
@@ -1040,7 +1043,8 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
 
                             fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
                             h23 = h22 + str(
-                                fp_carrier.connote_start_value + fp_carrier.current_value
+                                fp_carrier.connote_start_value
+                                + fp_carrier.current_value
                             )
 
                             # Update booking while build CSV for DHL
@@ -1056,7 +1060,8 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 h22
                                 + "L00"
                                 + str(
-                                    fp_carrier.label_start_value + fp_carrier.current_value
+                                    fp_carrier.label_start_value
+                                    + fp_carrier.current_value
                                 )
                             )
 
