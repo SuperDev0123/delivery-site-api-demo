@@ -958,7 +958,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         postal_code=booking["de_To_Address_PostalCode"],
                     ).first()
 
-                if fp is None:
+                if fp_zone is None:
                     # Update booking with FP bug
                     with mysqlcon.cursor() as cursor:
                         sql2 = "UPDATE dme_bookings \

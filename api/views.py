@@ -2959,7 +2959,6 @@ def generate_xml(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
-    one_manifest_file = int(body["one_manifest_file"])
 
     if len(booking_ids) == 0:
         return JsonResponse(
@@ -2967,7 +2966,7 @@ def generate_xml(request):
         )
 
     try:
-        booked_list = build_xml(booking_ids, vx_freight_provider, one_manifest_file)
+        booked_list = build_xml(booking_ids, vx_freight_provider, 1)
 
         if len(booked_list) == 0:
             return JsonResponse({"success": "success"})
