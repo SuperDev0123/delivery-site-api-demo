@@ -2973,9 +2973,12 @@ def generate_manifest(request):
         filenames = build_manifest(booking_ids, vx_freight_provider, user_name)
         file_paths = []
 
-        if vx_freight_provider == "TASFR":
+        if vx_freight_provider.upper() == "TASFR":
             for filename in filenames:
                 file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
+        elif vx_freight_provider.upper() == "DHL":
+            for filename in filenames:
+                file_paths.append("/opt/s3_public/pdfs/dhl_au/" + filename)
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
