@@ -4378,6 +4378,13 @@ def build_pdf(booking_ids, vx_freight_provider):
                             [
                                 Paragraph(
                                     "<font size=7>%s</font>"
+                                    % booking["de_to_Phone_Main"],
+                                    style_left,
+                                )
+                            ],
+                            [
+                                Paragraph(
+                                    "<font size=7>%s</font>"
                                     % booking["de_To_Address_Street_1"],
                                     style_left,
                                 )
@@ -4417,7 +4424,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                         t1 = Table(
                             tbl_data,
                             colWidths=(165),
-                            rowHeights=([13, 13, 13, 13, 10, 10]),
+                            rowHeights=([10, 10, 10, 10, 10, 10, 10]),
                             hAlign="LEFT",
                             style=[
                                 ("LEFTPADDING", (0, 0), (-1, -1), 5),
