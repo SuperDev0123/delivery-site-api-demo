@@ -1069,6 +1069,18 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             except FP_carriers.DoesNotExist:
                                 has_error = True
 
+                                # Update booking with FP bug
+                                with mysqlcon.cursor() as cursor:
+                                    sql2 = "UPDATE dme_bookings \
+                                            SET b_error_Capture = %s \
+                                            WHERE id = %s"
+                                    adr2 = (
+                                        "FP_carrier is not matching. Please check FP_zones.",
+                                        booking["id"],
+                                    )
+                                    cursor.execute(sql2, adr2)
+                                    mysqlcon.commit()
+
                             # Update booking while build CSV for DHL
                             with mysqlcon.cursor() as cursor:
                                 sql2 = "UPDATE dme_bookings \
