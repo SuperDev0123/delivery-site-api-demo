@@ -2890,67 +2890,49 @@ def generate_csv(request):
     if len(booking_ids) == 0:
         return JsonResponse({"filename": "", "status": "No bookings to build CSV"})
 
-    csv_name = _generate_csv(booking_ids, vx_freight_provider)
+    has_error = _generate_csv(booking_ids, vx_freight_provider)
 
-    for booking_id in booking_ids:
-        booking = Bookings.objects.get(id=booking_id)
-
-        if vx_freight_provider == "cope":
-            ############################################################################################
-            # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
-            ############################################################################################
-            booking.b_dateBookedDate = get_sydney_now_time()
-            booking.b_status = "Booked"
-            booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
-            booking.save()
-
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            )
-            index = 1
-
-            for booking_line in booking_lines:
-                for i in range(int(booking_line.e_qty)):
-                    api_booking_confirmation_line = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id,
-                        fk_booking_line_id=booking_line.pk_lines_id,
-                        api_item_id=str("COPDME")
-                        + str(booking.b_bookingID_Visual)
-                        + make_3digit(index),
-                        service_provider=booking.vx_freight_provider,
-                        label_code=str("COPDME")
-                        + str(booking.b_bookingID_Visual)
-                        + make_3digit(index),
-                        client_item_reference=booking_line.client_item_reference,
-                    )
-                    api_booking_confirmation_line.save()
-                    index = index + 1
-        elif vx_freight_provider == "dhl":
-            booking.b_dateBookedDate = get_sydney_now_time()
-            booking.save()
-
-    if settings.ENV == "local":
-        file_path = (
-            "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
-        )  # Local (Test Case)
+    if has_error:
+        return JsonResponse({"status": "Failed to create CSV"}, status=400)
     else:
-        if vx_freight_provider == "cope":
-            file_path = (
-                "/home/cope_au/dme_sftp/cope_au/pickup_ext/cope_au/" + csv_name
-            )  # Dev & Prod
-        elif vx_freight_provider == "dhl":
-            file_path = (
-                "/home/cope_au/dme_sftp/cope_au/pickup_ext/dhl_au/" + csv_name
-            )  # Dev & Prod
+        for booking_id in booking_ids:
+            booking = Bookings.objects.get(id=booking_id)
 
-    return JsonResponse({"filename": csv_name, "status": "Created CSV"})
-    if os.path.exists(file_path):
-        return JsonResponse({"filename": csv_name, "status": "Created CSV"})
-        # with open(file_path, 'rb') as fh:
-        #     response = HttpResponse(fh.read(), content_type="text/csv")
-        #     # response['Content-Disposition'] = 'inline; filename=' + csv_name
-        #     response['Content-Disposition'] = 'attachment; filename= "%s"' % csv_name
-        #     return response
+            if vx_freight_provider == "cope":
+                ############################################################################################
+                # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
+                ############################################################################################
+                booking.b_dateBookedDate = get_sydney_now_time()
+                booking.b_status = "Booked"
+                booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
+                booking.save()
+
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+                index = 1
+
+                for booking_line in booking_lines:
+                    for i in range(int(booking_line.e_qty)):
+                        api_booking_confirmation_line = Api_booking_confirmation_lines(
+                            fk_booking_id=booking.pk_booking_id,
+                            fk_booking_line_id=booking_line.pk_lines_id,
+                            api_item_id=str("COPDME")
+                            + str(booking.b_bookingID_Visual)
+                            + make_3digit(index),
+                            service_provider=booking.vx_freight_provider,
+                            label_code=str("COPDME")
+                            + str(booking.b_bookingID_Visual)
+                            + make_3digit(index),
+                            client_item_reference=booking_line.client_item_reference,
+                        )
+                        api_booking_confirmation_line.save()
+                        index = index + 1
+            elif vx_freight_provider == "dhl":
+                booking.b_dateBookedDate = get_sydney_now_time()
+                booking.save()
+
+        return JsonResponse({"status": "Created CSV successfully"}, status=200)
 
 
 @api_view(["POST"])

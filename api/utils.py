@@ -248,6 +248,8 @@ def wrap_in_quote(string):
 
 
 def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
+    has_error = False
+
     if vx_freight_provider == "cope":
         # Write Header
         fileHandler.write(
@@ -959,6 +961,8 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                     ).first()
 
                 if fp_zone is None:
+                    has_error = True
+
                     # Update booking with FP bug
                     with mysqlcon.cursor() as cursor:
                         sql2 = "UPDATE dme_bookings \
@@ -1047,14 +1051,15 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 + fp_carrier.current_value
                             )
 
-                            # Update booking while build CSV for DHL
-                            with mysqlcon.cursor() as cursor:
-                                sql2 = "UPDATE dme_bookings \
-                                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
-                                        WHERE id = %s"
-                                adr2 = (h23, fp_zone.carrier, booking["id"])
-                                cursor.execute(sql2, adr2)
-                                mysqlcon.commit()
+                            if not has_error:
+                                # Update booking while build CSV for DHL
+                                with mysqlcon.cursor() as cursor:
+                                    sql2 = "UPDATE dme_bookings \
+                                            SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
+                                            WHERE id = %s"
+                                    adr2 = (h23, fp_zone.carrier, booking["id"])
+                                    cursor.execute(sql2, adr2)
+                                    mysqlcon.commit()
 
                             h29 = (
                                 h22
@@ -1140,6 +1145,8 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             )
                             fileHandler.write(eachLineText + newLine)
 
+    return has_error
+
 
 def _generate_csv(booking_ids, vx_freight_provider):
     # print('#900 - Running %s' % datetime.datetime.now())
@@ -1189,12 +1196,15 @@ def _generate_csv(booking_ids, vx_freight_provider):
     else:
         f = open("/Users/admin/Documents/" + csv_name, "w")
 
-    csv_write(f, bookings, vx_freight_provider, mysqlcon)
+    has_error = csv_write(f, bookings, vx_freight_provider, mysqlcon)
     f.close()
+
+    if has_error:
+        os.remove(f.name)
 
     # print('#901 - Finished %s' % datetime.datetime.now())
     mysqlcon.close()
-    return csv_name
+    return has_error
 
 
 def get_booked_list(bookings):
