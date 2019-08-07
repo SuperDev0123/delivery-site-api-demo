@@ -1215,7 +1215,7 @@ def _generate_csv(booking_ids, vx_freight_provider):
             + str(len(booking_ids))
             + "__"
             + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
-            + " .csv"
+            + ".csv"
         )
     elif vx_freight_provider == "dhl":
         csv_name = (
@@ -1223,7 +1223,7 @@ def _generate_csv(booking_ids, vx_freight_provider):
             + str(len(booking_ids))
             + "__"
             + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
-            + " .csv"
+            + ".csv"
         )
 
     if production:
