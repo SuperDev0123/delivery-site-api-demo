@@ -3214,7 +3214,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                                         styles["Normal"],
                                     ),
                                     Paragraph(
-                                        '<font size=10 color="white"><b>ROUTE</b></font>',
+                                        '<font size=10 color="white"><b>ROUTE/OTHER</b></font>',
                                         styles["Normal"],
                                     ),
                                 ]
@@ -3321,7 +3321,11 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                                     styles["Normal"],
                                 ),
                                 Paragraph("<font size=6></font>", styles["Normal"]),
-                                Paragraph("<font size=6></font>", styles["Normal"]),
+                                Paragraph(
+                                    "<font size=6>%s</font>"
+                                    % booking["vx_freight_provider_carrier"],
+                                    styles["Normal"],
+                                ),
                             ]
                         ]
                         tbl = Table(
