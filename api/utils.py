@@ -4323,12 +4323,12 @@ def build_pdf(booking_ids, vx_freight_provider):
                         tbl_data = [
                             [
                                 Paragraph(
-                                    "<font size=6>Item:&nbsp;&nbsp;&nbsp;&nbsp; %s - Of - %s</font>"
+                                    "<font size=6>Item:&nbsp;&nbsp; %s - Of - %s</font>"
                                     % (j, totalQty),
                                     style_right,
                                 ),
                                 Paragraph(
-                                    "<font size=6>Date:&nbsp;&nbsp;&nbsp;&nbsp; %s</font>"
+                                    "<font size=6>Date:&nbsp;&nbsp; %s</font>"
                                     % booking["b_dateBookedDate"].strftime("%d/%m/%Y"),
                                     style_left,
                                 ),
