@@ -4322,10 +4322,10 @@ def build_pdf(booking_ids, vx_freight_provider):
 
                         tbl_data = [
                             [
-                                Paragraph("<font size=6>Item:</font>", style_right),
                                 Paragraph(
-                                    "<font size=6>%s - Of - %s</font>" % (j, totalQty),
-                                    style_left,
+                                    "<font size=6>Item:&nbsp;&nbsp;&nbsp;&nbsp; %s - Of - %s</font>"
+                                    % (j, totalQty),
+                                    style_right,
                                 ),
                                 Paragraph(
                                     "<font size=6>Date:&nbsp;&nbsp;&nbsp;&nbsp; %s</font>"
