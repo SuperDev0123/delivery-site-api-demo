@@ -952,7 +952,9 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                     h21 = ""
                 else:
                     h21 = wrap_in_quote(
-                        booking.get("de_to_PickUp_Instructions_Address")
+                        booking.get("de_to_PickUp_Instructions_Address").replace(
+                            ";", " "
+                        )
                     )
 
                 if (
