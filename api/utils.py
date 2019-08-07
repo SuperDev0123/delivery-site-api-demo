@@ -1049,6 +1049,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 h20 = str(booking_line.get("e_qty"))
 
                             h23 = ""
+                            h29 = ""
                             fp_carrier = None
 
                             try:
@@ -1056,6 +1057,14 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 h23 = h22 + str(
                                     fp_carrier.connote_start_value
                                     + fp_carrier.current_value
+                                )
+                                h29 = (
+                                    h22
+                                    + "L00"
+                                    + str(
+                                        fp_carrier.label_start_value
+                                        + fp_carrier.current_value
+                                    )
                                 )
                             except FP_carriers.DoesNotExist:
                                 has_error = True
@@ -1068,15 +1077,6 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 adr2 = (h23, fp_zone.carrier, None, booking["id"])
                                 cursor.execute(sql2, adr2)
                                 mysqlcon.commit()
-
-                            h29 = (
-                                h22
-                                + "L00"
-                                + str(
-                                    fp_carrier.label_start_value
-                                    + fp_carrier.current_value
-                                )
-                            )
 
                             if fp_carrier:
                                 # Update fp_carrier current value
