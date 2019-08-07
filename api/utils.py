@@ -1049,6 +1049,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 h20 = str(booking_line.get("e_qty"))
 
                             h23 = ""
+                            fp_carrier = None
 
                             try:
                                 fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
@@ -1077,9 +1078,10 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 )
                             )
 
-                            # Update fp_carrier current value
-                            fp_carrier.current_value += 1
-                            fp_carrier.save()
+                            if fp_carrier:
+                                # Update fp_carrier current value
+                                fp_carrier.current_value += 1
+                                fp_carrier.save()
 
                             h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
 
