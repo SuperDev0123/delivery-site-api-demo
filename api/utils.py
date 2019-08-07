@@ -1051,16 +1051,6 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 + fp_carrier.current_value
                             )
 
-                            if not has_error:
-                                # Update booking while build CSV for DHL
-                                with mysqlcon.cursor() as cursor:
-                                    sql2 = "UPDATE dme_bookings \
-                                            SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
-                                            WHERE id = %s"
-                                    adr2 = (h23, fp_zone.carrier, booking["id"])
-                                    cursor.execute(sql2, adr2)
-                                    mysqlcon.commit()
-
                             h29 = (
                                 h22
                                 + "L00"
@@ -1144,6 +1134,17 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 + h30
                             )
                             fileHandler.write(eachLineText + newLine)
+
+    if len(bookings) > 0 and not has_error:
+        for booking in bookings:
+            # Update booking while build CSV for DHL
+            with mysqlcon.cursor() as cursor:
+                sql2 = "UPDATE dme_bookings \
+                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s, b_error_Capture = %s \
+                        WHERE id = %s"
+                adr2 = (h23, fp_zone.carrier, None, booking["id"])
+                cursor.execute(sql2, adr2)
+                mysqlcon.commit()
 
     return has_error
 
