@@ -4327,6 +4327,11 @@ def build_pdf(booking_ids, vx_freight_provider):
                                     "<font size=6>%s - Of - %s</font>" % (j, totalQty),
                                     style_left,
                                 ),
+                                Paragraph(
+                                    "<font size=6>Date:&nbsp;&nbsp;&nbsp;&nbsp; %s</font>"
+                                    % booking["b_dateBookedDate"].strftime("%d/%m/%Y"),
+                                    style_left,
+                                ),
                             ],
                             [
                                 Paragraph(
@@ -4368,13 +4373,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                         )
 
                         tbl_data = [
-                            [
-                                Paragraph(
-                                    "<font size=6>Date:&nbsp;&nbsp;&nbsp;&nbsp; %s</font>"
-                                    % booking["b_dateBookedDate"].strftime("%d/%m/%Y"),
-                                    style_left,
-                                )
-                            ],
+                            [Paragraph("<font size=6> </font>", style_left)],
                             [get_barcode_rotated(barcode, 3 * inch)],
                         ]
                         t3 = Table(
