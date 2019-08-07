@@ -933,7 +933,10 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 else:
                     h10 = str(booking.get("de_To_Address_PostalCode"))
 
-                h15 = "receiver_contact"
+                if booking["de_to_Contact_F_LName"] is None:
+                    h15 = ""
+                else:
+                    h15 = str(booking.get("de_to_Contact_F_LName"))
 
                 if booking["de_to_Phone_Main"] is None:
                     h16 = ""
