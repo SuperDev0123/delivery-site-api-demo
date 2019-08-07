@@ -1030,15 +1030,18 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             else:
                                 h14 = str(booking_line.get("e_dimHeight"))
 
-                            if booking_line["e_pallet_type"] is None:
-                                h18 = ""
-                            else:
-                                h18 = str(booking_line.get("e_pallet_type"))
+                            # if booking_line["e_pallet_type"] is None:
+                            #     h18 = ""
+                            # else:
+                            #     h18 = str(booking_line.get("e_pallet_type"))
 
-                            if booking_line["e_type_of_packaging"] is None:
-                                h19 = ""
-                            else:
-                                h19 = str(booking_line.get("e_type_of_packaging"))
+                            # if booking_line["e_type_of_packaging"] is None:
+                            #     h19 = ""
+                            # else:
+                            #     h19 = str(booking_line.get("e_type_of_packaging"))
+
+                            h18 = "PAL"  # Hardcoded
+                            h19 = "Pallet"  # Hardcoded
 
                             if booking_line["e_qty"] is None:
                                 h20 = ""
@@ -1050,6 +1053,15 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 fp_carrier.connote_start_value
                                 + fp_carrier.current_value
                             )
+
+                            # Update booking while build CSV for DHL
+                            with mysqlcon.cursor() as cursor:
+                                sql2 = "UPDATE dme_bookings \
+                                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s, b_error_Capture = %s \
+                                        WHERE id = %s"
+                                adr2 = (h23, fp_zone.carrier, None, booking["id"])
+                                cursor.execute(sql2, adr2)
+                                mysqlcon.commit()
 
                             h29 = (
                                 h22
@@ -1135,14 +1147,14 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             )
                             fileHandler.write(eachLineText + newLine)
 
-    if len(bookings) > 0 and not has_error:
+    if has_error:
         for booking in bookings:
-            # Update booking while build CSV for DHL
+            # Clear booking updates
             with mysqlcon.cursor() as cursor:
                 sql2 = "UPDATE dme_bookings \
-                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s, b_error_Capture = %s \
+                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
                         WHERE id = %s"
-                adr2 = (h23, fp_zone.carrier, None, booking["id"])
+                adr2 = (None, None, booking["id"])
                 cursor.execute(sql2, adr2)
                 mysqlcon.commit()
 
