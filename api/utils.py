@@ -1048,11 +1048,16 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                             else:
                                 h20 = str(booking_line.get("e_qty"))
 
-                            fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
-                            h23 = h22 + str(
-                                fp_carrier.connote_start_value
-                                + fp_carrier.current_value
-                            )
+                            h23 = ""
+
+                            try:
+                                fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
+                                h23 = h22 + str(
+                                    fp_carrier.connote_start_value
+                                    + fp_carrier.current_value
+                                )
+                            except FP_carriers.DoesNotExist:
+                                has_error = True
 
                             # Update booking while build CSV for DHL
                             with mysqlcon.cursor() as cursor:
