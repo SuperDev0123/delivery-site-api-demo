@@ -3578,6 +3578,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
         doc.build(Story)
         file.close()
 
+        # Add Manifest Log
         sql = "INSERT INTO `dme_manifest_log` \
             (`manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdTimeStamp`, \
             `z_modifiedTimeStamp`, `z_createdByAccount`) \
@@ -3595,6 +3596,21 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
             ),
         )
         mysqlcon.commit()
+
+        # Update Booking's manifest id
+        sql = "SELECT * FROM `dme_manifest_log` \
+            WHERE manifest_url=%s"
+        mycursor.execute(sql, (filename))
+        manifest_log = mysqlcon.fetchone()
+
+        for booking in booknigs:
+            sql = "UPDATE `dme_manifest_log` \
+            set `fk_manifest_id`=%s, `z_modifiedTimeStamp`=%s \
+            WHERE id=%s"
+            mycursor.execute(
+                sql, (manifest_log["id"], str(datetime.utcnow()), booking["id"])
+            )
+            mysqlcon.commit()
 
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)

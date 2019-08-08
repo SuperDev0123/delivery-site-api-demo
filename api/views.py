@@ -588,6 +588,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                     "b_client_name": booking.b_client_name,
                     "check_pod": booking.check_pod,
+                    "fk_manifest_id": booking.fk_manifest_id,
                 }
             )
 
