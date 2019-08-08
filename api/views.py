@@ -1214,6 +1214,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "v_vehicle_Type": booking.v_vehicle_Type,
                         "inv_billing_status": booking.inv_billing_status,
                         "inv_billing_status_note": booking.inv_billing_status_note,
+                        "b_client_sales_inv_num": booking.b_client_sales_inv_num,
                     }
                     return JsonResponse(
                         {
