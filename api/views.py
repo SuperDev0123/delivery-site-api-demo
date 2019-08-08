@@ -2930,6 +2930,7 @@ def generate_csv(request):
                         index = index + 1
             elif vx_freight_provider == "dhl":
                 booking.b_dateBookedDate = get_sydney_now_time()
+                booking.b_status = "Booked"
                 booking.save()
 
         return JsonResponse({"status": "Created CSV successfully"}, status=200)
