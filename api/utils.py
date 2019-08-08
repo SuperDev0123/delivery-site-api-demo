@@ -3601,7 +3601,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
         sql = "SELECT * FROM `dme_manifest_log` \
             WHERE manifest_url=%s"
         mycursor.execute(sql, (filename))
-        manifest_log = mysqlcon.fetchone()
+        manifest_log = mycursor.fetchone()
 
         for booking in booknigs:
             sql = "UPDATE `dme_manifest_log` \
