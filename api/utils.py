@@ -3604,8 +3604,8 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
         manifest_log = mycursor.fetchone()
 
         for booking in bookings:
-            sql = "UPDATE `dme_manifest_log` \
-            set `fk_manifest`=%s, `z_modifiedTimeStamp`=%s \
+            sql = "UPDATE `dme_bookings` \
+            set `fk_manifest`=%s, `z_ModifiedTimestamp`=%s \
             WHERE id=%s"
             mycursor.execute(
                 sql, (manifest_log["id"], str(datetime.utcnow()), booking["id"])
