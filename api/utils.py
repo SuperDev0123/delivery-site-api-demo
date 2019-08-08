@@ -3074,17 +3074,12 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                                 ],
                                 [
                                     Paragraph(
-                                        "<font size=8><b>Accounts:</b></font>",
-                                        styles["BodyText"],
+                                        "<font size=8></font>", styles["BodyText"]
                                     ),
                                     Paragraph(
-                                        "<font size=8>%s</font>" % senderName,
-                                        styles["BodyText"],
+                                        "<font size=8></font>", styles["BodyText"]
                                     ),
-                                ]
-                                # [Paragraph('<font size=8><b>Total Qty:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' %  str(ent_qty), styles["BodyText"])],
-                                # [Paragraph('<font size=8><b>Total Kgs:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str("{0:.2f}".format(ent_weight)), styles["BodyText"])],
-                                # [Paragraph('<font size=8><b>Total VOL:</b></font>', styles["BodyText"]), Paragraph('<font size=8>%s</font>' % str(ent_vol), styles["BodyText"])],
+                                ],
                             ]
                             t1 = Table(
                                 tbl_data,
@@ -3100,7 +3095,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                                 ],
                             )
 
-                            tbl_data = [[barcode128]]
+                            tbl_data = [[" "]]
                             t2 = Table(
                                 tbl_data,
                                 colWidths=(127 * mm),
