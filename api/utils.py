@@ -3747,9 +3747,11 @@ def build_pdf(booking_ids, vx_freight_provider):
                 filename = (
                     booking["pu_Address_State"]
                     + "_"
-                    + str(booking["pk_booking_id"])
+                    + str(booking["b_client_sales_inv_num"])
                     + "_"
-                    + "DME_"
+                    + str(booking["v_FPBookingNumber"])
+                    + "_"
+                    + "DME"
                     + str(booking["b_bookingID_Visual"])
                     + ".pdf"
                 )
@@ -4238,7 +4240,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                 filename = (
                     booking["pu_Address_State"]
                     + "_"
-                    + str(booking["pk_booking_id"])
+                    + str(booking["b_client_sales_inv_num"])
+                    + "_"
+                    + str(booking["v_FPBookingNumber"])
                     + "_"
                     + "DME"
                     + str(booking["b_bookingID_Visual"])
