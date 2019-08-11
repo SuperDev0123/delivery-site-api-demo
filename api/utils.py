@@ -1858,7 +1858,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mysqlcon.commit()
                 except Exception as e:
                     logger.error(f"@300 TAS XML - {e}")
-                    # print("@300 TAS XML - ", e)
                     return e
         elif one_manifest_file == 1:
             try:
@@ -2176,7 +2175,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mysqlcon.commit()
             except Exception as e:
                 logger.error(f"@301 TAS XML - {e}")
-                # print("@301 TAS XML - ", e)
                 return e
 
     mysqlcon.close()
@@ -2881,9 +2879,6 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    # print(dir(exc_type), fname, exc_tb.tb_lineno)
-                    # print("Error: unable to fecth data")
-                    # print("Error1: " + str(e))
                     logger.error(f"ERROR @303 - {str(e)}")
 
             k += 1
@@ -3618,7 +3613,6 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
 
 
 def myFirstPage(canvas, doc):
-    print(canvas)
     canvas.saveState()
     canvas.rotate(180)
     canvas.restoreState()
@@ -3645,8 +3639,6 @@ def get_barcode_rotated(
     drawing_width = 2.5 * inch
     barcode_scale = drawing_width / barcode.width
     drawing_height = barcode.height * barcode_scale
-
-    print(drawing_width, drawing_height)
 
     drawing = Drawing(drawing_width, drawing_height)
     drawing.scale(barcode_scale, barcode_scale)
