@@ -3569,9 +3569,6 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    # print(dir(exc_type), fname, exc_tb.tb_lineno)
-                    # print("Error: unable to fecth data")
-                    # print("Error1: " + str(e))
                     logger.error(f"ERROR @303 - {str(e)}")
 
             k += 1
@@ -4199,8 +4196,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            # print(dir(exc_type), fname, exc_tb.tb_lineno)
-            # print("#505 Error: " + str(e))
+            logger.error(f"#505 Error: - {e}")
     elif vx_freight_provider.upper() == "DHL":
         try:
             bookings = get_available_bookings(mysqlcon, booking_ids)
@@ -4584,8 +4580,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            # print(dir(exc_type), fname, exc_tb.tb_lineno)
-            print("#506 Error1: " + str(e))
+            logger.error(f"#506 Error: - {e}")
     mysqlcon.close()
     return i - 1
 
