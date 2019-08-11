@@ -525,7 +525,10 @@ class BookingsViewSet(viewsets.ViewSet):
             if sort_field is None:
                 queryset = queryset.order_by("id")
             else:
-                queryset = queryset.order_by(sort_field)
+                if sort_field == "z_pod_url":
+                    queryset = queryset.order_by(sort_field, "z_pod_signed_url")
+                else:
+                    queryset = queryset.order_by(sort_field)
 
         # Count
         bookings_cnt = queryset.count()
