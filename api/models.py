@@ -1264,6 +1264,9 @@ class Bookings(models.Model):
     fk_manifest = models.ForeignKey(
         Dme_manifest_log, on_delete=models.CASCADE, default=None, null=True
     )
+    b_is_flagged_add_on_services = models.BooleanField(
+        default=False, blank=True, null=True
+    )
 
     class Meta:
         db_table = "dme_bookings"

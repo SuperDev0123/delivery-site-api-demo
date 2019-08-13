@@ -633,6 +633,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_client_name": booking.b_client_name,
                     "check_pod": booking.check_pod,
                     "fk_manifest_id": booking.fk_manifest_id,
+                    "b_is_flagged_add_on_services": booking.b_is_flagged_add_on_services,
                 }
             )
 
@@ -668,40 +669,52 @@ class BookingsViewSet(viewsets.ViewSet):
         booking_ids = request.data["bookingIds"]
 
         try:
-            for booking_id in booking_ids:
-                booking = Bookings.objects.get(pk=booking_id)
+            if "flag_add_on_services" in status:
+                print("@1 - ", status)
+                for booking_id in booking_ids:
+                    booking = Bookings.objects.get(pk=booking_id)
+                    booking.b_is_flagged_add_on_services = (
+                        1 if status == "flag_add_on_services" else 0
+                    )
+                    print("@2 - ", booking.id, booking.b_is_flagged_add_on_services)
+                    booking.save()
+                    return JsonResponse({"status": "success"})
+            else:
+                for booking_id in booking_ids:
+                    booking = Bookings.objects.get(pk=booking_id)
 
-                # Create new status_history
-                dme_status_history = Dme_status_history(
-                    fk_booking_id=booking.pk_booking_id
-                )
-                dme_status_history.status_old = booking.b_status
-                dme_status_history.notes = (
-                    str(booking.b_status) + " ---> " + str(status)
-                )
-                dme_status_history.status_last = status
-                dme_status_history.event_time_stamp = datetime.now()
-                dme_status_history.recipient_name = ""
-                dme_status_history.status_update_via = ""
-                dme_status_history.z_createdByAccount = request.user.username
-                dme_status_history.save()
-
-                # When new status is `Collected`
-                if status == "Collected":
-                    booking_lines = Booking_lines.objects.filter(
+                    # Create new status_history
+                    dme_status_history = Dme_status_history(
                         fk_booking_id=booking.pk_booking_id
                     )
-                    for booking_line in booking_lines:
-                        booking_line.e_qty_collected = (
-                            booking_line.e_qty - booking_line.e_qty_awaiting_inventory
-                        )
-                        booking_line.save()
+                    dme_status_history.status_old = booking.b_status
+                    dme_status_history.notes = (
+                        str(booking.b_status) + " ---> " + str(status)
+                    )
+                    dme_status_history.status_last = status
+                    dme_status_history.event_time_stamp = datetime.now()
+                    dme_status_history.recipient_name = ""
+                    dme_status_history.status_update_via = ""
+                    dme_status_history.z_createdByAccount = request.user.username
+                    dme_status_history.save()
 
-                booking.b_status = status
-                booking.save()
-            return JsonResponse({"status": "success"})
+                    # When new status is `Collected`
+                    if status == "Collected":
+                        booking_lines = Booking_lines.objects.filter(
+                            fk_booking_id=booking.pk_booking_id
+                        )
+                        for booking_line in booking_lines:
+                            booking_line.e_qty_collected = (
+                                booking_line.e_qty
+                                - booking_line.e_qty_awaiting_inventory
+                            )
+                            booking_line.save()
+
+                    booking.b_status = status
+                    booking.save()
+                return JsonResponse({"status": "success"})
         except Exception as e:
-            # print('Exception: ', e)
+            print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["get"])
