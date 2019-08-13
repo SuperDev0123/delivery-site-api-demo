@@ -3084,3 +3084,21 @@ class FP_carriers(models.Model):
 
     class Meta:
         db_table = "fp_carriers"
+
+
+class FP_label_scans(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+    label_code = models.CharField(max_length=32, blank=True, null=True, default=None)
+    client_item_reference = models.CharField(
+        max_length=32, blank=True, null=True, default=None
+    )
+    scanned_date = models.DateField(blank=True, null=True, default=None)
+    scanned_time = models.TimeField(blank=True, null=True, default=None)
+    scanned_by = models.CharField(max_length=32, blank=True, null=True, default=None)
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "fp_label_scans"
