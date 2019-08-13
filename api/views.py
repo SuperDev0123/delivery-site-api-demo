@@ -19,6 +19,7 @@ from datetime import datetime, date, timedelta
 from time import gmtime, strftime
 from django.utils import timezone
 from ast import literal_eval
+from functools import reduce
 from pydash import _
 import pytz
 import os
@@ -28,6 +29,7 @@ import zipfile
 import uuid
 import time
 import logging
+import operator
 
 from .serializers import *
 from .models import *
@@ -454,32 +456,71 @@ class BookingsViewSet(viewsets.ViewSet):
 
             # Simple search & Column fitler
             if len(simple_search_keyword) > 0:
-                queryset = queryset.filter(
-                    Q(b_bookingID_Visual__icontains=simple_search_keyword)
-                    | Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword)
-                    | Q(puCompany__icontains=simple_search_keyword)
-                    | Q(pu_Address_Suburb__icontains=simple_search_keyword)
-                    | Q(pu_Address_State__icontains=simple_search_keyword)
-                    | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
-                    | Q(deToCompanyName__icontains=simple_search_keyword)
-                    | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
-                    | Q(de_To_Address_State__icontains=simple_search_keyword)
-                    | Q(de_To_Address_PostalCode__icontains=simple_search_keyword)
-                    | Q(b_clientReference_RA_Numbers__icontains=simple_search_keyword)
-                    | Q(vx_freight_provider__icontains=simple_search_keyword)
-                    | Q(vx_serviceName__icontains=simple_search_keyword)
-                    | Q(v_FPBookingNumber__icontains=simple_search_keyword)
-                    | Q(b_status__icontains=simple_search_keyword)
-                    | Q(b_status_API__icontains=simple_search_keyword)
-                    | Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword)
-                    | Q(
-                        s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
+                if (
+                    not "&" in simple_search_keyword
+                    and not "|" in simple_search_keyword
+                ):
+                    queryset = queryset.filter(
+                        Q(b_bookingID_Visual__icontains=simple_search_keyword)
+                        | Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword)
+                        | Q(puCompany__icontains=simple_search_keyword)
+                        | Q(pu_Address_Suburb__icontains=simple_search_keyword)
+                        | Q(pu_Address_State__icontains=simple_search_keyword)
+                        | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
+                        | Q(deToCompanyName__icontains=simple_search_keyword)
+                        | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
+                        | Q(de_To_Address_State__icontains=simple_search_keyword)
+                        | Q(de_To_Address_PostalCode__icontains=simple_search_keyword)
+                        | Q(
+                            b_clientReference_RA_Numbers__icontains=simple_search_keyword
+                        )
+                        | Q(vx_freight_provider__icontains=simple_search_keyword)
+                        | Q(vx_serviceName__icontains=simple_search_keyword)
+                        | Q(v_FPBookingNumber__icontains=simple_search_keyword)
+                        | Q(b_status__icontains=simple_search_keyword)
+                        | Q(b_status_API__icontains=simple_search_keyword)
+                        | Q(
+                            s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
+                        )
+                        | Q(
+                            s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
+                        )
+                        | Q(
+                            s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword
+                        )
+                        | Q(
+                            s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword
+                        )
+                        | Q(b_client_sales_inv_num__icontains=simple_search_keyword)
+                        | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
+                        | Q(
+                            de_to_PickUp_Instructions_Address__icontains=simple_search_keyword
+                        )
                     )
-                    | Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword)
-                    | Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword)
-                    | Q(b_client_sales_inv_num__icontains=simple_search_keyword)
-                    | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
-                )
+                else:
+                    if "&" in simple_search_keyword:
+                        search_keywords = simple_search_keyword.split("&")
+
+                        for search_keyword in search_keywords:
+                            search_keyword = search_keyword.replace(" ", "").lower()
+
+                            if len(search_keyword) > 0:
+                                queryset = queryset.filter(
+                                    de_to_PickUp_Instructions_Address__icontains=search_keyword
+                                )
+                    elif "|" in simple_search_keyword:
+                        search_keywords = simple_search_keyword.split("|")
+
+                        for index, search_keyword in enumerate(search_keywords):
+                            search_keywords[index] = search_keyword.replace(
+                                " ", ""
+                            ).lower()
+
+                        list_of_Q = [
+                            Q(**{"de_to_PickUp_Instructions_Address__icontains": val})
+                            for val in search_keywords
+                        ]
+                        queryset = queryset.filter(reduce(operator.or_, list_of_Q))
             else:
                 queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
