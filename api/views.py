@@ -390,7 +390,11 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
             queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
-        if "new" in download_option or "check_pod" in download_option:
+        if (
+            "new" in download_option
+            or "check_pod" in download_option
+            or "flagged" in download_option
+        ):
             # New POD filter
             if download_option == "new_pod":
                 queryset = queryset.filter(
