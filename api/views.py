@@ -431,6 +431,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     .order_by("-check_pod")
                 )
 
+            # Flagged
+            if download_option == "flagged":
+                queryset = queryset.filter(b_is_flagged_add_on_services=True)
+
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
         else:
