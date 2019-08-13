@@ -670,15 +670,13 @@ class BookingsViewSet(viewsets.ViewSet):
 
         try:
             if "flag_add_on_services" in status:
-                print("@1 - ", status)
                 for booking_id in booking_ids:
                     booking = Bookings.objects.get(pk=booking_id)
                     booking.b_is_flagged_add_on_services = (
                         1 if status == "flag_add_on_services" else 0
                     )
-                    print("@2 - ", booking.id, booking.b_is_flagged_add_on_services)
                     booking.save()
-                    return JsonResponse({"status": "success"})
+                return JsonResponse({"status": "success"})
             else:
                 for booking_id in booking_ids:
                     booking = Bookings.objects.get(pk=booking_id)
