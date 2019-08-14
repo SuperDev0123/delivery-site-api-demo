@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 from .views import *
 from .views_api import *
+from .views_external_apis import *
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet, basename="user")
@@ -56,4 +57,6 @@ urlpatterns += [
     url(r"^pricing_allied/", pricing_allied),
     url(r"^suburb/", getSuburbs),
     url(r"^attachments/", getAttachmentsHistory),
+    # External apis
+    url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
 ]
