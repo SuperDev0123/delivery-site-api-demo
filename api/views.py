@@ -642,6 +642,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "check_pod": booking.check_pod,
                     "fk_manifest_id": booking.fk_manifest_id,
                     "b_is_flagged_add_on_services": booking.b_is_flagged_add_on_services,
+                    "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
                 }
             )
 
