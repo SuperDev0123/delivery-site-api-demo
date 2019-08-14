@@ -1924,12 +1924,8 @@ class BOK_1_headers(models.Model):
     b_100_client_price_paid_or_quoted = models.FloatField(
         max_length=64, blank=True, null=True, default=0
     )
-    b_000_3_consignment_nuumber = models.CharField(
-        verbose_name=_("FP Booking Number"),
-        max_length=32,
-        blank=True,
-        null=True,
-        default="",
+    b_000_3_consignment_number = models.CharField(
+        max_length=32, blank=True, null=True, default=""
     )
     z_test = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default="")
