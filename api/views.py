@@ -2949,14 +2949,18 @@ def download_connote(request):
 def generate_csv(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
-    vx_freight_provider = body["vx_freight_provider"]
+    vx_freight_provider = body.get("vx_freight_provider", None)
     file_paths = []
     label_names = []
 
     if len(booking_ids) == 0:
         return JsonResponse({"filename": "", "status": "No bookings to build CSV"})
 
-    has_error = _generate_csv(booking_ids, vx_freight_provider)
+    if not vx_freight_provider:
+        vx_freight_provider = Bookings.objects.get(
+            id=booking_ids[0]
+        ).vx_freight_provider
+        has_error = _generate_csv(booking_ids, vx_freight_provider)
 
     if has_error:
         return JsonResponse({"status": "Failed to create CSV"}, status=400)
