@@ -2960,7 +2960,7 @@ def generate_csv(request):
         vx_freight_provider = Bookings.objects.get(
             id=booking_ids[0]
         ).vx_freight_provider
-        has_error = _generate_csv(booking_ids, vx_freight_provider)
+        has_error = _generate_csv(booking_ids, vx_freight_provider.lower())
 
     if has_error:
         return JsonResponse({"status": "Failed to create CSV"}, status=400)
