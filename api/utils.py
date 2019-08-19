@@ -865,7 +865,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
     elif vx_freight_provider == "dhl":
         # Write Header
         fileHandler.write(
-            "unique_identifier, sinv_number, ref1, ref2, receiver_name, receiver_address1, receiver_address2, receiver_address3, receiver_address4, receiver_locality, receiver_state, \
+            "unique_identifier, ref1, ref2(sinv), receiver_name, receiver_address1, receiver_address2, receiver_address3, receiver_address4, receiver_locality, receiver_state, \
             receiver_postcode, weight, length, width, height, receiver_contact, receiver_phone_no, receiver_email, pack_unit_code, pack_unit_description, \
             items, special_instructions, consignment_prefix, consignment_number, transporter_code, service_code, sender_code, sender_warehouse_code, freight_payer, freight_label_number, \
             barcode\n"
@@ -890,17 +890,15 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 else:
                     h00 = str(booking.get("b_client_order_num"))
 
-                if booking["b_client_sales_inv_num"] is None:
-                    h01 = ""
-                else:
-                    h01 = str(booking.get("b_client_sales_inv_num"))
-
                 if booking["b_clientReference_RA_Numbers"] is None:
                     h02 = ""
                 else:
                     h02 = str(booking.get("b_clientReference_RA_Numbers"))
 
-                h03 = "ref2"
+                if booking["b_client_sales_inv_num"] is None:
+                    h03 = ""
+                else:
+                    h03 = str(booking.get("b_client_sales_inv_num"))
 
                 if booking["deToCompanyName"] is None:
                     h04 = ""
@@ -1109,8 +1107,6 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
 
                             eachLineText += (
                                 h00
-                                + comma
-                                + h01
                                 + comma
                                 + h02
                                 + comma
