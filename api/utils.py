@@ -865,12 +865,9 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
     elif vx_freight_provider == "dhl":
         # Write Header
         fileHandler.write(
-            "unique_identifier, ref1, ref2, receiver_name, receiver_address1, \
-            receiver_address2, receiver_address3, receiver_address4, receiver_locality, receiver_state, \
-            receiver_postcode, weight, length, width, height, \
-            receiver_contact, receiver_phone_no, receiver_email, pack_unit_code, pack_unit_description, \
-            items, special_instructions, consignment_prefix, consignment_number, transporter_code, \
-            service_code, sender_code, sender_warehouse_code, freight_payer, freight_label_number, \
+            "unique_identifier, sinv_number, ref1, ref2, receiver_name, receiver_address1, receiver_address2, receiver_address3, receiver_address4, receiver_locality, receiver_state, \
+            receiver_postcode, weight, length, width, height, receiver_contact, receiver_phone_no, receiver_email, pack_unit_code, pack_unit_description, \
+            items, special_instructions, consignment_prefix, consignment_number, transporter_code, service_code, sender_code, sender_warehouse_code, freight_payer, freight_label_number, \
             barcode\n"
         )
 
@@ -893,65 +890,70 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 else:
                     h00 = str(booking.get("b_client_order_num"))
 
-                if booking["b_clientReference_RA_Numbers"] is None:
+                if booking["b_client_sales_inv_num"] is None:
                     h01 = ""
                 else:
-                    h01 = str(booking.get("b_clientReference_RA_Numbers"))
+                    h01 = str(booking.get("b_client_sales_inv_num"))
 
-                h02 = "ref2"
+                if booking["b_clientReference_RA_Numbers"] is None:
+                    h02 = ""
+                else:
+                    h02 = str(booking.get("b_clientReference_RA_Numbers"))
+
+                h03 = "ref2"
 
                 if booking["deToCompanyName"] is None:
-                    h03 = ""
-                else:
-                    h03 = str(booking.get("deToCompanyName"))
-
-                if booking["de_To_Address_Street_1"] is None:
                     h04 = ""
                 else:
-                    h04 = str(booking.get("de_To_Address_Street_1"))
+                    h04 = str(booking.get("deToCompanyName"))
 
-                if booking["de_To_Address_Street_2"] is None:
+                if booking["de_To_Address_Street_1"] is None:
                     h05 = ""
                 else:
-                    h05 = str(booking.get("de_To_Address_Street_2"))
+                    h05 = str(booking.get("de_To_Address_Street_1"))
 
-                h06 = ""
+                if booking["de_To_Address_Street_2"] is None:
+                    h06 = ""
+                else:
+                    h06 = str(booking.get("de_To_Address_Street_2"))
+
                 h07 = ""
+                h08 = ""
 
                 if booking["de_To_Address_Suburb"] is None:
-                    h08 = ""
-                else:
-                    h08 = str(booking.get("de_To_Address_Suburb"))
-
-                if booking["de_To_Address_State"] is None:
                     h09 = ""
                 else:
-                    h09 = str(booking.get("de_To_Address_State"))
+                    h09 = str(booking.get("de_To_Address_Suburb"))
 
-                if booking["de_To_Address_PostalCode"] is None:
+                if booking["de_To_Address_State"] is None:
                     h10 = ""
                 else:
-                    h10 = str(booking.get("de_To_Address_PostalCode"))
+                    h10 = str(booking.get("de_To_Address_State"))
+
+                if booking["de_To_Address_PostalCode"] is None:
+                    h11 = ""
+                else:
+                    h11 = str(booking.get("de_To_Address_PostalCode"))
 
                 if booking["de_to_Contact_F_LName"] is None:
-                    h15 = ""
-                else:
-                    h15 = str(booking.get("de_to_Contact_F_LName"))
-
-                if booking["de_to_Phone_Main"] is None:
                     h16 = ""
                 else:
-                    h16 = str(booking.get("de_to_Phone_Main"))
+                    h16 = str(booking.get("de_to_Contact_F_LName"))
 
-                if booking["de_Email"] is None:
+                if booking["de_to_Phone_Main"] is None:
                     h17 = ""
                 else:
-                    h17 = str(booking.get("de_Email"))
+                    h17 = str(booking.get("de_to_Phone_Main"))
+
+                if booking["de_Email"] is None:
+                    h18 = ""
+                else:
+                    h18 = str(booking.get("de_Email"))
 
                 if booking["de_to_PickUp_Instructions_Address"] is None:
-                    h21 = ""
+                    h22 = ""
                 else:
-                    h21 = wrap_in_quote(
+                    h22 = wrap_in_quote(
                         booking.get("de_to_PickUp_Instructions_Address").replace(
                             ";", " "
                         )
@@ -984,18 +986,18 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                         cursor.execute(sql2, adr2)
                         mysqlcon.commit()
                 else:
-                    h22 = "DMS" if fp_zone.carrier == "DHLSFS" else "DMB"
+                    h23 = "DMS" if fp_zone.carrier == "DHLSFS" else "DMB"
 
-                    h24 = fp_zone.carrier
-                    h25 = fp_zone.service
-                    h26 = fp_zone.sender_code
-                    h27 = "OWNSITE"  # HARDCODED - "sender_warehouse_code"
-                    h28 = "S"
+                    h25 = fp_zone.carrier
+                    h26 = fp_zone.service
+                    h27 = fp_zone.sender_code
+                    h28 = "OWNSITE"  # HARDCODED - "sender_warehouse_code"
+                    h29 = "S"
 
                     if len(booking_lines) > 0:
                         for booking_line in booking_lines:
                             eachLineText = ""
-                            h11 = ""
+                            h12 = ""
                             if (
                                 booking_line["e_weightUOM"] is not None
                                 and booking_line["e_weightPerEach"] is not None
@@ -1004,7 +1006,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     booking_line["e_weightUOM"].upper() == "GRAM"
                                     or booking_line["e_weightUOM"].upper() == "GRAMS"
                                 ):
-                                    h11 = str(
+                                    h12 = str(
                                         booking_line["e_qty"]
                                         * booking_line["e_weightPerEach"]
                                         / 1000
@@ -1013,62 +1015,62 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     booking_line["e_weightUOM"].upper() == "TON"
                                     or booking_line["e_weightUOM"].upper() == "TONS"
                                 ):
-                                    h11 = str(
+                                    h12 = str(
                                         booking_line["e_qty"]
                                         * booking_line["e_weightPerEach"]
                                         * 1000
                                     )
                                 else:
-                                    h11 = str(
+                                    h12 = str(
                                         booking_line["e_qty"]
                                         * booking_line["e_weightPerEach"]
                                     )
 
                             if booking_line["e_dimLength"] is None:
-                                h12 = ""
-                            else:
-                                h12 = str(booking_line.get("e_dimLength"))
-
-                            if booking_line["e_dimWidth"] is None:
                                 h13 = ""
                             else:
-                                h13 = str(booking_line.get("e_dimWidth"))
+                                h13 = str(booking_line.get("e_dimLength"))
 
-                            if booking_line["e_dimHeight"] is None:
+                            if booking_line["e_dimWidth"] is None:
                                 h14 = ""
                             else:
-                                h14 = str(booking_line.get("e_dimHeight"))
+                                h14 = str(booking_line.get("e_dimWidth"))
+
+                            if booking_line["e_dimHeight"] is None:
+                                h15 = ""
+                            else:
+                                h15 = str(booking_line.get("e_dimHeight"))
 
                             # if booking_line["e_pallet_type"] is None:
-                            #     h18 = ""
-                            # else:
-                            #     h18 = str(booking_line.get("e_pallet_type"))
-
-                            # if booking_line["e_type_of_packaging"] is None:
                             #     h19 = ""
                             # else:
-                            #     h19 = str(booking_line.get("e_type_of_packaging"))
+                            #     h19 = str(booking_line.get("e_pallet_type"))
 
-                            h18 = "PAL"  # Hardcoded
-                            h19 = "Pallet"  # Hardcoded
+                            # if booking_line["e_type_of_packaging"] is None:
+                            #     h20 = ""
+                            # else:
+                            #     h20 = str(booking_line.get("e_type_of_packaging"))
+
+                            h19 = "PAL"  # Hardcoded
+                            h20 = "Pallet"  # Hardcoded
 
                             if booking_line["e_qty"] is None:
-                                h20 = ""
+                                h21 = ""
                             else:
-                                h20 = str(booking_line.get("e_qty"))
+                                h21 = str(booking_line.get("e_qty"))
 
-                            h23 = ""
-                            h29 = ""
+                            h24 = ""
+                            h30 = ""
                             fp_carrier = None
 
                             try:
                                 fp_carrier = fp_carriers.get(carrier=fp_zone.carrier)
-                                h23 = h22 + str(
+                                h24 = h23 + str(
                                     fp_carrier.connote_start_value
                                     + fp_carrier.current_value
                                 )
-                                h29 = (
-                                    h22
+                                h30 = (
+                                    h23
                                     + "L00"
                                     + str(
                                         fp_carrier.label_start_value
@@ -1103,7 +1105,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     cursor.execute(sql2, adr2)
                                     mysqlcon.commit()
 
-                            h30 = h23 + h29 + booking["de_To_Address_PostalCode"]
+                            h31 = h24 + h30 + booking["de_To_Address_PostalCode"]
 
                             eachLineText += (
                                 h00
@@ -1169,9 +1171,9 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 + h28
                                 + comma
                                 + h29
-                                + comma
-                                + h30
                             )
+                            eachLineText += comma + h30 + comma + h31
+
                             fileHandler.write(eachLineText + newLine)
 
     if has_error:
@@ -1225,7 +1227,7 @@ def _generate_csv(booking_ids, vx_freight_provider):
             + str(len(booking_ids))
             + "__"
             + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
-            + ".csv"
+            + ".csv_"
         )
 
     if production:
