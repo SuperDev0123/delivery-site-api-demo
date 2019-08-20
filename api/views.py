@@ -721,7 +721,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["get"])
@@ -1550,7 +1550,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 {"success": "All bookings e_qty_collected has been calculated"}
             )
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return JsonResponse({"error": "Got error, please contact support center"})
 
 
@@ -3068,7 +3068,7 @@ def generate_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
-        print("generate_mainifest error: ", e)
+        # print("generate_mainifest error: ", e)
         return JsonResponse({"error": "error"})
 
 
