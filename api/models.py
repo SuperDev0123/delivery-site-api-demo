@@ -134,6 +134,7 @@ class Client_warehouses(models.Model):
     client_warehouse_code = models.CharField(
         verbose_name=_("warehouse code"), max_length=100, blank=True, null=True
     )
+    success_type = models.IntegerField(default=0)
 
     class Meta:
         db_table = "dme_client_warehouses"
