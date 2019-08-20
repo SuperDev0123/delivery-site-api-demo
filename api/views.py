@@ -3001,6 +3001,7 @@ def generate_csv(request):
                         index = index + 1
             elif vx_freight_provider == "dhl":
                 booking.b_dateBookedDate = get_sydney_now_time()
+                booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 booking.b_status = "Booked"
                 booking.save()
 

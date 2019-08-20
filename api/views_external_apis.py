@@ -27,7 +27,12 @@ def get_booking_status_by_consignment(request):
         try:
             booking = Bookings.objects.get(v_FPBookingNumber=v_FPBookingNumber)
             return JsonResponse(
-                {"status": "success", "b_status": booking.b_status}, status=200
+                {
+                    "status": "success",
+                    "b_status": booking.b_status_API,
+                    "z_lastStatusAPI_ProcessedTimeStamp": booking.z_lastStatusAPI_ProcessedTimeStamp,
+                },
+                status=200,
             )
         except Bookings.DoesNotExist:
             return JsonResponse(
