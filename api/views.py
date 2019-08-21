@@ -1422,7 +1422,8 @@ class BookingViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def manual_book(self, request, format=None):
-        id = request.POST.get("id", None)
+        body = literal_eval(request.body.decode("utf8"))
+        id = body["id"]
         user_id = request.user.id
 
         dme_employee = (
