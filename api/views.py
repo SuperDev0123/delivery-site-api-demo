@@ -1432,14 +1432,13 @@ class BookingViewSet(viewsets.ViewSet):
 
         if dme_employee is None:
             user_type = "CLIENT"
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        print("@1 - ", id)
         booking = Bookings.objects.get(id=id)
         booking.b_status = "Booked"
         booking.b_dateBookedDate = datetime.now()
         booking.save()
-        return Response(booking, status=status.HTTP_201_CREATED)
+        return Response(BookingSerializer(data=booking), status=status.HTTP_201_CREATED)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
