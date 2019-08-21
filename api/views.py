@@ -1437,10 +1437,12 @@ class BookingViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(id=id)
         booking.b_status = "Booked"
         booking.b_dateBookedDate = datetime.now()
-        booking.save()
-        return Response(
-            BookingSerializer(data=booking).data, status=status.HTTP_201_CREATED
-        )
+        serializer = BookingSerializer(data=booking).data
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
