@@ -1437,7 +1437,7 @@ class BookingViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(id=id)
         booking.b_status = "Booked"
         booking.b_dateBookedDate = datetime.now()
-        serializer = BookingSerializer(data=booking)
+        serializer = BookingSerializer(booking)
 
         if serializer.is_valid():
             serializer.save()
