@@ -4240,7 +4240,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                 date = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
                 doc = SimpleDocTemplate(
                     local_filepath + filename,
-                    pagesize=(5 * inch, 3 * inch),
+                    pagesize=(6 * inch, 4 * inch),
                     rightMargin=10,
                     leftMargin=10,
                     topMargin=10,
