@@ -1420,6 +1420,25 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["post"])
+    def manual_book(self, request, format=None):
+        id = request.POST.get("id", "")
+        user_id = request.user.id
+
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is None:
+            user_type = "CLIENT"
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        booking = Bookings.objects.get(id=id)
+        booking.b_status = "Booked"
+        booking.b_dateBookedDate = datetime.now()
+        booking.save()
+        return Response(booking, status=status.HTTP_201_CREATED)
+
 
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
