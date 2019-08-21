@@ -1422,7 +1422,7 @@ class BookingViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def manual_book(self, request, format=None):
-        id = request.POST.get("id", "")
+        id = request.POST.get("id", None)
         user_id = request.user.id
 
         dme_employee = (
@@ -1433,6 +1433,7 @@ class BookingViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        print("@1 - ", id)
         booking = Bookings.objects.get(id=id)
         booking.b_status = "Booked"
         booking.b_dateBookedDate = datetime.now()
