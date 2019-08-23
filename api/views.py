@@ -1435,8 +1435,14 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         booking = Bookings.objects.get(id=id)
-        booking.b_status = "Booked"
-        booking.b_dateBookedDate = datetime.now()
+
+        if not booking.b_dateBookedDate:
+            booking.b_status = "Booked"
+            booking.b_dateBookedDate = datetime.now()
+        else:
+            booking.b_status = None
+            booking.b_dateBookedDate = None
+
         booking.save()
         serializer = BookingSerializer(booking)
 
