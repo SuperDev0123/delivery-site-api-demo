@@ -272,10 +272,14 @@ class Bookings(models.Model):
         default="",
     )
     puCompany = models.CharField(
-        verbose_name=_("Company"), max_length=40, blank=True, null=True, default=""
+        verbose_name=_("Company"), max_length=128, blank=True, null=True, default=""
     )
     deToCompanyName = models.CharField(
-        verbose_name=_("Company Name"), max_length=40, blank=True, null=True, default=""
+        verbose_name=_("Company Name"),
+        max_length=128,
+        blank=True,
+        null=True,
+        default="",
     )
     consignment_label_link = models.CharField(
         verbose_name=_("Consignment"), max_length=250, blank=True, null=True, default=""
