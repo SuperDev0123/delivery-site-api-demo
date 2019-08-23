@@ -1081,7 +1081,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     sql2 = "UPDATE dme_bookings \
                                             SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s, b_error_Capture = %s \
                                             WHERE id = %s"
-                                    adr2 = (h23, fp_zone.carrier, None, booking["id"])
+                                    adr2 = (h24, fp_zone.carrier, None, booking["id"])
                                     cursor.execute(sql2, adr2)
                                     mysqlcon.commit()
 
