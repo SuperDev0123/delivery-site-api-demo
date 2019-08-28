@@ -1743,7 +1743,7 @@ class PodUploadView(views.APIView):
         return Response(uploadResult)
 
 
-def handle_uploaded_file_attachments(request, f, upload_type):
+def handle_uploaded_file_4_booking(request, f, upload_type):
     try:
         bookingId = request.POST.get("booking_id", None)
 
