@@ -1720,34 +1720,67 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
 
 class AttachmentsUploadView(views.APIView):
-    parser_classes = (MultiPartParser,)
-
     def post(self, request, filename, format=None):
-        file_obj = request.FILES["file"]
-        user_id = request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        uploadResult = handle_uploaded_file_4_booking(
+            request, request.FILES["file"], "attachments"
         )
-
-        if dme_employee is not None:
-            user_type = "DME"
-        else:
-            user_type = "CLIENT"
-
-        if user_type == "DME":
-            dme_account_num = "dme_user"
-        else:
-            client_employee = Client_employees.objects.select_related().filter(
-                fk_id_user=int(user_id)
-            )
-            dme_account_num = client_employee[0].fk_id_dme_client.dme_account_num
-        upload_file_name = request.FILES["file"].name
-        prepend_name = str(dme_account_num) + "_" + upload_file_name
-
-        uploadResult = handle_uploaded_file_attachments(request, request.FILES["file"])
-
-        html = prepend_name
         return Response(uploadResult)
+
+
+class LabelUploadView(views.APIView):
+    def post(self, request, filename, format=None):
+        uploadResult = handle_uploaded_file_4_booking(
+            request, request.FILES["file"], "label"
+        )
+        return Response(uploadResult)
+
+
+class PodUploadView(views.APIView):
+    def post(self, request, filename, format=None):
+        uploadResult = handle_uploaded_file_4_booking(
+            request, request.FILES["file"], "pod"
+        )
+        return Response(uploadResult)
+
+
+def handle_uploaded_file_attachments(request, f, upload_type):
+    try:
+        bookingId = request.POST.get("booking_id", None)
+
+        if not bookingId:
+            return "failed"
+
+        user_id = request.user.id
+        client = DME_clients.objects.get(pk_id_dme_client=user_id)
+        booking = Bookings.objects.get(id=bookingId)
+        name, extension = os.path.splitext(f.name)
+
+        if upload_type == "attachments":
+            fileName = (
+                "/opt/s3_private/attachments/"
+                + name
+                + "_"
+                + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
+                + extension
+            )
+
+        with open(fileName, "wb+") as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+
+        if upload_type == "attachments":
+            dme_attachment = Dme_attachments(
+                fk_id_dme_client=client,
+                fk_id_dme_booking=booking.pk_booking_id,
+                fileName=fileName,
+                linkurl="22",
+                upload_Date=datetime.now(),
+            )
+            dme_attachment.save()
+        return "ok"
+    except Exception as e:
+        # print('Exception: ', e)
+        return "failed"
 
 
 class CommsViewSet(viewsets.ViewSet):
@@ -2654,40 +2687,6 @@ class ApiBCLViewSet(viewsets.ViewSet):
             return JsonResponse({"results": ""})
 
 
-def handle_uploaded_file_attachments(request, f):
-    try:
-        bookingId = request.POST.get("warehouse_id", "")
-
-        if bookingId == "undefined":
-            return "failed"
-        now = datetime.now()
-        now1 = now.strftime("%Y%m%d_%H%M%S")
-        name, extension = os.path.splitext(f.name)
-        fileName = "/opt/s3_private/attachments/" + name + "_" + str(now1) + extension
-
-        with open(fileName, "wb+") as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-        user_id = request.user.id
-        client = DME_clients.objects.get(pk_id_dme_client=user_id)
-        bookingObject = Bookings.objects.get(id=bookingId)
-        saveData = Dme_attachments(
-            fk_id_dme_client=client,
-            fk_id_dme_booking=bookingObject.pk_booking_id,
-            fileName=fileName,
-            linkurl="22",
-            upload_Date=now,
-        )
-        saveData.save()
-        return "ok"
-    except Exception as e:
-        # print('Exception: ', e)
-        return "failed"
-
-    # Save history on database.
-
-
 class FileUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
 
@@ -2727,13 +2726,11 @@ class FileUploadView(views.APIView):
 
 
 def handle_uploaded_file(request, dme_account_num, f):
-    # live code
     with open(
         "/var/www/html/dme_api/media/onedrive/" + str(dme_account_num) + "_" + f.name,
         "wb+",
-    ) as destination:
-        # local code(local url)
-        # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
+    ) as destination:  # PROD
+        # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination: # LOCAL
         for chunk in f.chunks():
             destination.write(chunk)
 
