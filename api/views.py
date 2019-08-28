@@ -1720,7 +1720,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
 
 class AttachmentsUploadView(views.APIView):
-    def post(self, request, filename, format=None):
+    def post(self, request, format=None):
         uploadResult = handle_uploaded_file_4_booking(
             request, request.FILES["file"], "attachments"
         )
@@ -1728,7 +1728,7 @@ class AttachmentsUploadView(views.APIView):
 
 
 class LabelUploadView(views.APIView):
-    def post(self, request, filename, format=None):
+    def post(self, request, format=None):
         uploadResult = handle_uploaded_file_4_booking(
             request, request.FILES["file"], "label"
         )
@@ -1736,7 +1736,7 @@ class LabelUploadView(views.APIView):
 
 
 class PodUploadView(views.APIView):
-    def post(self, request, filename, format=None):
+    def post(self, request, format=None):
         uploadResult = handle_uploaded_file_4_booking(
             request, request.FILES["file"], "pod"
         )
@@ -1761,6 +1761,18 @@ def handle_uploaded_file_attachments(request, f, upload_type):
                 + name
                 + "_"
                 + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
+                + extension
+            )
+        elif upload_type == "label":
+            fileName = (
+                "/home/cope_au/dme_sftp/cope_au/labels/indata/"
+                + str(bookingId)
+                + extension
+            )
+        elif upload_type == "pod":
+            fileName = (
+                "/home/cope_au/dme_sftp/cope_au/pods/indata/"
+                + str(bookingId)
                 + extension
             )
 
