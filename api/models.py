@@ -385,7 +385,7 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    kf_Invoice_Num_Booking = models.CharField(
+    inv_dme_invoice_no = models.CharField(
         verbose_name=_("Invoice Num Booking"),
         max_length=64,
         blank=True,
@@ -1275,6 +1275,14 @@ class Bookings(models.Model):
     z_calculated_ETA = models.CharField(
         max_length=32, blank=True, null=True, default=None
     )
+    b_client_name_sub = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    fp_invoice_no = models.CharField(max_length=16, blank=True, null=True, default=None)
+    inv_cost_quoted = models.IntegerField(blank=True, default=0, null=True)
+    inv_cost_actual = models.IntegerField(blank=True, default=0, null=True)
+    inv_sell_quoted = models.IntegerField(blank=True, default=0, null=True)
+    inv_sell_actual = models.IntegerField(blank=True, default=0, null=True)
 
     class Meta:
         db_table = "dme_bookings"
