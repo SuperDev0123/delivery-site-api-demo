@@ -1272,9 +1272,7 @@ class Bookings(models.Model):
     b_is_flagged_add_on_services = models.BooleanField(
         default=False, blank=True, null=True
     )
-    z_calculated_ETA = models.CharField(
-        max_length=32, blank=True, null=True, default=None
-    )
+    z_calculated_ETA = models.DateField(blank=True, null=True)
     b_client_name_sub = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
