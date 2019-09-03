@@ -1279,6 +1279,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "inv_billing_status": booking.inv_billing_status,
                         "inv_billing_status_note": booking.inv_billing_status_note,
                         "b_client_sales_inv_num": booking.b_client_sales_inv_num,
+                        "b_client_order_num": booking.b_client_order_num,
                         "b_client_name_sub": booking.b_client_name_sub,
                         "inv_dme_invoice_no": booking.inv_dme_invoice_no,
                         "fp_invoice_no": booking.fp_invoice_no,
