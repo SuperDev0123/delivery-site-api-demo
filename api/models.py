@@ -1277,10 +1277,10 @@ class Bookings(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     fp_invoice_no = models.CharField(max_length=16, blank=True, null=True, default=None)
-    inv_cost_quoted = models.IntegerField(blank=True, default=0, null=True)
-    inv_cost_actual = models.IntegerField(blank=True, default=0, null=True)
-    inv_sell_quoted = models.IntegerField(blank=True, default=0, null=True)
-    inv_sell_actual = models.IntegerField(blank=True, default=0, null=True)
+    inv_cost_quoted = models.FloatField(blank=True, default=0, null=True)
+    inv_cost_actual = models.FloatField(blank=True, default=0, null=True)
+    inv_sell_quoted = models.FloatField(blank=True, default=0, null=True)
+    inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
 
     class Meta:
         db_table = "dme_bookings"
