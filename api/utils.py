@@ -5233,8 +5233,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         else:
             worksheet.write("A1", "Booked Date", bold)
             worksheet.write("B1", "Booked Time", bold)
-            worksheet.write("C1", "From State", bold)
-            worksheet.write("D1", "WHS Sent Date", bold)
+            worksheet.write("C1", "WHS Sent Date", bold)
+            worksheet.write("D1", "From State", bold)
             worksheet.write("E1", "To Entity Group Name", bold)
             worksheet.write("F1", "To Entity", bold)
             worksheet.write("G1", "To Suburb", bold)
