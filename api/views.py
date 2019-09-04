@@ -2707,6 +2707,13 @@ class ApiBCLViewSet(viewsets.ViewSet):
             return JsonResponse({"results": ""})
 
 
+class DmeReportsViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = DME_reports.objects.all()
+        serializer = DmeReportsSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class FileUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
 

@@ -3122,3 +3122,26 @@ class FP_label_scans(models.Model):
 
     class Meta:
         db_table = "fp_label_scans"
+
+
+class DME_reports(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=128, blank=True, null=True)
+    type = models.CharField(max_length=32, blank=True, null=True)
+    url = models.TextField(max_length=512, blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "dme_reports"

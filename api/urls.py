@@ -21,6 +21,7 @@ router.register(r"statushistory", StatusHistoryViewSet, basename="statushistory"
 router.register(r"fp", FPViewSet, basename="fp")
 router.register(r"status", StatusViewSet, basename="status")
 router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
+router.register(r"reports", DmeReportsViewSet, basename="reports")
 urlpatterns = router.urls
 
 urlpatterns += [
