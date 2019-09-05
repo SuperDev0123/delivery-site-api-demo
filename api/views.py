@@ -2327,6 +2327,18 @@ class CommsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_comm(self, request, pk, format=None):
         dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
+
+        if (
+            dme_comm_and_task.closed != request.data["closed"]
+            and request.data["closed"]
+        ):
+            request.data["status_log_closed_time"] = datetime.now()
+        elif (
+            dme_comm_and_task.closed != request.data["closed"]
+            and not request.data["closed"]
+        ):
+            request.data["status_log_closed_time"] = None
+
         serializer = CommSerializer(dme_comm_and_task, data=request.data)
 
         try:
@@ -2340,6 +2352,8 @@ class CommsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def create_comm(self, request, pk=None):
+        if request.data["closed"]:
+            request.data["status_log_closed_time"] = datetime.now()
         serializer = CommSerializer(data=request.data)
 
         try:
