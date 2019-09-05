@@ -814,6 +814,7 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
+    x_manual_booked_flag = models.BooleanField(default=False, blank=True, null=True)
     de_Email_Group_Emails = models.CharField(
         verbose_name=_("DE Email Group Emails"),
         max_length=30,

@@ -1287,6 +1287,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "inv_cost_actual": booking.inv_cost_actual,
                         "inv_sell_quoted": booking.inv_sell_quoted,
                         "inv_sell_actual": booking.inv_sell_actual,
+                        "x_manual_booked_flag": booking.x_manual_booked_flag,
                     }
                     return JsonResponse(
                         {
@@ -1429,6 +1430,31 @@ class BookingViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
+    def tick_manual_book(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        id = body["id"]
+        user_id = request.user.id
+
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is None:
+            user_type = "CLIENT"
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        booking = Bookings.objects.get(id=id)
+
+        if booking.b_dateBookedDate:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
+            booking.x_manual_booked_flag = not booking.x_manual_booked_flag
+            booking.save()
+            serializer = BookingSerializer(booking)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["post"])
     def manual_book(self, request, format=None):
         body = literal_eval(request.body.decode("utf8"))
         id = body["id"]
@@ -1444,17 +1470,16 @@ class BookingViewSet(viewsets.ViewSet):
 
         booking = Bookings.objects.get(id=id)
 
-        if not booking.b_dateBookedDate:
+        if not booking.x_manual_booked_flag:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
             booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
-        else:
-            booking.b_status = None
-            booking.b_dateBookedDate = None
+            booking.x_booking_Created_With = "Manual"
+            booking.save()
+            serializer = BookingSerializer(booking)
 
-        booking.save()
-        serializer = BookingSerializer(booking)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
