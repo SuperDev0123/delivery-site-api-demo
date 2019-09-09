@@ -1340,7 +1340,6 @@ class BookingViewSet(viewsets.ViewSet):
         dup_line_and_linedetail = request.GET["dupLineAndLineDetail"]
         booking_id = request.GET["bookingId"]
         user_id = request.user.id
-
         booking = Bookings.objects.get(id=booking_id)
 
         if switch_info == "true":
@@ -1372,6 +1371,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_To_Address_State": booking.pu_Address_State,
                 "pk_booking_id": booking.pk_booking_id,
                 "z_lock_status": booking.z_lock_status,
+                "b_status": "Ready for Booking",
             }
         else:
             newBooking = {
@@ -1402,6 +1402,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_To_Address_State": booking.de_To_Address_State,
                 "pk_booking_id": booking.pk_booking_id,
                 "z_lock_status": booking.z_lock_status,
+                "b_status": "Ready for Booking",
             }
 
         if dup_line_and_linedetail == "true":
