@@ -1369,7 +1369,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.pu_Phone_Main,
                 "de_Email": booking.pu_Email,
                 "de_To_Address_State": booking.pu_Address_State,
-                "pk_booking_id": booking.pk_booking_id,
+                "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
                 "b_status": "Ready for Booking",
             }
@@ -1400,13 +1400,12 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.de_to_Phone_Main,
                 "de_Email": booking.de_Email,
                 "de_To_Address_State": booking.de_To_Address_State,
-                "pk_booking_id": booking.pk_booking_id,
+                "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
                 "b_status": "Ready for Booking",
             }
 
         if dup_line_and_linedetail == "true":
-            newBooking["pk_booking_id"] = str(uuid.uuid1())
             booking_lines = Booking_lines.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             )
@@ -1421,8 +1420,6 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line_detail.pk_id_lines_data = None
                 booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
                 booking_line_detail.save()
-        else:
-            newBooking["pk_booking_id"] = str(uuid.uuid1())
 
         serializer = BookingSerializer(data=newBooking)
         if serializer.is_valid():
