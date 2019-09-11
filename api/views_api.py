@@ -33,6 +33,17 @@ from .models import *
 from django.conf import settings
 
 
+if settings.ENV == "local":
+    production = False  # Local
+else:
+    production = True  # Dev
+
+if production:
+    DME_LEVEL_API_URL = "http://35.161.204.104:8081"
+else:
+    DME_LEVEL_API_URL = "http://localhost:3000"
+
+
 @api_view(["GET", "POST"])
 def bok_0_bookingkeys(request):
     if request.method == "GET":
@@ -331,7 +342,7 @@ def all_trigger(request):
             booking.vx_freight_provider == "Allied"
             and booking.b_client_name == "Seaway"
         ):
-            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+            url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
             data = {}
             # print("==============")
             # print(booking.v_FPBookingNumber)
@@ -401,7 +412,7 @@ def all_trigger(request):
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+            url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
             data = {}
             # print("==============")
             # print(booking.v_FPBookingNumber)
@@ -480,7 +491,7 @@ def trigger_allied(request):
     )
     results = []
     for booking in booking_list:
-        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
         data = {}
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -644,7 +655,7 @@ def trigger_st(request):
     results = []
 
     for booking in booking_list:
-        url = "http://35.161.204.104:8081/dme-api/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
         data = {}
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -805,7 +816,7 @@ def get_label_allied_fn(bid):
         data["labelType"] = "1"
         # print(data)
 
-        url = "http://35.161.204.104:8081/dme-api/labelling/getlabel"
+        url = DME_LEVEL_API_URL + "/dme-api/labelling/getlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
@@ -1158,7 +1169,7 @@ def booking_allied(request):
             data["items"] = items
             # print(data)
 
-            url = "http://35.161.204.104:8081/dme-api/booking/bookconsignment"
+            url = DME_LEVEL_API_URL + "/dme-api/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
@@ -1376,7 +1387,7 @@ def pricing_allied(request):
             data["items"] = items
             # print(data)
 
-            url = "http://35.161.204.104:8081/dme-api/pricing/calculateprice"
+            url = DME_LEVEL_API_URL + "/dme-api/pricing/calculateprice"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
