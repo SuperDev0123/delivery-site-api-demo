@@ -1807,13 +1807,15 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
         elif upload_type == "label":
             fileName = (
                 "/home/cope_au/dme_sftp/cope_au/labels/indata/"
-                + str(bookingId)
+                + "DME"
+                + str(booking[b_bookingID_Visual])
                 + extension
             )
         elif upload_type == "pod":
             fileName = (
                 "/home/cope_au/dme_sftp/cope_au/pods/indata/"
-                + str(bookingId)
+                + "DME"
+                + str(booking[b_bookingID_Visual])
                 + extension
             )
 
