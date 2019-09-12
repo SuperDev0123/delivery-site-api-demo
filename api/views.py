@@ -347,6 +347,11 @@ class BookingsViewSet(viewsets.ViewSet):
         download_option = self.request.query_params.get("downloadOption", None)
         client_pk = self.request.query_params.get("clientPK", None)
         dme_status = self.request.query_params.get("dmeStatus", None)
+        multi_find_field = self.request.query_params.get("multiFindField", None)
+        multi_find_values = self.request.query_params.get("multiFindValues", "")
+
+        if multi_find_values:
+            multi_find_values = multi_find_values.split(", ")
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
 
         # if user_type == 'CLIENT':
@@ -371,6 +376,8 @@ class BookingsViewSet(viewsets.ViewSet):
         # print('@07 - Simple search keyword: ', simple_search_keyword)
         # print('@08 - Download Option: ', download_option)
         # print('@09 - Client PK: ', client_pk)
+        # print("@010 - MultiFind Field: ", multi_find_field)
+        # print("@011 - MultiFind Values: ", multi_find_values)
 
         # DME & Client filter
         if user_type == "DME":
@@ -462,8 +469,11 @@ class BookingsViewSet(viewsets.ViewSet):
             if int(warehouse_id) is not 0:
                 queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
-            # Simple search & Column fitler
-            if len(simple_search_keyword) > 0:
+            # Mulitple search | Simple search | Column fitler
+            if len(multi_find_values) > 0:
+                filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
+                queryset = queryset.filter(**filter_kwargs)
+            elif len(simple_search_keyword) > 0:
                 if (
                     not "&" in simple_search_keyword
                     and not "|" in simple_search_keyword
