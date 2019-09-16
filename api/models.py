@@ -1282,6 +1282,10 @@ class Bookings(models.Model):
     inv_cost_actual = models.FloatField(blank=True, default=0, null=True)
     inv_sell_quoted = models.FloatField(blank=True, default=0, null=True)
     inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
+    b_del_to_signed_name = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    b_del_to_signed_time = models.DateTimeField(blank=True, null=True, default=None)
 
     class Meta:
         db_table = "dme_bookings"
