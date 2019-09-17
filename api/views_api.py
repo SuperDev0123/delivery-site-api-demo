@@ -39,7 +39,7 @@ else:
     production = True  # Dev
 
 if production:
-    DME_LEVEL_API_URL = "http://35.161.204.104:8081"
+    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
 else:
     DME_LEVEL_API_URL = "http://localhost:3000"
 
@@ -217,7 +217,7 @@ def st_tracking(request):
     # print("Response ", booking_list)
     for booking in booking_list:
         # print("booking", booking)
-        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = literal_eval(request.body.decode("utf8"))
         data["consignmentDetails"] = [{"consignmentNumber": booking.v_FPBookingNumber}]
         request_timestamp = datetime.now()
@@ -275,7 +275,7 @@ def allied_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = literal_eval(request.body.decode("utf8"))
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -342,7 +342,7 @@ def all_trigger(request):
             booking.vx_freight_provider == "Allied"
             and booking.b_client_name == "Seaway"
         ):
-            url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+            url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
             data = {}
             # print("==============")
             # print(booking.v_FPBookingNumber)
@@ -412,7 +412,7 @@ def all_trigger(request):
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+            url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
             data = {}
             # print("==============")
             # print(booking.v_FPBookingNumber)
@@ -491,7 +491,7 @@ def trigger_allied(request):
     )
     results = []
     for booking in booking_list:
-        url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = {}
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -655,7 +655,7 @@ def trigger_st(request):
     results = []
 
     for booking in booking_list:
-        url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = {}
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -733,7 +733,7 @@ def hunter_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = literal_eval(request.body.decode("utf8"))
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -816,7 +816,7 @@ def get_label_allied_fn(bid):
         data["labelType"] = "1"
         # print(data)
 
-        url = DME_LEVEL_API_URL + "/dme-api/labelling/getlabel"
+        url = DME_LEVEL_API_URL + "/labelling/getlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
@@ -910,7 +910,7 @@ def get_label_st_fn(bid):
         data["serviceProvider"] = "ST"
         data["consignmentNumber"] = booking.v_FPBookingNumber
 
-        data["type"] = "# print"
+        data["type"] = "PRINT"
 
         items = []
         confirmation_items = Api_booking_confirmation_lines.objects.filter(
@@ -937,34 +937,30 @@ def get_label_st_fn(bid):
 
         data["pageFormat"] = items
 
-        # print('Payload(Get Label for ST): ', data)
+        # print("Payload(Create Label for ST): ", data)
 
-        url = "http://52.62.102.72:8080/dme-api-sit/labelling/createlabel"
+        url = DME_LEVEL_API_URL + "/labelling/createlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        # print(s0)
+        # print("Response(Create Label for ST): ", s0)
 
         try:
-            id = data0["stLabelRequestId"]
-            # id = "4c055984-2831-49b8-aca3-bf381a8315b8"
-            # id = "f35af59f-6c05-4e5a-a397-4e689599c7ca"
-            data["consignmentNumber"] = id
+            data["consignmentNumber"] = data0[0]["request_id"]
+            data["labelType"] = "PRINT"
 
-            data["labelType"] = "# print"
-
-            url = "http://52.62.102.72:8080/dme-api-sit/labelling/getlabel"
-            time.sleep(5)
+            url = DME_LEVEL_API_URL + "/labelling/getlabel"
+            time.sleep(20)
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(
                 data0, indent=4, sort_keys=True, default=str
             )  # Just for visual
-            # print(s0)
+            # print("Response(Get Label for ST): ", s0)
 
-            booking.z_label_url = data0["url"]
+            booking.z_label_url = data0["labels"][0]["url"]
             booking.save()
             request_type = "ST Label"
             request_status = "SUCCESS"
@@ -976,7 +972,7 @@ def get_label_st_fn(bid):
                 fk_booking_id=booking.id,
             )
             oneLog.save()
-            results.append({"Created label url": data0["url"]})
+            results.append({"Created label url": booking.z_label_url})
         except KeyError:
             try:
                 request_type = "ST Label"
@@ -1169,7 +1165,7 @@ def booking_allied(request):
             data["items"] = items
             # print(data)
 
-            url = DME_LEVEL_API_URL + "/dme-api/booking/bookconsignment"
+            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
@@ -1387,7 +1383,7 @@ def pricing_allied(request):
             data["items"] = items
             # print(data)
 
-            url = DME_LEVEL_API_URL + "/dme-api/pricing/calculateprice"
+            url = DME_LEVEL_API_URL + "/pricing/calculateprice"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
@@ -1459,17 +1455,13 @@ def pricing_allied(request):
 @permission_classes((AllowAny,))
 def st_create_order(request):
     results = []
-    date = literal_eval(request.body.decode("utf8"))
-    date = date["date"]
+    body = literal_eval(request.body.decode("utf8"))
+    booking_ids = body["bookingIds"]
     # # print('Date (Create Order for ST): ', datetime.now().strftime("%Y-%m-%d"))
     # print('Date (Create Order for ST): ', date)
 
     try:
-        bookings = Bookings.objects.filter(
-            vx_freight_provider="STARTRACK",
-            puPickUpAvailFrom_Date=date,
-            b_status="Booked",
-        )
+        bookings = Bookings.objects.filter(pk__in=booking_ids, b_status="Booked")
 
         data = {}
 
@@ -1489,14 +1481,14 @@ def st_create_order(request):
 
         data["consignmentNumber"] = booking_numbers
 
-        # print('Payload(Create Order for ST): ', data)
+        print("Payload(Create Order for ST): ", data)
 
-        url = "http://52.62.102.72:8080/dme-api-sit/order/create"
+        url = DME_LEVEL_API_URL + "/order/create"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        # print(s0)
+        print(s0)
 
         try:
             results.append({"Order create Successfully ": data0["orderId"]})
@@ -1559,7 +1551,7 @@ def get_order_summary_fn(order_id):
 
     # print(data)
 
-    url = "http://52.62.102.72:8080/dme-api-sit/order/summary"
+    url = DME_LEVEL_API_URL + "/order/summary"
     response0 = requests.post(url, params={}, json=data)
     response0 = response0.content.decode("utf8").replace("'", '"')
     data0 = json.loads(response0)
@@ -1620,7 +1612,7 @@ def booking_st(request):
         try:
             booking = Bookings.objects.filter(id=bid)[0]
 
-            if booking.b_status != "Ready for booking":
+            if booking.b_status.lower() != "ready for booking":
                 return Response([{"Error": "Booking is already booked."}])
 
             if booking.pu_Address_State is None or not booking.pu_Address_State:
@@ -1755,16 +1747,16 @@ def booking_st(request):
                     items.append(temp_item)
 
             data["items"] = items
-            # print(data)
+            print(data)
 
-            url = "http://52.62.102.72:8080/dme-api-sit/booking/bookconsignment"
+            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(
                 data0, indent=4, sort_keys=True, default=str
             )  # Just for visual
-            # print(s0)
+            print(s0)
 
             try:
                 request_payload = {
@@ -1981,7 +1973,7 @@ def edit_booking_st(request):
             data["items"] = items
             # print(data)
 
-            url = "http://52.62.102.72:8080/dme-api-sit/booking/bookconsignment"
+            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
@@ -2147,7 +2139,7 @@ def cancel_booking(request):
                 data["serviceProvider"] = "ST"
                 data["consignmentNumber"] = booking.v_FPBookingNumber
 
-                url = "http://52.62.102.72:8080/dme-api-sit/booking/cancelconsignment"
+                url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
                 response0 = requests.delete(url, params={}, json=data)
                 response0 = response0.content.decode("utf8").replace("'", '"')
                 data0 = json.loads(response0)
