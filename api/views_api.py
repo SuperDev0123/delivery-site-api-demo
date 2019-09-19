@@ -39,9 +39,11 @@ else:
     production = True  # Dev
 
 if production:
-    DME_LEVEL_API_URL = "http://35.161.204.104:8081"
+    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
 else:
     DME_LEVEL_API_URL = "http://localhost:3000"
+
+DME_LEVEL_API_URL = "http://localhost:3000"
 
 
 @api_view(["GET", "POST"])
@@ -209,65 +211,6 @@ def bok_1_to_bookings(request):
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
-def st_tracking(request):
-    booking_list = Bookings.objects.filter(
-        vx_freight_provider="STARTRACK", z_api_issue_update_flag_500=1
-    )  # add z_api_status_update_flag_500 check
-    results = []
-    # print("Response ", booking_list)
-    for booking in booking_list:
-        # print("booking", booking)
-        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
-        data = literal_eval(request.body.decode("utf8"))
-        data["consignmentDetails"] = [{"consignmentNumber": booking.v_FPBookingNumber}]
-        request_timestamp = datetime.now()
-
-        response0 = requests.post(url, params={}, json=data)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        # print(s0)
-
-        try:
-            request_id = data0["requestId"]
-            request_payload = {
-                "apiUrl": "",
-                "accountCode": "",
-                "authKey": "",
-                "trackingId": "",
-            }
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-            request_payload["trackingId"] = data["consignmentDetails"][0][
-                "consignmentNumber"
-            ]
-            request_type = "TRACKING"
-            request_status = "SUCCESS"
-
-            oneLog = Log(
-                request_payload=request_payload,
-                request_status=request_status,
-                request_type=request_type,
-                response=response0,
-                fk_booking_id=booking.id,
-            )
-            oneLog.save()
-            booking.b_status_API = data0["consignmentTrackDetails"][0][
-                "consignmentStatuses"
-            ][0]["status"]
-            booking.save()
-
-            results.append({"Created Log ID": oneLog.id})
-        except KeyError:
-            results.append({"Error": "Too many request"})
-
-    return Response(results)
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
 def allied_tracking(request):
     booking_list = Bookings.objects.filter(
         vx_freight_provider="ALLIED", z_api_issue_update_flag_500=1
@@ -275,7 +218,7 @@ def allied_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = literal_eval(request.body.decode("utf8"))
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -290,7 +233,7 @@ def allied_tracking(request):
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+        s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
         # print(s0)
 
         try:
@@ -342,7 +285,7 @@ def all_trigger(request):
             booking.vx_freight_provider == "Allied"
             and booking.b_client_name == "Seaway"
         ):
-            url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+            url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
             data = {}
             # print("==============")
             # print(booking.v_FPBookingNumber)
@@ -364,7 +307,7 @@ def all_trigger(request):
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
-            s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+            s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
             # print(s0)
 
             try:
@@ -412,7 +355,7 @@ def all_trigger(request):
             except KeyError:
                 results.append({"Error": "Too many request"})
         elif booking.vx_freight_provider == "STARTRACK":
-            url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+            url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
             data = {}
             # print("==============")
             # print(booking.v_FPBookingNumber)
@@ -432,7 +375,7 @@ def all_trigger(request):
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
-            s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+            s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
             # print(s0)
 
             try:
@@ -491,7 +434,7 @@ def trigger_allied(request):
     )
     results = []
     for booking in booking_list:
-        url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = {}
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -512,7 +455,7 @@ def trigger_allied(request):
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+        s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
 
         try:
             request_payload = {
@@ -644,86 +587,6 @@ def trigger_allied(request):
 
 
 @api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def trigger_st(request):
-    booking_list = Bookings.objects.filter(
-        vx_freight_provider="STARTRACK",
-        z_api_issue_update_flag_500=1,
-        b_client_name="BioPak",
-    )
-    results = []
-
-    for booking in booking_list:
-        url = DME_LEVEL_API_URL + "/dme-api/tracking/trackconsignment"
-        data = {}
-        # print("==============")
-        # print(booking.v_FPBookingNumber)
-        data["consignmentDetails"] = [{"consignmentNumber": booking.v_FPBookingNumber}]
-        data["spAccountDetails"] = {
-            "accountCode": "10149943",
-            "accountState": "NSW",
-            "accountPassword": "x81775935aece65541c9",
-            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-        }
-        data["serviceProvider"] = "ST"
-
-        # print(data)
-        # print("==============")
-        response0 = requests.post(url, params={}, json=data)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
-        # print(s0)
-
-        try:
-            request_payload = {
-                "apiUrl": "",
-                "accountCode": "",
-                "authKey": "",
-                "trackingId": "",
-            }
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-            request_payload["trackingId"] = data["consignmentDetails"][0][
-                "consignmentNumber"
-            ]
-            request_type = "TRACKING"
-            request_status = "SUCCESS"
-
-            oneLog = Log(
-                request_payload=request_payload,
-                request_status=request_status,
-                request_type=request_type,
-                response=response0,
-                fk_booking_id=booking.id,
-            )
-            oneLog.save()
-            try:
-                booking.b_status_API = data0["consignmentTrackDetails"][0][
-                    "consignmentStatuses"
-                ][0]["status"]
-                booking.z_lastStatusAPI_ProcessedTimeStamp = datetime.now()
-                if (
-                    data0["consignmentTrackDetails"][0]["consignmentStatuses"][0][
-                        "status"
-                    ]
-                    == "Delivered in Full"
-                ):
-                    booking.s_21_ActualDeliveryTimeStamp = datetime.now()
-                booking.save()
-            except IndexError:
-                results.append({"Error": "Index Error"})
-
-            results.append({"Created Log ID": oneLog.id})
-        except KeyError:
-            results.append({"Error": "Too many request"})
-
-    return Response(results)
-
-
-@api_view(["POST"])
 # @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def hunter_tracking(request):
@@ -733,7 +596,7 @@ def hunter_tracking(request):
     results = []
 
     for booking in booking_list:
-        url = "http://52.62.102.72:8080/dme-api-sit/tracking/trackconsignment"
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = literal_eval(request.body.decode("utf8"))
         # print("==============")
         # print(booking.v_FPBookingNumber)
@@ -748,7 +611,7 @@ def hunter_tracking(request):
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True)  # Just for visual
+        s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
         # print(s0)
 
         try:
@@ -816,11 +679,11 @@ def get_label_allied_fn(bid):
         data["labelType"] = "1"
         # print(data)
 
-        url = DME_LEVEL_API_URL + "/dme-api/labelling/getlabel"
+        url = DME_LEVEL_API_URL + "/labelling/getlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
+        s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
         # print(s0)
 
         try:
@@ -887,127 +750,6 @@ def get_label_allied(request):
         bid = literal_eval(request.body.decode("utf8"))
         bid = bid["booking_id"]
         results = get_label_allied_fn(bid)
-
-    except SyntaxError:
-        results.append({"message": "booking id is required"})
-
-    return Response(results)
-
-
-def get_label_st_fn(bid):
-    results = []
-    try:
-        booking = Bookings.objects.filter(id=bid)[0]
-
-        data = {}
-
-        data["spAccountDetails"] = {
-            "accountCode": "00956684",
-            "accountState": "NSW",
-            "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-            "accountPassword": "xab801a41e663b5cb889",
-        }
-        data["serviceProvider"] = "ST"
-        data["consignmentNumber"] = booking.v_FPBookingNumber
-
-        data["type"] = "# print"
-
-        items = []
-        confirmation_items = Api_booking_confirmation_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        )
-
-        for ite in confirmation_items:
-            temp_item = {"itemId": ite.api_item_id, "packagingType": "PAL"}
-            items.append(temp_item)
-
-        data["items"] = items
-
-        items = []
-
-        temp_item = {
-            "branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
-            "branded": False,
-            "layout": "A4-1pp",
-            "leftOffset": 0,
-            "topOffset": 0,
-            "typeOfPost": "Express Post",
-        }
-        items.append(temp_item)
-
-        data["pageFormat"] = items
-
-        # print('Payload(Get Label for ST): ', data)
-
-        url = "http://52.62.102.72:8080/dme-api-sit/labelling/createlabel"
-        response0 = requests.post(url, params={}, json=data)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        # print(s0)
-
-        try:
-            id = data0["stLabelRequestId"]
-            # id = "4c055984-2831-49b8-aca3-bf381a8315b8"
-            # id = "f35af59f-6c05-4e5a-a397-4e689599c7ca"
-            data["consignmentNumber"] = id
-
-            data["labelType"] = "# print"
-
-            url = "http://52.62.102.72:8080/dme-api-sit/labelling/getlabel"
-            time.sleep(5)
-            response0 = requests.post(url, params={}, json=data)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
-            s0 = json.dumps(
-                data0, indent=4, sort_keys=True, default=str
-            )  # Just for visual
-            # print(s0)
-
-            booking.z_label_url = data0["url"]
-            booking.save()
-            request_type = "ST Label"
-            request_status = "SUCCESS"
-            oneLog = Log(
-                request_payload=data,
-                request_status=request_status,
-                request_type=request_type,
-                response=response0,
-                fk_booking_id=booking.id,
-            )
-            oneLog.save()
-            results.append({"Created label url": data0["url"]})
-        except KeyError:
-            try:
-                request_type = "ST Label"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=data,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
-                results.append({"Error": data0["errorMsg"]})
-            except KeyError:
-                results.append({"Error": s0})
-
-    except IndexError:
-        results.append({"message": "Booking not found"})
-
-    return results
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def get_label_st(request):
-    results = []
-    try:
-        bid = literal_eval(request.body.decode("utf8"))
-        bid = bid["booking_id"]
-        results = get_label_st_fn(bid)
 
     except SyntaxError:
         results.append({"message": "booking id is required"})
@@ -1169,12 +911,12 @@ def booking_allied(request):
             data["items"] = items
             # print(data)
 
-            url = DME_LEVEL_API_URL + "/dme-api/booking/bookconsignment"
+            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(
-                data0, indent=4, sort_keys=True, default=str
+                data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
             # print(s0)
 
@@ -1387,12 +1129,12 @@ def pricing_allied(request):
             data["items"] = items
             # print(data)
 
-            url = DME_LEVEL_API_URL + "/dme-api/pricing/calculateprice"
+            url = DME_LEVEL_API_URL + "/pricing/calculateprice"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(
-                data0, indent=4, sort_keys=True, default=str
+                data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
             # print(s0)
 
@@ -1433,609 +1175,6 @@ def pricing_allied(request):
                 booking.b_error_Capture = data0["errorMsg"]
                 booking.save()
                 request_type = "ALLIED BOOKING"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=data,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
-
-                results.append({"Error": data0["errorMsg"]})
-
-        except IndexError:
-            results.append({"message": "Booking not found"})
-
-    except SyntaxError:
-        results.append({"message": "booking id is required"})
-
-    return Response(results)
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def st_create_order(request):
-    results = []
-    date = literal_eval(request.body.decode("utf8"))
-    date = date["date"]
-    # # print('Date (Create Order for ST): ', datetime.now().strftime("%Y-%m-%d"))
-    # print('Date (Create Order for ST): ', date)
-
-    try:
-        bookings = Bookings.objects.filter(
-            vx_freight_provider="STARTRACK",
-            puPickUpAvailFrom_Date=date,
-            b_status="Booked",
-        )
-
-        data = {}
-
-        data["spAccountDetails"] = {
-            "accountCode": "00956684",
-            "accountState": "NSW",
-            "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-            "accountPassword": "xab801a41e663b5cb889",
-        }
-        data["serviceProvider"] = "ST"
-        data["paymentMethods"] = "CHARGE_TO_ACCOUNT"
-        data["referenceNumber"] = "refer1"
-
-        booking_numbers = []
-        for booking in bookings:
-            booking_numbers.append(booking.v_FPBookingNumber)
-
-        data["consignmentNumber"] = booking_numbers
-
-        # print('Payload(Create Order for ST): ', data)
-
-        url = "http://52.62.102.72:8080/dme-api-sit/order/create"
-        response0 = requests.post(url, params={}, json=data)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-        # print(s0)
-
-        try:
-            results.append({"Order create Successfully ": data0["orderId"]})
-
-            request_type = "Create Order"
-            request_status = "SUCCESS"
-            oneLog = Log(
-                request_payload=data,
-                request_status=request_status,
-                request_type=request_type,
-                response=response0,
-                fk_booking_id=booking.id,
-            )
-            oneLog.save()
-            data["orderId"] = data0["orderId"]
-            for booking in bookings:
-                booking.vx_fp_order_id = data["orderId"]
-                booking.save()
-
-            summary_res = get_order_summary_fn(data0["orderId"])
-            results.append(summary_res)
-
-        except KeyError:
-            try:
-                booking.b_error_Capture = data0["errorMsg"]
-                booking.save()
-                request_type = "Create Order"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=data,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
-                results.append({"Error": data0["errorMsg"]})
-            except KeyError:
-                results.append({"Error": s0})
-
-    except IndexError:
-        results.append({"message": "Booking not found"})
-
-    return Response(results)
-
-
-def get_order_summary_fn(order_id):
-    results = []
-
-    data = {}
-
-    data["spAccountDetails"] = {
-        "accountCode": "00956684",
-        "accountState": "NSW",
-        "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-        "accountPassword": "xab801a41e663b5cb889",
-    }
-    data["serviceProvider"] = "ST"
-    data["orderId"] = order_id
-
-    # print(data)
-
-    url = "http://52.62.102.72:8080/dme-api-sit/order/summary"
-    response0 = requests.post(url, params={}, json=data)
-    response0 = response0.content.decode("utf8").replace("'", '"')
-    data0 = json.loads(response0)
-    s0 = json.dumps(data0, indent=4, sort_keys=True, default=str)  # Just for visual
-    # print(s0)
-    try:
-        file_name = (
-            "biopak_manifest_" + str(order_id) + "_" + str(datetime.now()) + ".pdf"
-        )
-        file_url = "/var/www/html/dme_api/static/pdfs/" + file_name
-
-        with open(os.path.expanduser(file_url), "wb") as fout:
-            fout.write(base64.decodestring(data0["pdfData"].encode("utf-8")))
-
-        bookings = Bookings.objects.filter(vx_fp_order_id=order_id)
-        for book in bookings:
-            book.z_manifest_url = file_name
-            book.save()
-
-        return {"Success": "Manifest is created successfully."}
-
-    except KeyError:
-
-        return {"Error": data0["errorMsg"]}
-
-    return results
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def get_order_summary(request):
-    results = []
-    try:
-        bid = literal_eval(request.body.decode("utf8"))
-        bid = bid["booking_id"]
-        try:
-            booking = Bookings.objects.filter(id=bid)[0]
-            results.append(get_order_summary_fn(booking.vx_fp_order_id))
-
-        except IndexError:
-            results.append({"message": "Order is not created for this booking."})
-    except SyntaxError:
-        results.append({"message": "booking id is required"})
-
-    return Response(results)
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def booking_st(request):
-    results = []
-    try:
-        bid = literal_eval(request.body.decode("utf8"))
-        bid = bid["booking_id"]
-
-        try:
-            booking = Bookings.objects.filter(id=bid)[0]
-
-            if booking.b_status != "Ready for booking":
-                return Response([{"Error": "Booking is already booked."}])
-
-            if booking.pu_Address_State is None or not booking.pu_Address_State:
-                return Response(
-                    [{"Error": "State for pickup postal address is required."}]
-                )
-
-            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
-                return Response(
-                    [{"Error": "suburb name for pickup postal address is required."}]
-                )
-
-            data = {}
-            data["spAccountDetails"] = {
-                "accountCode": "00956684",
-                "accountState": "NSW",
-                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                "accountPassword": "xab801a41e663b5cb889",
-            }
-            data["serviceProvider"] = "ST"
-            data["readyDate"] = (
-                ""
-                if booking.puPickUpAvailFrom_Date is None
-                else str(booking.puPickUpAvailFrom_Date)
-            )
-            data["referenceNumber"] = (
-                ""
-                if booking.b_clientReference_RA_Numbers is None
-                else booking.b_clientReference_RA_Numbers
-            )
-            data["serviceType"] = "R" if booking.vx_serviceName is None else "R"
-            data["bookedBy"] = "Mr.CharlieBrown"
-            data["pickupAddress"] = {
-                "companyName": "" if booking.puCompany is None else booking.puCompany,
-                "contact": "Rosie Stokeld"
-                if booking.pu_Contact_F_L_Name is None
-                else booking.pu_Contact_F_L_Name,
-                "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-                "instruction": ""
-                if booking.pu_PickUp_Instructions_Contact is None
-                else booking.pu_PickUp_Instructions_Contact,
-                "phoneNumber": "0267651109"
-                if booking.pu_Phone_Main is None
-                else booking.pu_Phone_Main,
-            }
-            data["pickupAddress"]["postalAddress"] = {
-                "address1": ""
-                if booking.pu_Address_Street_1 is None
-                else booking.pu_Address_Street_1,
-                "address2": ""
-                if booking.pu_Address_street_2 is None
-                else booking.pu_Address_street_2,
-                "country": ""
-                if booking.pu_Address_Country is None
-                else booking.pu_Address_Country,
-                "postCode": ""
-                if booking.pu_Address_PostalCode is None
-                else booking.pu_Address_PostalCode,
-                "state": ""
-                if booking.pu_Address_State is None
-                else booking.pu_Address_State,
-                "suburb": ""
-                if booking.pu_Address_Suburb is None
-                else booking.pu_Address_Suburb,
-                "sortCode": ""
-                if booking.pu_Address_PostalCode is None
-                else booking.pu_Address_PostalCode,
-            }
-
-            data["dropAddress"] = {
-                "companyName": ""
-                if booking.deToCompanyName is None
-                else booking.deToCompanyName,
-                "contact": "James Sam"
-                if booking.de_to_Contact_F_LName is None
-                else booking.de_to_Contact_F_LName,
-                "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-                "instruction": ""
-                if booking.de_to_Pick_Up_Instructions_Contact is None
-                else booking.de_to_Pick_Up_Instructions_Contact,
-                "phoneNumber": "0393920020"
-                if booking.pu_Phone_Main is None
-                else booking.pu_Phone_Main,
-            }
-            data["dropAddress"]["postalAddress"] = {
-                "address1": ""
-                if booking.de_To_Address_Street_1 is None
-                else booking.de_To_Address_Street_1,
-                "address2": ""
-                if booking.de_To_Address_Street_2 is None
-                else booking.de_To_Address_Street_2,
-                "country": ""
-                if booking.de_To_Address_Country is None
-                else booking.de_To_Address_Country,
-                "postCode": ""
-                if booking.de_To_Address_PostalCode is None
-                else booking.de_To_Address_PostalCode,
-                "state": ""
-                if booking.de_To_Address_State is None
-                else booking.de_To_Address_State,
-                "suburb": ""
-                if booking.de_To_Address_Suburb is None
-                else booking.de_To_Address_Suburb,
-                "sortCode": ""
-                if booking.de_To_Address_PostalCode is None
-                else booking.de_To_Address_PostalCode,
-            }
-
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            )
-
-            items = []
-
-            for line in booking_lines:
-                for i in range(line.e_qty):
-                    temp_item = {
-                        "dangerous": 0,
-                        "itemId": "EXP",
-                        "packagingType": "PAL",
-                        "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                        "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                        "quantity": 0 if line.e_qty is None else line.e_qty,
-                        "volume": 0
-                        if line.e_weightPerEach is None
-                        else line.e_weightPerEach,
-                        "weight": 0
-                        if line.e_weightPerEach is None
-                        else line.e_weightPerEach,
-                        "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
-                    }
-                    items.append(temp_item)
-
-            data["items"] = items
-            # print(data)
-
-            url = "http://52.62.102.72:8080/dme-api-sit/booking/bookconsignment"
-            response0 = requests.post(url, params={}, json=data)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
-            s0 = json.dumps(
-                data0, indent=4, sort_keys=True, default=str
-            )  # Just for visual
-            # print(s0)
-
-            try:
-                request_payload = {
-                    "apiUrl": "",
-                    "accountCode": "",
-                    "authKey": "",
-                    "trackingId": "",
-                }
-                request_payload["apiUrl"] = url
-                request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-                request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "TRACKING"
-                request_status = "SUCCESS"
-
-                booking.v_FPBookingNumber = data0["consignmentNumber"]
-                booking.fk_fp_pickup_id = data0["requestId"]
-                booking.b_dateBookedDate = str(datetime.now())
-                booking.b_status = "Booked"
-                booking.b_error_Capture = ""
-                booking.save()
-
-                oneLog = Log(
-                    request_payload=request_payload,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
-
-                results.append({"Created Booking ID": data0["consignmentNumber"]})
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-
-                for item in data0["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id, api_item_id=item["itemId"]
-                    )
-                    book_con.save()
-
-                get_label_st_fn(booking.id)
-            except KeyError:
-                booking.b_error_Capture = data0["errorMsg"]
-                booking.save()
-                request_type = "ST BOOKING"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=data,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
-                results.append({"Error": data0["errorMsg"]})
-
-        except IndexError:
-            results.append({"message": "Booking not found"})
-
-        except TypeError:
-            results.append({"message": "eqty is none"})
-
-    except SyntaxError:
-        results.append({"message": "booking id is required"})
-
-    return Response(results)
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def edit_booking_st(request):
-    results = []
-    try:
-        bid = literal_eval(request.body.decode("utf8"))
-        bid = bid["booking_id"]
-
-        try:
-            booking = Bookings.objects.filter(id=bid)[0]
-
-            if booking.pu_Address_State is None or not booking.pu_Address_State:
-                return Response(
-                    [{"Error": "State for pickup postal address is required."}]
-                )
-
-            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
-                return Response(
-                    [{"Error": "suburb name for pickup postal address is required."}]
-                )
-
-            data = {}
-            data["spAccountDetails"] = {
-                "accountCode": "00956684",
-                "accountState": "NSW",
-                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                "accountPassword": "xab801a41e663b5cb889",
-            }
-            data["serviceProvider"] = "ST"
-            data["consignmentNumber"] = booking.v_FPBookingNumber
-            data["readyDate"] = (
-                ""
-                if booking.puPickUpAvailFrom_Date is None
-                else str(booking.puPickUpAvailFrom_Date)
-            )
-            data["referenceNumber"] = (
-                ""
-                if booking.b_clientReference_RA_Numbers is None
-                else booking.b_clientReference_RA_Numbers
-            )
-            data["serviceType"] = "R" if booking.vx_serviceName is None else "R"
-            data["bookedBy"] = "Mr.CharlieBrown"
-            data["pickupAddress"] = {
-                "companyName": "" if booking.puCompany is None else booking.puCompany,
-                "contact": "Rosie Stokeld"
-                if booking.pu_Contact_F_L_Name is None
-                else booking.pu_Contact_F_L_Name,
-                "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-                "instruction": ""
-                if booking.pu_PickUp_Instructions_Contact is None
-                else booking.pu_PickUp_Instructions_Contact,
-                "phoneNumber": "0267651109"
-                if booking.pu_Phone_Main is None
-                else booking.pu_Phone_Main,
-            }
-            data["pickupAddress"]["postalAddress"] = {
-                "address1": ""
-                if booking.pu_Address_Street_1 is None
-                else booking.pu_Address_Street_1,
-                "address2": ""
-                if booking.pu_Address_street_2 is None
-                else booking.pu_Address_street_2,
-                "country": ""
-                if booking.pu_Address_Country is None
-                else booking.pu_Address_Country,
-                "postCode": ""
-                if booking.pu_Address_PostalCode is None
-                else booking.pu_Address_PostalCode,
-                "state": ""
-                if booking.pu_Address_State is None
-                else booking.pu_Address_State,
-                "suburb": ""
-                if booking.pu_Address_Suburb is None
-                else booking.pu_Address_Suburb,
-                "sortCode": ""
-                if booking.pu_Address_PostalCode is None
-                else booking.pu_Address_PostalCode,
-            }
-
-            data["dropAddress"] = {
-                "companyName": ""
-                if booking.deToCompanyName is None
-                else booking.deToCompanyName,
-                "contact": "James Sam"
-                if booking.de_to_Contact_F_LName is None
-                else booking.de_to_Contact_F_LName,
-                "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-                "instruction": ""
-                if booking.de_to_Pick_Up_Instructions_Contact is None
-                else booking.de_to_Pick_Up_Instructions_Contact,
-                "phoneNumber": "0393920020"
-                if booking.pu_Phone_Main is None
-                else booking.pu_Phone_Main,
-            }
-            data["dropAddress"]["postalAddress"] = {
-                "address1": ""
-                if booking.de_To_Address_Street_1 is None
-                else booking.de_To_Address_Street_1,
-                "address2": ""
-                if booking.de_To_Address_Street_2 is None
-                else booking.de_To_Address_Street_2,
-                "country": ""
-                if booking.de_To_Address_Country is None
-                else booking.de_To_Address_Country,
-                "postCode": ""
-                if booking.de_To_Address_PostalCode is None
-                else booking.de_To_Address_PostalCode,
-                "state": ""
-                if booking.de_To_Address_State is None
-                else booking.de_To_Address_State,
-                "suburb": ""
-                if booking.de_To_Address_Suburb is None
-                else booking.de_To_Address_Suburb,
-                "sortCode": ""
-                if booking.de_To_Address_PostalCode is None
-                else booking.de_To_Address_PostalCode,
-            }
-
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            )
-
-            items = []
-
-            for line in booking_lines:
-                temp_item = {
-                    "dangerous": 0,
-                    "itemId": "EXP",
-                    "packagingType": "PAL",
-                    "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                    "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                    "quantity": 0 if line.e_qty is None else line.e_qty,
-                    "volume": 0
-                    if line.e_1_Total_dimCubicMeter is None
-                    else line.e_1_Total_dimCubicMeter,
-                    "weight": 0
-                    if line.e_Total_KG_weight is None
-                    else line.e_Total_KG_weight,
-                    "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
-                }
-                items.append(temp_item)
-
-            data["items"] = items
-            # print(data)
-
-            url = "http://52.62.102.72:8080/dme-api-sit/booking/bookconsignment"
-            response0 = requests.post(url, params={}, json=data)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
-            s0 = json.dumps(
-                data0, indent=4, sort_keys=True, default=str
-            )  # Just for visual
-            # print(s0)
-
-            try:
-                request_payload = {
-                    "apiUrl": "",
-                    "accountCode": "",
-                    "authKey": "",
-                    "trackingId": "",
-                }
-                request_payload["apiUrl"] = url
-                request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-                request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "TRACKING"
-                request_status = "SUCCESS"
-
-                booking.v_FPBookingNumber = data0["consignmentNumber"]
-                booking.fk_fp_pickup_id = data0["requestId"]
-                booking.b_dateBookedDate = str(datetime.now())
-                booking.b_status = "Booked"
-                booking.b_error_Capture = ""
-                booking.save()
-
-                oneLog = Log(
-                    request_payload=request_payload,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
-
-                results.append({"Created Booking ID": data0["consignmentNumber"]})
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-
-                for item in data0["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id, api_item_id=item["itemId"]
-                    )
-                    book_con.save()
-
-                get_label_st_fn(booking.id)
-            except KeyError:
-                booking.b_error_Capture = data0["errorMsg"]
-                booking.save()
-                request_type = "EDIT ST BOOKING"
                 request_status = "ERROR"
                 oneLog = Log(
                     request_payload=data,
@@ -2123,80 +1262,3 @@ def returntempexcel(request):
 
     workbook.close()
     return response
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def cancel_booking(request):
-    results = []
-    try:
-        bid = literal_eval(request.body.decode("utf8"))
-        bid = bid["booking_id"]
-        booking = Bookings.objects.filter(id=bid)[0]
-
-        if booking.b_status != "Closed":
-            if booking.b_dateBookedDate is not None:
-                data = {}
-                data["spAccountDetails"] = {
-                    "accountCode": "00956684",
-                    "accountState": "NSW",
-                    "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                    "accountPassword": "xab801a41e663b5cb889",
-                }
-                data["serviceProvider"] = "ST"
-                data["consignmentNumber"] = booking.v_FPBookingNumber
-
-                url = "http://52.62.102.72:8080/dme-api-sit/booking/cancelconsignment"
-                response0 = requests.delete(url, params={}, json=data)
-                response0 = response0.content.decode("utf8").replace("'", '"')
-                data0 = json.loads(response0)
-                s0 = json.dumps(
-                    data0, indent=4, sort_keys=True, default=str
-                )  # Just for visual
-                # print(s0)
-
-                try:
-                    a = data0["requestId"]
-                    booking.b_status = "Closed"
-                    booking.b_booking_Notes = (
-                        "This booking has been closed vis Startrack API"
-                    )
-                    booking.save()
-                    request_type = "CANCEL ST BOOKING"
-                    request_status = "SUCCESS"
-                    oneLog = Log(
-                        request_payload=data,
-                        request_status=request_status,
-                        request_type=request_type,
-                        response=response0,
-                        fk_booking_id=booking.id,
-                    )
-                    oneLog.save()
-
-                    results.append({"message": "Booking canceled "})
-                except KeyError:
-                    request_type = "CANCEL ST BOOKING"
-                    request_status = "ERROR"
-                    oneLog = Log(
-                        request_payload=data,
-                        request_status=request_status,
-                        request_type=request_type,
-                        response=response0,
-                        fk_booking_id=booking.id,
-                    )
-                    oneLog.save()
-
-                    results.append({"message": "Error while canceling "})
-            else:
-                results.append({"message": "Booking is not booked yet."})
-        else:
-            results.append({"message": "Booking is closed."})
-
-    except IndexError:
-        results.append({"message": "Booking not found."})
-
-    except SyntaxError:
-        results.append({"message": "booking id is required"})
-
-    return Response(results)
