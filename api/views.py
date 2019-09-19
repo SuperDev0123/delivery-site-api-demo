@@ -1381,7 +1381,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_To_Address_State": booking.pu_Address_State,
                 "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
-                "b_status": "Ready for Booking",
+                "b_status": "Ready for booking",
+                "vx_freight_provider": booking.vx_freight_provider,
             }
         else:
             newBooking = {
@@ -1412,7 +1413,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_To_Address_State": booking.de_To_Address_State,
                 "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
-                "b_status": "Ready for Booking",
+                "b_status": "Ready for booking",
+                "vx_freight_provider": booking.vx_freight_provider,
             }
 
         if dup_line_and_linedetail == "true":
