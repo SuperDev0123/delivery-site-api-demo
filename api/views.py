@@ -347,6 +347,11 @@ class BookingsViewSet(viewsets.ViewSet):
         download_option = self.request.query_params.get("downloadOption", None)
         client_pk = self.request.query_params.get("clientPK", None)
         dme_status = self.request.query_params.get("dmeStatus", None)
+        multi_find_field = self.request.query_params.get("multiFindField", None)
+        multi_find_values = self.request.query_params.get("multiFindValues", "")
+
+        if multi_find_values:
+            multi_find_values = multi_find_values.split(", ")
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
 
         # if user_type == 'CLIENT':
@@ -371,6 +376,8 @@ class BookingsViewSet(viewsets.ViewSet):
         # print('@07 - Simple search keyword: ', simple_search_keyword)
         # print('@08 - Download Option: ', download_option)
         # print('@09 - Client PK: ', client_pk)
+        # print("@010 - MultiFind Field: ", multi_find_field)
+        # print("@011 - MultiFind Values: ", multi_find_values)
 
         # DME & Client filter
         if user_type == "DME":
@@ -462,8 +469,11 @@ class BookingsViewSet(viewsets.ViewSet):
             if int(warehouse_id) is not 0:
                 queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
-            # Simple search & Column fitler
-            if len(simple_search_keyword) > 0:
+            # Mulitple search | Simple search | Column fitler
+            if len(multi_find_values) > 0:
+                filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
+                queryset = queryset.filter(**filter_kwargs)
+            elif len(simple_search_keyword) > 0:
                 if (
                     not "&" in simple_search_keyword
                     and not "|" in simple_search_keyword
@@ -1287,6 +1297,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "inv_cost_actual": booking.inv_cost_actual,
                         "inv_sell_quoted": booking.inv_sell_quoted,
                         "inv_sell_actual": booking.inv_sell_actual,
+                        "x_manual_booked_flag": booking.x_manual_booked_flag,
                     }
                     return JsonResponse(
                         {
@@ -1339,7 +1350,6 @@ class BookingViewSet(viewsets.ViewSet):
         dup_line_and_linedetail = request.GET["dupLineAndLineDetail"]
         booking_id = request.GET["bookingId"]
         user_id = request.user.id
-
         booking = Bookings.objects.get(id=booking_id)
 
         if switch_info == "true":
@@ -1369,8 +1379,10 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.pu_Phone_Main,
                 "de_Email": booking.pu_Email,
                 "de_To_Address_State": booking.pu_Address_State,
-                "pk_booking_id": booking.pk_booking_id,
+                "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
+                "b_status": "Ready for booking",
+                "vx_freight_provider": booking.vx_freight_provider,
             }
         else:
             newBooking = {
@@ -1399,12 +1411,13 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.de_to_Phone_Main,
                 "de_Email": booking.de_Email,
                 "de_To_Address_State": booking.de_To_Address_State,
-                "pk_booking_id": booking.pk_booking_id,
+                "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
+                "b_status": "Ready for booking",
+                "vx_freight_provider": booking.vx_freight_provider,
             }
 
         if dup_line_and_linedetail == "true":
-            newBooking["pk_booking_id"] = str(uuid.uuid1())
             booking_lines = Booking_lines.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             )
@@ -1419,14 +1432,37 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line_detail.pk_id_lines_data = None
                 booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
                 booking_line_detail.save()
-        else:
-            newBooking["pk_booking_id"] = str(uuid.uuid1())
 
         serializer = BookingSerializer(data=newBooking)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"])
+    def tick_manual_book(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        id = body["id"]
+        user_id = request.user.id
+
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is None:
+            user_type = "CLIENT"
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        booking = Bookings.objects.get(id=id)
+
+        if booking.b_dateBookedDate:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
+            booking.x_manual_booked_flag = not booking.x_manual_booked_flag
+            booking.save()
+            serializer = BookingSerializer(booking)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["post"])
     def manual_book(self, request, format=None):
@@ -1444,17 +1480,16 @@ class BookingViewSet(viewsets.ViewSet):
 
         booking = Bookings.objects.get(id=id)
 
-        if not booking.b_dateBookedDate:
+        if not booking.x_manual_booked_flag:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
             booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
-        else:
-            booking.b_status = None
-            booking.b_dateBookedDate = None
+            booking.x_booking_Created_With = "Manual"
+            booking.save()
+            serializer = BookingSerializer(booking)
 
-        booking.save()
-        serializer = BookingSerializer(booking)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
@@ -1774,13 +1809,15 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
         elif upload_type == "label":
             fileName = (
                 "/home/cope_au/dme_sftp/cope_au/labels/indata/"
-                + str(bookingId)
+                + "DME"
+                + str(booking.b_bookingID_Visual)
                 + extension
             )
         elif upload_type == "pod":
             fileName = (
                 "/home/cope_au/dme_sftp/cope_au/pods/indata/"
-                + str(bookingId)
+                + "DME"
+                + str(booking.b_bookingID_Visual)
                 + extension
             )
 
@@ -2327,6 +2364,18 @@ class CommsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_comm(self, request, pk, format=None):
         dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
+
+        if (
+            dme_comm_and_task.closed != request.data["closed"]
+            and request.data["closed"]
+        ):
+            request.data["status_log_closed_time"] = datetime.now()
+        elif (
+            dme_comm_and_task.closed != request.data["closed"]
+            and not request.data["closed"]
+        ):
+            request.data["status_log_closed_time"] = None
+
         serializer = CommSerializer(dme_comm_and_task, data=request.data)
 
         try:
@@ -2340,6 +2389,8 @@ class CommsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def create_comm(self, request, pk=None):
+        if request.data["closed"]:
+            request.data["status_log_closed_time"] = datetime.now()
         serializer = CommSerializer(data=request.data)
 
         try:

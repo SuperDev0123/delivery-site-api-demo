@@ -814,6 +814,7 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
+    x_manual_booked_flag = models.BooleanField(default=False, blank=True, null=True)
     de_Email_Group_Emails = models.CharField(
         verbose_name=_("DE Email Group Emails"),
         max_length=30,
@@ -1281,6 +1282,11 @@ class Bookings(models.Model):
     inv_cost_actual = models.FloatField(blank=True, default=0, null=True)
     inv_sell_quoted = models.FloatField(blank=True, default=0, null=True)
     inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
+    b_del_to_signed_name = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    b_del_to_signed_time = models.DateTimeField(blank=True, null=True, default=None)
+    z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -1441,6 +1447,7 @@ class Booking_lines(models.Model):
     e_qty_returned = models.IntegerField(blank=True, null=True, default=0)
     e_qty_shortages = models.IntegerField(blank=True, null=True, default=0)
     e_qty_scanned_fp = models.IntegerField(blank=True, null=True, default=0)
+    z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(
         verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
     )
@@ -1494,6 +1501,7 @@ class Booking_lines_data(models.Model):
     itemSerialNumbers = models.CharField(
         verbose_name=_("Item Serial Numbers"), max_length=100, blank=True, null=True
     )
+    z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created By Account"), max_length=25, blank=True, null=True
     )

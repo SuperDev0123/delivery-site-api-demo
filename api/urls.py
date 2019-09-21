@@ -1,9 +1,11 @@
 from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
+
 from .views import *
 from .views_api import *
 from .views_external_apis import *
+from .fp_apis import st_apis as st_apis
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet, basename="user")
@@ -33,6 +35,8 @@ urlpatterns += [
     url(r"^upload/label/", LabelUploadView.as_view()),
     url(r"^upload/pod/", PodUploadView.as_view()),
     url(r"^share/upload-status/", upload_status),
+    url(r"^suburb/", getSuburbs),
+    url(r"^attachments/", getAttachmentsHistory),
     url(r"^download-pdf/", download_pdf),
     url(r"^download-pod/", download_pod),
     url(r"^download-connote/", download_connote),
@@ -40,26 +44,28 @@ urlpatterns += [
     url(r"^generate-xml/", generate_xml),
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
+    # BIOPAK push apis
     url(r"^bok_0_bookingskeys/", bok_0_bookingkeys),
     url(r"^bok_1_headers/", bok_1_headers),
     url(r"^bok_2_lines/", bok_2_lines),
     url(r"^bok_1_to_bookings/", bok_1_to_bookings),
-    url(r"^st_tracking/", st_tracking),
+    # ST apis
+    url(r"^st_tracking/", st_apis.tracking),
+    url(r"^st_book/", st_apis.book),
+    url(r"^st_get_label/", st_apis.get_label),
+    url(r"^st_edit_book/", st_apis.edit_book),
+    url(r"^st_cancel_book/", st_apis.cancel_book),
+    url(r"^st_create_order/", st_apis.create_order),
+    url(r"^st_order_summary/", st_apis.order_summary),
+    # Allied apis
     url(r"^allied_tracking/", allied_tracking),
-    url(r"^hunter_tracking/", hunter_tracking),
     url(r"^trigger_allied/", trigger_allied),
-    url(r"^trigger_st/", trigger_st),
     url(r"^trigger_all/", all_trigger),
     url(r"^booking_allied/", booking_allied),
-    url(r"^booking_st/", booking_st),
     url(r"^get_label_allied/", get_label_allied),
-    url(r"^get_label_st/", get_label_st),
-    url(r"^cancel_booking/", cancel_booking),
-    url(r"^st_create_order/", st_create_order),
-    url(r"^get_order_summary/", get_order_summary),
     url(r"^pricing_allied/", pricing_allied),
-    url(r"^suburb/", getSuburbs),
-    url(r"^attachments/", getAttachmentsHistory),
+    # Hunter apis
+    url(r"^hunter_tracking/", hunter_tracking),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
 ]
