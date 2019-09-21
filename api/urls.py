@@ -27,19 +27,24 @@ router.register(r"reports", DmeReportsViewSet, basename="reports")
 urlpatterns = router.urls
 
 urlpatterns += [
+    # Auth
     url(r"^api-token-auth/", obtain_jwt_token),
     url(r"^api-token-verify/", verify_jwt_token),
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
+    url(r"^suburb/", getSuburbs),
+    url(r"^attachments/", getAttachmentsHistory),
+    # Uploads
     url(r"^share/upload/(?P<filename>[^/]+)$", FileUploadView.as_view()),
     url(r"^upload/attachments/", AttachmentsUploadView.as_view()),
     url(r"^upload/label/", LabelUploadView.as_view()),
     url(r"^upload/pod/", PodUploadView.as_view()),
     url(r"^share/upload-status/", upload_status),
-    url(r"^suburb/", getSuburbs),
-    url(r"^attachments/", getAttachmentsHistory),
+    # Downloads
     url(r"^download-pdf/", download_pdf),
     url(r"^download-pod/", download_pod),
     url(r"^download-connote/", download_connote),
+    url(r"^download-manifest/", download_manifest),
+    # Generates
     url(r"^generate-csv/", generate_csv),
     url(r"^generate-xml/", generate_xml),
     url(r"^generate-pdf/", generate_pdf),

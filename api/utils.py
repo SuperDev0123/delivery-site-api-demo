@@ -142,6 +142,24 @@ def getFileCheckHistory(filename):
         return error
 
 
+def get_client_name(request):
+    user_id = request.user.id
+    dme_employee = (
+        DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+    )
+
+    if dme_employee is not None:
+        return "dme"
+    else:
+        client_employee = (
+            Client_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+        client = DME_clients.objects.get(
+            pk_id_dme_client=client_employee.fk_id_dme_client_id
+        )
+        return client.company_name
+
+
 def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
     assert isinstance(send_to, list)
 

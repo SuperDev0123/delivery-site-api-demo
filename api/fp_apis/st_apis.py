@@ -878,10 +878,11 @@ def order_summary(request):
                 )
 
                 if IS_PRODUCTION:
-                    file_url = "/var/www/html/dme_api/static/pdfs/" + file_name
+                    file_url = "/opt/s3_public/pdfs/startrack_au/" + file_name
                 else:
                     file_url = (
-                        "/Users/admin/work/goldmine/dme_api/static/pdfs/" + file_name
+                        "/Users/admin/work/goldmine/dme_api/static/pdfs/startrack_au/"
+                        + file_name
                     )
 
                 with open(file_url, "wb") as f:
@@ -893,7 +894,7 @@ def order_summary(request):
                 )
 
                 for booking in bookings:
-                    booking.z_manifest_url = file_name
+                    booking.z_manifest_url = "startrack_au/" + file_name
                     booking.save()
 
                 return JsonResponse({"Success": "Manifest is created successfully."})

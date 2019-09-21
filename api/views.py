@@ -1,3 +1,19 @@
+import pytz
+import os
+import io
+import json
+import zipfile
+import uuid
+import time
+import logging
+import operator
+from wsgiref.util import FileWrapper
+from datetime import datetime, date, timedelta
+from time import gmtime, strftime
+from ast import literal_eval
+from functools import reduce
+from pydash import _
+
 from django.shortcuts import render
 from django.core import serializers
 from rest_framework.response import Response
@@ -14,22 +30,8 @@ from rest_framework.decorators import (
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q
-from wsgiref.util import FileWrapper
-from datetime import datetime, date, timedelta
-from time import gmtime, strftime
 from django.utils import timezone
-from ast import literal_eval
-from functools import reduce
-from pydash import _
-import pytz
-import os
-import io
-import json
-import zipfile
-import uuid
-import time
-import logging
-import operator
+from django.conf import settings
 
 from .serializers import *
 from .models import *
@@ -45,6 +47,7 @@ from .utils import (
     make_3digit,
     build_manifest,
     get_sydney_now_time,
+    get_client_name,
 )
 
 logger = logging.getLogger("dme_api")
@@ -1113,6 +1116,47 @@ class BookingsViewSet(viewsets.ViewSet):
             )
 
         return JsonResponse({"results": ret_data})
+
+    @action(detail=False, methods=["get"])
+    def get_manifest_report(self, request, format=None):
+        clientname = get_client_name(self.request)
+
+        if clientname in ["BioPak", "dme"]:
+            st_bookings_has_manifest = (
+                Bookings.objects.exclude(manifest_timestamp__isnull=True)
+                .filter(vx_freight_provider__icontains="startrack")
+                .order_by("-manifest_timestamp")
+            )
+            manifest_dates = st_bookings_has_manifest.values_list(
+                "manifest_timestamp", flat=True
+            ).distinct()
+
+            results = []
+            for manifest_date in manifest_dates:
+                result = {}
+
+                result["count"] = st_bookings_has_manifest.filter(
+                    manifest_timestamp=manifest_date
+                ).count()
+                result["z_manifest_url"] = (
+                    st_bookings_has_manifest.filter(manifest_timestamp=manifest_date)
+                    .first()
+                    .z_manifest_url
+                )
+                result["warehouse_name"] = (
+                    st_bookings_has_manifest.filter(manifest_timestamp=manifest_date)
+                    .first()
+                    .fk_client_warehouse.warehousename
+                )
+                result["manifest_date"] = manifest_date
+                results.append(result)
+        else:
+            return JsonResponse(
+                {"message": "You have no permission to see this information"},
+                status=400,
+            )
+
+        return JsonResponse({"results": results})
 
 
 class BookingViewSet(viewsets.ViewSet):
@@ -2860,6 +2904,36 @@ def download_pdf(request):
     for index, file_path in enumerate(file_paths):
         zip_path = os.path.join(zip_subdir, file_path)
         zf.write(file_path, "labels/" + label_names[index])
+    zf.close()
+
+    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+    return response
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def download_manifest(request):
+    body = literal_eval(request.body.decode("utf8"))
+    z_manifest_url = body["z_manifest_url"]
+
+    if settings.ENV in ["prod", "dev"]:
+        file_path = "/opt/s3_public/pdfs/" + z_manifest_url  # Prod & Dev
+    else:
+        file_path = (
+            "/Users/admin/work/goldmine/dme_api/static/pdfs/" + z_manifest_url
+        )  # Prod
+
+    manifest_name = z_manifest_url.split("/")[1]
+
+    zip_subdir = "manifests"
+    zip_filename = "%s.zip" % zip_subdir
+
+    s = io.BytesIO()
+    zf = zipfile.ZipFile(s, "w")
+
+    zip_path = os.path.join(zip_subdir, file_path)
+    zf.write(file_path, manifest_name)
     zf.close()
 
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
