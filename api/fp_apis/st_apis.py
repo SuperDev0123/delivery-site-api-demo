@@ -15,16 +15,64 @@ from api.models import *
 from django.conf import settings
 
 if settings.ENV == "local":
-    production = False  # Local
+    IS_PRODUCTION = False  # Local
 else:
-    production = True  # Dev
+    IS_PRODUCTION = True  # Dev
 
-if production:
-    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
-else:
+if settings.ENV == "local":
     DME_LEVEL_API_URL = "http://localhost:3000"
+elif settings.ENV == "dev":
+    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
+elif settings.ENV == "prod":
+    DME_LEVEL_API_URL = "http://52.62.102.72:3000"
 
-DME_LEVEL_API_URL = "http://localhost:3000"
+ST_ACCOUTN_CODES = {
+    "test_bed_0": "00956684",  # Original
+    "test_bed_1": "00251522",  # ST Premium and ST Express
+    "BIO - BON": "10145902",
+    "BIO - ROC": "10145593",
+    "BIO - CAV": "10145596",
+    "BIO - TRU": "10149944",
+    "BIO - HAZ": "10145597",
+    "BIO - EAS": "10149943",
+}
+
+ST_KEY_CHAINS = {
+    "test_bed_0": {
+        "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+        "accountPassword": "xab801a41e663b5cb889",
+    },
+    "test_bed_1": {
+        "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+        "accountPassword": "x9083d2fed4d50aa2ad5",
+    },
+    "live": {
+        "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+        "accountPassword": "x81775935aece65541c9",
+    },
+}
+
+
+def _set_error(booking, error_msg):
+    booking.b_error_Capture = str(error_msg)[:999]
+    booking.save()
+
+
+def _get_account_details(booking):
+    if settings.ENV in ["local", "dev"]:
+        account_detail = {
+            "accountCode": ST_ACCOUTN_CODES["test_bed_1"],
+            **ST_KEY_CHAINS["test_bed_1"],
+        }
+    else:
+        account_detail = {
+            "accountCode": ST_ACCOUTN_CODES[
+                booking.fk_client_warehouse.client_warehouse_code
+            ],
+            **ST_KEY_CHAINS["live"],
+        }
+
+    return account_detail
 
 
 @api_view(["POST"])
@@ -35,7 +83,7 @@ def tracking(request):
         vx_freight_provider__iexact="startrack", z_api_issue_update_flag_500=1
     )
     results = []
-    # print("booking_list: ", booking_list)
+
     for booking in booking_list:
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         data = literal_eval(request.body.decode("utf8"))
@@ -96,7 +144,7 @@ def book(request):
         booking_id = body["booking_id"]
 
         try:
-            booking = Bookings.objects.filter(id=booking_id)[0]
+            booking = Bookings.objects.get(id=booking_id)
 
             if booking.b_status.lower() != "ready for booking":
                 return JsonResponse(
@@ -104,24 +152,17 @@ def book(request):
                 )
 
             if booking.pu_Address_State is None or not booking.pu_Address_State:
-                return JsonResponse(
-                    {"message": "State for pickup postal address is required."},
-                    status=400,
-                )
+                error_msg = "State for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
 
             if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
-                return JsonResponse(
-                    {"message": "Suburb name for pickup postal address is required."},
-                    status=400,
-                )
+                error_msg = "Suburb name for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
 
             data = {}
-            data["spAccountDetails"] = {
-                "accountCode": "00956684",
-                "accountState": "NSW",
-                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                "accountPassword": "xab801a41e663b5cb889",
-            }
+            data["spAccountDetails"] = _get_account_details(booking)
             data["serviceProvider"] = "ST"
             data["readyDate"] = (
                 ""
@@ -297,24 +338,21 @@ def book(request):
                         fk_booking_id=booking.id,
                     ).save()
 
-                    booking.b_error_Capture = data0["errorMsg"]
-                    booking.save()
-                    return JsonResponse(
-                        {"message": booking.b_error_Capture}, status=400
-                    )
+                    error_msg = data0["errors"]
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
                 except KeyError:
-                    booking.b_error_Capture = "ST Booking failed"
-                    booking.save()
+                    error_msg = data0
+                    _set_error(booking, error_msg)
                     return JsonResponse({"message": s0}, status=400)
-
         except IndexError:
             return JsonResponse({"message": "Booking not found"}, status=400)
-
         except TypeError:
-            return JsonResponse({"message": "eqty is none"}, status=400)
-
+            error_msg = "e_qty is none"
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError:
-        return JsonResponse({"message": "booking id is required"}, status=400)
+        return JsonResponse({"message": "Booking id is required"}, status=400)
 
 
 @api_view(["POST"])
@@ -329,22 +367,17 @@ def edit_book(request):
             booking = Bookings.objects.get(id=booking_id)
 
             if booking.pu_Address_State is None or not booking.pu_Address_State:
-                return JsonResponse(
-                    {"Error": "State for pickup postal address is required."}
-                )
+                error_msg = "State for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg})
 
             if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
-                return booking_id(
-                    {"Error": "suburb name for pickup postal address is required."}
-                )
+                error_msg = "Suburb name for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return booking_id({"message": error_msg})
 
             data = {}
-            data["spAccountDetails"] = {
-                "accountCode": "00956684",
-                "accountState": "NSW",
-                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                "accountPassword": "xab801a41e663b5cb889",
-            }
+            data["spAccountDetails"] = _get_account_details(booking)
             data["serviceProvider"] = "ST"
             data["consignmentNumber"] = booking.v_FPBookingNumber
             data["readyDate"] = (
@@ -395,7 +428,6 @@ def edit_book(request):
                 if booking.pu_Address_PostalCode is None
                 else booking.pu_Address_PostalCode,
             }
-
             data["dropAddress"] = {
                 "companyName": ""
                 if booking.deToCompanyName is None
@@ -459,7 +491,7 @@ def edit_book(request):
                 items.append(temp_item)
             data["items"] = items
 
-            # print(data)
+            print("### Payload (ST edit book): ", data)
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
@@ -467,7 +499,7 @@ def edit_book(request):
             s0 = json.dumps(
                 data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            # print(s0)
+            print("### Response (ST edit book): ", s0)
 
             try:
                 request_payload = {
@@ -524,17 +556,15 @@ def edit_book(request):
                     )
                     oneLog.save()
 
-                    booking.b_error_Capture = data0["errorMsg"]
-                    booking.save()
-                    return JsonResponse({"Error": data0["errorMsg"]}, status=400)
+                    error_msg = data0["errors"]
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
                 except KeyError:
-                    booking.b_error_Capture = "Failed to edit book"
-                    booking.save()
-                    return JsonResponse({"Error": s0}, status=400)
-
+                    error_msg = data0
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": s0}, status=400)
         except IndexError:
             return JsonResponse({"message": "Booking not found"}, status=400)
-
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
 
@@ -551,12 +581,7 @@ def cancel_book(request):
         if booking.b_status != "Closed":
             if booking.b_dateBookedDate is not None:
                 data = {}
-                data["spAccountDetails"] = {
-                    "accountCode": "00956684",
-                    "accountState": "NSW",
-                    "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                    "accountPassword": "xab801a41e663b5cb889",
-                }
+                data["spAccountDetails"] = _get_account_details(booking)
                 data["serviceProvider"] = "ST"
                 data["consignmentNumbers"] = [booking.v_FPBookingNumber]
 
@@ -593,35 +618,44 @@ def cancel_book(request):
                             {"message": "Successfully cancelled book"}, status=200
                         )
                     else:
+                        error_msg = data0
+                        _set_error(booking, error_msg)
                         return JsonResponse(
-                            {"message": "Failed to cancel book"}, status=200
+                            {"message": "Failed to cancel book"}, status=400
                         )
                 except KeyError:
-                    request_type = "CANCEL ST BOOKING"
-                    request_status = "ERROR"
-                    log = Log(
-                        request_payload=data,
-                        request_status=request_status,
-                        request_type=request_type,
-                        response=response0,
-                        fk_booking_id=booking.id,
-                    ).save()
+                    try:
+                        request_type = "CANCEL ST BOOKING"
+                        request_status = "ERROR"
+                        oneLog = Log(
+                            request_payload=data,
+                            request_status=request_status,
+                            request_type=request_type,
+                            response=response0,
+                            fk_booking_id=booking.id,
+                        )
+                        oneLog.save()
 
-                    return JsonResponse(
-                        {"message": "Failed to cancel book"}, status=400
-                    )
+                        error_msg = data0["errors"]
+                        _set_error(booking, error_msg)
+                        return JsonResponse({"message": error_msg}, status=400)
+                    except KeyError:
+                        error_msg = data0
+                        _set_error(booking, error_msg)
+                        return JsonResponse({"message": s0}, status=400)
+
             else:
-                return JsonResponse(
-                    {"message": "Booking is not booked yet"}, status=400
-                )
+                error_msg = "Booking is not booked yet"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
         else:
-            return JsonResponse({"message": "Booking is closed"}, status=400)
-
+            error_msg = "Booking is already cancelled"
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg}, status=400)
     except IndexError:
         return JsonResponse({"message": "Booking not found"}, status=400)
-
     except SyntaxError:
-        return JsonResponse({"message": "booking id is required"}, status=400)
+        return JsonResponse({"message": "Booking id is required"}, status=400)
 
 
 @api_view(["POST"])
@@ -634,12 +668,7 @@ def get_label(request):
         booking = Bookings.objects.get(id=booking_id)
 
         data = {}
-        data["spAccountDetails"] = {
-            "accountCode": "00956684",
-            "accountState": "NSW",
-            "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-            "accountPassword": "xab801a41e663b5cb889",
-        }
+        data["spAccountDetails"] = _get_account_details(booking)
         data["serviceProvider"] = "ST"
         data["consignmentNumber"] = booking.v_FPBookingNumber
         data["type"] = "PRINT"
@@ -721,7 +750,9 @@ def get_label(request):
                     fk_booking_id=booking.id,
                 ).save()
 
-                return JsonResponse({"message": data0["errorMsg"]}, status=400)
+                error_msg = data0["errors"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
             except TypeError:
                 return JsonResponse({"message": s0}, status=400)
             except KeyError:
@@ -747,12 +778,7 @@ def create_order(request):
         )
 
         data = {}
-        data["spAccountDetails"] = {
-            "accountCode": "00956684",
-            "accountState": "NSW",
-            "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-            "accountPassword": "xab801a41e663b5cb889",
-        }
+        data["spAccountDetails"] = _get_account_details(booking)
         data["serviceProvider"] = "ST"
         data["paymentMethods"] = "CHARGE_TO_ACCOUNT"
         data["referenceNumber"] = "refer1"
@@ -801,9 +827,14 @@ def create_order(request):
                     fk_booking_id=booking.id,
                 )
                 oneLog.save()
-                return JsonResponse({"Error": data0["errorMsg"]})
+
+                error_msg = data0["errors"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg})
             except KeyError:
-                return JsonResponse({"Error": s0})
+                error_msg = data0
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": s0})
     except IndexError:
         return JsonResponse({"message": "Booking not found"})
 
@@ -820,24 +851,22 @@ def order_summary(request):
             booking = Bookings.objects.get(id=booking_ids[0])
 
             data = {}
-            data["spAccountDetails"] = {
-                "accountCode": "00956684",
-                "accountState": "NSW",
-                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                "accountPassword": "xab801a41e663b5cb889",
-            }
+            data["spAccountDetails"] = _get_account_details(booking)
             data["serviceProvider"] = "ST"
             data["orderId"] = booking.vx_fp_order_id
 
+            headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+
             print("### Payload (Get Order Summary): ", data)
             url = DME_LEVEL_API_URL + "/order/summary"
-            response0 = requests.post(url, params={}, json=data)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
-            s0 = json.dumps(
-                data0, indent=2, sort_keys=True, default=str
-            )  # Just for visual
-            print("### Response (Get Order Summary): ", s0)
+            response0 = requests.post(url, json=data, headers=headers)
+            response0 = response0.content
+            # response0 = response0.content.decode("utf8").replace("'", '"')
+            # data0 = json.loads(response0)
+            # s0 = json.dumps(
+            #     data0, indent=2, sort_keys=True, default=str
+            # )  # Just for visual
+            print("### Response (Get Order Summary): ", response0)
 
             try:
                 file_name = (
@@ -847,22 +876,34 @@ def order_summary(request):
                     + str(datetime.now())
                     + ".pdf"
                 )
-                file_url = "/var/www/html/dme_api/static/pdfs/" + file_name
 
-                with open(os.path.expanduser(file_url), "wb") as fout:
-                    fout.write(base64.decodestring(data0["pdfData"].encode("utf-8")))
+                if IS_PRODUCTION:
+                    file_url = "/var/www/html/dme_api/static/pdfs/" + file_name
+                else:
+                    file_url = (
+                        "/Users/admin/work/goldmine/dme_api/static/pdfs/" + file_name
+                    )
+
+                with open(file_url, "wb") as f:
+                    # f.write(base64.decodestring(response0.content))
+                    f.write(response0)
 
                 bookings = Bookings.objects.filter(
                     vx_fp_order_id=booking.vx_fp_order_id
                 )
-                for book in bookings:
-                    book.z_manifest_url = file_name
-                    book.save()
+
+                for booking in bookings:
+                    booking.z_manifest_url = file_name
+                    booking.save()
 
                 return JsonResponse({"Success": "Manifest is created successfully."})
             except KeyError:
-                return JsonResponse({"Error": s0})
+                error_msg = data0
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": s0})
         except IndexError:
-            return JsonResponse({"message": "Order is not created for this booking."})
+            error_msg = "Order is not created for this booking."
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg})
     except SyntaxError:
-        return JsonResponse({"message": "booking id is required"})
+        return JsonResponse({"message": "Booking id is required"})
