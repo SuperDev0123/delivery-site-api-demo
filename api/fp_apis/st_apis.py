@@ -861,13 +861,12 @@ def order_summary(request):
             print("### Payload (Get Order Summary): ", data)
             url = DME_LEVEL_API_URL + "/order/summary"
             response0 = requests.post(url, json=data, headers=headers)
-            response0 = response0.content.decode("utf8")
-            # response0 = response0.content.decode("utf8").replace("'", '"')
-            # data0 = json.loads(response0)
+            response0 = response0.content
+            data0 = json.loads(response0)
             # s0 = json.dumps(
             #     data0, indent=2, sort_keys=True, default=str
             # )  # Just for visual
-            print("### Response (Get Order Summary): ", response0)
+            # print("### Response (Get Order Summary): ", bytes(data0["pdfData"]["data"]))
 
             try:
                 file_name = (
@@ -875,7 +874,7 @@ def order_summary(request):
                     + str(booking.vx_fp_order_id)
                     + "_"
                     + str(datetime.now())
-                    + ".txt"
+                    + ".pdf"
                 )
 
                 if IS_PRODUCTION:
@@ -886,8 +885,8 @@ def order_summary(request):
                         + file_name
                     )
 
-                with open(file_url, "w") as f:
-                    f.write(response0)
+                with open(file_url, "wb") as f:
+                    f.write(bytes(data0["pdfData"]["data"]))
                     f.close()
 
                 bookings = Bookings.objects.filter(
