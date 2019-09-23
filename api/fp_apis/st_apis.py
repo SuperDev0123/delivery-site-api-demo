@@ -348,7 +348,7 @@ def book(request):
         except IndexError:
             return JsonResponse({"message": "Booking not found"}, status=400)
         except TypeError:
-            error_msg = "e_qty is none"
+            error_msg = data0[0]["field"]
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError:
