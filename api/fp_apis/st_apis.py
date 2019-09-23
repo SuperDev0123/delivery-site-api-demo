@@ -338,7 +338,7 @@ def book(request):
                         fk_booking_id=booking.id,
                     ).save()
 
-                    error_msg = data0["errors"]
+                    error_msg = data0[0]["field"]
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
                 except KeyError:
