@@ -779,7 +779,7 @@ def create_order(request):
         )
 
         data = {}
-        data["spAccountDetails"] = _get_account_details(booking)
+        data["spAccountDetails"] = _get_account_details(bookings.first())
         data["serviceProvider"] = "ST"
         data["paymentMethods"] = "CHARGE_TO_ACCOUNT"
         data["referenceNumber"] = "refer1"
