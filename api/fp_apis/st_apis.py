@@ -597,7 +597,8 @@ def cancel_book(request):
 
                 try:
                     if response.status_code == 200:
-                        booking.b_status = "Closed"
+                        booking.b_status = "Ready for booking"
+                        booking.b_dateBookedDate = None
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
@@ -707,7 +708,7 @@ def get_label(request):
         print("### Response (ST create_label): ", s0)
 
         try:
-            time.sleep(10)  # Delay to wait label is created
+            time.sleep(15)  # Delay to wait label is created
             data["consignmentNumber"] = data0[0]["request_id"]
             data["labelType"] = "PRINT"
 
