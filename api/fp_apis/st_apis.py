@@ -146,7 +146,7 @@ def book(request):
         try:
             booking = Bookings.objects.get(id=booking_id)
 
-            if booking.b_status.lower() != "ready for booking":
+            if booking.b_status.lower() == "booked":
                 return JsonResponse(
                     {"message": "Booking is already booked."}, status=400
                 )
@@ -597,12 +597,12 @@ def cancel_book(request):
 
                 try:
                     if response.status_code == 200:
-                        booking.b_status = "Ready for booking"
+                        booking.b_status = "Closed"
                         booking.b_dateBookedDate = None
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
-                        booking.v_FPBookingNumber = None
+                        # booking.v_FPBookingNumber = None
                         booking.save()
 
                         request_type = "CANCEL ST BOOKING"
