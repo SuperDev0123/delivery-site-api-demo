@@ -895,6 +895,7 @@ def order_summary(request):
 
                 for booking in bookings:
                     booking.z_manifest_url = "startrack_au/" + file_name
+                    booking.manifest_timestamp = datetime.now()
                     booking.save()
 
                 return JsonResponse({"Success": "Manifest is created successfully."})
