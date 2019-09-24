@@ -326,7 +326,7 @@ def book(request):
                     ).save()
 
                 return JsonResponse(
-                    {"message": f"Successfully booked({data0['consignmentNumber']})"}
+                    {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                 )
             except KeyError:
                 try:
@@ -515,8 +515,8 @@ def edit_book(request):
                 request_type = "TRACKING"
                 request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = data0["consignmentNumber"]
-                # booking.fk_fp_pickup_id = data0["requestId"]
+                booking.v_FPBookingNumber = data0["consignment_id"]
+                booking.fk_fp_pickup_id = data0["consignmentNumber"]
                 booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
@@ -541,7 +541,7 @@ def edit_book(request):
                     book_con.save()
 
                 return JsonResponse(
-                    {"message": f"Successfully edit book({data0['consignmentNumber']})"}
+                    {"message": f"Successfully edit book({booking.v_FPBookingNumber})"}
                 )
             except KeyError:
                 try:
