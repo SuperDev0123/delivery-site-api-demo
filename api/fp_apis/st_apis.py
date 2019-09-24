@@ -301,8 +301,8 @@ def book(request):
                 request_type = "TRACKING"
                 request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = data0["consignmentNumber"]
-                # booking.fk_fp_pickup_id = data0["requestId"]
+                booking.v_FPBookingNumber = data0["consignment_id"]
+                booking.fk_fp_pickup_id = data0["consignmentNumber"]
                 booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
@@ -379,7 +379,7 @@ def edit_book(request):
             data = {}
             data["spAccountDetails"] = _get_account_details(booking)
             data["serviceProvider"] = "ST"
-            data["consignmentNumber"] = booking.v_FPBookingNumber
+            data["consignmentNumber"] = booking.fk_fp_pickup_id
             data["readyDate"] = (
                 ""
                 if booking.puPickUpAvailFrom_Date is None
@@ -583,7 +583,7 @@ def cancel_book(request):
                 data = {}
                 data["spAccountDetails"] = _get_account_details(booking)
                 data["serviceProvider"] = "ST"
-                data["consignmentNumbers"] = [booking.v_FPBookingNumber]
+                data["consignmentNumbers"] = [booking.fk_fp_pickup_id]
 
                 # print("### Payload (ST cancel book): ", data)
                 url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
@@ -671,7 +671,7 @@ def get_label(request):
         data = {}
         data["spAccountDetails"] = _get_account_details(booking)
         data["serviceProvider"] = "ST"
-        data["consignmentNumber"] = booking.v_FPBookingNumber
+        data["consignmentNumber"] = booking.fk_fp_pickup_id
         data["type"] = "PRINT"
 
         confirmation_items = Api_booking_confirmation_lines.objects.filter(
@@ -786,7 +786,7 @@ def create_order(request):
 
         consignmentNumbers = []
         for booking in bookings:
-            consignmentNumbers.append(booking.v_FPBookingNumber)
+            consignmentNumbers.append(booking.fk_fp_pickup_id)
         data["consignmentNumbers"] = consignmentNumbers
 
         # print("Payload(Create Order for ST): ", data)
