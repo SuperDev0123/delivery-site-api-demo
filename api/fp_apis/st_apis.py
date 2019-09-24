@@ -261,7 +261,7 @@ def book(request):
                     temp_item = {
                         "dangerous": 0,
                         "itemId": "EXP",
-                        "packagingType": "PAL",
+                        "packagingType": "CTN",
                         "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
                         "length": 0 if line.e_dimLength is None else line.e_dimLength,
                         "quantity": 0 if line.e_qty is None else line.e_qty,
@@ -476,7 +476,7 @@ def edit_book(request):
                 temp_item = {
                     "dangerous": 0,
                     "itemId": "EXP",
-                    "packagingType": "PAL",
+                    "packagingType": "CTN",
                     "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
                     "length": 0 if line.e_dimLength is None else line.e_dimLength,
                     "quantity": 0 if line.e_qty is None else line.e_qty,
@@ -680,7 +680,7 @@ def get_label(request):
 
         items = []
         for item in confirmation_items:
-            temp_item = {"itemId": item.api_item_id, "packagingType": "PAL"}
+            temp_item = {"itemId": item.api_item_id, "packagingType": "CTN"}
             items.append(temp_item)
         data["items"] = items
 
