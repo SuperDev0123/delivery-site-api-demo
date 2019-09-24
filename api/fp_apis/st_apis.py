@@ -277,7 +277,7 @@ def book(request):
 
             data["items"] = items
 
-            print("### Payload (ST book): ", data)
+            # print("### Payload (ST book): ", data)
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
@@ -285,7 +285,7 @@ def book(request):
             s0 = json.dumps(
                 data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            print("### Response (ST book): ", s0)
+            # print("### Response (ST book): ", s0)
 
             try:
                 request_payload = {
@@ -491,7 +491,7 @@ def edit_book(request):
                 items.append(temp_item)
             data["items"] = items
 
-            print("### Payload (ST edit book): ", data)
+            # print("### Payload (ST edit book): ", data)
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
@@ -499,7 +499,7 @@ def edit_book(request):
             s0 = json.dumps(
                 data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            print("### Response (ST edit book): ", s0)
+            # print("### Response (ST edit book): ", s0)
 
             try:
                 request_payload = {
@@ -585,7 +585,7 @@ def cancel_book(request):
                 data["serviceProvider"] = "ST"
                 data["consignmentNumbers"] = [booking.v_FPBookingNumber]
 
-                print("### Payload (ST cancel book): ", data)
+                # print("### Payload (ST cancel book): ", data)
                 url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
                 response = requests.delete(url, params={}, json=data)
                 response0 = response.content.decode("utf8").replace("'", '"')
@@ -593,7 +593,7 @@ def cancel_book(request):
                 s0 = json.dumps(
                     data0, indent=2, sort_keys=True, default=str
                 )  # Just for visual
-                print("### Response (ST cancel book): ", s0)
+                # print("### Response (ST cancel book): ", s0)
 
                 try:
                     if response.status_code == 200:
@@ -696,23 +696,23 @@ def get_label(request):
         ]
         data["pageFormat"] = page_format
 
-        print(
-            "### Payload (ST create_label): ",
-            json.dumps(data, indent=2, sort_keys=True, default=str),
-        )
+        # print(
+        #    "### Payload (ST create_label): ",
+        #    json.dumps(data, indent=2, sort_keys=True, default=str),
+        # )
         url = DME_LEVEL_API_URL + "/labelling/createlabel"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
-        print("### Response (ST create_label): ", s0)
+        # print("### Response (ST create_label): ", s0)
 
         try:
             time.sleep(15)  # Delay to wait label is created
             data["consignmentNumber"] = data0[0]["request_id"]
             data["labelType"] = "PRINT"
 
-            print("### Payload (ST get_label): ", data)
+            # print("### Payload (ST get_label): ", data)
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
@@ -720,7 +720,7 @@ def get_label(request):
             s0 = json.dumps(
                 data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            print("### Response (ST get_label): ", s0)
+            # print("### Response (ST get_label): ", s0)
 
             booking.z_label_url = data0["labels"][0]["url"]
             booking.save()
@@ -789,13 +789,13 @@ def create_order(request):
             consignmentNumbers.append(booking.v_FPBookingNumber)
         data["consignmentNumbers"] = consignmentNumbers
 
-        print("Payload(Create Order for ST): ", data)
+        # print("Payload(Create Order for ST): ", data)
         url = DME_LEVEL_API_URL + "/order/create"
         response0 = requests.post(url, params={}, json=data)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
-        print("Response(Create Order for ST): ", s0)
+        # print("Response(Create Order for ST): ", s0)
 
         try:
             request_type = "Create Order"
@@ -858,7 +858,7 @@ def order_summary(request):
 
             headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
 
-            print("### Payload (Get Order Summary): ", data)
+            # print("### Payload (Get Order Summary): ", data)
             url = DME_LEVEL_API_URL + "/order/summary"
             response0 = requests.post(url, json=data, headers=headers)
             response0 = response0.content
