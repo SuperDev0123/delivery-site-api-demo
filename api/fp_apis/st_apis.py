@@ -111,7 +111,7 @@ def tracking(request):
             request_payload["trackingId"] = data["consignmentDetails"][0][
                 "consignmentNumber"
             ]
-            request_type = "TRACKING"
+            request_type = "ST TRACKING"
             request_status = "SUCCESS"
 
             oneLog = Log(
@@ -298,7 +298,7 @@ def book(request):
                 request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
                 request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
                 request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "TRACKING"
+                request_type = "ST BOOK"
                 request_status = "SUCCESS"
 
                 booking.v_FPBookingNumber = data0["consignment_id"]
@@ -333,7 +333,7 @@ def book(request):
                     log = Log(
                         request_payload=data,
                         request_status="ERROR",
-                        request_type="ST BOOKING",
+                        request_type="ST BOOK",
                         response=response0,
                         fk_booking_id=booking.id,
                     ).save()
@@ -512,7 +512,7 @@ def edit_book(request):
                 request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
                 request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
                 request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "TRACKING"
+                request_type = "ST EDIT BOOK"
                 request_status = "SUCCESS"
 
                 booking.v_FPBookingNumber = data0["consignment_id"]
@@ -545,7 +545,7 @@ def edit_book(request):
                 )
             except KeyError:
                 try:
-                    request_type = "EDIT ST BOOKING"
+                    request_type = "ST EDIT BOOK"
                     request_status = "ERROR"
                     oneLog = Log(
                         request_payload=data,
@@ -605,7 +605,7 @@ def cancel_book(request):
                         # booking.v_FPBookingNumber = None
                         booking.save()
 
-                        request_type = "CANCEL ST BOOKING"
+                        request_type = "ST CANCEL BOOK"
                         request_status = "SUCCESS"
                         log = Log(
                             request_payload=data,
@@ -626,7 +626,7 @@ def cancel_book(request):
                         )
                 except KeyError:
                     try:
-                        request_type = "CANCEL ST BOOKING"
+                        request_type = "ST CANCEL BOOK"
                         request_status = "ERROR"
                         oneLog = Log(
                             request_payload=data,
@@ -725,7 +725,7 @@ def get_label(request):
             booking.z_label_url = data0["labels"][0]["url"]
             booking.save()
 
-            request_type = "ST Label"
+            request_type = "ST LABEL"
             request_status = "SUCCESS"
             oneLog = Log(
                 request_payload=data,
@@ -741,7 +741,7 @@ def get_label(request):
             )
         except KeyError:
             try:
-                request_type = "ST Label"
+                request_type = "ST LABEL"
                 request_status = "ERROR"
                 oneLog = Log(
                     request_payload=data,
@@ -798,7 +798,7 @@ def create_order(request):
         # print("Response(Create Order for ST): ", s0)
 
         try:
-            request_type = "Create Order"
+            request_type = "ST CREATE ORDER"
             request_status = "SUCCESS"
             oneLog = Log(
                 request_payload=data,
@@ -818,7 +818,7 @@ def create_order(request):
             try:
                 booking.b_error_Capture = data0["errorMsg"]
                 booking.save()
-                request_type = "Create Order"
+                request_type = "ST CREATE ORDER"
                 request_status = "ERROR"
                 oneLog = Log(
                     request_payload=data,
