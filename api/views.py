@@ -1580,6 +1580,22 @@ class BookingLinesViewSet(viewsets.ViewSet):
 
         return JsonResponse({"booking_lines": return_data})
 
+    @action(detail=False, methods=["get"])
+    def get_count(self, request, format=None):
+        booking_ids = request.GET["bookingIds"].split(",")
+        bookings = Bookings.objects.filter(id__in=booking_ids)
+
+        count = 0
+        for booking in bookings:
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+
+            for booking_line in booking_lines:
+                count = count + booking_line.e_qty
+
+        return JsonResponse({"count": count})
+
     @action(detail=False, methods=["post"])
     def create_booking_line(self, request, format=None):
         serializer = BookingLineSerializer(data=request.data)
