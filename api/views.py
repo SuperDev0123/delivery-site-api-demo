@@ -2903,12 +2903,16 @@ def download_pdf(request):
                 file_paths.append(
                     "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
+                label_names.append(booking.z_label_url)
+            elif booking.vx_freight_provider.lower == "startrack":
+                file_paths.append(booking.z_label_url)
+                label_names.append(booking.z_label_url.split("?")[0].split("/")[-1])
             else:
                 file_paths.append(
                     "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
+                label_names.append(booking.z_label_url)
             # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
-            label_names.append(booking.z_label_url)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
             booking.save()
 
