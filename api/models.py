@@ -1298,9 +1298,11 @@ class Bookings(models.Model):
         return int(max)
 
     def has_comms(self):
-        comms = Dme_comm_and_task.objects.filter(fk_booking_id=self.pk_booking_id)
+        comms_count = Dme_comm_and_task.objects.filter(
+            fk_booking_id=self.pk_booking_id
+        ).count()
 
-        if len(comms) == 0:
+        if comms_count == 0:
             return False
         else:
             return True

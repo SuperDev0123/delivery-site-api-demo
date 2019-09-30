@@ -656,6 +656,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "fk_manifest_id": booking.fk_manifest_id,
                     "b_is_flagged_add_on_services": booking.b_is_flagged_add_on_services,
                     "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
+                    "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
                 }
             )
 
