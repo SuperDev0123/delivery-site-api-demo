@@ -2892,12 +2892,11 @@ def upload_status(request):
 def download_pdf(request):
     body = literal_eval(request.body.decode("utf8"))
     bookingIds = body["ids"]
+    bookings = Bookings.objects.get(id__in=bookingIds)
     file_paths = []
     label_names = []
 
-    for id in bookingIds:
-        booking = Bookings.objects.get(id=id)
-
+    for booking in bookings:
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
             if booking.vx_freight_provider == "TASFR":
                 file_paths.append(
