@@ -60,7 +60,7 @@ urlpatterns += [
     url(r"^st_get_label/", st_apis.get_label),
     url(r"^st_edit_book/", st_apis.edit_book),
     url(r"^st_cancel_book/", st_apis.cancel_book),
-    (?# url(r"^st_create_order/", st_apis.create_order),)
+    # url(r"^st_create_order/", st_apis.create_order),
     url(r"^st_create_order/", st_apis.order_summary),
     # Allied apis
     url(r"^allied_tracking/", allied_tracking),
