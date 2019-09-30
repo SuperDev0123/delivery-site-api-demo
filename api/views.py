@@ -2904,7 +2904,7 @@ def download_pdf(request):
                     "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
                 label_names.append(booking.z_label_url)
-            elif booking.vx_freight_provider.lower == "startrack":
+            elif booking.vx_freight_provider.lower() == "startrack":
                 file_paths.append(booking.z_label_url)
                 label_names.append(booking.z_label_url.split("?")[0].split("/")[-1])
             else:
