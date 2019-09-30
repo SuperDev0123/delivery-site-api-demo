@@ -893,9 +893,10 @@ def order_summary(request):
                     vx_fp_order_id=booking.vx_fp_order_id
                 )
 
+                manifest_timestamp = datetime.now()
                 for booking in bookings:
                     booking.z_manifest_url = "startrack_au/" + file_name
-                    booking.manifest_timestamp = datetime.now()
+                    booking.manifest_timestamp = manifest_timestamp
                     booking.save()
 
                 return JsonResponse({"Success": "Manifest is created successfully."})
