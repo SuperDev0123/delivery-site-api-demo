@@ -1430,6 +1430,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "z_lock_status": booking.z_lock_status,
                 "b_status": "Ready for booking",
                 "vx_freight_provider": booking.vx_freight_provider,
+                "kf_client_id": booking.kf_client_id,
             }
         else:
             newBooking = {
@@ -1462,6 +1463,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "z_lock_status": booking.z_lock_status,
                 "b_status": "Ready for booking",
                 "vx_freight_provider": booking.vx_freight_provider,
+                "kf_client_id": booking.kf_client_id,
             }
 
         if dup_line_and_linedetail == "true":
