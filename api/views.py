@@ -13,9 +13,11 @@ from time import gmtime, strftime
 from ast import literal_eval
 from functools import reduce
 from pydash import _
+import requests
+import tempfile
 
 from django.shortcuts import render
-from django.core import serializers
+from django.core import serializers, files
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets, views, status, authentication, permissions
@@ -2892,26 +2894,36 @@ def upload_status(request):
 def download_pdf(request):
     body = literal_eval(request.body.decode("utf8"))
     bookingIds = body["ids"]
-    bookings = Bookings.objects.get(id__in=bookingIds)
+    bookings = Bookings.objects.filter(id__in=bookingIds)
     file_paths = []
     label_names = []
 
     for booking in bookings:
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            if booking.vx_freight_provider == "TASFR":
-                file_paths.append(
-                    "/opt/s3_public/pdfs/" + booking.z_label_url
-                )  # Dev & Prod
-                label_names.append(booking.z_label_url)
-            elif booking.vx_freight_provider.lower() == "startrack":
-                file_paths.append(booking.z_label_url)
-                label_names.append(booking.z_label_url.split("?")[0].split("/")[-1])
+            if booking.vx_freight_provider.lower() == "startrack":
+                request = requests.get(booking.z_label_url, stream=True)
+
+                if request.status_code != requests.codes.ok:
+                    continue
+
+                label_name = booking.z_label_url.split("?")[0].split("/")[-1]
+                file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
+                # file_path = f"/Users/admin/work/goldmine/dme_api/static/pdfs/atc_au/{label_name}" # Local (Test Case)
+                file = open(file_path, "wb+")
+                for block in request.iter_content(1024 * 8):
+                    if not block:
+                        break
+
+                    file.write(block)
+                file.close()
+                file_paths.append(file_path)
+                label_names.append(label_name)
             else:
                 file_paths.append(
                     "/opt/s3_public/pdfs/" + booking.z_label_url
                 )  # Dev & Prod
                 label_names.append(booking.z_label_url)
-            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
+                # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
             booking.save()
 
@@ -2922,7 +2934,6 @@ def download_pdf(request):
     zf = zipfile.ZipFile(s, "w")
 
     for index, file_path in enumerate(file_paths):
-        zip_path = os.path.join(zip_subdir, file_path)
         zf.write(file_path, "labels/" + label_names[index])
     zf.close()
 
