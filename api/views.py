@@ -2906,7 +2906,14 @@ def download_pdf(request):
                 if request.status_code != requests.codes.ok:
                     continue
 
-                label_name = booking.z_label_url.split("?")[0].split("/")[-1]
+                label_name = (
+                    booking["pu_Address_State"]
+                    + "_"
+                    + booking["b_clientReference_RA_Numbers"]
+                    + "_"
+                    + booking["v_FPBookingNumber"]
+                    + ".png"
+                )
                 file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
                 # file_path = f"/Users/admin/work/goldmine/dme_api/static/pdfs/atc_au/{label_name}" # Local (Test Case)
                 file = open(file_path, "wb+")
