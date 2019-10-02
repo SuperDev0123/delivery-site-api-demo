@@ -31,7 +31,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
-from django.db.models import Q
+from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
 
@@ -476,8 +476,14 @@ class BookingsViewSet(viewsets.ViewSet):
 
             # Mulitple search | Simple search | Column fitler
             if len(multi_find_values) > 0:
+                preserved = Case(
+                    *[
+                        When(**{f"{multi_find_field}": multi_find_value, "then": pos})
+                        for pos, multi_find_value in enumerate(multi_find_values)
+                    ]
+                )
                 filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
-                queryset = queryset.filter(**filter_kwargs)
+                queryset = queryset.filter(**filter_kwargs).order_by(preserved)
             elif len(simple_search_keyword) > 0:
                 if (
                     not "&" in simple_search_keyword
@@ -585,7 +591,7 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(b_status=dme_status)
 
         # Sort
-        if download_option != "check_pod":
+        if download_option != "check_pod" and len(multi_find_values) == 0:
             if sort_field is None:
                 queryset = queryset.order_by("id")
             else:
