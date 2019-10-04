@@ -2915,11 +2915,11 @@ def download_pdf(request):
                     continue
 
                 label_name = (
-                    booking["pu_Address_State"]
+                    booking.pu_Address_State
                     + "_"
-                    + booking["b_clientReference_RA_Numbers"]
+                    + booking.b_clientReference_RA_Numbers
                     + "_"
-                    + booking["v_FPBookingNumber"]
+                    + booking.v_FPBookingNumber
                     + ".png"
                 )
                 file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
