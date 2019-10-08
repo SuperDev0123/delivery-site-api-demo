@@ -26,40 +26,97 @@ elif settings.ENV == "dev":
 elif settings.ENV == "prod":
     DME_LEVEL_API_URL = "http://52.62.102.72:3000"
 
-HUNTER_ACCOUTN_CODES = {
-    "live1": "DELIME",  # Original
+TNT_ACCOUTN_CODES = {
+    "live": "30021385",  # Original
 }
 
-HUNTER_KEY_CHAINS = {
-    "live1": {
-        "accountKey": "RE1FUEFMOmRlbGl2ZXI=",
-        "accountPassword": "deliver",
+TNT_KEY_CHAINS = {
+    "live": {
+        "accountKey": "30021385",
+        "accountPassword": "Deliver123"
     },
 }
 
 
 def _set_error(booking, error_msg):
     booking.b_error_Capture = str(error_msg)[:999]
-    print(booking)
     booking.save()
-    print('SET ERROR', booking.b_error_Capture)
 
 
-def _get_account_details(booking):  
+def _get_account_details(booking):
     if settings.ENV in ["local", "dev"]:
         account_detail = {
-            "accountCode": HUNTER_ACCOUTN_CODES["live1"],
-            **HUNTER_KEY_CHAINS["live1"],
+            "accountCode": ST_ACCOUTN_CODES["live"],
+            **ST_KEY_CHAINS["live"],
         }
     else:
         account_detail = {
-            "accountCode": HUNTER_ACCOUTN_CODES[
+            "accountCode": ST_ACCOUTN_CODES[
                 booking.fk_client_warehouse.client_warehouse_code
             ],
-            **HUNTER_KEY_CHAINS["live1"],
+            **ST_KEY_CHAINS["live"],
         }
 
     return account_detail
+
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def tracking(request):
+    booking_list = Bookings.objects.filter(
+        vx_freight_provider__iexact="tnt", z_api_issue_update_flag_500=1
+    )
+    results = []
+
+    for booking in booking_list:
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
+        data = literal_eval(request.body.decode("utf8"))
+        data["consignmentDetails"] = [{"consignmentNumber": booking.v_FPBookingNumber}]
+        request_timestamp = datetime.now()
+
+        # print('### Payload (ST tracking): ', data)
+        response0 = requests.post(url, params={}, json=data)
+        response0 = response0.content.decode("utf8").replace("'", '"')
+        data0 = json.loads(response0)
+        s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
+        # print('### Response: ', s0)
+
+        try:
+            request_id = data0["requestId"]
+            request_payload = {
+                "apiUrl": "",
+                "accountCode": "",
+                "authKey": "",
+                "trackingId": "",
+            }
+            request_payload["apiUrl"] = url
+            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
+            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
+            request_payload["trackingId"] = data["consignmentDetails"][0][
+                "consignmentNumber"
+            ]
+            request_type = "TNT TRACKING"
+            request_status = "SUCCESS"
+
+            oneLog = Log(
+                request_payload=request_payload,
+                request_status=request_status,
+                request_type=request_type,
+                response=response0,
+                fk_booking_id=booking.id,
+            )
+            oneLog.save()
+            booking.b_status_API = data0["consignmentTrackDetails"][0][
+                "consignmentStatuses"
+            ][0]["status"]
+            booking.save()
+
+            results.append({"Created Log ID": oneLog.id})
+        except KeyError:
+            results.append({"Error": "Too many request"})
+
+    return Response(results)
 
 
 @api_view(["POST"])
@@ -91,7 +148,7 @@ def book(request):
 
             data = {}
             data["spAccountDetails"] = _get_account_details(booking)
-            data["serviceProvider"] = "HUNTER"
+            data["serviceProvider"] = "TNT"
             data["readyDate"] = (
                 ""
                 if booking.puPickUpAvailFrom_Date is None
@@ -102,7 +159,7 @@ def book(request):
                 if booking.b_clientReference_RA_Numbers is None
                 else booking.b_clientReference_RA_Numbers
             )
-            data["serviceType"] = "RF" if booking.vx_serviceName is None else "RF"
+            data["serviceType"] = "R" if booking.vx_serviceName is None else "R"
             data["bookedBy"] = "Mr.CharlieBrown"
             data["pickupAddress"] = {
                 "companyName": "" if booking.puCompany is None else booking.puCompany,
@@ -184,7 +241,6 @@ def book(request):
             )
 
             items = []
-
             for line in booking_lines:
                 for i in range(line.e_qty):
                     temp_item = {
@@ -197,7 +253,7 @@ def book(request):
                         "volume": 0
                         if line.e_weightPerEach is None
                         else line.e_weightPerEach,
-                        "weight": line.e_Total_KG_weight/line.e_qty
+                        "weight": 0
                         if line.e_weightPerEach is None
                         else line.e_weightPerEach,
                         "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
@@ -206,16 +262,16 @@ def book(request):
 
             data["items"] = items
 
-            # print("### Payload (Hunter book): ", data)
+            # print("### Payload (ST book): ", data)
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
-            print('response0' , response0)
             data0 = json.loads(response0)
             s0 = json.dumps(
                 data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            print("### Response (Hunter book): ", s0)
+            # print("### Response (ST book): ", s0)
+
             try:
                 request_payload = {
                     "apiUrl": "",
@@ -227,7 +283,7 @@ def book(request):
                 request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
                 request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
                 request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "ST BOOK"
+                request_type = "TNT BOOK"
                 request_status = "SUCCESS"
 
                 booking.v_FPBookingNumber = data0["consignment_id"]
@@ -262,86 +318,26 @@ def book(request):
                     log = Log(
                         request_payload=data,
                         request_status="ERROR",
-                        request_type="ST BOOK",
+                        request_type="TNT BOOK",
                         response=response0,
                         fk_booking_id=booking.id,
                     ).save()
 
-                    error_msg = data0[0]["errorMessage"]
-                    # _set_error(booking, error_msg)
+                    error_msg = data0[0]["field"]
+                    _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
                 except KeyError:
                     error_msg = data0
-                    # _set_error(booking, error_msg)
+                    _set_error(booking, error_msg)
                     return JsonResponse({"message": s0}, status=400)
         except IndexError:
             return JsonResponse({"message": "Booking not found"}, status=400)
         except TypeError:
-            error_msg = data0[0]["errorMessage"]
-            # _set_error(booking, error_msg)
+            error_msg = data0[0]["field"]
+            _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
-
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
-def tracking(request):
-    booking_list = Bookings.objects.filter(
-        vx_freight_provider__iexact="hunter", z_api_issue_update_flag_500=1
-    )
-    results = []
-
-    for booking in booking_list:
-        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
-        data = literal_eval(request.body.decode("utf8"))
-        data["consignmentDetails"] = [{"consignmentNumber": booking.v_FPBookingNumber}]
-        request_timestamp = datetime.now()
-
-        # print('### Payload (ST tracking): ', data)
-        response0 = requests.post(url, params={}, json=data)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
-        # print('### Response: ', s0)
-
-        try:
-            request_id = data0["requestId"]
-            request_payload = {
-                "apiUrl": "",
-                "accountCode": "",
-                "authKey": "",
-                "trackingId": "",
-            }
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
-            request_payload["trackingId"] = data["consignmentDetails"][0][
-                "consignmentNumber"
-            ]
-            request_type = "ST TRACKING"
-            request_status = "SUCCESS"
-
-            oneLog = Log(
-                request_payload=request_payload,
-                request_status=request_status,
-                request_type=request_type,
-                response=response0,
-                fk_booking_id=booking.id,
-            )
-            oneLog.save()
-            booking.b_status_API = data0["consignmentTrackDetails"][0][
-                "consignmentStatuses"
-            ][0]["status"]
-            booking.save()
-
-            results.append({"Created Log ID": oneLog.id})
-        except KeyError:
-            results.append({"Error": "Too many request"})
-
-    return Response(results)
 
 
 @api_view(["POST"])
@@ -356,6 +352,11 @@ def pricing(request):
         try:
             booking = Bookings.objects.get(id=booking_id)
 
+            if booking.b_status.lower() == "booked":
+                return JsonResponse(
+                    {"message": "Booking is already booked."}, status=400
+                )
+
             if booking.pu_Address_State is None or not booking.pu_Address_State:
                 error_msg = "State for pickup postal address is required."
                 _set_error(booking, error_msg)
@@ -368,7 +369,7 @@ def pricing(request):
 
             data = {}
             data["spAccountDetails"] = _get_account_details(booking)
-            data["serviceProvider"] = "HUNTER"
+            data["serviceProvider"] = "TNT"
             data["readyDate"] = (
                 ""
                 if booking.puPickUpAvailFrom_Date is None
@@ -379,7 +380,7 @@ def pricing(request):
                 if booking.b_clientReference_RA_Numbers is None
                 else booking.b_clientReference_RA_Numbers
             )
-            data["serviceType"] = "RF" if booking.vx_serviceName is None else "RF"
+            data["serviceType"] = "R" if booking.vx_serviceName is None else "R"
             data["bookedBy"] = "Mr.CharlieBrown"
             data["pickupAddress"] = {
                 "companyName": "" if booking.puCompany is None else booking.puCompany,
@@ -461,7 +462,6 @@ def pricing(request):
             )
 
             items = []
-
             for line in booking_lines:
                 for i in range(line.e_qty):
                     temp_item = {
@@ -474,7 +474,7 @@ def pricing(request):
                         "volume": 0
                         if line.e_weightPerEach is None
                         else line.e_weightPerEach,
-                        "weight": line.e_Total_KG_weight/line.e_qty
+                        "weight": 0
                         if line.e_weightPerEach is None
                         else line.e_weightPerEach,
                         "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
@@ -483,16 +483,16 @@ def pricing(request):
 
             data["items"] = items
 
-            # print("### Payload (Hunter book): ", data)
-            url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+            # print("### Payload (ST book): ", data)
+            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response0 = requests.post(url, params={}, json=data)
             response0 = response0.content.decode("utf8").replace("'", '"')
-            print('response0' , response0)
             data0 = json.loads(response0)
             s0 = json.dumps(
                 data0, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            print("### Response (Hunter book): ", s0)
+            # print("### Response (ST book): ", s0)
+
             try:
                 request_payload = {
                     "apiUrl": "",
@@ -504,7 +504,7 @@ def pricing(request):
                 request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
                 request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
                 request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "ST BOOK"
+                request_type = "TNT BOOK"
                 request_status = "SUCCESS"
 
                 booking.v_FPBookingNumber = data0["consignment_id"]
@@ -539,26 +539,27 @@ def pricing(request):
                     log = Log(
                         request_payload=data,
                         request_status="ERROR",
-                        request_type="ST BOOK",
+                        request_type="TNT BOOK",
                         response=response0,
                         fk_booking_id=booking.id,
                     ).save()
 
-                    error_msg = data0[0]["errorMessage"]
-                    # _set_error(booking, error_msg)
+                    error_msg = data0[0]["field"]
+                    _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
                 except KeyError:
                     error_msg = data0
-                    # _set_error(booking, error_msg)
+                    _set_error(booking, error_msg)
                     return JsonResponse({"message": s0}, status=400)
         except IndexError:
             return JsonResponse({"message": "Booking not found"}, status=400)
         except TypeError:
-            error_msg = data0[0]["errorMessage"]
-            # _set_error(booking, error_msg)
+            error_msg = data0[0]["field"]
+            _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
+
 
 
 @api_view(["POST"])
@@ -590,7 +591,7 @@ def pod(request):
 
             data = {}
             data["spAccountDetails"] = _get_account_details(booking)
-            data["serviceProvider"] = "HUNTER"
+            data["serviceProvider"] = "TNT"
             data["readyDate"] = (
                 ""
                 if booking.puPickUpAvailFrom_Date is None
@@ -725,7 +726,7 @@ def pod(request):
                 request_payload["accountCode"] = data["spAccountDetails"]["accountCode"]
                 request_payload["authKey"] = data["spAccountDetails"]["accountKey"]
                 request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = "HUNTER POD"
+                request_type = "TNT POD"
                 request_status = "SUCCESS"
 
                 booking.v_FPBookingNumber = data0["consignment_id"]
@@ -760,7 +761,7 @@ def pod(request):
                     log = Log(
                         request_payload=data,
                         request_status="ERROR",
-                        request_type="HUNTER POD",
+                        request_type="TNT POD",
                         response=response0,
                         fk_booking_id=booking.id,
                     ).save()
@@ -780,5 +781,4 @@ def pod(request):
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
-
 
