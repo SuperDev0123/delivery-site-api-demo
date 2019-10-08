@@ -1352,6 +1352,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "inv_sell_quoted": booking.inv_sell_quoted,
                         "inv_sell_actual": booking.inv_sell_actual,
                         "x_manual_booked_flag": booking.x_manual_booked_flag,
+                        "b_fp_qty_delivered": booking.b_fp_qty_delivered,
                     }
                     return JsonResponse(
                         {
