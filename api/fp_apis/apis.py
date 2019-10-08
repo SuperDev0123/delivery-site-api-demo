@@ -491,12 +491,13 @@ def create_order(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=response0,
-                fk_booking_id=booking.id,
+                fk_booking_id=booking_ids,
             ).save()
 
             for booking in bookings:
                 booking.vx_fp_order_id = data0["order_id"]
                 booking.save()
+
             return JsonResponse(
                 {"message": f"Successfully create order({booking.vx_fp_order_id})"}
             )
