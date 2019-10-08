@@ -5,7 +5,7 @@ from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 from .views import *
 from .views_api import *
 from .views_external_apis import *
-from .fp_apis import st_apis as st_apis
+from .fp_apis import apis as fp_apis
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet, basename="user")
@@ -54,23 +54,14 @@ urlpatterns += [
     url(r"^bok_1_headers/", bok_1_headers),
     url(r"^bok_2_lines/", bok_2_lines),
     url(r"^bok_1_to_bookings/", bok_1_to_bookings),
-    # ST apis
-    url(r"^st_tracking/", st_apis.tracking),
-    url(r"^st_book/", st_apis.book),
-    url(r"^st_get_label/", st_apis.get_label),
-    url(r"^st_edit_book/", st_apis.edit_book),
-    url(r"^st_cancel_book/", st_apis.cancel_book),
-    url(r"^st_create_order/", st_apis.create_order),
-    url(r"^st_order_summary/", st_apis.order_summary),
-    # Allied apis
-    url(r"^allied_tracking/", allied_tracking),
-    url(r"^trigger_allied/", trigger_allied),
-    url(r"^trigger_all/", all_trigger),
-    url(r"^booking_allied/", booking_allied),
-    url(r"^get_label_allied/", get_label_allied),
-    url(r"^pricing_allied/", pricing_allied),
-    # Hunter apis
-    url(r"^hunter_tracking/", hunter_tracking),
+    # Freight Provider apis
+    url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/book/", fp_apis.book),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/get-label/", fp_apis.get_label),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/edit-book/", fp_apis.edit_book),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/cancel-book/", fp_apis.cancel_book),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/create-order/", fp_apis.create_order),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/get-order-summary/", fp_apis.get_order_summary),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
 ]
