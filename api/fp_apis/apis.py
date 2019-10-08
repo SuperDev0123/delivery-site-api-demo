@@ -477,7 +477,7 @@ def create_order(request, fp_name):
 
         # print("Payload(Create Order for ST): ", data)
         url = DME_LEVEL_API_URL + "/order/create"
-        response0 = requests.post(url, params={}, json=data)
+        response0 = requests.post(url, params={}, json=payload)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
