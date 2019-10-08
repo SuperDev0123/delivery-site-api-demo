@@ -491,7 +491,7 @@ def create_order(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=response0,
-                fk_booking_id=booking_ids,
+                fk_booking_id=booking_ids[0],
             ).save()
 
             for booking in bookings:
