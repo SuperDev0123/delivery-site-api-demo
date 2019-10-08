@@ -425,7 +425,7 @@ def get_label(request, fp_name):
             request_type = f"{fp_name.upper()} GET LABEL"
             request_status = "SUCCESS"
             oneLog = Log(
-                request_payload=data,
+                request_payload=payload,
                 request_status=request_status,
                 request_type=request_type,
                 response=response0,
@@ -441,7 +441,7 @@ def get_label(request, fp_name):
                 request_type = f"{fp_name.upper()} GET LABEL"
                 request_status = "ERROR"
                 oneLog = Log(
-                    request_payload=data,
+                    request_payload=payload,
                     request_status=request_status,
                     request_type=request_type,
                     response=response0,
@@ -487,7 +487,7 @@ def create_order(request, fp_name):
             request_type = f"{fp_name} CREATE ORDER"
             request_status = "SUCCESS"
             oneLog = Log(
-                request_payload=data,
+                request_payload=payload,
                 request_status=request_status,
                 request_type=request_type,
                 response=response0,
@@ -507,7 +507,7 @@ def create_order(request, fp_name):
                 request_type = f"{fp_name.upper()} CREATE ORDER"
                 request_status = "ERROR"
                 oneLog = Log(
-                    request_payload=data,
+                    request_payload=payload,
                     request_status=request_status,
                     request_type=request_type,
                     response=response0,
