@@ -578,7 +578,7 @@ def get_order_summary(request, fp_name):
                     booking.manifest_timestamp = manifest_timestamp
                     booking.save()
 
-                return JsonResponse({"Success": "Manifest is created successfully."})
+                return JsonResponse({"message": "Manifest is created successfully."})
             except KeyError:
                 error_msg = data0
                 _set_error(booking, error_msg)
