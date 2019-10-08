@@ -113,7 +113,7 @@ def book(request, fp_name):
                 payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 print(f"#401 - Error while build payload: {e}")
-                return JsonResponse({"message": e}, status=400)
+                return JsonResponse({"message": str(e)}, status=400)
 
             # print(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
