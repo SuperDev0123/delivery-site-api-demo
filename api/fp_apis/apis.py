@@ -589,3 +589,162 @@ def get_order_summary(request, fp_name):
             return JsonResponse({"message": error_msg})
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"})
+
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def pricing(request, fp_name):
+    try:
+        body = literal_eval(request.body.decode("utf8"))
+        booking_id = body["booking_id"]
+
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+
+            if booking.b_status.lower() == "booked":
+                return JsonResponse(
+                    {"message": "Booking is already booked."}, status=400
+                )
+
+            if booking.pu_Address_State is None or not booking.pu_Address_State:
+                error_msg = "State for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+
+            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
+                error_msg = "Suburb name for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+
+            try:
+                payload = get_book_payload(booking, fp_name)
+            except Exception as e:
+                print(f"#401 - Error while build payload: {e}")
+                return JsonResponse({"message": str(e)}, status=400)
+
+            # print(f"### Payload ({fp_name} price): {payload}")
+            url = DME_LEVEL_API_URL + "/price/calculateprice"
+            response0 = requests.post(url, params={}, json=payload)
+            response0 = response0.content.decode("utf8").replace("'", '"')
+            data0 = json.loads(response0)
+            s0 = json.dumps(
+                data0, indent=2, sort_keys=True, default=str
+            )  # Just for visual
+            # print(f"### Response ({fp_name} price): {s0}")
+
+            try:
+                request_payload = {
+                    "apiUrl": "",
+                    "accountCode": "",
+                    "authKey": "",
+                    "trackingId": "",
+                }
+                request_payload["apiUrl"] = url
+                request_payload["accountCode"] = payload["spAccountDetails"][
+                    "accountCode"
+                ]
+                request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
+                request_payload["trackingId"] = data0["consignmentNumber"]
+                request_type = f"{fp_name.upper()} PRICE"
+                request_status = "SUCCESS"
+
+                log = Log(
+                    request_payload=request_payload,
+                    request_status=request_status,
+                    request_type=request_type,
+                    response=response0,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                Api_booking_confirmation_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                ).delete()
+
+                for item in data0["items"]:
+                    book_con = Api_booking_confirmation_lines(
+                        fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
+                    ).save()
+
+                return JsonResponse(
+                    {"message": f"Successfully pricing({booking.v_FPBookingNumber})"}
+                )
+            except KeyError:
+                try:
+                    log = Log(
+                        request_payload=payload,
+                        request_status="ERROR",
+                        request_type=f"{fp_name.upper()} PRICE",
+                        response=response0,
+                        fk_booking_id=booking.id,
+                    ).save()
+
+                    error_msg = data0[0]["field"]
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
+                except KeyError:
+                    error_msg = data0
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": s0}, status=400)
+        except IndexError:
+            return JsonResponse({"message": "Booking not found"}, status=400)
+        except TypeError:
+            error_msg = data0[0]["field"]
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg}, status=400)
+    except SyntaxError:
+        return JsonResponse({"message": "Booking id is required"}, status=400)
+
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def pod(request, fp_name):
+    try:
+        body = literal_eval(request.body.decode("utf8"))
+        booking_id = body["booking_id"]
+
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+            payload = get_pod_payload(booking, fp_name)
+
+            # print(f'### Payload ({fp_name} POD): {data}')
+            url = DME_LEVEL_API_URL + "/pod/fetchpod"
+            response0 = requests.post(url, params={}, json=payload)
+            response0 = response0.content.decode("utf8").replace("'", '"')
+            data0 = json.loads(response0)
+            # s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
+            # print(f"### Response ({fp_name} POD): {s0}")
+
+            try:
+                file_name = (
+                    "biopak_pod_"
+                    + booking.pu_Address_State
+                    + "_"
+                    + booking.b_client_sales_inv_num
+                    + "_"
+                    + booking.v_FPBookingNumber
+                    + ".png"
+                )
+
+                if IS_PRODUCTION:
+                    file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
+                else:
+                    file_url = f"/Users/admin/work/goldmine/dme_api/static/imgs/{fp_name.loer()}_au/{file_name}"
+
+                with open(file_url, "wb") as f:
+                    f.write(bytes(data0["podData"]["data"]))
+                    f.close()
+
+                booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
+                booking.save()
+
+                return JsonResponse({"message": "POD is fetched successfully."})
+            except KeyError:
+                error_msg = data0
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": s0})
+        except KeyError:
+            return JsonResponse({"Error": "Too many request"}, status=400)
+    except SyntaxError:
+        return JsonResponse({"message": "Booking id is required"}, status=400)

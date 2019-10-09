@@ -12,7 +12,8 @@ ACCOUTN_CODES = {
         "BIO - HAZ": "10145597",
         "BIO - EAS": "10149943",
     },
-    "hunter": {"live": "DELIME"},  # Original
+    "hunter": {"live": "DELIME"},
+    "tnt": {"live": "30021385"},
 }
 
 KEY_CHAINS = {
@@ -33,6 +34,7 @@ KEY_CHAINS = {
     "hunter": {
         "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
     },
+    "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123"}},
 }
 
 
@@ -50,7 +52,7 @@ def _get_account_details(booking, fp_name):
                 ],
                 **KEY_CHAINS[fp_name]["live"],
             }
-    elif fp_name == "hunter":
+    elif fp_name in ["hunter", "tnt"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name]["live"],
@@ -63,6 +65,15 @@ def _get_account_details(booking, fp_name):
             }
 
     return account_detail
+
+
+def _get_service_provider(fp_name):
+    if fp_name.lower() == "startrack":
+        return "ST"
+    elif fp_name.lower() == "tnt":
+        return "TNT"
+    else:
+        return fp_name
 
 
 def _set_error(booking, error_msg):
@@ -78,7 +89,7 @@ def get_tracking_payload(booking, fp_name):
         consignmentDetails.append({"consignmentNumber": booking["v_FPBookingNumber"]})
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = "ST" if fp_name == "startrack" else fp_name
+        payload["serviceProvider"] = _get_service_provider(fp_name)
 
         return payload
     except Exception as e:
@@ -89,7 +100,8 @@ def get_tracking_payload(booking, fp_name):
 def get_book_payload(booking, fp_name):
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-    payload["serviceProvider"] = "ST" if fp_name == "startrack" else fp_name
+    payload["serviceProvider"] = _get_service_provider(fp_name)
+
     payload["readyDate"] = (
         ""
         if booking.puPickUpAvailFrom_Date is None
@@ -201,7 +213,7 @@ def get_cancel_book_payload(booking, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = "ST"
+        payload["serviceProvider"] = _get_service_provider(fp_name)
         payload["consignmentNumbers"] = [booking.fk_fp_pickup_id]
 
         return payload
@@ -213,24 +225,23 @@ def get_cancel_book_payload(booking, fp_name):
 def get_create_label_payload(booking, fp_name):
     try:
         payload = {}
+        payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["consignmentNumber"] = booking.fk_fp_pickup_id
+
+        confirmation_items = Api_booking_confirmation_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        )
+
+        items = []
+        for item in confirmation_items:
+            temp_item = {"itemId": item.api_item_id, "packagingType": "CTN"}
+            items.append(temp_item)
+        payload["items"] = items
 
         if fp_name == "startrack":
-            payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-            payload["serviceProvider"] = "ST"
-            payload["consignmentNumber"] = booking.fk_fp_pickup_id
             payload["type"] = "PRINT"
-
-            confirmation_items = Api_booking_confirmation_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            )
-
-            items = []
-            for item in confirmation_items:
-                temp_item = {"itemId": item.api_item_id, "packagingType": "CTN"}
-                items.append(temp_item)
-            payload["items"] = items
-
-            page_format = [
+            payload["pageFormat"] = [
                 {
                     "branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
                     "branded": False,
@@ -240,7 +251,6 @@ def get_create_label_payload(booking, fp_name):
                     "typeOfPost": "Express Post",
                 }
             ]
-            payload["pageFormat"] = page_format
 
         return payload
     except Exception as e:
@@ -254,7 +264,7 @@ def get_create_order_payload(bookings, fp_name):
         payload["spAccountDetails"] = _get_account_details(bookings.first(), fp_name)
 
         if fp_name == "startrack":
-            payload["serviceProvider"] = "ST"
+            payload["serviceProvider"] = _get_service_provider(fp_name)
             payload["paymentMethods"] = "CHARGE_TO_ACCOUNT"
             payload["referenceNumber"] = "refer1"
 
@@ -273,10 +283,25 @@ def get_get_order_summary_payload(booking, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = "ST" if fp_name == "startrack" else fp_name
+        payload["serviceProvider"] = _get_service_provider(fp_name)
         payload["orderId"] = booking.vx_fp_order_id
 
         return payload
     except Exception as e:
         # print(f"#405 - Error while build payload: {e}")
+        return None
+
+
+def get_pod_payload(booking, fp_name):
+    try:
+        payload = {}
+        consignmentDetails = []
+        consignmentDetails.append({"consignmentNumber": booking["v_FPBookingNumber"]})
+        payload["consignmentDetails"] = consignmentDetails
+        payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+        payload["serviceProvider"] = _get_service_provider(fp_name)
+
+        return payload
+    except Exception as e:
+        # print(f"#400 - Error while build payload: {e}")
         return None
