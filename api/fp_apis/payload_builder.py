@@ -39,29 +39,29 @@ KEY_CHAINS = {
 
 
 def _get_account_details(booking, fp_name):
-    if fp_name == "startrack":
+    if fp_name.lower() == "startrack":
         if settings.ENV in ["local", "dev"]:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name]["test_bed_1"],
-                **KEY_CHAINS[fp_name]["test_bed_1"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()]["test_bed_1"],
+                **KEY_CHAINS[fp_name.lower()]["test_bed_1"],
             }
         else:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name][
+                "accountCode": ACCOUTN_CODES[fp_name.lower()][
                     booking.fk_client_warehouse.client_warehouse_code
                 ],
-                **KEY_CHAINS[fp_name]["live"],
+                **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name in ["hunter", "tnt"]:
+    elif fp_name.lower() in ["hunter", "tnt"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name]["live"],
-                **KEY_CHAINS[fp_name]["live"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()]["live"],
+                **KEY_CHAINS[fp_name.lower()]["live"],
             }
         else:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name]["live"],
-                **KEY_CHAINS[fp_name]["live"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()]["live"],
+                **KEY_CHAINS[fp_name.lower()]["live"],
             }
 
     return account_detail
@@ -70,10 +70,8 @@ def _get_account_details(booking, fp_name):
 def _get_service_provider(fp_name):
     if fp_name.lower() == "startrack":
         return "ST"
-    elif fp_name.lower() == "tnt":
-        return "TNT"
     else:
-        return fp_name
+        return fp_name.upper()
 
 
 def _set_error(booking, error_msg):
@@ -160,8 +158,8 @@ def get_book_payload(booking, fp_name):
         if booking.de_to_Pick_Up_Instructions_Contact is None
         else booking.de_to_Pick_Up_Instructions_Contact,
         "phoneNumber": "0393920020"
-        if booking.pu_Phone_Main is None
-        else booking.pu_Phone_Main,
+        if booking.de_to_Phone_Main is None
+        else booking.de_to_Phone_Main,
     }
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
@@ -239,7 +237,7 @@ def get_create_label_payload(booking, fp_name):
             items.append(temp_item)
         payload["items"] = items
 
-        if fp_name == "startrack":
+        if fp_name.lower() == "startrack":
             payload["type"] = "PRINT"
             payload["pageFormat"] = [
                 {
@@ -262,8 +260,9 @@ def get_create_order_payload(bookings, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(bookings.first(), fp_name)
+        payload["serviceProvider"] = _get_service_provider(fp_name)
 
-        if fp_name == "startrack":
+        if fp_name.lower() == "startrack":
             payload["serviceProvider"] = _get_service_provider(fp_name)
             payload["paymentMethods"] = "CHARGE_TO_ACCOUNT"
             payload["referenceNumber"] = "refer1"

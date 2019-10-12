@@ -27,6 +27,11 @@ elif settings.ENV == "prod":
     DME_LEVEL_API_URL = "http://52.62.102.72:3000"
 
 
+def _set_error(booking, error_msg):
+    booking.b_error_Capture = str(error_msg)[:999]
+    booking.save()
+
+
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -113,7 +118,9 @@ def book(request, fp_name):
                 payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 print(f"#401 - Error while build payload: {e}")
-                return JsonResponse({"message": str(e)}, status=400)
+                return JsonResponse(
+                    {"message": f"Error while build payload {str(e)}"}, status=400
+                )
 
             # print(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
@@ -141,7 +148,9 @@ def book(request, fp_name):
                 request_type = f"{fp_name.upper()} BOOK"
                 request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = data0["consignment_id"]
+                booking.v_FPBookingNumber = data0["items"][0]["tracking_details"][
+                    "consignment_id"
+                ]
                 booking.fk_fp_pickup_id = data0["consignmentNumber"]
                 booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
@@ -168,31 +177,26 @@ def book(request, fp_name):
                 return JsonResponse(
                     {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                 )
-            except KeyError:
-                try:
-                    log = Log(
-                        request_payload=payload,
-                        request_status="ERROR",
-                        request_type=f"{fp_name.upper()} BOOK",
-                        response=response0,
-                        fk_booking_id=booking.id,
-                    ).save()
+            except KeyError as e:
+                log = Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} BOOK",
+                    response=response0,
+                    fk_booking_id=booking.id,
+                ).save()
 
-                    error_msg = data0[0]["field"]
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg}, status=400)
-                except KeyError:
-                    error_msg = data0
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": s0}, status=400)
-        except IndexError:
-            return JsonResponse({"message": "Booking not found"}, status=400)
-        except TypeError:
-            error_msg = data0[0]["field"]
+                error_msg = f"KeyError: {e}"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+        except IndexError as e:
+            return JsonResponse({"message": f"IndexError: {e}"}, status=400)
+        except TypeError as e:
+            error_msg = f"TypeError: {e}"
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
-    except SyntaxError:
-        return JsonResponse({"message": "Booking id is required"}, status=400)
+    except SyntaxError as e:
+        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
 
 
 @api_view(["POST"])
@@ -244,7 +248,9 @@ def edit_book(request, fp_name):
                 request_type = f"{fp_name.upper()} EDIT BOOK"
                 request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = data0["consignment_id"]
+                booking.v_FPBookingNumber = data0["items"][0]["tracking_details"][
+                    "consignment_id"
+                ]
                 booking.fk_fp_pickup_id = data0["consignmentNumber"]
                 booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
@@ -271,30 +277,25 @@ def edit_book(request, fp_name):
                 return JsonResponse(
                     {"message": f"Successfully edit book({booking.v_FPBookingNumber})"}
                 )
-            except KeyError:
-                try:
-                    request_type = f"{fp_name.upper()} EDIT BOOK"
-                    request_status = "ERROR"
-                    oneLog = Log(
-                        request_payload=payload,
-                        request_status=request_status,
-                        request_type=request_type,
-                        response=response0,
-                        fk_booking_id=booking.id,
-                    )
-                    oneLog.save()
+            except KeyError as e:
+                request_type = f"{fp_name.upper()} EDIT BOOK"
+                request_status = "ERROR"
+                oneLog = Log(
+                    request_payload=payload,
+                    request_status=request_status,
+                    request_type=request_type,
+                    response=response0,
+                    fk_booking_id=booking.id,
+                )
+                oneLog.save()
 
-                    error_msg = data0["errors"]
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg}, status=400)
-                except KeyError:
-                    error_msg = data0
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": s0}, status=400)
-        except IndexError:
-            return JsonResponse({"message": "Booking not found"}, status=400)
-    except SyntaxError:
-        return JsonResponse({"message": "Booking id is required"}, status=400)
+                error_msg = f"KeyError: {e}"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+        except IndexError as e:
+            return JsonResponse({"message": f"IndexError {e}"}, status=400)
+    except SyntaxError as e:
+        return JsonResponse({"message": f"SyntaxError {e}"}, status=400)
 
 
 @api_view(["POST"])
@@ -349,37 +350,31 @@ def cancel_book(request, fp_name):
                         return JsonResponse(
                             {"message": "Failed to cancel book"}, status=400
                         )
-                except KeyError:
-                    try:
-                        request_type = f"{fp_name.upper()} CANCEL BOOK"
-                        request_status = "ERROR"
-                        oneLog = Log(
-                            request_payload=payload,
-                            request_status=request_status,
-                            request_type=request_type,
-                            response=response0,
-                            fk_booking_id=booking.id,
-                        )
-                        oneLog.save()
+                except KeyError as e:
+                    request_type = f"{fp_name.upper()} CANCEL BOOK"
+                    request_status = "ERROR"
+                    oneLog = Log(
+                        request_payload=payload,
+                        request_status=request_status,
+                        request_type=request_type,
+                        response=response0,
+                        fk_booking_id=booking.id,
+                    )
+                    oneLog.save()
 
-                        error_msg = data0["errors"]
-                        _set_error(booking, error_msg)
-                        return JsonResponse({"message": error_msg}, status=400)
-                    except KeyError:
-                        error_msg = data0
-                        _set_error(booking, error_msg)
-                        return JsonResponse({"message": s0}, status=400)
-
+                    error_msg = f"KeyError: {e}"
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
             else:
                 error_msg = "Booking is not booked yet"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         else:
             return JsonResponse({"message": "Booking is already cancelled"}, status=400)
-    except IndexError:
-        return JsonResponse({"message": "Booking not found"}, status=400)
-    except SyntaxError:
-        return JsonResponse({"message": "Booking id is required"}, status=400)
+    except IndexError as e:
+        return JsonResponse({"message": f"IndexError: {e}"}, status=400)
+    except SyntaxError as e:
+        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
 
 
 @api_view(["POST"])
@@ -391,19 +386,36 @@ def get_label(request, fp_name):
         booking_id = body["bookingId"]
         booking = Bookings.objects.get(id=booking_id)
 
-        payload = get_create_label_payload(booking, fp_name)
+        if fp_name.lower() in ["startrack"]:
+            try:
+                payload = get_create_label_payload(booking, fp_name)
 
-        # print(
-        #    f"### Payload ({fp_name} create_label): ",
-        #    json.dumps(payload, indent=2, sort_keys=True, default=str),
-        # )
-        url = DME_LEVEL_API_URL + "/labelling/createlabel"
-        response0 = requests.post(url, params={}, json=payload)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
-        # print(f"### Response ({fp_name} create_label): {s0}")
+                # print(
+                #     f"### Payload ({fp_name} create_label): ",
+                #     json.dumps(payload, indent=2, sort_keys=True, default=str),
+                # )
+                url = DME_LEVEL_API_URL + "/labelling/createlabel"
+                response0 = requests.post(url, params={}, json=payload)
+                response0 = response0.content.decode("utf8").replace("'", '"')
+                data0 = json.loads(response0)
+                s0 = json.dumps(
+                    data0, indent=2, sort_keys=True, default=str
+                )  # Just for visual
+                # print(f"### Response ({fp_name} create_label): {s0}")
+            except Exception as e:
+                request_type = f"{fp_name.upper()} CREATE LABEL"
+                request_status = "ERROR"
+                oneLog = Log(
+                    request_payload=payload,
+                    request_status=request_status,
+                    request_type=request_type,
+                    response=response0,
+                    fk_booking_id=booking.id,
+                ).save()
 
+                error_msg = e
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
         try:
             time.sleep(15)  # Delay to wait label is created
             payload["consignmentNumber"] = data0[0]["request_id"]
@@ -436,28 +448,22 @@ def get_label(request, fp_name):
                 {"message": f"Successfully created label({booking.z_label_url})"},
                 status=200,
             )
-        except KeyError:
-            try:
-                request_type = f"{fp_name.upper()} GET LABEL"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=payload,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                ).save()
+        except KeyError as e:
+            request_type = f"{fp_name.upper()} GET LABEL"
+            request_status = "ERROR"
+            oneLog = Log(
+                request_payload=payload,
+                request_status=request_status,
+                request_type=request_type,
+                response=response0,
+                fk_booking_id=booking.id,
+            ).save()
 
-                error_msg = data0["errors"]
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
-            except TypeError:
-                return JsonResponse({"message": s0}, status=400)
-            except KeyError:
-                return JsonResponse({"message": s0}, status=400)
-
-    except IndexError:
-        return JsonResponse({"message": "Booking not found"}, status=400)
+            error_msg = f"KeyError: {e}"
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg}, status=400)
+    except IndexError as e:
+        return JsonResponse({"message": "IndexError: {e}"}, status=400)
 
 
 @api_view(["POST"])
@@ -501,30 +507,25 @@ def create_order(request, fp_name):
             return JsonResponse(
                 {"message": f"Successfully create order({booking.vx_fp_order_id})"}
             )
-        except KeyError:
-            try:
-                booking.b_error_Capture = data0["errorMsg"]
-                booking.save()
-                request_type = f"{fp_name.upper()} CREATE ORDER"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=payload,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                )
-                oneLog.save()
+        except KeyError as e:
+            booking.b_error_Capture = data0["errorMsg"]
+            booking.save()
+            request_type = f"{fp_name.upper()} CREATE ORDER"
+            request_status = "ERROR"
+            oneLog = Log(
+                request_payload=payload,
+                request_status=request_status,
+                request_type=request_type,
+                response=response0,
+                fk_booking_id=booking.id,
+            )
+            oneLog.save()
 
-                error_msg = data0["errors"]
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg})
-            except KeyError:
-                error_msg = data0
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": s0})
-    except IndexError:
-        return JsonResponse({"message": "Booking not found"})
+            error_msg = f"KeyError: {e}"
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg})
+    except IndexError as e:
+        return JsonResponse({"message": f"IndexError: e"})
 
 
 @api_view(["POST"])
@@ -562,7 +563,7 @@ def get_order_summary(request, fp_name):
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.loer()}_au/{file_name}"
+                    file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(bytes(data0["pdfData"]["data"]))
@@ -579,11 +580,11 @@ def get_order_summary(request, fp_name):
                     booking.save()
 
                 return JsonResponse({"message": "Manifest is created successfully."})
-            except KeyError:
-                error_msg = data0
+            except KeyError as e:
+                error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0})
-        except IndexError:
+        except IndexError as e:
             error_msg = "Order is not created for this booking."
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg})
@@ -669,27 +670,22 @@ def pricing(request, fp_name):
                 return JsonResponse(
                     {"message": f"Successfully pricing({booking.v_FPBookingNumber})"}
                 )
-            except KeyError:
-                try:
-                    log = Log(
-                        request_payload=payload,
-                        request_status="ERROR",
-                        request_type=f"{fp_name.upper()} PRICE",
-                        response=response0,
-                        fk_booking_id=booking.id,
-                    ).save()
+            except KeyError as e:
+                log = Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} PRICE",
+                    response=response0,
+                    fk_booking_id=booking.id,
+                ).save()
 
-                    error_msg = data0[0]["field"]
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg}, status=400)
-                except KeyError:
-                    error_msg = data0
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": s0}, status=400)
+                error_msg = f"KeyError: {e}"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
         except IndexError:
             return JsonResponse({"message": "Booking not found"}, status=400)
-        except TypeError:
-            error_msg = data0[0]["field"]
+        except TypeError as e:
+            error_msg = f"TypeError: {e}"
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError:
@@ -740,11 +736,11 @@ def pod(request, fp_name):
                 booking.save()
 
                 return JsonResponse({"message": "POD is fetched successfully."})
-            except KeyError:
-                error_msg = data0
+            except KeyError as e:
+                error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0})
-        except KeyError:
+        except KeyError as e:
             return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
