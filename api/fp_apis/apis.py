@@ -124,7 +124,7 @@ def book(request, fp_name):
 
             # print(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response0 = requests.post(url, params={}, json=payload)
+            response = requests.post(url, params={}, json=payload)
             response0 = response0.content.decode("utf8").replace("'", '"')
             data0 = json.loads(response0)
             s0 = json.dumps(
@@ -132,61 +132,69 @@ def book(request, fp_name):
             )  # Just for visual
             # print(f"### Response ({fp_name} book): {s0}")
 
-            try:
-                request_payload = {
-                    "apiUrl": "",
-                    "accountCode": "",
-                    "authKey": "",
-                    "trackingId": "",
-                }
-                request_payload["apiUrl"] = url
-                request_payload["accountCode"] = payload["spAccountDetails"][
-                    "accountCode"
-                ]
-                request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = data0["consignmentNumber"]
-                request_type = f"{fp_name.upper()} BOOK"
-                request_status = "SUCCESS"
+            if response.status_code == 200:
+                try:
+                    request_payload = {
+                        "apiUrl": "",
+                        "accountCode": "",
+                        "authKey": "",
+                        "trackingId": "",
+                    }
+                    request_payload["apiUrl"] = url
+                    request_payload["accountCode"] = payload["spAccountDetails"][
+                        "accountCode"
+                    ]
+                    request_payload["authKey"] = payload["spAccountDetails"][
+                        "accountKey"
+                    ]
+                    request_payload["trackingId"] = data0["consignmentNumber"]
+                    request_type = f"{fp_name.upper()} BOOK"
+                    request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = data0["items"][0]["tracking_details"][
-                    "consignment_id"
-                ]
-                booking.fk_fp_pickup_id = data0["consignmentNumber"]
-                booking.b_dateBookedDate = str(datetime.now())
-                booking.b_status = "Booked"
-                booking.b_error_Capture = ""
-                booking.save()
+                    booking.v_FPBookingNumber = data0["items"][0]["tracking_details"][
+                        "consignment_id"
+                    ]
+                    booking.fk_fp_pickup_id = data0["consignmentNumber"]
+                    booking.b_dateBookedDate = str(datetime.now())
+                    booking.b_status = "Booked"
+                    booking.b_error_Capture = ""
+                    booking.save()
 
-                log = Log(
-                    request_payload=request_payload,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                ).save()
-
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-
-                for item in data0["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
+                    log = Log(
+                        request_payload=request_payload,
+                        request_status=request_status,
+                        request_type=request_type,
+                        response=response0,
+                        fk_booking_id=booking.id,
                     ).save()
 
-                return JsonResponse(
-                    {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
-                )
-            except KeyError as e:
-                log = Log(
-                    request_payload=payload,
-                    request_status="ERROR",
-                    request_type=f"{fp_name.upper()} BOOK",
-                    response=response0,
-                    fk_booking_id=booking.id,
-                ).save()
+                    Api_booking_confirmation_lines.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    ).delete()
 
-                error_msg = f"KeyError: {e}"
+                    for item in data0["items"]:
+                        book_con = Api_booking_confirmation_lines(
+                            fk_booking_id=booking.pk_booking_id,
+                            api_item_id=item["item_id"],
+                        ).save()
+
+                    return JsonResponse(
+                        {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
+                    )
+                except KeyError as e:
+                    log = Log(
+                        request_payload=payload,
+                        request_status="ERROR",
+                        request_type=f"{fp_name.upper()} BOOK",
+                        response=response0,
+                        fk_booking_id=booking.id,
+                    ).save()
+
+                    error_msg = f"KeyError: {e}"
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
+            elif response.status_code == 400:
+                error_msg = f"{response0[0]['message']}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except IndexError as e:
