@@ -194,7 +194,7 @@ def book(request, fp_name):
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 400:
-                error_msg = f"{response0[0]['message']}"
+                error_msg = f"{data0[0]['message']}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except IndexError as e:
