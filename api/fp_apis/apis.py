@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from api.models import *
 from django.conf import settings
 from .payload_builder import *
+from .update_by_json import update_biopak_with_booked_booking
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -451,6 +452,9 @@ def get_label(request, fp_name):
                 response=response0,
                 fk_booking_id=booking.id,
             ).save()
+
+            if booking.vx_freight_provider.lower == "biopak":
+                update_biopak_with_booked_booking(booking_id)
 
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
