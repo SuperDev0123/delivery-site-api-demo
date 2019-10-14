@@ -194,7 +194,7 @@ def book(request, fp_name):
                         fk_booking_id=booking.id,
                     ).save()
 
-                    error_msg = f"KeyError: {e}"
+                    error_msg = s0
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 400:
@@ -301,7 +301,7 @@ def edit_book(request, fp_name):
                 )
                 oneLog.save()
 
-                error_msg = f"KeyError: {e}"
+                error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except IndexError as e:
@@ -374,7 +374,7 @@ def cancel_book(request, fp_name):
                     )
                     oneLog.save()
 
-                    error_msg = f"KeyError: {e}"
+                    error_msg = s0
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
             else:
@@ -425,7 +425,7 @@ def get_label(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = e
+                error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         try:
@@ -474,7 +474,7 @@ def get_label(request, fp_name):
                 fk_booking_id=booking.id,
             ).save()
 
-            error_msg = f"KeyError: {e}"
+            error_msg = s0
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except IndexError as e:
