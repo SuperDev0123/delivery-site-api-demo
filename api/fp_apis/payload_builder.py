@@ -12,7 +12,7 @@ ACCOUTN_CODES = {
         "BIO - HAZ": "10145597",
         "BIO - EAS": "10149943",
     },
-    "hunter": {"live": "DELIME"},
+    "hunter": {"live": "DMEPAL"},
     "tnt": {"live": "30021385"},
 }
 
@@ -193,7 +193,7 @@ def get_book_payload(booking, fp_name):
             temp_item = {
                 "dangerous": 0,
                 "itemId": "EXP",
-                "packagingType": "CTN",
+                "packagingType": "CTN" if fp_name.lower() == "startrack" else "PAL",
                 "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
                 "length": 0 if line.e_dimLength is None else line.e_dimLength,
                 "quantity": 0 if line.e_qty is None else line.e_qty,
@@ -204,6 +204,11 @@ def get_book_payload(booking, fp_name):
             items.append(temp_item)
 
     payload["items"] = items
+
+    # Detail for each FP
+    if fp_name.lower() == "hunter":
+        payload["serviceType"] = "RF"
+
     return payload
 
 
