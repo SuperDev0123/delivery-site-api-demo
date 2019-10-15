@@ -666,6 +666,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
                     "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
                     "b_fp_qty_delivered": booking.b_fp_qty_delivered,
+                    "manifest_timestamp": booking.manifest_timestamp,
                 }
             )
 
