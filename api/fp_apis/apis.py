@@ -496,13 +496,13 @@ def create_order(request, fp_name):
 
         payload = get_create_order_payload(bookings, fp_name)
 
-        logger.error("Payload(Create Order for ST): ", payload)
+        logger.error(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
         response0 = requests.post(url, params={}, json=payload)
         response0 = response0.content.decode("utf8").replace("'", '"')
         data0 = json.loads(response0)
         s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
-        logger.error("Response(Create Order for ST): ", s0)
+        logger.error(f"Response(Create Order for ST): {s0}")
 
         try:
             request_type = f"{fp_name} CREATE ORDER"
