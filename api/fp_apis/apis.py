@@ -561,9 +561,9 @@ def get_order_summary(request, fp_name):
             response0 = requests.post(url, json=payload, headers=headers)
             response0 = response0.content
             data0 = json.loads(response0)
-            # s0 = json.dumps(
-            #     data0, indent=2, sort_keys=True, default=str
-            # )  # Just for visual
+            s0 = json.dumps(
+                data0, indent=2, sort_keys=True, default=str
+            )  # Just for visual
             # logger.error(f"### Response ({fp_name} Get Order Summary): {bytes(data0["pdfData"]["data"])}")
 
             try:
