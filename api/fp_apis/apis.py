@@ -402,18 +402,18 @@ def get_label(request, fp_name):
             try:
                 payload = get_create_label_payload(booking, fp_name)
 
-                # logger.error(
-                #     f"### Payload ({fp_name} create_label): ",
-                #     json.dumps(payload, indent=2, sort_keys=True, default=str),
-                # )
-                # url = DME_LEVEL_API_URL + "/labelling/createlabel"
-                # response0 = requests.post(url, params={}, json=payload)
-                # response0 = response0.content.decode("utf8").replace("'", '"')
-                # data0 = json.loads(response0)
-                # s0 = json.dumps(
-                #     data0, indent=2, sort_keys=True, default=str
-                # )  # Just for visual
-                # logger.error(f"### Response ({fp_name} create_label): {s0}")
+                logger.error(
+                    f"### Payload ({fp_name} create_label): ",
+                    json.dumps(payload, indent=2, sort_keys=True, default=str),
+                )
+                url = DME_LEVEL_API_URL + "/labelling/createlabel"
+                response0 = requests.post(url, params={}, json=payload)
+                response0 = response0.content.decode("utf8").replace("'", '"')
+                data0 = json.loads(response0)
+                s0 = json.dumps(
+                    data0, indent=2, sort_keys=True, default=str
+                )  # Just for visual
+                logger.error(f"### Response ({fp_name} create_label): {s0}")
             except Exception as e:
                 request_type = f"{fp_name.upper()} CREATE LABEL"
                 request_status = "ERROR"
@@ -430,8 +430,8 @@ def get_label(request, fp_name):
                 return JsonResponse({"message": error_msg}, status=400)
         try:
             time.sleep(10)  # Delay to wait label is created
-            # payload["consignmentNumber"] = data0[0]["request_id"]
-            payload["consignmentNumber"] = "0e860708-be9a-4224-b16d-dc516134742b"
+            payload["consignmentNumber"] = data0[0]["request_id"]
+            # payload["consignmentNumber"] = "0e860708-be9a-4224-b16d-dc516134742b"
             payload["labelType"] = "PRINT"
 
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
