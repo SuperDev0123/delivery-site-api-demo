@@ -536,7 +536,7 @@ def create_order(request, fp_name):
             )
             oneLog.save()
 
-            error_msg = f"KeyError: {e}"
+            error_msg = s0
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg})
     except IndexError as e:
@@ -596,7 +596,7 @@ def get_order_summary(request, fp_name):
 
                 return JsonResponse({"message": "Manifest is created successfully."})
             except KeyError as e:
-                error_msg = f"KeyError: {e}"
+                error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0})
         except IndexError as e:
