@@ -565,7 +565,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 errors_to_correct += 1
             if booking.z_label_url is None or len(booking.z_label_url) == 0:
                 missing_labels += 1
-            if booking.b_status == "Booked":
+            if booking.b_status == "Booked" and not booking.z_manifest_url:
                 to_manifest += 1
             if booking.b_status == "Ready to booking":
                 to_process += 1
