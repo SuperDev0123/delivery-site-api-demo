@@ -398,39 +398,39 @@ def get_label(request, fp_name):
         booking_id = body["bookingId"]
         booking = Bookings.objects.get(id=booking_id)
 
-        if fp_name.lower() in ["startrack"]:
-            try:
-                payload = get_create_label_payload(booking, fp_name)
+        # if fp_name.lower() in ["startrack"]:
+        #     try:
+        #         payload = get_create_label_payload(booking, fp_name)
 
-                logger.error(
-                    f"### Payload ({fp_name} create_label): ",
-                    json.dumps(payload, indent=2, sort_keys=True, default=str),
-                )
-                url = DME_LEVEL_API_URL + "/labelling/createlabel"
-                response0 = requests.post(url, params={}, json=payload)
-                response0 = response0.content.decode("utf8").replace("'", '"')
-                data0 = json.loads(response0)
-                s0 = json.dumps(
-                    data0, indent=2, sort_keys=True, default=str
-                )  # Just for visual
-                logger.error(f"### Response ({fp_name} create_label): {s0}")
-            except Exception as e:
-                request_type = f"{fp_name.upper()} CREATE LABEL"
-                request_status = "ERROR"
-                oneLog = Log(
-                    request_payload=payload,
-                    request_status=request_status,
-                    request_type=request_type,
-                    response=response0,
-                    fk_booking_id=booking.id,
-                ).save()
+        #         logger.error(
+        #             f"### Payload ({fp_name} create_label): ",
+        #             json.dumps(payload, indent=2, sort_keys=True, default=str),
+        #         )
+        #         url = DME_LEVEL_API_URL + "/labelling/createlabel"
+        #         response0 = requests.post(url, params={}, json=payload)
+        #         response0 = response0.content.decode("utf8").replace("'", '"')
+        #         data0 = json.loads(response0)
+        #         s0 = json.dumps(
+        #             data0, indent=2, sort_keys=True, default=str
+        #         )  # Just for visual
+        #         logger.error(f"### Response ({fp_name} create_label): {s0}")
+        #     except Exception as e:
+        #         request_type = f"{fp_name.upper()} CREATE LABEL"
+        #         request_status = "ERROR"
+        #         oneLog = Log(
+        #             request_payload=payload,
+        #             request_status=request_status,
+        #             request_type=request_type,
+        #             response=response0,
+        #             fk_booking_id=booking.id,
+        #         ).save()
 
-                error_msg = s0
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+        #         error_msg = s0
+        #         _set_error(booking, error_msg)
+        #         return JsonResponse({"message": error_msg}, status=400)
         try:
-            time.sleep(15)  # Delay to wait label is created
-            payload["consignmentNumber"] = data0[0]["request_id"]
+            time.sleep(30)  # Delay to wait label is created
+            payload["consignmentNumber"] = "0e860708-be9a-4224-b16d-dc516134742b"
             payload["labelType"] = "PRINT"
 
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
