@@ -3156,3 +3156,33 @@ class DME_reports(models.Model):
 
     class Meta:
         db_table = "dme_reports"
+
+
+class DME_Label_Settings(models.Model):
+    id = models.AutoField(primary_key=True)
+    uom = models.CharField(max_length=24, blank=True, null=True, default="")
+    font_family = models.CharField(max_length=128, blank=True, null=True)
+    font_size_small = models.FloatField(blank=True, null=True, default=0)
+    font_size_medium = models.FloatField(blank=True, null=True, default=0)
+    font_size_large = models.FloatField(blank=True, null=True, default=0)
+    label_dimension_length = models.FloatField(blank=True, null=True, default=0)
+    label_dimension_width = models.FloatField(blank=True, null=True, default=0)
+    label_image_size_length = models.FloatField(blank=True, null=True, default=0)
+    label_image_size_width = models.FloatField(blank=True, null=True, default=0)
+    barcode_dimension_length = models.FloatField(blank=True, null=True, default=0)
+    barcode_dimension_width = models.FloatField(blank=True, null=True, default=0)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "label_settings"
