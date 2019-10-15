@@ -584,9 +584,7 @@ def get_order_summary(request, fp_name):
                     f.write(bytes(data0["pdfData"]["data"]))
                     f.close()
 
-                bookings = Bookings.objects.filter(
-                    vx_fp_order_id=booking.vx_fp_order_id
-                )
+                bookings = Bookings.objects.filter(pk__in=booking_ids)
 
                 manifest_timestamp = datetime.now()
                 for booking in bookings:
