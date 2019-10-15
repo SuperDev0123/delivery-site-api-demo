@@ -496,7 +496,7 @@ def create_order(request, fp_name):
 
         payload = get_create_order_payload(bookings, fp_name)
 
-        logger.error("Payload(Create Order for ST): ", data)
+        logger.error("Payload(Create Order for ST): ", payload)
         url = DME_LEVEL_API_URL + "/order/create"
         response0 = requests.post(url, params={}, json=payload)
         response0 = response0.content.decode("utf8").replace("'", '"')
