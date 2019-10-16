@@ -456,7 +456,7 @@ def get_label(request, fp_name):
                 fk_booking_id=booking.id,
             ).save()
 
-            if booking.vx_freight_provider.lower() == "biopak":
+            if booking.b_client_name.lower() == "biopak":
                 update_biopak_with_booked_booking(booking_id)
 
             return JsonResponse(
