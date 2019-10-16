@@ -41,12 +41,7 @@ def build_json(booking):
 def update_biopak_with_booked_booking(booking_id):
     booking = Bookings.objects.get(pk=booking_id)
     json_file_name = (
-        booking.b_clientReference_RA_Numbers
-        + "__"
-        + booking.pk_booking_id
-        + "__"
-        + str(datetime.now())
-        + ".json"
+        booking.b_clientReference_RA_Numbers + "__" + booking.pk_booking_id + ".json"
     )
 
     if production:
