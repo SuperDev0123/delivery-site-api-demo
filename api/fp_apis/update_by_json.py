@@ -66,10 +66,10 @@ def update_biopak_with_booked_booking(booking_id):
 
     if production:
         sftp.upload_sftp(
-            sftp_server_infos["biopak"].host,
-            sftp_server_infos["biopak"].username,
-            sftp_server_infos["biopak"].password,
-            sftp_server_infos["biopak"].sftp_filepath,
+            sftp_server_infos["biopak"]["host"],
+            sftp_server_infos["biopak"]["username"],
+            sftp_server_infos["biopak"]["password"],
+            sftp_server_infos["biopak"]["sftp_filepath"],
             local_filepath,
             local_filepath_archive,
             json_file_name,
