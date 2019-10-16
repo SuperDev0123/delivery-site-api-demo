@@ -47,14 +47,13 @@ def update_biopak_with_booked_booking(booking_id):
     if production:
         local_filepath = "/home/cope_au/dme_sftp/biopak_au/jsons/indata/"
         local_filepath_archive = "/home/cope_au/dme_sftp/biopak_au/jsons/archive/"
-        json_file = open(local_filepath + json_file_name, "w")
     else:
         local_filepath = "/Users/admin/work/goldmine/dme_api/static/jsons/"
         local_filepath_archive = (
             "/Users/admin/work/goldmine/dme_api/static/jsons/archive/"
         )
-        json_file = open(local_filepath + json_file_name, "w")
 
+    json_file = open(local_filepath + json_file_name, "w")
     json_content = build_json(booking)
     json_file.write(json_content)
     json_file.close()
