@@ -49,14 +49,14 @@ def tracking(request, fp_name):
 
         logger.error(f"### Payload ({fp_name} tracking): {data}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
-        response0 = requests.post(url, params={}, json=payload)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
+        response = requests.post(url, params={}, json=payload)
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.error(f"### Response ({fp_name} tracking): {s0}")
 
         try:
-            request_id = data0["requestId"]
+            request_id = json_data["requestId"]
             request_payload = {
                 "apiUrl": "",
                 "accountCode": "",
@@ -76,11 +76,11 @@ def tracking(request, fp_name):
                 request_payload=request_payload,
                 request_status=request_status,
                 request_type=request_type,
-                response=response0,
+                response=res_content,
                 fk_booking_id=booking.id,
             )
             oneLog.save()
-            booking.b_status_API = data0["consignmentTrackDetails"][0][
+            booking.b_status_API = json_data["consignmentTrackDetails"][0][
                 "consignmentStatuses"
             ][0]["status"]
             booking.save()
@@ -96,6 +96,9 @@ def tracking(request, fp_name):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def book(request, fp_name):
+    update_biopak_with_booked_booking(booking_id)
+    return JsonResponse({"message": "TEST"}, status=200)
+
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
@@ -129,10 +132,10 @@ def book(request, fp_name):
             logger.error(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
-            response0 = response.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
             s0 = json.dumps(
-                data0, indent=2, sort_keys=True, default=str
+                json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
             logger.error(f"### Response ({fp_name} book): {s0}")
 
@@ -151,14 +154,14 @@ def book(request, fp_name):
                     request_payload["authKey"] = payload["spAccountDetails"][
                         "accountKey"
                     ]
-                    request_payload["trackingId"] = data0["consignmentNumber"]
+                    request_payload["trackingId"] = json_data["consignmentNumber"]
                     request_type = f"{fp_name.upper()} BOOK"
                     request_status = "SUCCESS"
 
-                    booking.v_FPBookingNumber = data0["items"][0]["tracking_details"][
-                        "consignment_id"
-                    ]
-                    booking.fk_fp_pickup_id = data0["consignmentNumber"]
+                    booking.v_FPBookingNumber = json_data["items"][0][
+                        "tracking_details"
+                    ]["consignment_id"]
+                    booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
@@ -168,7 +171,7 @@ def book(request, fp_name):
                         request_payload=request_payload,
                         request_status=request_status,
                         request_type=request_type,
-                        response=response0,
+                        response=res_content,
                         fk_booking_id=booking.id,
                     ).save()
 
@@ -176,7 +179,7 @@ def book(request, fp_name):
                         fk_booking_id=booking.pk_booking_id
                     ).delete()
 
-                    for item in data0["items"]:
+                    for item in json_data["items"]:
                         book_con = Api_booking_confirmation_lines(
                             fk_booking_id=booking.pk_booking_id,
                             api_item_id=item["item_id"],
@@ -190,7 +193,7 @@ def book(request, fp_name):
                         request_payload=payload,
                         request_status="ERROR",
                         request_type=f"{fp_name.upper()} BOOK",
-                        response=response0,
+                        response=res_content,
                         fk_booking_id=booking.id,
                     ).save()
 
@@ -198,7 +201,7 @@ def book(request, fp_name):
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 400:
-                error_msg = f"{data0[0]['message']}"
+                error_msg = f"{json_data[0]['message']}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except IndexError as e:
@@ -236,11 +239,11 @@ def edit_book(request, fp_name):
 
             logger.error(f"### Payload ({fp_name} edit book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response0 = requests.post(url, params={}, json=payload)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
+            response = requests.post(url, params={}, json=payload)
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
             s0 = json.dumps(
-                data0, indent=2, sort_keys=True, default=str
+                json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
             logger.error(f"### Response ({fp_name} edit book): {s0}")
 
@@ -256,14 +259,14 @@ def edit_book(request, fp_name):
                     "accountCode"
                 ]
                 request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = data0["consignmentNumber"]
+                request_payload["trackingId"] = json_data["consignmentNumber"]
                 request_type = f"{fp_name.upper()} EDIT BOOK"
                 request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = data0["items"][0]["tracking_details"][
+                booking.v_FPBookingNumber = json_data["items"][0]["tracking_details"][
                     "consignment_id"
                 ]
-                booking.fk_fp_pickup_id = data0["consignmentNumber"]
+                booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                 booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
@@ -273,7 +276,7 @@ def edit_book(request, fp_name):
                     request_payload=request_payload,
                     request_status=request_status,
                     request_type=request_type,
-                    response=response0,
+                    response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
 
@@ -281,7 +284,7 @@ def edit_book(request, fp_name):
                     fk_booking_id=booking.pk_booking_id
                 ).delete()
 
-                for item in data0["items"]:
+                for item in json_data["items"]:
                     book_con = Api_booking_confirmation_lines(
                         fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
                     ).save()
@@ -296,7 +299,7 @@ def edit_book(request, fp_name):
                     request_payload=payload,
                     request_status=request_status,
                     request_type=request_type,
-                    response=response0,
+                    response=res_content,
                     fk_booking_id=booking.id,
                 )
                 oneLog.save()
@@ -326,10 +329,10 @@ def cancel_book(request, fp_name):
                 logger.error(f"### Payload ({fp_name} cancel book): {payload}")
                 url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
                 response = requests.delete(url, params={}, json=payload)
-                response0 = response.content.decode("utf8").replace("'", '"')
-                data0 = json.loads(response0)
+                res_content = response.content.decode("utf8").replace("'", '"')
+                json_data = json.loads(res_content)
                 s0 = json.dumps(
-                    data0, indent=2, sort_keys=True, default=str
+                    json_data, indent=2, sort_keys=True, default=str
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} cancel book): {s0}")
 
@@ -349,7 +352,7 @@ def cancel_book(request, fp_name):
                             request_payload=payload,
                             request_status=request_status,
                             request_type=request_type,
-                            response=response0,
+                            response=res_content,
                             fk_booking_id=booking.id,
                         ).save()
 
@@ -357,7 +360,7 @@ def cancel_book(request, fp_name):
                             {"message": "Successfully cancelled book"}, status=200
                         )
                     else:
-                        error_msg = data0
+                        error_msg = json_data
                         _set_error(booking, error_msg)
                         return JsonResponse(
                             {"message": "Failed to cancel book"}, status=400
@@ -369,7 +372,7 @@ def cancel_book(request, fp_name):
                         request_payload=payload,
                         request_status=request_status,
                         request_type=request_type,
-                        response=response0,
+                        response=res_content,
                         fk_booking_id=booking.id,
                     )
                     oneLog.save()
@@ -407,11 +410,11 @@ def get_label(request, fp_name):
                     json.dumps(payload, indent=2, sort_keys=True, default=str),
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
-                response0 = requests.post(url, params={}, json=payload)
-                response0 = response0.content.decode("utf8").replace("'", '"')
-                data0 = json.loads(response0)
+                response = requests.post(url, params={}, json=payload)
+                res_content = response.content.decode("utf8").replace("'", '"')
+                json_data = json.loads(res_content)
                 s0 = json.dumps(
-                    data0, indent=2, sort_keys=True, default=str
+                    json_data, indent=2, sort_keys=True, default=str
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} create_label): {s0}")
             except Exception as e:
@@ -421,7 +424,7 @@ def get_label(request, fp_name):
                     request_payload=payload,
                     request_status=request_status,
                     request_type=request_type,
-                    response=response0,
+                    response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
 
@@ -429,21 +432,26 @@ def get_label(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         try:
-            time.sleep(60)  # Delay to wait label is created
-            payload["consignmentNumber"] = data0[0]["request_id"]
+            payload["consignmentNumber"] = json_data[0]["request_id"]
             payload["labelType"] = "PRINT"
 
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
-            response0 = requests.post(url, params={}, json=payload)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
-            s0 = json.dumps(
-                data0, indent=2, sort_keys=True, default=str
-            )  # Just for visual
-            logger.error(f"### Response ({fp_name} get_label): {s0}")
+            json_data = None
 
-            booking.z_label_url = data0["labels"][0]["url"]
+            while json_data is None or (
+                json_data is not None and json_data["labels"][0]["status"] == "PENDING"
+            ):
+                time.sleep(60)  # Delay to wait label is created
+                response = requests.post(url, params={}, json=payload)
+                res_content = response.content.decode("utf8").replace("'", '"')
+                json_data = json.loads(res_content)
+                s0 = json.dumps(
+                    json_data, indent=2, sort_keys=True, default=str
+                )  # Just for visual
+                logger.error(f"### Response ({fp_name} get_label): {s0}")
+
+            booking.z_label_url = json_data["labels"][0]["url"]
             booking.save()
 
             request_type = f"{fp_name.upper()} GET LABEL"
@@ -452,7 +460,7 @@ def get_label(request, fp_name):
                 request_payload=payload,
                 request_status=request_status,
                 request_type=request_type,
-                response=response0,
+                response=res_content,
                 fk_booking_id=booking.id,
             ).save()
 
@@ -470,7 +478,7 @@ def get_label(request, fp_name):
                 request_payload=payload,
                 request_status=request_status,
                 request_type=request_type,
-                response=response0,
+                response=res_content,
                 fk_booking_id=booking.id,
             ).save()
 
@@ -498,10 +506,12 @@ def create_order(request, fp_name):
 
         logger.error(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
-        response0 = requests.post(url, params={}, json=payload)
-        response0 = response0.content.decode("utf8").replace("'", '"')
-        data0 = json.loads(response0)
-        s0 = json.dumps(data0, indent=2, sort_keys=True, default=str)  # Just for visual
+        response = requests.post(url, params={}, json=payload)
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        s0 = json.dumps(
+            json_data, indent=2, sort_keys=True, default=str
+        )  # Just for visual
         logger.error(f"Response(Create Order for ST): {s0}")
 
         try:
@@ -511,19 +521,19 @@ def create_order(request, fp_name):
                 request_payload=payload,
                 request_status=request_status,
                 request_type=request_type,
-                response=response0,
+                response=res_content,
                 fk_booking_id=booking_ids[0],
             ).save()
 
             for booking in bookings:
-                booking.vx_fp_order_id = data0["order_id"]
+                booking.vx_fp_order_id = json_data["order_id"]
                 booking.save()
 
             return JsonResponse(
                 {"message": f"Successfully create order({booking.vx_fp_order_id})"}
             )
         except KeyError as e:
-            booking.b_error_Capture = data0["errorMsg"]
+            booking.b_error_Capture = json_data["errorMsg"]
             booking.save()
             request_type = f"{fp_name.upper()} CREATE ORDER"
             request_status = "ERROR"
@@ -531,7 +541,7 @@ def create_order(request, fp_name):
                 request_payload=payload,
                 request_status=request_status,
                 request_type=request_type,
-                response=response0,
+                response=res_content,
                 fk_booking_id=booking.id,
             )
             oneLog.save()
@@ -558,13 +568,13 @@ def get_order_summary(request, fp_name):
 
             logger.error(f"### Payload ({fp_name} Get Order Summary): {payload}")
             url = DME_LEVEL_API_URL + "/order/summary"
-            response0 = requests.post(url, json=payload, headers=headers)
-            response0 = response0.content
-            data0 = json.loads(response0)
+            response = requests.post(url, json=payload, headers=headers)
+            res_content = response.content
+            json_data = json.loads(res_content)
             s0 = json.dumps(
-                data0, indent=2, sort_keys=True, default=str
+                json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            # logger.error(f"### Response ({fp_name} Get Order Summary): {bytes(data0["pdfData"]["data"])}")
+            # logger.error(f"### Response ({fp_name} Get Order Summary): {bytes(json_data["pdfData"]["data"])}")
 
             try:
                 file_name = (
@@ -581,7 +591,7 @@ def get_order_summary(request, fp_name):
                     file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
-                    f.write(bytes(data0["pdfData"]["data"]))
+                    f.write(bytes(json_data["pdfData"]["data"]))
                     f.close()
 
                 bookings = Bookings.objects.filter(pk__in=booking_ids)
@@ -639,11 +649,11 @@ def pricing(request, fp_name):
 
             logger.error(f"### Payload ({fp_name} price): {payload}")
             url = DME_LEVEL_API_URL + "/price/calculateprice"
-            response0 = requests.post(url, params={}, json=payload)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
+            response = requests.post(url, params={}, json=payload)
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
             s0 = json.dumps(
-                data0, indent=2, sort_keys=True, default=str
+                json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
             logger.error(f"### Response ({fp_name} price): {s0}")
 
@@ -659,7 +669,7 @@ def pricing(request, fp_name):
                     "accountCode"
                 ]
                 request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = data0["consignmentNumber"]
+                request_payload["trackingId"] = json_data["consignmentNumber"]
                 request_type = f"{fp_name.upper()} PRICE"
                 request_status = "SUCCESS"
 
@@ -667,7 +677,7 @@ def pricing(request, fp_name):
                     request_payload=request_payload,
                     request_status=request_status,
                     request_type=request_type,
-                    response=response0,
+                    response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
 
@@ -675,7 +685,7 @@ def pricing(request, fp_name):
                     fk_booking_id=booking.pk_booking_id
                 ).delete()
 
-                for item in data0["items"]:
+                for item in json_data["items"]:
                     book_con = Api_booking_confirmation_lines(
                         fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
                     ).save()
@@ -688,7 +698,7 @@ def pricing(request, fp_name):
                     request_payload=payload,
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} PRICE",
-                    response=response0,
+                    response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
 
@@ -719,10 +729,10 @@ def pod(request, fp_name):
 
             logger.error(f"### Payload ({fp_name} POD): {data}")
             url = DME_LEVEL_API_URL + "/pod/fetchpod"
-            response0 = requests.post(url, params={}, json=payload)
-            response0 = response0.content.decode("utf8").replace("'", '"')
-            data0 = json.loads(response0)
-            # s0 = json.dumps(data0, indent=2, sort_keys=True)  # Just for visual
+            response = requests.post(url, params={}, json=payload)
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
+            # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
             # logger.error(f"### Response ({fp_name} POD): {s0}")
 
             try:
@@ -742,7 +752,7 @@ def pod(request, fp_name):
                     file_url = f"/Users/admin/work/goldmine/dme_api/static/imgs/{fp_name.loer()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
-                    f.write(bytes(data0["podData"]["data"]))
+                    f.write(bytes(json_data["podData"]["data"]))
                     f.close()
 
                 booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
