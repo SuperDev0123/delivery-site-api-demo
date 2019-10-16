@@ -504,6 +504,12 @@ def create_order(request, fp_name):
         logger.error(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
         response = requests.post(url, params={}, json=payload)
+
+        had_504_res = False
+        while response.status_code == 504:
+            had_504_res = True
+            response = requests.post(url, params={}, json=payload)
+
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
         s0 = json.dumps(
@@ -523,7 +529,11 @@ def create_order(request, fp_name):
             ).save()
 
             for booking in bookings:
-                booking.vx_fp_order_id = json_data["order_id"]
+                booking.vx_fp_order_id = (
+                    json_data["order_id"]
+                    if not had_504_res
+                    else json_data[0]["context"]["order_id"]
+                )
                 booking.save()
 
             return JsonResponse(
