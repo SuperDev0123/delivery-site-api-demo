@@ -96,6 +96,8 @@ def tracking(request, fp_name):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def book(request, fp_name):
+    body = literal_eval(request.body.decode("utf8"))
+    booking_id = body["booking_id"]
     update_biopak_with_booked_booking(booking_id)
     return JsonResponse({"message": "TEST"}, status=200)
 
