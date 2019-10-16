@@ -1375,7 +1375,7 @@ class Booking_lines(models.Model):
     e_weightUOM = models.CharField(
         verbose_name=_("Weight UOM"), max_length=56, blank=True, null=True
     )
-    e_weightPerEach = models.IntegerField(
+    e_weightPerEach = models.FloatField(
         verbose_name=_("Weight Per Each"), blank=True, null=True
     )
     e_dimUOM = models.CharField(
