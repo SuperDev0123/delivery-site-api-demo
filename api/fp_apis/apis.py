@@ -118,6 +118,11 @@ def book(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
+            if fp_name.upper() == 'HUNTER' and booking.puPickUpAvailFrom_Date is None or not booking.puPickUpAvailFrom_Date:
+                error_msg = "PU Available From Date is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+
             try:
                 payload = get_book_payload(booking, fp_name)
             except Exception as e:
@@ -155,11 +160,16 @@ def book(request, fp_name):
                     request_type = f"{fp_name.upper()} BOOK"
                     request_status = "SUCCESS"
 
-                    booking.v_FPBookingNumber = json_data["items"][0][
-                        "tracking_details"
-                    ]["consignment_id"]
+                    if fp_name.upper() == 'STARTRACK':
+                        booking.v_FPBookingNumber = json_data["items"][0][
+                            "tracking_details"
+                        ]["consignment_id"]
+                    elif fp_name.upper() == 'HUNTER':
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                    
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
+
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
@@ -175,13 +185,13 @@ def book(request, fp_name):
                     Api_booking_confirmation_lines.objects.filter(
                         fk_booking_id=booking.pk_booking_id
                     ).delete()
-
-                    for item in json_data["items"]:
-                        book_con = Api_booking_confirmation_lines(
-                            fk_booking_id=booking.pk_booking_id,
-                            api_item_id=item["item_id"],
-                        ).save()
-
+                    if fp_name.upper() == 'STARTRACK':
+                        for item in json_data["items"]:
+                            book_con = Api_booking_confirmation_lines(
+                                fk_booking_id=booking.pk_booking_id,
+                                api_item_id=item["item_id"],
+                            ).save()
+                            
                     return JsonResponse(
                         {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                     )

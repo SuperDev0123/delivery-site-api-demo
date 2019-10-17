@@ -105,6 +105,7 @@ def get_book_payload(booking, fp_name):
         if booking.puPickUpAvailFrom_Date is None
         else str(booking.puPickUpAvailFrom_Date)
     )
+
     payload["referenceNumber"] = (
         ""
         if booking.b_clientReference_RA_Numbers is None
