@@ -211,6 +211,8 @@ def book(request, fp_name):
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
+                            booking.z_label_url = f"hunter_au/{file_name}"
+                            booking.save()
 
                     if booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
