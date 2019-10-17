@@ -118,7 +118,10 @@ def book(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            if fp_name.upper() == 'HUNTER' and booking.puPickUpAvailFrom_Date is None or not booking.puPickUpAvailFrom_Date:
+            if (
+                booking.vx_freight_provider.lower() == "hunter"
+                and not booking.puPickUpAvailFrom_Date
+            ):
                 error_msg = "PU Available From Date is required."
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
@@ -160,18 +163,18 @@ def book(request, fp_name):
                     request_type = f"{fp_name.upper()} BOOK"
                     request_status = "SUCCESS"
 
-                    if fp_name.upper() == 'STARTRACK':
+                    if booking.vx_freight_provider.lower() == "startrack":
                         booking.v_FPBookingNumber = json_data["items"][0][
                             "tracking_details"
                         ]["consignment_id"]
-                    elif fp_name.upper() == 'HUNTER':
+                    elif booking.vx_freight_provider.lower() == "hunter":
                         booking.v_FPBookingNumber = json_data["consignmentNumber"]
-                    
+                        booking.jobNumber = json_data["jobNumber"]
+                        booking.jobDate = json_data["jobDate"]
+
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
-                    booking.jobNumber = json_data["jobNumber"]
-                    booking.jobDate = json_data["jobDate"]
-                    booking.b_status = "Booked"
+                    # booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
 
@@ -187,25 +190,29 @@ def book(request, fp_name):
                         fk_booking_id=booking.pk_booking_id
                     ).delete()
 
-                    # if fp_name.upper() == 'HUNTER':
-                    #     file_name = (
-                    #         "hunter_"
-                    #         + str(booking.v_FPBookingNumber)
-                    #         + "_"
-                    #         + str(datetime.now())
-                    #         + ".pdf"
-                    #     )
+                    # Save Label for Hunter
+                    if booking.vx_freight_provider.lower() == "hunter":
+                        json_label_data = json.loads(response.content)
+                        file_name = (
+                            "hunter_"
+                            + str(booking.v_FPBookingNumber)
+                            + "_"
+                            + str(datetime.now())
+                            + ".pdf"
+                        )
 
-                    #     if IS_PRODUCTION:
-                    #         file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
-                    #     else:
-                    #         file_url = f"/home/administrator/Downloads/dme_ui/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                        if IS_PRODUCTION:
+                            file_url = (
+                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                            )
+                        else:
+                            file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
 
-                    #     with open(file_url, "wb") as f:
-                    #         f.write(bytes(json_data["shippingLabel"]))
-                    #         f.close()
+                        with open(file_url, "wb") as f:
+                            f.write(base64.b64decode(json_label_data["shippingLabel"]))
+                            f.close()
 
-                    if fp_name.upper() == 'STARTRACK':
+                    if booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
                                 fk_booking_id=booking.pk_booking_id,
@@ -770,7 +777,7 @@ def pod(request, fp_name):
 
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
-            
+
             # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
             # logger.error(f"### Response ({fp_name} POD): {s0}")
 
@@ -786,7 +793,6 @@ def pod(request, fp_name):
                     + booking.v_FPBookingNumber
                     + ".png"
                 )
-
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
