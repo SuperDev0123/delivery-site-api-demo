@@ -185,13 +185,32 @@ def book(request, fp_name):
                     Api_booking_confirmation_lines.objects.filter(
                         fk_booking_id=booking.pk_booking_id
                     ).delete()
+
+                    if fp_name.upper() == 'HUNTER':
+                        file_name = (
+                            "hunter_"
+                            + str(booking.v_FPBookingNumber)
+                            + "_"
+                            + str(datetime.now())
+                            + ".pdf"
+                        )
+
+                        if IS_PRODUCTION:
+                            file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                        else:
+                            file_url = f"/home/administrator/Downloads/dme_ui/static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                        with open(file_url, "wb") as f:
+                            f.write(bytes(json_data["shippingLabel"]))
+                            f.close()
+
                     if fp_name.upper() == 'STARTRACK':
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
                                 fk_booking_id=booking.pk_booking_id,
                                 api_item_id=item["item_id"],
                             ).save()
-                            
+
                     return JsonResponse(
                         {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                     )
