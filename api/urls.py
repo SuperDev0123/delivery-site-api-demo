@@ -57,6 +57,7 @@ urlpatterns += [
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/book/", fp_apis.book),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/pod/", fp_apis.pod),
     url(r"^fp-api/(?P<fp_name>[^/]+)/get-label/", fp_apis.get_label),
     url(r"^fp-api/(?P<fp_name>[^/]+)/edit-book/", fp_apis.edit_book),
     url(r"^fp-api/(?P<fp_name>[^/]+)/cancel-book/", fp_apis.cancel_book),

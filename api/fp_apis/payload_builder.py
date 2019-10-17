@@ -105,7 +105,6 @@ def get_book_payload(booking, fp_name):
         if booking.puPickUpAvailFrom_Date is None
         else str(booking.puPickUpAvailFrom_Date)
     )
-
     payload["referenceNumber"] = (
         ""
         if booking.b_clientReference_RA_Numbers is None
@@ -300,12 +299,11 @@ def get_get_order_summary_payload(booking, fp_name):
 def get_pod_payload(booking, fp_name):
     try:
         payload = {}
-        consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking["v_FPBookingNumber"]})
-        payload["consignmentDetails"] = consignmentDetails
+        
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
-
+        payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
+        payload["jobDate"] = booking.jobDate
         return payload
     except Exception as e:
         # print(f"#400 - Error while build payload: {e}")
