@@ -34,7 +34,7 @@ KEY_CHAINS = {
     "hunter": {
         "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
     },
-    "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123"}},
+    "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123", "accountUsername": "CIT00000000000098839"}},
 }
 
 

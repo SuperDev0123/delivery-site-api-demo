@@ -196,7 +196,7 @@ LOGGING = {
         "file": {
             "level": "INFO",
             "class": "logging.FileHandler",
-            "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
+            "filename": "/home/administrator/Downloads/dme_api/logs/debug.log"
             if ENV == "local"
             else "/var/www/html/dme_api/logs/debug.log",
             "formatter": "simple",
