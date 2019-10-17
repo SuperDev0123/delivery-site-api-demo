@@ -118,6 +118,11 @@ def book(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
+            if fp_name.upper() == 'HUNTER' and booking.puPickUpAvailFrom_Date is None or not booking.puPickUpAvailFrom_Date:
+                error_msg = "PU Available From Date is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+
             try:
                 payload = get_book_payload(booking, fp_name)
             except Exception as e:
@@ -155,11 +160,17 @@ def book(request, fp_name):
                     request_type = f"{fp_name.upper()} BOOK"
                     request_status = "SUCCESS"
 
-                    booking.v_FPBookingNumber = json_data["items"][0][
-                        "tracking_details"
-                    ]["consignment_id"]
+                    if fp_name.upper() == 'STARTRACK':
+                        booking.v_FPBookingNumber = json_data["items"][0][
+                            "tracking_details"
+                        ]["consignment_id"]
+                    elif fp_name.upper() == 'HUNTER':
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                    
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
+                    booking.jobNumber = json_data["jobNumber"]
+                    booking.jobDate = json_data["jobDate"]
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
@@ -176,11 +187,30 @@ def book(request, fp_name):
                         fk_booking_id=booking.pk_booking_id
                     ).delete()
 
-                    for item in json_data["items"]:
-                        book_con = Api_booking_confirmation_lines(
-                            fk_booking_id=booking.pk_booking_id,
-                            api_item_id=item["item_id"],
-                        ).save()
+                    # if fp_name.upper() == 'HUNTER':
+                    #     file_name = (
+                    #         "hunter_"
+                    #         + str(booking.v_FPBookingNumber)
+                    #         + "_"
+                    #         + str(datetime.now())
+                    #         + ".pdf"
+                    #     )
+
+                    #     if IS_PRODUCTION:
+                    #         file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                    #     else:
+                    #         file_url = f"/home/administrator/Downloads/dme_ui/static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                    #     with open(file_url, "wb") as f:
+                    #         f.write(bytes(json_data["shippingLabel"]))
+                    #         f.close()
+
+                    if fp_name.upper() == 'STARTRACK':
+                        for item in json_data["items"]:
+                            book_con = Api_booking_confirmation_lines(
+                                fk_booking_id=booking.pk_booking_id,
+                                api_item_id=item["item_id"],
+                            ).save()
 
                     return JsonResponse(
                         {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
@@ -734,14 +764,18 @@ def pod(request, fp_name):
             booking = Bookings.objects.get(id=booking_id)
             payload = get_pod_payload(booking, fp_name)
 
-            logger.error(f"### Payload ({fp_name} POD): {data}")
+            logger.error(f"### Payload ({fp_name} POD): {payload}")
             url = DME_LEVEL_API_URL + "/pod/fetchpod"
             response = requests.post(url, params={}, json=payload)
+
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
+            
             # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
             # logger.error(f"### Response ({fp_name} POD): {s0}")
 
+            if json_data["errorMessage"] is not None:
+                return JsonResponse({"message": json_data["errorMessage"]})
             try:
                 file_name = (
                     "biopak_pod_"
@@ -753,10 +787,11 @@ def pod(request, fp_name):
                     + ".png"
                 )
 
+
                 if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/Users/admin/work/goldmine/dme_api/static/imgs/{fp_name.loer()}_au/{file_name}"
+                    file_url = f"/home/administrator/Downloads/dme_ui/static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["podData"]["data"]))

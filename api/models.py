@@ -1288,6 +1288,8 @@ class Bookings(models.Model):
     b_del_to_signed_time = models.DateTimeField(blank=True, null=True, default=None)
     z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
     b_fp_qty_delivered = models.IntegerField(blank=True, default=0, null=True)
+    jobNumber = models.CharField(max_length=45, blank=True, null=True, default=None)
+    jobDate = models.CharField(max_length=45, blank=True, null=True, default=None)
 
     class Meta:
         db_table = "dme_bookings"

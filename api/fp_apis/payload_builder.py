@@ -34,7 +34,7 @@ KEY_CHAINS = {
     "hunter": {
         "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
     },
-    "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123"}},
+    "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123", "accountUsername": "CIT00000000000098839"}},
 }
 
 
@@ -299,12 +299,11 @@ def get_get_order_summary_payload(booking, fp_name):
 def get_pod_payload(booking, fp_name):
     try:
         payload = {}
-        consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking["v_FPBookingNumber"]})
-        payload["consignmentDetails"] = consignmentDetails
+        
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
-
+        payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
+        payload["jobDate"] = booking.jobDate
         return payload
     except Exception as e:
         # print(f"#400 - Error while build payload: {e}")
