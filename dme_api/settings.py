@@ -28,6 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Env setting
+ENV = "local"  # local, dev, prod
 
 # Application definition
 
@@ -172,9 +174,6 @@ CORS_ALLOW_HEADERS = (
 
 JWT_AUTH = {"JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=36000)}  # Test case
 
-# Env setting
-ENV = "local"  # local, dev, prod
-
 # Email setting
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_USE_TLS = True
@@ -183,6 +182,7 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = "bookings@deliver-me.com.au"
 EMAIL_HOST_PASSWORD = "Dme35718&*"
 
+# Logging setting
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -196,9 +196,7 @@ LOGGING = {
         "file": {
             "level": "INFO",
             "class": "logging.FileHandler",
-            "filename": "/Users/admin/work/goldmine/dme_api/logs/debug.log"
-            if ENV == "local"
-            else "/var/www/html/dme_api/logs/debug.log",
+            "filename": "./logs/debug.log",
             "formatter": "simple",
         },
     },
