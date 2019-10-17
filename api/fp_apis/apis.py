@@ -174,7 +174,7 @@ def book(request, fp_name):
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
-                    # booking.b_status = "Booked"
+                    booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
 
