@@ -47,14 +47,14 @@ def tracking(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         payload = get_tracking_payload(booking, fp_name)
 
-        logger.error(f"### Payload ({fp_name} tracking): {data}")
+        logger.error(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
         res_content = response.content.decode("utf8").replace("'", '"')
-        json_data = json.loads(res_content)
+        json_data = json.loads(res_content)        
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.error(f"### Response ({fp_name} tracking): {s0}")
-
+        
         try:
             request_id = json_data["requestId"]
             request_payload = {
@@ -80,6 +80,7 @@ def tracking(request, fp_name):
                 fk_booking_id=booking.id,
             )
             oneLog.save()
+
             booking.b_status_API = json_data["consignmentTrackDetails"][0][
                 "consignmentStatuses"
             ][0]["status"]
@@ -89,6 +90,7 @@ def tracking(request, fp_name):
         except KeyError:
             return JsonResponse({"Error": "Too many request"}, status=400)
     except Exception as e:
+        print('ERROR', e)
         return JsonResponse({"message": "Booking not found"}, status=400)
 
 
@@ -434,8 +436,11 @@ def cancel_book(request, fp_name):
 def get_label(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
-        booking_id = body["bookingId"]
+        booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
+
+        payload = {}
+        payload = get_getlabel_payload(booking, fp_name)
 
         if fp_name.lower() in ["startrack"]:
             try:
@@ -768,7 +773,7 @@ def pod(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
-
+       
         try:
             booking = Bookings.objects.get(id=booking_id)
             payload = get_pod_payload(booking, fp_name)
@@ -812,6 +817,63 @@ def pod(request, fp_name):
                 booking.save()
 
                 return JsonResponse({"message": "POD is fetched successfully."})
+            except KeyError as e:
+                error_msg = f"KeyError: {e}"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": s0})
+        except KeyError as e:
+            return JsonResponse({"Error": "Too many request"}, status=400)
+    except SyntaxError:
+        return JsonResponse({"message": "Booking id is required"}, status=400)
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def reprint(request, fp_name):
+    try:
+        body = literal_eval(request.body.decode("utf8"))
+        booking_id = body["booking_id"]
+       
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+            payload = get_reprint_payload(booking, fp_name)
+
+            logger.error(f"### Payload ({fp_name} POD): {payload}")
+            url = DME_LEVEL_API_URL + "/labelling/reprint"
+            response = requests.post(url, params={}, json=payload)
+
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
+
+            # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+            # logger.error(f"### Response ({fp_name} POD): {s0}")
+
+            podData = json_data["ReprintActionResult"]["LabelPDF"]
+
+            try:
+                file_name = (
+                    "biopak_reprint_"
+                    + booking.pu_Address_State
+                    + "_"
+                    + booking.b_client_sales_inv_num
+                    + "_" 
+                    + str(datetime.now())
+                    + ".pdf"
+                )
+
+                if IS_PRODUCTION:
+                    file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                else:
+                    file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
+
+                with open(file_url, "wb") as f:
+                    f.write(base64.b64decode(podData))
+                    f.close()
+
+                booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
+                booking.save()
+
+                return JsonResponse({"message": "Label is reprinted successfully."})
             except KeyError as e:
                 error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)

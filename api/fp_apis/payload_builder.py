@@ -84,7 +84,8 @@ def get_tracking_payload(booking, fp_name):
         payload = {}
         consignmentDetails = []
         # for i in range(index * 10, (index + 1) * 10):  # Batch - 10
-        consignmentDetails.append({"consignmentNumber": booking["v_FPBookingNumber"]})
+        consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+        # consignmentDetails.append({"consignmentNumber": "DME000100372"})
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
@@ -224,6 +225,116 @@ def get_cancel_book_payload(booking, fp_name):
         # print(f"#402 - Error while build payload: {e}")
         return None
 
+def get_getlabel_payload(booking,fp_name):
+    payload = {}
+    payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+    payload["serviceProvider"] = _get_service_provider(fp_name)
+    payload["pickupAddress"] = {
+        "companyName": "" if booking.puCompany is None else booking.puCompany,
+        "contact": "Rosie Stokeld"
+        if booking.pu_Contact_F_L_Name is None
+        else booking.pu_Contact_F_L_Name,
+        "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
+        "instruction": ""
+        if booking.pu_PickUp_Instructions_Contact is None
+        else booking.pu_PickUp_Instructions_Contact,
+        "phoneNumber": "0267651109"
+        if booking.pu_Phone_Main is None
+        else booking.pu_Phone_Main,
+    }
+    payload["pickupAddress"]["postalAddress"] = {
+        "address1": ""
+        if booking.pu_Address_Street_1 is None
+        else booking.pu_Address_Street_1,
+        "address2": ""
+        if booking.pu_Address_street_2 is None
+        else booking.pu_Address_street_2,
+        "country": ""
+        if booking.pu_Address_Country is None
+        else booking.pu_Address_Country,
+        "postCode": ""
+        if booking.pu_Address_PostalCode is None
+        else booking.pu_Address_PostalCode,
+        "state": "" if booking.pu_Address_State is None else booking.pu_Address_State,
+        "suburb": ""
+        if booking.pu_Address_Suburb is None
+        else booking.pu_Address_Suburb,
+        "sortCode": ""
+        if booking.pu_Address_PostalCode is None
+        else booking.pu_Address_PostalCode,
+    }
+    payload["dropAddress"] = {
+        "companyName": ""
+        if booking.deToCompanyName is None
+        else booking.deToCompanyName,
+        "contact": "James Sam"
+        if booking.de_to_Contact_F_LName is None
+        else booking.de_to_Contact_F_LName,
+        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+        "instruction": ""
+        if booking.de_to_Pick_Up_Instructions_Contact is None
+        else booking.de_to_Pick_Up_Instructions_Contact,
+        "phoneNumber": "0393920020"
+        if booking.de_to_Phone_Main is None
+        else booking.de_to_Phone_Main,
+    }
+    payload["dropAddress"]["postalAddress"] = {
+        "address1": ""
+        if booking.de_To_Address_Street_1 is None
+        else booking.de_To_Address_Street_1,
+        "address2": ""
+        if booking.de_To_Address_Street_2 is None
+        else booking.de_To_Address_Street_2,
+        "country": ""
+        if booking.de_To_Address_Country is None
+        else booking.de_To_Address_Country,
+        "postCode": ""
+        if booking.de_To_Address_PostalCode is None
+        else booking.de_To_Address_PostalCode,
+        "state": ""
+        if booking.de_To_Address_State is None
+        else booking.de_To_Address_State,
+        "suburb": ""
+        if booking.de_To_Address_Suburb is None
+        else booking.de_To_Address_Suburb,
+        "sortCode": ""
+        if booking.de_To_Address_PostalCode is None
+        else booking.de_To_Address_PostalCode,
+    }
+
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+    items = []
+    for line in booking_lines:
+        for i in range(line.e_qty):
+            temp_item = {
+                "dangerous": 0,
+                "itemId": "EXP",
+                "packagingType": "CTN" if fp_name.lower() == "startrack" else "PAL",
+                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
+                "length": 0 if line.e_dimLength is None else line.e_dimLength,
+                "quantity": 0 if line.e_qty is None else line.e_qty,
+                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
+            }
+            items.append(temp_item)
+
+    payload["items"] = items
+
+    # Detail for each FP
+    if fp_name.lower() == "tnt":
+        payload["serviceType"] = "76"
+        payload["labelType"] = "A"
+        # payload["readyDate"] = (
+        #     ""
+        #     if booking.puPickUpAvailFrom_Date is None
+        #     else str(booking.puPickUpAvailFrom_Date)
+        # )
+        payload["consignmentDate"] = "18102019"
+        payload["consignmentNumber"] = "DME000100372"
+    return payload
+
 
 def get_create_label_payload(booking, fp_name):
     try:
@@ -304,11 +415,26 @@ def get_pod_payload(booking, fp_name):
         payload["serviceProvider"] = _get_service_provider(fp_name)
 
         if fp_name.lower() == 'hunter':
+            # payload["consignmentDetails"] = {"consignmentNumber": 'DME000106541'}
             payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
             payload["jobDate"] = booking.jobDate
         else:
             payload["consignmentDetails"] = {"consignmentNumber": booking.v_FPBookingNumber}
-        # payload["consignmentDetails"] = {"consignmentNumber": 'DME000106541'}
+
+        return payload
+    except Exception as e:
+        # print(f"#400 - Error while build payload: {e}")
+        return None
+
+def get_reprint_payload(booking, fp_name):
+    try:
+        payload = {}
+        
+        payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+        payload["serviceProvider"] = _get_service_provider(fp_name)
+        # payload["consignmentNumber"] = booking.v_FPBookingNumber
+        payload["labelType"] = "A"
+        payload["consignmentNumber"] = 'DME000106541'
         return payload
     except Exception as e:
         # print(f"#400 - Error while build payload: {e}")
