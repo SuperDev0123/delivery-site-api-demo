@@ -302,8 +302,13 @@ def get_pod_payload(booking, fp_name):
         
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
-        payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
-        payload["jobDate"] = booking.jobDate
+
+        if fp_name.lower() == 'hunter':
+            payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
+            payload["jobDate"] = booking.jobDate
+        else:
+            payload["consignmentDetails"] = {"consignmentNumber": booking.v_FPBookingNumber}
+        # payload["consignmentDetails"] = {"consignmentNumber": 'DME000106541'}
         return payload
     except Exception as e:
         # print(f"#400 - Error while build payload: {e}")

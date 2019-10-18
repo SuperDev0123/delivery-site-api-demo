@@ -783,16 +783,19 @@ def pod(request, fp_name):
             # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
             # logger.error(f"### Response ({fp_name} POD): {s0}")
 
-            if json_data["errorMessage"] is not None:
+            if fp_name.lower() == 'hunter' and json_data["errorMessage"] is not None:
                 return JsonResponse({"message": json_data["errorMessage"]})
+
+            podData = json_data["pod"]["podData"]
+            print(podData)
             try:
                 file_name = (
                     "biopak_pod_"
                     + booking.pu_Address_State
                     + "_"
                     + booking.b_client_sales_inv_num
-                    + "_"
-                    + booking.v_FPBookingNumber
+                    + "_" 
+                    + str(datetime.now())
                     + ".png"
                 )
 
@@ -802,7 +805,7 @@ def pod(request, fp_name):
                     file_url = f"/home/administrator/Downloads/dme_api/static/imgs/{file_name}"
 
                 with open(file_url, "wb") as f:
-                    f.write(bytes(json_data["podData"]["data"]))
+                    f.write(base64.b64decode(podData))
                     f.close()
 
                 booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
