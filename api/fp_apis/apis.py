@@ -206,7 +206,7 @@ def book(request, fp_name):
                                 f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                             )
                         else:
-                            file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                            file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
 
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
@@ -634,7 +634,7 @@ def get_order_summary(request, fp_name):
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
@@ -797,9 +797,9 @@ def pod(request, fp_name):
                 )
 
                 if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/home/administrator/Downloads/dme_ui/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"/home/administrator/Downloads/dme_api/static/imgs/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["podData"]["data"]))
