@@ -432,9 +432,9 @@ def get_reprint_payload(booking, fp_name):
         
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
-        # payload["consignmentNumber"] = booking.v_FPBookingNumber
+        payload["consignmentNumber"] = booking.v_FPBookingNumber
         payload["labelType"] = "A"
-        payload["consignmentNumber"] = 'DME000106541'
+        # payload["consignmentNumber"] = 'DME000106541'
         return payload
     except Exception as e:
         # print(f"#400 - Error while build payload: {e}")
