@@ -17,19 +17,19 @@ def download_sftp(
         logger.error(f"@102 - Connected to {host}")
 
         with sftp_con.cd(sftp_filepath):
-            logger.error("@103 - Go to sftp dir")
+            logger.error(f"@103 - Go to sftp dir: {sftp_filepath}")
 
             for file in sftp_con.listdir():
                 lstatout = str(sftp_con.lstat(file)).split()[0]
 
                 if "d" not in lstatout:  # If file
-                    logger.error("@104 - downloading: ", file)
+                    logger.error(f"@104 - downloading: {file}")
                     sftp_con.get(sftp_filepath + file, local_filepath + file)
                     sftp_file_size = sftp_con.lstat(sftp_filepath + file).st_size
                     local_file_size = os.stat(local_filepath + file).st_size
 
                     if sftp_file_size == local_file_size:  # Check file size
-                        logger.error("@105 - Download success: " + file)
+                        logger.error(f"@105 - Download success: {file}")
                         sftp_con.remove(sftp_filepath + file)  # Delete file from remote
 
         sftp_con.close()
@@ -51,7 +51,7 @@ def upload_sftp(
     ) as sftp_con:
         logger.error(f"@202 - Connected to {host}")
         with sftp_con.cd(sftp_filepath):
-            logger.error("@203 - Go to sftp dir")
+            logger.error(f"@203 - Go to sftp dir: {sftp_filepath}")
             sftp_con.put(local_filepath + filename)
             sftp_file_size = sftp_con.lstat(sftp_filepath + filename).st_size
             local_file_size = os.stat(local_filepath + filename).st_size
@@ -64,6 +64,6 @@ def upload_sftp(
                 shutil.move(
                     local_filepath + filename, local_filepath_archive + filename
                 )
-                logger.error("@209 Moved file:", filename)
+                logger.error(f"@209 Moved file: {filename}")
 
         sftp_con.close()
