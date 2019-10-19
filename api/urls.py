@@ -24,6 +24,7 @@ router.register(r"fp", FPViewSet, basename="fp")
 router.register(r"status", StatusViewSet, basename="status")
 router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
 router.register(r"reports", DmeReportsViewSet, basename="reports")
+router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -63,6 +64,7 @@ urlpatterns += [
     url(r"^fp-api/(?P<fp_name>[^/]+)/cancel-book/", fp_apis.cancel_book),
     url(r"^fp-api/(?P<fp_name>[^/]+)/create-order/", fp_apis.create_order),
     url(r"^fp-api/(?P<fp_name>[^/]+)/get-order-summary/", fp_apis.get_order_summary),
+    url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
 ]

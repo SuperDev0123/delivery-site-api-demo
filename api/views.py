@@ -2842,6 +2842,15 @@ class DmeReportsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+class ApiBookingQuotesViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=["get"])
+    def get_pricings(self, request):
+        fk_booking_id = request.GET["fk_booking_id"]
+        queryset = API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
+        serializer = ApiBookingQuotesSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class FileUploadView(views.APIView):
     parser_classes = (MultiPartParser,)
 

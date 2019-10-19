@@ -12,8 +12,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse
 
 from api.models import *
+from api.serializers import ApiBookingQuotesSerializer
 from django.conf import settings
 from .payload_builder import *
+from .response_parser import *
 from .update_by_json import update_biopak_with_booked_booking
 
 if settings.ENV == "local":
@@ -817,3 +819,96 @@ def pod(request, fp_name):
             return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
+
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def pricing(request):
+    try:
+        body = literal_eval(request.body.decode("utf8"))
+        booking_id = body["booking_id"]
+
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+
+            if not booking.puPickUpAvailFrom_Date:
+                error_msg = "PU Available From Date is required."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+
+            fp_names = ["Hunter", "TNT"]
+
+            try:
+                for fp_name in fp_names:
+                    payload = get_pricing_payload(booking, fp_name.lower())
+
+                    print(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+                    response = requests.post(url, params={}, json=payload)
+                    res_content = response.content.decode("utf8").replace("'", '"')
+                    json_data = json.loads(res_content)
+                    s0 = json.dumps(
+                        json_data, indent=2, sort_keys=True
+                    )  # Just for visual
+                    print(f"### Response ({fp_name.upper()} PRICING): {s0}")
+
+                    Log.objects.create(
+                        request_payload=payload,
+                        request_status="SUCCESS",
+                        request_type=f"{fp_name.upper()} PRICING",
+                        response=res_content,
+                        fk_booking_id=booking.id,
+                    )
+
+                    parse_results = parse_pricing_response(
+                        response, fp_name.lower(), booking
+                    )
+                    if not "error" in parse_results:
+                        for parse_result in parse_results:
+                            try:
+                                api_booking_quote = API_booking_quotes.objects.get(
+                                    fk_booking_id=booking.pk_booking_id,
+                                    fk_freight_provider_id=parse_result[
+                                        "fk_freight_provider_id"
+                                    ].upper(),
+                                    service_name=parse_result["service_name"],
+                                )
+                                serializer = ApiBookingQuotesSerializer(
+                                    api_booking_quote, data=parse_result
+                                )
+                                try:
+                                    if serializer.is_valid():
+                                        serializer.save()
+                                except Exception as e:
+                                    print("Exception: ", e)
+                                api_booking_quote.save()
+                            except API_booking_quotes.DoesNotExist:
+                                serializer = ApiBookingQuotesSerializer(
+                                    data=parse_result
+                                )
+                                try:
+                                    if serializer.is_valid():
+                                        serializer.save()
+                                    else:
+                                        print(
+                                            "@401 Serializer error: ", serializer.errors
+                                        )
+                                except Exception as e:
+                                    print("@402 Exception: ", e)
+                results = API_booking_quotes.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+                return JsonResponse(
+                    {
+                        "message": f"Retrieved all Pricing info",
+                        "results": ApiBookingQuotesSerializer(results, many=True).data,
+                    },
+                    status=200,
+                )
+            except Exception as e:
+                return JsonResponse({"message": f"Error: {e}"}, status=400)
+        except Exception as e:
+            return JsonResponse({"message": f"Booking is not exist"}, status=400)
+    except SyntaxError as e:
+        return JsonResponse({"message": f"SyntaxError {e}"}, status=400)

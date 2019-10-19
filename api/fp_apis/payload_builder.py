@@ -34,7 +34,13 @@ KEY_CHAINS = {
     "hunter": {
         "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
     },
-    "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123", "accountUsername": "CIT00000000000098839"}},
+    "tnt": {
+        "live": {
+            "accountKey": "30021385",
+            "accountPassword": "Deliver123",
+            "accountUsername": "CIT00000000000098839",
+        }
+    },
 }
 
 
@@ -299,7 +305,7 @@ def get_get_order_summary_payload(booking, fp_name):
 def get_pod_payload(booking, fp_name):
     try:
         payload = {}
-        
+
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
         payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
@@ -308,3 +314,127 @@ def get_pod_payload(booking, fp_name):
     except Exception as e:
         # print(f"#400 - Error while build payload: {e}")
         return None
+
+
+def get_pricing_payload(booking, fp_name):
+    payload = {}
+    payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+    payload["serviceProvider"] = _get_service_provider(fp_name)
+
+    payload["readyDate"] = (
+        ""
+        if booking.puPickUpAvailFrom_Date is None
+        else str(booking.puPickUpAvailFrom_Date)
+    )
+    payload["referenceNumber"] = (
+        ""
+        if booking.b_clientReference_RA_Numbers is None
+        else booking.b_clientReference_RA_Numbers
+    )
+    payload["bookedBy"] = "Mr.CharlieBrown"
+    payload["pickupAddress"] = {
+        "companyName": "" if booking.puCompany is None else booking.puCompany,
+        "contact": "Rosie Stokeld"
+        if booking.pu_Contact_F_L_Name is None
+        else booking.pu_Contact_F_L_Name,
+        "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
+        "instruction": ""
+        if booking.pu_PickUp_Instructions_Contact is None
+        else booking.pu_PickUp_Instructions_Contact,
+        "phoneNumber": "0267651109"
+        if booking.pu_Phone_Main is None
+        else booking.pu_Phone_Main,
+    }
+    payload["pickupAddress"]["postalAddress"] = {
+        "address1": ""
+        if booking.pu_Address_Street_1 is None
+        else booking.pu_Address_Street_1,
+        "address2": ""
+        if booking.pu_Address_street_2 is None
+        else booking.pu_Address_street_2,
+        "country": ""
+        if booking.pu_Address_Country is None
+        else booking.pu_Address_Country,
+        "postCode": ""
+        if booking.pu_Address_PostalCode is None
+        else booking.pu_Address_PostalCode,
+        "state": "" if booking.pu_Address_State is None else booking.pu_Address_State,
+        "suburb": ""
+        if booking.pu_Address_Suburb is None
+        else booking.pu_Address_Suburb,
+        "sortCode": ""
+        if booking.pu_Address_PostalCode is None
+        else booking.pu_Address_PostalCode,
+    }
+    payload["dropAddress"] = {
+        "companyName": ""
+        if booking.deToCompanyName is None
+        else booking.deToCompanyName,
+        "contact": "James Sam"
+        if booking.de_to_Contact_F_LName is None
+        else booking.de_to_Contact_F_LName,
+        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+        "instruction": ""
+        if booking.de_to_Pick_Up_Instructions_Contact is None
+        else booking.de_to_Pick_Up_Instructions_Contact,
+        "phoneNumber": "0393920020"
+        if booking.de_to_Phone_Main is None
+        else booking.de_to_Phone_Main,
+    }
+    payload["dropAddress"]["postalAddress"] = {
+        "address1": ""
+        if booking.de_To_Address_Street_1 is None
+        else booking.de_To_Address_Street_1,
+        "address2": ""
+        if booking.de_To_Address_Street_2 is None
+        else booking.de_To_Address_Street_2,
+        "country": ""
+        if booking.de_To_Address_Country is None
+        else booking.de_To_Address_Country,
+        "postCode": ""
+        if booking.de_To_Address_PostalCode is None
+        else booking.de_To_Address_PostalCode,
+        "state": ""
+        if booking.de_To_Address_State is None
+        else booking.de_To_Address_State,
+        "suburb": ""
+        if booking.de_To_Address_Suburb is None
+        else booking.de_To_Address_Suburb,
+        "sortCode": ""
+        if booking.de_To_Address_PostalCode is None
+        else booking.de_To_Address_PostalCode,
+    }
+
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    items = []
+    for line in booking_lines:
+        for i in range(line.e_qty):
+            item = {
+                "dangerous": 0,
+                "itemId": "EXP",
+                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
+                "length": 0 if line.e_dimLength is None else line.e_dimLength,
+                "quantity": 0 if line.e_qty is None else line.e_qty,
+                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
+                "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
+            }
+
+            if fp_name.lower() == "startrack":
+                item["packagingType"] = "CTN"
+            elif fp_name.lower() == "hunter":
+                item["packagingType"] = "PAL"
+            elif fp_name.lower() == "tnt":
+                item["packagingType"] = "D"
+
+            items.append(item)
+
+    payload["items"] = items
+
+    # Detail for each FP
+    if fp_name.lower() == "startrack":
+        payload["serviceType"] = "R" if booking.vx_serviceName is None else "R"
+    elif fp_name.lower() == "hunter":
+        payload["serviceType"] = "RF"
+
+    return payload

@@ -10,6 +10,7 @@ from .models import (
     Dme_comm_notes,
     Dme_status_history,
     DME_reports,
+    API_booking_quotes,
 )
 
 
@@ -80,3 +81,9 @@ class DmeReportsSerializer(serializers.ModelSerializer):
 
     def get_username(self, obj):
         return obj.user.username
+
+
+class ApiBookingQuotesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = API_booking_quotes
+        fields = "__all__"

@@ -2276,10 +2276,10 @@ class Api_booking_confirmation_lines(models.Model):
         db_table = "api_booking_confirmation_lines"
 
 
-class api_booking_quotes(models.Model):
+class API_booking_quotes(models.Model):
     id = models.AutoField(primary_key=True)
-    api_results_id = models.IntegerField(
-        verbose_name=_("Result ID"), blank=True, null=True
+    api_results_id = models.CharField(
+        verbose_name=_("Result ID"), blank=True, null=True, max_length=128
     )
     fk_booking_id = models.CharField(
         verbose_name=_("Booking ID"), max_length=64, blank=True, null=True
@@ -2297,38 +2297,38 @@ class api_booking_quotes(models.Model):
         verbose_name=_("Service Code"), max_length=10, blank=True, null=True
     )
     service_name = models.CharField(
-        verbose_name=_("Service Name"), max_length=24, blank=True, null=True
+        verbose_name=_("Service Name"), max_length=64, blank=True, null=True
     )
     fee = models.FloatField(verbose_name=_("Fee"), blank=True, null=True)
     etd = models.CharField(verbose_name=_("ETD"), max_length=64, blank=True, null=True)
     tax_id_1 = models.CharField(
         verbose_name=_("Tax ID 1"), max_length=10, blank=True, null=True
     )
-    tax_value_1 = models.IntegerField(
+    tax_value_1 = models.FloatField(
         verbose_name=_("Tax Value 1"), blank=True, null=True
     )
     tax_id_2 = models.CharField(
         verbose_name=_("Tax ID 2"), max_length=10, blank=True, null=True
     )
-    tax_value_2 = models.IntegerField(
+    tax_value_2 = models.FloatField(
         verbose_name=_("Tax Value 2"), blank=True, null=True
     )
     tax_id_3 = models.CharField(
         verbose_name=_("Tax ID 3"), max_length=10, blank=True, null=True
     )
-    tax_value_3 = models.IntegerField(
+    tax_value_3 = models.FloatField(
         verbose_name=_("Tax Value 3"), blank=True, null=True
     )
     tax_id_4 = models.CharField(
         verbose_name=_("Tax ID 4"), max_length=10, blank=True, null=True
     )
-    tax_value_4 = models.IntegerField(
+    tax_value_4 = models.FloatField(
         verbose_name=_("Tax Value 4"), blank=True, null=True
     )
     tax_id_5 = models.CharField(
         verbose_name=_("Tax ID 5"), max_length=10, blank=True, null=True
     )
-    tax_value_5 = models.IntegerField(
+    tax_value_5 = models.FloatField(
         verbose_name=_("Tax Value 5"), blank=True, null=True
     )
     b_client_markup2_percentage = models.FloatField(
