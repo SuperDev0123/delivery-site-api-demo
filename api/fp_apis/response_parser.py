@@ -14,7 +14,7 @@ def parse_pricing_response(response, fp_name, booking):
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
                 result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
-                result["etd"] = price["etd"]
+                result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceName"]
                 result["service_code"] = price["serviceType"]
