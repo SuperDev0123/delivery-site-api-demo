@@ -7,7 +7,7 @@ def parse_pricing_response(response, fp_name, booking):
     results = []
 
     try:
-        if fp_name == "hunter":
+        if fp_name == "hunter" and json_data["price"]:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
@@ -21,7 +21,7 @@ def parse_pricing_response(response, fp_name, booking):
                 result["tax_id_1"] = price["totalTaxes"]["id"]
                 result["tax_value_1"] = price["totalTaxes"]["value"]
                 results.append(result)
-        elif fp_name == "tnt":
+        elif fp_name == "tnt" and json_data["price"]:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
