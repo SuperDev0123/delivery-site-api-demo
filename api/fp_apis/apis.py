@@ -144,6 +144,24 @@ def book(request, fp_name):
             )  # Just for visual
             logger.error(f"### Response ({fp_name} book): {s0}")
 
+            if (
+                response.status_code == 500
+                and "An internal system error" in json_data[0]["message"]
+            ):
+                for i in range(4):
+                    logger.error(f"### Payload ({fp_name} book): {payload}")
+                    url = DME_LEVEL_API_URL + "/booking/bookconsignment"
+                    response = requests.post(url, params={}, json=payload)
+                    res_content = response.content.decode("utf8").replace("'", '"')
+                    json_data = json.loads(res_content)
+                    s0 = json.dumps(
+                        json_data, indent=2, sort_keys=True, default=str
+                    )  # Just for visual
+                    logger.error(f"### Response ({fp_name} book): {s0}")
+
+                    if response.status_code == 200:
+                        break
+
             if response.status_code == 200:
                 try:
                     request_payload = {
