@@ -51,10 +51,10 @@ def tracking(request, fp_name):
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
         res_content = response.content.decode("utf8").replace("'", '"')
-        json_data = json.loads(res_content)        
+        json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.error(f"### Response ({fp_name} tracking): {s0}")
-        
+
         try:
             request_id = json_data["requestId"]
             request_payload = {
@@ -77,7 +77,7 @@ def tracking(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=res_content,
-                fk_booking_id=booking.id,
+                fk_booking_id=booking.pk_booking_id,
             )
             oneLog.save()
 
@@ -90,7 +90,7 @@ def tracking(request, fp_name):
         except KeyError:
             return JsonResponse({"Error": "Too many request"}, status=400)
     except Exception as e:
-        print('ERROR', e)
+        print("ERROR", e)
         return JsonResponse({"message": "Booking not found"}, status=400)
 
 
@@ -148,6 +148,7 @@ def book(request, fp_name):
 
             if (
                 response.status_code == 500
+                and fp_name.lower() == "startrack"
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
@@ -180,8 +181,6 @@ def book(request, fp_name):
                         "accountKey"
                     ]
                     request_payload["trackingId"] = json_data["consignmentNumber"]
-                    request_type = f"{fp_name.upper()} BOOK"
-                    request_status = "SUCCESS"
 
                     if booking.vx_freight_provider.lower() == "startrack":
                         booking.v_FPBookingNumber = json_data["items"][0][
@@ -200,10 +199,10 @@ def book(request, fp_name):
 
                     log = Log(
                         request_payload=request_payload,
-                        request_status=request_status,
-                        request_type=request_type,
+                        request_status="SUCCESS",
+                        request_type=f"{fp_name.upper()} BOOK",
                         response=res_content,
-                        fk_booking_id=booking.id,
+                        fk_booking_id=booking.pk_booking_id,
                     ).save()
 
                     Api_booking_confirmation_lines.objects.filter(
@@ -243,7 +242,7 @@ def book(request, fp_name):
                         request_status="ERROR",
                         request_type=f"{fp_name.upper()} BOOK",
                         response=res_content,
-                        fk_booking_id=booking.id,
+                        fk_booking_id=booking.pk_booking_id,
                     ).save()
 
                     error_msg = s0
@@ -326,7 +325,7 @@ def edit_book(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.id,
+                    fk_booking_id=booking.pk_booking_id,
                 ).save()
 
                 Api_booking_confirmation_lines.objects.filter(
@@ -349,7 +348,7 @@ def edit_book(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.id,
+                    fk_booking_id=booking.pk_booking_id,
                 )
                 oneLog.save()
 
@@ -402,7 +401,7 @@ def cancel_book(request, fp_name):
                             request_status=request_status,
                             request_type=request_type,
                             response=res_content,
-                            fk_booking_id=booking.id,
+                            fk_booking_id=booking.pk_booking_id,
                         ).save()
 
                         return JsonResponse(
@@ -422,7 +421,7 @@ def cancel_book(request, fp_name):
                         request_status=request_status,
                         request_type=request_type,
                         response=res_content,
-                        fk_booking_id=booking.id,
+                        fk_booking_id=booking.pk_booking_id,
                     )
                     oneLog.save()
 
@@ -477,7 +476,7 @@ def get_label(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.id,
+                    fk_booking_id=booking.pk_booking_id,
                 ).save()
 
                 error_msg = s0
@@ -513,7 +512,7 @@ def get_label(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=res_content,
-                fk_booking_id=booking.id,
+                fk_booking_id=booking.pk_booking_id,
             ).save()
 
             if booking.b_client_name.lower() == "biopak":
@@ -531,7 +530,7 @@ def get_label(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=res_content,
-                fk_booking_id=booking.id,
+                fk_booking_id=booking.pk_booking_id,
             ).save()
 
             error_msg = s0
@@ -580,7 +579,7 @@ def create_order(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=res_content,
-                fk_booking_id=booking_ids[0],
+                fk_booking_id=bookings[0].pk_booking_id,
             ).save()
 
             for booking in bookings:
@@ -604,7 +603,7 @@ def create_order(request, fp_name):
                 request_status=request_status,
                 request_type=request_type,
                 response=res_content,
-                fk_booking_id=booking.id,
+                fk_booking_id=booking.pk_booking_id,
             )
             oneLog.save()
 
@@ -740,7 +739,7 @@ def pricing(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.id,
+                    fk_booking_id=booking.pk_booking_id,
                 ).save()
 
                 Api_booking_confirmation_lines.objects.filter(
@@ -761,7 +760,7 @@ def pricing(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} PRICE",
                     response=res_content,
-                    fk_booking_id=booking.id,
+                    fk_booking_id=booking.pk_booking_id,
                 ).save()
 
                 error_msg = f"KeyError: {e}"
@@ -784,7 +783,7 @@ def pod(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
-       
+
         try:
             booking = Bookings.objects.get(id=booking_id)
             payload = get_pod_payload(booking, fp_name)
@@ -799,7 +798,7 @@ def pod(request, fp_name):
             # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
             # logger.error(f"### Response ({fp_name} POD): {s0}")
 
-            if fp_name.lower() == 'hunter' and json_data["errorMessage"] is not None:
+            if fp_name.lower() == "hunter" and json_data["errorMessage"] is not None:
                 return JsonResponse({"message": json_data["errorMessage"]})
 
             podData = json_data["pod"]["podData"]
@@ -810,7 +809,7 @@ def pod(request, fp_name):
                     + booking.pu_Address_State
                     + "_"
                     + booking.b_client_sales_inv_num
-                    + "_" 
+                    + "_"
                     + str(datetime.now())
                     + ".png"
                 )
@@ -818,7 +817,9 @@ def pod(request, fp_name):
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/home/administrator/Downloads/dme_api/static/imgs/{file_name}"
+                    file_url = (
+                        f"/home/administrator/Downloads/dme_api/static/imgs/{file_name}"
+                    )
 
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
@@ -837,6 +838,7 @@ def pod(request, fp_name):
     except SyntaxError:
         return JsonResponse({"message": "Booking id is required"}, status=400)
 
+
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -844,7 +846,7 @@ def reprint(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
-       
+
         try:
             booking = Bookings.objects.get(id=booking_id)
             payload = get_reprint_payload(booking, fp_name)
@@ -867,7 +869,7 @@ def reprint(request, fp_name):
                     + booking.pu_Address_State
                     + "_"
                     + booking.b_client_sales_inv_num
-                    + "_" 
+                    + "_"
                     + str(datetime.now())
                     + ".pdf"
                 )
@@ -875,7 +877,9 @@ def reprint(request, fp_name):
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
+                    file_url = (
+                        f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
+                    )
 
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
