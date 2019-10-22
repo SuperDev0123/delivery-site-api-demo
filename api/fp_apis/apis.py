@@ -193,13 +193,7 @@ def book(request, fp_name):
                     # Save Label for Hunter
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
-                        file_name = (
-                            "hunter_"
-                            + str(booking.v_FPBookingNumber)
-                            + "_"
-                            + str(datetime.now())
-                            + ".pdf"
-                        )
+                        file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
 
                         if IS_PRODUCTION:
                             file_url = (
@@ -213,8 +207,7 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
-
-                    if booking.vx_freight_provider.lower() == "startrack":
+                    elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
                                 fk_booking_id=booking.pk_booking_id,
