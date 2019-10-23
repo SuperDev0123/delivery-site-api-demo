@@ -248,13 +248,33 @@ def book(request, fp_name):
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 400:
+                log = Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} BOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
                 error_msg = f"{json_data[0]['message']}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
-        except IndexError as e:
-            return JsonResponse({"message": f"IndexError: {e}"}, status=400)
-        except TypeError as e:
-            error_msg = f"TypeError: {e}"
+            elif response.status_code == 500:
+                log = Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} BOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                error_msg = (
+                    "DME bot: Tried booking 3-4 times seems to be an unknown issue."
+                )
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+        except Exception as e:
+            error_msg = f"Error: {e}"
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError as e:
