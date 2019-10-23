@@ -36,6 +36,7 @@ KEY_CHAINS = {
         "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
     },
     "tnt": {"live": {"accountKey": "30021385", "accountPassword": "Deliver123", "accountUsername": "CIT00000000000098839"}},
+    "capital": {"live": {"accountKey": "eYte9AeLruGYmM78", "accountUsername": "deliverme", "accountState" : "NSW" }},
 }
 
 
@@ -53,7 +54,7 @@ def _get_account_details(booking, fp_name):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt"]:
+    elif fp_name.lower() in ["hunter", "tnt", "capital"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()]["live"],
@@ -210,6 +211,8 @@ def get_book_payload(booking, fp_name):
     # Detail for each FP
     if fp_name.lower() == "hunter":
         payload["serviceType"] = "RF"
+    elif fp_name.lower() == "capital":
+        payload["serviceType"] = "EC"
 
     return payload
 
