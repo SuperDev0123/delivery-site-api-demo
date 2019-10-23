@@ -7,4 +7,8 @@ local_settings.py
 .env
 db.sqlite3
 .DS_Store
+<<<<<<< HEAD
 /dme-api/settings.py
+=======
+/static
+>>>>>>> c14fe99bf50d4247feebe8f2a2b6da372d4aa3c5

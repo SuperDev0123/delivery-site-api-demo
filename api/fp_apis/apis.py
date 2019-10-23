@@ -146,6 +146,24 @@ def book(request, fp_name):
             )  # Just for visual
             logger.error(f"### Response ({fp_name} book): {s0}")
 
+            if (
+                response.status_code == 500
+                and "An internal system error" in json_data[0]["message"]
+            ):
+                for i in range(4):
+                    logger.error(f"### Payload ({fp_name} book): {payload}")
+                    url = DME_LEVEL_API_URL + "/booking/bookconsignment"
+                    response = requests.post(url, params={}, json=payload)
+                    res_content = response.content.decode("utf8").replace("'", '"')
+                    json_data = json.loads(res_content)
+                    s0 = json.dumps(
+                        json_data, indent=2, sort_keys=True, default=str
+                    )  # Just for visual
+                    logger.error(f"### Response ({fp_name} book): {s0}")
+
+                    if response.status_code == 200:
+                        break
+
             if response.status_code == 200:
                 try:
                     request_payload = {
@@ -195,13 +213,7 @@ def book(request, fp_name):
                     # Save Label for Hunter
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
-                        file_name = (
-                            "hunter_"
-                            + str(booking.v_FPBookingNumber)
-                            + "_"
-                            + str(datetime.now())
-                            + ".pdf"
-                        )
+                        file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
 
                         if IS_PRODUCTION:
                             file_url = (
@@ -215,8 +227,7 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
-
-                    if booking.vx_freight_provider.lower() == "startrack":
+                    elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
                                 fk_booking_id=booking.pk_booking_id,
@@ -239,13 +250,31 @@ def book(request, fp_name):
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 400:
+                log = Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} BOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
                 error_msg = f"{json_data[0]['message']}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
-        except IndexError as e:
-            return JsonResponse({"message": f"IndexError: {e}"}, status=400)
-        except TypeError as e:
-            error_msg = f"TypeError: {e}"
+            elif response.status_code == 500:
+                log = Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} BOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+        except Exception as e:
+            error_msg = f"Error: {e}"
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError as e:

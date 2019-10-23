@@ -1488,6 +1488,8 @@ class BookingViewSet(viewsets.ViewSet):
             for booking_line in booking_lines:
                 booking_line.pk_lines_id = None
                 booking_line.fk_booking_id = newBooking["pk_booking_id"]
+                booking_line.e_qty_delivered = 0
+                booking_line.e_qty_adjusted_delivered = 0
                 booking_line.save()
             for booking_line_detail in booking_line_details:
                 booking_line_detail.pk_id_lines_data = None

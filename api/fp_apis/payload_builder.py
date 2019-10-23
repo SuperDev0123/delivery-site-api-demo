@@ -14,6 +14,7 @@ ACCOUTN_CODES = {
     },
     "hunter": {"live": "DMEPAL"},
     "tnt": {"live": "30021385"},
+    "capital": {"live": "DMENSW"},
 }
 
 KEY_CHAINS = {

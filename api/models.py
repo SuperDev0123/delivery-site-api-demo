@@ -1290,6 +1290,9 @@ class Bookings(models.Model):
     b_fp_qty_delivered = models.IntegerField(blank=True, default=0, null=True)
     jobNumber = models.CharField(max_length=45, blank=True, null=True, default=None)
     jobDate = models.CharField(max_length=45, blank=True, null=True, default=None)
+    b_booking_project = models.CharField(
+        max_length=250, blank=True, null=True, default=None
+    )
 
     class Meta:
         db_table = "dme_bookings"
