@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from api.models import *
 from django.conf import settings
 from .payload_builder import *
+from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 
 if settings.ENV == "local":
@@ -66,23 +67,24 @@ def tracking(request, fp_name):
             request_payload["apiUrl"] = url
             request_payload["accountCode"] = payload["spAccountDetails"]["accountCode"]
             request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-            request_payload["trackingId"] = payload["consignmentDetails"][0][
-                "consignmentNumber"
-            ]
-            request_type = f"{fp_name.upper()} TRACKING"
-            request_status = "SUCCESS"
+
+            if booking.vx_freight_provider.lower() == "startrack":
+                request_payload["trackingId"] = payload["consignmentDetails"][0][
+                    "consignmentNumber"
+                ]
 
             Log(
                 request_payload=request_payload,
-                request_status=request_status,
-                request_type=request_type,
+                request_status="SUCCESS",
+                request_type=f"{fp_name.upper()} TRACKING",
                 response=res_content,
                 fk_booking_id=booking.pk_booking_id,
             ).save()
 
-            booking.b_status_API = json_data["consignmentTrackDetails"][0][
-                "consignmentStatuses"
-            ][0]["status"]
+            if booking.vx_freight_provider.lower() == "startrack":
+                booking.b_status_API = json_data["consignmentTrackDetails"][0][
+                    "consignmentStatuses"
+                ][0]["status"]
             booking.save()
 
             return JsonResponse({"message": booking.b_status_API}, status=200)
@@ -103,28 +105,9 @@ def book(request, fp_name):
 
         try:
             booking = Bookings.objects.get(id=booking_id)
+            error_msg = pre_check_book(booking)
 
-            if booking.b_status.lower() == "booked":
-                return JsonResponse(
-                    {"message": "Booking is already booked."}, status=400
-                )
-
-            if booking.pu_Address_State is None or not booking.pu_Address_State:
-                error_msg = "State for pickup postal address is required."
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
-
-            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
-                error_msg = "Suburb name for pickup postal address is required."
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
-
-            if (
-                booking.vx_freight_provider.lower() == "hunter"
-                and not booking.puPickUpAvailFrom_Date
-            ):
-                error_msg = "PU Available From Date is required."
-                _set_error(booking, error_msg)
+            if error_msg:
                 return JsonResponse({"message": error_msg}, status=400)
 
             try:
@@ -189,6 +172,8 @@ def book(request, fp_name):
                         booking.v_FPBookingNumber = json_data["consignmentNumber"]
                         booking.jobNumber = json_data["jobNumber"]
                         booking.jobDate = json_data["jobDate"]
+                    elif booking.vx_freight_provider.lower() == "tnt":
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
@@ -218,7 +203,7 @@ def book(request, fp_name):
                                 f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                             )
                         else:
-                            file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
+                            file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
@@ -274,15 +259,7 @@ def book(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except Exception as e:
-            Log(
-                request_payload=payload,
-                request_status="ERROR",
-                request_type=f"{fp_name.upper()} BOOK",
-                response=res_content,
-                fk_booking_id=booking.pk_booking_id,
-            ).save()
-
-            error_msg = s0
+            error_msg = str(e)
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError as e:
@@ -487,6 +464,9 @@ def get_label(request, fp_name):
                     json_data, indent=2, sort_keys=True, default=str
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} create_label): {s0}")
+
+                payload["consignmentNumber"] = json_data[0]["request_id"]
+                payload["labelType"] = "PRINT"
             except Exception as e:
                 request_type = f"{fp_name.upper()} CREATE LABEL"
                 request_status = "ERROR"
@@ -502,9 +482,6 @@ def get_label(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         try:
-            payload["consignmentNumber"] = json_data[0]["request_id"]
-            payload["labelType"] = "PRINT"
-
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
