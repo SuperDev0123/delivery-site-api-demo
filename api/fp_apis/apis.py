@@ -57,34 +57,17 @@ def tracking(request, fp_name):
         logger.error(f"### Response ({fp_name} tracking): {s0}")
 
         try:
-            request_id = json_data["requestId"]
-            request_payload = {
-                "apiUrl": "",
-                "accountCode": "",
-                "authKey": "",
-                "trackingId": "",
-            }
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = payload["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-
-            if booking.vx_freight_provider.lower() == "startrack":
-                request_payload["trackingId"] = payload["consignmentDetails"][0][
-                    "consignmentNumber"
-                ]
-
             Log(
-                request_payload=request_payload,
+                request_payload=payload,
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} TRACKING",
                 response=res_content,
                 fk_booking_id=booking.pk_booking_id,
             ).save()
 
-            if booking.vx_freight_provider.lower() == "startrack":
-                booking.b_status_API = json_data["consignmentTrackDetails"][0][
-                    "consignmentStatuses"
-                ][0]["status"]
+            booking.b_status_API = json_data["consignmentTrackDetails"][0][
+                "consignmentStatuses"
+            ][0]["status"]
             booking.save()
 
             return JsonResponse({"message": booking.b_status_API}, status=200)
