@@ -253,9 +253,7 @@ def book(request, fp_name):
                     fk_booking_id=booking.pk_booking_id,
                 ).save()
 
-                error_msg = (
-                    f"DME bot: Tried booking 3-4 times seems to be an unknown issue."
-                )
+                error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except Exception as e:
