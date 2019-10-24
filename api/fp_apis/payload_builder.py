@@ -40,6 +40,7 @@ KEY_CHAINS = {
     "tnt": {
         "live": {
             "accountKey": "30021385",
+            "accountState": "DELME",
             "accountPassword": "Deliver123",
             "accountUsername": "CIT00000000000098839",
         }
@@ -368,11 +369,10 @@ def get_getlabel_payload(booking, fp_name):
 
     # Detail for each FP
     if fp_name.lower() == "tnt":
-        payload["consignmentNumber"] = booking.v_FPBookingNumber
+        payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
-        payload["consignmentNoteNumber"] = "DME000100372"
     return payload
 
 
@@ -475,7 +475,7 @@ def get_reprint_payload(booking, fp_name):
 
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = _get_service_provider(fp_name)
-        payload["consignmentNumber"] = booking.v_FPBookingNumber
+        payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
         payload["labelType"] = "A"
         # payload["consignmentNumber"] = 'DME000106541'
         return payload
