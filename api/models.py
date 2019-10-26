@@ -2961,6 +2961,9 @@ class Dme_utl_fp_statuses(models.Model):
     fp_name = models.CharField(max_length=50, blank=True, null=True)
     fp_original_status = models.TextField(max_length=400, blank=True, null=True)
     fp_lookup_status = models.TextField(max_length=400, blank=True, null=True)
+    fp_status_description = models.TextField(
+        max_length=1024, blank=True, null=True, default=""
+    )
     dme_status = models.CharField(max_length=150, blank=True, null=True)
     if_scan_total_in_booking_greaterthanzero = models.CharField(
         max_length=32, blank=True, null=True

@@ -16,6 +16,7 @@ from django.conf import settings
 from .payload_builder import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
+from api.common import status_history
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -117,6 +118,7 @@ def book(request, fp_name):
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
+                    time.sleep(180)
                     logger.error(f"### Payload ({fp_name} book): {payload}")
                     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
                     response = requests.post(url, params={}, json=payload)
@@ -163,8 +165,9 @@ def book(request, fp_name):
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
+                    status_history.create(booking, request.user.username)
 
-                    log = Log(
+                    Log(
                         request_payload=request_payload,
                         request_status="SUCCESS",
                         request_type=f"{fp_name.upper()} BOOK",
@@ -373,8 +376,8 @@ def cancel_book(request, fp_name):
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
-                        # booking.v_FPBookingNumber = None
                         booking.save()
+                        status_history.create(booking, request.user.username)
 
                         Log(
                             request_payload=payload,
