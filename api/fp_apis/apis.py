@@ -71,9 +71,26 @@ def tracking(request, fp_name):
             ][0]["status"]
             booking.save()
 
-            return JsonResponse({"message": booking.b_status_API}, status=200)
+            if fp_name.lower == "startrack":
+                event_time = None
+            elif fp_name.lower == "tnt":
+                event_time = json_data["consignmentTrackDetails"][0][
+                    "consignmentStatuses"
+                ][0]["statusDate"]
+                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
+            else:
+                event_time = None
+
+            return JsonResponse(
+                {
+                    "message": booking.b_status_API,
+                    "b_status_API": booking.b_status_API,
+                    "event_time": event_time,
+                },
+                status=200,
+            )
         except KeyError:
-            return JsonResponse({"Error": "Too many request"}, status=400)
+            return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Exception as e:
         print("ERROR", e)
         return JsonResponse({"message": "Booking not found"}, status=400)
@@ -165,7 +182,9 @@ def book(request, fp_name):
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
-                    status_history.create(booking, request.user.username)
+                    status_history.create(
+                        booking, booking.b_status, request.user.username
+                    )
 
                     Log(
                         request_payload=request_payload,
@@ -377,7 +396,9 @@ def cancel_book(request, fp_name):
                             "This booking has been closed vis Startrack API"
                         )
                         booking.save()
-                        status_history.create(booking, request.user.username)
+                        status_history.create(
+                            booking, booking.b_status, request.user.username
+                        )
 
                         Log(
                             request_payload=payload,

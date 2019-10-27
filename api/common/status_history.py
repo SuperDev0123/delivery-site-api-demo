@@ -4,7 +4,7 @@ from api.models import Dme_status_history
 
 
 # Create new status_history
-def create(booking, username):
+def create(booking, status, username):
     last_status_history = None
     try:
         last_status_history = (
