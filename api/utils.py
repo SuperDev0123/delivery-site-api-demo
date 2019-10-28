@@ -2432,6 +2432,11 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 tree = xml.ElementTree(root)
                 with open(local_filepath + filename, "wb") as fh:
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
+
+        
+        except Exception as e:
+            logger.error(f"@302 ST ACT XML - {e}")
+            return e
     elif vx_freight_provider.lower() == "jet":
         # start check if xmls folder exists
         if production:
@@ -2672,11 +2677,10 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 tree = xml.ElementTree(root)
                 with open(local_filepath + filename, "wb") as fh:
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
-        
-        except Exception as e:
-            logger.error(f"@302 ST JET XML - {e}")
-            return e
 
+        except Exception as e:
+            logger.error(f"@301 JET XML - {e}")
+            return e
     mysqlcon.close()
 
 
