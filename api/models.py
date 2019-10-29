@@ -1293,6 +1293,10 @@ class Bookings(models.Model):
     b_booking_project = models.CharField(
         max_length=250, blank=True, null=True, default=None
     )
+    b_project_opened = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_inventory_due = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_wh_unpack = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_dd_receive_date = models.DateTimeField(blank=True, null=True, default=None)
 
     class Meta:
         db_table = "dme_bookings"

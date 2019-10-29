@@ -667,6 +667,11 @@ class BookingsViewSet(viewsets.ViewSet):
                     "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
                     "b_fp_qty_delivered": booking.b_fp_qty_delivered,
                     "manifest_timestamp": booking.manifest_timestamp,
+                    "b_booking_project": booking.b_booking_project,
+                    "b_project_opened": booking.b_project_opened,
+                    "b_project_inventory_due": booking.b_project_inventory_due,
+                    "b_project_wh_unpack": booking.b_project_wh_unpack,
+                    "b_project_dd_receive_date": booking.b_project_dd_receive_date
                 }
             )
 
@@ -1355,6 +1360,11 @@ class BookingViewSet(viewsets.ViewSet):
                         "x_manual_booked_flag": booking.x_manual_booked_flag,
                         "b_fp_qty_delivered": booking.b_fp_qty_delivered,
                         "manifest_timestamp": booking.manifest_timestamp,
+                        "b_booking_project": booking.b_booking_project,
+                        "b_project_opened": booking.b_project_opened,
+                        "b_project_inventory_due": booking.b_project_inventory_due,
+                        "b_project_wh_unpack": booking.b_project_wh_unpack,
+                        "b_project_dd_receive_date": booking.b_project_dd_receive_date
                     }
                     return JsonResponse(
                         {
