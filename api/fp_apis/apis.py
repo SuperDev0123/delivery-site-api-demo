@@ -63,7 +63,7 @@ def tracking(request, fp_name):
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} TRACKING",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.i,
             ).save()
 
             booking.b_status_API = json_data["consignmentTrackDetails"][0][
@@ -191,7 +191,7 @@ def book(request, fp_name):
                         request_status="SUCCESS",
                         request_type=f"{fp_name.upper()} BOOK",
                         response=res_content,
-                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_id=booking.id,
                     ).save()
 
                     Api_booking_confirmation_lines.objects.filter(
@@ -231,7 +231,7 @@ def book(request, fp_name):
                         request_status="ERROR",
                         request_type=f"{fp_name.upper()} BOOK",
                         response=res_content,
-                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_id=booking.id,
                     ).save()
 
                     error_msg = s0
@@ -243,7 +243,7 @@ def book(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} BOOK",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = f"{json_data[0]['message']}"
@@ -255,7 +255,7 @@ def book(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} BOOK",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
@@ -332,7 +332,7 @@ def edit_book(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 Api_booking_confirmation_lines.objects.filter(
@@ -353,7 +353,7 @@ def edit_book(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} EDIT BOOK",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = s0
@@ -405,7 +405,7 @@ def cancel_book(request, fp_name):
                             request_status="SUCCESS",
                             request_type=f"{fp_name.upper()} CANCEL BOOK",
                             response=res_content,
-                            fk_booking_id=booking.pk_booking_id,
+                            fk_booking_id=booking.id,
                         ).save()
 
                         return JsonResponse(
@@ -423,7 +423,7 @@ def cancel_book(request, fp_name):
                         request_status="ERROR",
                         request_type=f"{fp_name.upper()} CANCEL BOOK",
                         response=res_content,
-                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_id=booking.id,
                     ).save()
 
                     error_msg = s0
@@ -480,7 +480,7 @@ def get_label(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = s0
@@ -511,7 +511,7 @@ def get_label(request, fp_name):
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} GET LABEL",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.id,
             ).save()
 
             if booking.b_client_name.lower() == "biopak":
@@ -527,7 +527,7 @@ def get_label(request, fp_name):
                 request_status="ERROR",
                 request_type=f"{fp_name.upper()} GET LABEL",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.id,
             ).save()
 
             error_msg = s0
@@ -596,7 +596,7 @@ def create_order(request, fp_name):
                 request_status="ERROR",
                 request_type=f"{fp_name.upper()} CREATE ORDER",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.id,
             ).save()
 
             error_msg = s0
@@ -739,7 +739,7 @@ def pricing(request, fp_name):
                     request_status="SUCCESS",
                     request_type=f"{fp_name.upper()} PRICING",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 Api_booking_confirmation_lines.objects.filter(
@@ -760,7 +760,7 @@ def pricing(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} PRICING",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = f"KeyError: {e}"
