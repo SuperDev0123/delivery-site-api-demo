@@ -458,8 +458,7 @@ def get_label(request, fp_name):
                 payload = get_create_label_payload(booking, fp_name)
 
                 logger.error(
-                    f"### Payload ({fp_name} create_label): ",
-                    json.dumps(payload, indent=2, sort_keys=True, default=str),
+                    f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
                 response = requests.post(url, params={}, json=payload)
