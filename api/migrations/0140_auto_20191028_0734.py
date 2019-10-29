@@ -5,49 +5,27 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('api', '0139_auto_20191021_0056'),
-    ]
+    dependencies = [("api", "0139_auto_20191021_0056")]
 
     operations = [
         migrations.AddField(
-            model_name='bookings',
-            name='b_project_dd_receive_date',
-            field=models.DateField(blank=True, default=None, null=True),
+            model_name="bookings",
+            name="b_project_dd_receive_date",
+            field=models.DateTimeField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='bookings',
-            name='b_project_inventory_due',
-            field=models.DateField(blank=True, default=None, null=True),
+            model_name="bookings",
+            name="b_project_inventory_due",
+            field=models.DateTimeField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='bookings',
-            name='b_project_opened',
-            field=models.DateField(blank=True, default=None, null=True),
+            model_name="bookings",
+            name="b_project_opened",
+            field=models.DateTimeField(blank=True, default=None, null=True),
         ),
         migrations.AddField(
-            model_name='bookings',
-            name='b_project_wh_unpack',
-            field=models.DateField(blank=True, default=None, null=True),
-        ),
-        migrations.AddField(
-            model_name='bookings',
-            name='z_connote_url',
-            field=models.CharField(blank=True, default='', max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='bookings',
-            name='z_downloaded_connote_timestamp',
-            field=models.DateTimeField(blank=True, null=True),
-        ),
-        migrations.AlterField(
-            model_name='dme_reports',
-            name='z_downloadedTimeStamp',
-            field=models.DateTimeField(blank=True, default=None, null=True, verbose_name='Downloaded Timestamp'),
-        ),
-        migrations.AlterField(
-            model_name='utl_states',
-            name='fk_country_id',
-            field=models.CharField(blank=True, default='', max_length=32, null=True),
+            model_name="bookings",
+            name="b_project_wh_unpack",
+            field=models.DateTimeField(blank=True, default=None, null=True),
         ),
     ]
