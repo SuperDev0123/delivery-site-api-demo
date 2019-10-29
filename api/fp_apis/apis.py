@@ -222,6 +222,9 @@ def book(request, fp_name):
                                 api_item_id=item["item_id"],
                             ).save()
 
+                    if booking.b_client_name.lower() == "biopak":
+                        update_biopak_with_booked_booking(booking_id)
+
                     return JsonResponse(
                         {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                     )
@@ -511,9 +514,6 @@ def get_label(request, fp_name):
                 response=res_content,
                 fk_booking_id=booking.id,
             ).save()
-
-            if booking.b_client_name.lower() == "biopak":
-                update_biopak_with_booked_booking(booking_id)
 
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
