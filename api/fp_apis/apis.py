@@ -472,6 +472,7 @@ def get_label(request, fp_name):
 
                 booking.fk_fp_pickup_id = json_data[0]["request_id"]
                 booking.save()
+                time.sleep(60)  # Delay to wait label is created
             except Exception as e:
                 request_type = f"{fp_name.upper()} CREATE LABEL"
                 request_status = "ERROR"
@@ -495,9 +496,12 @@ def get_label(request, fp_name):
             json_data = None
 
             while json_data is None or (
-                json_data is not None and json_data["labels"][0]["status"] == "PENDING"
+                json_data is not None
+                and json_data["labels"]
+                and json_data["labels"][0]
+                and json_data["labels"][0]["stats"]
+                and json_data["labels"][0]["status"] == "PENDING"
             ):
-                time.sleep(60)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
