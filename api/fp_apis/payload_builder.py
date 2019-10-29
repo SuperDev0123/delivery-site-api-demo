@@ -12,8 +12,16 @@ ACCOUTN_CODES = {
         "BIO - HAZ": "10145597",
         "BIO - EAS": "10149943",
     },
-    "hunter": {"live": "DMEPAL"},
-    "tnt": {"live": "30021385"},
+    "hunter": {
+        "live_0": "DELIME",
+        "live_1": "DEMELP",
+        "live_2": "DMEMEL",
+        "live_3": "DMEBNE",
+        "live_4": "DMEPAL",
+        # "live_5": "DEMELK",
+        # "live_6": "DMEADL",
+    },
+    "tnt": {"live_0": "30021385"},
 }
 
 KEY_CHAINS = {
@@ -32,10 +40,16 @@ KEY_CHAINS = {
         },
     },
     "hunter": {
-        "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
+        "live_0": {"accountKey": "REVMSU1FOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        "live_1": {"accountKey": "REVNRUxQOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        "live_2": {"accountKey": "RE1FTUVMOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        "live_3": {"accountKey": "RE1FQk5FOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        "live_4": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        # "live_5": {"accountKey": "REVNRUxLOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        # "live_6": {"accountKey": "RE1FQURMOmRlbGl2ZXI=", "accountPassword": "deliver"},
     },
     "tnt": {
-        "live": {
+        "live_0": {
             "accountKey": "30021385",
             "accountPassword": "Deliver123",
             "accountUsername": "CIT00000000000098839",
@@ -44,7 +58,17 @@ KEY_CHAINS = {
 }
 
 
-def _get_account_details(booking, fp_name):
+def _get_live_account_count(fp_name):
+    count = 0
+
+    for account_code in ACCOUTN_CODES[fp_name.lower()]:
+        if "live_" in account_code:
+            count += 1
+
+    return count
+
+
+def _get_account_details(booking, fp_name, acc_ind=0):
     if fp_name.lower() == "startrack":
         if settings.ENV in ["local", "dev"]:
             account_detail = {
@@ -61,13 +85,13 @@ def _get_account_details(booking, fp_name):
     elif fp_name.lower() in ["hunter", "tnt"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()]["live"],
-                **KEY_CHAINS[fp_name.lower()]["live"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()][f"live_{acc_ind}"],
+                **KEY_CHAINS[fp_name.lower()][f"live_{acc_ind}"],
             }
         else:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()]["live"],
-                **KEY_CHAINS[fp_name.lower()]["live"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()][f"live_{acc_ind}"],
+                **KEY_CHAINS[fp_name.lower()][f"live_{acc_ind}"],
             }
 
     return account_detail
@@ -316,9 +340,9 @@ def get_pod_payload(booking, fp_name):
         return None
 
 
-def get_pricing_payload(booking, fp_name):
+def get_pricing_payload(booking, fp_name, acc_ind):
     payload = {}
-    payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+    payload["spAccountDetails"] = _get_account_details(booking, fp_name, acc_ind)
     payload["serviceProvider"] = _get_service_provider(fp_name)
 
     payload["readyDate"] = (

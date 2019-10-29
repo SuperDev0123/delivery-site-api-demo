@@ -1290,6 +1290,7 @@ class Bookings(models.Model):
     b_fp_qty_delivered = models.IntegerField(blank=True, default=0, null=True)
     jobNumber = models.CharField(max_length=45, blank=True, null=True, default=None)
     jobDate = models.CharField(max_length=45, blank=True, null=True, default=None)
+    vx_account_code = models.CharField(max_length=32, blank=True, null=True, default="")
 
     class Meta:
         db_table = "dme_bookings"
@@ -2289,6 +2290,9 @@ class API_booking_quotes(models.Model):
     )
     fk_freight_provider_id = models.CharField(
         verbose_name=_("Freight Provider ID"), max_length=64, blank=True, null=True
+    )
+    account_code = models.CharField(
+        verbose_name=_("Account Code"), max_length=32, blank=True, null=True
     )
     provider = models.CharField(
         verbose_name=_("Provider"), max_length=64, blank=True, null=True

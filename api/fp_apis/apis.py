@@ -15,6 +15,7 @@ from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
 from django.conf import settings
 from .payload_builder import *
+from .payload_builder import _get_live_account_count
 from .response_parser import *
 from .update_by_json import update_biopak_with_booked_booking
 
@@ -841,64 +842,80 @@ def pricing(request):
 
             try:
                 for fp_name in fp_names:
-                    payload = get_pricing_payload(booking, fp_name.lower())
+                    account_count = _get_live_account_count(fp_name.lower())
 
-                    print(f"### Payload ({fp_name.upper()} PRICING): {payload}")
-                    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
-                    response = requests.post(url, params={}, json=payload)
-                    res_content = response.content.decode("utf8").replace("'", '"')
-                    json_data = json.loads(res_content)
-                    s0 = json.dumps(
-                        json_data, indent=2, sort_keys=True
-                    )  # Just for visual
-                    print(f"### Response ({fp_name.upper()} PRICING): {s0}")
+                    for acc_ind in range(account_count):
+                        payload = get_pricing_payload(booking, fp_name.lower(), acc_ind)
 
-                    Log.objects.create(
-                        request_payload=payload,
-                        request_status="SUCCESS",
-                        request_type=f"{fp_name.upper()} PRICING",
-                        response=res_content,
-                        fk_booking_id=booking.id,
-                    )
+                        print(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                        url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+                        response = requests.post(url, params={}, json=payload)
+                        res_content = response.content.decode("utf8").replace("'", '"')
+                        json_data = json.loads(res_content)
+                        s0 = json.dumps(
+                            json_data, indent=2, sort_keys=True
+                        )  # Just for visual
+                        print(f"### Response ({fp_name.upper()} PRICING): {s0}")
 
-                    parse_results = parse_pricing_response(
-                        response, fp_name.lower(), booking
-                    )
-                    if not "error" in parse_results:
-                        for parse_result in parse_results:
-                            try:
-                                api_booking_quote = API_booking_quotes.objects.get(
-                                    fk_booking_id=booking.pk_booking_id,
-                                    fk_freight_provider_id=parse_result[
-                                        "fk_freight_provider_id"
-                                    ].upper(),
-                                    service_name=parse_result["service_name"],
-                                )
-                                serializer = ApiBookingQuotesSerializer(
-                                    api_booking_quote, data=parse_result
-                                )
+                        Log.objects.create(
+                            request_payload=payload,
+                            request_status="SUCCESS",
+                            request_type=f"{fp_name.upper()} PRICING",
+                            response=res_content,
+                            fk_booking_id=booking.id,
+                        )
+
+                        parse_results = parse_pricing_response(
+                            response, fp_name.lower(), booking
+                        )
+
+                        if not "error" in parse_results:
+                            for parse_result in parse_results:
                                 try:
-                                    if serializer.is_valid():
-                                        serializer.save()
-                                except Exception as e:
-                                    print("Exception: ", e)
-                                api_booking_quote.save()
-                            except API_booking_quotes.DoesNotExist:
-                                serializer = ApiBookingQuotesSerializer(
-                                    data=parse_result
-                                )
-                                try:
-                                    if serializer.is_valid():
-                                        serializer.save()
-                                    else:
-                                        print(
-                                            "@401 Serializer error: ", serializer.errors
-                                        )
-                                except Exception as e:
-                                    print("@402 Exception: ", e)
+                                    parse_result["account_code"] = payload[
+                                        "spAccountDetails"
+                                    ]["accountCode"]
+                                    api_booking_quote = API_booking_quotes.objects.get(
+                                        fk_booking_id=booking.pk_booking_id,
+                                        fk_freight_provider_id=parse_result[
+                                            "fk_freight_provider_id"
+                                        ].upper(),
+                                        service_name=parse_result["service_name"],
+                                        account_code=payload["spAccountDetails"][
+                                            "accountCode"
+                                        ],
+                                    )
+                                    serializer = ApiBookingQuotesSerializer(
+                                        api_booking_quote, data=parse_result
+                                    )
+
+                                    try:
+                                        if serializer.is_valid():
+                                            serializer.save()
+                                    except Exception as e:
+                                        print("Exception: ", e)
+
+                                    api_booking_quote.save()
+                                except API_booking_quotes.DoesNotExist:
+                                    serializer = ApiBookingQuotesSerializer(
+                                        data=parse_result
+                                    )
+
+                                    try:
+                                        if serializer.is_valid():
+                                            serializer.save()
+                                        else:
+                                            print(
+                                                "@401 Serializer error: ",
+                                                serializer.errors,
+                                            )
+                                    except Exception as e:
+                                        print("@402 Exception: ", e)
+
                 results = API_booking_quotes.objects.filter(
                     fk_booking_id=booking.pk_booking_id
                 )
+
                 return JsonResponse(
                     {
                         "message": f"Retrieved all Pricing info",
