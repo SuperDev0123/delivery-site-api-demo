@@ -15,7 +15,7 @@ ACCOUTN_CODES = {
         "BIO - HAZ": "10145597",
         "BIO - EAS": "10149943",
     },
-    "hunter": {"live": "DMEPAL"},
+    "hunter": {"live": "DELIME"},
     "tnt": {"live": "30021385"},
 }
 
@@ -35,7 +35,7 @@ KEY_CHAINS = {
         },
     },
     "hunter": {
-        "live": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"}
+        "live": {"accountKey": "REVMSU1FOmRlbGl2ZXI=", "accountPassword": "deliver"}
     },
     "tnt": {
         "live": {
@@ -199,7 +199,6 @@ def get_book_payload(booking, fp_name):
     }
 
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
     items = []
     totalWeight = 0
     maxHeight = 0
@@ -210,7 +209,7 @@ def get_book_payload(booking, fp_name):
             temp_item = {
                 "dangerous": 0,
                 "itemId": "EXP",
-                "packagingType": "CTN" if fp_name.lower() == "startrack" else "PAL",
+                "typeCode": line.e_type_of_packaging,
                 "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
                 "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
                 "length": 0 if line.e_dimLength is None else line.e_dimLength,
@@ -218,6 +217,12 @@ def get_book_payload(booking, fp_name):
                 "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
                 "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
             }
+
+            if fp_name.lower() == "startrack":
+                temp_item["packagingType"] = "CTN"
+            elif fp_name.lower() == "hunter":
+                temp_item["packagingType"] = line.e_type_of_packaging
+
             items.append(temp_item)
 
             if line.e_weightPerEach:
@@ -228,12 +233,23 @@ def get_book_payload(booking, fp_name):
                 maxWidth = float(line.e_dimWidth)
             if maxLength < float(line.e_dimLength):
                 maxLength = float(line.e_dimLength)
-
     payload["items"] = items
+
+    booking_lines_data = Booking_lines_data.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    )
+    clientRefNumbers = []
+    for lines_data in booking_lines_data:
+        if lines_data.clientRefNumber:
+            clientRefNumbers.append(lines_data.clientRefNumber)
 
     # Detail for each FP
     if fp_name.lower() == "hunter":
-        payload["serviceType"] = "RF"
+        payload["serviceType"] = booking.v_service_Type
+        payload["reference1"] = ",".join(clientRefNumbers)
+        payload["reference2"] = f"DM{Bookings.get_max_b_bookingID_Visual() + 1}"
+        payload["earliest"] = str(booking.puPickUpAvailFrom_Date)
+        payload["latest"] = str(booking.pu_PickUp_By_Date_DME)
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)

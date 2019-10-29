@@ -26,4 +26,12 @@ def pre_check_book(booking):
         _set_error(booking, error_msg)
         return error_msg
 
+    if (
+        booking.vx_freight_provider.lower() == "hunter"
+        and not booking.pu_PickUp_By_Date_DME
+    ):
+        error_msg = "PU By Date is required."
+        _set_error(booking, error_msg)
+        return error_msg
+
     return None
