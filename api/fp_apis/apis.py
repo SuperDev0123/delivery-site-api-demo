@@ -453,7 +453,7 @@ def get_label(request, fp_name):
         payload = {}
         payload = get_getlabel_payload(booking, fp_name)
 
-        if fp_name.lower() in ["startrack"] and not booking.fk_fp_pickup_id:
+        if fp_name.lower() in ["startrack"]:
             try:
                 payload = get_create_label_payload(booking, fp_name)
 
@@ -470,9 +470,7 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} create_label): {s0}")
 
-                booking.fk_fp_pickup_id = json_data[0]["request_id"]
-                booking.save()
-                time.sleep(60)  # Delay to wait label is created
+                payload["consignmentNumber"] = json_data[0]["request_id"]
             except Exception as e:
                 request_type = f"{fp_name.upper()} CREATE LABEL"
                 request_status = "ERROR"
@@ -488,19 +486,12 @@ def get_label(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         try:
-            if fp_name.lower() == "startrack":
-                payload["consignmentNumber"] = booking.fk_fp_pickup_id
-
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
 
             while json_data is None or (
-                json_data is not None
-                and json_data["labels"]
-                and json_data["labels"][0]
-                and json_data["labels"][0]["stats"]
-                and json_data["labels"][0]["status"] == "PENDING"
+                json_data is not None and json_data["labels"][0]["status"] == "PENDING"
             ):
                 time.sleep(10)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
