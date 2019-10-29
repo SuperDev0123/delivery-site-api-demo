@@ -395,6 +395,7 @@ def get_create_label_payload(booking, fp_name):
 
         if fp_name.lower() == "startrack":
             payload["type"] = "PRINT"
+            payload["labelType"] = "PRINT"
             payload["pageFormat"] = [
                 {
                     "branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",

@@ -494,7 +494,7 @@ def get_label(request, fp_name):
             while json_data is None or (
                 json_data is not None and json_data["labels"][0]["status"] == "PENDING"
             ):
-                time.sleep(60)  # Delay to wait label is created
+                time.sleep(10)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
