@@ -52,6 +52,11 @@ class DME_clients(models.Model):
     current_freight_provider = models.CharField(
         verbose_name=_("Related FP"), max_length=30, blank=False, null=True, default="*"
     )
+    client_mark_up_percent = models.FloatField(default=0, null=True, blank=True)
+    client_min_markup_startingcostvalue = models.FloatField(
+        default=0, null=True, blank=True
+    )
+    client_min_markup_value = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "dme_clients"
@@ -3037,6 +3042,7 @@ class Fp_freight_providers(models.Model):
     fp_inactive_date = models.DateField(blank=True, null=True)
     fp_manifest_cnt = models.IntegerField(default=1, blank=True, null=True)
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
+    fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

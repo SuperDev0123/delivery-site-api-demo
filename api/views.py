@@ -34,6 +34,7 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
+from api.common import convert_price
 
 from .serializers import *
 from .models import *
@@ -2848,7 +2849,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         fk_booking_id = request.GET["fk_booking_id"]
         queryset = API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
         serializer = ApiBookingQuotesSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(convert_price.fp_price_2_dme_price(serializer.data))
 
 
 class FileUploadView(views.APIView):
