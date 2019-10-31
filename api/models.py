@@ -3194,3 +3194,29 @@ class DME_Label_Settings(models.Model):
 
     class Meta:
         db_table = "label_settings"
+
+
+class DME_Email_Templates(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_idEmailParent = models.IntegerField(blank=True, null=True, default=0)
+    emailName = models.CharField(max_length=255, blank=True, null=True)
+    emailBody = models.TextField(blank=True, null=True)
+    sectionName = models.TextField(max_length=255, blank=True, null=True)
+    emailBodyRepeatEven = models.TextField(max_length=2048, blank=True, null=True)
+    emailBodyRepeatOdd = models.TextField(max_length=2048, blank=True, null=True)
+    whenAttachmentUnavailable = models.TextField(blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "dme_email_templates"
