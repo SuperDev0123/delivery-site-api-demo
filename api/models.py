@@ -1296,7 +1296,9 @@ class Bookings(models.Model):
     b_project_opened = models.DateTimeField(blank=True, null=True, default=None)
     b_project_inventory_due = models.DateTimeField(blank=True, null=True, default=None)
     b_project_wh_unpack = models.DateTimeField(blank=True, null=True, default=None)
-    b_project_dd_receive_date = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_dd_receive_date = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
 
     class Meta:
         db_table = "dme_bookings"
@@ -2965,6 +2967,9 @@ class Dme_utl_fp_statuses(models.Model):
     fp_name = models.CharField(max_length=50, blank=True, null=True)
     fp_original_status = models.TextField(max_length=400, blank=True, null=True)
     fp_lookup_status = models.TextField(max_length=400, blank=True, null=True)
+    fp_status_description = models.TextField(
+        max_length=1024, blank=True, null=True, default=""
+    )
     dme_status = models.CharField(max_length=150, blank=True, null=True)
     if_scan_total_in_booking_greaterthanzero = models.CharField(
         max_length=32, blank=True, null=True
@@ -3195,3 +3200,29 @@ class DME_Label_Settings(models.Model):
 
     class Meta:
         db_table = "label_settings"
+
+
+class DME_Email_Templates(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_idEmailParent = models.IntegerField(blank=True, null=True, default=0)
+    emailName = models.CharField(max_length=255, blank=True, null=True)
+    emailBody = models.TextField(blank=True, null=True)
+    sectionName = models.TextField(max_length=255, blank=True, null=True)
+    emailBodyRepeatEven = models.TextField(max_length=2048, blank=True, null=True)
+    emailBodyRepeatOdd = models.TextField(max_length=2048, blank=True, null=True)
+    whenAttachmentUnavailable = models.TextField(blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "dme_email_templates"

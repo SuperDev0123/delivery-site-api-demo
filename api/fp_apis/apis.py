@@ -16,6 +16,7 @@ from django.conf import settings
 from .payload_builder import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
+from api.common import status_history
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -57,39 +58,39 @@ def tracking(request, fp_name):
         logger.error(f"### Response ({fp_name} tracking): {s0}")
 
         try:
-            request_id = json_data["requestId"]
-            request_payload = {
-                "apiUrl": "",
-                "accountCode": "",
-                "authKey": "",
-                "trackingId": "",
-            }
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = payload["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-
-            if booking.vx_freight_provider.lower() == "startrack":
-                request_payload["trackingId"] = payload["consignmentDetails"][0][
-                    "consignmentNumber"
-                ]
-
             Log(
-                request_payload=request_payload,
+                request_payload=payload,
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} TRACKING",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.i,
             ).save()
 
-            if booking.vx_freight_provider.lower() == "startrack":
-                booking.b_status_API = json_data["consignmentTrackDetails"][0][
-                    "consignmentStatuses"
-                ][0]["status"]
+            booking.b_status_API = json_data["consignmentTrackDetails"][0][
+                "consignmentStatuses"
+            ][0]["status"]
             booking.save()
 
-            return JsonResponse({"message": booking.b_status_API}, status=200)
+            if fp_name.lower == "startrack":
+                event_time = None
+            elif fp_name.lower == "tnt":
+                event_time = json_data["consignmentTrackDetails"][0][
+                    "consignmentStatuses"
+                ][0]["statusDate"]
+                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
+            else:
+                event_time = None
+
+            return JsonResponse(
+                {
+                    "message": booking.b_status_API,
+                    "b_status_API": booking.b_status_API,
+                    "event_time": event_time,
+                },
+                status=200,
+            )
         except KeyError:
-            return JsonResponse({"Error": "Too many request"}, status=400)
+            return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Exception as e:
         print("ERROR", e)
         return JsonResponse({"message": "Booking not found"}, status=400)
@@ -134,6 +135,7 @@ def book(request, fp_name):
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
+                    time.sleep(180)
                     logger.error(f"### Payload ({fp_name} book): {payload}")
                     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
                     response = requests.post(url, params={}, json=payload)
@@ -180,13 +182,16 @@ def book(request, fp_name):
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
+                    status_history.create(
+                        booking, booking.b_status, request.user.username
+                    )
 
-                    log = Log(
+                    Log(
                         request_payload=request_payload,
                         request_status="SUCCESS",
                         request_type=f"{fp_name.upper()} BOOK",
                         response=res_content,
-                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_id=booking.id,
                     ).save()
 
                     Api_booking_confirmation_lines.objects.filter(
@@ -217,6 +222,9 @@ def book(request, fp_name):
                                 api_item_id=item["item_id"],
                             ).save()
 
+                    if booking.b_client_name.lower() == "biopak":
+                        update_biopak_with_booked_booking(booking_id)
+
                     return JsonResponse(
                         {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                     )
@@ -226,7 +234,7 @@ def book(request, fp_name):
                         request_status="ERROR",
                         request_type=f"{fp_name.upper()} BOOK",
                         response=res_content,
-                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_id=booking.id,
                     ).save()
 
                     error_msg = s0
@@ -238,7 +246,7 @@ def book(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} BOOK",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = f"{json_data[0]['message']}"
@@ -250,12 +258,10 @@ def book(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} BOOK",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = (
-                    f"DME bot: Tried booking 3-4 times seems to be an unknown issue."
-                )
+                error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except Exception as e:
@@ -329,7 +335,7 @@ def edit_book(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 Api_booking_confirmation_lines.objects.filter(
@@ -350,7 +356,7 @@ def edit_book(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} EDIT BOOK",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = s0
@@ -392,15 +398,17 @@ def cancel_book(request, fp_name):
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
-                        # booking.v_FPBookingNumber = None
                         booking.save()
+                        status_history.create(
+                            booking, booking.b_status, request.user.username
+                        )
 
                         Log(
                             request_payload=payload,
                             request_status="SUCCESS",
                             request_type=f"{fp_name.upper()} CANCEL BOOK",
                             response=res_content,
-                            fk_booking_id=booking.pk_booking_id,
+                            fk_booking_id=booking.id,
                         ).save()
 
                         return JsonResponse(
@@ -418,7 +426,7 @@ def cancel_book(request, fp_name):
                         request_status="ERROR",
                         request_type=f"{fp_name.upper()} CANCEL BOOK",
                         response=res_content,
-                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_id=booking.id,
                     ).save()
 
                     error_msg = s0
@@ -453,8 +461,7 @@ def get_label(request, fp_name):
                 payload = get_create_label_payload(booking, fp_name)
 
                 logger.error(
-                    f"### Payload ({fp_name} create_label): ",
-                    json.dumps(payload, indent=2, sort_keys=True, default=str),
+                    f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
                 response = requests.post(url, params={}, json=payload)
@@ -466,7 +473,6 @@ def get_label(request, fp_name):
                 logger.error(f"### Response ({fp_name} create_label): {s0}")
 
                 payload["consignmentNumber"] = json_data[0]["request_id"]
-                payload["labelType"] = "PRINT"
             except Exception as e:
                 request_type = f"{fp_name.upper()} CREATE LABEL"
                 request_status = "ERROR"
@@ -475,7 +481,7 @@ def get_label(request, fp_name):
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = s0
@@ -489,7 +495,7 @@ def get_label(request, fp_name):
             while json_data is None or (
                 json_data is not None and json_data["labels"][0]["status"] == "PENDING"
             ):
-                time.sleep(60)  # Delay to wait label is created
+                time.sleep(10)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
@@ -506,11 +512,8 @@ def get_label(request, fp_name):
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} GET LABEL",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.id,
             ).save()
-
-            if booking.b_client_name.lower() == "biopak":
-                update_biopak_with_booked_booking(booking_id)
 
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
@@ -522,7 +525,7 @@ def get_label(request, fp_name):
                 request_status="ERROR",
                 request_type=f"{fp_name.upper()} GET LABEL",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.id,
             ).save()
 
             error_msg = s0
@@ -591,7 +594,7 @@ def create_order(request, fp_name):
                 request_status="ERROR",
                 request_type=f"{fp_name.upper()} CREATE ORDER",
                 response=res_content,
-                fk_booking_id=booking.pk_booking_id,
+                fk_booking_id=booking.id,
             ).save()
 
             error_msg = s0
@@ -734,7 +737,7 @@ def pricing(request, fp_name):
                     request_status="SUCCESS",
                     request_type=f"{fp_name.upper()} PRICING",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 Api_booking_confirmation_lines.objects.filter(
@@ -755,7 +758,7 @@ def pricing(request, fp_name):
                     request_status="ERROR",
                     request_type=f"{fp_name.upper()} PRICING",
                     response=res_content,
-                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_id=booking.id,
                 ).save()
 
                 error_msg = f"KeyError: {e}"
