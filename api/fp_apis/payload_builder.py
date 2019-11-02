@@ -1,5 +1,6 @@
 from django.conf import settings
 from api.models import *
+from api.common import ratio
 
 ACCOUTN_CODES = {
     "startrack": {
@@ -57,6 +58,11 @@ KEY_CHAINS = {
     },
 }
 
+FP_DIM_UOM = {
+    "tnt": {"dim": "cm", "weight": "kg"},
+    "hunter": {"dim": "cm", "weight": "kg"},
+}
+
 
 def _get_live_account_count(fp_name):
     count = 0
@@ -107,6 +113,10 @@ def _get_service_provider(fp_name):
 def _set_error(booking, error_msg):
     booking.b_error_Capture = str(error_msg)[:999]
     booking.save()
+
+
+def _convert(value, uom, type, fp_name):
+    return value * ratio.get_ratio(uom, FP_DIM_UOM[fp_name][type], type)
 
 
 def get_tracking_payload(booking, fp_name):
@@ -219,19 +229,40 @@ def get_book_payload(booking, fp_name):
 
     items = []
     for line in booking_lines:
-        for i in range(line.e_qty):
-            temp_item = {
-                "dangerous": 0,
-                "itemId": "EXP",
-                "packagingType": "CTN" if fp_name.lower() == "startrack" else "PAL",
-                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                "quantity": 0 if line.e_qty is None else line.e_qty,
-                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
-            }
-            items.append(temp_item)
+        item = {
+            "dangerous": 0,
+            "itemId": "EXP",
+            "width": 0
+            if not line.e_dimWidth
+            else _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower()),
+            "height": 0
+            if not line.e_dimHeight
+            else _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower()),
+            "length": 0
+            if not line.e_dimLength
+            else _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower()),
+            "quantity": 0 if not line.e_qty else line.e_qty,
+            "volume": 0
+            if not line.total_2_cubic_mass_factor_calc
+            else line.total_2_cubic_mass_factor_calc,
+            "weight": 0
+            if not line.e_weightPerEach and not line.e_qty
+            else _convert(
+                line.e_weightPerEach * line.e_qty,
+                line.e_weightUOM,
+                "weight",
+                fp_name.lower(),
+            ),
+        }
+
+        if fp_name.lower() == "startrack":
+            item["packagingType"] = "CTN"
+        elif fp_name.lower() == "hunter":
+            item["packagingType"] = "PAL"
+        elif fp_name.lower() == "tnt":
+            item["packagingType"] = "D"
+
+        items.append(item)
 
     payload["items"] = items
 
@@ -432,32 +463,46 @@ def get_pricing_payload(booking, fp_name, acc_ind):
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
     items = []
     for line in booking_lines:
-        for i in range(line.e_qty):
-            item = {
-                "dangerous": 0,
-                "itemId": "EXP",
-                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                "quantity": 0 if line.e_qty is None else line.e_qty,
-                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
-            }
+        item = {
+            "dangerous": 0,
+            "itemId": "EXP",
+            "width": 0
+            if not line.e_dimWidth
+            else _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower()),
+            "height": 0
+            if not line.e_dimHeight
+            else _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower()),
+            "length": 0
+            if not line.e_dimLength
+            else _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower()),
+            "quantity": 0 if not line.e_qty else line.e_qty,
+            "volume": 0
+            if not line.total_2_cubic_mass_factor_calc
+            else line.total_2_cubic_mass_factor_calc,
+            "weight": 0
+            if not line.e_weightPerEach and not line.e_qty
+            else _convert(
+                line.e_weightPerEach * line.e_qty,
+                line.e_weightUOM,
+                "weight",
+                fp_name.lower(),
+            ),
+        }
 
-            if fp_name.lower() == "startrack":
-                item["packagingType"] = "CTN"
-            elif fp_name.lower() == "hunter":
-                item["packagingType"] = "PAL"
-            elif fp_name.lower() == "tnt":
-                item["packagingType"] = "D"
+        if fp_name.lower() == "startrack":
+            item["packagingType"] = "CTN"
+        elif fp_name.lower() == "hunter":
+            item["packagingType"] = "PAL"
+        elif fp_name.lower() == "tnt":
+            item["packagingType"] = "D"
 
-            items.append(item)
+        items.append(item)
 
     payload["items"] = items
 
     # Detail for each FP
     if fp_name.lower() == "startrack":
-        payload["serviceType"] = "R" if booking.vx_serviceName is None else "R"
+        payload["serviceType"] = "R" if not booking.vx_serviceName else "R"
     elif fp_name.lower() == "hunter":
         payload["serviceType"] = "RF"
 
