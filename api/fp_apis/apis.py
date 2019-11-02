@@ -95,7 +95,7 @@ def tracking(request, fp_name):
         except KeyError:
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Exception as e:
-        print("ERROR", e)
+        logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
 
 
@@ -907,7 +907,9 @@ def pricing(request):
                     for acc_ind in range(account_count):
                         payload = get_pricing_payload(booking, fp_name.lower(), acc_ind)
 
-                        print(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                        logger.error(
+                            f"### Payload ({fp_name.upper()} PRICING): {payload}"
+                        )
                         url = DME_LEVEL_API_URL + "/pricing/calculateprice"
                         response = requests.post(url, params={}, json=payload)
                         res_content = response.content.decode("utf8").replace("'", '"')
@@ -915,7 +917,7 @@ def pricing(request):
                         s0 = json.dumps(
                             json_data, indent=2, sort_keys=True
                         )  # Just for visual
-                        print(f"### Response ({fp_name.upper()} PRICING): {s0}")
+                        logger.error(f"### Response ({fp_name.upper()} PRICING): {s0}")
 
                         Log.objects.create(
                             request_payload=payload,
@@ -953,7 +955,7 @@ def pricing(request):
                                         if serializer.is_valid():
                                             serializer.save()
                                     except Exception as e:
-                                        print("Exception: ", e)
+                                        logger.error("Exception: ", e)
 
                                     api_booking_quote.save()
                                 except API_booking_quotes.DoesNotExist:
@@ -965,12 +967,11 @@ def pricing(request):
                                         if serializer.is_valid():
                                             serializer.save()
                                         else:
-                                            print(
-                                                "@401 Serializer error: ",
-                                                serializer.errors,
+                                            logger.error(
+                                                f"@401 Serializer error: {serializer.errors}"
                                             )
                                     except Exception as e:
-                                        print("@402 Exception: ", e)
+                                        logger.error(f"@402 Exception: {e}")
 
                 results = API_booking_quotes.objects.filter(
                     fk_booking_id=booking.pk_booking_id
