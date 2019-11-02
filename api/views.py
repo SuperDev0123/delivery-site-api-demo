@@ -355,6 +355,7 @@ class BookingsViewSet(viewsets.ViewSet):
         dme_status = self.request.query_params.get("dmeStatus", None)
         multi_find_field = self.request.query_params.get("multiFindField", None)
         multi_find_values = self.request.query_params.get("multiFindValues", "")
+        project_name = self.request.query_params.get("projectName", None)
 
         if multi_find_values:
             multi_find_values = multi_find_values.split(", ")
@@ -476,7 +477,9 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
             # Mulitple search | Simple search | Column fitler
-            if len(multi_find_values) > 0:
+            if project_name and len(project_name) > 0:
+                queryset = queryset.filter(b_booking_project=project_name)
+            elif multi_find_values and len(multi_find_values) > 0:
                 preserved = Case(
                     *[
                         When(**{f"{multi_find_field}": multi_find_value, "then": pos})
@@ -485,7 +488,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
                 filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
                 queryset = queryset.filter(**filter_kwargs).order_by(preserved)
-            elif len(simple_search_keyword) > 0:
+            elif simple_search_keyword and len(simple_search_keyword) > 0:
                 if (
                     not "&" in simple_search_keyword
                     and not "|" in simple_search_keyword
@@ -603,7 +606,6 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # Count
         bookings_cnt = queryset.count()
-
         bookings = queryset
         ret_data = []
 
@@ -668,6 +670,11 @@ class BookingsViewSet(viewsets.ViewSet):
                     "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
                     "b_fp_qty_delivered": booking.b_fp_qty_delivered,
                     "manifest_timestamp": booking.manifest_timestamp,
+                    "b_booking_project": booking.b_booking_project,
+                    "b_project_opened": booking.b_project_opened,
+                    "b_project_inventory_due": booking.b_project_inventory_due,
+                    "b_project_wh_unpack": booking.b_project_wh_unpack,
+                    "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                 }
             )
 
@@ -1170,6 +1177,18 @@ class BookingsViewSet(viewsets.ViewSet):
 
         return JsonResponse({"results": results})
 
+    @action(detail=False, methods=["get"])
+    def get_project_names(self, request, format=None):
+        results = (
+            Bookings.objects.exclude(
+                Q(b_booking_project__isnull=True) | Q(b_booking_project__exact="")
+            )
+            .values_list("b_booking_project", flat=True)
+            .distinct()
+        )
+
+        return JsonResponse({"results": list(results)})
+
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
@@ -1356,6 +1375,11 @@ class BookingViewSet(viewsets.ViewSet):
                         "x_manual_booked_flag": booking.x_manual_booked_flag,
                         "b_fp_qty_delivered": booking.b_fp_qty_delivered,
                         "manifest_timestamp": booking.manifest_timestamp,
+                        "b_booking_project": booking.b_booking_project,
+                        "b_project_opened": booking.b_project_opened,
+                        "b_project_inventory_due": booking.b_project_inventory_due,
+                        "b_project_wh_unpack": booking.b_project_wh_unpack,
+                        "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                     }
                     return JsonResponse(
                         {
@@ -1489,6 +1513,8 @@ class BookingViewSet(viewsets.ViewSet):
             for booking_line in booking_lines:
                 booking_line.pk_lines_id = None
                 booking_line.fk_booking_id = newBooking["pk_booking_id"]
+                booking_line.e_qty_delivered = 0
+                booking_line.e_qty_adjusted_delivered = 0
                 booking_line.save()
             for booking_line_detail in booking_line_details:
                 booking_line_detail.pk_id_lines_data = None
