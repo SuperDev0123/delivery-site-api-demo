@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import *
 
 from django.conf import settings
 from api.models import *
@@ -122,7 +121,9 @@ def _set_error(booking, error_msg):
 
 
 def _convert(value, uom, type, fp_name):
-    return value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+    converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+    round(converted_value, 2)
+    return converted_value
 
 
 def get_tracking_payload(booking, fp_name):
@@ -143,7 +144,6 @@ def get_tracking_payload(booking, fp_name):
 
 
 def get_book_payload(booking, fp_name):
-    getcontext().prec = 2
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
     payload["serviceProvider"] = _get_service_provider(fp_name)
@@ -324,7 +324,6 @@ def get_cancel_book_payload(booking, fp_name):
 
 
 def get_getlabel_payload(booking, fp_name):
-    getcontext().prec = 2
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
     payload["serviceProvider"] = _get_service_provider(fp_name)
@@ -558,7 +557,6 @@ def get_reprint_payload(booking, fp_name):
 
 
 def get_pricing_payload(booking, fp_name, acc_ind):
-    getcontext().prec = 2
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name, acc_ind)
     payload["serviceProvider"] = _get_service_provider(fp_name)
