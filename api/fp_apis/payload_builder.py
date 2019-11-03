@@ -62,7 +62,7 @@ KEY_CHAINS = {
     },
 }
 
-FP_DIM_UOM = {
+FP_UOM = {
     "startrack": {"dim": "cm", "weight": "kg"},
     "hunter": {"dim": "cm", "weight": "kg"},
     "tnt": {"dim": "cm", "weight": "kg"},
@@ -121,7 +121,7 @@ def _set_error(booking, error_msg):
 
 
 def _convert(value, uom, type, fp_name):
-    return value * ratio.get_ratio(uom, FP_DIM_UOM[fp_name][type], type)
+    return value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
 
 
 def get_tracking_payload(booking, fp_name):
@@ -276,13 +276,13 @@ def get_book_payload(booking, fp_name):
         items.append(item)
 
         if line.e_weightPerEach:
-            totalWeight += float(e_weightPerEach)
-        if maxHeight < float(e_dimHeight):
-            maxHeight = float(e_dimHeight)
-        if maxWidth < float(e_dimWidth):
-            maxWidth = float(e_dimWidth)
-        if maxLength < float(e_dimLength):
-            maxLength = float(e_dimLength)
+            totalWeight += float(line.e_weightPerEach)
+        if maxHeight < float(line.e_dimHeight):
+            maxHeight = float(line.e_dimHeight)
+        if maxWidth < float(line.e_dimWidth):
+            maxWidth = float(line.e_dimWidth)
+        if maxLength < float(line.e_dimLength):
+            maxLength = float(line.e_dimLength)
 
     payload["items"] = items
 
