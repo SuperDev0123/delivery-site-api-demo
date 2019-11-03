@@ -122,8 +122,7 @@ def _set_error(booking, error_msg):
 
 def _convert(value, uom, type, fp_name):
     converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
-    round(converted_value, 2)
-    return converted_value
+    return round(converted_value, 2)
 
 
 def get_tracking_payload(booking, fp_name):
