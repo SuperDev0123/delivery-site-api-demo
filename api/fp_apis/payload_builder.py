@@ -246,42 +246,40 @@ def get_book_payload(booking, fp_name):
         height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         weight = _convert(
-            line.e_weightPerEach * line.e_qty,
-            line.e_weightUOM,
-            "weight",
-            fp_name.lower(),
+            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
 
-        item = {
-            "dangerous": 0,
-            "itemId": "EXP",
-            "width": 0 if not line.e_dimWidth else width,
-            "height": 0 if not line.e_dimHeight else height,
-            "length": 0 if not line.e_dimLength else length,
-            "quantity": 0 if not line.e_qty else line.e_qty,
-            "volume": 0
-            if not line.total_2_cubic_mass_factor_calc
-            else line.total_2_cubic_mass_factor_calc,
-            "weight": 0 if not line.e_weightPerEach and not line.e_qty else weight,
-        }
+        for i in range(line.e_qty):
+            item = {
+                "dangerous": 0,
+                "itemId": "EXP",
+                "width": 0 if not line.e_dimWidth else width,
+                "height": 0 if not line.e_dimHeight else height,
+                "length": 0 if not line.e_dimLength else length,
+                "quantity": 1,
+                "volume": 0
+                if not line.total_2_cubic_mass_factor_calc
+                else line.total_2_cubic_mass_factor_calc,
+                "weight": 0 if not line.e_weightPerEach else weight,
+            }
 
-        if fp_name.lower() == "startrack":
-            item["packagingType"] = "CTN"
-        elif fp_name.lower() == "hunter":
-            item["packagingType"] = "PAL"
-        elif fp_name.lower() == "tnt":
-            item["packagingType"] = "D"
+            if fp_name.lower() == "startrack":
+                item["packagingType"] = "CTN"
+            elif fp_name.lower() == "hunter":
+                item["packagingType"] = "PAL"
+            elif fp_name.lower() == "tnt":
+                item["packagingType"] = "D"
 
-        items.append(item)
+            items.append(item)
 
-        if line.e_weightPerEach and line.e_qty:
-            totalWeight += weight
-        if maxHeight < height:
-            maxHeight = height
-        if maxWidth < width:
-            maxWidth = width
-        if maxLength < length:
-            maxLength = length
+            if line.e_weightPerEach:
+                totalWeight += weight
+            if maxHeight < height:
+                maxHeight = height
+            if maxWidth < width:
+                maxWidth = width
+            if maxLength < length:
+                maxLength = length
 
     payload["items"] = items
 
@@ -409,31 +407,29 @@ def get_getlabel_payload(booking, fp_name):
         height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         weight = _convert(
-            line.e_weightPerEach * line.e_qty,
-            line.e_weightUOM,
-            "weight",
-            fp_name.lower(),
+            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
 
-        item = {
-            "dangerous": 0,
-            "itemId": "EXP",
-            "width": 0 if not line.e_dimWidth else width,
-            "height": 0 if not line.e_dimHeight else height,
-            "length": 0 if not line.e_dimLength else length,
-            "quantity": 0 if not line.e_qty else line.e_qty,
-            "volume": 0
-            if not line.total_2_cubic_mass_factor_calc
-            else line.total_2_cubic_mass_factor_calc,
-            "weight": 0 if not line.e_weightPerEach and not line.e_qty else weight,
-        }
+        for i in range(line.e_qty):
+            item = {
+                "dangerous": 0,
+                "itemId": "EXP",
+                "width": 0 if not line.e_dimWidth else width,
+                "height": 0 if not line.e_dimHeight else height,
+                "length": 0 if not line.e_dimLength else length,
+                "quantity": 1,
+                "volume": 0
+                if not line.total_2_cubic_mass_factor_calc
+                else line.total_2_cubic_mass_factor_calc,
+                "weight": 0 if not line.e_weightPerEach else weight,
+            }
 
-        if fp_name.lower() == "startrack":
-            item["packagingType"] = "CTN"
-        elif fp_name.lower() == "hunter":
-            item["packagingType"] = "PAL"
-        elif fp_name.lower() == "tnt":
-            item["packagingType"] = "D"
+            if fp_name.lower() == "startrack":
+                item["packagingType"] = "CTN"
+            elif fp_name.lower() == "hunter":
+                item["packagingType"] = "PAL"
+            elif fp_name.lower() == "tnt":
+                item["packagingType"] = "D"
 
     payload["items"] = items
 
@@ -651,32 +647,31 @@ def get_pricing_payload(booking, fp_name, acc_ind):
         height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         weight = _convert(
-            line.e_weightPerEach * line.e_qty,
-            line.e_weightUOM,
-            "weight",
-            fp_name.lower(),
+            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
-        item = {
-            "dangerous": 0,
-            "itemId": "EXP",
-            "width": 0 if not line.e_dimWidth else width,
-            "height": 0 if not line.e_dimHeight else height,
-            "length": 0 if not line.e_dimLength else length,
-            "quantity": 0 if not line.e_qty else line.e_qty,
-            "volume": 0
-            if not line.total_2_cubic_mass_factor_calc
-            else line.total_2_cubic_mass_factor_calc,
-            "weight": 0 if not line.e_weightPerEach and not line.e_qty else weight,
-        }
 
-        if fp_name.lower() == "startrack":
-            item["packagingType"] = "CTN"
-        elif fp_name.lower() == "hunter":
-            item["packagingType"] = "PAL"
-        elif fp_name.lower() == "tnt":
-            item["packagingType"] = "D"
+        for i in range(line.e_qty):
+            item = {
+                "dangerous": 0,
+                "itemId": "EXP",
+                "width": 0 if not line.e_dimWidth else width,
+                "height": 0 if not line.e_dimHeight else height,
+                "length": 0 if not line.e_dimLength else length,
+                "quantity": 1,
+                "volume": 0
+                if not line.total_2_cubic_mass_factor_calc
+                else line.total_2_cubic_mass_factor_calc,
+                "weight": 0 if not line.e_weightPerEach else weight,
+            }
 
-        items.append(item)
+            if fp_name.lower() == "startrack":
+                item["packagingType"] = "CTN"
+            elif fp_name.lower() == "hunter":
+                item["packagingType"] = "PAL"
+            elif fp_name.lower() == "tnt":
+                item["packagingType"] = "D"
+
+            items.append(item)
 
     payload["items"] = items
 
