@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import *
 
 from django.conf import settings
 from api.models import *
@@ -142,6 +143,7 @@ def get_tracking_payload(booking, fp_name):
 
 
 def get_book_payload(booking, fp_name):
+    getcontext().prec = 2
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
     payload["serviceProvider"] = _get_service_provider(fp_name)
@@ -244,7 +246,7 @@ def get_book_payload(booking, fp_name):
         width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        e_weightPerEach = _convert(
+        weight = _convert(
             line.e_weightPerEach * line.e_qty,
             line.e_weightUOM,
             "weight",
@@ -261,9 +263,7 @@ def get_book_payload(booking, fp_name):
             "volume": 0
             if not line.total_2_cubic_mass_factor_calc
             else line.total_2_cubic_mass_factor_calc,
-            "weight": 0
-            if not line.e_weightPerEach and not line.e_qty
-            else e_weightPerEach,
+            "weight": 0 if not line.e_weightPerEach and not line.e_qty else weight,
         }
 
         if fp_name.lower() == "startrack":
@@ -275,14 +275,14 @@ def get_book_payload(booking, fp_name):
 
         items.append(item)
 
-        if line.e_weightPerEach:
-            totalWeight += float(line.e_weightPerEach)
-        if maxHeight < float(line.e_dimHeight):
-            maxHeight = float(line.e_dimHeight)
-        if maxWidth < float(line.e_dimWidth):
-            maxWidth = float(line.e_dimWidth)
-        if maxLength < float(line.e_dimLength):
-            maxLength = float(line.e_dimLength)
+        if line.e_weightPerEach and line.e_qty:
+            totalWeight += weight
+        if maxHeight < height:
+            maxHeight = height
+        if maxWidth < width:
+            maxWidth = width
+        if maxLength < length:
+            maxLength = length
 
     payload["items"] = items
 
@@ -324,6 +324,7 @@ def get_cancel_book_payload(booking, fp_name):
 
 
 def get_getlabel_payload(booking, fp_name):
+    getcontext().prec = 2
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
     payload["serviceProvider"] = _get_service_provider(fp_name)
@@ -406,19 +407,35 @@ def get_getlabel_payload(booking, fp_name):
 
     items = []
     for line in booking_lines:
-        for i in range(line.e_qty):
-            temp_item = {
-                "dangerous": 0,
-                "itemId": "EXP",
-                "packagingType": "CTN" if fp_name.lower() == "startrack" else "PAL",
-                "height": 0 if line.e_dimHeight is None else line.e_dimHeight,
-                "length": 0 if line.e_dimLength is None else line.e_dimLength,
-                "quantity": 0 if line.e_qty is None else line.e_qty,
-                "volume": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                "weight": 0 if line.e_weightPerEach is None else line.e_weightPerEach,
-                "width": 0 if line.e_dimWidth is None else line.e_dimWidth,
-            }
-            items.append(temp_item)
+        width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        weight = _convert(
+            line.e_weightPerEach * line.e_qty,
+            line.e_weightUOM,
+            "weight",
+            fp_name.lower(),
+        )
+
+        item = {
+            "dangerous": 0,
+            "itemId": "EXP",
+            "width": 0 if not line.e_dimWidth else width,
+            "height": 0 if not line.e_dimHeight else height,
+            "length": 0 if not line.e_dimLength else length,
+            "quantity": 0 if not line.e_qty else line.e_qty,
+            "volume": 0
+            if not line.total_2_cubic_mass_factor_calc
+            else line.total_2_cubic_mass_factor_calc,
+            "weight": 0 if not line.e_weightPerEach and not line.e_qty else weight,
+        }
+
+        if fp_name.lower() == "startrack":
+            item["packagingType"] = "CTN"
+        elif fp_name.lower() == "hunter":
+            item["packagingType"] = "PAL"
+        elif fp_name.lower() == "tnt":
+            item["packagingType"] = "D"
 
     payload["items"] = items
 
@@ -541,6 +558,7 @@ def get_reprint_payload(booking, fp_name):
 
 
 def get_pricing_payload(booking, fp_name, acc_ind):
+    getcontext().prec = 2
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name, acc_ind)
     payload["serviceProvider"] = _get_service_provider(fp_name)
@@ -632,30 +650,26 @@ def get_pricing_payload(booking, fp_name, acc_ind):
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
     items = []
     for line in booking_lines:
+        width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        weight = _convert(
+            line.e_weightPerEach * line.e_qty,
+            line.e_weightUOM,
+            "weight",
+            fp_name.lower(),
+        )
         item = {
             "dangerous": 0,
             "itemId": "EXP",
-            "width": 0
-            if not line.e_dimWidth
-            else _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower()),
-            "height": 0
-            if not line.e_dimHeight
-            else _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower()),
-            "length": 0
-            if not line.e_dimLength
-            else _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower()),
+            "width": 0 if not line.e_dimWidth else width,
+            "height": 0 if not line.e_dimHeight else height,
+            "length": 0 if not line.e_dimLength else length,
             "quantity": 0 if not line.e_qty else line.e_qty,
             "volume": 0
             if not line.total_2_cubic_mass_factor_calc
             else line.total_2_cubic_mass_factor_calc,
-            "weight": 0
-            if not line.e_weightPerEach and not line.e_qty
-            else _convert(
-                line.e_weightPerEach * line.e_qty,
-                line.e_weightUOM,
-                "weight",
-                fp_name.lower(),
-            ),
+            "weight": 0 if not line.e_weightPerEach and not line.e_qty else weight,
         }
 
         if fp_name.lower() == "startrack":
