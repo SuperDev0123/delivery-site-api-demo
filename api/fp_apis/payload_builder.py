@@ -63,8 +63,9 @@ KEY_CHAINS = {
 }
 
 FP_DIM_UOM = {
-    "tnt": {"dim": "cm", "weight": "kg"},
+    "startrack": {"dim": "cm", "weight": "kg"},
     "hunter": {"dim": "cm", "weight": "kg"},
+    "tnt": {"dim": "cm", "weight": "kg"},
 }
 
 
