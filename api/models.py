@@ -508,7 +508,7 @@ class Bookings(models.Model):
         default="",
     )
     pu_Email = models.CharField(
-        verbose_name=_("PU Email"), max_length=35, blank=True, null=True, default=""
+        verbose_name=_("PU Email"), max_length=64, blank=True, null=True, default=""
     )
     pu_email_Group_Name = models.CharField(
         verbose_name=_("PU Email Group Name"),
@@ -567,7 +567,7 @@ class Bookings(models.Model):
         default="",
     )
     de_Email = models.CharField(
-        verbose_name=_("DE Email"), max_length=35, blank=True, null=True, default=""
+        verbose_name=_("DE Email"), max_length=64, blank=True, null=True, default=""
     )
     de_To_AddressType = models.CharField(
         verbose_name=_("DE Address Type"),
