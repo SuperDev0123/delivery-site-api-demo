@@ -1145,6 +1145,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 Bookings.objects.exclude(manifest_timestamp__isnull=True)
                 .filter(vx_freight_provider__iexact="startrack")
                 .order_by("-manifest_timestamp")
+                .values("manifest_timestamp", "z_manifest_url", "fk_client_warehouse")
             )
             manifest_dates = st_bookings_has_manifest.values_list(
                 "manifest_timestamp", flat=True
