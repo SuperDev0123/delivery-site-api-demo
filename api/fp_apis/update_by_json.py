@@ -58,7 +58,7 @@ def update_biopak_with_booked_booking(booking_id):
     json_file.write(json_content)
     json_file.close()
 
-    if production:
+    if settings.ENV == "prod":
         sftp.upload_sftp(
             sftp_server_infos["biopak"]["host"],
             sftp_server_infos["biopak"]["username"],
