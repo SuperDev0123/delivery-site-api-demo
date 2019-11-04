@@ -1143,7 +1143,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if clientname in ["BioPak", "dme"]:
             st_bookings_has_manifest = (
                 Bookings.objects.exclude(manifest_timestamp__isnull=True)
-                .filter(vx_freight_provider__icontains="startrack")
+                .filter(vx_freight_provider__iexact="startrack")
                 .order_by("-manifest_timestamp")
             )
             manifest_dates = st_bookings_has_manifest.values_list(
