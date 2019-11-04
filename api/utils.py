@@ -2433,7 +2433,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 with open(local_filepath + filename, "wb") as fh:
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
-        
         except Exception as e:
             logger.error(f"@302 ST ACT XML - {e}")
             return e
@@ -5251,10 +5250,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate, date_format
+                    row, col + 0, booking.b_dateBookedDate.date(), date_format
                 )
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 1,
+                    booking.b_dateBookedDate.strftime("%H:%M:%S"),
+                    time_format,
                 )
 
             if booking.z_first_scan_label_date:
@@ -5553,10 +5555,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if booking.b_dateBookedDate and booking.b_dateBookedDate:
                         worksheet.write_datetime(
-                            row, col + 1, booking.b_dateBookedDate, date_format
+                            row, col + 1, booking.b_dateBookedDate.date(), date_format
                         )
                         worksheet.write_datetime(
-                            row, col + 2, booking.b_dateBookedDate, time_format
+                            row,
+                            col + 2,
+                            booking.b_dateBookedDate.strftime("%H:%M:%S"),
+                            time_format,
                         )
 
                     if booking.z_first_scan_label_date:
