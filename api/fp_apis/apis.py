@@ -31,7 +31,7 @@ from .payload_builder import (
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
-from api.common import status_history
+from api.common import status_history, download_external
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -510,7 +510,7 @@ def get_label(request, fp_name):
             while json_data is None or (
                 json_data is not None and json_data["labels"][0]["status"] == "PENDING"
             ):
-                time.sleep(10)  # Delay to wait label is created
+                time.sleep(5)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
@@ -519,7 +519,8 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} get_label): {s0}")
 
-            booking.z_label_url = json_data["labels"][0]["url"]
+            internal_url = download_external.pdf(json_data["labels"][0]["url"], booking)
+            booking.z_label_url = internal_url
             booking.save()
 
             Log(
