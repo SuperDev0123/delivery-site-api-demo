@@ -1154,19 +1154,15 @@ class BookingsViewSet(viewsets.ViewSet):
             for manifest_date in manifest_dates:
                 result = {}
 
-                result["count"] = st_bookings_has_manifest.filter(
+                each_day_manifest_bookings = st_bookings_has_manifest.filter(
                     manifest_timestamp=manifest_date
-                ).count()
-                result["z_manifest_url"] = (
-                    st_bookings_has_manifest.filter(manifest_timestamp=manifest_date)
-                    .first()
-                    .z_manifest_url
                 )
-                result["warehouse_name"] = (
-                    st_bookings_has_manifest.filter(manifest_timestamp=manifest_date)
-                    .first()
-                    .fk_client_warehouse.warehousename
-                )
+                first_booking = each_day_manifest_bookings.first()
+                result["count"] = each_day_manifest_bookings.count()
+                result["z_manifest_url"] = first_booking.z_manifest_url
+                result[
+                    "warehouse_name"
+                ] = first_booking.fk_client_warehouse.warehousename
                 result["manifest_date"] = manifest_date
                 results.append(result)
         else:
