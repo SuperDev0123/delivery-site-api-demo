@@ -8,3 +8,4 @@ local_settings.py
 db.sqlite3
 .DS_Store
 /static
+/dme_api/settings.py
