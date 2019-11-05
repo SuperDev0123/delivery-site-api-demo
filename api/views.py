@@ -2756,9 +2756,77 @@ class FPViewSet(viewsets.ViewSet):
                         {
                             "id": resultObject.id,
                             "fp_company_name": resultObject.fp_company_name,
+                            "fp_address_country": resultObject.fp_address_country
                         }
                     )
             return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        print(fp_id)
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.get(id=int(fp_id))
+            for resultObject in resultObjects:
+                if not resultObject.fp_inactive_date:
+                    return_data.append(
+                        {
+                            "id": resultObject.id,
+                            "fp_company_name": resultObject.fp_company_name,
+                            "fp_address_country": resultObject.fp_address_country
+                        }
+                    )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.create(fp_company_name=request.data["fp_company_name"], fp_address_country=request.data["fp_address_country"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["put"])
+    def edit(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        
+        return_data = []
+
+        try:
+            fp_freight_providers = Fp_freight_providers(
+                        id=fp_id
+                    )
+            fp_freight_providers.fp_company_name = request.data["fp_company_name"]
+            fp_freight_providers.fp_address_country = request.data["fp_address_country"]
+            fp_freight_providers.save()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["delete"])
+    def delete(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        return_data = []
+
+        try:
+            fp_freight_providers = Fp_freight_providers.objects.get(pk=fp_id)
+            fp_freight_providers.delete()
+            return JsonResponse({"results": fp_freight_providers})
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"results": ""})
