@@ -2946,7 +2946,7 @@ def download_pdf(request):
 
     for booking in bookings:
         if booking.z_label_url is not None and len(booking.z_label_url) > 0:
-            if "https://ap-prod" in booking.z_label_url:
+            if "https://ap-prod" in booking.z_label_url:  # can be deleted later
                 request = requests.get(booking.z_label_url, stream=True)
 
                 if request.status_code != requests.codes.ok:
