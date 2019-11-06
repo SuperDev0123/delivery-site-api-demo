@@ -1175,8 +1175,42 @@ class BookingsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def get_project_names(self, request, format=None):
+        user_id = int(self.request.user.id)
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is not None:
+            user_type = "DME"
+        else:
+            user_type = "CLIENT"
+            client_employee = (
+                Client_employees.objects.select_related()
+                .filter(fk_id_user=user_id)
+                .first()
+            )
+            client_employee_role = client_employee.get_role()
+            client = (
+                DME_clients.objects.select_related()
+                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                .first()
+            )
+
+        # DME & Client filter
+        if user_type == "DME":
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == "company":
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == "warehouse":
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(
+                    kf_client_id=client.dme_account_num,
+                    fk_client_warehouse_id=employee_warehouse_id,
+                )
+
         results = (
-            Bookings.objects.exclude(
+            queryset.exclude(
                 Q(b_booking_project__isnull=True) | Q(b_booking_project__exact="")
             )
             .values_list("b_booking_project", flat=True)
