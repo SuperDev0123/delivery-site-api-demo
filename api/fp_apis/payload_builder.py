@@ -690,5 +690,7 @@ def get_pricing_payload(booking, fp_name, acc_ind):
         payload["serviceType"] = "R" if not booking.vx_serviceName else "R"
     elif fp_name.lower() == "hunter":
         payload["serviceType"] = "RF"
+    elif fp_name.lower() == "capital":
+        payload["serviceType"] = "EC"
 
     return payload
