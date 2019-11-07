@@ -1021,6 +1021,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "dme_status_detail": booking.dme_status_detail,
                     "dme_status_action": booking.dme_status_action,
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
+                    "z_manifest_url": booking.z_manifest_url,
                 }
             )
 
@@ -2980,30 +2981,30 @@ def download_pdf(request):
 
     for booking in bookings:
         if booking.z_label_url is not None and len(booking.z_label_url) > 0:
-            if "https://ap-prod" in booking.z_label_url:  # can be deleted later
-                request = requests.get(booking.z_label_url, stream=True)
+            # if "https://ap-prod" in booking.z_label_url:  # PYTHON CODE to download from url
+            #     request = requests.get(booking.z_label_url, stream=True)
 
-                if request.status_code != requests.codes.ok:
-                    continue
+            #     if request.status_code != requests.codes.ok:
+            #         continue
 
-                label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
-                file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
-                # file_path = f"/Users/admin/work/goldmine/dme_api/static/pdfs/atc_au/{label_name}" # Local (Test Case)
-                file = open(file_path, "wb+")
-                for block in request.iter_content(1024 * 8):
-                    if not block:
-                        break
+            #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
+            #     file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
+            #     # file_path = f"/Users/admin/work/goldmine/dme_api/static/pdfs/atc_au/{label_name}" # Local (Test Case)
+            #     file = open(file_path, "wb+")
+            #     for block in request.iter_content(1024 * 8):
+            #         if not block:
+            #             break
 
-                    file.write(block)
-                file.close()
-                file_paths.append(file_path)
-                label_names.append(label_name)
-            else:
-                file_paths.append(
-                    f"/opt/s3_public/pdfs/{booking.z_label_url}"
-                )  # Dev & Prod
-                # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
-                label_names.append(booking.z_label_url)
+            #         file.write(block)
+            #     file.close()
+            #     file_paths.append(file_path)
+            #     label_names.append(label_name)
+            # else:
+            file_paths.append(
+                f"/opt/s3_public/pdfs/{booking.z_label_url}"
+            )  # Dev & Prod
+            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
+            label_names.append(booking.z_label_url)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
             booking.save()
 
