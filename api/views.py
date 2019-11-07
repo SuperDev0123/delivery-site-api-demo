@@ -2743,6 +2743,8 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
 
 class FPViewSet(viewsets.ViewSet):
+    serializer_class = FpSerializer
+
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         return_data = []
@@ -2767,24 +2769,21 @@ class FPViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get(self, request, pk=None):
         fp_id = request.GET["fp_id"]
-        print(fp_id)
         return_data = []
-
         try:
             resultObjects = []
-            resultObjects = Fp_freight_providers.objects.get(id=int(fp_id))
-            for resultObject in resultObjects:
-                if not resultObject.fp_inactive_date:
-                    return_data.append(
-                        {
-                            "id": resultObject.id,
-                            "fp_company_name": resultObject.fp_company_name,
-                            "fp_address_country": resultObject.fp_address_country
-                        }
-                    )
+            resultObjects = Fp_freight_providers.objects.get(pk=int(fp_id))
+            if not resultObjects.fp_inactive_date:
+                return_data.append(
+                    {
+                        "id": resultObjects.id,
+                        "fp_company_name": resultObjects.fp_company_name,
+                        "fp_address_country": resultObjects.fp_address_country
+                    }
+                )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            # print('@Exception', e)
+            #print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -2800,31 +2799,25 @@ class FPViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({"results": ""})
 
-    @action(detail=False, methods=["put"])
-    def edit(self, request, pk=None):
-        fp_id = request.GET["fp_id"]
-        
-        return_data = []
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
+        serializer = FpSerializer(fp_freight_providers, data=request.data)
 
         try:
-            fp_freight_providers = Fp_freight_providers(
-                        id=fp_id
-                    )
-            fp_freight_providers.fp_company_name = request.data["fp_company_name"]
-            fp_freight_providers.fp_address_country = request.data["fp_address_country"]
-            fp_freight_providers.save()
-            return JsonResponse({"results": fp_freight_providers})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=["delete"])
-    def delete(self, request, pk=None):
-        fp_id = request.GET["fp_id"]
-        return_data = []
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
 
         try:
-            fp_freight_providers = Fp_freight_providers.objects.get(pk=fp_id)
             fp_freight_providers.delete()
             return JsonResponse({"results": fp_freight_providers})
         except Exception as e:

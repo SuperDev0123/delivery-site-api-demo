@@ -11,6 +11,7 @@ from .models import (
     Dme_status_history,
     DME_reports,
     API_booking_quotes,
+    Fp_freight_providers
 )
 
 
@@ -45,6 +46,11 @@ class BookingSerializer(serializers.ModelSerializer):
 class BookingLineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking_lines
+        fields = "__all__"
+
+class FpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fp_freight_providers
         fields = "__all__"
 
 
