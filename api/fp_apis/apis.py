@@ -264,7 +264,10 @@ def book(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = f"{json_data[0]['message']}"
+                if "errors" in json_data:
+                    error_msg = s0
+                else:
+                    error_msg = json_data[0]["message"]
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 500:
