@@ -2766,13 +2766,12 @@ class FPViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({"results": ""})
 
-    @action(detail=False, methods=["get"])
-    def get(self, request, pk=None):
-        fp_id = request.GET["fp_id"]
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
         return_data = []
         try:
             resultObjects = []
-            resultObjects = Fp_freight_providers.objects.get(pk=int(fp_id))
+            resultObjects = Fp_freight_providers.objects.get(pk=pk)
             if not resultObjects.fp_inactive_date:
                 return_data.append(
                     {
@@ -2822,6 +2821,58 @@ class FPViewSet(viewsets.ViewSet):
             return JsonResponse({"results": fp_freight_providers})
         except Exception as e:
             # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get_carriers(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = FP_carriers.objects.filter(fk_fp=fp_id)
+                        
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_fp": resultObject.fk_fp,
+                        "carrier": resultObject.carrier,
+                        "connote_start_value": resultObject.connote_start_value,
+                        "connote_end_value": resultObject.connote_end_value,
+                        "current_value": resultObject.current_value,
+                        "label_end_value": resultObject.label_end_value,
+                        "label_start_value": resultObject.label_start_value
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            #print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get_zones(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = FP_zones.objects.filter(fk_fp=fp_id)[0:10]
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_fp": resultObject.fk_fp,
+                        "suburb": resultObject.suburb,
+                        "state": resultObject.state,
+                        "postal_code": resultObject.postal_code,
+                        "zone": resultObject.zone,
+                        "carrier": resultObject.carrier,
+                        "service": resultObject.service,
+                        "sender_code": resultObject.sender_code
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            #print('@Exception', e)
             return JsonResponse({"results": ""})
 
 
