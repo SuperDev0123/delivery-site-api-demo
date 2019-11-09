@@ -52,6 +52,11 @@ class DME_clients(models.Model):
     current_freight_provider = models.CharField(
         verbose_name=_("Related FP"), max_length=30, blank=False, null=True, default="*"
     )
+    client_mark_up_percent = models.FloatField(default=0, null=True, blank=True)
+    client_min_markup_startingcostvalue = models.FloatField(
+        default=0, null=True, blank=True
+    )
+    client_min_markup_value = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "dme_clients"
@@ -134,6 +139,7 @@ class Client_warehouses(models.Model):
     client_warehouse_code = models.CharField(
         verbose_name=_("warehouse code"), max_length=100, blank=True, null=True
     )
+    success_type = models.IntegerField(default=0)
 
     class Meta:
         db_table = "dme_client_warehouses"
@@ -200,6 +206,32 @@ class Client_employees(models.Model):
         return role.role_code
 
 
+class Dme_manifest_log(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_booking_id = models.CharField(
+        verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
+    )
+    manifest_number = models.CharField(max_length=32, blank=True, null=True)
+    manifest_url = models.CharField(max_length=200, blank=True, null=True)
+    is_one_booking = models.BooleanField(blank=True, null=True, default=False)
+    bookings_cnt = models.IntegerField(default=0, blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "dme_manifest_log"
+
+
 class Bookings(models.Model):
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
@@ -245,10 +277,14 @@ class Bookings(models.Model):
         default="",
     )
     puCompany = models.CharField(
-        verbose_name=_("Company"), max_length=40, blank=True, null=True, default=""
+        verbose_name=_("Company"), max_length=128, blank=True, null=True, default=""
     )
     deToCompanyName = models.CharField(
-        verbose_name=_("Company Name"), max_length=40, blank=True, null=True, default=""
+        verbose_name=_("Company Name"),
+        max_length=128,
+        blank=True,
+        null=True,
+        default="",
     )
     consignment_label_link = models.CharField(
         verbose_name=_("Consignment"), max_length=250, blank=True, null=True, default=""
@@ -354,7 +390,7 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    kf_Invoice_Num_Booking = models.CharField(
+    inv_dme_invoice_no = models.CharField(
         verbose_name=_("Invoice Num Booking"),
         max_length=64,
         blank=True,
@@ -472,7 +508,7 @@ class Bookings(models.Model):
         default="",
     )
     pu_Email = models.CharField(
-        verbose_name=_("PU Email"), max_length=35, blank=True, null=True, default=""
+        verbose_name=_("PU Email"), max_length=64, blank=True, null=True, default=""
     )
     pu_email_Group_Name = models.CharField(
         verbose_name=_("PU Email Group Name"),
@@ -531,7 +567,7 @@ class Bookings(models.Model):
         default="",
     )
     de_Email = models.CharField(
-        verbose_name=_("DE Email"), max_length=35, blank=True, null=True, default=""
+        verbose_name=_("DE Email"), max_length=64, blank=True, null=True, default=""
     )
     de_To_AddressType = models.CharField(
         verbose_name=_("DE Address Type"),
@@ -783,6 +819,7 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
+    x_manual_booked_flag = models.BooleanField(default=False, blank=True, null=True)
     de_Email_Group_Emails = models.CharField(
         verbose_name=_("DE Email Group Emails"),
         max_length=30,
@@ -1232,6 +1269,42 @@ class Bookings(models.Model):
     )
     z_first_scan_label_date = models.DateField(blank=True, null=True)
     check_pod = models.BooleanField(default=False, blank=True, null=True)
+    vx_freight_provider_carrier = models.CharField(
+        max_length=32, blank=True, null=True, default=None
+    )
+    fk_manifest = models.ForeignKey(
+        Dme_manifest_log, on_delete=models.CASCADE, default=None, null=True
+    )
+    b_is_flagged_add_on_services = models.BooleanField(
+        default=False, blank=True, null=True
+    )
+    z_calculated_ETA = models.DateField(blank=True, null=True)
+    b_client_name_sub = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    fp_invoice_no = models.CharField(max_length=16, blank=True, null=True, default=None)
+    inv_cost_quoted = models.FloatField(blank=True, default=0, null=True)
+    inv_cost_actual = models.FloatField(blank=True, default=0, null=True)
+    inv_sell_quoted = models.FloatField(blank=True, default=0, null=True)
+    inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
+    b_del_to_signed_name = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    b_del_to_signed_time = models.DateTimeField(blank=True, null=True, default=None)
+    z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
+    b_fp_qty_delivered = models.IntegerField(blank=True, default=0, null=True)
+    jobNumber = models.CharField(max_length=45, blank=True, null=True, default=None)
+    jobDate = models.CharField(max_length=45, blank=True, null=True, default=None)
+    vx_account_code = models.CharField(max_length=32, blank=True, null=True, default="")
+    b_booking_project = models.CharField(
+        max_length=250, blank=True, null=True, default=None
+    )
+    b_project_opened = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_inventory_due = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_wh_unpack = models.DateTimeField(blank=True, null=True, default=None)
+    b_project_dd_receive_date = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
 
     class Meta:
         db_table = "dme_bookings"
@@ -1243,9 +1316,11 @@ class Bookings(models.Model):
         return int(max)
 
     def has_comms(self):
-        comms = Dme_comm_and_task.objects.filter(fk_booking_id=self.pk_booking_id)
+        comms_count = Dme_comm_and_task.objects.filter(
+            fk_booking_id=self.pk_booking_id
+        ).count()
 
-        if len(comms) == 0:
+        if comms_count == 0:
             return False
         else:
             return True
@@ -1317,7 +1392,7 @@ class Booking_lines(models.Model):
     e_weightUOM = models.CharField(
         verbose_name=_("Weight UOM"), max_length=56, blank=True, null=True
     )
-    e_weightPerEach = models.IntegerField(
+    e_weightPerEach = models.FloatField(
         verbose_name=_("Weight Per Each"), blank=True, null=True
     )
     e_dimUOM = models.CharField(
@@ -1392,6 +1467,7 @@ class Booking_lines(models.Model):
     e_qty_returned = models.IntegerField(blank=True, null=True, default=0)
     e_qty_shortages = models.IntegerField(blank=True, null=True, default=0)
     e_qty_scanned_fp = models.IntegerField(blank=True, null=True, default=0)
+    z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
     z_createdTimeStamp = models.DateTimeField(
         verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
     )
@@ -1445,6 +1521,7 @@ class Booking_lines_data(models.Model):
     itemSerialNumbers = models.CharField(
         verbose_name=_("Item Serial Numbers"), max_length=100, blank=True, null=True
     )
+    z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created By Account"), max_length=25, blank=True, null=True
     )
@@ -1465,7 +1542,9 @@ class Booking_lines_data(models.Model):
 class Dme_attachments(models.Model):
     pk_id_attachment = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    fk_id_dme_booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    fk_id_dme_booking = models.CharField(
+        verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
+    )
     fileName = models.CharField(verbose_name=_("filename"), max_length=230, blank=False)
     linkurl = models.CharField(
         verbose_name=_("linkurl"), max_length=430, blank=True, null=True
@@ -1887,6 +1966,9 @@ class BOK_1_headers(models.Model):
     b_100_client_price_paid_or_quoted = models.FloatField(
         max_length=64, blank=True, null=True, default=0
     )
+    b_000_3_consignment_number = models.CharField(
+        max_length=32, blank=True, null=True, default=""
+    )
     z_test = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default="")
@@ -2209,10 +2291,10 @@ class Api_booking_confirmation_lines(models.Model):
         db_table = "api_booking_confirmation_lines"
 
 
-class api_booking_quotes(models.Model):
+class API_booking_quotes(models.Model):
     id = models.AutoField(primary_key=True)
-    api_results_id = models.IntegerField(
-        verbose_name=_("Result ID"), blank=True, null=True
+    api_results_id = models.CharField(
+        verbose_name=_("Result ID"), blank=True, null=True, max_length=128
     )
     fk_booking_id = models.CharField(
         verbose_name=_("Booking ID"), max_length=64, blank=True, null=True
@@ -2223,6 +2305,9 @@ class api_booking_quotes(models.Model):
     fk_freight_provider_id = models.CharField(
         verbose_name=_("Freight Provider ID"), max_length=64, blank=True, null=True
     )
+    account_code = models.CharField(
+        verbose_name=_("Account Code"), max_length=32, blank=True, null=True
+    )
     provider = models.CharField(
         verbose_name=_("Provider"), max_length=64, blank=True, null=True
     )
@@ -2230,38 +2315,38 @@ class api_booking_quotes(models.Model):
         verbose_name=_("Service Code"), max_length=10, blank=True, null=True
     )
     service_name = models.CharField(
-        verbose_name=_("Service Name"), max_length=24, blank=True, null=True
+        verbose_name=_("Service Name"), max_length=64, blank=True, null=True
     )
     fee = models.FloatField(verbose_name=_("Fee"), blank=True, null=True)
     etd = models.CharField(verbose_name=_("ETD"), max_length=64, blank=True, null=True)
     tax_id_1 = models.CharField(
         verbose_name=_("Tax ID 1"), max_length=10, blank=True, null=True
     )
-    tax_value_1 = models.IntegerField(
+    tax_value_1 = models.FloatField(
         verbose_name=_("Tax Value 1"), blank=True, null=True
     )
     tax_id_2 = models.CharField(
         verbose_name=_("Tax ID 2"), max_length=10, blank=True, null=True
     )
-    tax_value_2 = models.IntegerField(
+    tax_value_2 = models.FloatField(
         verbose_name=_("Tax Value 2"), blank=True, null=True
     )
     tax_id_3 = models.CharField(
         verbose_name=_("Tax ID 3"), max_length=10, blank=True, null=True
     )
-    tax_value_3 = models.IntegerField(
+    tax_value_3 = models.FloatField(
         verbose_name=_("Tax Value 3"), blank=True, null=True
     )
     tax_id_4 = models.CharField(
         verbose_name=_("Tax ID 4"), max_length=10, blank=True, null=True
     )
-    tax_value_4 = models.IntegerField(
+    tax_value_4 = models.FloatField(
         verbose_name=_("Tax Value 4"), blank=True, null=True
     )
     tax_id_5 = models.CharField(
         verbose_name=_("Tax ID 5"), max_length=10, blank=True, null=True
     )
-    tax_value_5 = models.IntegerField(
+    tax_value_5 = models.FloatField(
         verbose_name=_("Tax Value 5"), blank=True, null=True
     )
     b_client_markup2_percentage = models.FloatField(
@@ -2867,6 +2952,7 @@ class Utl_dme_status(models.Model):
     dev_notes = models.TextField(max_length=400, blank=True, null=True)
     sort_order = models.FloatField(verbose_name=_("sort order"), default=1)
     z_show_client_option = models.BooleanField(null=True, blank=True, default=False)
+    dme_status_label = models.CharField(max_length=128, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2890,6 +2976,9 @@ class Dme_utl_fp_statuses(models.Model):
     fp_name = models.CharField(max_length=50, blank=True, null=True)
     fp_original_status = models.TextField(max_length=400, blank=True, null=True)
     fp_lookup_status = models.TextField(max_length=400, blank=True, null=True)
+    fp_status_description = models.TextField(
+        max_length=1024, blank=True, null=True, default=""
+    )
     dme_status = models.CharField(max_length=150, blank=True, null=True)
     if_scan_total_in_booking_greaterthanzero = models.CharField(
         max_length=32, blank=True, null=True
@@ -2965,6 +3054,7 @@ class Fp_freight_providers(models.Model):
     fp_inactive_date = models.DateField(blank=True, null=True)
     fp_manifest_cnt = models.IntegerField(default=1, blank=True, null=True)
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
+    fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -3022,27 +3112,127 @@ class Utl_dme_status_actions(models.Model):
         db_table = "utl_dme_status_actions"
 
 
-class Dme_manifest_log(models.Model):
+class FP_zones(models.Model):
     id = models.AutoField(primary_key=True)
-    fk_booking_id = models.CharField(
-        verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
+    suburb = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=50, blank=True, null=True)
+    postal_code = models.CharField(max_length=16, blank=True, null=True)
+    zone = models.CharField(max_length=50, blank=True, null=True)
+    carrier = models.CharField(max_length=50, blank=True, null=True)
+    service = models.CharField(max_length=50, blank=True, null=True)
+    sender_code = models.CharField(max_length=50, blank=True, null=True)
+    fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+
+    class Meta:
+        db_table = "fp_zones"
+
+
+class FP_carriers(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+    carrier = models.CharField(max_length=50, blank=True, null=True)
+    connote_start_value = models.IntegerField(default=None, blank=True, null=True)
+    connote_end_value = models.IntegerField(default=None, blank=True, null=True)
+    label_start_value = models.IntegerField(default=None, blank=True, null=True)
+    label_end_value = models.IntegerField(default=None, blank=True, null=True)
+    current_value = models.IntegerField(default=None, blank=True, null=True)
+
+    class Meta:
+        db_table = "fp_carriers"
+
+
+class FP_label_scans(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+    label_code = models.CharField(max_length=32, blank=True, null=True, default=None)
+    client_item_reference = models.CharField(
+        max_length=32, blank=True, null=True, default=None
     )
-    manifest_number = models.CharField(max_length=32, blank=True, null=True)
-    manifest_url = models.CharField(max_length=200, blank=True, null=True)
-    is_one_booking = models.BooleanField(blank=True, null=True, default=False)
-    bookings_cnt = models.IntegerField(default=0, blank=True, null=True)
+    scanned_date = models.DateField(blank=True, null=True, default=None)
+    scanned_time = models.TimeField(blank=True, null=True, default=None)
+    scanned_by = models.CharField(max_length=32, blank=True, null=True, default=None)
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "fp_label_scans"
+
+
+class DME_reports(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=128, blank=True, null=True)
+    type = models.CharField(max_length=32, blank=True, null=True)
+    url = models.TextField(max_length=512, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
     z_createdTimeStamp = models.DateTimeField(
         verbose_name=_("Created Timestamp"), default=datetime.now
     )
-    z_modifiedByAccount = models.CharField(
-        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
     )
-    z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), default=datetime.now
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
     )
 
     class Meta:
-        db_table = "dme_manifest_log"
+        db_table = "dme_reports"
+
+
+class DME_Label_Settings(models.Model):
+    id = models.AutoField(primary_key=True)
+    uom = models.CharField(max_length=24, blank=True, null=True, default="")
+    font_family = models.CharField(max_length=128, blank=True, null=True)
+    font_size_small = models.FloatField(blank=True, null=True, default=0)
+    font_size_medium = models.FloatField(blank=True, null=True, default=0)
+    font_size_large = models.FloatField(blank=True, null=True, default=0)
+    label_dimension_length = models.FloatField(blank=True, null=True, default=0)
+    label_dimension_width = models.FloatField(blank=True, null=True, default=0)
+    label_image_size_length = models.FloatField(blank=True, null=True, default=0)
+    label_image_size_width = models.FloatField(blank=True, null=True, default=0)
+    barcode_dimension_length = models.FloatField(blank=True, null=True, default=0)
+    barcode_dimension_width = models.FloatField(blank=True, null=True, default=0)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "label_settings"
+
+
+class DME_Email_Templates(models.Model):
+    id = models.AutoField(primary_key=True)
+    fk_idEmailParent = models.IntegerField(blank=True, null=True, default=0)
+    emailName = models.CharField(max_length=255, blank=True, null=True)
+    emailBody = models.TextField(blank=True, null=True)
+    sectionName = models.TextField(max_length=255, blank=True, null=True)
+    emailBodyRepeatEven = models.TextField(max_length=2048, blank=True, null=True)
+    emailBodyRepeatOdd = models.TextField(max_length=2048, blank=True, null=True)
+    whenAttachmentUnavailable = models.TextField(blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Downloaded by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Downloaded Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "dme_email_templates"

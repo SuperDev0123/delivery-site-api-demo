@@ -1,5 +1,23 @@
+import pytz
+import os
+import io
+import json
+import zipfile
+import uuid
+import time
+import logging
+import operator
+from wsgiref.util import FileWrapper
+from datetime import datetime, date, timedelta
+from time import gmtime, strftime
+from ast import literal_eval
+from functools import reduce
+from pydash import _
+import requests
+import tempfile
+
 from django.shortcuts import render
-from django.core import serializers
+from django.core import serializers, files
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets, views, status, authentication, permissions
@@ -13,21 +31,10 @@ from rest_framework.decorators import (
 )
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
-from django.db.models import Q
-from wsgiref.util import FileWrapper
-from datetime import datetime, date, timedelta
-from time import gmtime, strftime
+from django.db.models import Q, Case, When
 from django.utils import timezone
-from ast import literal_eval
-from pydash import _
-import pytz
-import os
-import io
-import json
-import zipfile
-import uuid
-import time
-import logging
+from django.conf import settings
+from api.common import convert_price
 
 from .serializers import *
 from .models import *
@@ -35,7 +42,7 @@ from .utils import (
     clearFileCheckHistory,
     getFileCheckHistory,
     save2Redis,
-    generate_csv,
+    _generate_csv,
     build_xml,
     build_pdf,
     build_xls_and_send,
@@ -43,6 +50,7 @@ from .utils import (
     make_3digit,
     build_manifest,
     get_sydney_now_time,
+    get_client_name,
 )
 
 logger = logging.getLogger("dme_api")
@@ -348,6 +356,14 @@ class BookingsViewSet(viewsets.ViewSet):
         client_pk = self.request.query_params.get("clientPK", None)
         page_item_cnt = self.request.query_params.get("pageItemCnt", 10)
         page_ind = self.request.query_params.get("pageInd", 0)
+        dme_status = self.request.query_params.get("dmeStatus", None)
+        multi_find_field = self.request.query_params.get("multiFindField", None)
+        multi_find_values = self.request.query_params.get("multiFindValues", "")
+        project_name = self.request.query_params.get("projectName", None)
+
+        if multi_find_values:
+            multi_find_values = multi_find_values.split(", ")
+        # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
 
         # if user_type == 'CLIENT':
         #     print('@01 - Client filter: ', client.dme_account_num)
@@ -371,6 +387,8 @@ class BookingsViewSet(viewsets.ViewSet):
         # print('@07 - Simple search keyword: ', simple_search_keyword)
         # print('@08 - Download Option: ', download_option)
         # print('@09 - Client PK: ', client_pk)
+        # print("@010 - MultiFind Field: ", multi_find_field)
+        # print("@011 - MultiFind Values: ", multi_find_values)
 
         # DME & Client filter
         if user_type == "DME":
@@ -390,7 +408,11 @@ class BookingsViewSet(viewsets.ViewSet):
             client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
             queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
-        if "new" in download_option or "check_pod" in download_option:
+        if (
+            "new" in download_option
+            or "check_pod" in download_option
+            or "flagged" in download_option
+        ):
             # New POD filter
             if download_option == "new_pod":
                 queryset = queryset.filter(
@@ -431,6 +453,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     .order_by("-check_pod")
                 )
 
+            # Flagged
+            if download_option == "flagged":
+                queryset = queryset.filter(b_is_flagged_add_on_services=True)
+
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
         else:
@@ -441,51 +467,97 @@ class BookingsViewSet(viewsets.ViewSet):
                         z_CreatedTimestamp__range=(first_date, last_date)
                     )
                 else:
-                    if (
-                        client.company_name == "Seaway"
-                        or client.company_name == "Seaway-Hanalt"
-                        or client.company_name == "Tempo"
-                    ):
-                        queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
-                        )
-                    elif client.company_name == "BioPak":
+                    if client.company_name == "BioPak":
                         queryset = queryset.filter(
                             puPickUpAvailFrom_Date__range=(first_date, last_date)
+                        )
+                    else:
+                        queryset = queryset.filter(
+                            z_CreatedTimestamp__range=(first_date, last_date)
                         )
 
             # Warehouse filter
             if int(warehouse_id) is not 0:
                 queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
-            # Simple search & Column fitler
-            if len(simple_search_keyword) > 0:
-                queryset = queryset.filter(
-                    Q(b_bookingID_Visual__icontains=simple_search_keyword)
-                    | Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword)
-                    | Q(puCompany__icontains=simple_search_keyword)
-                    | Q(pu_Address_Suburb__icontains=simple_search_keyword)
-                    | Q(pu_Address_State__icontains=simple_search_keyword)
-                    | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
-                    | Q(deToCompanyName__icontains=simple_search_keyword)
-                    | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
-                    | Q(de_To_Address_State__icontains=simple_search_keyword)
-                    | Q(de_To_Address_PostalCode__icontains=simple_search_keyword)
-                    | Q(b_clientReference_RA_Numbers__icontains=simple_search_keyword)
-                    | Q(vx_freight_provider__icontains=simple_search_keyword)
-                    | Q(vx_serviceName__icontains=simple_search_keyword)
-                    | Q(v_FPBookingNumber__icontains=simple_search_keyword)
-                    | Q(b_status__icontains=simple_search_keyword)
-                    | Q(b_status_API__icontains=simple_search_keyword)
-                    | Q(s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword)
-                    | Q(
-                        s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
-                    )
-                    | Q(s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword)
-                    | Q(s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword)
-                    | Q(b_client_sales_inv_num__icontains=simple_search_keyword)
-                    | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
+            # Mulitple search | Simple search | Column fitler
+            if project_name and len(project_name) > 0:
+                queryset = queryset.filter(b_booking_project=project_name)
+            elif multi_find_values and len(multi_find_values) > 0:
+                preserved = Case(
+                    *[
+                        When(**{f"{multi_find_field}": multi_find_value, "then": pos})
+                        for pos, multi_find_value in enumerate(multi_find_values)
+                    ]
                 )
+                filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
+                queryset = queryset.filter(**filter_kwargs).order_by(preserved)
+            elif simple_search_keyword and len(simple_search_keyword) > 0:
+                if (
+                    not "&" in simple_search_keyword
+                    and not "|" in simple_search_keyword
+                ):
+                    queryset = queryset.filter(
+                        Q(b_bookingID_Visual__icontains=simple_search_keyword)
+                        | Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword)
+                        | Q(puCompany__icontains=simple_search_keyword)
+                        | Q(pu_Address_Suburb__icontains=simple_search_keyword)
+                        | Q(pu_Address_State__icontains=simple_search_keyword)
+                        | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
+                        | Q(deToCompanyName__icontains=simple_search_keyword)
+                        | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
+                        | Q(de_To_Address_State__icontains=simple_search_keyword)
+                        | Q(de_To_Address_PostalCode__icontains=simple_search_keyword)
+                        | Q(
+                            b_clientReference_RA_Numbers__icontains=simple_search_keyword
+                        )
+                        | Q(vx_freight_provider__icontains=simple_search_keyword)
+                        | Q(vx_serviceName__icontains=simple_search_keyword)
+                        | Q(v_FPBookingNumber__icontains=simple_search_keyword)
+                        | Q(b_status__icontains=simple_search_keyword)
+                        | Q(b_status_API__icontains=simple_search_keyword)
+                        | Q(
+                            s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
+                        )
+                        | Q(
+                            s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
+                        )
+                        | Q(
+                            s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword
+                        )
+                        | Q(
+                            s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword
+                        )
+                        | Q(b_client_sales_inv_num__icontains=simple_search_keyword)
+                        | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
+                        | Q(
+                            de_to_PickUp_Instructions_Address__icontains=simple_search_keyword
+                        )
+                    )
+                else:
+                    if "&" in simple_search_keyword:
+                        search_keywords = simple_search_keyword.split("&")
+
+                        for search_keyword in search_keywords:
+                            search_keyword = search_keyword.replace(" ", "").lower()
+
+                            if len(search_keyword) > 0:
+                                queryset = queryset.filter(
+                                    de_to_PickUp_Instructions_Address__icontains=search_keyword
+                                )
+                    elif "|" in simple_search_keyword:
+                        search_keywords = simple_search_keyword.split("|")
+
+                        for index, search_keyword in enumerate(search_keywords):
+                            search_keywords[index] = search_keyword.replace(
+                                " ", ""
+                            ).lower()
+
+                        list_of_Q = [
+                            Q(**{"de_to_PickUp_Instructions_Address__icontains": val})
+                            for val in search_keywords
+                        ]
+                        queryset = queryset.filter(reduce(operator.or_, list_of_Q))
             else:
                 queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
@@ -501,7 +573,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 errors_to_correct += 1
             if booking.z_label_url is None or len(booking.z_label_url) == 0:
                 missing_labels += 1
-            if booking.b_status == "Booked":
+            if booking.b_status == "Booked" and not booking.z_manifest_url:
                 to_manifest += 1
             if booking.b_status == "Ready to booking":
                 to_process += 1
@@ -523,13 +595,18 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(b_status__icontains="Ready to booking")
         elif active_tab_ind == 5:
             queryset = queryset.filter(b_status__icontains="Closed")
+        elif prefilter == 6:
+            queryset = queryset.filter(b_status=dme_status)
 
         # Sort
-        if download_option != "check_pod":
+        if download_option != "check_pod" and len(multi_find_values) == 0:
             if sort_field is None:
                 queryset = queryset.order_by("id")
             else:
-                queryset = queryset.order_by(sort_field)
+                if sort_field == "z_pod_url":
+                    queryset = queryset.order_by(sort_field, "z_pod_signed_url")
+                else:
+                    queryset = queryset.order_by(sort_field)
 
         # Count
         bookings_cnt = queryset.count()
@@ -537,6 +614,9 @@ class BookingsViewSet(viewsets.ViewSet):
         filtered_booking_ids = []
         for booking in queryset:
             filtered_booking_ids.append(booking.id)
+
+        bookings = queryset
+        ret_data = []
 
         # Pagination
         page_cnt = (
@@ -606,6 +686,17 @@ class BookingsViewSet(viewsets.ViewSet):
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                     "b_client_name": booking.b_client_name,
                     "check_pod": booking.check_pod,
+                    "fk_manifest_id": booking.fk_manifest_id,
+                    "b_is_flagged_add_on_services": booking.b_is_flagged_add_on_services,
+                    "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
+                    "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
+                    "b_fp_qty_delivered": booking.b_fp_qty_delivered,
+                    "manifest_timestamp": booking.manifest_timestamp,
+                    "b_booking_project": booking.b_booking_project,
+                    "b_project_opened": booking.b_project_opened,
+                    "b_project_inventory_due": booking.b_project_inventory_due,
+                    "b_project_wh_unpack": booking.b_project_wh_unpack,
+                    "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                 }
             )
 
@@ -645,40 +736,50 @@ class BookingsViewSet(viewsets.ViewSet):
         booking_ids = request.data["bookingIds"]
 
         try:
-            for booking_id in booking_ids:
-                booking = Bookings.objects.get(pk=booking_id)
+            if "flag_add_on_services" in status:
+                for booking_id in booking_ids:
+                    booking = Bookings.objects.get(pk=booking_id)
+                    booking.b_is_flagged_add_on_services = (
+                        1 if status == "flag_add_on_services" else 0
+                    )
+                    booking.save()
+                return JsonResponse({"status": "success"})
+            else:
+                for booking_id in booking_ids:
+                    booking = Bookings.objects.get(pk=booking_id)
 
-                # Create new status_history
-                dme_status_history = Dme_status_history(
-                    fk_booking_id=booking.pk_booking_id
-                )
-                dme_status_history.status_old = booking.b_status
-                dme_status_history.notes = (
-                    str(booking.b_status) + " ---> " + str(status)
-                )
-                dme_status_history.status_last = status
-                dme_status_history.event_time_stamp = datetime.now()
-                dme_status_history.recipient_name = ""
-                dme_status_history.status_update_via = ""
-                dme_status_history.z_createdByAccount = request.user.username
-                dme_status_history.save()
-
-                # When new status is `Collected`
-                if status == "Collected":
-                    booking_lines = Booking_lines.objects.filter(
+                    # Create new status_history
+                    dme_status_history = Dme_status_history(
                         fk_booking_id=booking.pk_booking_id
                     )
-                    for booking_line in booking_lines:
-                        booking_line.e_qty_collected = (
-                            booking_line.e_qty - booking_line.e_qty_awaiting_inventory
-                        )
-                        booking_line.save()
+                    dme_status_history.status_old = booking.b_status
+                    dme_status_history.notes = (
+                        str(booking.b_status) + " ---> " + str(status)
+                    )
+                    dme_status_history.status_last = status
+                    dme_status_history.event_time_stamp = datetime.now()
+                    dme_status_history.recipient_name = ""
+                    dme_status_history.status_update_via = ""
+                    dme_status_history.z_createdByAccount = request.user.username
+                    dme_status_history.save()
 
-                booking.b_status = status
-                booking.save()
-            return JsonResponse({"status": "success"})
+                    # When new status is `Collected`
+                    if status == "Collected":
+                        booking_lines = Booking_lines.objects.filter(
+                            fk_booking_id=booking.pk_booking_id
+                        )
+                        for booking_line in booking_lines:
+                            booking_line.e_qty_collected = (
+                                booking_line.e_qty
+                                - booking_line.e_qty_awaiting_inventory
+                            )
+                            booking_line.save()
+
+                    booking.b_status = status
+                    booking.save()
+                return JsonResponse({"status": "success"})
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["get"])
@@ -766,17 +867,13 @@ class BookingsViewSet(viewsets.ViewSet):
                 z_CreatedTimestamp__range=(first_date, last_date)
             )
         else:
-            if (
-                client.company_name == "Seaway"
-                or client.company_name == "Seaway-Hanalt"
-                or client.company_name == "Tempo"
-            ):
-                queryset = queryset.filter(
-                    z_CreatedTimestamp__range=(first_date, last_date)
-                )
-            elif client.company_name == "BioPak":
+            if client.company_name == "BioPak":
                 queryset = queryset.filter(
                     puPickUpAvailFrom_Date__range=(first_date, last_date)
+                )
+            else:
+                queryset = queryset.filter(
+                    z_CreatedTimestamp__range=(first_date, last_date)
                 )
 
         # Freight Provider filter
@@ -950,6 +1047,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "dme_status_detail": booking.dme_status_detail,
                     "dme_status_action": booking.dme_status_action,
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
+                    "z_manifest_url": booking.z_manifest_url,
                 }
             )
 
@@ -983,6 +1081,170 @@ class BookingsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return JsonResponse({"error": "Got error, please contact support center"})
+
+    @action(detail=False, methods=["get"])
+    def get_status_info(self, request, format=None):
+        user_id = int(self.request.user.id)
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is not None:
+            user_type = "DME"
+        else:
+            user_type = "CLIENT"
+            client_employee = (
+                Client_employees.objects.select_related()
+                .filter(fk_id_user=user_id)
+                .first()
+            )
+            client_employee_role = client_employee.get_role()
+            client = (
+                DME_clients.objects.select_related()
+                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                .first()
+            )
+
+        start_date = self.request.query_params.get("startDate", None)
+        end_date = self.request.query_params.get("endDate", None)
+        first_date = datetime.strptime(start_date, "%Y-%m-%d")
+        last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        client_pk = self.request.query_params.get("clientPK", None)
+
+        # DME & Client filter
+        if user_type == "DME":
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == "company":
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == "warehouse":
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(
+                    kf_client_id=client.dme_account_num,
+                    fk_client_warehouse_id=employee_warehouse_id,
+                )
+
+        # Client filter
+        if client_pk is not "0":
+            client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+
+        # Date filter
+        if user_type == "DME":
+            queryset = queryset.filter(
+                z_CreatedTimestamp__range=(first_date, last_date)
+            )
+        else:
+            if client.company_name == "BioPak":
+                queryset = queryset.filter(
+                    puPickUpAvailFrom_Date__range=(first_date, last_date)
+                )
+            else:
+                queryset = queryset.filter(
+                    z_CreatedTimestamp__range=(first_date, last_date)
+                )
+
+        # Get all statuses
+        dme_statuses = Utl_dme_status.objects.all().order_by("dme_delivery_status")
+
+        ret_data = []
+        for dme_status in dme_statuses:
+            ret_data.append(
+                {
+                    "dme_delivery_status": dme_status.dme_delivery_status,
+                    "dme_status_label": dme_status.dme_status_label
+                    if dme_status.dme_status_label is not None
+                    else dme_status.dme_delivery_status,
+                    "count": queryset.filter(
+                        b_status=dme_status.dme_delivery_status
+                    ).count(),
+                }
+            )
+
+        return JsonResponse({"results": ret_data})
+
+    @action(detail=False, methods=["get"])
+    def get_manifest_report(self, request, format=None):
+        clientname = get_client_name(self.request)
+
+        if clientname in ["BioPak", "dme"]:
+            st_bookings_has_manifest = (
+                Bookings.objects.exclude(manifest_timestamp__isnull=True)
+                .filter(vx_freight_provider__iexact="startrack")
+                .order_by("-manifest_timestamp")
+            )
+            manifest_dates = st_bookings_has_manifest.values_list(
+                "manifest_timestamp", flat=True
+            ).distinct()
+
+            results = []
+            for manifest_date in manifest_dates:
+                result = {}
+
+                each_day_manifest_bookings = st_bookings_has_manifest.filter(
+                    manifest_timestamp=manifest_date
+                )
+                first_booking = each_day_manifest_bookings.first()
+                result["count"] = each_day_manifest_bookings.count()
+                result["z_manifest_url"] = first_booking.z_manifest_url
+                result[
+                    "warehouse_name"
+                ] = first_booking.fk_client_warehouse.warehousename
+                result["manifest_date"] = manifest_date
+                results.append(result)
+        else:
+            return JsonResponse(
+                {"message": "You have no permission to see this information"},
+                status=400,
+            )
+
+        return JsonResponse({"results": results})
+
+    @action(detail=False, methods=["get"])
+    def get_project_names(self, request, format=None):
+        user_id = int(self.request.user.id)
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is not None:
+            user_type = "DME"
+        else:
+            user_type = "CLIENT"
+            client_employee = (
+                Client_employees.objects.select_related()
+                .filter(fk_id_user=user_id)
+                .first()
+            )
+            client_employee_role = client_employee.get_role()
+            client = (
+                DME_clients.objects.select_related()
+                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                .first()
+            )
+
+        # DME & Client filter
+        if user_type == "DME":
+            queryset = Bookings.objects.all()
+        else:
+            if client_employee_role == "company":
+                queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
+            elif client_employee_role == "warehouse":
+                employee_warehouse_id = client_employee.warehouse_id
+                queryset = Bookings.objects.filter(
+                    kf_client_id=client.dme_account_num,
+                    fk_client_warehouse_id=employee_warehouse_id,
+                )
+
+        results = (
+            queryset.exclude(
+                Q(b_booking_project__isnull=True) | Q(b_booking_project__exact="")
+            )
+            .values_list("b_booking_project", flat=True)
+            .distinct()
+        )
+
+        return JsonResponse({"results": list(results)})
 
 
 class BookingViewSet(viewsets.ViewSet):
@@ -1043,6 +1305,8 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == "id":
                 booking = queryset.get(id=idBookingNumber)
+            elif filterName == "null":
+                booking = queryset.last()
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
@@ -1056,6 +1320,26 @@ class BookingViewSet(viewsets.ViewSet):
                     nextBookingId = nextBooking.id
                 if prevBooking is not None:
                     prevBookingId = prevBooking.id
+
+                # Get count for `Shipment Packages / Goods`
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+                e_qty_total = 0
+                for booking_line in booking_lines:
+                    e_qty_total += (
+                        booking_line.e_qty if booking_line.e_qty is not None else 0
+                    )
+
+                # Get count for `Communication Log`
+                comms = Dme_comm_and_task.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+
+                # Get count for 'Attachments'
+                attachments = Dme_attachments.objects.filter(
+                    fk_id_dme_booking=booking.pk_booking_id
+                )
 
                 return_data = []
                 if booking is not None:
@@ -1136,171 +1420,56 @@ class BookingViewSet(viewsets.ViewSet):
                         "v_vehicle_Type": booking.v_vehicle_Type,
                         "inv_billing_status": booking.inv_billing_status,
                         "inv_billing_status_note": booking.inv_billing_status_note,
+                        "b_client_sales_inv_num": booking.b_client_sales_inv_num,
+                        "b_client_order_num": booking.b_client_order_num,
+                        "b_client_name_sub": booking.b_client_name_sub,
+                        "inv_dme_invoice_no": booking.inv_dme_invoice_no,
+                        "fp_invoice_no": booking.fp_invoice_no,
+                        "inv_cost_quoted": booking.inv_cost_quoted,
+                        "inv_cost_actual": booking.inv_cost_actual,
+                        "inv_sell_quoted": booking.inv_sell_quoted,
+                        "inv_sell_actual": booking.inv_sell_actual,
+                        "x_manual_booked_flag": booking.x_manual_booked_flag,
+                        "b_fp_qty_delivered": booking.b_fp_qty_delivered,
+                        "manifest_timestamp": booking.manifest_timestamp,
+                        "b_booking_project": booking.b_booking_project,
+                        "b_project_opened": booking.b_project_opened,
+                        "b_project_inventory_due": booking.b_project_inventory_due,
+                        "b_project_wh_unpack": booking.b_project_wh_unpack,
+                        "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                     }
                     return JsonResponse(
                         {
                             "booking": return_data,
                             "nextid": nextBookingId,
                             "previd": prevBookingId,
+                            "e_qty_total": e_qty_total,
+                            "cnt_comms": len(comms),
+                            "cnt_attachments": len(attachments),
                         }
                     )
             else:
-                return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
+                return JsonResponse(
+                    {
+                        "booking": {},
+                        "nextid": 0,
+                        "previd": 0,
+                        "e_qty_total": 0,
+                        "cnt_comms": 0,
+                        "cnt_attachments": 0,
+                    }
+                )
         except Bookings.DoesNotExist:
-            return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-
-    @action(detail=False, methods=["get"])
-    def get_latest_booking(self, request, format=None):
-        user_id = request.user.id
-
-        try:
-            dme_employee = (
-                DME_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+            return JsonResponse(
+                {
+                    "booking": {},
+                    "nextid": 0,
+                    "previd": 0,
+                    "e_qty_total": 0,
+                    "cnt_comms": 0,
+                    "cnt_attachments": 0,
+                }
             )
-
-            if dme_employee is not None:
-                user_type = "DME"
-            else:
-                user_type = "CLIENT"
-
-            if user_type == "DME":
-                queryset = Bookings.objects.all()
-            else:
-                client_employee = (
-                    Client_employees.objects.select_related()
-                    .filter(fk_id_user=user_id)
-                    .first()
-                )
-
-                if client_employee is None:
-                    return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-
-                client_employee_role = client_employee.get_role()
-                client = DME_clients.objects.get(
-                    pk_id_dme_client=client_employee.fk_id_dme_client_id
-                )
-
-                if client is None:
-                    return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-
-                if client_employee_role == "company":
-                    queryset = Bookings.objects.filter(
-                        kf_client_id=client.dme_account_num
-                    )
-                elif client_employee_role == "warehouse":
-                    employee_warehouse_id = client_employee.warehouse_id
-                    queryset = Bookings.objects.filter(
-                        kf_client_id=client.dme_account_num,
-                        fk_client_warehouse_id=employee_warehouse_id,
-                    )
-
-            booking = queryset.last()
-
-            if booking is not None:
-                nextBooking = queryset.filter(id__gt=booking.id).order_by("id").first()
-                prevBooking = queryset.filter(id__lt=booking.id).order_by("-id").first()
-                nextBookingId = 0
-                prevBookingId = 0
-
-                if nextBooking is not None:
-                    nextBookingId = nextBooking.id
-                if prevBooking is not None:
-                    prevBookingId = prevBooking.id
-
-                return_data = []
-
-                if booking is not None:
-                    return_data = {
-                        "id": booking.id,
-                        "puCompany": booking.puCompany,
-                        "pu_Address_Street_1": booking.pu_Address_Street_1,
-                        "pu_Address_street_2": booking.pu_Address_street_2,
-                        "pu_Address_PostalCode": booking.pu_Address_PostalCode,
-                        "pu_Address_Suburb": booking.pu_Address_Suburb,
-                        "pu_Address_Country": booking.pu_Address_Country,
-                        "pu_Contact_F_L_Name": booking.pu_Contact_F_L_Name,
-                        "pu_Phone_Main": booking.pu_Phone_Main,
-                        "pu_Email": booking.pu_Email,
-                        "de_To_Address_Street_1": booking.de_To_Address_Street_1,
-                        "de_To_Address_Street_2": booking.de_To_Address_Street_2,
-                        "de_To_Address_PostalCode": booking.de_To_Address_PostalCode,
-                        "de_To_Address_Suburb": booking.de_To_Address_Suburb,
-                        "de_To_Address_Country": booking.de_To_Address_Country,
-                        "de_to_Contact_F_LName": booking.de_to_Contact_F_LName,
-                        "de_to_Phone_Main": booking.de_to_Phone_Main,
-                        "de_Email": booking.de_Email,
-                        "deToCompanyName": booking.deToCompanyName,
-                        "b_bookingID_Visual": booking.b_bookingID_Visual,
-                        "v_FPBookingNumber": booking.v_FPBookingNumber,
-                        "pk_booking_id": booking.pk_booking_id,
-                        "vx_freight_provider": booking.vx_freight_provider,
-                        "z_label_url": booking.z_label_url,
-                        "pu_Address_State": booking.pu_Address_State,
-                        "de_To_Address_State": booking.de_To_Address_State,
-                        "b_status": booking.b_status,
-                        "b_dateBookedDate": booking.b_dateBookedDate,
-                        "s_20_Actual_Pickup_TimeStamp": booking.s_20_Actual_Pickup_TimeStamp,
-                        "s_21_Actual_Delivery_TimeStamp": booking.s_21_Actual_Delivery_TimeStamp,
-                        "b_client_name": booking.b_client_name,
-                        "b_client_warehouse_code": booking.b_client_warehouse_code,
-                        "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
-                        "booking_Created_For": booking.booking_Created_For,
-                        "booking_Created_For_Email": booking.booking_Created_For_Email,
-                        "vx_fp_pu_eta_time": booking.vx_fp_pu_eta_time,
-                        "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
-                        "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
-                        "de_to_Pick_Up_Instructions_Contact": booking.de_to_Pick_Up_Instructions_Contact,
-                        "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
-                        "pu_pickup_instructions_address": booking.pu_pickup_instructions_address,
-                        "pu_PickUp_Instructions_Contact": booking.pu_PickUp_Instructions_Contact,
-                        "vx_serviceName": booking.vx_serviceName,
-                        "consignment_label_link": booking.consignment_label_link,
-                        "s_02_Booking_Cutoff_Time": booking.s_02_Booking_Cutoff_Time,
-                        "puPickUpAvailFrom_Date": booking.puPickUpAvailFrom_Date,
-                        "z_CreatedTimestamp": booking.z_CreatedTimestamp,
-                        "b_dateBookedDate": booking.b_dateBookedDate,
-                        "total_lines_qty_override": booking.total_lines_qty_override,
-                        "total_1_KG_weight_override": booking.total_1_KG_weight_override,
-                        "total_Cubic_Meter_override": booking.total_Cubic_Meter_override,
-                        "b_status_API": booking.b_status_API,
-                        "z_lock_status": booking.z_lock_status,
-                        "tally_delivered": booking.tally_delivered,
-                        "dme_status_history_notes": booking.dme_status_history_notes,
-                        "dme_status_detail": booking.dme_status_detail,
-                        "dme_status_action": booking.dme_status_action,
-                        "dme_status_linked_reference_from_fp": booking.dme_status_linked_reference_from_fp,
-                        "pu_PickUp_Avail_From_Date_DME": booking.pu_PickUp_Avail_From_Date_DME,
-                        "pu_PickUp_Avail_Time_Hours": booking.pu_PickUp_Avail_Time_Hours,
-                        "pu_PickUp_Avail_Time_Minutes": booking.pu_PickUp_Avail_Time_Minutes,
-                        "pu_PickUp_By_Date_DME": booking.pu_PickUp_By_Date_DME,
-                        "pu_PickUp_By_Time_Hours_DME": booking.pu_PickUp_By_Time_Hours_DME,
-                        "pu_PickUp_By_Time_Minutes_DME": booking.pu_PickUp_By_Time_Minutes_DME,
-                        "de_Deliver_From_Date": booking.de_Deliver_From_Date,
-                        "de_Deliver_From_Hours": booking.de_Deliver_From_Hours,
-                        "de_Deliver_From_Minutes": booking.de_Deliver_From_Minutes,
-                        "de_Deliver_By_Date": booking.de_Deliver_By_Date,
-                        "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
-                        "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
-                        "client_item_references": booking.get_client_item_references(),
-                        "v_service_Type_2": booking.v_service_Type_2,
-                        "fk_fp_pickup_id": booking.fk_fp_pickup_id,
-                        "v_vehicle_Type": booking.v_vehicle_Type,
-                        "inv_billing_status": booking.inv_billing_status,
-                        "inv_billing_status_note": booking.inv_billing_status_note,
-                    }
-                    return JsonResponse(
-                        {
-                            "booking": return_data,
-                            "nextid": nextBookingId,
-                            "previd": prevBookingId,
-                        }
-                    )
-            else:
-                return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
-        except Bookings.DoesNotExist:
-            return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
     @action(detail=False, methods=["post"])
     def create_booking(self, request, format=None):
@@ -1320,7 +1489,6 @@ class BookingViewSet(viewsets.ViewSet):
         dup_line_and_linedetail = request.GET["dupLineAndLineDetail"]
         booking_id = request.GET["bookingId"]
         user_id = request.user.id
-
         booking = Bookings.objects.get(id=booking_id)
 
         if switch_info == "true":
@@ -1350,8 +1518,12 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.pu_Phone_Main,
                 "de_Email": booking.pu_Email,
                 "de_To_Address_State": booking.pu_Address_State,
-                "pk_booking_id": booking.pk_booking_id,
+                "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
+                "b_status": "Ready for booking",
+                "vx_freight_provider": booking.vx_freight_provider,
+                "kf_client_id": booking.kf_client_id,
+                "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
             }
         else:
             newBooking = {
@@ -1380,12 +1552,15 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.de_to_Phone_Main,
                 "de_Email": booking.de_Email,
                 "de_To_Address_State": booking.de_To_Address_State,
-                "pk_booking_id": booking.pk_booking_id,
+                "pk_booking_id": str(uuid.uuid1()),
                 "z_lock_status": booking.z_lock_status,
+                "b_status": "Ready for booking",
+                "vx_freight_provider": booking.vx_freight_provider,
+                "kf_client_id": booking.kf_client_id,
+                "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
             }
 
         if dup_line_and_linedetail == "true":
-            newBooking["pk_booking_id"] = str(uuid.uuid1())
             booking_lines = Booking_lines.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             )
@@ -1395,19 +1570,71 @@ class BookingViewSet(viewsets.ViewSet):
             for booking_line in booking_lines:
                 booking_line.pk_lines_id = None
                 booking_line.fk_booking_id = newBooking["pk_booking_id"]
+                booking_line.e_qty_delivered = 0
+                booking_line.e_qty_adjusted_delivered = 0
                 booking_line.save()
             for booking_line_detail in booking_line_details:
                 booking_line_detail.pk_id_lines_data = None
                 booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
                 booking_line_detail.save()
-        else:
-            newBooking["pk_booking_id"] = str(uuid.uuid1())
 
         serializer = BookingSerializer(data=newBooking)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"])
+    def tick_manual_book(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        id = body["id"]
+        user_id = request.user.id
+
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is None:
+            user_type = "CLIENT"
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        booking = Bookings.objects.get(id=id)
+
+        if booking.b_dateBookedDate:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
+            booking.x_manual_booked_flag = not booking.x_manual_booked_flag
+            booking.save()
+            serializer = BookingSerializer(booking)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["post"])
+    def manual_book(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        id = body["id"]
+        user_id = request.user.id
+
+        dme_employee = (
+            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+
+        if dme_employee is None:
+            user_type = "CLIENT"
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        booking = Bookings.objects.get(id=id)
+
+        if not booking.x_manual_booked_flag:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
+            booking.b_status = "Booked"
+            booking.b_dateBookedDate = datetime.now()
+            booking.x_booking_Created_With = "Manual"
+            booking.save()
+            serializer = BookingSerializer(booking)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
@@ -1453,6 +1680,22 @@ class BookingLinesViewSet(viewsets.ViewSet):
             )
 
         return JsonResponse({"booking_lines": return_data})
+
+    @action(detail=False, methods=["get"])
+    def get_count(self, request, format=None):
+        booking_ids = request.GET["bookingIds"].split(",")
+        bookings = Bookings.objects.filter(id__in=booking_ids)
+
+        count = 0
+        for booking in bookings:
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+
+            for booking_line in booking_lines:
+                count = count + booking_line.e_qty
+
+        return JsonResponse({"count": count})
 
     @action(detail=False, methods=["post"])
     def create_booking_line(self, request, format=None):
@@ -1539,7 +1782,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 {"success": "All bookings e_qty_collected has been calculated"}
             )
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return JsonResponse({"error": "Got error, please contact support center"})
 
 
@@ -1681,34 +1924,81 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
 
 class AttachmentsUploadView(views.APIView):
-    parser_classes = (MultiPartParser,)
-
-    def post(self, request, filename, format=None):
-        file_obj = request.FILES["file"]
-        user_id = request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+    def post(self, request, format=None):
+        uploadResult = handle_uploaded_file_4_booking(
+            request, request.FILES["file"], "attachments"
         )
-
-        if dme_employee is not None:
-            user_type = "DME"
-        else:
-            user_type = "CLIENT"
-
-        if user_type == "DME":
-            dme_account_num = "dme_user"
-        else:
-            client_employee = Client_employees.objects.select_related().filter(
-                fk_id_user=int(user_id)
-            )
-            dme_account_num = client_employee[0].fk_id_dme_client.dme_account_num
-        upload_file_name = request.FILES["file"].name
-        prepend_name = str(dme_account_num) + "_" + upload_file_name
-
-        uploadResult = handle_uploaded_file_attachments(request, request.FILES["file"])
-
-        html = prepend_name
         return Response(uploadResult)
+
+
+class LabelUploadView(views.APIView):
+    def post(self, request, format=None):
+        uploadResult = handle_uploaded_file_4_booking(
+            request, request.FILES["file"], "label"
+        )
+        return Response(uploadResult)
+
+
+class PodUploadView(views.APIView):
+    def post(self, request, format=None):
+        uploadResult = handle_uploaded_file_4_booking(
+            request, request.FILES["file"], "pod"
+        )
+        return Response(uploadResult)
+
+
+def handle_uploaded_file_4_booking(request, f, upload_type):
+    try:
+        bookingId = request.POST.get("booking_id", None)
+
+        if not bookingId:
+            return "failed"
+
+        user_id = request.user.id
+        client = DME_clients.objects.get(pk_id_dme_client=user_id)
+        booking = Bookings.objects.get(id=bookingId)
+        name, extension = os.path.splitext(f.name)
+
+        if upload_type == "attachments":
+            fileName = (
+                "/opt/s3_private/attachments/"
+                + name
+                + "_"
+                + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
+                + extension
+            )
+        elif upload_type == "label":
+            fileName = (
+                "/home/cope_au/dme_sftp/cope_au/labels/indata/"
+                + "DME"
+                + str(booking.b_bookingID_Visual)
+                + extension
+            )
+        elif upload_type == "pod":
+            fileName = (
+                "/home/cope_au/dme_sftp/cope_au/pods/indata/"
+                + "DME"
+                + str(booking.b_bookingID_Visual)
+                + extension
+            )
+
+        with open(fileName, "wb+") as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+
+        if upload_type == "attachments":
+            dme_attachment = Dme_attachments(
+                fk_id_dme_client=client,
+                fk_id_dme_booking=booking.pk_booking_id,
+                fileName=fileName,
+                linkurl="22",
+                upload_Date=datetime.now(),
+            )
+            dme_attachment.save()
+        return "ok"
+    except Exception as e:
+        # print('Exception: ', e)
+        return "failed"
 
 
 class CommsViewSet(viewsets.ViewSet):
@@ -2235,6 +2525,18 @@ class CommsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_comm(self, request, pk, format=None):
         dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
+
+        if (
+            dme_comm_and_task.closed != request.data["closed"]
+            and request.data["closed"]
+        ):
+            request.data["status_log_closed_time"] = datetime.now()
+        elif (
+            dme_comm_and_task.closed != request.data["closed"]
+            and not request.data["closed"]
+        ):
+            request.data["status_log_closed_time"] = None
+
         serializer = CommSerializer(dme_comm_and_task, data=request.data)
 
         try:
@@ -2248,6 +2550,8 @@ class CommsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def create_comm(self, request, pk=None):
+        if request.data["closed"]:
+            request.data["status_log_closed_time"] = datetime.now()
         serializer = CommSerializer(data=request.data)
 
         try:
@@ -2615,44 +2919,20 @@ class ApiBCLViewSet(viewsets.ViewSet):
             return JsonResponse({"results": ""})
 
 
-def handle_uploaded_file_attachments(request, f):
-    try:
-        bookingId = request.POST.get("warehouse_id", "")
+class DmeReportsViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = DME_reports.objects.all()
+        serializer = DmeReportsSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-        if bookingId == "undefined":
-            return "failed"
-        now = datetime.now()
-        now1 = now.strftime("%Y%m%d_%H%M%S")
-        name, extension = os.path.splitext(f.name)
-        fileName = (
-            "/var/www/html/dme_api/media/attachments/"
-            + name
-            + "_"
-            + str(now1)
-            + extension
-        )
 
-        with open(fileName, "wb+") as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-        user_id = request.user.id
-        client = DME_clients.objects.get(pk_id_dme_client=user_id)
-        bookingObject = Bookings.objects.get(id=bookingId)
-        saveData = Dme_attachments(
-            fk_id_dme_client=client,
-            fk_id_dme_booking=bookingObject,
-            fileName=fileName,
-            linkurl="22",
-            upload_Date=now,
-        )
-        saveData.save()
-        return "ok"
-    except Exception as e:
-        # print('Exception: ', e)
-        return "failed"
-
-    # Save history on database.
+class ApiBookingQuotesViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=["get"])
+    def get_pricings(self, request):
+        fk_booking_id = request.GET["fk_booking_id"]
+        queryset = API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
+        serializer = ApiBookingQuotesSerializer(queryset, many=True)
+        return Response(convert_price.fp_price_2_dme_price(serializer.data))
 
 
 class FileUploadView(views.APIView):
@@ -2694,13 +2974,11 @@ class FileUploadView(views.APIView):
 
 
 def handle_uploaded_file(request, dme_account_num, f):
-    # live code
     with open(
         "/var/www/html/dme_api/media/onedrive/" + str(dme_account_num) + "_" + f.name,
         "wb+",
-    ) as destination:
-        # local code(local url)
-        # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination:
+    ) as destination:  # PROD
+        # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination: # LOCAL
         for chunk in f.chunks():
             destination.write(chunk)
 
@@ -2723,21 +3001,34 @@ def upload_status(request):
 def download_pdf(request):
     body = literal_eval(request.body.decode("utf8"))
     bookingIds = body["ids"]
+    bookings = Bookings.objects.filter(id__in=bookingIds)
     file_paths = []
     label_names = []
 
-    for id in bookingIds:
-        booking = Bookings.objects.get(id=id)
+    for booking in bookings:
+        if booking.z_label_url is not None and len(booking.z_label_url) > 0:
+            # if "https://ap-prod" in booking.z_label_url:  # PYTHON CODE to download from url
+            #     request = requests.get(booking.z_label_url, stream=True)
 
-        if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            if booking.vx_freight_provider == "TASFR":
-                file_paths.append(
-                    "/opt/s3_public/pdfs/" + booking.z_label_url
-                )  # Dev & Prod
-            else:
-                file_paths.append(
-                    "/opt/s3_public/pdfs/" + booking.z_label_url
-                )  # Dev & Prod
+            #     if request.status_code != requests.codes.ok:
+            #         continue
+
+            #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
+            #     file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
+            #     # file_path = f"/Users/admin/work/goldmine/dme_api/static/pdfs/atc_au/{label_name}" # Local (Test Case)
+            #     file = open(file_path, "wb+")
+            #     for block in request.iter_content(1024 * 8):
+            #         if not block:
+            #             break
+
+            #         file.write(block)
+            #     file.close()
+            #     file_paths.append(file_path)
+            #     label_names.append(label_name)
+            # else:
+            file_paths.append(
+                f"/opt/s3_public/pdfs/{booking.z_label_url}"
+            )  # Dev & Prod
             # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
@@ -2750,8 +3041,37 @@ def download_pdf(request):
     zf = zipfile.ZipFile(s, "w")
 
     for index, file_path in enumerate(file_paths):
-        zip_path = os.path.join(zip_subdir, file_path)
         zf.write(file_path, "labels/" + label_names[index])
+    zf.close()
+
+    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+    return response
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def download_manifest(request):
+    body = literal_eval(request.body.decode("utf8"))
+    z_manifest_url = body["z_manifest_url"]
+
+    if settings.ENV in ["prod", "dev"]:
+        file_path = "/opt/s3_public/pdfs/" + z_manifest_url  # Prod & Dev
+    else:
+        file_path = (
+            "/Users/admin/work/goldmine/dme_api/static/pdfs/" + z_manifest_url
+        )  # Prod
+
+    manifest_name = z_manifest_url.split("/")[1]
+
+    zip_subdir = "manifests"
+    zip_filename = "%s.zip" % zip_subdir
+
+    s = io.BytesIO()
+    zf = zipfile.ZipFile(s, "w")
+
+    zip_path = os.path.join(zip_subdir, file_path)
+    zf.write(file_path, manifest_name)
     zf.close()
 
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
@@ -2941,66 +3261,65 @@ def download_connote(request):
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def download_csv(request):
+def generate_csv(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
+    vx_freight_provider = body.get("vx_freight_provider", None)
     file_paths = []
     label_names = []
 
     if len(booking_ids) == 0:
         return JsonResponse({"filename": "", "status": "No bookings to build CSV"})
 
-    csv_name = generate_csv(booking_ids)
+    if not vx_freight_provider:
+        vx_freight_provider = Bookings.objects.get(
+            id=booking_ids[0]
+        ).vx_freight_provider
 
-    for booking_id in booking_ids:
-        booking = Bookings.objects.get(id=booking_id)
+    has_error = _generate_csv(booking_ids, vx_freight_provider.lower())
 
-        ############################################################################################
-        # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
-        ############################################################################################
-        booking.b_dateBookedDate = get_sydney_now_time()
-        booking.b_status = "Booked"
-        booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
-        booking.save()
-
-        booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        )
-        index = 1
-
-        for booking_line in booking_lines:
-            for i in range(int(booking_line.e_qty)):
-                api_booking_confirmation_line = Api_booking_confirmation_lines(
-                    fk_booking_id=booking.pk_booking_id,
-                    fk_booking_line_id=booking_line.pk_lines_id,
-                    api_item_id=str("COPDME")
-                    + str(booking.b_bookingID_Visual)
-                    + make_3digit(index),
-                    service_provider=booking.vx_freight_provider,
-                    label_code=str("COPDME")
-                    + str(booking.b_bookingID_Visual)
-                    + make_3digit(index),
-                    client_item_reference=booking_line.client_item_reference,
-                )
-                api_booking_confirmation_line.save()
-                index = index + 1
-
-    if settings.ENV == "local":
-        file_path = (
-            "/Users/admin/work/goldmine/dme_api/static/csvs/" + csv_name
-        )  # Local (Test Case)
+    if has_error:
+        return JsonResponse({"status": "Failed to create CSV"}, status=400)
     else:
-        file_path = (
-            "/home/cope_au/dme_sftp/cope_au/pickup_ext/" + csv_name
-        )  # Dev & Prod
-    return JsonResponse({"filename": csv_name, "status": "Created CSV"})
-    if os.path.exists(file_path):
-        return JsonResponse({"filename": csv_name, "status": "Created CSV"})
-        # with open(file_path, 'rb') as fh:
-        #     response = HttpResponse(fh.read(), content_type="text/csv")
-        #     # response['Content-Disposition'] = 'inline; filename=' + csv_name
-        #     response['Content-Disposition'] = 'attachment; filename= "%s"' % csv_name
-        #     return response
+        for booking_id in booking_ids:
+            booking = Bookings.objects.get(id=booking_id)
+
+            if vx_freight_provider == "cope":
+                ############################################################################################
+                # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
+                ############################################################################################
+                booking.b_dateBookedDate = get_sydney_now_time()
+                booking.b_status = "Booked"
+                booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
+                booking.save()
+
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+                index = 1
+
+                for booking_line in booking_lines:
+                    for i in range(int(booking_line.e_qty)):
+                        api_booking_confirmation_line = Api_booking_confirmation_lines(
+                            fk_booking_id=booking.pk_booking_id,
+                            fk_booking_line_id=booking_line.pk_lines_id,
+                            api_item_id=str("COPDME")
+                            + str(booking.b_bookingID_Visual)
+                            + make_3digit(index),
+                            service_provider=booking.vx_freight_provider,
+                            label_code=str("COPDME")
+                            + str(booking.b_bookingID_Visual)
+                            + make_3digit(index),
+                            client_item_reference=booking_line.client_item_reference,
+                        )
+                        api_booking_confirmation_line.save()
+                        index = index + 1
+            elif vx_freight_provider == "dhl":
+                booking.b_dateBookedDate = get_sydney_now_time()
+                booking.b_status = "Booked"
+                booking.save()
+
+        return JsonResponse({"status": "Created CSV successfully"}, status=200)
 
 
 @api_view(["POST"])
@@ -3009,7 +3328,6 @@ def generate_xml(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
-    one_manifest_file = int(body["one_manifest_file"])
 
     if len(booking_ids) == 0:
         return JsonResponse(
@@ -3017,7 +3335,7 @@ def generate_xml(request):
         )
 
     try:
-        booked_list = build_xml(booking_ids, vx_freight_provider, one_manifest_file)
+        booked_list = build_xml(booking_ids, vx_freight_provider, 1)
 
         if len(booked_list) == 0:
             return JsonResponse({"success": "success"})
@@ -3035,15 +3353,19 @@ def generate_xml(request):
 def generate_manifest(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
-    one_manifest_file = int(body["one_manifest_file"])
+    vx_freight_provider = body["vx_freight_provider"]
     user_name = body["username"]
 
     try:
-        filenames = build_manifest(booking_ids, one_manifest_file, user_name)
+        filenames = build_manifest(booking_ids, vx_freight_provider, user_name)
         file_paths = []
 
-        for filename in filenames:
-            file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
+        if vx_freight_provider.upper() == "TASFR":
+            for filename in filenames:
+                file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
+        elif vx_freight_provider.upper() == "DHL":
+            for filename in filenames:
+                file_paths.append("/opt/s3_public/pdfs/dhl_au/" + filename)
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
@@ -3060,7 +3382,7 @@ def generate_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
-        print("generate_mainifest error: ", e)
+        # print("generate_mainifest error: ", e)
         return JsonResponse({"error": "error"})
 
 
@@ -3087,13 +3409,13 @@ def generate_pdf(request):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def getAttachmentsHistory(request):
-    bookingId = request.GET.get("id")
+    fk_booking_id = request.GET.get("fk_booking_id")
     return_data = []
 
     try:
         resultObjects = []
         resultObjects = Dme_attachments.objects.select_related().filter(
-            fk_id_dme_booking=bookingId
+            fk_id_dme_booking=fk_booking_id
         )
         for resultObject in resultObjects:
             # print('@bookingID', resultObject.fk_id_dme_booking.id)
@@ -3101,7 +3423,7 @@ def getAttachmentsHistory(request):
                 {
                     "pk_id_attachment": resultObject.pk_id_attachment,
                     "fk_id_dme_client": resultObject.fk_id_dme_client.pk_id_dme_client,
-                    "fk_id_dme_booking": resultObject.fk_id_dme_booking.id,
+                    "fk_id_dme_booking": resultObject.fk_id_dme_booking,
                     "fileName": resultObject.fileName,
                     "linkurl": resultObject.linkurl,
                     "upload_Date": resultObject.upload_Date,
