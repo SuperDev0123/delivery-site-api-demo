@@ -1022,6 +1022,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "dme_status_action": booking.dme_status_action,
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                     "z_manifest_url": booking.z_manifest_url,
+                    "z_calculated_ETA": booking.z_calculated_ETA,
                 }
             )
 
