@@ -1051,10 +1051,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 booking = Bookings.objects.get(id=booking_id)
                 setattr(booking, field_name, field_content)
                 booking.save()
-            return JsonResponse({"success": "Bookings are updated"})
+            return JsonResponse(
+                {"message": "Bookings are updated successfully"}, status=200
+            )
         except Exception as e:
-            # print('Exception: ', e)
-            return JsonResponse({"error": "Got error, please contact support center"})
+            # print("Exception: ", e)
+            return JsonResponse(
+                {"message": f"Error: {e}, Please contact support center!"}, status=400
+            )
 
     @action(detail=False, methods=["get"])
     def get_status_info(self, request, format=None):
