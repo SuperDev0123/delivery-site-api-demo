@@ -348,7 +348,7 @@ class BookingsViewSet(viewsets.ViewSet):
         column_filters = json.loads(
             self.request.query_params.get("columnFilters", None)
         )
-        active_tab_ind = json.loads(self.request.query_params.get("activeTabInd", None))
+        prefilter = json.loads(self.request.query_params.get("prefilterInd", None))
         simple_search_keyword = self.request.query_params.get(
             "simpleSearchKeyword", None
         )
@@ -383,7 +383,7 @@ class BookingsViewSet(viewsets.ViewSet):
         # else:
         #     print('@05 - Company name: DME')
 
-        # print('@06 - active_tab_ind: ', active_tab_ind)
+        # print('@06 - Prefilter: ', prefilter)
         # print('@07 - Simple search keyword: ', simple_search_keyword)
         # print('@08 - Download Option: ', download_option)
         # print('@09 - Client PK: ', client_pk)
@@ -561,7 +561,7 @@ class BookingsViewSet(viewsets.ViewSet):
             else:
                 queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
-        # ActiveTab count
+        # Prefilter count
         errors_to_correct = 0
         missing_labels = 0
         to_manifest = 0
@@ -580,20 +580,20 @@ class BookingsViewSet(viewsets.ViewSet):
             if booking.b_status == "Closed":
                 closed += 1
 
-        # ActiveTab Index 0 -> all, 1 -> errors_to_correct
-        if active_tab_ind == 1:
+        # Prefilter 0 -> all, 1 -> errors_to_correct
+        if prefilter == 1:
             queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
                 b_error_Capture__exact=""
             )
-        if active_tab_ind == 2:
+        if prefilter == 2:
             queryset = queryset.filter(
                 Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
             )
-        elif active_tab_ind == 3:
+        elif prefilter == 3:
             queryset = queryset.filter(b_status__icontains="Booked")
-        elif active_tab_ind == 4:
+        elif prefilter == 4:
             queryset = queryset.filter(b_status__icontains="Ready to booking")
-        elif active_tab_ind == 5:
+        elif prefilter == 5:
             queryset = queryset.filter(b_status__icontains="Closed")
         elif prefilter == 6:
             queryset = queryset.filter(b_status=dme_status)
