@@ -1444,6 +1444,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_inventory_due": booking.b_project_inventory_due,
                         "b_project_wh_unpack": booking.b_project_wh_unpack,
                         "b_project_dd_receive_date": booking.b_project_dd_receive_date,
+                        "z_calculated_ETA": booking.z_calculated_ETA,
                     }
                     return JsonResponse(
                         {
