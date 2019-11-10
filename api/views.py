@@ -678,6 +678,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_client_sales_inv_num": booking.b_client_sales_inv_num,
                     "z_lock_status": booking.z_lock_status,
                     "business_group": booking.get_group_name(),
+                    "pu_PickUp_By_Date_DME": booking.pu_PickUp_By_Date_DME,
                     "de_Deliver_By_Date": booking.de_Deliver_By_Date,
                     "de_Deliver_From_Date": booking.de_Deliver_From_Date,
                     "dme_delivery_status_category": booking.get_dme_delivery_status_category(),
@@ -697,6 +698,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_project_inventory_due": booking.b_project_inventory_due,
                     "b_project_wh_unpack": booking.b_project_wh_unpack,
                     "b_project_dd_receive_date": booking.b_project_dd_receive_date,
+                    "z_calculated_ETA": booking.z_calculated_ETA,
                 }
             )
 
