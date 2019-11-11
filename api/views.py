@@ -2849,13 +2849,67 @@ class FPViewSet(viewsets.ViewSet):
             #print('@Exception', e)
             return JsonResponse({"results": ""})
 
+    @action(detail=False, methods=["post"])
+    def add_carrier(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_carriers.objects.create(fk_fp=request.data["fk_fp"], carrier=request.data["carrier"], connote_start_value=request.data["connote_start_value"], connote_end_value=request.data["connote_end_value"], current_value=request.data["current_value"], label_start_value=request.data["label_start_value"], label_end_value=request.data["label_end_value"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit_carrier(self, request, pk, format=None):
+        fp_carrier = FP_carriers.objects.get(pk=pk)
+        serializer = CarrierSerializer(fp_carrier, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete_carrier(self, request, pk, format=None):
+        fp_carrier = FP_carriers.objects.get(pk=pk)
+
+        try:
+            fp_carrier.delete()
+            return JsonResponse({"results": fp_carrier})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
     @action(detail=False, methods=["get"])
     def get_zones(self, request, pk=None):
-        fp_id = request.GET["fp_id"]
+        fp_id = self.request.GET["fp_id"]
+        page_item_cnt = self.request.query_params.get("pageItemCnt", 10)
+        page_ind = self.request.query_params.get("pageInd", 0)
         return_data = []
         try:
             resultObjects = []
-            resultObjects = FP_zones.objects.filter(fk_fp=fp_id)[0:10]
+            resultObjects = FP_zones.objects.filter(fk_fp=fp_id)
+            # Count
+            zones_cnt = resultObjects.count()
+
+            # Pagination
+            page_cnt = (
+                int(zones_cnt / int(page_item_cnt))
+                if zones_cnt % int(page_item_cnt) == 0
+                else int(zones_cnt / int(page_item_cnt)) + 1
+            )
+            resultObjects = resultObjects[
+                int(page_item_cnt)
+                * int(page_ind) : int(page_item_cnt)
+                * (int(page_ind) + 1)
+            ]
             for resultObject in resultObjects:
                 return_data.append(
                     {
@@ -2870,9 +2924,47 @@ class FPViewSet(viewsets.ViewSet):
                         "sender_code": resultObject.sender_code
                     }
                 )
-            return JsonResponse({"results": return_data})
+            return JsonResponse({"results": return_data, 'page_cnt': page_cnt, 'page_ind': page_ind, 'page_item_cnt': page_item_cnt})
         except Exception as e:
             #print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add_zone(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_zones.objects.create(fk_fp=request.data["fk_fp"], suburb=request.data["suburb"], state=request.data["connote_start_value"], connote_end_value=request.data["state"], postal_code=request.data["postal_code"], zone=request.data["zone"], carrier=request.data["carrier"], service=request.data["service"], sender_code=request.data["sender_code"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit_zone(self, request, pk, format=None):
+        fp_zone = FP_zones.objects.get(pk=pk)
+        serializer = ZoneSerializer(fp_zone, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete_zone(self, request, pk, format=None):
+        fp_zone = FP_zones.objects.get(pk=pk)
+
+        try:
+            fp_zone.delete()
+            return JsonResponse({"results": fp_zone})
+        except Exception as e:
+            # print('@Exception', e)
             return JsonResponse({"results": ""})
 
 
