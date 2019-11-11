@@ -306,6 +306,44 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
+        try:
+            column_filter = column_filters["dme_status_detail"]
+            queryset = queryset.filter(dme_status_detail__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["dme_status_action"]
+            queryset = queryset.filter(dme_status_action__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["z_calculated_ETA"]
+            queryset = queryset.filter(z_calculated_ETA__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["de_to_PickUp_Instructions_Address"]
+            queryset = queryset.filter(
+                de_to_PickUp_Instructions_Address__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_booking_project"]
+            queryset = queryset.filter(b_booking_project__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["de_Deliver_By_Date"]
+            queryset = queryset.filter(de_Deliver_By_Date__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
         return queryset
 
     @action(detail=False, methods=["get"])
