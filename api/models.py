@@ -1305,6 +1305,7 @@ class Bookings(models.Model):
     b_project_dd_receive_date = models.DateTimeField(
         blank=True, null=True, default=None
     )
+    b_project_due_date = models.DateField(blank=True, null=True, default=None)
 
     class Meta:
         db_table = "dme_bookings"

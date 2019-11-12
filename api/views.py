@@ -346,6 +346,14 @@ class BookingsViewSet(viewsets.ViewSet):
 
         return queryset
 
+        try:
+            column_filter = column_filters["b_project_due_date"]
+            queryset = queryset.filter(b_project_due_date__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        return queryset
+
     @action(detail=False, methods=["get"])
     def get_bookings(self, request, format=None):
         user_id = int(self.request.user.id)
@@ -495,7 +503,8 @@ class BookingsViewSet(viewsets.ViewSet):
             if download_option == "flagged":
                 queryset = queryset.filter(b_is_flagged_add_on_services=True)
 
-            queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+            if column_filters:
+                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
         else:
             if search_type == "FILTER":
@@ -596,7 +605,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             for val in search_keywords
                         ]
                         queryset = queryset.filter(reduce(operator.or_, list_of_Q))
-            else:
+            elif column_filters:
                 queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
         # Prefilter count
@@ -737,6 +746,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_project_wh_unpack": booking.b_project_wh_unpack,
                     "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                     "z_calculated_ETA": booking.z_calculated_ETA,
+                    "b_project_due_date": booking.b_project_due_date,
                 }
             )
 
@@ -1117,6 +1127,14 @@ class BookingsViewSet(viewsets.ViewSet):
             for booking_id in booking_ids:
                 booking = Bookings.objects.get(id=booking_id)
                 setattr(booking, field_name, field_content)
+
+                if (
+                    field_name == "b_project_due_date"
+                    and field_content
+                    and not booking.de_Deliver_By_Date
+                ):
+                    booking.de_Deliver_By_Date = field_content
+
                 booking.save()
             return JsonResponse(
                 {"message": "Bookings are updated successfully"}, status=200
@@ -1483,6 +1501,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_wh_unpack": booking.b_project_wh_unpack,
                         "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                         "z_calculated_ETA": booking.z_calculated_ETA,
+                        "b_project_due_date": booking.b_project_due_date,
                     }
                     return JsonResponse(
                         {
