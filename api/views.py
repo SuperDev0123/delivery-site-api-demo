@@ -344,11 +344,15 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
-        return queryset
-
         try:
             column_filter = column_filters["b_project_due_date"]
             queryset = queryset.filter(b_project_due_date__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["fp_store_event_date"]
+            queryset = queryset.filter(fp_store_event_date__icontains=column_filter)
         except KeyError:
             column_filter = ""
 
@@ -725,6 +729,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                     "z_calculated_ETA": booking.z_calculated_ETA,
                     "b_project_due_date": booking.b_project_due_date,
+                    "fp_store_event_date": booking.fp_store_event_date,
+                    "fp_store_event_time": booking.fp_store_event_time,
                 }
             )
 
@@ -1476,6 +1482,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                         "z_calculated_ETA": booking.z_calculated_ETA,
                         "b_project_due_date": booking.b_project_due_date,
+                        "fp_store_event_date": booking.fp_store_event_date,
+                        "fp_store_event_time": booking.fp_store_event_time,
                     }
                     return JsonResponse(
                         {
