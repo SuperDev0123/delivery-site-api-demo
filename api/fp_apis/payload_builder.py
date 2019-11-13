@@ -74,6 +74,7 @@ FP_UOM = {
     "startrack": {"dim": "cm", "weight": "kg"},
     "hunter": {"dim": "cm", "weight": "kg"},
     "tnt": {"dim": "cm", "weight": "kg"},
+    "capital": {"dim": "cm", "weight": "kg"},
 }
 
 
