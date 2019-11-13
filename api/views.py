@@ -2878,7 +2878,7 @@ class FPViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["delete"])
     def delete_carrier(self, request, pk, format=None):
-        fp_carrier = FP_carriers.objects.get(pk=pk)
+        fp_carrier = FP_carriers.objects.get(id=pk)
 
         try:
             fp_carrier.delete()
@@ -2935,7 +2935,7 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = FP_zones.objects.create(fk_fp=request.data["fk_fp"], suburb=request.data["suburb"], state=request.data["connote_start_value"], connote_end_value=request.data["state"], postal_code=request.data["postal_code"], zone=request.data["zone"], carrier=request.data["carrier"], service=request.data["service"], sender_code=request.data["sender_code"])
+            resultObjects = FP_zones.objects.create(fk_fp=request.data["fk_fp"], suburb=request.data["suburb"], state=request.data["state"], postal_code=request.data["postal_code"], zone=request.data["zone"], carrier=request.data["carrier"], service=request.data["service"], sender_code=request.data["sender_code"])
             
             return JsonResponse({"results": resultObjects})
         except Exception as e:
