@@ -1128,12 +1128,12 @@ class BookingsViewSet(viewsets.ViewSet):
                 booking = Bookings.objects.get(id=booking_id)
                 setattr(booking, field_name, field_content)
 
-                if (
-                    field_name == "b_project_due_date"
-                    and field_content
-                    and not booking.de_Deliver_By_Date
-                ):
-                    booking.de_Deliver_By_Date = field_content
+                if field_name == "b_project_due_date" and field_content:
+                    if not booking.de_Deliver_From_Date:
+                        booking.de_Deliver_From_Date = field_content
+
+                    if not booking.de_Deliver_By_Date:
+                        booking.de_Deliver_By_Date = field_content
 
                 booking.save()
             return JsonResponse(
