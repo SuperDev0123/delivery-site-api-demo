@@ -164,12 +164,15 @@ def calc_collect_after_status_change(pk_booking_id, status):
     booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
 
     for booking_line in booking_lines:
-        if status == "Collected":
+        if status == "Collected" and booking_line.e_qty_awaiting_inventory:
             booking_line.e_qty_collected = (
                 booking_line.e_qty - booking_line.e_qty_awaiting_inventory
             )
-        elif status == "In Transit":
+        elif status == "In Transit" or (
+            status == "Collected" and not booking_line.e_qty_awaiting_inventory
+        ):
             booking_line.e_qty_collected = booking_line.e_qty
+
         booking_line.save()
 
 
