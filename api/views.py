@@ -51,6 +51,7 @@ from .utils import (
     build_manifest,
     get_sydney_now_time,
     get_client_name,
+    calc_collect_after_status_change,
 )
 
 logger = logging.getLogger("dme_api")
@@ -344,11 +345,15 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
-        return queryset
-
         try:
             column_filter = column_filters["b_project_due_date"]
             queryset = queryset.filter(b_project_due_date__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["fp_store_event_date"]
+            queryset = queryset.filter(fp_store_event_date__icontains=column_filter)
         except KeyError:
             column_filter = ""
 
@@ -747,6 +752,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                     "z_calculated_ETA": booking.z_calculated_ETA,
                     "b_project_due_date": booking.b_project_due_date,
+                    "fp_store_event_date": booking.fp_store_event_date,
+                    "fp_store_event_time": booking.fp_store_event_time,
                 }
             )
 
@@ -813,19 +820,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     dme_status_history.z_createdByAccount = request.user.username
                     dme_status_history.save()
 
-                    # When new status is `Collected`
-                    if status == "Collected":
-                        booking_lines = Booking_lines.objects.filter(
-                            fk_booking_id=booking.pk_booking_id
-                        )
-                        for booking_line in booking_lines:
-                            booking_line.e_qty_collected = (
-                                booking_line.e_qty
-                                - booking_line.e_qty_awaiting_inventory
-                            )
-                            booking_line.save()
-
                     booking.b_status = status
+                    calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
@@ -1134,6 +1130,10 @@ class BookingsViewSet(viewsets.ViewSet):
 
                     if not booking.de_Deliver_By_Date:
                         booking.de_Deliver_By_Date = field_content
+
+                if field_name == "fp_store_event_date" and field_content:
+                    booking.de_Deliver_From_Date = field_content
+                    booking.de_Deliver_By_Date = field_content
 
                 booking.save()
             return JsonResponse(
@@ -1502,6 +1502,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                         "z_calculated_ETA": booking.z_calculated_ETA,
                         "b_project_due_date": booking.b_project_due_date,
+                        "fp_store_event_date": booking.fp_store_event_date,
+                        "fp_store_event_time": booking.fp_store_event_time,
                     }
                     return JsonResponse(
                         {
@@ -2846,6 +2848,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
+                calc_collect_after_status_change(
+                    request.data["fk_booking_id"], request.data["status_last"]
+                )
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2860,6 +2865,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
+                calc_collect_after_status_change(
+                    request.data["fk_booking_id"], request.data["status_last"]
+                )
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

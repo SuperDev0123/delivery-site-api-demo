@@ -160,6 +160,22 @@ def get_client_name(request):
         return client.company_name
 
 
+def calc_collect_after_status_change(pk_booking_id, status):
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+
+    for booking_line in booking_lines:
+        if status == "Collected" and booking_line.e_qty_awaiting_inventory:
+            booking_line.e_qty_collected = (
+                booking_line.e_qty - booking_line.e_qty_awaiting_inventory
+            )
+        elif status == "In Transit" or (
+            status == "Collected" and not booking_line.e_qty_awaiting_inventory
+        ):
+            booking_line.e_qty_collected = booking_line.e_qty
+
+        booking_line.save()
+
+
 def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
     assert isinstance(send_to, list)
 
@@ -5385,13 +5401,16 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 27, booking.z_calculated_ETA, date_format
                 )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 28, booking.de_Deliver_By_Date, date_format
+                    row, col + 28, booking.fp_store_event_date, date_format
                 )
+
+            if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 29, booking.de_Deliver_By_Date, time_format
+                    row, col + 29, booking.fp_store_event_time, time_format
                 )
+
             worksheet.write(row, col + 30, booking.inv_billing_status)
             worksheet.write(row, col + 31, booking.inv_billing_status_note)
             worksheet.write(row, col + 32, booking.b_booking_project)
@@ -5948,12 +5967,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 27, booking.z_calculated_ETA, date_format
                 )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 28, booking.de_Deliver_By_Date, date_format
+                    row, col + 28, booking.fp_store_event_date, date_format
                 )
+
+            if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 29, booking.de_Deliver_By_Date, time_format
+                    row, col + 29, booking.fp_store_event_time, time_format
                 )
 
             worksheet.write(row, col + 30, gaps)
@@ -6303,9 +6324,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 30, booking.z_calculated_ETA, date_format
                 )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 31, booking.de_Deliver_By_Date, date_format
+                    row, col + 31, booking.fp_store_event_date, date_format
                 )
 
             row += 1
