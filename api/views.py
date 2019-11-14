@@ -534,7 +534,7 @@ class BookingsViewSet(viewsets.ViewSet):
             if int(warehouse_id) is not 0:
                 queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
-            # Mulitple search | Simple search | Column fitler
+            # Mulitple search | Simple search | Project Name Search
             if project_name and len(project_name) > 0:
                 queryset = queryset.filter(b_booking_project=project_name)
             elif multi_find_values and len(multi_find_values) > 0:
@@ -612,8 +612,8 @@ class BookingsViewSet(viewsets.ViewSet):
                             for val in search_keywords
                         ]
                         queryset = queryset.filter(reduce(operator.or_, list_of_Q))
-            elif column_filters:
-                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+            # Column fitler
+            queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
         # active_tab_index count
         errors_to_correct = 0
