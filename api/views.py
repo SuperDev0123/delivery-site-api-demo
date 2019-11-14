@@ -653,7 +653,10 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(b_status=dme_status)
 
         # Sort
-        if download_option != "check_pod" and len(multi_find_values) == 0:
+        if download_option != "check_pod" and (
+            len(multi_find_values) == 0
+            or (len(multi_find_values) > 0 and sort_field not in ["id", "-id"])
+        ):
             if sort_field is None:
                 queryset = queryset.order_by("id")
             else:
