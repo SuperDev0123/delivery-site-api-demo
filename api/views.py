@@ -1286,6 +1286,13 @@ class BookingsViewSet(viewsets.ViewSet):
 
         return JsonResponse({"results": list(results)})
 
+    @action(detail=False, methods=["get"])
+    def send_email(self, request, format=None):
+        user_id = int(self.request.user.id)
+        template_name = self.request.query_params.get("templateName", None)
+        print("@100 Email Template:", template_name)
+        return JsonResponse({"message": "success"}, status=200)
+
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
