@@ -795,6 +795,7 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["put"])
     def change_bookings_status(self, request, format=None):
         status = request.data["status"]
+        optional_value = request.data["optionalValue"]
         booking_ids = request.data["bookingIds"]
 
         try:
@@ -825,12 +826,25 @@ class BookingsViewSet(viewsets.ViewSet):
                     dme_status_history.z_createdByAccount = request.user.username
                     dme_status_history.save()
 
+                    if status == "In Transit" and optional_value:
+                        booking.z_calculated_ETA = optional_value
+                    elif status == "In Transit" and not optional_value:
+                        if not booking.fp_store_event_date:
+                            booking.z_calculated_ETA = get_sydney_now_time("date-char")
+                        else:
+                            if datetime.now().date() < booking.fp_store_event_date:
+                                booking.z_calculated_ETA = get_sydney_now_time(
+                                    "date-char"
+                                )
+                            else:
+                                booking.z_calculated_ETA = booking.fp_store_event_date
+
                     booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
-            # print("Exception: ", e)
+            print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["get"])
