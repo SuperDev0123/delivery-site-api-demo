@@ -51,7 +51,6 @@ from reportlab.pdfgen import canvas
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import *
 
@@ -176,7 +175,15 @@ def calc_collect_after_status_change(pk_booking_id, status):
         booking_line.save()
 
 
-def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
+def send_email(
+    send_to,
+    subject,
+    text,
+    files=None,
+    mime_type="plain",
+    server="localhost",
+    use_tls=True,
+):
     assert isinstance(send_to, list)
 
     msg = MIMEMultipart()
@@ -185,7 +192,7 @@ def send_email(send_to, subject, text, files=None, server="localhost", use_tls=T
     msg["Date"] = formatdate(localtime=True)
     msg["Subject"] = subject
 
-    msg.attach(MIMEText(text))
+    msg.attach(MIMEText(text, mime_type))
 
     for f in files or []:
         with open(f, "rb") as fil:

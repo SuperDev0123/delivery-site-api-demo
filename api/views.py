@@ -46,13 +46,13 @@ from .utils import (
     build_xml,
     build_pdf,
     build_xls_and_send,
-    send_email,
     make_3digit,
     build_manifest,
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
 )
+from api.outputs import emails as email_module
 
 logger = logging.getLogger("dme_api")
 
@@ -1352,7 +1352,8 @@ class BookingsViewSet(viewsets.ViewSet):
     def send_email(self, request, format=None):
         user_id = int(self.request.user.id)
         template_name = self.request.query_params.get("templateName", None)
-        print("@100 Email Template:", template_name)
+        booking_id = self.request.query_params.get("bookingId", None)
+        email_module.send_booking_email_using_template(booking_id, template_name)
         return JsonResponse({"message": "success"}, status=200)
 
 
