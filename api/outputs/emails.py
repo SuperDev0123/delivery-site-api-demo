@@ -270,7 +270,7 @@ def send_booking_email_using_template(bookingId, emailName):
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
-    to_emails = []
+    to_emails = ["bookings@deliver-me.com.au"]
     if pu_Email:
         to_emails.append(pu_Email)
     if pu_email_Group:
