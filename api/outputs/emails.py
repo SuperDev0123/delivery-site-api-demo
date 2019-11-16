@@ -271,14 +271,14 @@ def send_booking_email_using_template(bookingId, emailName):
     # fp1.write(html)
 
     to_emails = ["bookings@deliver-me.com.au"]
-    if pu_Email:
-        to_emails.append(pu_Email)
-    if pu_email_Group:
-        to_emails.append(pu_email_Group)
-    if de_Email_Group_Emails:
-        to_emails.append(de_Email_Group_Emails)
-    if booking_Created_For_Email:
-        to_emails.append(booking_Created_For_Email)
+    if booking.pu_Email:
+        to_emails.append(booking.pu_Email)
+    if booking.pu_email_Group:
+        to_emails.append(booking.pu_email_Group)
+    if booking.de_Email_Group_Emails:
+        to_emails.append(booking.de_Email_Group_Emails)
+    if booking.booking_Created_For_Email:
+        to_emails.append(booking.booking_Created_For_Email)
 
     subject = f"Tempo ${emailName} - DME#${booking.v_FPBookingNumber} - FP#${booking.vx_freight_provider}"
     mime_type = "html"
