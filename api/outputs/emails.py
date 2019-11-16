@@ -270,7 +270,16 @@ def send_booking_email_using_template(bookingId, emailName):
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
-    to_email = "icss666@gmail.com"
+    to_emails = []
+    if pu_Email:
+        to_emails.append(pu_Email)
+    if pu_email_Group:
+        to_emails.append(pu_email_Group)
+    if de_Email_Group_Emails:
+        to_emails.append(de_Email_Group_Emails)
+    if booking_Created_For_Email:
+        to_emails.append(booking_Created_For_Email)
+
     subject = f"Tempo ${emailName} - DME#${booking.v_FPBookingNumber} - FP#${booking.vx_freight_provider}"
     mime_type = "html"
-    send_email([to_email], subject, html, label_files, mime_type)
+    send_email(to_emails, subject, html, label_files, mime_type)
