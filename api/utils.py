@@ -242,6 +242,8 @@ def get_sydney_now_time(return_type="char"):
         return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
     elif return_type == "datetime":
         return sydney_now
+    elif return_type == "date-char":
+        return sydney_now.strftime("%Y-%m-%d")
 
 
 def get_available_bookings(mysqlcon, booking_ids):

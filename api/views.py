@@ -383,6 +383,7 @@ class BookingsViewSet(viewsets.ViewSet):
             )
 
         start_date = self.request.query_params.get("startDate", None)
+
         if start_date == "*":
             search_type = "ALL"
         else:
@@ -392,17 +393,22 @@ class BookingsViewSet(viewsets.ViewSet):
         if search_type == "FILTER":
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+
         warehouse_id = self.request.query_params.get("warehouseId", None)
         sort_field = self.request.query_params.get("sortField", None)
         column_filters = json.loads(
             self.request.query_params.get("columnFilters", None)
         )
-        prefilter = json.loads(self.request.query_params.get("prefilterInd", None))
+        active_tab_index = json.loads(
+            self.request.query_params.get("activeTabInd", None)
+        )
         simple_search_keyword = self.request.query_params.get(
             "simpleSearchKeyword", None
         )
         download_option = self.request.query_params.get("downloadOption", None)
         client_pk = self.request.query_params.get("clientPK", None)
+        page_item_cnt = self.request.query_params.get("pageItemCnt", 10)
+        page_ind = self.request.query_params.get("pageInd", 0)
         dme_status = self.request.query_params.get("dmeStatus", None)
         multi_find_field = self.request.query_params.get("multiFindField", None)
         multi_find_values = self.request.query_params.get("multiFindValues", "")
@@ -430,7 +436,7 @@ class BookingsViewSet(viewsets.ViewSet):
         # else:
         #     print('@05 - Company name: DME')
 
-        # print('@06 - Prefilter: ', prefilter)
+        # print('@06 - active_tab_index: ', active_tab_index)
         # print('@07 - Simple search keyword: ', simple_search_keyword)
         # print('@08 - Download Option: ', download_option)
         # print('@09 - Client PK: ', client_pk)
@@ -609,7 +615,7 @@ class BookingsViewSet(viewsets.ViewSet):
             # Column fitler
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
-        # Prefilter count
+        # active_tab_index count
         errors_to_correct = 0
         missing_labels = 0
         to_manifest = 0
@@ -628,22 +634,22 @@ class BookingsViewSet(viewsets.ViewSet):
             if booking.b_status == "Closed":
                 closed += 1
 
-        # Prefilter 0 -> all, 1 -> errors_to_correct
-        if prefilter == 1:
+        # active_tab_index 0 -> all, 1 -> errors_to_correct
+        if active_tab_index == 1:
             queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
                 b_error_Capture__exact=""
             )
-        if prefilter == 2:
+        if active_tab_index == 2:
             queryset = queryset.filter(
                 Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
             )
-        elif prefilter == 3:
+        elif active_tab_index == 3:
             queryset = queryset.filter(b_status__icontains="Booked")
-        elif prefilter == 4:
+        elif active_tab_index == 4:
             queryset = queryset.filter(b_status__icontains="Ready to booking")
-        elif prefilter == 5:
+        elif active_tab_index == 5:
             queryset = queryset.filter(b_status__icontains="Closed")
-        elif prefilter == 6:
+        elif active_tab_index == 6:
             queryset = queryset.filter(b_status=dme_status)
 
         # Sort
@@ -661,10 +667,28 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # Count
         bookings_cnt = queryset.count()
+
+        filtered_booking_ids = []
+        for booking in queryset:
+            filtered_booking_ids.append(booking.id)
+
         bookings = queryset
         ret_data = []
 
-        for booking in bookings:
+        # Pagination
+        page_cnt = (
+            int(bookings_cnt / int(page_item_cnt))
+            if bookings_cnt % int(page_item_cnt) == 0
+            else int(bookings_cnt / int(page_item_cnt)) + 1
+        )
+        queryset = queryset[
+            int(page_item_cnt)
+            * int(page_ind) : int(page_item_cnt)
+            * (int(page_ind) + 1)
+        ]
+
+        ret_data = []
+        for booking in queryset:
             ret_data.append(
                 {
                     "id": booking.id,
@@ -741,7 +765,11 @@ class BookingsViewSet(viewsets.ViewSet):
         return JsonResponse(
             {
                 "bookings": ret_data,
+                "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
+                "page_cnt": page_cnt,
+                "page_ind": page_ind,
+                "page_item_cnt": page_item_cnt,
                 "errors_to_correct": errors_to_correct,
                 "to_manifest": to_manifest,
                 "missing_labels": missing_labels,
@@ -767,6 +795,7 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["put"])
     def change_bookings_status(self, request, format=None):
         status = request.data["status"]
+        optional_value = request.data["optionalValue"]
         booking_ids = request.data["bookingIds"]
 
         try:
@@ -797,12 +826,25 @@ class BookingsViewSet(viewsets.ViewSet):
                     dme_status_history.z_createdByAccount = request.user.username
                     dme_status_history.save()
 
+                    if status == "In Transit" and optional_value:
+                        booking.z_calculated_ETA = optional_value
+                    elif status == "In Transit" and not optional_value:
+                        if not booking.fp_store_event_date:
+                            booking.z_calculated_ETA = get_sydney_now_time("date-char")
+                        else:
+                            if datetime.now().date() < booking.fp_store_event_date:
+                                booking.z_calculated_ETA = get_sydney_now_time(
+                                    "date-char"
+                                )
+                            else:
+                                booking.z_calculated_ETA = booking.fp_store_event_date
+
                     booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
-            # print("Exception: ", e)
+            print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["get"])
@@ -992,7 +1034,7 @@ class BookingsViewSet(viewsets.ViewSet):
         queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
         queryset = queryset.filter(b_status__icontains="Ready for XML")
 
-        # Prefilter count
+        # Active Tab content count
         errors_to_correct = 0
         missing_labels = 0
         to_manifest = 0
@@ -1104,13 +1146,33 @@ class BookingsViewSet(viewsets.ViewSet):
                 if field_name == "b_project_due_date" and field_content:
                     if not booking.de_Deliver_From_Date:
                         booking.de_Deliver_From_Date = field_content
-
                     if not booking.de_Deliver_By_Date:
                         booking.de_Deliver_By_Date = field_content
-
-                if field_name == "fp_store_event_date" and field_content:
+                elif field_name == "fp_store_event_date" and field_content:
                     booking.de_Deliver_From_Date = field_content
                     booking.de_Deliver_By_Date = field_content
+                elif (
+                    field_name == "fp_received_date_time"
+                    and field_content
+                    and not booking.fp_warehouse_collected_date_time
+                ):
+                    if not booking.delivery_kpi_days:
+                        delivery_kpi_days = 14
+                    else:
+                        delivery_kpi_days = int(booking.delivery_kpi_days)
+
+                    booking.z_calculated_ETA = datetime.strptime(
+                        field_content, "%Y-%m-%d"
+                    ) + timedelta(days=delivery_kpi_days)
+                elif field_name == "fp_warehouse_collected_date_time" and field_content:
+                    if not booking.delivery_kpi_days:
+                        delivery_kpi_days = 14
+                    else:
+                        delivery_kpi_days = int(booking.delivery_kpi_days)
+
+                    booking.z_calculated_ETA = datetime.strptime(
+                        field_content, "%Y-%m-%d"
+                    ) + timedelta(days=delivery_kpi_days)
 
                 booking.save()
             return JsonResponse(
@@ -1488,6 +1550,11 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_due_date": booking.b_project_due_date,
                         "fp_store_event_date": booking.fp_store_event_date,
                         "fp_store_event_time": booking.fp_store_event_time,
+                        "fp_received_date_time": booking.fp_received_date_time,
+                        "fp_warehouse_collected_date_time": booking.fp_warehouse_collected_date_time,
+                        "delivery_kpi_days": 14
+                        if not booking.delivery_kpi_days
+                        else booking.delivery_kpi_days,
                     }
                     return JsonResponse(
                         {
