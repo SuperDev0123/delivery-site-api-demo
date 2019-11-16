@@ -1146,13 +1146,33 @@ class BookingsViewSet(viewsets.ViewSet):
                 if field_name == "b_project_due_date" and field_content:
                     if not booking.de_Deliver_From_Date:
                         booking.de_Deliver_From_Date = field_content
-
                     if not booking.de_Deliver_By_Date:
                         booking.de_Deliver_By_Date = field_content
-
-                if field_name == "fp_store_event_date" and field_content:
+                elif field_name == "fp_store_event_date" and field_content:
                     booking.de_Deliver_From_Date = field_content
                     booking.de_Deliver_By_Date = field_content
+                elif (
+                    field_name == "fp_received_date_time"
+                    and field_content
+                    and not booking.fp_warehouse_collected_date_time
+                ):
+                    if not booking.delivery_kpi_days:
+                        delivery_kpi_days = 14
+                    else:
+                        delivery_kpi_days = int(booking.delivery_kpi_days)
+
+                    booking.z_calculated_ETA = datetime.strptime(
+                        field_content, "%Y-%m-%d"
+                    ) + timedelta(days=delivery_kpi_days)
+                elif field_name == "fp_warehouse_collected_date_time" and field_content:
+                    if not booking.delivery_kpi_days:
+                        delivery_kpi_days = 14
+                    else:
+                        delivery_kpi_days = int(booking.delivery_kpi_days)
+
+                    booking.z_calculated_ETA = datetime.strptime(
+                        field_content, "%Y-%m-%d"
+                    ) + timedelta(days=delivery_kpi_days)
 
                 booking.save()
             return JsonResponse(
@@ -1523,6 +1543,11 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_due_date": booking.b_project_due_date,
                         "fp_store_event_date": booking.fp_store_event_date,
                         "fp_store_event_time": booking.fp_store_event_time,
+                        "fp_received_date_time": booking.fp_received_date_time,
+                        "fp_warehouse_collected_date_time": booking.fp_warehouse_collected_date_time,
+                        "delivery_kpi_days": 14
+                        if not booking.delivery_kpi_days
+                        else booking.delivery_kpi_days,
                     }
                     return JsonResponse(
                         {
