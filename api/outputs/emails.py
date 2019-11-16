@@ -22,8 +22,8 @@ def send_booking_email_using_template(bookingId, emailName):
     totalQty = 0
     totalWeight = 0
     for booking_line in booking_lines:
-        totalQty = totalQty + booking_line.e_qty
-        totalWeight = totalWeight + e_qty * e_weightPerEach
+        totalQty += booking_line.e_qty
+        totalWeight += booking_line.e_qty * booking_line.e_weightPerEach
 
     label_files = []
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
