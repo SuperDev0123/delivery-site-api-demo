@@ -1267,7 +1267,6 @@ class Bookings(models.Model):
     inv_billing_status_note = models.CharField(
         max_length=255, blank=True, null=True, default=""
     )
-    fp_received_date_time = models.DateField(blank=True, null=True)
     check_pod = models.BooleanField(default=False, blank=True, null=True)
     vx_freight_provider_carrier = models.CharField(
         max_length=32, blank=True, null=True, default=None
@@ -1309,6 +1308,7 @@ class Bookings(models.Model):
     fp_warehouse_collected_date_time = models.DateTimeField(
         blank=True, null=True, default=None
     )
+    fp_received_date_time = models.DateField(blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
