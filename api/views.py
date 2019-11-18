@@ -826,20 +826,38 @@ class BookingsViewSet(viewsets.ViewSet):
                     dme_status_history.z_createdByAccount = request.user.username
                     dme_status_history.save()
 
+                    if not booking.delivery_kpi_days:
+                        delivery_kpi_days = 14
+                    else:
+                        delivery_kpi_days = int(booking.delivery_kpi_days)
+
                     if status == "In Transit" and optional_value:
-                        booking.z_calculated_ETA = optional_value
+                        print("@1 - ", optional_value, delivery_kpi_days)
+                        booking.z_calculated_ETA = datetime.strptime(
+                            optional_value, "%Y-%m-%d"
+                        ) + timedelta(days=delivery_kpi_days)
                     elif status == "In Transit" and not optional_value:
-                        if not booking.fp_store_event_date:
-                            booking.z_calculated_ETA = get_sydney_now_time("date-char")
-                        else:
-                            if datetime.now().date() < booking.fp_store_event_date:
-                                booking.z_calculated_ETA = get_sydney_now_time(
-                                    "date-char"
-                                )
-                            else:
-                                booking.z_calculated_ETA = booking.fp_store_event_date
+                        if (
+                            booking.fp_received_date_time
+                            and booking.fp_warehouse_collected_date_time
+                        ):
+                            booking.z_calculated_ETA = (
+                                booking.fp_warehouse_collected_date_time
+                                + timdelta(delivery_kpi_days)
+                            )
+                        if (
+                            booking.fp_received_date_time
+                            and not booking.fp_warehouse_collected_date_time
+                        ):
+                            booking.z_calculated_ETA = (
+                                booking.fp_received_date_time
+                                + timdelta(delivery_kpi_days)
+                            )
 
                     booking.b_status = status
+                    booking.dme_status_detail = (
+                        "Collection Confirmed by Pickup Address."
+                    )
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
@@ -2903,9 +2921,10 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
-                calc_collect_after_status_change(
-                    request.data["fk_booking_id"], request.data["status_last"]
-                )
+                if request.data["status_last"] == "In Transit":
+                    calc_collect_after_status_change(
+                        request.data["fk_booking_id"], request.data["status_last"]
+                    )
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2920,9 +2939,10 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
-                calc_collect_after_status_change(
-                    request.data["fk_booking_id"], request.data["status_last"]
-                )
+                if request.data["status_last"] == "In Transit":
+                    calc_collect_after_status_change(
+                        request.data["fk_booking_id"], request.data["status_last"]
+                    )
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
