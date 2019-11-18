@@ -832,7 +832,6 @@ class BookingsViewSet(viewsets.ViewSet):
                         delivery_kpi_days = int(booking.delivery_kpi_days)
 
                     if status == "In Transit" and optional_value:
-                        print("@1 - ", optional_value, delivery_kpi_days)
                         booking.z_calculated_ETA = datetime.strptime(
                             optional_value, "%Y-%m-%d"
                         ) + timedelta(days=delivery_kpi_days)
