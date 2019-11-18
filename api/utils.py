@@ -5121,20 +5121,33 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         os.makedirs(local_filepath)
     # end check if xmls folder exists
 
-    filename = (
-        username
-        + "__"
-        + xls_type
-        + "__"
-        + str(len(bookings))
-        + "__"
-        + str(start_date.strftime("%d-%m-%Y"))
-        + "__"
-        + str(end_date.strftime("%d-%m-%Y"))
-        + "__"
-        + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
-        + ".xlsx"
-    )
+    if start_date and end_date:
+        filename = (
+            username
+            + "__"
+            + xls_type
+            + "__"
+            + str(len(bookings))
+            + "__"
+            + str(start_date.strftime("%d-%m-%Y"))
+            + "__"
+            + str(end_date.strftime("%d-%m-%Y"))
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
+            + ".xlsx"
+        )
+    else:
+        filename = (
+            username
+            + "__"
+            + xls_type
+            + "__"
+            + str(len(bookings))
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
+            + ".xlsx"
+        )
+
     workbook = xlsxwriter.Workbook(filename, {"remove_timezone": True})
     worksheet = workbook.add_worksheet()
     bold = workbook.add_format({"bold": 1, "align": "left"})

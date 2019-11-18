@@ -847,7 +847,7 @@ class BookingsViewSet(viewsets.ViewSet):
             print("Exception: ", e)
             return Response({"status": "error"})
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["post"])
     def generate_xls(self, request, format=None):
         user_id = int(self.request.user.id)
         dme_employee = (
@@ -870,21 +870,21 @@ class BookingsViewSet(viewsets.ViewSet):
                 .first()
             )
 
-        vx_freight_provider = self.request.query_params.get("vx_freight_provider", None)
-        report_type = self.request.query_params.get("report_type", None)
-        email_addr = self.request.query_params.get("emailAddr", None)
-        show_field_name = self.request.query_params.get("showFieldName", None)
+        vx_freight_provider = request.data["vx_freight_provider"]
+        report_type = request.data["report_type"]
+        email_addr = request.data["emailAddr"]
+        show_field_name = request.data["showFieldName"]
+        use_selected = request.data["useSelected"]
+        first_date = None
+        last_date = None
 
-        if show_field_name == "true":
-            show_field_name = True
+        if use_selected:
+            booking_ids = request.data["selectedBookingIds"]
         else:
-            show_field_name = False
-
-        start_date = self.request.query_params.get("startDate", None)
-        end_date = self.request.query_params.get("endDate", None)
-
-        first_date = datetime.strptime(start_date, "%Y-%m-%d")
-        last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            start_date = request.data["startDate"]
+            end_date = request.data["endDate"]
+            first_date = datetime.strptime(start_date, "%Y-%m-%d")
+            last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
 
         # DME & Client filter
         if user_type == "DME":
@@ -926,20 +926,23 @@ class BookingsViewSet(viewsets.ViewSet):
             "b_bookingID_Visual",
         )
 
-        # Date filter
-        if user_type == "DME":
-            queryset = queryset.filter(
-                z_CreatedTimestamp__range=(first_date, last_date)
-            )
+        if use_selected:
+            queryset = queryset.filter(pk__in=booking_ids)
         else:
-            if client.company_name == "BioPak":
-                queryset = queryset.filter(
-                    puPickUpAvailFrom_Date__range=(first_date, last_date)
-                )
-            else:
+            # Date filter
+            if user_type == "DME":
                 queryset = queryset.filter(
                     z_CreatedTimestamp__range=(first_date, last_date)
                 )
+            else:
+                if client.company_name == "BioPak":
+                    queryset = queryset.filter(
+                        puPickUpAvailFrom_Date__range=(first_date, last_date)
+                    )
+                else:
+                    queryset = queryset.filter(
+                        z_CreatedTimestamp__range=(first_date, last_date)
+                    )
 
         # Freight Provider filter
         if vx_freight_provider != "All":
