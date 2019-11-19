@@ -1192,7 +1192,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         delivery_kpi_days = int(booking.delivery_kpi_days)
 
                     booking.z_calculated_ETA = datetime.strptime(
-                        field_content, "%Y-%m-%d"
+                        field_content, "%Y-%m-%d %H:%M:%S"
                     ) + timedelta(days=delivery_kpi_days)
 
                 booking.save()
