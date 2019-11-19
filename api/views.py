@@ -820,7 +820,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         str(booking.b_status) + " ---> " + str(status)
                     )
                     dme_status_history.status_last = status
-                    dme_status_history.event_time_stamp = datetime.now()
+                    dme_status_history.event_time_stamp = optional_value
                     dme_status_history.recipient_name = ""
                     dme_status_history.status_update_via = ""
                     dme_status_history.z_createdByAccount = request.user.username
@@ -832,9 +832,10 @@ class BookingsViewSet(viewsets.ViewSet):
                         delivery_kpi_days = int(booking.delivery_kpi_days)
 
                     if status == "In Transit" and optional_value:
-                        booking.z_calculated_ETA = datetime.strptime(
-                            optional_value, "%Y-%m-%d"
-                        ) + timedelta(days=delivery_kpi_days)
+                        booking.z_calculated_ETA = (
+                            datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
+                            + timedelta(days=delivery_kpi_days)
+                        ).date()
                     elif status == "In Transit" and not optional_value:
                         if (
                             booking.fp_received_date_time
