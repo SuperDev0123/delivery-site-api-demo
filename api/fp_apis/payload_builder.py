@@ -26,6 +26,7 @@ ACCOUTN_CODES = {
         # "live_6": "DMEADL",
     },
     "tnt": {"live_0": "30021385"},
+    "capital": {"live_0": "DMENSW"},
 }
 
 KEY_CHAINS = {
@@ -60,12 +61,20 @@ KEY_CHAINS = {
             "accountUsername": "CIT00000000000098839",
         }
     },
+    "capital": {
+        "live_0": {
+            "accountKey": "eYte9AeLruGYmM78",
+            "accountState": "NSW",
+            "accountUsername": "deliverme",
+        }
+    },
 }
 
 FP_UOM = {
     "startrack": {"dim": "cm", "weight": "kg"},
     "hunter": {"dim": "cm", "weight": "kg"},
     "tnt": {"dim": "cm", "weight": "kg"},
+    "capital": {"dim": "cm", "weight": "kg"},
 }
 
 
@@ -93,7 +102,7 @@ def _get_account_details(booking, fp_name, acc_ind=0):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt"]:
+    elif fp_name.lower() in ["hunter", "tnt", "capital"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()][f"live_{acc_ind}"],
@@ -303,6 +312,8 @@ def get_book_payload(booking, fp_name):
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
+    elif fp_name.lower() == "capital":
+        payload["serviceType"] = "EC"
 
     return payload
 
@@ -680,5 +691,7 @@ def get_pricing_payload(booking, fp_name, acc_ind):
         payload["serviceType"] = "R" if not booking.vx_serviceName else "R"
     elif fp_name.lower() == "hunter":
         payload["serviceType"] = "RF"
+    elif fp_name.lower() == "capital":
+        payload["serviceType"] = "EC"
 
     return payload
