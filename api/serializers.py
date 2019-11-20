@@ -11,6 +11,7 @@ from .models import (
     Dme_status_history,
     DME_reports,
     API_booking_quotes,
+    DME_Email_Templates
 )
 
 
@@ -86,4 +87,9 @@ class DmeReportsSerializer(serializers.ModelSerializer):
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = API_booking_quotes
+        fields = "__all__"
+
+class EmailTemplatesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Email_Templates
         fields = "__all__"

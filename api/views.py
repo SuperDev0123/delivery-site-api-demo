@@ -2763,6 +2763,112 @@ class FPViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({"results": ""})
 
+class EmailTemplatesViewSet(viewsets.ViewSet):
+    serializer_class = EmailTemplatesSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Email_Templates.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_idEmailParent": resultObject.fk_idEmailParent,
+                        "emailName": resultObject.emailName,
+                        "emailBody": resultObject.emailBody,
+                        "sectionName": resultObject.sectionName,
+                        "emailBodyRepeatEven": resultObject.emailBodyRepeatEven,
+                        "emailBodyRepeatOdd": resultObject.emailBodyRepeatOdd,
+                        "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = DME_Email_Templates.objects.get(pk=pk)
+            
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "fk_idEmailParent": resultObject.fk_idEmailParent,
+                    "emailName": resultObject.emailName,
+                    "emailBody": resultObject.emailBody,
+                    "sectionName": resultObject.sectionName,
+                    "emailBodyRepeatEven": resultObject.emailBodyRepeatEven,
+                    "emailBodyRepeatOdd": resultObject.emailBodyRepeatOdd,
+                    "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
+                    "z_createdByAccount": resultObject.z_createdByAccount,
+                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                    "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                    "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Email_Templates.objects.create(fk_idEmailParent = request.data["fk_idEmailParent"],emailName = request.data["emailName"],emailBody = request.data["emailBody"],sectionName = request.data["sectionName"],emailBodyRepeatEven = request.data["emailBodyRepeatEven"],emailBodyRepeatOdd = request.data["emailBodyRepeatOdd"],whenAttachmentUnavailable = request.data["whenAttachmentUnavailable"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        email_template = DME_Email_Templates.objects.get(pk=pk)
+        #return JsonResponse({"results": (email_template.emailBody)})
+        #serializer = EmailTemplatesSerializer(email_template, data=request.data)
+
+        try:
+            DME_Email_Templates.objects.filter(pk=pk).update(emailBody=request.data["emailBody"])
+            return JsonResponse({"results": request.data})
+            #if serializer.is_valid():
+                #try:
+                    #serializer.save()
+                    #return Response(serializer.data)
+                #except Exception as e:
+                    #print('%s (%s)' % (e.message, type(e)))
+                    #return Response({"results": e.message})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            #print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        email_template = DME_Email_Templates.objects.get(pk=pk)
+
+        try:
+            email_template.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
 
 class StatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])

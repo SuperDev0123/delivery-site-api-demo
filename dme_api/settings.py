@@ -106,7 +106,7 @@ WSGI_APPLICATION = "dme_api.wsgi.application"
 DATABASES = {  # Dev
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "dme_db_prod",
+        "NAME": "dme_db_dev",
         "USER": "fmadmin",
         # 'PASSWORD': 'Fmadmin1', # Old db password
         "PASSWORD": "oU8pPQxh",  # New db password
