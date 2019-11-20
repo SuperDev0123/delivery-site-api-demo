@@ -29,7 +29,7 @@ ACCOUTN_CODES = {
     "capital": {"live_0": "DMENSW"},
     "sendle": {"live_0": "XXX"},
     "fastway": {"live_0": "XXX"},
-    "allied": {"live_0": "SEATEM"},
+    "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
 }
 
 KEY_CHAINS = {
@@ -81,10 +81,14 @@ KEY_CHAINS = {
         }
     },
     "allied": {
+        "test_bed_1": {
+            "accountKey": "11e328f646051c3decc4b2bb4584530b",
+            "accountState": "NSW",
+        },
         "live_0": {
             "accountKey": "ce0d58fd22ae8619974958e65302a715",
             "accountState": "NSW",
-        }
+        },
     },
 }
 
@@ -95,6 +99,7 @@ FP_UOM = {
     "capital": {"dim": "cm", "weight": "kg"},
     "sendle": {"dim": "cm", "weight": "kg"},
     "fastway": {"dim": "cm", "weight": "kg"},
+    "allied": {"dim": "cm", "weight": "kg"},
 }
 
 
@@ -111,7 +116,7 @@ def _get_live_account_count(fp_name):
 def _get_account_details(booking, fp_name, acc_ind=0):
     account_detail = None
 
-    if fp_name.lower() == "startrack":
+    if fp_name.lower() in ["startrack", "allied"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()]["test_bed_1"],
@@ -715,5 +720,7 @@ def get_pricing_payload(booking, fp_name, acc_ind):
         payload["serviceType"] = "RF"
     elif fp_name.lower() == "capital":
         payload["serviceType"] = "EC"
+    elif fp_name.lower() == "allied":
+        payload["serviceType"] = "R"
 
     return payload

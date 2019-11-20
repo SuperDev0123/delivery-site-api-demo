@@ -759,6 +759,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_project_due_date": booking.b_project_due_date,
                     "fp_store_event_date": booking.fp_store_event_date,
                     "fp_store_event_time": booking.fp_store_event_time,
+                    "fp_received_date_time": booking.fp_received_date_time,
                 }
             )
 

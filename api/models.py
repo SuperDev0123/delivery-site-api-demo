@@ -1308,7 +1308,7 @@ class Bookings(models.Model):
     fp_warehouse_collected_date_time = models.DateTimeField(
         blank=True, null=True, default=None
     )
-    fp_received_date_time = models.DateField(blank=True, null=True)
+    fp_received_date_time = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
