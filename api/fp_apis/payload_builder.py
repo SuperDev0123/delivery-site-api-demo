@@ -27,6 +27,9 @@ ACCOUTN_CODES = {
     },
     "tnt": {"live_0": "30021385"},
     "capital": {"live_0": "DMENSW"},
+    "sendle": {"live_0": "XXX"},
+    "fastway": {"live_0": "XXX"},
+    "allied": {"live_0": "SEATEM"},
 }
 
 KEY_CHAINS = {
@@ -68,6 +71,21 @@ KEY_CHAINS = {
             "accountUsername": "deliverme",
         }
     },
+    "sendle": {
+        "live_0": {"accountKey": "FAKE_KEY_01", "accountState": "FAKE_STATE_01"}
+    },
+    "fastway": {
+        "live_0": {
+            "accountKey": "ebdb18c3ce966bc3a4e3f115d311b453",
+            "accountState": "FAKE_STATE_01",
+        }
+    },
+    "allied": {
+        "live_0": {
+            "accountKey": "ce0d58fd22ae8619974958e65302a715",
+            "accountState": "NSW",
+        }
+    },
 }
 
 FP_UOM = {
@@ -75,6 +93,8 @@ FP_UOM = {
     "hunter": {"dim": "cm", "weight": "kg"},
     "tnt": {"dim": "cm", "weight": "kg"},
     "capital": {"dim": "cm", "weight": "kg"},
+    "sendle": {"dim": "cm", "weight": "kg"},
+    "fastway": {"dim": "cm", "weight": "kg"},
 }
 
 
@@ -89,6 +109,8 @@ def _get_live_account_count(fp_name):
 
 
 def _get_account_details(booking, fp_name, acc_ind=0):
+    account_detail = None
+
     if fp_name.lower() == "startrack":
         if settings.ENV in ["local", "dev"]:
             account_detail = {
@@ -102,7 +124,7 @@ def _get_account_details(booking, fp_name, acc_ind=0):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt", "capital"]:
+    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()][f"live_{acc_ind}"],
