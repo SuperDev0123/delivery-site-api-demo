@@ -1334,7 +1334,10 @@ class Bookings(models.Model):
         customer_groups = Dme_utl_client_customer_group.objects.all()
 
         for customer_group in customer_groups:
-            if customer_group.name_lookup.lower() in self.deToCompanyName.lower():
+            if (
+                customer_group
+                and customer_group.name_lookup.lower() in self.deToCompanyName.lower()
+            ):
                 customer_group_name = customer_group.group_name
 
         return customer_group_name

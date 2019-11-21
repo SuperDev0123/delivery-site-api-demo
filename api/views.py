@@ -1165,10 +1165,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 booking = Bookings.objects.get(id=booking_id)
                 setattr(booking, field_name, field_content)
 
+                if not booking.delivery_kpi_days:
+                    delivery_kpi_days = 14
+                else:
+                    delivery_kpi_days = int(booking.delivery_kpi_days)
+
                 if field_name == "b_project_due_date" and field_content:
-                    if not booking.de_Deliver_From_Date:
+                    if not booking.fp_store_event_date:
                         booking.de_Deliver_From_Date = field_content
-                    if not booking.de_Deliver_By_Date:
                         booking.de_Deliver_By_Date = field_content
                 elif field_name == "fp_store_event_date" and field_content:
                     booking.de_Deliver_From_Date = field_content
@@ -1178,20 +1182,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     and field_content
                     and not booking.fp_warehouse_collected_date_time
                 ):
-                    if not booking.delivery_kpi_days:
-                        delivery_kpi_days = 14
-                    else:
-                        delivery_kpi_days = int(booking.delivery_kpi_days)
-
                     booking.z_calculated_ETA = datetime.strptime(
                         field_content, "%Y-%m-%d"
                     ) + timedelta(days=delivery_kpi_days)
                 elif field_name == "fp_warehouse_collected_date_time" and field_content:
-                    if not booking.delivery_kpi_days:
-                        delivery_kpi_days = 14
-                    else:
-                        delivery_kpi_days = int(booking.delivery_kpi_days)
-
                     booking.z_calculated_ETA = datetime.strptime(
                         field_content, "%Y-%m-%d %H:%M:%S"
                     ) + timedelta(days=delivery_kpi_days)
