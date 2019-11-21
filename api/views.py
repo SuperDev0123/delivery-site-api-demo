@@ -156,6 +156,114 @@ class UserViewSet(viewsets.ViewSet):
                 {"user_date_filter_field": client.client_filter_date_field}
             )
 
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+        client_pk = self.request.query_params.get("clientPK", None)
+
+        if client_pk is not None:
+            filter_data = Client_employees.objects.filter(
+                    fk_id_dme_client_id=int(client_pk)
+                )
+
+            filter_arr = []
+            for data in filter_data:
+                filter_arr.append(
+                    data.fk_id_user_id
+                )
+
+        try:
+            resultObjects = []
+            if len(filter_arr) == 0:
+                resultObjects = User.objects.all().order_by('username')
+            else:
+                resultObjects = User.objects.filter(pk__in=filter_arr).order_by('username')
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "first_name": resultObject.first_name,
+                        "last_name": resultObject.last_name,
+                        "username": resultObject.username,
+                        "email": resultObject.email,
+                        "last_login": resultObject.last_login,
+                        "is_staff": resultObject.is_staff,
+                        "is_active": resultObject.is_active,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = User.objects.get(pk=pk)
+            
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "first_name": resultObject.first_name,
+                    "last_name": resultObject.last_name,
+                    "username": resultObject.username,
+                    "email": resultObject.email,
+                    "last_login": resultObject.last_login,
+                    "is_staff": resultObject.is_staff,
+                    "is_active": resultObject.is_active,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = User.objects.create(fk_idEmailParent = request.data["fk_idEmailParent"],emailName = request.data["emailName"],emailBody = request.data["emailBody"],sectionName = request.data["sectionName"],emailBodyRepeatEven = request.data["emailBodyRepeatEven"],emailBodyRepeatOdd = request.data["emailBodyRepeatOdd"],whenAttachmentUnavailable = request.data["whenAttachmentUnavailable"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
+            return JsonResponse({"results": request.data})
+            #if serializer.is_valid():
+                #try:
+                    #serializer.save()
+                    #return Response(serializer.data)
+                #except Exception as e:
+                    #print('%s (%s)' % (e.message, type(e)))
+                    #return Response({"results": e.message})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            #print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            #user.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
 
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
