@@ -223,7 +223,7 @@ def book(request, fp_name):
                                 f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                             )
                         else:
-                            file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                            file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
@@ -265,9 +265,13 @@ def book(request, fp_name):
                 ).save()
 
                 if "errors" in json_data:
-                    error_msg = s0
+                    error_msg = json_data["errors"]
+                elif "errorMessage" in json_data:  # TNT Error
+                    error_msg = json_data["errorMessage"]
+                elif "errorMessage" in json_data[0]:  # Hunter Error
+                    error_msg = json_data[0]["errorMessage"]
                 else:
-                    error_msg = json_data[0]["message"]
+                    error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 500:
@@ -472,8 +476,6 @@ def get_label(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
 
         payload = {}
-        payload = get_getlabel_payload(booking, fp_name)
-
         if fp_name.lower() in ["startrack"]:
             try:
                 payload = get_create_label_payload(booking, fp_name)
@@ -505,13 +507,26 @@ def get_label(request, fp_name):
                 error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
+        elif fp_name.lower() in ["tnt"]:
+            payload = get_getlabel_payload(booking, fp_name)
+
         try:
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
 
-            while json_data is None or (
-                json_data is not None and json_data["labels"][0]["status"] == "PENDING"
+            while (
+                json_data is None
+                or (
+                    json_data is not None
+                    and fp_name.lower() == "startrack"
+                    and json_data["labels"][0]["status"] == "PENDING"
+                )
+                or (
+                    json_data is not None
+                    and fp_name.lower() == "tnt"
+                    and json_data["anyType"]["Status"] != "SUCCESS"
+                )
             ):
                 time.sleep(5)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
@@ -522,8 +537,29 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} get_label): {s0}")
 
-            internal_url = download_external.pdf(json_data["labels"][0]["url"], booking)
-            booking.z_label_url = internal_url
+            if fp_name.lower() in ["startrack"]:
+                label_url = download_external.pdf(
+                    json_data["labels"][0]["url"], booking
+                )
+            elif fp_name.lower() in ["tnt"]:
+                try:
+                    file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+
+                    if IS_PRODUCTION:
+                        label_url = (
+                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                        )
+                    else:
+                        label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                    with open(label_url, "wb") as f:
+                        f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
+                        f.close()
+                except KeyError as e:
+                    error_msg = f"KeyError: {e}"
+                    _set_error(booking, error_msg)
+
+            booking.z_label_url = label_url
             booking.save()
 
             Log(
@@ -652,7 +688,7 @@ def get_order_summary(request, fp_name):
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
@@ -773,20 +809,18 @@ def reprint(request, fp_name):
             podData = json_data["ReprintActionResult"]["LabelPDF"]
 
             try:
-                file_name = f"biopak_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = (
-                        f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
-                    )
+                    file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
 
-                booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
+                booking.z_label_url = file_url
                 booking.save()
 
                 return JsonResponse({"message": "Label is reprinted successfully."})
@@ -816,7 +850,7 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Hunter", "TNT", "Capital", "Sendle"]
+            fp_names = ["Sendle", "Capital", "Hunter", "TNT"]
 
             try:
                 for fp_name in fp_names:

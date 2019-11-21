@@ -461,6 +461,7 @@ def get_getlabel_payload(booking, fp_name):
                 else line.total_2_cubic_mass_factor_calc,
                 "weight": 0 if not line.e_weightPerEach else weight,
             }
+            items.append(item)
 
             if fp_name.lower() == "startrack":
                 item["packagingType"] = "CTN"
