@@ -837,6 +837,9 @@ class BookingsViewSet(viewsets.ViewSet):
                             datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
                             + timedelta(days=delivery_kpi_days)
                         ).date()
+                        booking.fp_warehouse_collected_date_time = datetime.strptime(
+                            optional_value, "%Y-%m-%d %H:%M:%S"
+                        )
                     elif status == "In Transit" and not optional_value:
                         if (
                             booking.fp_received_date_time
