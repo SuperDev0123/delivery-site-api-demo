@@ -93,6 +93,11 @@ def tracking(request, fp_name):
                     "consignmentStatuses"
                 ][0]["statusDate"]
                 event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
+            elif fp_name.lower == "sendle":
+                event_time = json_data["consignmentTrackDetails"][0][
+                    "consignmentStatuses"
+                ][0]["statusDate"]
+                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
             else:
                 event_time = None
 
