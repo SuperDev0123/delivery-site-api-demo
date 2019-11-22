@@ -72,7 +72,7 @@ KEY_CHAINS = {
         }
     },
     "sendle": {
-        "live_0": {"accountKey": "FAKE_KEY_01", "accountState": "FAKE_STATE_01"}
+        "live_0": {"accountKey": "bookings_tempo_deliv", "accountState": "FAKE_STATE_01", "accountPassword": "3KZRdXVpfTkFTPknqzjqDXw6"}
     },
     "fastway": {
         "live_0": {

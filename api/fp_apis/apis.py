@@ -191,6 +191,9 @@ def book(request, fp_name):
                         booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":
                         booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                    elif booking.vx_freight_provider.lower() == "sendle":
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                        request_payload["trackingId"] = json_data["consignmentReferenceNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
