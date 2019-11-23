@@ -767,14 +767,12 @@ def pod(request, fp_name):
             podData = json_data["pod"]["podData"]
 
             try:
-                file_name = f"biopak_pod_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.png"
+                file_name = f"pod_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.png"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = (
-                        f"/home/administrator/Downloads/dme_api/static/imgs/{file_name}"
-                    )
+                    file_url = f"./static/imgs/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
