@@ -67,7 +67,12 @@ def tracking(request, fp_name):
         logger.error(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
-        res_content = response.content.decode("utf8").replace("'", '"')
+
+        if fp_name.lower() in ["tnt"]:
+            res_content = response.content.decode("utf8")
+        else:
+            res_content = response.content.decode("utf8").replace("'", '"')
+
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.error(f"### Response ({fp_name} tracking): {s0}")
@@ -78,24 +83,26 @@ def tracking(request, fp_name):
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} TRACKING",
                 response=res_content,
-                fk_booking_id=booking.i,
+                fk_booking_id=booking.id,
             ).save()
 
-            booking.b_status_API = json_data["consignmentTrackDetails"][0][
-                "consignmentStatuses"
-            ][0]["status"]
-            booking.save()
+            consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
+            consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
 
-            if fp_name.lower == "startrack":
+            if fp_name.lower() == "startrack":
+                booking.b_status_API = consignmentStatuses[0]["status"]
                 event_time = None
-            elif fp_name.lower == "tnt":
-                event_time = json_data["consignmentTrackDetails"][0][
-                    "consignmentStatuses"
-                ][0]["statusDate"]
-                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
+            elif fp_name.lower() == "tnt":
+                last_consignmentStatus = consignmentStatuses[
+                    len(consignmentStatuses) - 1
+                ]
+                booking.b_status_API = last_consignmentStatus["status"][0]
+                event_time = last_consignmentStatus["statusDate"][0]
+                event_time = str(datetime.strptime(event_time, "%m/%d/%Y"))
             else:
                 event_time = None
 
+            booking.save()
             return JsonResponse(
                 {
                     "message": booking.b_status_API,
@@ -106,9 +113,12 @@ def tracking(request, fp_name):
             )
         except KeyError:
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
-    except Exception as e:
+    except Bookings.DoesNotExist:
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
+    except Exception as e:
+        logger.error(f"ERROR: {e}")
+        return JsonResponse({"message": "Tracking failed"}, status=400)
 
 
 @api_view(["POST"])
@@ -850,7 +860,8 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Sendle", "Capital", "Hunter", "TNT"]
+            # fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Allied"]
+            fp_names = ["Sendle", "Fastway"]
 
             try:
                 for fp_name in fp_names:
