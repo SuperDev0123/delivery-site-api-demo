@@ -92,7 +92,7 @@ def tracking(request, fp_name):
             if fp_name.lower() == "startrack":
                 booking.b_status_API = consignmentStatuses[0]["status"]
                 event_time = None
-            elif fp_name.lower() == "tnt":
+            elif fp_name.lower() in ["tnt", "hunter"]:
                 last_consignmentStatus = consignmentStatuses[
                     len(consignmentStatuses) - 1
                 ]
