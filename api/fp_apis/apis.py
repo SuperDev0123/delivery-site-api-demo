@@ -99,6 +99,13 @@ def tracking(request, fp_name):
                 booking.b_status_API = last_consignmentStatus["status"][0]
                 event_time = last_consignmentStatus["statusDate"][0]
                 event_time = str(datetime.strptime(event_time, "%m/%d/%Y"))
+            elif fp_name.lower() in ["hunter"]:
+                last_consignmentStatus = consignmentStatuses[
+                    len(consignmentStatuses) - 1
+                ]
+                booking.b_status_API = last_consignmentStatus["status"][0]
+                event_time = last_consignmentStatus["statusUpdate"]
+                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
             else:
                 event_time = None
 
