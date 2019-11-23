@@ -28,6 +28,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
+from .utils import get_dme_status_from_fp_status
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
@@ -109,7 +110,9 @@ def tracking(request, fp_name):
             else:
                 event_time = None
 
-            booking.save()
+            if booking.b_status_API:
+                booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
+                booking.save()
             return JsonResponse(
                 {
                     "message": booking.b_status_API,
