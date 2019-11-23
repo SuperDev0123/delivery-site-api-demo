@@ -767,7 +767,7 @@ def pod(request, fp_name):
             podData = json_data["pod"]["podData"]
 
             try:
-                file_name = f"pod_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.png"
+                file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
