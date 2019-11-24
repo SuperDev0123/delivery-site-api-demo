@@ -784,9 +784,9 @@ def pod(request, fp_name):
                 file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
 
                 if fp_name.lower() in ["hunter"]:
-                    fp_name += ".jpeg"
+                    file_name += ".jpeg"
                 else:
-                    fp_name += ".png"
+                    file_name += ".png"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
