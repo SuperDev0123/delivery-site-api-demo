@@ -117,6 +117,7 @@ def tracking(request, fp_name):
                 {
                     "message": booking.b_status_API,
                     "b_status_API": booking.b_status_API,
+                    "b_status": booking.b_status,
                     "event_time": event_time,
                 },
                 status=200,
@@ -768,16 +769,24 @@ def pod(request, fp_name):
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
-            # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-            # logger.error(f"### Response ({fp_name} POD): {s0}")
+            s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+            logger.error(f"### Response ({fp_name} POD): {s0}")
 
-            if fp_name.lower() == "hunter" and json_data["errorMessage"] is not None:
-                return JsonResponse({"message": json_data["errorMessage"]})
+            # if fp_name.lower() == "hunter" and json_data["errorMessage"] is not None:
+            #     return JsonResponse({"message": json_data["errorMessage"]})
 
-            podData = json_data["pod"]["podData"]
+            if fp_name.lower() in ["hunter"]:
+                podData = json_data[0]["podImage"]
+            else:
+                podData = json_data["pod"]["podData"]
 
             try:
-                file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
+
+                if fp_name.lower() in ["hunter"]:
+                    fp_name += ".jpeg"
+                else:
+                    fp_name += ".png"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
