@@ -837,25 +837,30 @@ class BookingsViewSet(viewsets.ViewSet):
                             datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
                             + timedelta(days=delivery_kpi_days)
                         ).date()
-                        booking.fp_warehouse_collected_date_time = datetime.strptime(
+                        booking.b_given_to_transport_date_time = datetime.strptime(
                             optional_value, "%Y-%m-%d %H:%M:%S"
                         )
                     elif status == "In Transit" and not optional_value:
                         if (
                             booking.fp_received_date_time
-                            and booking.fp_warehouse_collected_date_time
+                            and booking.b_given_to_transport_date_time
                         ):
                             booking.z_calculated_ETA = (
-                                booking.fp_warehouse_collected_date_time
+                                booking.b_given_to_transport_date_time
                                 + timdelta(delivery_kpi_days)
                             )
-                        if (
+                        elif (
                             booking.fp_received_date_time
-                            and not booking.fp_warehouse_collected_date_time
+                            and not booking.b_given_to_transport_date_time
                         ):
                             booking.z_calculated_ETA = (
                                 booking.fp_received_date_time
                                 + timdelta(delivery_kpi_days)
+                            )
+
+                        if not booking.b_given_to_transport_date_time:
+                            booking.b_given_to_transport_date_time = (
+                                get_sydney_now_time()
                             )
 
                     booking.b_status = status
@@ -1183,12 +1188,12 @@ class BookingsViewSet(viewsets.ViewSet):
                 elif (
                     field_name == "fp_received_date_time"
                     and field_content
-                    and not booking.fp_warehouse_collected_date_time
+                    and not booking.b_given_to_transport_date_time
                 ):
                     booking.z_calculated_ETA = datetime.strptime(
                         field_content, "%Y-%m-%d"
                     ) + timedelta(days=delivery_kpi_days)
-                elif field_name == "fp_warehouse_collected_date_time" and field_content:
+                elif field_name == "b_given_to_transport_date_time" and field_content:
                     booking.z_calculated_ETA = datetime.strptime(
                         field_content, "%Y-%m-%d %H:%M:%S"
                     ) + timedelta(days=delivery_kpi_days)
@@ -1571,7 +1576,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "fp_store_event_date": booking.fp_store_event_date,
                         "fp_store_event_time": booking.fp_store_event_time,
                         "fp_received_date_time": booking.fp_received_date_time,
-                        "fp_warehouse_collected_date_time": booking.fp_warehouse_collected_date_time,
+                        "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
                         "delivery_kpi_days": 14
                         if not booking.delivery_kpi_days
                         else booking.delivery_kpi_days,

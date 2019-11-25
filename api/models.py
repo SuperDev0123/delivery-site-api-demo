@@ -1305,7 +1305,7 @@ class Bookings(models.Model):
         blank=True, null=True, default=None
     )
     b_project_due_date = models.DateField(blank=True, null=True, default=None)
-    fp_warehouse_collected_date_time = models.DateTimeField(
+    b_given_to_transport_date_time = models.DateTimeField(
         blank=True, null=True, default=None
     )
     fp_received_date_time = models.DateTimeField(blank=True, null=True)
