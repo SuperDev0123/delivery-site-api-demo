@@ -2,11 +2,11 @@ import json
 
 
 def parse_pricing_response(response, fp_name, booking):
-    res_content = response.content.decode("utf8").replace("'", '"')
-    json_data = json.loads(res_content)
-    results = []
-
     try:
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        results = []
+
         if fp_name == "hunter" and json_data["price"]:  # Hunter
             for price in json_data["price"]:
                 result = {}
