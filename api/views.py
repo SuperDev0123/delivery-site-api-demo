@@ -841,26 +841,17 @@ class BookingsViewSet(viewsets.ViewSet):
                             optional_value, "%Y-%m-%d %H:%M:%S"
                         )
                     elif status == "In Transit" and not optional_value:
-                        if (
-                            booking.fp_received_date_time
-                            and booking.b_given_to_transport_date_time
-                        ):
-                            booking.z_calculated_ETA = (
-                                booking.b_given_to_transport_date_time
-                                + timdelta(delivery_kpi_days)
-                            )
-                        elif (
-                            booking.fp_received_date_time
-                            and not booking.b_given_to_transport_date_time
-                        ):
-                            booking.z_calculated_ETA = (
-                                booking.fp_received_date_time
-                                + timdelta(delivery_kpi_days)
-                            )
-
                         if not booking.b_given_to_transport_date_time:
                             booking.b_given_to_transport_date_time = (
                                 get_sydney_now_time()
+                            )
+                            booking.z_calculated_ETA = datetime.now() + timdelta(
+                                delivery_kpi_days
+                            )
+                        else:
+                            booking.z_calculated_ETA = (
+                                booking.b_given_to_transport_date_time
+                                + timdelta(delivery_kpi_days)
                             )
 
                     booking.b_status = status
