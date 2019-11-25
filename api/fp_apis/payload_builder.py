@@ -144,7 +144,7 @@ def _get_account_details(booking, fp_name, acc_ind=0):
     return account_detail
 
 
-def _get_service_provider(fp_name):
+def get_service_provider(fp_name):
     if fp_name.lower() == "startrack":
         return "ST"
     else:
@@ -170,7 +170,7 @@ def get_tracking_payload(booking, fp_name):
         # consignmentDetails.append({"consignmentNumber": "DME000100372"})
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
 
         return payload
     except Exception as e:
@@ -181,7 +181,7 @@ def get_tracking_payload(booking, fp_name):
 def get_book_payload(booking, fp_name):
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-    payload["serviceProvider"] = _get_service_provider(fp_name)
+    payload["serviceProvider"] = get_service_provider(fp_name)
 
     payload["readyDate"] = (
         ""
@@ -349,7 +349,7 @@ def get_cancel_book_payload(booking, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumbers"] = [booking.fk_fp_pickup_id]
 
         return payload
@@ -361,7 +361,7 @@ def get_cancel_book_payload(booking, fp_name):
 def get_getlabel_payload(booking, fp_name):
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-    payload["serviceProvider"] = _get_service_provider(fp_name)
+    payload["serviceProvider"] = get_service_provider(fp_name)
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
         "contact": "Rosie Stokeld"
@@ -485,7 +485,7 @@ def get_create_label_payload(booking, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumber"] = booking.fk_fp_pickup_id
 
         confirmation_items = Api_booking_confirmation_lines.objects.filter(
@@ -522,10 +522,10 @@ def get_create_order_payload(bookings, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(bookings.first(), fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
 
         if fp_name.lower() == "startrack":
-            payload["serviceProvider"] = _get_service_provider(fp_name)
+            payload["serviceProvider"] = get_service_provider(fp_name)
             payload["paymentMethods"] = "CHARGE_TO_ACCOUNT"
             payload["referenceNumber"] = "refer1"
 
@@ -544,7 +544,7 @@ def get_get_order_summary_payload(booking, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
         payload["orderId"] = booking.vx_fp_order_id
 
         return payload
@@ -558,7 +558,7 @@ def get_pod_payload(booking, fp_name):
         payload = {}
 
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
 
         if fp_name.lower() == "hunter":
             # payload["consignmentDetails"] = {"consignmentNumber": 'DME000106541'}
@@ -580,7 +580,7 @@ def get_reprint_payload(booking, fp_name):
         payload = {}
 
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
-        payload["serviceProvider"] = _get_service_provider(fp_name)
+        payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
         payload["labelType"] = "A"
         # payload["consignmentNumber"] = 'DME000106541'
@@ -593,7 +593,7 @@ def get_reprint_payload(booking, fp_name):
 def get_pricing_payload(booking, fp_name, acc_ind):
     payload = {}
     payload["spAccountDetails"] = _get_account_details(booking, fp_name, acc_ind)
-    payload["serviceProvider"] = _get_service_provider(fp_name)
+    payload["serviceProvider"] = get_service_provider(fp_name)
 
     payload["readyDate"] = (
         ""
