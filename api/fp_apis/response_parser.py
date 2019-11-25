@@ -48,5 +48,4 @@ def parse_pricing_response(response, fp_name, booking):
         return results
     except Exception as e:
         error_msg = f"Error while parse Pricing response: {e}"
-        print(error_msg)
-        return {"error": error_msg}
+        return None

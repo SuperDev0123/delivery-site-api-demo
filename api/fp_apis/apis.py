@@ -877,7 +877,7 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Fastway"]  # "Allied"
+            fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Allied", "Fastway"]
 
             try:
                 for fp_name in fp_names:
@@ -910,7 +910,7 @@ def pricing(request):
                             response, fp_name.lower(), booking
                         )
 
-                        if not "error" in parse_results:
+                        if parse_results and not "error" in parse_results:
                             for parse_result in parse_results:
                                 try:
                                     parse_result["account_code"] = payload[
