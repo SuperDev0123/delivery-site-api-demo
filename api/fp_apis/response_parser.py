@@ -16,7 +16,7 @@ def parse_pricing_response(response, fp_name, booking):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
+                # result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = (
@@ -32,7 +32,7 @@ def parse_pricing_response(response, fp_name, booking):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
+                # result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
                 results.append(result)
@@ -42,7 +42,7 @@ def parse_pricing_response(response, fp_name, booking):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
+                # result["fk_freight_provider_id"] = json_data["serviceProvider"].upper()
                 result["fee"] = price["quote"]["net"]["amount"]
                 result["tax_value_1"] = price["quote"]["tax"]["amount"]
                 result["service_name"] = price["plan_name"]
