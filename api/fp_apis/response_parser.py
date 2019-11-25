@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger("dme_api")
 
 
 def parse_pricing_response(response, fp_name, booking):
@@ -48,4 +51,5 @@ def parse_pricing_response(response, fp_name, booking):
         return results
     except Exception as e:
         error_msg = f"Error while parse Pricing response: {e}"
+        logger.error(error_msg)
         return None
