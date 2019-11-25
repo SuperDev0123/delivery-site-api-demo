@@ -36,6 +36,13 @@ from django.utils import timezone
 from django.conf import settings
 from api.common import convert_price
 
+from django.core.mail import EmailMultiAlternatives
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+
+from django_rest_passwordreset.signals import reset_password_token_created, post_password_reset, pre_password_reset
+
 from .serializers import *
 from .models import *
 from .utils import (
@@ -54,6 +61,70 @@ from .utils import (
 )
 
 logger = logging.getLogger("dme_api")
+
+@receiver(pre_password_reset)
+def pre_password_reset(user, *args, **kwargs):
+    print(user)
+
+@receiver(post_password_reset)
+def post_password_reset(user, *args, **kwargs):
+    print(user)
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    """
+    Handles password reset tokens
+    When a token is created, an e-mail needs to be sent to the user
+    :param sender: View Class that sent the signal
+    :param instance: View Instance that sent the signal
+    :param reset_password_token: Token Model Object
+    :param args:
+    :param kwargs:
+    :return:
+    """
+
+    #print((instance))
+    # send an e-mail to the user
+    context = {
+    'current_user': reset_password_token.user,
+    'username': reset_password_token.user.username,
+    'email': reset_password_token.user.email,
+    #'reset_password_url': "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+    'reset_password_url': 'http://localhost:9000/reset-password?token='+reset_password_token.key
+    }
+    #print(context)
+    # render email text
+
+    from django.utils.datastructures import MultiValueDictKeyError
+
+    try:
+        filepath = settings.EMAIL_ROOT + '/user_reset_password.html'
+        print(filepath)
+    except MultiValueDictKeyError:
+        print("Either the file is missing or not readable")
+
+    email_html_message = render_to_string(settings.EMAIL_ROOT + '/user_reset_password.html', context)
+    email_plaintext_message = render_to_string(settings.EMAIL_ROOT + '/user_reset_password.txt', context)  
+
+    #print(email_html_message)
+
+    msg = EmailMultiAlternatives(
+    # title:
+    "Password Reset for {title}".format(title="Deliver Me"),
+    # message:
+    email_plaintext_message,
+    # from:
+    "noreply@deliverme.com",
+    # to:
+    [reset_password_token.user.email]
+    )
+    msg.attach_alternative(email_html_message, "text/html")
+    print(str(msg))
+    try:
+        
+        msg.send()
+    except Exception as e:
+        print('Exception: ', str(e))
 
 
 class UserViewSet(viewsets.ViewSet):

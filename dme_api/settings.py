@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django_filters",
     "api",
     "rest_framework",
+    "django_rest_passwordreset",
     "corsheaders",
 ]
 
@@ -81,6 +82,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.media",
+                "django.template.context_processors.email",
             ]
         },
     }
@@ -92,29 +94,29 @@ WSGI_APPLICATION = "dme_api.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-DATABASES = {  # Local
+#DATABASES = {  # Local
+#    "default": {
+#        "ENGINE": "django.db.backends.mysql",
+#        "NAME": "deliver_me",
+#        "USER": "root",
+#        "PASSWORD": "root",
+#        "HOST": "localhost",
+#        "PORT": "3306",
+#    }
+#}
+
+DATABASES = {  # Dev
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "deliver_me",
-        "USER": "root",
-        "PASSWORD": "root",
-        "HOST": "localhost",
+        "NAME": "dme_db_dev",
+        "USER": "fmadmin",
+        # 'PASSWORD': 'Fmadmin1', # Old db password
+        "PASSWORD": "oU8pPQxh",  # New db password
+        # 'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com', # Old db
+        "HOST": "deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com",  # New db
         "PORT": "3306",
     }
 }
-
-# DATABASES = {  # Dev
-#     "default": {
-#         "ENGINE": "django.db.backends.mysql",
-#         "NAME": "dme_db_prod",
-#         "USER": "fmadmin",
-#         # 'PASSWORD': 'Fmadmin1', # Old db password
-#         "PASSWORD": "oU8pPQxh",  # New db password
-#         # 'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com', # Old db
-#         "HOST": "deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com",  # New db
-#         "PORT": "3306",
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -157,6 +159,9 @@ LOGOUT_REDIRECT_URL = "/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+EMAIL_URL = "/templates/email/"
+EMAIL_ROOT = os.path.join(BASE_DIR, 'templates/email')
 
 CORS_ORIGIN_ALLOW_ALL = True
 
