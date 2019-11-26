@@ -760,6 +760,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "fp_store_event_date": booking.fp_store_event_date,
                     "fp_store_event_time": booking.fp_store_event_time,
                     "fp_received_date_time": booking.fp_received_date_time,
+                    "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
                 }
             )
 
@@ -1571,6 +1572,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "delivery_kpi_days": 14
                         if not booking.delivery_kpi_days
                         else booking.delivery_kpi_days,
+                        "api_booking_quote": booking.api_booking_quote.id,
                     }
                     return JsonResponse(
                         {
