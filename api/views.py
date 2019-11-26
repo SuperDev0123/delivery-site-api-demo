@@ -1572,7 +1572,9 @@ class BookingViewSet(viewsets.ViewSet):
                         "delivery_kpi_days": 14
                         if not booking.delivery_kpi_days
                         else booking.delivery_kpi_days,
-                        "api_booking_quote": booking.api_booking_quote.id,
+                        "api_booking_quote": booking.api_booking_quote.id
+                        if booking.api_booking_quote
+                        else None,
                     }
                     return JsonResponse(
                         {
