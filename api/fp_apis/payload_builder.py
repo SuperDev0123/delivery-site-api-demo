@@ -103,17 +103,7 @@ FP_UOM = {
 }
 
 
-def _get_live_account_count(fp_name):
-    count = 0
-
-    for account_code in ACCOUTN_CODES[fp_name.lower()]:
-        if "live_" in account_code:
-            count += 1
-
-    return count
-
-
-def _get_account_details(booking, fp_name, acc_ind=0):
+def _get_account_details(booking, fp_name, account_code_key="live_0"):
     account_detail = None
 
     if fp_name.lower() in ["startrack", "allied"]:
@@ -132,13 +122,13 @@ def _get_account_details(booking, fp_name, acc_ind=0):
     elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()][f"live_{acc_ind}"],
-                **KEY_CHAINS[fp_name.lower()][f"live_{acc_ind}"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()][account_code_key],
+                **KEY_CHAINS[fp_name.lower()][account_code_key],
             }
         else:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()][f"live_{acc_ind}"],
-                **KEY_CHAINS[fp_name.lower()][f"live_{acc_ind}"],
+                "accountCode": ACCOUTN_CODES[fp_name.lower()][account_code_key],
+                **KEY_CHAINS[fp_name.lower()][account_code_key],
             }
 
     return account_detail

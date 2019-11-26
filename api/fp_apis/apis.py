@@ -16,7 +16,7 @@ from api.serializers import ApiBookingQuotesSerializer
 from django.conf import settings
 
 from .payload_builder import (
-    _get_live_account_count,
+    ACCOUTN_CODES,
     get_tracking_payload,
     get_book_payload,
     get_cancel_book_payload,
@@ -28,7 +28,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
-from .utils import get_dme_status_from_fp_status
+from .utils import get_dme_status_from_fp_status, get_account_code_key
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
@@ -148,7 +148,17 @@ def book(request, fp_name):
                 return JsonResponse({"message": error_msg}, status=400)
 
             try:
-                payload = get_book_payload(booking, fp_name)
+                if fp_name.lower() in ["hunter"]:
+                    account_code_key = get_account_code_key(booking, fp_name)
+
+                    if not account_code_key:
+                        return JsonResponse(
+                            {"message": booking.b_error_Capture}, status=400
+                        )
+
+                    payload = get_book_payload(booking, fp_name, account_code_key)
+                else:
+                    payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 logger.error(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
@@ -882,10 +892,15 @@ def pricing(request):
 
             try:
                 for fp_name in fp_names:
-                    account_count = _get_live_account_count(fp_name.lower())
+                    if fp_name.lower() not in ACCOUTN_CODES:
+                        return JsonResponse(
+                            {"message": f"Not supported FP"}, status=400
+                        )
 
-                    for acc_ind in range(account_count):
-                        payload = get_pricing_payload(booking, fp_name.lower(), acc_ind)
+                    for account_code_key in ACCOUTN_CODES[fp_name.lower()]:
+                        payload = get_pricing_payload(
+                            booking, fp_name.lower(), account_code_key
+                        )
 
                         logger.error(
                             f"### Payload ({fp_name.upper()} PRICING): {payload}"
