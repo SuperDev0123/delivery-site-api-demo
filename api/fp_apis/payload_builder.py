@@ -152,15 +152,15 @@ def _convert(value, uom, type, fp_name):
     return round(converted_value, 2)
 
 
-def get_tracking_payload(booking, fp_name):
+def get_tracking_payload(booking, fp_name, account_code_key):
     try:
         payload = {}
         consignmentDetails = []
-        # for i in range(index * 10, (index + 1) * 10):  # Batch - 10
         consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
-        # consignmentDetails.append({"consignmentNumber": "DME000100372"})
         payload["consignmentDetails"] = consignmentDetails
-        payload["spAccountDetails"] = _get_account_details(booking, fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            booking, fp_name, account_code_key
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
 
         return payload

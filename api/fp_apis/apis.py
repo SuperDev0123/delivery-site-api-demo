@@ -63,7 +63,15 @@ def tracking(request, fp_name):
 
     try:
         booking = Bookings.objects.get(id=booking_id)
-        payload = get_tracking_payload(booking, fp_name)
+        if fp_name.lower() in ["hunter"]:
+            account_code_key = get_account_code_key(booking, fp_name)
+
+            if not account_code_key:
+                return JsonResponse({"message": booking.b_error_Capture}, status=400)
+
+            payload = get_tracking_payload(booking, fp_name, account_code_key)
+        else:
+            payload = get_tracking_payload(booking, fp_name)
 
         logger.error(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
