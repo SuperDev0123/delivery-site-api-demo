@@ -152,7 +152,7 @@ def _convert(value, uom, type, fp_name):
     return round(converted_value, 2)
 
 
-def get_tracking_payload(booking, fp_name, account_code_key):
+def get_tracking_payload(booking, fp_name, account_code_key=None):
     try:
         payload = {}
         consignmentDetails = []
