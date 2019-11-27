@@ -25,6 +25,7 @@ router.register(r"status", StatusViewSet, basename="status")
 router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
 router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
+router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
 urlpatterns = router.urls
 
 urlpatterns += [

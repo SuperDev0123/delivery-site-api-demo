@@ -15,6 +15,7 @@ from functools import reduce
 from pydash import _
 import requests
 import tempfile
+import re
 
 from django.shortcuts import render
 from django.core import serializers, files
@@ -36,6 +37,10 @@ from django.utils import timezone
 from django.conf import settings
 from api.common import convert_price
 
+from django.db import connection
+import MySQLdb
+#import mysql.connector
+#from mysql.connector import errorcode
 from .serializers import *
 from .models import *
 from .utils import (
@@ -3676,3 +3681,107 @@ def getSuburbs(request):
         return JsonResponse({"type": requestType, "suburbs": return_data})
     except Exception as e:
         return JsonResponse({"type": requestType, "suburbs": ""})
+
+class SqlQueriesViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Utl_sql_queries.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "sql_title": resultObject.sql_title,
+                        "sql_query": resultObject.sql_query,
+                        "sql_description": resultObject.sql_description,
+                        "sql_notes": resultObject.sql_notes,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_modifiedByAccount": resultObject.z_modifiedByAccount,
+                        "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = Utl_sql_queries.objects.get(pk=pk)
+            
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "sql_title": resultObject.sql_title,
+                    "sql_query": resultObject.sql_query,
+                    "sql_description": resultObject.sql_description,
+                    "sql_notes": resultObject.sql_notes,
+                    "z_createdByAccount": resultObject.z_createdByAccount,
+                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                    "z_modifiedByAccount": resultObject.z_modifiedByAccount,
+                    "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+        
+        try:
+            resultObjects = []
+            resultObjects = Utl_sql_queries.objects.create(sql_title = request.data["sql_title"], sql_query = request.data["sql_query"], sql_description = request.data["sql_description"], sql_notes = request.data["sql_notes"])
+            
+            return JsonResponse({"results": request.data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        data = Utl_sql_queries.objects.get(pk=pk)
+
+        try:
+            Utl_sql_queries.objects.filter(pk=pk).update(sql_query = request.data["sql_query"], sql_description = request.data["sql_description"], sql_notes = request.data["sql_notes"])
+            return JsonResponse({"results": request.data})
+        except Exception as e:
+            #print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        data = Utl_sql_queries.objects.get(pk=pk)
+
+        try:
+            data.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def validate(self, request, pk=None):
+        return_data = []
+        if (re.search('select', request.data["sql_query"], flags=re.IGNORECASE)):
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(request.data["sql_query"])
+                    row = cursor.fetchall()
+                    return JsonResponse({"results": str(row)})
+                except Exception as e:
+                    # print('@Exception', e)
+                    return JsonResponse({"error": str(e)})
+        else:
+            return JsonResponse({"error": 'Sorry only SELECT statement allowed'})
+    
