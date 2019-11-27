@@ -2658,6 +2658,36 @@ class Utl_country_codes(models.Model):
     class Meta:
         db_table = "utl_country_codes"
 
+class Utl_sql_queries(models.Model):
+    id = models.AutoField(primary_key=True)
+    sql_title = models.CharField(
+        verbose_name=_("SQL Title"), max_length=36, blank=True, null=True
+    )
+    sql_query = models.TextField(
+        verbose_name=_("SQL Query"), blank=True, null=True
+    )
+    sql_description = models.TextField(
+        verbose_name=_("SQL Description"), blank=True, null=True
+    )
+    sql_notes = models.TextField(
+        verbose_name=_("SQL Notes"), blank=True, null=True
+    )
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "utl_sql_queries"
+
 
 class Dme_status_history(models.Model):
     id = models.AutoField(primary_key=True)
