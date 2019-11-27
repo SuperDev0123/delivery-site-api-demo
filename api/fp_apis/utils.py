@@ -7,7 +7,7 @@ from .payload_builder import ACCOUTN_CODES
 def get_dme_status_from_fp_status(fp_name, booking):
     try:
         status_info = Dme_utl_fp_statuses.objects.get(
-            fp_name__iexact=fp_name, fp_original_status=booking.b_status_API
+            fp_name__iexact=fp_name, fp_lookup_status=booking.b_status_API
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
