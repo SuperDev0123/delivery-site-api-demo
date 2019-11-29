@@ -3103,32 +3103,42 @@ class FileUploadView(views.APIView):
             dme_account_num = DME_clients.objects.get(
                 company_name=uploader
             ).dme_account_num
+            client_company_name = "DME"
         else:
             client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
             dme_account_num = client_employee.fk_id_dme_client.dme_account_num
+            client_company_name = DME_clients.objects.get(
+                pk_id_dme_client=client_employee.fk_id_dme_client_id
+            ).company_name
 
         upload_file_name = request.FILES["file"].name
         prepend_name = str(dme_account_num) + "_" + upload_file_name
 
         save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
-        # save2Redis(prepend_name + "_b_client_name", client_employee[0].fk_id_dme_client.dme_account_num)
 
-        handle_uploaded_file(request, dme_account_num, request.FILES["file"])
+        handle_uploaded_file(
+            dme_account_num, request.FILES["file"], client_company_name
+        )
 
         html = prepend_name
         return Response(prepend_name)
 
 
-def handle_uploaded_file(request, dme_account_num, f):
-    with open(
-        "/var/www/html/dme_api/media/onedrive/" + str(dme_account_num) + "_" + f.name,
-        "wb+",
-    ) as destination:  # PROD
-        # with open('/Users/admin/work/goldmine/xlsimport/upload/' + f.name, 'wb+') as destination: # LOCAL
+def handle_uploaded_file(dme_account_num, f, client_company_name):
+    if settings.ENV in ["prod", "dev"]:  # PROD & DEV
+        filename = (
+            f"/var/www/html/dme_api/media/onedrive/{str(dme_account_num)}_{f.name}"
+            if client_company_name != "Tempo"
+            else f"/dme_sftp/tempo_au/pickup_ext/{str(dme_account_num)}_{f.name}"
+        )
+    else:  # LOCAL
+        filename = f"/Users/admin/work/goldmine/xlsimport/upload/{f.name}"
+
+    with open(filename, "wb+") as destination:
         for chunk in f.chunks():
             destination.write(chunk)
 
-    clearFileCheckHistory(str(dme_account_num) + "_" + f.name)
+    clearFileCheckHistory(f"str(dme_account_num)_{f.name}")
 
 
 def upload_status(request):
