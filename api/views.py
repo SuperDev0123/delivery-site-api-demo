@@ -3129,7 +3129,7 @@ def handle_uploaded_file(dme_account_num, f, client_company_name):
         filename = (
             f"/var/www/html/dme_api/media/onedrive/{str(dme_account_num)}_{f.name}"
             if client_company_name != "Tempo"
-            else f"/dme_sftp/tempo_au/pickup_ext/{str(dme_account_num)}_{f.name}"
+            else f"/dme_sftp/tempo_au/pickup_ext/{f.name}"
         )
     else:  # LOCAL
         filename = f"/Users/admin/work/goldmine/xlsimport/upload/{f.name}"
