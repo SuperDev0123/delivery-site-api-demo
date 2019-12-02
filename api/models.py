@@ -1,12 +1,15 @@
+from datetime import datetime, date
+
 from django.db import models
 from django.utils import timezone
-from datetime import datetime, date
 from django.conf import settings
 from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Max
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 
 
 class UserPermissions(models.Model):
@@ -3253,3 +3256,19 @@ class DME_Email_Templates(models.Model):
 
     class Meta:
         db_table = "dme_email_templates"
+
+
+@receiver(pre_save, sender=Bookings)
+def pre_save_booking(sender, instance: Bookings, **kwargs):
+    print("@0 - ")
+    if instance.id is None:  # new object will be created
+        pass
+    else:
+        previous = Bookings.objects.get(id=instance.id)
+        if (
+            previous.dme_status_detail != instance.dme_status_detail
+        ):  # field will be updated
+            instance.dme_status_detail_updated_by = "user"
+            instance.prev_dme_status_detail = previous.dme_status_detail
+            instance.dme_status_detail_updated_at = datetime.now()
+            print("@1 - ", instance)
