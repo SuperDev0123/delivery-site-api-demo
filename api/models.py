@@ -1474,6 +1474,13 @@ class Bookings(models.Model):
     api_booking_quote = models.OneToOneField(
         API_booking_quotes, on_delete=models.CASCADE, null=True
     )  # Optional
+    prev_dme_status_detail = models.CharField(
+        max_length=255, blank=True, null=True, default=""
+    )
+    dme_status_detail_updated_at = models.DateTimeField(blank=True, null=True)
+    dme_status_detail_updated_by = models.CharField(
+        max_length=64, blank=True, null=True, default=""
+    )
 
     class Meta:
         db_table = "dme_bookings"
