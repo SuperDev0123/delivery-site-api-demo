@@ -3273,32 +3273,36 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
             instance.dme_status_detail_updated_at = datetime.now()
 
         if previous.b_status != instance.b_status:
-            if instance.b_status == "In Transit":
-                booking_Lines_cnt = Booking_lines.objects.filter(
-                    fk_booking_id=instance.pk_booking_id
-                ).count()
-                fp_scanned_cnt = Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=instance.pk_booking_id, tally__gt=0
-                ).count()
+            try:
+                if instance.b_status == "In Transit":
+                    booking_Lines_cnt = Booking_lines.objects.filter(
+                        fk_booking_id=instance.pk_booking_id
+                    ).count()
+                    fp_scanned_cnt = Api_booking_confirmation_lines.objects.filter(
+                        fk_booking_id=instance.pk_booking_id, tally__gt=0
+                    ).count()
 
-                dme_status_detail = ""
-                if (
-                    instance.b_given_to_transport_date_time
-                    and not instance.fp_received_date_time
-                ):
-                    dme_status_detail = "In transporter's depot"
-                if instance.fp_received_date_time:
-                    dme_status_detail = "Good Received by Transport"
+                    dme_status_detail = ""
+                    if (
+                        instance.b_given_to_transport_date_time
+                        and not instance.fp_received_date_time
+                    ):
+                        dme_status_detail = "In transporter's depot"
+                    if instance.fp_received_date_time:
+                        dme_status_detail = "Good Received by Transport"
 
-                if fp_scanned_cnt > 0 and fp_scanned_cnt < booking_Lines_cnt:
-                    dme_status_detail = dme_status_detail + " (Partial)"
+                    if fp_scanned_cnt > 0 and fp_scanned_cnt < booking_Lines_cnt:
+                        dme_status_detail = dme_status_detail + " (Partial)"
 
-                instance.dme_status_detail = dme_status_detail
-                instance.dme_status_detail_updated_by = "user"
-                instance.prev_dme_status_detail = previous.dme_status_detail
-                instance.dme_status_detail_updated_at = datetime.now()
-            if status == "Delivered":
-                instance.dme_status_detail = ""
-                instance.dme_status_detail_updated_by = "user"
-                instance.prev_dme_status_detail = previous.dme_status_detail
-                instance.dme_status_detail_updated_at = datetime.now()
+                    instance.dme_status_detail = dme_status_detail
+                    instance.dme_status_detail_updated_by = "user"
+                    instance.prev_dme_status_detail = previous.dme_status_detail
+                    instance.dme_status_detail_updated_at = datetime.now()
+                if status == "Delivered":
+                    instance.dme_status_detail = ""
+                    instance.dme_status_detail_updated_by = "user"
+                    instance.prev_dme_status_detail = previous.dme_status_detail
+                    instance.dme_status_detail_updated_at = datetime.now()
+            except Exception as e:
+                logger.info("Error 515 {e}")
+                pass
