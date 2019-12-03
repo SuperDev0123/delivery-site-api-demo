@@ -842,29 +842,6 @@ class BookingsViewSet(viewsets.ViewSet):
                             optional_value, "%Y-%m-%d %H:%M:%S"
                         )
 
-                        booking_Lines_cnt = Booking_lines.objects.filter(
-                            fk_booking_id=booking.pk_booking_id
-                        ).count()
-                        fp_scanned_cnt = Api_booking_confirmation_lines.objects.filter(
-                            fk_booking_id=booking.pk_booking_id, tally__gt=0
-                        ).count()
-
-                        dme_status_detail = ""
-                        if (
-                            booking.b_given_to_transport_date_time
-                            and not booking.fp_received_date_time
-                        ):
-                            dme_status_detail = "In transporter's depot"
-                        if booking.fp_received_date_time:
-                            dme_status_detail = "Good Received by Transport"
-
-                        if fp_scanned_cnt > 0 and fp_scanned_cnt < booking_Lines_cnt:
-                            dme_status_detail = dme_status_detail + " (Partial)"
-
-                        booking.dme_status_detail = dme_status_detail
-                    if status == "Delivered":
-                        booking.dme_status_detail = ""
-
                     booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
