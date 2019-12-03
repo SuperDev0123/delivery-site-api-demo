@@ -56,6 +56,7 @@ from .utils import (
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
+    tables_in_query,
 )
 from api.outputs import emails as email_module
 
@@ -3773,15 +3774,48 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def validate(self, request, pk=None):
         return_data = []
+        query_tables = tables_in_query(request.data["sql_query"])
+        #return JsonResponse({"results": str(query_tables)})  
         if (re.search('select', request.data["sql_query"], flags=re.IGNORECASE)):
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(request.data["sql_query"])
+                    columns = cursor.description
                     row = cursor.fetchall()
-                    return JsonResponse({"results": str(row)})
+                    cursor.execute("SHOW KEYS FROM "+query_tables[0]+" WHERE Key_name = 'PRIMARY'")
+                    row1 = cursor.fetchone()
+                    result = []
+                    for value in row:
+                        tmp = {}
+                        for (index,column) in enumerate(value):
+                            tmp[columns[index][0]] = column
+                        result.append(tmp)
+                    return JsonResponse({"results": result, "tables": row1})
                 except Exception as e:
                     # print('@Exception', e)
                     return JsonResponse({"error": str(e)})
         else:
             return JsonResponse({"error": 'Sorry only SELECT statement allowed'})
+
+    @action(detail=False, methods=["post"])
+    def update_query(self, request, pk=None):
+        return_data = []
+        if (re.search('update', request.data["sql_query"], flags=re.IGNORECASE)):
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(request.data["sql_query"])
+                    columns = cursor.description
+                    row = cursor.fetchall()
+                    result = []
+                    for value in row:
+                        tmp = {}
+                        for (index,column) in enumerate(value):
+                            tmp[columns[index][0]] = column
+                        result.append(tmp)
+                    return JsonResponse({"results": result})
+                except Exception as e:
+                    # print('@Exception', e)
+                    return JsonResponse({"error": str(e)})
+        else:
+            return JsonResponse({"error": 'Sorry only UPDATE statement allowed'})
     
