@@ -3294,5 +3294,11 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
                     dme_status_detail = dme_status_detail + " (Partial)"
 
                 instance.dme_status_detail = dme_status_detail
+                instance.dme_status_detail_updated_by = "user"
+                instance.prev_dme_status_detail = previous.dme_status_detail
+                instance.dme_status_detail_updated_at = datetime.now()
             if status == "Delivered":
                 instance.dme_status_detail = ""
+                instance.dme_status_detail_updated_by = "user"
+                instance.prev_dme_status_detail = previous.dme_status_detail
+                instance.dme_status_detail_updated_at = datetime.now()
