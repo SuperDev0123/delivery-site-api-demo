@@ -833,7 +833,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     else:
                         delivery_kpi_days = int(booking.delivery_kpi_days)
 
-                    if status == "In Transit" and optional_value:
+                    if status == "In Transit":
                         booking.z_calculated_ETA = (
                             datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
                             + timedelta(days=delivery_kpi_days)
@@ -841,29 +841,37 @@ class BookingsViewSet(viewsets.ViewSet):
                         booking.b_given_to_transport_date_time = datetime.strptime(
                             optional_value, "%Y-%m-%d %H:%M:%S"
                         )
-                    elif status == "In Transit" and not optional_value:
-                        if not booking.b_given_to_transport_date_time:
-                            booking.b_given_to_transport_date_time = (
-                                get_sydney_now_time()
-                            )
-                            booking.z_calculated_ETA = datetime.now() + timdelta(
-                                delivery_kpi_days
-                            )
-                        else:
-                            booking.z_calculated_ETA = (
-                                booking.b_given_to_transport_date_time
-                                + timdelta(delivery_kpi_days)
-                            )
+
+                        booking_Lines_cnt = Booking_lines.objects.filter(
+                            fk_booking_id=booking.pk_booking_id
+                        ).count()
+                        fp_scanned_cnt = Api_booking_confirmation_lines.objects.filter(
+                            fk_booking_id=booking.pk_booking_id, tally__gt=0
+                        ).count()
+
+                        dme_status_detail = ""
+                        if (
+                            booking.b_given_to_transport_date_time
+                            and not booking.fp_received_date_time
+                        ):
+                            dme_status_detail = "In transporter's depot"
+                        if booking.fp_received_date_time:
+                            dme_status_detail = "Good Received by Transport"
+
+                        if fp_scanned_cnt > 0 and fp_scanned_cnt < booking_Lines_cnt:
+                            dme_status_detail = dme_status_detail + " (Partial)"
+
+                        booking.dme_status_detail = dme_status_detail
+                    if status == "Delivered":
+                        booking.dme_status_detail = ""
 
                     booking.b_status = status
-                    booking.dme_status_detail = (
-                        "Collection Confirmed by Pickup Address."
-                    )
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
-            print("Exception: ", e)
+            if settings.env == "local":
+                print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["post"])
