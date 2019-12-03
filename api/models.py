@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, date
 
 from django.db import models
@@ -10,6 +11,8 @@ from django.db.models import Max
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+
+logger = logging.getLogger("dme_api")
 
 
 class UserPermissions(models.Model):
