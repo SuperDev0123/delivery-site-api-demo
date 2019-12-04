@@ -16,7 +16,7 @@ from api.serializers import ApiBookingQuotesSerializer
 from django.conf import settings
 
 from .payload_builder import (
-    _get_live_account_count,
+    ACCOUTN_CODES,
     get_tracking_payload,
     get_book_payload,
     get_cancel_book_payload,
@@ -28,6 +28,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
+from .utils import get_dme_status_from_fp_status, get_account_code_key
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
@@ -62,12 +63,25 @@ def tracking(request, fp_name):
 
     try:
         booking = Bookings.objects.get(id=booking_id)
-        payload = get_tracking_payload(booking, fp_name)
+        if fp_name.lower() in ["hunter"]:
+            account_code_key = get_account_code_key(booking, fp_name)
+
+            if not account_code_key:
+                return JsonResponse({"message": booking.b_error_Capture}, status=400)
+
+            payload = get_tracking_payload(booking, fp_name, account_code_key)
+        else:
+            payload = get_tracking_payload(booking, fp_name)
 
         logger.error(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
-        res_content = response.content.decode("utf8").replace("'", '"')
+
+        if fp_name.lower() in ["tnt"]:
+            res_content = response.content.decode("utf8")
+        else:
+            res_content = response.content.decode("utf8").replace("'", '"')
+
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.error(f"### Response ({fp_name} tracking): {s0}")
@@ -78,37 +92,52 @@ def tracking(request, fp_name):
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} TRACKING",
                 response=res_content,
-                fk_booking_id=booking.i,
+                fk_booking_id=booking.id,
             ).save()
 
-            booking.b_status_API = json_data["consignmentTrackDetails"][0][
-                "consignmentStatuses"
-            ][0]["status"]
-            booking.save()
+            consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
+            consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
 
-            if fp_name.lower == "startrack":
+            if fp_name.lower() == "startrack":
+                booking.b_status_API = consignmentStatuses[0]["status"]
                 event_time = None
-            elif fp_name.lower == "tnt":
-                event_time = json_data["consignmentTrackDetails"][0][
-                    "consignmentStatuses"
-                ][0]["statusDate"]
-                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
+            elif fp_name.lower() in ["tnt"]:
+                last_consignmentStatus = consignmentStatuses[
+                    len(consignmentStatuses) - 1
+                ]
+                booking.b_status_API = last_consignmentStatus["status"][0]
+                event_time = last_consignmentStatus["statusDate"][0]
+                event_time = str(datetime.strptime(event_time, "%m/%d/%Y"))
+            elif fp_name.lower() in ["hunter"]:
+                last_consignmentStatus = consignmentStatuses[
+                    len(consignmentStatuses) - 1
+                ]
+                booking.b_status_API = last_consignmentStatus["status"]
+                event_time = last_consignmentStatus["statusUpdate"]
+                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
             else:
                 event_time = None
 
+            if booking.b_status_API:
+                booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
+                booking.save()
             return JsonResponse(
                 {
-                    "message": booking.b_status_API,
+                    "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
                     "b_status_API": booking.b_status_API,
+                    "b_status": booking.b_status,
                     "event_time": event_time,
                 },
                 status=200,
             )
         except KeyError:
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
-    except Exception as e:
+    except Bookings.DoesNotExist:
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
+    except Exception as e:
+        logger.error(f"ERROR: {e}")
+        return JsonResponse({"message": "Tracking failed"}, status=400)
 
 
 @api_view(["POST"])
@@ -127,7 +156,17 @@ def book(request, fp_name):
                 return JsonResponse({"message": error_msg}, status=400)
 
             try:
-                payload = get_book_payload(booking, fp_name)
+                if fp_name.lower() in ["hunter"]:
+                    account_code_key = get_account_code_key(booking, fp_name)
+
+                    if not account_code_key:
+                        return JsonResponse(
+                            {"message": booking.b_error_Capture}, status=400
+                        )
+
+                    payload = get_book_payload(booking, fp_name, account_code_key)
+                else:
+                    payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 logger.error(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
@@ -223,7 +262,7 @@ def book(request, fp_name):
                                 f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                             )
                         else:
-                            file_url = f"/Users/admin/work/goldmine/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                            file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
@@ -264,7 +303,14 @@ def book(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = f"{json_data[0]['message']}"
+                if "errors" in json_data:
+                    error_msg = json_data["errors"]
+                elif "errorMessage" in json_data:  # TNT Error
+                    error_msg = json_data["errorMessage"]
+                elif "errorMessage" in json_data[0]:  # Hunter Error
+                    error_msg = json_data[0]["errorMessage"]
+                else:
+                    error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
             elif response.status_code == 500:
@@ -469,8 +515,6 @@ def get_label(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
 
         payload = {}
-        payload = get_getlabel_payload(booking, fp_name)
-
         if fp_name.lower() in ["startrack"]:
             try:
                 payload = get_create_label_payload(booking, fp_name)
@@ -502,13 +546,26 @@ def get_label(request, fp_name):
                 error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
+        elif fp_name.lower() in ["tnt"]:
+            payload = get_getlabel_payload(booking, fp_name)
+
         try:
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
 
-            while json_data is None or (
-                json_data is not None and json_data["labels"][0]["status"] == "PENDING"
+            while (
+                json_data is None
+                or (
+                    json_data is not None
+                    and fp_name.lower() == "startrack"
+                    and json_data["labels"][0]["status"] == "PENDING"
+                )
+                or (
+                    json_data is not None
+                    and fp_name.lower() == "tnt"
+                    and json_data["anyType"]["Status"] != "SUCCESS"
+                )
             ):
                 time.sleep(5)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
@@ -519,8 +576,29 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.error(f"### Response ({fp_name} get_label): {s0}")
 
-            internal_url = download_external.pdf(json_data["labels"][0]["url"], booking)
-            booking.z_label_url = internal_url
+            if fp_name.lower() in ["startrack"]:
+                label_url = download_external.pdf(
+                    json_data["labels"][0]["url"], booking
+                )
+            elif fp_name.lower() in ["tnt"]:
+                try:
+                    file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+
+                    if IS_PRODUCTION:
+                        label_url = (
+                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                        )
+                    else:
+                        label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                    with open(label_url, "wb") as f:
+                        f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
+                        f.close()
+                except KeyError as e:
+                    error_msg = f"KeyError: {e}"
+                    _set_error(booking, error_msg)
+
+            booking.z_label_url = label_url
             booking.save()
 
             Log(
@@ -649,7 +727,7 @@ def get_order_summary(request, fp_name):
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = f"/home/administrator/Downloads/dme_api/static/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
@@ -695,104 +773,6 @@ def get_order_summary(request, fp_name):
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
-def pricing(request, fp_name):
-    try:
-        body = literal_eval(request.body.decode("utf8"))
-        booking_id = body["booking_id"]
-
-        try:
-            booking = Bookings.objects.get(id=booking_id)
-
-            if booking.b_status.lower() == "booked":
-                return JsonResponse(
-                    {"message": "Booking is already booked."}, status=400
-                )
-
-            if booking.pu_Address_State is None or not booking.pu_Address_State:
-                error_msg = "State for pickup postal address is required."
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
-
-            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
-                error_msg = "Suburb name for pickup postal address is required."
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
-
-            try:
-                payload = get_book_payload(booking, fp_name)
-            except Exception as e:
-                logger.error(f"#401 - Error while build payload: {e}")
-                return JsonResponse({"message": str(e)}, status=400)
-
-            logger.error(f"### Payload ({fp_name} price): {payload}")
-            url = DME_LEVEL_API_URL + "/price/calculateprice"
-            response = requests.post(url, params={}, json=payload)
-            res_content = response.content.decode("utf8").replace("'", '"')
-            json_data = json.loads(res_content)
-            s0 = json.dumps(
-                json_data, indent=2, sort_keys=True, default=str
-            )  # Just for visual
-            logger.error(f"### Response ({fp_name} price): {s0}")
-
-            try:
-                request_payload = {
-                    "apiUrl": "",
-                    "accountCode": "",
-                    "authKey": "",
-                    "trackingId": "",
-                }
-                request_payload["apiUrl"] = url
-                request_payload["accountCode"] = payload["spAccountDetails"][
-                    "accountCode"
-                ]
-                request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = json_data["consignmentNumber"]
-
-                log = Log(
-                    request_payload=request_payload,
-                    request_status="SUCCESS",
-                    request_type=f"{fp_name.upper()} PRICING",
-                    response=res_content,
-                    fk_booking_id=booking.id,
-                ).save()
-
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-
-                for item in json_data["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
-                    ).save()
-
-                return JsonResponse(
-                    {"message": f"Successfully pricing({booking.v_FPBookingNumber})"}
-                )
-            except KeyError as e:
-                log = Log(
-                    request_payload=payload,
-                    request_status="ERROR",
-                    request_type=f"{fp_name.upper()} PRICING",
-                    response=res_content,
-                    fk_booking_id=booking.id,
-                ).save()
-
-                error_msg = f"KeyError: {e}"
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
-        except IndexError:
-            return JsonResponse({"message": "Booking not found"}, status=400)
-        except TypeError as e:
-            error_msg = f"TypeError: {e}"
-            _set_error(booking, error_msg)
-            return JsonResponse({"message": error_msg}, status=400)
-    except SyntaxError:
-        return JsonResponse({"message": "Booking id is required"}, status=400)
-
-
-@api_view(["POST"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
 def pod(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
@@ -807,23 +787,29 @@ def pod(request, fp_name):
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
-            # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-            # logger.error(f"### Response ({fp_name} POD): {s0}")
+            s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+            logger.error(f"### Response ({fp_name} POD): {s0}")
 
-            if fp_name.lower() == "hunter" and json_data["errorMessage"] is not None:
-                return JsonResponse({"message": json_data["errorMessage"]})
+            # if fp_name.lower() == "hunter" and json_data["errorMessage"] is not None:
+            #     return JsonResponse({"message": json_data["errorMessage"]})
 
-            podData = json_data["pod"]["podData"]
+            if fp_name.lower() in ["hunter"]:
+                podData = json_data[0]["podImage"]
+            else:
+                podData = json_data["pod"]["podData"]
 
             try:
-                file_name = f"biopak_pod_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.png"
+                file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
+
+                if fp_name.lower() in ["hunter"]:
+                    file_name += ".jpeg"
+                else:
+                    file_name += ".png"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = (
-                        f"/home/administrator/Downloads/dme_api/static/imgs/{file_name}"
-                    )
+                    file_url = f"./static/imgs/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
@@ -868,20 +854,18 @@ def reprint(request, fp_name):
             podData = json_data["ReprintActionResult"]["LabelPDF"]
 
             try:
-                file_name = f"biopak_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
 
                 if IS_PRODUCTION:
                     file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                 else:
-                    file_url = (
-                        f"/home/administrator/Downloads/dme_api/static/pdfs/{file_name}"
-                    )
+                    file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
 
-                booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
+                booking.z_label_url = file_url
                 booking.save()
 
                 return JsonResponse({"message": "Label is reprinted successfully."})
@@ -911,14 +895,20 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Hunter", "TNT"]
+            # fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Allied", "Fastway"]
+            fp_names = ["Sendle", "Hunter", "TNT"]
 
             try:
                 for fp_name in fp_names:
-                    account_count = _get_live_account_count(fp_name.lower())
+                    if fp_name.lower() not in ACCOUTN_CODES:
+                        return JsonResponse(
+                            {"message": f"Not supported FP"}, status=400
+                        )
 
-                    for acc_ind in range(account_count):
-                        payload = get_pricing_payload(booking, fp_name.lower(), acc_ind)
+                    for account_code_key in ACCOUTN_CODES[fp_name.lower()]:
+                        payload = get_pricing_payload(
+                            booking, fp_name.lower(), account_code_key
+                        )
 
                         logger.error(
                             f"### Payload ({fp_name.upper()} PRICING): {payload}"
@@ -944,7 +934,7 @@ def pricing(request):
                             response, fp_name.lower(), booking
                         )
 
-                        if not "error" in parse_results:
+                        if parse_results and not "error" in parse_results:
                             for parse_result in parse_results:
                                 try:
                                     parse_result["account_code"] = payload[
