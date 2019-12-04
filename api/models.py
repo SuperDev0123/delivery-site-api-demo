@@ -3307,5 +3307,5 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
                     instance.prev_dme_status_detail = previous.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
             except Exception as e:
-                logger.info("Error 515 {e}")
+                logger.info(f"Error 515 {e}")
                 pass
