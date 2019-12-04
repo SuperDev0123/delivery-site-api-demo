@@ -51,7 +51,6 @@ from reportlab.pdfgen import canvas
 from reportlab.graphics import renderPDF
 from reportlab.lib import colors
 
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import *
 
@@ -160,7 +159,31 @@ def get_client_name(request):
         return client.company_name
 
 
-def send_email(send_to, subject, text, files=None, server="localhost", use_tls=True):
+def calc_collect_after_status_change(pk_booking_id, status):
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+
+    for booking_line in booking_lines:
+        if status == "Collected" and booking_line.e_qty_awaiting_inventory:
+            booking_line.e_qty_collected = (
+                booking_line.e_qty - booking_line.e_qty_awaiting_inventory
+            )
+        elif status == "In Transit" or (
+            status == "Collected" and not booking_line.e_qty_awaiting_inventory
+        ):
+            booking_line.e_qty_collected = booking_line.e_qty
+
+        booking_line.save()
+
+
+def send_email(
+    send_to,
+    subject,
+    text,
+    files=None,
+    mime_type="plain",
+    server="localhost",
+    use_tls=True,
+):
     assert isinstance(send_to, list)
 
     msg = MIMEMultipart()
@@ -169,7 +192,7 @@ def send_email(send_to, subject, text, files=None, server="localhost", use_tls=T
     msg["Date"] = formatdate(localtime=True)
     msg["Subject"] = subject
 
-    msg.attach(MIMEText(text))
+    msg.attach(MIMEText(text, mime_type))
 
     for f in files or []:
         with open(f, "rb") as fil:
@@ -226,6 +249,8 @@ def get_sydney_now_time(return_type="char"):
         return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
     elif return_type == "datetime":
         return sydney_now
+    elif return_type == "date-char":
+        return sydney_now.strftime("%Y-%m-%d")
 
 
 def get_available_bookings(mysqlcon, booking_ids):
@@ -5096,20 +5121,33 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         os.makedirs(local_filepath)
     # end check if xmls folder exists
 
-    filename = (
-        username
-        + "__"
-        + xls_type
-        + "__"
-        + str(len(bookings))
-        + "__"
-        + str(start_date.strftime("%d-%m-%Y"))
-        + "__"
-        + str(end_date.strftime("%d-%m-%Y"))
-        + "__"
-        + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
-        + ".xlsx"
-    )
+    if start_date and end_date:
+        filename = (
+            username
+            + "__"
+            + xls_type
+            + "__"
+            + str(len(bookings))
+            + "__"
+            + str(start_date.strftime("%d-%m-%Y"))
+            + "__"
+            + str(end_date.strftime("%d-%m-%Y"))
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
+            + ".xlsx"
+        )
+    else:
+        filename = (
+            username
+            + "__"
+            + xls_type
+            + "__"
+            + str(len(bookings))
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
+            + ".xlsx"
+        )
+
     workbook = xlsxwriter.Workbook(filename, {"remove_timezone": True})
     worksheet = workbook.add_worksheet()
     bold = workbook.add_format({"bold": 1, "align": "left"})
@@ -5127,7 +5165,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
             worksheet.write("B1", "b_dateBookedDate(Time)", bold)
-            worksheet.write("C1", "z_first_scan_label_date", bold)
+            worksheet.write("C1", "fp_received_date_time", bold)
             worksheet.write("D1", "pu_Address_State", bold)
             worksheet.write("E1", "business_group", bold)
             worksheet.write("F1", "deToCompanyName", bold)
@@ -5136,27 +5174,30 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I1", "de_To_Address_PostalCode", bold)
             worksheet.write("J1", "b_client_sales_inv_num", bold)
             worksheet.write("K1", "b_client_order_num", bold)
-            worksheet.write("L1", "v_FPBookingNumber", bold)
-            worksheet.write("M1", "b_status", bold)
-            worksheet.write("N1", "Total Qty", bold)
-            worksheet.write("O1", "Total Scanned Qty", bold)
-            worksheet.write("P1", "Booked to Scanned Variance", bold)
-            worksheet.write("Q1", "b_fp_qty_delivered", bold)
-            worksheet.write("R1", "dme_status_detail", bold)
-            worksheet.write("S1", "dme_status_action", bold)
-            worksheet.write("T1", "dme_status_history_notes", bold)
-            worksheet.write("U1", "s_21_ActualDeliveryTimeStamp", bold)
-            worksheet.write("V1", "zc_pod_or_no_pod", bold)
-            worksheet.write("W1", "z_pod_url", bold)
-            worksheet.write("X1", "z_pod_signed_url", bold)
-            worksheet.write("Y1", "delivery_kpi_days", bold)
-            worksheet.write("Z1", "delivery_days_from_booked", bold)
-            worksheet.write("AA1", "delivery_actual_kpi_days", bold)
-            worksheet.write("AB1", "z_calculated_ETA", bold)
-            worksheet.write("AC1", "de_Deliver_By_Date(Date)", bold)
-            worksheet.write("AD1", "de_Deliver_By_Date(Time)", bold)
-            worksheet.write("AE1", "inv_billing_status", bold)
-            worksheet.write("AF1", "inv_billing_status_note", bold)
+            worksheet.write("L1", "vx_freight_provider", bold)
+            worksheet.write("M1", "v_FPBookingNumber", bold)
+            worksheet.write("N1", "b_status", bold)
+            worksheet.write("O1", "Total Qty", bold)
+            worksheet.write("P1", "Total Scanned Qty", bold)
+            worksheet.write("Q1", "Booked to Scanned Variance", bold)
+            worksheet.write("R1", "b_fp_qty_delivered", bold)
+            worksheet.write("S1", "dme_status_detail", bold)
+            worksheet.write("T1", "dme_status_action", bold)
+            worksheet.write("U1", "dme_status_history_notes", bold)
+            worksheet.write("V1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("W1", "zc_pod_or_no_pod", bold)
+            worksheet.write("X1", "z_pod_url", bold)
+            worksheet.write("Y1", "z_pod_signed_url", bold)
+            worksheet.write("Z1", "delivery_kpi_days", bold)
+            worksheet.write("AA1", "delivery_days_from_booked", bold)
+            worksheet.write("AB1", "delivery_actual_kpi_days", bold)
+            worksheet.write("AC1", "z_calculated_ETA", bold)
+            worksheet.write("AD1", "de_Deliver_By_Date(Date)", bold)
+            worksheet.write("AE1", "de_Deliver_By_Date(Time)", bold)
+            worksheet.write("AF1", "inv_billing_status", bold)
+            worksheet.write("AG1", "inv_billing_status_note", bold)
+            worksheet.write("AH1", "b_booking_project", bold)
+            worksheet.write("AI1", "de_Deliver_By_Date", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
@@ -5169,27 +5210,30 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I2", "To Postal Code", bold)
             worksheet.write("J2", "Client Sales Invoice", bold)
             worksheet.write("K2", "Client Order Number", bold)
-            worksheet.write("L2", "Consignment No", bold)
-            worksheet.write("M2", "Status", bold)
-            worksheet.write("N2", "Total Qty", bold)
-            worksheet.write("O2", "Total Scanned Qty", bold)
-            worksheet.write("P2", "Booked to Scanned Variance", bold)
-            worksheet.write("Q2", "Total Delivered", bold)
-            worksheet.write("R2", "Status Detail", bold)
-            worksheet.write("S2", "Status Action", bold)
-            worksheet.write("T2", "Status History Note", bold)
-            worksheet.write("U2", "Actual Delivery", bold)
-            worksheet.write("V2", "POD?", bold)
-            worksheet.write("W2", "POD LINK", bold)
-            worksheet.write("X2", "POD Signed on Glass Link", bold)
-            worksheet.write("Y2", "Target Delivery KPI (Days)", bold)
-            worksheet.write("Z2", "Delivery Days from Booked", bold)
-            worksheet.write("AA2", "Actual Delivery KPI (Days)", bold)
-            worksheet.write("AB2", "Calculated ETA", bold)
-            worksheet.write("AC2", "Store Booking Date", bold)
-            worksheet.write("AD2", "Store Booking Time", bold)
-            worksheet.write("AE2", "Invoice Billing Status", bold)
-            worksheet.write("AF2", "Invoice Billing Status Note", bold)
+            worksheet.write("L2", "Freigth Provider", bold)
+            worksheet.write("M2", "Consignment No", bold)
+            worksheet.write("N2", "Status", bold)
+            worksheet.write("O2", "Total Qty", bold)
+            worksheet.write("P2", "Total Scanned Qty", bold)
+            worksheet.write("Q2", "Booked to Scanned Variance", bold)
+            worksheet.write("R2", "Total Delivered", bold)
+            worksheet.write("S2", "Status Detail", bold)
+            worksheet.write("T2", "Status Action", bold)
+            worksheet.write("U2", "Status History Note", bold)
+            worksheet.write("V2", "Actual Delivery", bold)
+            worksheet.write("W2", "POD?", bold)
+            worksheet.write("X2", "POD LINK", bold)
+            worksheet.write("Y2", "POD Signed on Glass Link", bold)
+            worksheet.write("Z2", "Target Delivery KPI (Days)", bold)
+            worksheet.write("AA2", "Delivery Days from Booked", bold)
+            worksheet.write("AB2", "Actual Delivery KPI (Days)", bold)
+            worksheet.write("AC2", "Calculated ETA", bold)
+            worksheet.write("AD2", "Store Booking Date", bold)
+            worksheet.write("AE2", "Store Booking Time", bold)
+            worksheet.write("AF2", "Invoice Billing Status", bold)
+            worksheet.write("AG2", "Invoice Billing Status Note", bold)
+            worksheet.write("AH2", "Project Name", bold)
+            worksheet.write("AI2", "Project Due Date", bold)
 
             row = 2
         else:
@@ -5204,27 +5248,30 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I1", "To Postal Code", bold)
             worksheet.write("J1", "Client Sales Invoice", bold)
             worksheet.write("K1", "Client Order Number", bold)
-            worksheet.write("L1", "Consignment No", bold)
-            worksheet.write("M1", "Status", bold)
-            worksheet.write("N1", "Total Qty", bold)
-            worksheet.write("O1", "Total Scanned Qty", bold)
-            worksheet.write("P1", "Booked to Scanned Variance", bold)
-            worksheet.write("Q1", "Total Delivered", bold)
-            worksheet.write("R1", "Status Detail", bold)
-            worksheet.write("S1", "Status Action", bold)
-            worksheet.write("T1", "Status History Note", bold)
-            worksheet.write("U1", "Actual Delivery", bold)
-            worksheet.write("V1", "POD?", bold)
-            worksheet.write("W1", "POD LINK", bold)
-            worksheet.write("X1", "POD Signed on Glass Link", bold)
-            worksheet.write("Y1", "Target Delivery KPI (Days)", bold)
-            worksheet.write("Z1", "Delivery Days from Booked", bold)
-            worksheet.write("AA1", "Actual Delivery KPI (Days)", bold)
-            worksheet.write("AB1", "Calculated ETA", bold)
-            worksheet.write("AC1", "Store Booking Date", bold)
-            worksheet.write("AD1", "Store Booking Time", bold)
-            worksheet.write("AE1", "Invoice Billing Status", bold)
-            worksheet.write("AF1", "Invoice Billing Status Note", bold)
+            worksheet.write("L1", "Freigth Provider", bold)
+            worksheet.write("M1", "Consignment No", bold)
+            worksheet.write("N1", "Status", bold)
+            worksheet.write("O1", "Total Qty", bold)
+            worksheet.write("P1", "Total Scanned Qty", bold)
+            worksheet.write("Q1", "Booked to Scanned Variance", bold)
+            worksheet.write("R1", "Total Delivered", bold)
+            worksheet.write("S1", "Status Detail", bold)
+            worksheet.write("T1", "Status Action", bold)
+            worksheet.write("U1", "Status History Note", bold)
+            worksheet.write("V1", "Actual Delivery", bold)
+            worksheet.write("W1", "POD?", bold)
+            worksheet.write("X1", "POD LINK", bold)
+            worksheet.write("Y1", "POD Signed on Glass Link", bold)
+            worksheet.write("Z1", "Target Delivery KPI (Days)", bold)
+            worksheet.write("AA1", "Delivery Days from Booked", bold)
+            worksheet.write("AB1", "Actual Delivery KPI (Days)", bold)
+            worksheet.write("AC1", "Calculated ETA", bold)
+            worksheet.write("AD1", "Store Booking Date", bold)
+            worksheet.write("AE1", "Store Booking Time", bold)
+            worksheet.write("AF1", "Invoice Billing Status", bold)
+            worksheet.write("AG1", "Invoice Billing Status Note", bold)
+            worksheet.write("AH1", "Project Name", bold)
+            worksheet.write("AI1", "Project Due Date", bold)
 
             row = 1
 
@@ -5256,9 +5303,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 1, booking.b_dateBookedDate, time_format
                 )
 
-            if booking.z_first_scan_label_date:
+            if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.z_first_scan_label_date, date_format
+                    row, col + 2, booking.fp_received_date_time, date_format
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -5279,18 +5326,19 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
             worksheet.write(row, col + 9, booking.b_client_sales_inv_num)
             worksheet.write(row, col + 10, booking.b_client_order_num)
-            worksheet.write(row, col + 11, booking.v_FPBookingNumber)
-            worksheet.write(row, col + 12, booking.b_status)
-            worksheet.write(row, col + 13, e_qty_total)
-            worksheet.write(row, col + 14, e_qty_scanned_fp_total)
-            worksheet.write(row, col + 15, e_qty_total - e_qty_scanned_fp_total)
-            worksheet.write(row, col + 16, booking.b_fp_qty_delivered)
+            worksheet.write(row, col + 11, booking.vx_freight_provider)
+            worksheet.write(row, col + 12, booking.v_FPBookingNumber)
+            worksheet.write(row, col + 13, booking.b_status)
+            worksheet.write(row, col + 14, e_qty_total)
+            worksheet.write(row, col + 15, e_qty_scanned_fp_total)
+            worksheet.write(row, col + 16, e_qty_total - e_qty_scanned_fp_total)
+            worksheet.write(row, col + 17, booking.b_fp_qty_delivered)
 
             cell_format = workbook.add_format({"text_wrap": True})
-            worksheet.write(row, col + 17, booking.dme_status_detail, cell_format)
-            worksheet.write(row, col + 18, booking.dme_status_action, cell_format)
+            worksheet.write(row, col + 18, booking.dme_status_detail, cell_format)
+            worksheet.write(row, col + 19, booking.dme_status_action, cell_format)
             worksheet.write(
-                row, col + 19, booking.dme_status_history_notes, cell_format
+                row, col + 20, booking.dme_status_history_notes, cell_format
             )
 
             if (
@@ -5298,22 +5346,22 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 20, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row, col + 21, booking.s_21_ActualDeliveryTimeStamp, date_format
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
                 booking.z_pod_signed_url is not None
                 and len(booking.z_pod_signed_url) > 0
             ):
-                worksheet.write(row, col + 21, "Y")
+                worksheet.write(row, col + 22, "Y")
             else:
-                worksheet.write(row, col + 21, "")
+                worksheet.write(row, col + 22, "")
 
             if settings.ENV == "dev":
                 if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                     worksheet.write_url(
                         row,
-                        col + 22,
+                        col + 23,
                         settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
@@ -5324,7 +5372,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ):
                     worksheet.write_url(
                         row,
-                        col + 23,
+                        col + 24,
                         settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
@@ -5332,7 +5380,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                     worksheet.write_url(
                         row,
-                        col + 22,
+                        col + 23,
                         settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
@@ -5343,12 +5391,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ):
                     worksheet.write_url(
                         row,
-                        col + 23,
+                        col + 24,
                         settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
-            worksheet.write(row, col + 24, booking.delivery_kpi_days)
+            worksheet.write(row, col + 25, booking.delivery_kpi_days)
 
             if (
                 booking.b_status is not None
@@ -5358,7 +5406,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             ):
                 worksheet.write(
                     row,
-                    col + 25,
+                    col + 26,
                     (
                         booking.s_21_ActualDeliveryTimeStamp.date()
                         - booking.b_dateBookedDate.date()
@@ -5366,7 +5414,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
                 worksheet.write(
                     row,
-                    col + 26,
+                    col + 27,
                     booking.delivery_kpi_days
                     - (
                         booking.s_21_ActualDeliveryTimeStamp.date()
@@ -5376,18 +5424,23 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 27, booking.z_calculated_ETA, date_format
+                    row, col + 28, booking.z_calculated_ETA, date_format
                 )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 28, booking.de_Deliver_By_Date, date_format
+                    row, col + 29, booking.fp_store_event_date, date_format
                 )
+
+            if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 29, booking.de_Deliver_By_Date, time_format
+                    row, col + 30, booking.fp_store_event_time, time_format
                 )
-            worksheet.write(row, col + 30, booking.inv_billing_status)
-            worksheet.write(row, col + 31, booking.inv_billing_status_note)
+
+            worksheet.write(row, col + 31, booking.inv_billing_status)
+            worksheet.write(row, col + 32, booking.inv_billing_status_note)
+            worksheet.write(row, col + 33, booking.b_booking_project)
+            worksheet.write(row, col + 34, booking.de_Deliver_By_Date, date_format)
 
             row += 1
 
@@ -5398,125 +5451,134 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         logger.error(f"#380 Get started to build `BookingLines` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
-            worksheet.write("A1", "dme_bookings:v_FPBookingNumber", bold)
-            worksheet.write("B1", "dme_bookings:b_dateBookedDate(Date)", bold)
-            worksheet.write("C1", "dme_bookings:b_dateBookedDate(Time)", bold)
-            worksheet.write("D1", "z_first_scan_label_date", bold)
+            worksheet.write("A1", "dme_bookings:vx_freight_provider", bold)
+            worksheet.write("B1", "dme_bookings:v_FPBookingNumber", bold)
+            worksheet.write("C1", "dme_bookings:b_dateBookedDate(Date)", bold)
+            worksheet.write("D1", "dme_bookings:b_dateBookedDate(Time)", bold)
+            worksheet.write("E1", "fp_received_date_time", bold)
             worksheet.write(
-                "E1",
+                "F1",
                 "api_booking_confirmation_lines:fp_event_date and fp_event_time",
                 bold,
             )
-            worksheet.write("F1", "dme_bookings:vx_freight_provider", bold)
-            worksheet.write("G1", "dme_bookings:puCompany", bold)
-            worksheet.write("H1", "dme_bookings:pu_Address_Suburb", bold)
-            worksheet.write("I1", "dme_bookings:deToCompanyName", bold)
-            worksheet.write("J1", "dme_bookings:de_To_Address_Suburb", bold)
-            worksheet.write("K1", "dme_bookings:de_To_Address_State", bold)
-            worksheet.write("L1", "dme_bookings:de_To_Address_PostalCode", bold)
-            worksheet.write("M1", "dme_bookings:b_client_order_num", bold)
-            worksheet.write("N1", "dme_bookings:b_client_sales_inv_num", bold)
-            worksheet.write("O1", "e_pallety_type", bold)
-            worksheet.write("P1", "e_item", bold)
-            worksheet.write("Q1", "e_item_qty", bold)
-            worksheet.write("R1", "client_item_reference", bold)
-            worksheet.write("S1", "Booking Ref ?? GAP", bold)
-            worksheet.write("T1", "DD Received Date(Date)", bold)
-            worksheet.write("U1", "DD Received Date(Time)", bold)
-            worksheet.write("V1", "z_calculated_ETA", bold)
-            worksheet.write("W1", "Dispatch Date", bold)
-            worksheet.write("X1", "ETA Into Store", bold)
-            worksheet.write("Y1", "b_status", bold)
-            worksheet.write("Z1", "dme_bookings: dme_status_detail", bold)
-            worksheet.write("AA1", "dme_bookings: dme_status_action", bold)
-            worksheet.write("AB1", "POD Available", bold)
-            worksheet.write("AC1", "e_qty_awaiting_inventory", bold)
-            worksheet.write("AD1", "e_qty_collected", bold)
-            worksheet.write("AE1", "e_qty_scanned_fp", bold)
-            worksheet.write("AF1", "e_qty_scanned_depot", bold)
-            worksheet.write("AG1", "e_qty_delivered", bold)
-            worksheet.write("AH1", "e_qty_damaged", bold)
-            worksheet.write("AI1", "e_qty_returned", bold)
-            worksheet.write("AJ1", "e_qty_shortages", bold)
-            worksheet.write("AK1", "e_qty_adjusted_delivered", bold)
+            worksheet.write("G1", "dme_bookings:vx_freight_provider", bold)
+            worksheet.write("H1", "dme_bookings:puCompany", bold)
+            worksheet.write("I1", "dme_bookings:pu_Address_Suburb", bold)
+            worksheet.write("J1", "dme_bookings:deToCompanyName", bold)
+            worksheet.write("K1", "dme_bookings:de_To_Address_Suburb", bold)
+            worksheet.write("L1", "dme_bookings:de_To_Address_State", bold)
+            worksheet.write("M1", "dme_bookings:de_To_Address_PostalCode", bold)
+            worksheet.write("N1", "dme_bookings:b_client_order_num", bold)
+            worksheet.write("O1", "dme_bookings:b_client_sales_inv_num", bold)
+            worksheet.write("P1", "e_pallety_type", bold)
+            worksheet.write("Q1", "e_item", bold)
+            worksheet.write("R1", "e_item_qty", bold)
+            worksheet.write("S1", "client_item_reference", bold)
+            worksheet.write("T1", "Booking Ref ?? GAP", bold)
+            worksheet.write("U1", "DD Received Date(Date)", bold)
+            worksheet.write("V1", "DD Received Date(Time)", bold)
+            worksheet.write("W1", "z_calculated_ETA", bold)
+            worksheet.write("X1", "Dispatch Date", bold)
+            worksheet.write("Y1", "ETA Into Store", bold)
+            worksheet.write("Z1", "b_status", bold)
+            worksheet.write("AA1", "dme_bookings: dme_status_detail", bold)
+            worksheet.write("AB1", "dme_bookings: dme_status_action", bold)
+            worksheet.write("AC1", "POD Available", bold)
+            worksheet.write("AD1", "e_qty_awaiting_inventory", bold)
+            worksheet.write("AE1", "e_qty_collected", bold)
+            worksheet.write("AF1", "e_qty_scanned_fp", bold)
+            worksheet.write("AG1", "e_qty_scanned_depot", bold)
+            worksheet.write("AH1", "e_qty_delivered", bold)
+            worksheet.write("AI1", "e_qty_damaged", bold)
+            worksheet.write("AJ1", "e_qty_returned", bold)
+            worksheet.write("AK1", "e_qty_shortages", bold)
+            worksheet.write("AL1", "e_qty_adjusted_delivered", bold)
+            worksheet.write("AM1", "b_booking_project", bold)
+            worksheet.write("AN1", "de_Deliver_By_Date", bold)
 
-            worksheet.write("A2", "Consignment No", bold)
-            worksheet.write("B2", "Booked Date", bold)
-            worksheet.write("C2", "Booked Time", bold)
-            worksheet.write("D2", "WHS Sent Date", bold)
-            worksheet.write("E2", "Date Scanned", bold)
-            worksheet.write("F2", "Freight Provider", bold)
-            worksheet.write("G2", "Pickup Entity", bold)
-            worksheet.write("H2", "Pickup Suburb", bold)
-            worksheet.write("I2", "To Entity", bold)
-            worksheet.write("J2", "To Suburb", bold)
-            worksheet.write("K2", "To State", bold)
-            worksheet.write("L2", "To Postal Code", bold)
-            worksheet.write("M2", "Customer Client Order No", bold)
-            worksheet.write("N2", "Customer Invoice No", bold)
-            worksheet.write("O2", "Model", bold)
-            worksheet.write("P2", "Product Description", bold)
-            worksheet.write("Q2", "Booked Qty", bold)
-            worksheet.write("R2", "Client Item Reference", bold)
-            worksheet.write("S2", "Booking Ref", bold)
-            worksheet.write("T2", "DD Received Date", bold)
-            worksheet.write("U2", "DD Received Time", bold)
-            worksheet.write("V2", "Calculated ETA", bold)
-            worksheet.write("W2", "Dispatch Date", bold)
-            worksheet.write("X2", "ETA Into Store", bold)
-            worksheet.write("Y2", "Status", bold)
-            worksheet.write("Z2", "Status Detail", bold)
-            worksheet.write("AA2", "Status Action", bold)
-            worksheet.write("AB2", "POD?", bold)
-            worksheet.write("AC2", "Inventory on Back Order", bold)
-            worksheet.write("AD2", "Qty Confimred Collected by Pickup Entity", bold)
-            worksheet.write("AE2", "Qty Scanned at Transporter Depot", bold)
-            worksheet.write("AF2", "Same as Col T?", bold)
-            worksheet.write("AG2", "Qty Delivered", bold)
-            worksheet.write("AH2", "Qty Damaged", bold)
-            worksheet.write("AI2", "Qty Returned", bold)
-            worksheet.write("AJ2", "Qty Short", bold)
-            worksheet.write("AK2", "Adjusted Delivered Qty", bold)
+            worksheet.write("A2", "Freight Provider", bold)
+            worksheet.write("B2", "Consignment No", bold)
+            worksheet.write("C2", "Booked Date", bold)
+            worksheet.write("D2", "Booked Time", bold)
+            worksheet.write("E2", "WHS Sent Date", bold)
+            worksheet.write("F2", "Date Scanned", bold)
+            worksheet.write("G2", "Freight Provider", bold)
+            worksheet.write("H2", "Pickup Entity", bold)
+            worksheet.write("I2", "Pickup Suburb", bold)
+            worksheet.write("J2", "To Entity", bold)
+            worksheet.write("K2", "To Suburb", bold)
+            worksheet.write("L2", "To State", bold)
+            worksheet.write("M2", "To Postal Code", bold)
+            worksheet.write("N2", "Customer Client Order No", bold)
+            worksheet.write("O2", "Customer Invoice No", bold)
+            worksheet.write("P2", "Model", bold)
+            worksheet.write("Q2", "Product Description", bold)
+            worksheet.write("R2", "Booked Qty", bold)
+            worksheet.write("S2", "Client Item Reference", bold)
+            worksheet.write("T2", "Booking Ref", bold)
+            worksheet.write("U2", "DD Received Date", bold)
+            worksheet.write("V2", "DD Received Time", bold)
+            worksheet.write("W2", "Calculated ETA", bold)
+            worksheet.write("X2", "Dispatch Date", bold)
+            worksheet.write("Y2", "ETA Into Store", bold)
+            worksheet.write("Z2", "Status", bold)
+            worksheet.write("AA2", "Status Detail", bold)
+            worksheet.write("AB2", "Status Action", bold)
+            worksheet.write("AC2", "POD?", bold)
+            worksheet.write("AD2", "Inventory on Back Order", bold)
+            worksheet.write("AE2", "Qty Confimred Collected by Pickup Entity", bold)
+            worksheet.write("AF2", "Qty Scanned at Transporter Depot", bold)
+            worksheet.write("AG2", "Same as Col T?", bold)
+            worksheet.write("AH2", "Qty Delivered", bold)
+            worksheet.write("AI2", "Qty Damaged", bold)
+            worksheet.write("AJ2", "Qty Returned", bold)
+            worksheet.write("AK2", "Qty Short", bold)
+            worksheet.write("AL2", "Adjusted Delivered Qty", bold)
+            worksheet.write("AM2", "Project Name", bold)
+            worksheet.write("AN2", "Project Due Date", bold)
 
             row = 2
         else:
-            worksheet.write("A1", "Consignment No", bold)
-            worksheet.write("B1", "Booked Date", bold)
-            worksheet.write("C1", "Booked Time", bold)
-            worksheet.write("D1", "WHS Sent Date", bold)
-            worksheet.write("E1", "Date Scanned", bold)
-            worksheet.write("F1", "Freight Provider", bold)
-            worksheet.write("G1", "Pickup Entity", bold)
-            worksheet.write("H1", "Pickup Suburb", bold)
-            worksheet.write("I1", "To Entity", bold)
-            worksheet.write("J1", "To Suburb", bold)
-            worksheet.write("K1", "To State", bold)
-            worksheet.write("L1", "To Postal Code", bold)
-            worksheet.write("M1", "Customer Client Order No", bold)
-            worksheet.write("N1", "Customer Invoice No", bold)
-            worksheet.write("O1", "Model", bold)
-            worksheet.write("P1", "Product Description", bold)
-            worksheet.write("Q1", "Booked Qty", bold)
-            worksheet.write("R1", "Client Item Reference", bold)
-            worksheet.write("S1", "Booking Ref", bold)
-            worksheet.write("T1", "DD Received Date", bold)
-            worksheet.write("U1", "DD Received Time", bold)
-            worksheet.write("V1", "Calculated ETA", bold)
-            worksheet.write("W1", "Dispatch Date", bold)
-            worksheet.write("X1", "ETA Into Store", bold)
-            worksheet.write("Y1", "Status", bold)
-            worksheet.write("Z1", "Status Detail", bold)
-            worksheet.write("AA1", "Status Action", bold)
-            worksheet.write("AB1", "POD?", bold)
-            worksheet.write("AC1", "Inventory on Back Order", bold)
-            worksheet.write("AD1", "Qty Confimred Collected by Pickup Entity", bold)
-            worksheet.write("AE1", "Qty Scanned at Transporter Depot", bold)
-            worksheet.write("AF1", "Same as Col T?", bold)
-            worksheet.write("AG1", "Qty Delivered", bold)
-            worksheet.write("AH1", "Qty Damaged", bold)
-            worksheet.write("AI1", "Qty Returned", bold)
-            worksheet.write("AJ1", "Qty Short", bold)
-            worksheet.write("AK1", "Adjusted Delivered Qty", bold)
+            worksheet.write("A1", "Freight Provider", bold)
+            worksheet.write("B1", "Consignment No", bold)
+            worksheet.write("C1", "Booked Date", bold)
+            worksheet.write("D1", "Booked Time", bold)
+            worksheet.write("E1", "WHS Sent Date", bold)
+            worksheet.write("F1", "Date Scanned", bold)
+            worksheet.write("G1", "Freight Provider", bold)
+            worksheet.write("H1", "Pickup Entity", bold)
+            worksheet.write("I1", "Pickup Suburb", bold)
+            worksheet.write("J1", "To Entity", bold)
+            worksheet.write("K1", "To Suburb", bold)
+            worksheet.write("L1", "To State", bold)
+            worksheet.write("M1", "To Postal Code", bold)
+            worksheet.write("N1", "Customer Client Order No", bold)
+            worksheet.write("O1", "Customer Invoice No", bold)
+            worksheet.write("P1", "Model", bold)
+            worksheet.write("Q1", "Product Description", bold)
+            worksheet.write("R1", "Booked Qty", bold)
+            worksheet.write("S1", "Client Item Reference", bold)
+            worksheet.write("T1", "Booking Ref", bold)
+            worksheet.write("U1", "DD Received Date", bold)
+            worksheet.write("V1", "DD Received Time", bold)
+            worksheet.write("W1", "Calculated ETA", bold)
+            worksheet.write("X1", "Dispatch Date", bold)
+            worksheet.write("Y1", "ETA Into Store", bold)
+            worksheet.write("Z1", "Status", bold)
+            worksheet.write("AA1", "Status Detail", bold)
+            worksheet.write("AB1", "Status Action", bold)
+            worksheet.write("AC1", "POD?", bold)
+            worksheet.write("AD1", "Inventory on Back Order", bold)
+            worksheet.write("AE1", "Qty Confimred Collected by Pickup Entity", bold)
+            worksheet.write("AF1", "Qty Scanned at Transporter Depot", bold)
+            worksheet.write("AG1", "Same as Col T?", bold)
+            worksheet.write("AH1", "Qty Delivered", bold)
+            worksheet.write("AI1", "Qty Damaged", bold)
+            worksheet.write("AJ1", "Qty Returned", bold)
+            worksheet.write("AK1", "Qty Short", bold)
+            worksheet.write("AL1", "Adjusted Delivered Qty", bold)
+            worksheet.write("AM2", "Project Name", bold)
+            worksheet.write("AN2", "Project Due Date", bold)
 
             row = 1
 
@@ -5548,19 +5610,20 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ).filter(fk_booking_id=booking.pk_booking_id)
 
                 for booking_line in booking_lines:
-                    worksheet.write(row, col + 0, booking.v_FPBookingNumber)
+                    worksheet.write(row, col + 0, booking.vx_freight_provider)
+                    worksheet.write(row, col + 1, booking.v_FPBookingNumber)
 
                     if booking.b_dateBookedDate and booking.b_dateBookedDate:
                         worksheet.write_datetime(
-                            row, col + 1, booking.b_dateBookedDate.date(), date_format
+                            row, col + 2, booking.b_dateBookedDate.date(), date_format
                         )
                         worksheet.write_datetime(
-                            row, col + 2, booking.b_dateBookedDate, time_format
+                            row, col + 3, booking.b_dateBookedDate, time_format
                         )
 
-                    if booking.z_first_scan_label_date:
+                    if booking.fp_received_date_time:
                         worksheet.write_datetime(
-                            row, col + 3, booking.z_first_scan_label_date, date_format
+                            row, col + 4, booking.fp_received_date_time, date_format
                         )
 
                     api_bcl = Api_booking_confirmation_lines.objects.filter(
@@ -5569,43 +5632,43 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write(
                             row,
-                            col + 4,
+                            col + 5,
                             api_bcl.fp_event_date.strftime("%d-%m-%Y")
                             + " "
                             + api_bcl.fp_event_time.strftime("%H:%M:%S"),
                         )
 
-                    worksheet.write(row, col + 5, booking.vx_freight_provider)
-                    worksheet.write(row, col + 6, booking.puCompany)
-                    worksheet.write(row, col + 7, booking.pu_Address_Suburb)
-                    worksheet.write(row, col + 8, booking.deToCompanyName)
-                    worksheet.write(row, col + 9, booking.de_To_Address_Suburb)
-                    worksheet.write(row, col + 10, booking.de_To_Address_State)
-                    worksheet.write(row, col + 11, booking.de_To_Address_PostalCode)
-                    worksheet.write(row, col + 12, booking.b_client_order_num)
-                    worksheet.write(row, col + 13, booking.b_client_sales_inv_num)
-                    worksheet.write(row, col + 14, booking_line.e_pallet_type)
-                    worksheet.write(row, col + 15, booking_line.e_item)
-                    worksheet.write(row, col + 16, booking_line.e_qty)
-                    worksheet.write(row, col + 17, booking_line.client_item_reference)
-                    worksheet.write(row, col + 18, booking.b_bookingID_Visual)
+                    worksheet.write(row, col + 6, booking.vx_freight_provider)
+                    worksheet.write(row, col + 7, booking.puCompany)
+                    worksheet.write(row, col + 8, booking.pu_Address_Suburb)
+                    worksheet.write(row, col + 9, booking.deToCompanyName)
+                    worksheet.write(row, col + 10, booking.de_To_Address_Suburb)
+                    worksheet.write(row, col + 11, booking.de_To_Address_State)
+                    worksheet.write(row, col + 12, booking.de_To_Address_PostalCode)
+                    worksheet.write(row, col + 13, booking.b_client_order_num)
+                    worksheet.write(row, col + 14, booking.b_client_sales_inv_num)
+                    worksheet.write(row, col + 15, booking_line.e_pallet_type)
+                    worksheet.write(row, col + 16, booking_line.e_item)
+                    worksheet.write(row, col + 17, booking_line.e_qty)
+                    worksheet.write(row, col + 18, booking_line.client_item_reference)
+                    worksheet.write(row, col + 19, booking.b_bookingID_Visual)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
-                            row, col + 19, api_bcl.fp_event_date, date_format
+                            row, col + 20, api_bcl.fp_event_date, date_format
                         )
                         worksheet.write_datetime(
-                            row, col + 20, api_bcl.fp_event_time, time_format
+                            row, col + 21, api_bcl.fp_event_time, time_format
                         )
 
                     if booking.z_calculated_ETA:
                         worksheet.write_datetime(
-                            row, col + 21, booking.z_calculated_ETA, date_format
+                            row, col + 22, booking.z_calculated_ETA, date_format
                         )
 
                     if booking.de_Deliver_By_Date:
                         worksheet.write_datetime(
-                            row, col + 22, booking.de_Deliver_By_Date, date_format
+                            row, col + 23, booking.de_Deliver_By_Date, date_format
                         )
 
                     if booking.de_Deliver_By_Date:
@@ -5616,7 +5679,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                         worksheet.write(
                             row,
-                            col + 23,
+                            col + 24,
                             (
                                 booking.de_Deliver_By_Date
                                 + timedelta(days=int(delivery_kpi_days))
@@ -5625,9 +5688,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     else:
                         worksheet.write(row, col + 21, "")
 
-                    worksheet.write(row, col + 24, booking.b_status)
-                    worksheet.write(row, col + 25, booking.dme_status_detail)
-                    worksheet.write(row, col + 26, booking.dme_status_action)
+                    worksheet.write(row, col + 25, booking.b_status)
+                    worksheet.write(row, col + 26, booking.dme_status_detail)
+                    worksheet.write(row, col + 27, booking.dme_status_action)
 
                     if (
                         booking.z_pod_url is not None and len(booking.z_pod_url) > 0
@@ -5635,22 +5698,26 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         booking.z_pod_signed_url is not None
                         and len(booking.z_pod_signed_url) > 0
                     ):
-                        worksheet.write(row, col + 27, "Y")
+                        worksheet.write(row, col + 28, "Y")
                     else:
-                        worksheet.write(row, col + 27, "")
+                        worksheet.write(row, col + 28, "")
 
                     worksheet.write(
-                        row, col + 28, booking_line.e_qty_awaiting_inventory
+                        row, col + 29, booking_line.e_qty_awaiting_inventory
                     )
-                    worksheet.write(row, col + 29, booking_line.e_qty_collected)
-                    worksheet.write(row, col + 30, booking_line.e_qty_scanned_fp)
-                    worksheet.write(row, col + 31, booking_line.e_qty_scanned_depot)
-                    worksheet.write(row, col + 32, booking_line.e_qty_delivered)
-                    worksheet.write(row, col + 33, booking_line.e_qty_damaged)
-                    worksheet.write(row, col + 34, booking_line.e_qty_returned)
-                    worksheet.write(row, col + 35, booking_line.e_qty_shortages)
+                    worksheet.write(row, col + 30, booking_line.e_qty_collected)
+                    worksheet.write(row, col + 31, booking_line.e_qty_scanned_fp)
+                    worksheet.write(row, col + 32, booking_line.e_qty_scanned_depot)
+                    worksheet.write(row, col + 33, booking_line.e_qty_delivered)
+                    worksheet.write(row, col + 34, booking_line.e_qty_damaged)
+                    worksheet.write(row, col + 35, booking_line.e_qty_returned)
+                    worksheet.write(row, col + 36, booking_line.e_qty_shortages)
                     worksheet.write(
-                        row, col + 36, booking_line.e_qty_adjusted_delivered
+                        row, col + 37, booking_line.e_qty_adjusted_delivered
+                    )
+                    worksheet.write(row, col + 38, booking.b_booking_project)
+                    worksheet.write(
+                        row, col + 39, booking.de_Deliver_By_Date, date_format
                     )
 
                     if booking_line.e_qty is not None:
@@ -5666,8 +5733,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             except Booking_lines.DoesNotExist:
                 continue
 
-        worksheet.write(row, col + 17, e_qty_total)
-        worksheet.write(row, col + 29, e_qty_scanned_fp_total)
+        worksheet.write(row, col + 18, e_qty_total)
+        worksheet.write(row, col + 30, e_qty_scanned_fp_total)
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
@@ -5678,7 +5745,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
             worksheet.write("B1", "b_dateBookedDate(Time)", bold)
-            worksheet.write("C1", "z_first_scan_label_date", bold)
+            worksheet.write("C1", "fp_received_date_time", bold)
             worksheet.write("D1", "pu_Address_State", bold)
             worksheet.write("E1", "business_group", bold)
             worksheet.write("F1", "deToCompanyName", bold)
@@ -5687,26 +5754,27 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I1", "de_To_Address_PostalCode", bold)
             worksheet.write("J1", "b_client_sales_inv_num", bold)
             worksheet.write("K1", "b_client_order_num", bold)
-            worksheet.write("L1", "v_FPBookingNumber", bold)
-            worksheet.write("M1", "b_status", bold)
-            worksheet.write("N1", "Total Qty", bold)
-            worksheet.write("O1", "Total Scanned Qty", bold)
-            worksheet.write("P1", "Booked to Scanned Variance", bold)
-            worksheet.write("Q1", "b_fp_qty_delivered", bold)
-            worksheet.write("R1", "dme_status_detail", bold)
-            worksheet.write("S1", "dme_status_action", bold)
-            worksheet.write("T1", "dme_status_history_notes", bold)
-            worksheet.write("U1", "s_21_ActualDeliveryTimeStamp", bold)
-            worksheet.write("V1", "zc_pod_or_no_pod", bold)
-            worksheet.write("W1", "z_pod_url", bold)
-            worksheet.write("X1", "z_pod_signed_url", bold)
-            worksheet.write("Y1", "delivery_kpi_days", bold)
-            worksheet.write("Z1", "delivery_days_from_booked", bold)
-            worksheet.write("AA1", "delivery_actual_kpi_days", bold)
-            worksheet.write("AB1", "z_calculated_ETA", bold)
-            worksheet.write("AC1", "de_Deliver_By_Date(Date)", bold)
-            worksheet.write("AD1", "de_Deliver_By_Date(Time)", bold)
-            worksheet.write("AE1", "client_item_reference", bold)
+            worksheet.write("L1", "vx_freight_provider", bold)
+            worksheet.write("M1", "v_FPBookingNumber", bold)
+            worksheet.write("N1", "b_status", bold)
+            worksheet.write("O1", "Total Qty", bold)
+            worksheet.write("P1", "Total Scanned Qty", bold)
+            worksheet.write("Q1", "Booked to Scanned Variance", bold)
+            worksheet.write("R1", "b_fp_qty_delivered", bold)
+            worksheet.write("S1", "dme_status_detail", bold)
+            worksheet.write("T1", "dme_status_action", bold)
+            worksheet.write("U1", "dme_status_history_notes", bold)
+            worksheet.write("V1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("W1", "zc_pod_or_no_pod", bold)
+            worksheet.write("X1", "z_pod_url", bold)
+            worksheet.write("Y1", "z_pod_signed_url", bold)
+            worksheet.write("Z1", "delivery_kpi_days", bold)
+            worksheet.write("AA1", "delivery_days_from_booked", bold)
+            worksheet.write("AB1", "delivery_actual_kpi_days", bold)
+            worksheet.write("AC1", "z_calculated_ETA", bold)
+            worksheet.write("AD1", "de_Deliver_By_Date(Date)", bold)
+            worksheet.write("AE1", "de_Deliver_By_Date(Time)", bold)
+            worksheet.write("AF1", "client_item_reference", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
@@ -5719,26 +5787,27 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I2", "To Postal Code", bold)
             worksheet.write("J2", "Client Sales Invoice", bold)
             worksheet.write("K2", "Client Order Number", bold)
-            worksheet.write("L2", "Consignment No", bold)
-            worksheet.write("M2", "Status", bold)
-            worksheet.write("N2", "Total Qty", bold)
-            worksheet.write("O2", "Total Scanned Qty", bold)
-            worksheet.write("P2", "Booked to Scanned Variance", bold)
-            worksheet.write("Q2", "Total Delivered", bold)
-            worksheet.write("R2", "Status Detail", bold)
-            worksheet.write("S2", "Status Action", bold)
-            worksheet.write("T2", "Status History Note", bold)
-            worksheet.write("U2", "Actual Delivery", bold)
-            worksheet.write("V2", "POD?", bold)
-            worksheet.write("W2", "POD LINK", bold)
-            worksheet.write("X2", "POD Signed on Glass Link", bold)
-            worksheet.write("Y2", "Target Delivery KPI (Days)", bold)
-            worksheet.write("Z2", "Delivery Days from Booked", bold)
-            worksheet.write("AA2", "Actual Delivery KPI (Days)", bold)
-            worksheet.write("AB2", "Calculated ETA", bold)
-            worksheet.write("AC2", "Store Booking Date", bold)
-            worksheet.write("AD2", "Store Booking Time", bold)
-            worksheet.write("AE2", "Gaps", bold)
+            worksheet.write("L2", "Freight Provider", bold)
+            worksheet.write("M2", "Consignment No", bold)
+            worksheet.write("N2", "Status", bold)
+            worksheet.write("O2", "Total Qty", bold)
+            worksheet.write("P2", "Total Scanned Qty", bold)
+            worksheet.write("Q2", "Booked to Scanned Variance", bold)
+            worksheet.write("R2", "Total Delivered", bold)
+            worksheet.write("S2", "Status Detail", bold)
+            worksheet.write("T2", "Status Action", bold)
+            worksheet.write("U2", "Status History Note", bold)
+            worksheet.write("V2", "Actual Delivery", bold)
+            worksheet.write("W2", "POD?", bold)
+            worksheet.write("X2", "POD LINK", bold)
+            worksheet.write("Y2", "POD Signed on Glass Link", bold)
+            worksheet.write("Z2", "Target Delivery KPI (Days)", bold)
+            worksheet.write("AA2", "Delivery Days from Booked", bold)
+            worksheet.write("AB2", "Actual Delivery KPI (Days)", bold)
+            worksheet.write("AC2", "Calculated ETA", bold)
+            worksheet.write("AD2", "Store Booking Date", bold)
+            worksheet.write("AE2", "Store Booking Time", bold)
+            worksheet.write("AF2", "Gaps", bold)
 
             row = 2
         else:
@@ -5753,26 +5822,27 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I1", "To Postal Code", bold)
             worksheet.write("J1", "Client Sales Invoice", bold)
             worksheet.write("K1", "Client Order Number", bold)
-            worksheet.write("L1", "Consignment No", bold)
-            worksheet.write("M1", "Status", bold)
-            worksheet.write("N1", "Total Qty", bold)
-            worksheet.write("O1", "Total Scanned Qty", bold)
-            worksheet.write("P1", "Booked to Scanned Variance", bold)
-            worksheet.write("Q1", "Total Delivered", bold)
-            worksheet.write("R1", "Status Detail", bold)
-            worksheet.write("S1", "Status Action", bold)
-            worksheet.write("T1", "Status History Note", bold)
-            worksheet.write("U1", "Actual Delivery", bold)
-            worksheet.write("V1", "POD?", bold)
-            worksheet.write("W1", "POD LINK", bold)
-            worksheet.write("X1", "POD Signed on Glass Link", bold)
-            worksheet.write("Y1", "Target Delivery KPI (Days)", bold)
-            worksheet.write("Z1", "Delivery Days from Booked", bold)
-            worksheet.write("AA1", "Actual Delivery KPI (Days)", bold)
-            worksheet.write("AB1", "Calculated ETA", bold)
-            worksheet.write("AC1", "Store Booking Date", bold)
-            worksheet.write("AD1", "Store Booking Time", bold)
-            worksheet.write("AE1", "Gaps", bold)
+            worksheet.write("L1", "Freight Provider", bold)
+            worksheet.write("M1", "Consignment No", bold)
+            worksheet.write("N1", "Status", bold)
+            worksheet.write("O1", "Total Qty", bold)
+            worksheet.write("P1", "Total Scanned Qty", bold)
+            worksheet.write("Q1", "Booked to Scanned Variance", bold)
+            worksheet.write("R1", "Total Delivered", bold)
+            worksheet.write("S1", "Status Detail", bold)
+            worksheet.write("T1", "Status Action", bold)
+            worksheet.write("U1", "Status History Note", bold)
+            worksheet.write("V1", "Actual Delivery", bold)
+            worksheet.write("W1", "POD?", bold)
+            worksheet.write("X1", "POD LINK", bold)
+            worksheet.write("Y1", "POD Signed on Glass Link", bold)
+            worksheet.write("Z1", "Target Delivery KPI (Days)", bold)
+            worksheet.write("AA1", "Delivery Days from Booked", bold)
+            worksheet.write("AB1", "Actual Delivery KPI (Days)", bold)
+            worksheet.write("AC1", "Calculated ETA", bold)
+            worksheet.write("AD1", "Store Booking Date", bold)
+            worksheet.write("AE1", "Store Booking Time", bold)
+            worksheet.write("AF1", "Gaps", bold)
 
             row = 1
 
@@ -5811,9 +5881,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 1, booking.b_dateBookedDate, time_format
                 )
 
-            if booking.z_first_scan_label_date:
+            if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.z_first_scan_label_date, date_format
+                    row, col + 2, booking.fp_received_date_time, date_format
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -5834,37 +5904,38 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 8, booking.de_To_Address_PostalCode)
             worksheet.write(row, col + 9, booking.b_client_sales_inv_num)
             worksheet.write(row, col + 10, booking.b_client_order_num)
-            worksheet.write(row, col + 11, booking.v_FPBookingNumber)
-            worksheet.write(row, col + 12, booking.b_status)
-            worksheet.write(row, col + 13, e_qty_total)
-            worksheet.write(row, col + 14, e_qty_scanned_fp_total)
-            worksheet.write(row, col + 15, e_qty_total - e_qty_scanned_fp_total)
-            worksheet.write(row, col + 16, booking.b_fp_qty_delivered)
-            worksheet.write(row, col + 17, booking.dme_status_detail)
-            worksheet.write(row, col + 18, booking.dme_status_action)
-            worksheet.write(row, col + 19, booking.dme_status_history_notes)
+            worksheet.write(row, col + 11, booking.vx_freight_provider)
+            worksheet.write(row, col + 12, booking.v_FPBookingNumber)
+            worksheet.write(row, col + 13, booking.b_status)
+            worksheet.write(row, col + 14, e_qty_total)
+            worksheet.write(row, col + 15, e_qty_scanned_fp_total)
+            worksheet.write(row, col + 16, e_qty_total - e_qty_scanned_fp_total)
+            worksheet.write(row, col + 17, booking.b_fp_qty_delivered)
+            worksheet.write(row, col + 18, booking.dme_status_detail)
+            worksheet.write(row, col + 19, booking.dme_status_action)
+            worksheet.write(row, col + 20, booking.dme_status_history_notes)
 
             if (
                 booking.s_21_ActualDeliveryTimeStamp
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 20, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row, col + 21, booking.s_21_ActualDeliveryTimeStamp, date_format
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
                 booking.z_pod_signed_url is not None
                 and len(booking.z_pod_signed_url) > 0
             ):
-                worksheet.write(row, col + 21, "Y")
+                worksheet.write(row, col + 22, "Y")
             else:
-                worksheet.write(row, col + 21, "")
+                worksheet.write(row, col + 22, "")
 
             if settings.ENV == "dev":
                 if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                     worksheet.write_url(
                         row,
-                        col + 22,
+                        col + 23,
                         "http://3.105.62.128/static/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
@@ -5875,7 +5946,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ):
                     worksheet.write_url(
                         row,
-                        col + 23,
+                        col + 24,
                         "http://3.105.62.128/static/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
@@ -5883,7 +5954,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                     worksheet.write_url(
                         row,
-                        col + 22,
+                        col + 23,
                         settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
@@ -5894,12 +5965,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ):
                     worksheet.write_url(
                         row,
-                        col + 23,
+                        col + 24,
                         settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
-            worksheet.write(row, col + 24, booking.delivery_kpi_days)
+            worksheet.write(row, col + 25, booking.delivery_kpi_days)
 
             if (
                 booking.b_status is not None
@@ -5909,7 +5980,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             ):
                 worksheet.write(
                     row,
-                    col + 25,
+                    col + 26,
                     (
                         booking.s_21_ActualDeliveryTimeStamp.date()
                         - booking.b_dateBookedDate.date()
@@ -5917,7 +5988,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
                 worksheet.write(
                     row,
-                    col + 26,
+                    col + 27,
                     booking.delivery_kpi_days
                     - (
                         booking.s_21_ActualDeliveryTimeStamp.date()
@@ -5927,18 +5998,20 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 27, booking.z_calculated_ETA, date_format
+                    row, col + 28, booking.z_calculated_ETA, date_format
                 )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 28, booking.de_Deliver_By_Date, date_format
-                )
-                worksheet.write_datetime(
-                    row, col + 29, booking.de_Deliver_By_Date, time_format
+                    row, col + 29, booking.fp_store_event_date, date_format
                 )
 
-            worksheet.write(row, col + 30, gaps)
+            if booking.fp_store_event_time:
+                worksheet.write_datetime(
+                    row, col + 30, booking.fp_store_event_time, time_format
+                )
+
+            worksheet.write(row, col + 31, gaps)
 
             row += 1
 
@@ -5958,37 +6031,38 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             cell_format = workbook.add_format(
                 {"font_color": "red", "bold": 1, "align": "left"}
             )
-            worksheet.write("B1", "z_first_scan_label_date", bold)
+            worksheet.write("B1", "fp_received_date_time", bold)
             worksheet.write("C1", "Pickup Days Late", cell_format)
             worksheet.write("D1", "Delivery Days Early / Late", cell_format)
             worksheet.write("E1", "Query With", bold)
             worksheet.write("F1", "b_client_sales_inv_num", bold)
-            worksheet.write("G1", "v_FPBookingNumber", bold)
-            worksheet.write("H1", "b_status", bold)
-            worksheet.write("I1", "dme_status_detail", bold)
-            worksheet.write("J1", "dme_status_action", bold)
-            worksheet.write("K1", "dme_status_history_notes", bold)
-            worksheet.write("L1", "", cell_format)
-            worksheet.write("M1", "e_qty", bold)
-            worksheet.write("N1", "e_qty_scanned_fp_total", bold)
-            worksheet.write("O1", "Booked to Scanned Variance", bold)
-            worksheet.write("P1", "b_fp_qty_delivered", bold)
-            worksheet.write("Q1", "pu_Address_State", bold)
-            worksheet.write("R1", "business_group", bold)
-            worksheet.write("S1", "deToCompanyName", bold)
-            worksheet.write("T1", "de_To_Address_Suburb", bold)
-            worksheet.write("U1", "de_To_Address_State", bold)
-            worksheet.write("V1", "de_To_Address_PostalCode", bold)
-            worksheet.write("W1", "b_client_order_num", bold)
-            worksheet.write("X1", "s_21_ActualDeliveryTimeStamp", bold)
-            worksheet.write("Y1", "zc_pod_or_no_pod", bold)
-            worksheet.write("Z1", "z_pod_url", bold)
-            worksheet.write("AA1", "z_pod_signed_url", bold)
-            worksheet.write("AB1", "delivery_kpi_days", bold)
-            worksheet.write("AC1", "delivery_days_from_booked", bold)
-            worksheet.write("AD1", "delivery_actual_kpi_days", bold)
-            worksheet.write("AE1", "z_calculated_ETA", bold)
-            worksheet.write("AF1", "de_Deliver_By_Date(Date)", bold)
+            worksheet.write("G1", "vx_freight_provider", bold)
+            worksheet.write("H1", "v_FPBookingNumber", bold)
+            worksheet.write("I1", "b_status", bold)
+            worksheet.write("J1", "dme_status_detail", bold)
+            worksheet.write("K1", "dme_status_action", bold)
+            worksheet.write("L1", "dme_status_history_notes", bold)
+            worksheet.write("M1", "", cell_format)
+            worksheet.write("N1", "e_qty", bold)
+            worksheet.write("O1", "e_qty_scanned_fp_total", bold)
+            worksheet.write("P1", "Booked to Scanned Variance", bold)
+            worksheet.write("Q1", "b_fp_qty_delivered", bold)
+            worksheet.write("R1", "pu_Address_State", bold)
+            worksheet.write("S1", "business_group", bold)
+            worksheet.write("T1", "deToCompanyName", bold)
+            worksheet.write("U1", "de_To_Address_Suburb", bold)
+            worksheet.write("V1", "de_To_Address_State", bold)
+            worksheet.write("W1", "de_To_Address_PostalCode", bold)
+            worksheet.write("X1", "b_client_order_num", bold)
+            worksheet.write("U1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("Z1", "zc_pod_or_no_pod", bold)
+            worksheet.write("AA1", "z_pod_url", bold)
+            worksheet.write("AB1", "z_pod_signed_url", bold)
+            worksheet.write("AC1", "delivery_kpi_days", bold)
+            worksheet.write("AD1", "delivery_days_from_booked", bold)
+            worksheet.write("AE1", "delivery_actual_kpi_days", bold)
+            worksheet.write("AF1", "z_calculated_ETA", bold)
+            worksheet.write("AG1", "de_Deliver_By_Date(Date)", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "WHS Sent Date", bold)
@@ -5996,36 +6070,37 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("D2", "Delivery Days Early / Late", cell_format)
             worksheet.write("E2", "Query With", bold)
             worksheet.write("F2", "Client Sales Invoice", bold)
-            worksheet.write("G2", "Consignment No", bold)
-            worksheet.write("H2", "Status", bold)
-            worksheet.write("I2", "Status Detail", bold)
-            worksheet.write("J2", "Status Action", bold)
-            worksheet.write("K2", "Status History Note", bold)
+            worksheet.write("G2", "Freight Provider", bold)
+            worksheet.write("H2", "Consignment No", bold)
+            worksheet.write("I2", "Status", bold)
+            worksheet.write("J2", "Status Detail", bold)
+            worksheet.write("K2", "Status Action", bold)
+            worksheet.write("L2", "Status History Note", bold)
             worksheet.write(
-                "L2",
+                "M2",
                 "Please put your Feedback / updates in the column if different to Column G, H and / or I",
                 cell_format,
             )
-            worksheet.write("M2", "Qty Booked", bold)
-            worksheet.write("N2", "Qty Scanned", bold)
-            worksheet.write("O2", "Booked to Scanned Variance", bold)
-            worksheet.write("P2", "Total Delivered", bold)
-            worksheet.write("Q2", "From State", bold)
-            worksheet.write("R2", "To Entity Group Name", bold)
-            worksheet.write("S2", "To Entity", bold)
-            worksheet.write("T2", "To Suburb", bold)
-            worksheet.write("U2", "To State", bold)
-            worksheet.write("V2", "To Postal Code", bold)
-            worksheet.write("W2", "Client Order Number", bold)
-            worksheet.write("X2", "Actual Delivery", bold)
-            worksheet.write("U2", "POD?", bold)
-            worksheet.write("Z2", "POD LINK", bold)
-            worksheet.write("AA2", "POD Signed on Glass Link", bold)
-            worksheet.write("AB2", "Target Delivery KPI (Days)", bold)
-            worksheet.write("AC2", "Delivery Days from Booked", bold)
-            worksheet.write("AD2", "Actual Delivery KPI (Days)", bold)
-            worksheet.write("AE2", "Calculated ETA", bold)
-            worksheet.write("AF2", "Store Booking Date", bold)
+            worksheet.write("N2", "Qty Booked", bold)
+            worksheet.write("O2", "Qty Scanned", bold)
+            worksheet.write("P2", "Booked to Scanned Variance", bold)
+            worksheet.write("Q2", "Total Delivered", bold)
+            worksheet.write("R2", "From State", bold)
+            worksheet.write("S2", "To Entity Group Name", bold)
+            worksheet.write("T2", "To Entity", bold)
+            worksheet.write("U2", "To Suburb", bold)
+            worksheet.write("V2", "To State", bold)
+            worksheet.write("W2", "To Postal Code", bold)
+            worksheet.write("X2", "Client Order Number", bold)
+            worksheet.write("Y2", "Actual Delivery", bold)
+            worksheet.write("Z2", "POD?", bold)
+            worksheet.write("AA2", "POD LINK", bold)
+            worksheet.write("AB2", "POD Signed on Glass Link", bold)
+            worksheet.write("AC2", "Target Delivery KPI (Days)", bold)
+            worksheet.write("AD2", "Delivery Days from Booked", bold)
+            worksheet.write("AE2", "Actual Delivery KPI (Days)", bold)
+            worksheet.write("AF2", "Calculated ETA", bold)
+            worksheet.write("AG2", "Store Booking Date", bold)
 
             row = 2
         else:
@@ -6038,36 +6113,37 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("D1", "Delivery Days Early / Late", cell_format)
             worksheet.write("E1", "Query With", bold)
             worksheet.write("F1", "Client Sales Invoice", bold)
-            worksheet.write("G1", "Consignment No", bold)
-            worksheet.write("H1", "Status", bold)
-            worksheet.write("I1", "Status Detail", bold)
-            worksheet.write("J1", "Status Action", bold)
-            worksheet.write("K1", "Status History Note", bold)
+            worksheet.write("G1", "Freight Provider", bold)
+            worksheet.write("H1", "Consignment No", bold)
+            worksheet.write("I1", "Status", bold)
+            worksheet.write("J1", "Status Detail", bold)
+            worksheet.write("K1", "Status Action", bold)
+            worksheet.write("L1", "Status History Note", bold)
             worksheet.write(
-                "L1",
+                "M1",
                 "Please put your Feedback / updates in the column if different to Column G, H and / or I",
                 cell_format,
             )
-            worksheet.write("M1", "Qty Booked", bold)
-            worksheet.write("N1", "Qty Scanned", bold)
-            worksheet.write("O1", "Booked to Scanned Variance", bold)
-            worksheet.write("P1", "Total Delivered", bold)
-            worksheet.write("Q1", "From State", bold)
-            worksheet.write("R1", "To Entity Group Name", bold)
-            worksheet.write("S1", "To Entity", bold)
-            worksheet.write("T1", "To Suburb", bold)
-            worksheet.write("U1", "To State", bold)
-            worksheet.write("V1", "To Postal Code", bold)
-            worksheet.write("W1", "Client Order Number", bold)
-            worksheet.write("X1", "Actual Delivery", bold)
-            worksheet.write("Y1", "POD?", bold)
-            worksheet.write("Z1", "POD LINK", bold)
-            worksheet.write("AA1", "POD Signed on Glass Link", bold)
-            worksheet.write("AB1", "Target Delivery KPI (Days)", bold)
-            worksheet.write("AC1", "Delivery Days from Booked", bold)
-            worksheet.write("AD1", "Actual Delivery KPI (Days)", bold)
-            worksheet.write("AE1", "Calculated ETA", bold)
-            worksheet.write("AF1", "Store Booking Date", bold)
+            worksheet.write("N1", "Qty Booked", bold)
+            worksheet.write("O1", "Qty Scanned", bold)
+            worksheet.write("P1", "Booked to Scanned Variance", bold)
+            worksheet.write("Q1", "Total Delivered", bold)
+            worksheet.write("R1", "From State", bold)
+            worksheet.write("S1", "To Entity Group Name", bold)
+            worksheet.write("T1", "To Entity", bold)
+            worksheet.write("U1", "To Suburb", bold)
+            worksheet.write("V1", "To State", bold)
+            worksheet.write("W1", "To Postal Code", bold)
+            worksheet.write("X1", "Client Order Number", bold)
+            worksheet.write("Y1", "Actual Delivery", bold)
+            worksheet.write("Z1", "POD?", bold)
+            worksheet.write("AA1", "POD LINK", bold)
+            worksheet.write("AB1", "POD Signed on Glass Link", bold)
+            worksheet.write("AC1", "Target Delivery KPI (Days)", bold)
+            worksheet.write("AD1", "Delivery Days from Booked", bold)
+            worksheet.write("AE1", "Actual Delivery KPI (Days)", bold)
+            worksheet.write("AF1", "Calculated ETA", bold)
+            worksheet.write("AG1", "Store Booking Date", bold)
 
             row = 1
 
@@ -6100,9 +6176,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 0, booking.b_dateBookedDate.date(), date_format
                 )
 
-            if booking.z_first_scan_label_date:
+            if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 1, booking.z_first_scan_label_date, date_format
+                    row, col + 1, booking.fp_received_date_time, date_format
                 )
 
             if booking.b_status is not None and "booked" in booking.b_status.lower():
@@ -6167,21 +6243,22 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write(row, col + 4, query_with)
             worksheet.write(row, col + 5, booking.b_client_sales_inv_num)
-            worksheet.write(row, col + 6, booking.v_FPBookingNumber)
-            worksheet.write(row, col + 7, booking.b_status)
+            worksheet.write(row, col + 6, booking.vx_freight_provider)
+            worksheet.write(row, col + 7, booking.v_FPBookingNumber)
+            worksheet.write(row, col + 8, booking.b_status)
 
             cell_format = workbook.add_format({"text_wrap": True})
-            worksheet.write(row, col + 8, booking.dme_status_detail, cell_format)
-            worksheet.write(row, col + 9, booking.dme_status_action, cell_format)
+            worksheet.write(row, col + 9, booking.dme_status_detail, cell_format)
+            worksheet.write(row, col + 10, booking.dme_status_action, cell_format)
             worksheet.write(
-                row, col + 10, booking.dme_status_history_notes, cell_format
+                row, col + 11, booking.dme_status_history_notes, cell_format
             )
-            worksheet.write(row, col + 11, "", cell_format)
-            worksheet.write(row, col + 12, e_qty_total)
-            worksheet.write(row, col + 13, e_qty_scanned_fp_total)
-            worksheet.write(row, col + 14, e_qty_total - e_qty_scanned_fp_total)
-            worksheet.write(row, col + 15, booking.b_fp_qty_delivered)
-            worksheet.write(row, col + 16, booking.pu_Address_State)
+            worksheet.write(row, col + 12, "", cell_format)
+            worksheet.write(row, col + 13, e_qty_total)
+            worksheet.write(row, col + 14, e_qty_scanned_fp_total)
+            worksheet.write(row, col + 15, e_qty_total - e_qty_scanned_fp_total)
+            worksheet.write(row, col + 16, booking.b_fp_qty_delivered)
+            worksheet.write(row, col + 17, booking.pu_Address_State)
 
             customer_group_name = ""
             customer_groups = Dme_utl_client_customer_group.objects.all()
@@ -6191,35 +6268,35 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     in booking.deToCompanyName.lower()
                 ):
                     customer_group_name = customer_group.group_name
-            worksheet.write(row, col + 17, customer_group_name)
+            worksheet.write(row, col + 18, customer_group_name)
 
-            worksheet.write(row, col + 18, booking.deToCompanyName)
-            worksheet.write(row, col + 19, booking.de_To_Address_Suburb)
-            worksheet.write(row, col + 20, booking.de_To_Address_State)
-            worksheet.write(row, col + 21, booking.de_To_Address_PostalCode)
-            worksheet.write(row, col + 22, booking.b_client_order_num)
+            worksheet.write(row, col + 19, booking.deToCompanyName)
+            worksheet.write(row, col + 20, booking.de_To_Address_Suburb)
+            worksheet.write(row, col + 21, booking.de_To_Address_State)
+            worksheet.write(row, col + 22, booking.de_To_Address_PostalCode)
+            worksheet.write(row, col + 23, booking.b_client_order_num)
 
             if (
                 booking.s_21_ActualDeliveryTimeStamp
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 23, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row, col + 24, booking.s_21_ActualDeliveryTimeStamp, date_format
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
                 booking.z_pod_signed_url is not None
                 and len(booking.z_pod_signed_url) > 0
             ):
-                worksheet.write(row, col + 24, "Y")
+                worksheet.write(row, col + 25, "Y")
             else:
-                worksheet.write(row, col + 24, "")
+                worksheet.write(row, col + 25, "")
 
             if settings.ENV == "dev":
                 if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                     worksheet.write_url(
                         row,
-                        col + 25,
+                        col + 26,
                         "http://3.105.62.128/static/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
@@ -6230,7 +6307,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ):
                     worksheet.write_url(
                         row,
-                        col + 26,
+                        col + 27,
                         "http://3.105.62.128/static/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
@@ -6238,7 +6315,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                     worksheet.write_url(
                         row,
-                        col + 25,
+                        col + 26,
                         settings.S3_URL + "/imgs/" + booking.z_pod_url,
                         string=booking.z_pod_url,
                     )
@@ -6249,12 +6326,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ):
                     worksheet.write_url(
                         row,
-                        col + 26,
+                        col + 27,
                         settings.S3_URL + "/imgs/" + booking.z_pod_signed_url,
                         string=booking.z_pod_signed_url,
                     )
 
-            worksheet.write(row, col + 27, booking.delivery_kpi_days)
+            worksheet.write(row, col + 28, booking.delivery_kpi_days)
 
             if (
                 booking.b_status is not None
@@ -6264,7 +6341,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             ):
                 worksheet.write(
                     row,
-                    col + 28,
+                    col + 29,
                     (
                         booking.s_21_ActualDeliveryTimeStamp.date()
                         - booking.b_dateBookedDate.date()
@@ -6272,7 +6349,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
                 worksheet.write(
                     row,
-                    col + 29,
+                    col + 30,
                     booking.delivery_kpi_days
                     - (
                         booking.s_21_ActualDeliveryTimeStamp.date()
@@ -6282,12 +6359,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 30, booking.z_calculated_ETA, date_format
+                    row, col + 31, booking.z_calculated_ETA, date_format
                 )
 
-            if booking.de_Deliver_By_Date and booking.de_Deliver_By_Date:
+            if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 31, booking.de_Deliver_By_Date, date_format
+                    row, col + 32, booking.fp_store_event_date, date_format
                 )
 
             row += 1
