@@ -158,7 +158,8 @@ def get_tracking_payload(booking, fp_name, account_code_key=None):
         consignmentDetails = []
 
         if fp_name.lower() in ["sendle"]:
-            consignmentDetails.append({"consignmentNumber": "SRMD9K"})
+            # consignmentDetails.append({"consignmentNumber": "SRMD9K"})
+            consignmentDetails.append({"consignmentNumber": booking.fk_fp_pickup_id})
         else:
             consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
 

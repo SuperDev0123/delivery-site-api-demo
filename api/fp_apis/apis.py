@@ -97,8 +97,6 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-
-            print(consignmentTrackDetails)
             
             if fp_name.lower() == "startrack":
                 booking.b_status_API = consignmentStatuses[0]["status"]
@@ -119,10 +117,12 @@ def tracking(request, fp_name):
                 event_time = last_consignmentStatus["statusUpdate"]
                 event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
             elif fp_name.lower() == "sendle":
-                event_time = json_data["consignmentTrackDetails"][0][
-                    "consignmentStatuses"
-                ][0]["statusDate"]
-                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
+                last_consignmentStatus = consignmentStatuses[
+                    len(consignmentStatuses) - 1
+                ]
+                booking.b_status_API = last_consignmentStatus["status"]
+                event_time = last_consignmentStatus["statusUpdate"]
+                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ"))
             else:
                 event_time = None
 
