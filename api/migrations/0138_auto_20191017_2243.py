@@ -8,14 +8,14 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0137_auto_20191015_2358")]
 
     operations = [
-        migrations.AddField(
-            model_name="bookings",
-            name="jobDate",
-            field=models.CharField(blank=True, default=None, max_length=45, null=True),
-        ),
-        migrations.AddField(
-            model_name="bookings",
-            name="jobNumber",
-            field=models.CharField(blank=True, default=None, max_length=45, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="jobDate",
+        #     field=models.CharField(blank=True, default=None, max_length=45, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="jobNumber",
+        #     field=models.CharField(blank=True, default=None, max_length=45, null=True),
+        # ),
     ]

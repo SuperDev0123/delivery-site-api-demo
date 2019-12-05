@@ -2962,6 +2962,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 tree = xml.ElementTree(root)
                 with open(local_filepath + filename, "wb") as fh:
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
+        except Exception as e:
+            logger.error(f"@301 JET XML - {e}")
+            return e
     mysqlcon.close()
 
 

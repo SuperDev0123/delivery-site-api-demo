@@ -9,88 +9,88 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0135_auto_20191008_0046")]
 
     operations = [
-        migrations.CreateModel(
-            name="DME_Label_Settings",
-            fields=[
-                ("id", models.AutoField(primary_key=True, serialize=False)),
-                (
-                    "uom",
-                    models.CharField(blank=True, default="", max_length=24, null=True),
-                ),
-                (
-                    "font_family",
-                    models.CharField(blank=True, max_length=128, null=True),
-                ),
-                (
-                    "font_size_small",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "font_size_medium",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "font_size_large",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "label_dimension_length",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "label_dimension_width",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "label_image_size_length",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "label_image_size_width",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "barcode_dimension_length",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "barcode_dimension_width",
-                    models.FloatField(blank=True, default=0, null=True),
-                ),
-                (
-                    "z_createdByAccount",
-                    models.CharField(
-                        blank=True,
-                        max_length=64,
-                        null=True,
-                        verbose_name="Created by account",
-                    ),
-                ),
-                (
-                    "z_createdTimeStamp",
-                    models.DateTimeField(
-                        default=datetime.datetime.now, verbose_name="Created Timestamp"
-                    ),
-                ),
-                (
-                    "z_downloadedByAccount",
-                    models.CharField(
-                        blank=True,
-                        max_length=64,
-                        null=True,
-                        verbose_name="Downloaded by account",
-                    ),
-                ),
-                (
-                    "z_downloadedTimeStamp",
-                    models.DateTimeField(
-                        blank=True,
-                        default=None,
-                        null=True,
-                        verbose_name="Downloaded Timestamp",
-                    ),
-                ),
-            ],
-            options={"db_table": "label_settings"},
-        )
+        # migrations.CreateModel(
+        #     name="DME_Label_Settings",
+        #     fields=[
+        #         ("id", models.AutoField(primary_key=True, serialize=False)),
+        #         (
+        #             "uom",
+        #             models.CharField(blank=True, default="", max_length=24, null=True),
+        #         ),
+        #         (
+        #             "font_family",
+        #             models.CharField(blank=True, max_length=128, null=True),
+        #         ),
+        #         (
+        #             "font_size_small",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "font_size_medium",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "font_size_large",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "label_dimension_length",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "label_dimension_width",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "label_image_size_length",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "label_image_size_width",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "barcode_dimension_length",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "barcode_dimension_width",
+        #             models.FloatField(blank=True, default=0, null=True),
+        #         ),
+        #         (
+        #             "z_createdByAccount",
+        #             models.CharField(
+        #                 blank=True,
+        #                 max_length=64,
+        #                 null=True,
+        #                 verbose_name="Created by account",
+        #             ),
+        #         ),
+        #         (
+        #             "z_createdTimeStamp",
+        #             models.DateTimeField(
+        #                 default=datetime.datetime.now, verbose_name="Created Timestamp"
+        #             ),
+        #         ),
+        #         (
+        #             "z_downloadedByAccount",
+        #             models.CharField(
+        #                 blank=True,
+        #                 max_length=64,
+        #                 null=True,
+        #                 verbose_name="Downloaded by account",
+        #             ),
+        #         ),
+        #         (
+        #             "z_downloadedTimeStamp",
+        #             models.DateTimeField(
+        #                 blank=True,
+        #                 default=None,
+        #                 null=True,
+        #                 verbose_name="Downloaded Timestamp",
+        #             ),
+        #         ),
+        #     ],
+        #     options={"db_table": "label_settings"},
+        # )
     ]

@@ -8,11 +8,11 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0141_auto_20191019_0706")]
 
     operations = [
-        migrations.AddField(
-            model_name="api_booking_quotes",
-            name="account_code",
-            field=models.CharField(
-                blank=True, max_length=32, null=True, verbose_name="Account Code"
-            ),
-        )
+        # migrations.AddField(
+        #     model_name="api_booking_quotes",
+        #     name="account_code",
+        #     field=models.CharField(
+        #         blank=True, max_length=32, null=True, verbose_name="Account Code"
+        #     ),
+        # )
     ]

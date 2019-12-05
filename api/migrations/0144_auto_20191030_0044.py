@@ -8,24 +8,24 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0143_auto_20191029_0348")]
 
     operations = [
-        migrations.AddField(
-            model_name="dme_clients",
-            name="client_mark_up_percent",
-            field=models.FloatField(blank=True, default=0, null=True),
-        ),
-        migrations.AddField(
-            model_name="dme_clients",
-            name="client_min_markup_startingcostvalue",
-            field=models.FloatField(blank=True, default=0, null=True),
-        ),
-        migrations.AddField(
-            model_name="dme_clients",
-            name="client_min_markup_value",
-            field=models.FloatField(blank=True, default=0, null=True),
-        ),
-        migrations.AddField(
-            model_name="fp_freight_providers",
-            name="fp_markupfuel_levy_percent",
-            field=models.FloatField(blank=True, default=0, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name="dme_clients",
+        #     name="client_mark_up_percent",
+        #     field=models.FloatField(blank=True, default=0, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="dme_clients",
+        #     name="client_min_markup_startingcostvalue",
+        #     field=models.FloatField(blank=True, default=0, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="dme_clients",
+        #     name="client_min_markup_value",
+        #     field=models.FloatField(blank=True, default=0, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="fp_freight_providers",
+        #     name="fp_markupfuel_levy_percent",
+        #     field=models.FloatField(blank=True, default=0, null=True),
+        # ),
     ]

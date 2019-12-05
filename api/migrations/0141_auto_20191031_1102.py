@@ -9,63 +9,63 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0140_auto_20191026_0723")]
 
     operations = [
-        migrations.CreateModel(
-            name="DME_Email_Templates",
-            fields=[
-                ("id", models.AutoField(primary_key=True, serialize=False)),
-                (
-                    "fk_idEmailParent",
-                    models.IntegerField(blank=True, default=0, null=True),
-                ),
-                ("emailName", models.CharField(blank=True, max_length=255, null=True)),
-                ("emailBody", models.TextField(blank=True, null=True)),
-                (
-                    "sectionName",
-                    models.TextField(blank=True, max_length=255, null=True),
-                ),
-                (
-                    "emailBodyRepeatEven",
-                    models.TextField(blank=True, max_length=2048, null=True),
-                ),
-                (
-                    "emailBodyRepeatOdd",
-                    models.TextField(blank=True, max_length=2048, null=True),
-                ),
-                ("whenAttachmentUnavailable", models.TextField(blank=True, null=True)),
-                (
-                    "z_createdByAccount",
-                    models.CharField(
-                        blank=True,
-                        max_length=64,
-                        null=True,
-                        verbose_name="Created by account",
-                    ),
-                ),
-                (
-                    "z_createdTimeStamp",
-                    models.DateTimeField(
-                        default=datetime.datetime.now, verbose_name="Created Timestamp"
-                    ),
-                ),
-                (
-                    "z_downloadedByAccount",
-                    models.CharField(
-                        blank=True,
-                        max_length=64,
-                        null=True,
-                        verbose_name="Downloaded by account",
-                    ),
-                ),
-                (
-                    "z_downloadedTimeStamp",
-                    models.DateTimeField(
-                        blank=True,
-                        default=None,
-                        null=True,
-                        verbose_name="Downloaded Timestamp",
-                    ),
-                ),
-            ],
-            options={"db_table": "dme_email_templates"},
-        )
+        # migrations.CreateModel(
+        #     name="DME_Email_Templates",
+        #     fields=[
+        #         ("id", models.AutoField(primary_key=True, serialize=False)),
+        #         (
+        #             "fk_idEmailParent",
+        #             models.IntegerField(blank=True, default=0, null=True),
+        #         ),
+        #         ("emailName", models.CharField(blank=True, max_length=255, null=True)),
+        #         ("emailBody", models.TextField(blank=True, null=True)),
+        #         (
+        #             "sectionName",
+        #             models.TextField(blank=True, max_length=255, null=True),
+        #         ),
+        #         (
+        #             "emailBodyRepeatEven",
+        #             models.TextField(blank=True, max_length=2048, null=True),
+        #         ),
+        #         (
+        #             "emailBodyRepeatOdd",
+        #             models.TextField(blank=True, max_length=2048, null=True),
+        #         ),
+        #         ("whenAttachmentUnavailable", models.TextField(blank=True, null=True)),
+        #         (
+        #             "z_createdByAccount",
+        #             models.CharField(
+        #                 blank=True,
+        #                 max_length=64,
+        #                 null=True,
+        #                 verbose_name="Created by account",
+        #             ),
+        #         ),
+        #         (
+        #             "z_createdTimeStamp",
+        #             models.DateTimeField(
+        #                 default=datetime.datetime.now, verbose_name="Created Timestamp"
+        #             ),
+        #         ),
+        #         (
+        #             "z_downloadedByAccount",
+        #             models.CharField(
+        #                 blank=True,
+        #                 max_length=64,
+        #                 null=True,
+        #                 verbose_name="Downloaded by account",
+        #             ),
+        #         ),
+        #         (
+        #             "z_downloadedTimeStamp",
+        #             models.DateTimeField(
+        #                 blank=True,
+        #                 default=None,
+        #                 null=True,
+        #                 verbose_name="Downloaded Timestamp",
+        #             ),
+        #         ),
+        #     ],
+        #     options={"db_table": "dme_email_templates"},
+        # )
     ]

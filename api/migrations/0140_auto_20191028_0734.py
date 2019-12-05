@@ -8,24 +8,24 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0139_auto_20191021_0056")]
 
     operations = [
-        migrations.AddField(
-            model_name="bookings",
-            name="b_project_dd_receive_date",
-            field=models.DateTimeField(blank=True, default=None, null=True),
-        ),
-        migrations.AddField(
-            model_name="bookings",
-            name="b_project_inventory_due",
-            field=models.DateTimeField(blank=True, default=None, null=True),
-        ),
-        migrations.AddField(
-            model_name="bookings",
-            name="b_project_opened",
-            field=models.DateTimeField(blank=True, default=None, null=True),
-        ),
-        migrations.AddField(
-            model_name="bookings",
-            name="b_project_wh_unpack",
-            field=models.DateTimeField(blank=True, default=None, null=True),
-        ),
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="b_project_dd_receive_date",
+        #     field=models.DateTimeField(blank=True, default=None, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="b_project_inventory_due",
+        #     field=models.DateTimeField(blank=True, default=None, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="b_project_opened",
+        #     field=models.DateTimeField(blank=True, default=None, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="b_project_wh_unpack",
+        #     field=models.DateTimeField(blank=True, default=None, null=True),
+        # ),
     ]

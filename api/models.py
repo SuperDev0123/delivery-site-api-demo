@@ -232,6 +232,168 @@ class Dme_manifest_log(models.Model):
         db_table = "dme_manifest_log"
 
 
+class API_booking_quotes(models.Model):
+    id = models.AutoField(primary_key=True)
+    api_results_id = models.CharField(
+        verbose_name=_("Result ID"), blank=True, null=True, max_length=128
+    )
+    fk_booking_id = models.CharField(
+        verbose_name=_("Booking ID"), max_length=64, blank=True, null=True
+    )
+    fk_client_id = models.CharField(
+        verbose_name=_("Client ID"), max_length=64, blank=True, null=True
+    )
+    fk_freight_provider_id = models.CharField(
+        verbose_name=_("Freight Provider ID"), max_length=64, blank=True, null=True
+    )
+    account_code = models.CharField(
+        verbose_name=_("Account Code"), max_length=32, blank=True, null=True
+    )
+    provider = models.CharField(
+        verbose_name=_("Provider"), max_length=64, blank=True, null=True
+    )
+    service_code = models.CharField(
+        verbose_name=_("Service Code"), max_length=10, blank=True, null=True
+    )
+    service_name = models.CharField(
+        verbose_name=_("Service Name"), max_length=64, blank=True, null=True
+    )
+    fee = models.FloatField(verbose_name=_("Fee"), blank=True, null=True)
+    etd = models.CharField(verbose_name=_("ETD"), max_length=64, blank=True, null=True)
+    tax_id_1 = models.CharField(
+        verbose_name=_("Tax ID 1"), max_length=10, blank=True, null=True
+    )
+    tax_value_1 = models.FloatField(
+        verbose_name=_("Tax Value 1"), blank=True, null=True
+    )
+    tax_id_2 = models.CharField(
+        verbose_name=_("Tax ID 2"), max_length=10, blank=True, null=True
+    )
+    tax_value_2 = models.FloatField(
+        verbose_name=_("Tax Value 2"), blank=True, null=True
+    )
+    tax_id_3 = models.CharField(
+        verbose_name=_("Tax ID 3"), max_length=10, blank=True, null=True
+    )
+    tax_value_3 = models.FloatField(
+        verbose_name=_("Tax Value 3"), blank=True, null=True
+    )
+    tax_id_4 = models.CharField(
+        verbose_name=_("Tax ID 4"), max_length=10, blank=True, null=True
+    )
+    tax_value_4 = models.FloatField(
+        verbose_name=_("Tax Value 4"), blank=True, null=True
+    )
+    tax_id_5 = models.CharField(
+        verbose_name=_("Tax ID 5"), max_length=10, blank=True, null=True
+    )
+    tax_value_5 = models.FloatField(
+        verbose_name=_("Tax Value 5"), blank=True, null=True
+    )
+    b_client_markup2_percentage = models.FloatField(
+        verbose_name=_("Client Markup2 Percent"), blank=True, null=True
+    )
+    fp_01_pu_possible = models.CharField(
+        verbose_name=_("PU possible"), max_length=64, blank=True, null=True
+    )
+    fp_02_del_possible = models.CharField(
+        verbose_name=_("DEL possible"), max_length=64, blank=True, null=True
+    )
+    fp_03_del_possible_price = models.CharField(
+        verbose_name=_("DEL possible price"), max_length=64, blank=True, null=True
+    )
+    booking_cut_off = models.DateTimeField(
+        verbose_name=_("Booking cut off"), default=datetime.now, blank=True, null=True
+    )
+    collection_cut_off = models.DateTimeField(
+        verbose_name=_("Collection cut off"),
+        default=datetime.now,
+        blank=True,
+        null=True,
+    )
+    mu_percentage_fuel_levy = models.FloatField(
+        verbose_name=_("Mu Percentage Fuel Levy"), blank=True, null=True
+    )
+    client_mu_1_minimum_values = models.FloatField(
+        verbose_name=_("Client MU 1 Minimum Value"), blank=True, null=True
+    )
+    x_price_per_UOM = models.IntegerField(
+        verbose_name=_("Price per UOM"), blank=True, null=True
+    )
+    fp_latest_promised_pu = models.DateTimeField(
+        verbose_name=_("Lastest Promised PU"),
+        default=datetime.now,
+        blank=True,
+        null=True,
+    )
+    fp_latest_promised_del = models.DateTimeField(
+        verbose_name=_("Lastest Timestamp DEL"),
+        default=datetime.now,
+        blank=True,
+        null=True,
+    )
+    x_for_dme_price_ToxbyPricePerUOM = models.IntegerField(
+        verbose_name=_("For DME Price ToxByPricePerUOM"), blank=True, null=True
+    )
+    x_for_dem_price_base_price = models.IntegerField(
+        verbose_name=_("For DEM Price Base Price"), blank=True, null=True
+    )
+    x_fk_pricin_id = models.IntegerField(
+        verbose_name=_("Pricin ID"), blank=True, null=True
+    )
+    x_price_surcharge = models.IntegerField(
+        verbose_name=_("Price Surcharge"), blank=True, null=True
+    )
+    x_minumum_charge = models.IntegerField(
+        verbose_name=_("Minimum Charge"), blank=True, null=True
+    )
+    z_fp_delivery_hours = models.IntegerField(
+        verbose_name=_("Delivery Hours"), blank=True, null=True
+    )
+    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
+        verbose_name=_("Latest PickUP Date Time Final"),
+        default=datetime.now,
+        blank=True,
+        null=True,
+    )
+    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
+        verbose_name=_("Latest Delivery Date Time Final"),
+        default=datetime.now,
+        blank=True,
+        null=True,
+    )
+    z_03_selected_lowest_priced_FC_that_passed = models.FloatField(
+        verbose_name=_("Selected Lowest Priced FC That Passed"), blank=True, null=True
+    )
+    zc_dme_service_translation_nocalc = models.CharField(
+        verbose_name=_("DME service translation no calc"),
+        max_length=64,
+        blank=True,
+        null=True,
+    )
+    z_selected_manual_auto = models.CharField(
+        verbose_name=_("Selected Manual Auto"), max_length=64, blank=True, null=True
+    )
+    z_selected_timestamp = models.DateTimeField(
+        verbose_name=_("Selected Timestamp"), default=datetime.now
+    )
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "api_booking_quotes"
+
+
 class Bookings(models.Model):
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
@@ -1305,10 +1467,20 @@ class Bookings(models.Model):
         blank=True, null=True, default=None
     )
     b_project_due_date = models.DateField(blank=True, null=True, default=None)
-    fp_warehouse_collected_date_time = models.DateTimeField(
+    b_given_to_transport_date_time = models.DateTimeField(
         blank=True, null=True, default=None
     )
     fp_received_date_time = models.DateTimeField(blank=True, null=True)
+    api_booking_quote = models.OneToOneField(
+        API_booking_quotes, on_delete=models.CASCADE, null=True
+    )  # Optional
+    prev_dme_status_detail = models.CharField(
+        max_length=255, blank=True, null=True, default=""
+    )
+    dme_status_detail_updated_at = models.DateTimeField(blank=True, null=True)
+    dme_status_detail_updated_by = models.CharField(
+        max_length=64, blank=True, null=True, default=""
+    )
 
     class Meta:
         db_table = "dme_bookings"
@@ -2296,168 +2468,6 @@ class Api_booking_confirmation_lines(models.Model):
 
     class Meta:
         db_table = "api_booking_confirmation_lines"
-
-
-class API_booking_quotes(models.Model):
-    id = models.AutoField(primary_key=True)
-    api_results_id = models.CharField(
-        verbose_name=_("Result ID"), blank=True, null=True, max_length=128
-    )
-    fk_booking_id = models.CharField(
-        verbose_name=_("Booking ID"), max_length=64, blank=True, null=True
-    )
-    fk_client_id = models.CharField(
-        verbose_name=_("Client ID"), max_length=64, blank=True, null=True
-    )
-    fk_freight_provider_id = models.CharField(
-        verbose_name=_("Freight Provider ID"), max_length=64, blank=True, null=True
-    )
-    account_code = models.CharField(
-        verbose_name=_("Account Code"), max_length=32, blank=True, null=True
-    )
-    provider = models.CharField(
-        verbose_name=_("Provider"), max_length=64, blank=True, null=True
-    )
-    service_code = models.CharField(
-        verbose_name=_("Service Code"), max_length=10, blank=True, null=True
-    )
-    service_name = models.CharField(
-        verbose_name=_("Service Name"), max_length=64, blank=True, null=True
-    )
-    fee = models.FloatField(verbose_name=_("Fee"), blank=True, null=True)
-    etd = models.CharField(verbose_name=_("ETD"), max_length=64, blank=True, null=True)
-    tax_id_1 = models.CharField(
-        verbose_name=_("Tax ID 1"), max_length=10, blank=True, null=True
-    )
-    tax_value_1 = models.FloatField(
-        verbose_name=_("Tax Value 1"), blank=True, null=True
-    )
-    tax_id_2 = models.CharField(
-        verbose_name=_("Tax ID 2"), max_length=10, blank=True, null=True
-    )
-    tax_value_2 = models.FloatField(
-        verbose_name=_("Tax Value 2"), blank=True, null=True
-    )
-    tax_id_3 = models.CharField(
-        verbose_name=_("Tax ID 3"), max_length=10, blank=True, null=True
-    )
-    tax_value_3 = models.FloatField(
-        verbose_name=_("Tax Value 3"), blank=True, null=True
-    )
-    tax_id_4 = models.CharField(
-        verbose_name=_("Tax ID 4"), max_length=10, blank=True, null=True
-    )
-    tax_value_4 = models.FloatField(
-        verbose_name=_("Tax Value 4"), blank=True, null=True
-    )
-    tax_id_5 = models.CharField(
-        verbose_name=_("Tax ID 5"), max_length=10, blank=True, null=True
-    )
-    tax_value_5 = models.FloatField(
-        verbose_name=_("Tax Value 5"), blank=True, null=True
-    )
-    b_client_markup2_percentage = models.FloatField(
-        verbose_name=_("Client Markup2 Percent"), blank=True, null=True
-    )
-    fp_01_pu_possible = models.CharField(
-        verbose_name=_("PU possible"), max_length=64, blank=True, null=True
-    )
-    fp_02_del_possible = models.CharField(
-        verbose_name=_("DEL possible"), max_length=64, blank=True, null=True
-    )
-    fp_03_del_possible_price = models.CharField(
-        verbose_name=_("DEL possible price"), max_length=64, blank=True, null=True
-    )
-    booking_cut_off = models.DateTimeField(
-        verbose_name=_("Booking cut off"), default=datetime.now, blank=True, null=True
-    )
-    collection_cut_off = models.DateTimeField(
-        verbose_name=_("Collection cut off"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
-    mu_percentage_fuel_levy = models.FloatField(
-        verbose_name=_("Mu Percentage Fuel Levy"), blank=True, null=True
-    )
-    client_mu_1_minimum_values = models.FloatField(
-        verbose_name=_("Client MU 1 Minimum Value"), blank=True, null=True
-    )
-    x_price_per_UOM = models.IntegerField(
-        verbose_name=_("Price per UOM"), blank=True, null=True
-    )
-    fp_latest_promised_pu = models.DateTimeField(
-        verbose_name=_("Lastest Promised PU"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
-    fp_latest_promised_del = models.DateTimeField(
-        verbose_name=_("Lastest Timestamp DEL"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
-    x_for_dme_price_ToxbyPricePerUOM = models.IntegerField(
-        verbose_name=_("For DME Price ToxByPricePerUOM"), blank=True, null=True
-    )
-    x_for_dem_price_base_price = models.IntegerField(
-        verbose_name=_("For DEM Price Base Price"), blank=True, null=True
-    )
-    x_fk_pricin_id = models.IntegerField(
-        verbose_name=_("Pricin ID"), blank=True, null=True
-    )
-    x_price_surcharge = models.IntegerField(
-        verbose_name=_("Price Surcharge"), blank=True, null=True
-    )
-    x_minumum_charge = models.IntegerField(
-        verbose_name=_("Minimum Charge"), blank=True, null=True
-    )
-    z_fp_delivery_hours = models.IntegerField(
-        verbose_name=_("Delivery Hours"), blank=True, null=True
-    )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest PickUP Date Time Final"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery Date Time Final"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
-    z_03_selected_lowest_priced_FC_that_passed = models.FloatField(
-        verbose_name=_("Selected Lowest Priced FC That Passed"), blank=True, null=True
-    )
-    zc_dme_service_translation_nocalc = models.CharField(
-        verbose_name=_("DME service translation no calc"),
-        max_length=64,
-        blank=True,
-        null=True,
-    )
-    z_selected_manual_auto = models.CharField(
-        verbose_name=_("Selected Manual Auto"), max_length=64, blank=True, null=True
-    )
-    z_selected_timestamp = models.DateTimeField(
-        verbose_name=_("Selected Timestamp"), default=datetime.now
-    )
-    z_createdByAccount = models.CharField(
-        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
-    )
-    z_createdTimeStamp = models.DateTimeField(
-        verbose_name=_("Created Timestamp"), default=datetime.now
-    )
-    z_modifiedByAccount = models.CharField(
-        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
-    )
-    z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), default=datetime.now
-    )
-
-    class Meta:
-        db_table = "api_booking_quotes"
 
 
 class Api_booking_quotes_confirmation(models.Model):

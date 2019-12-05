@@ -8,9 +8,9 @@ class Migration(migrations.Migration):
     dependencies = [("api", "0134_merge_20190921_1639")]
 
     operations = [
-        migrations.AddField(
-            model_name="bookings",
-            name="b_fp_qty_delivered",
-            field=models.IntegerField(blank=True, default=0, null=True),
-        )
+        # migrations.AddField(
+        #     model_name="bookings",
+        #     name="b_fp_qty_delivered",
+        #     field=models.IntegerField(blank=True, default=0, null=True),
+        # )
     ]
