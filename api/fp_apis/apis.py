@@ -98,6 +98,8 @@ def tracking(request, fp_name):
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
 
+            print(consignmentTrackDetails)
+            
             if fp_name.lower() == "startrack":
                 booking.b_status_API = consignmentStatuses[0]["status"]
                 event_time = None
@@ -116,6 +118,11 @@ def tracking(request, fp_name):
                 booking.b_status_API = last_consignmentStatus["status"]
                 event_time = last_consignmentStatus["statusUpdate"]
                 event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
+            elif fp_name.lower() == "sendle":
+                event_time = json_data["consignmentTrackDetails"][0][
+                    "consignmentStatuses"
+                ][0]["statusDate"]
+                event_time = str(datetime.datetime.strptime(event_time, "%m/%d/%Y"))
             else:
                 event_time = None
 
@@ -221,6 +228,9 @@ def book(request, fp_name):
                     ]
                     request_payload["trackingId"] = json_data["consignmentNumber"]
 
+
+                    booking.fk_fp_pickup_id = json_data["consignmentNumber"]
+
                     if booking.vx_freight_provider.lower() == "startrack":
                         booking.v_FPBookingNumber = json_data["items"][0][
                             "tracking_details"
@@ -234,8 +244,8 @@ def book(request, fp_name):
                     elif booking.vx_freight_provider.lower() == "sendle":
                         booking.v_FPBookingNumber = json_data["consignmentNumber"]
                         request_payload["trackingId"] = json_data["consignmentReferenceNumber"]
-
-                    booking.fk_fp_pickup_id = json_data["consignmentNumber"]
+                        booking.fk_fp_pickup_id = json_data["consignmentReferenceNumber"]
+                   
                     booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
@@ -616,19 +626,17 @@ def get_label(request, fp_name):
                     else:
                         label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
-                    print('SENDLE')
-                    print(json_data["pdfData"])
+                    print('SENDLE', file_name)
                     with open(label_url, "wb") as f:
-                        print(json_data)
-                        f.write(base64.b64decode(json_data["pdfData"]))
+                        f.write(str(json_data["pdfData"]).encode())
                         print('ASDFSSFAF')
                         f.close()
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            booking.z_label_url = label_url
-            booking.save()
+            # booking.z_label_url = label_url
+            # booking.save()
 
             if not fp_name.lower() in ["sendle"]:
                 Log(

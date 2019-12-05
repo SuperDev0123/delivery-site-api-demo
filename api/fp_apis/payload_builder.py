@@ -156,7 +156,12 @@ def get_tracking_payload(booking, fp_name, account_code_key=None):
     try:
         payload = {}
         consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+
+        if fp_name.lower() in ["sendle"]:
+            consignmentDetails.append({"consignmentNumber": "SRMD9K"})
+        else:
+            consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = _get_account_details(
             booking, fp_name, account_code_key
