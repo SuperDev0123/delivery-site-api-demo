@@ -84,6 +84,18 @@ class DmeReportsSerializer(serializers.ModelSerializer):
 
 
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        # Don't pass the 'fields_to_exclude' arg up to the superclass
+        fields_to_exclude = kwargs.pop("fields_to_exclude", None)
+
+        # Instantiate the superclass normally
+        super(ApiBookingQuotesSerializer, self).__init__(*args, **kwargs)
+
+        if fields_to_exclude is not None:
+            disallowed = set(fields_to_exclude)
+            for field_name in disallowed:
+                self.fields.pop(field_name)
+
     class Meta:
         model = API_booking_quotes
         fields = "__all__"

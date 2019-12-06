@@ -34,7 +34,6 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
-from api.common import convert_price
 
 from .serializers import *
 from .models import *
@@ -3060,10 +3059,25 @@ class DmeReportsViewSet(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
+        dme_employee = (
+            DME_employees.objects.select_related()
+            .filter(fk_id_user=request.user.id)
+            .first()
+        )
+
+        if dme_employee is not None:
+            user_type = "DME"
+            fields_to_exclude = []
+        else:
+            user_type = "CLIENT"
+            fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
+
         fk_booking_id = request.GET["fk_booking_id"]
         queryset = API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
-        serializer = ApiBookingQuotesSerializer(queryset, many=True)
-        return Response(convert_price.fp_price_2_dme_price(serializer.data))
+        serializer = ApiBookingQuotesSerializer(
+            queryset, many=True, fields_to_exclude=fields_to_exclude
+        )
+        return Response(serializer.data)
 
 
 class FileUploadView(views.APIView):
