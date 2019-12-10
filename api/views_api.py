@@ -136,7 +136,6 @@ def boks(request):
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["success"] = 2
         bok_1["pk_header_id"] = str(uuid.uuid1())
-        bok_1["fk_client_id"] = common_auth.get_client_info(request)["clientId"]
 
         bok_1_serializer = BOK_1_headersSerializer(data=bok_1)
         if bok_1_serializer.is_valid():
