@@ -102,7 +102,7 @@ def bok_2_lines(request):
 @api_view(["GET", "POST"])
 def bok_3_lines_data(request):
     if request.method == "GET":
-        queryset = bok_3_lines_data.objects.all()
+        queryset = BOK_3_lines_data.objects.all()
         serializer = BOK_3_Serializer(queryset, many=True)
         return Response(serializer.data)
 
