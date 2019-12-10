@@ -54,6 +54,7 @@ urlpatterns += [
     url(r"^bok_0_bookingskeys/", bok_0_bookingkeys),
     url(r"^bok_1_headers/", bok_1_headers),
     url(r"^bok_2_lines/", bok_2_lines),
+    url(r"^bok_3_lines_data/", bok_3_lines_data),
     url(r"^bok_1_to_bookings/", bok_1_to_bookings),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),

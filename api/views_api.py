@@ -90,9 +90,26 @@ def bok_2_lines(request):
         return Response(serializer.data)
 
     elif request.method == "POST":
-        bok_2_line = request.data
-        bok_2_line["v_client_pk_consigment_num"] = bok_2_line["fk_header_id"]
-        serializer = BOK_2_linesSerializer(data=bok_2_line)
+        object = request.data
+        object["v_client_pk_consigment_num"] = object["fk_header_id"]
+        serializer = BOK_2_linesSerializer(data=object)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "POST"])
+def bok_3_lines_data(request):
+    if request.method == "GET":
+        queryset = bok_3_lines_data.objects.all()
+        serializer = BOK_3_Serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    elif request.method == "POST":
+        object = request.data
+        object["v_client_pk_consigment_num"] = object["fk_header_id"]
+        serializer = BOK_3_Serializer(data=object)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
