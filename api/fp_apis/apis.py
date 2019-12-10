@@ -934,7 +934,7 @@ def pricing(request):
                 return JsonResponse({"message": error_msg}, status=400)
 
             # fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Allied", "Fastway"]
-            fp_names = ["Sendle"]
+            fp_names = ["Startrack"]
 
             try:
                 for fp_name in fp_names:
@@ -971,6 +971,8 @@ def pricing(request):
                         parse_results = parse_pricing_response(
                             response, fp_name.lower(), booking
                         )
+
+                        print(parse_results)
 
                         if parse_results and not "error" in parse_results:
                             for parse_result in parse_results:
@@ -1017,6 +1019,7 @@ def pricing(request):
                 results = API_booking_quotes.objects.filter(
                     fk_booking_id=booking.pk_booking_id
                 )
+
 
                 return JsonResponse(
                     {
