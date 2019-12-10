@@ -1,16 +1,20 @@
 import base64, os
 import codecs
 import time
-
-from django.http import HttpResponse
+import uuid
+import json
+import datetime
+from ast import literal_eval
+from urllib.request import urlopen
+import urllib, requests
 import xlsxwriter as xlsxwriter
+
+from django.http import HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import render
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
-from django.http import JsonResponse
 from rest_framework.views import APIView
-from rest_framework import authentication, permissions
-from rest_framework import viewsets
+from rest_framework import authentication, permissions, viewsets
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
@@ -19,18 +23,13 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
-from django.http import JsonResponse
-from django.http import QueryDict
 from django.db.models import Q
-from urllib.request import urlopen
-import urllib, requests
-import json
-import datetime
-from ast import literal_eval
+from django.conf import settings
+
 
 from .serializers_api import *
 from .models import *
-from django.conf import settings
+from api.common import auth as common_auth
 
 
 if settings.ENV == "local":
@@ -46,14 +45,14 @@ else:
 DME_LEVEL_API_URL = "http://localhost:3000"
 
 
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 def bok_0_bookingkeys(request):
-    if request.method == "GET":
-        bok_0_bookingkeys = BOK_0_BookingKeys.objects.all()
-        serializer = BOK_0_BookingKeysSerializer(bok_0_bookingkeys, many=True)
-        return Response(serializer.data)
+    # if request.method == "GET":
+    #     bok_0_bookingkeys = BOK_0_BookingKeys.objects.all()
+    #     serializer = BOK_0_BookingKeysSerializer(bok_0_bookingkeys, many=True)
+    #     return Response(serializer.data)
 
-    elif request.method == "POST":
+    if request.method == "POST":
         serializer = BOK_0_BookingKeysSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -61,14 +60,14 @@ def bok_0_bookingkeys(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 def bok_1_headers(request):
-    if request.method == "GET":
-        bok_1_headers = BOK_1_headers.objects.all()
-        serializer = BOK_1_headersSerializer(bok_1_headers, many=True)
-        return Response(serializer.data)
+    # if request.method == "GET":
+    #     bok_1_headers = BOK_1_headers.objects.all()
+    #     serializer = BOK_1_headersSerializer(bok_1_headers, many=True)
+    #     return Response(serializer.data)
 
-    elif request.method == "POST":
+    if request.method == "POST":
         bok_1_header = request.data
         b_client_warehouse_code = bok_1_header["b_client_warehouse_code"]
         warehouse = Client_warehouses.objects.get(
@@ -82,14 +81,14 @@ def bok_1_headers(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 def bok_2_lines(request):
-    if request.method == "GET":
-        bok_2_lines = BOK_2_lines.objects.all()
-        serializer = BOK_2_linesSerializer(bok_2_lines, many=True)
-        return Response(serializer.data)
+    # if request.method == "GET":
+    #     bok_2_lines = BOK_2_lines.objects.all()
+    #     serializer = BOK_2_linesSerializer(bok_2_lines, many=True)
+    #     return Response(serializer.data)
 
-    elif request.method == "POST":
+    if request.method == "POST":
         object = request.data
         object["v_client_pk_consigment_num"] = object["fk_header_id"]
         serializer = BOK_2_linesSerializer(data=object)
@@ -99,14 +98,14 @@ def bok_2_lines(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 def bok_3_lines_data(request):
-    if request.method == "GET":
-        queryset = BOK_3_lines_data.objects.all()
-        serializer = BOK_3_Serializer(queryset, many=True)
-        return Response(serializer.data)
+    # if request.method == "GET":
+    #     queryset = BOK_3_lines_data.objects.all()
+    #     serializer = BOK_3_Serializer(queryset, many=True)
+    #     return Response(serializer.data)
 
-    elif request.method == "POST":
+    if request.method == "POST":
         object = request.data
         object["v_client_pk_consigment_num"] = object["fk_header_id"]
         serializer = BOK_3_Serializer(data=object)
@@ -114,6 +113,66 @@ def bok_3_lines_data(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def boks(request):
+    boks_json = request.data
+    bok_1 = boks_json["booking"]
+    bok_2s = boks_json["booking_lines"]
+
+    try:
+        # Save bok_1
+        try:
+            warehouse = Client_warehouses.objects.get(
+                client_warehouse_code=bok_1["b_client_warehouse_code"]
+            )
+        except Client_warehouses.DoesNotExist:
+            return JsonResponse(
+                {"success": False, "message": "Warehouse code is not valid."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1["success"] = 2
+        bok_1["pk_header_id"] = str(uuid.uuid1())
+        bok_1["fk_client_id"] = common_auth.get_client_info(request)["clientId"]
+
+        bok_1_serializer = BOK_1_headersSerializer(data=bok_1)
+        if bok_1_serializer.is_valid():
+            bok_1_serializer.save()
+
+            # Save bok_2
+            for bok_2 in bok_2s:
+                bok_3s = bok_2["booking_lines_data"]
+                bok_2["booking_line"]["success"] = 2
+                bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
+                bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
+                    "pk_header_id"
+                ]
+                bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
+
+                bok_2_serializer = BOK_2_linesSerializer(data=bok_2["booking_line"])
+                if bok_2_serializer.is_valid():
+                    bok_2_serializer.save()
+
+                # Save bok_3
+                for bok_3 in bok_3s:
+                    bok_3["success"] = 2
+                    bok_3["fk_header_id"] = bok_1["pk_header_id"]
+                    bok_3["fk_booking_lines_id"] = bok_2["booking_line"][
+                        "pk_booking_lines_id"
+                    ]
+                    bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+
+                    bok_3_serializer = BOK_3_Serializer(data=bok_3)
+                    if bok_3_serializer.is_valid():
+                        bok_3_serializer.save()
+            return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
