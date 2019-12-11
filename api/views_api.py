@@ -135,7 +135,12 @@ def boks(request):
 
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["success"] = 2
-        bok_1["pk_header_id"] = str(uuid.uuid1())
+
+        if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).count() > 0:
+            return JsonResponse(
+                {"success": False, "message": "Same object is already exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         bok_1_serializer = BOK_1_headersSerializer(data=bok_1)
         if bok_1_serializer.is_valid():
