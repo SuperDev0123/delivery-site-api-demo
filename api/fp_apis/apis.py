@@ -107,7 +107,7 @@ def tracking(request, fp_name):
                 ]
                 booking.b_status_API = last_consignmentStatus["status"][0]
                 event_time = last_consignmentStatus["statusDate"][0]
-                event_time = str(datetime.strptime(event_time, "%m/%d/%Y"))
+                event_time = str(datetime.strptime(event_time, "%d/%m/%Y"))
             elif fp_name.lower() in ["hunter"]:
                 last_consignmentStatus = consignmentStatuses[
                     len(consignmentStatuses) - 1
@@ -229,7 +229,9 @@ def book(request, fp_name):
                         booking.jobNumber = json_data["jobNumber"]
                         booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":
-                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                        booking.v_FPBookingNumber = (
+                            f"DME000{str(booking.b_bookingID_Visual)}"
+                        )
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
