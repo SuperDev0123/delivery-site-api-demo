@@ -874,6 +874,7 @@ class BookingsViewSet(viewsets.ViewSet):
             )
 
         vx_freight_provider = request.data["vx_freight_provider"]
+        b_client_name = request.data["b_client_name"]
         report_type = request.data["report_type"]
         email_addr = request.data["emailAddr"]
         show_field_name = request.data["showFieldName"]
@@ -950,6 +951,10 @@ class BookingsViewSet(viewsets.ViewSet):
         # Freight Provider filter
         if vx_freight_provider != "All":
             queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+
+        # Client filter
+        if b_client_name != "All":
+            queryset = queryset.filter(b_client_name=b_client_name)
 
         build_xls_and_send(
             queryset,
