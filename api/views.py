@@ -954,7 +954,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # Client filter
         if b_client_name != "All":
-            queryset = queryset.filter(b_client_name=b_client_name)
+            client = DME_clients.objects.get(company_name=b_client_name)
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         build_xls_and_send(
             queryset,
