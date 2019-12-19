@@ -16,20 +16,21 @@ ACCOUTN_CODES = {
         "BIO - HAZ": "10145597",
         "BIO - EAS": "10149943",
     },
-    # "hunter": {
-    #     "live_0": "DELIME",
-    #     "live_1": "DEMELP",
-    #     "live_2": "DMEMEL",
-    #     "live_3": "DMEBNE",
-    #     "live_4": "DMEPAL",
-    #     # "live_5": "DEMELK",
-    #     # "live_6": "DMEADL",
-    # },
-    # "tnt": {"live_0": "30021385"},
-    # "capital": {"live_0": "DMENSW"},
+    "hunter": {
+        "live_0": "DELIME",
+        "live_1": "DEMELP",
+        "live_2": "DMEMEL",
+        "live_3": "DMEBNE",
+        "live_4": "DMEPAL",
+        # "live_5": "DEMELK",
+        # "live_6": "DMEADL",
+    },
+    "tnt": {"live_0": "30021385"},
+    "capital": {"live_0": "DMENSW"},
     "sendle": {"live_0": "XXX"},
-    # "fastway": {"live_0": "XXX"},
-    # "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
+    "dhl": {"live_0": "XXX"},
+    "fastway": {"live_0": "XXX"},
+    "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
 }
 
 KEY_CHAINS = {
@@ -58,9 +59,9 @@ KEY_CHAINS = {
     },
     "tnt": {
         "live_0": {
-            "accountKey": "30021385",
-            "accountState": "DELME",
-            "accountPassword": "Deliver123",
+                "accountKey": "30021385",
+                "accountState": "DELME",
+                "accountPassword": "Deliver123",
             "accountUsername": "CIT00000000000098839",
         }
     },
@@ -90,6 +91,12 @@ KEY_CHAINS = {
             "accountState": "NSW",
         },
     },
+    "dhl": {
+        "live_0": {
+            "accountKey": "DELIVER_ME_CARRIER_API",
+            "accountPassword": "RGVsaXZlcmNhcnJpZXJhcGkxMjM=",
+        }
+    }
 }
 
 FP_UOM = {
@@ -100,6 +107,7 @@ FP_UOM = {
     "sendle": {"dim": "cm", "weight": "kg"},
     "fastway": {"dim": "cm", "weight": "kg"},
     "allied": {"dim": "cm", "weight": "kg"},
+    "dhl": {"dim": "cm", "weight": "kg"},
 }
 
 
@@ -120,7 +128,7 @@ def _get_account_details(booking, fp_name, account_code_key=None):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway"]:
+    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway", "dhl"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()][default_account_code_key],
@@ -293,8 +301,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
                 "volume": 0
-                if not line.total_2_cubic_mass_factor_calc
-                else line.total_2_cubic_mass_factor_calc,
+                if not line.e_1_Total_dimCubicMeter
+                else line.e_1_Total_dimCubicMeter,
                 "weight": 0 if not line.e_weightPerEach else weight,
             }
 
