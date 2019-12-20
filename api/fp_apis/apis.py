@@ -601,7 +601,7 @@ def get_label(request, fp_name):
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            booking.z_label_url = label_url
+            booking.z_label_url = f"{fp_name.lower()}_au/{file_name}"
             booking.save()
 
             Log(
