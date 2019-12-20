@@ -1045,9 +1045,9 @@ class Bookings(models.Model):
     b_error_code = models.CharField(
         verbose_name=_("Error Code"), max_length=20, blank=True, null=True, default=""
     )
-    b_booking_Category = models.TextField(
+    b_booking_Category = models.CharField(
         verbose_name=_("Booking Categroy"),
-        max_length=400,
+        max_length=64,
         blank=True,
         null=True,
         default="",
@@ -1561,6 +1561,9 @@ class Booking_lines(models.Model):
     fk_booking_id = models.CharField(
         verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
     )
+    pk_booking_lines_id = models.CharField(
+        verbose_name=_("PK Booking Line"), max_length=64, blank=True, null=True
+    )
     e_type_of_packaging = models.CharField(
         verbose_name=_("Type Of Packaging"), max_length=36, blank=True, null=True
     )
@@ -1678,7 +1681,7 @@ class Booking_lines(models.Model):
 
 class Booking_lines_data(models.Model):
     pk_id_lines_data = models.AutoField(primary_key=True)
-    fk_id_booking_lines = models.CharField(
+    fk_booking_lines_id = models.CharField(
         verbose_name=_("FK Booking Lines Id"), max_length=64, blank=True, null=True
     )
     fk_booking_id = models.CharField(
@@ -1861,7 +1864,7 @@ class BOK_1_headers(models.Model):
         verbose_name=_("b_007_b_ready_status"), max_length=24, blank=True, null=True
     )
     b_008_b_category = models.CharField(
-        verbose_name=_("b_008_b_category"), max_length=24, blank=True, null=True
+        verbose_name=_("b_008_b_category"), max_length=64, blank=True, null=True
     )
     b_009_b_priority = models.CharField(
         verbose_name=_("b_009_b_priority"), max_length=20, blank=True, null=True
@@ -2185,6 +2188,9 @@ class BOK_2_lines(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
+    pk_booking_lines_id = models.CharField(
+        verbose_name=_("PK Booking Line"), max_length=64, blank=True, null=True
+    )
     l_501_client_UOM = models.CharField(
         verbose_name=_("Client UOM"), max_length=10, blank=True, null=True
     )
@@ -2290,8 +2296,8 @@ class BOK_3_lines_data(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
-    fk_booking_id = models.CharField(
-        verbose_name=_("FK Booking Id"), max_length=64, blank=True
+    fk_booking_lines_id = models.CharField(
+        verbose_name=_("FK Booking Lines Id"), max_length=64, blank=True, null=True
     )
     v_client_pk_consigment_num = models.CharField(
         verbose_name=_("Consigment num"), max_length=64, blank=True, null=True

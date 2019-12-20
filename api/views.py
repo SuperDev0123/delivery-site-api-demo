@@ -1940,7 +1940,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
                     "insuranceValueEach": booking_line_detail.insuranceValueEach,
                     "gap_ra": booking_line_detail.gap_ra,
                     "clientRefNumber": booking_line_detail.clientRefNumber,
-                    "fk_id_booking_lines": booking_line_detail.fk_id_booking_lines,
+                    "fk_booking_lines_id": booking_line_detail.fk_booking_lines_id,
                 }
             )
 
@@ -1969,7 +1969,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             "insuranceValueEach": booking_line_detail.insuranceValueEach,
             "gap_ra": booking_line_detail.gap_ra,
             "clientRefNumber": booking_line_detail.clientRefNumber,
-            "fk_id_booking_lines": booking_line_detail.fk_id_booking_lines,
+            "fk_booking_lines_id": booking_line_detail.fk_booking_lines_id,
         }
         serializer = BookingLineDetailSerializer(data=newbooking_line_detail)
 
