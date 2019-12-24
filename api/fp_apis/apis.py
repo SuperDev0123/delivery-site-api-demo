@@ -351,9 +351,12 @@ def edit_book(request, fp_name):
                 error_msg = "State for pickup postal address is required."
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
-
-            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
+            elif booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
                 error_msg = "Suburb name for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return booking_id({"message": error_msg})
+            elif booking.z_manifest_url is not None or booking.z_manifest_url != "":
+                error_msg = "This booking is manifested."
                 _set_error(booking, error_msg)
                 return booking_id({"message": error_msg})
 
