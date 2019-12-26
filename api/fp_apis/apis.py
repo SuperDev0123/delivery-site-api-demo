@@ -583,7 +583,7 @@ def get_label(request, fp_name):
                 logger.error(f"### Response ({fp_name} get_label): {s0}")
 
             if fp_name.lower() in ["startrack"]:
-                label_url = download_external.pdf(
+                z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
             elif fp_name.lower() in ["tnt"]:
@@ -600,11 +600,13 @@ def get_label(request, fp_name):
                     with open(label_url, "wb") as f:
                         f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
                         f.close()
+
+                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            booking.z_label_url = label_url
+            booking.z_label_url = z_label_url
             booking.save()
 
             Log(
