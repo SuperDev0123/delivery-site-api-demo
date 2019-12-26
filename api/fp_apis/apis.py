@@ -805,8 +805,9 @@ def pod(request, fp_name):
                 podData = json_data[0]["podImage"]
             else:
                 if json_data["errors"]:
-                    _set_error(booking, json_data["errors"])
-                    return JsonResponse({"message": json_data["errors"]})
+                    error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg})
                 elif "podData" not in json_data["pod"]:
                     error_msg = "Unknown error, please contact support center."
                     _set_error(booking, error_msg)
