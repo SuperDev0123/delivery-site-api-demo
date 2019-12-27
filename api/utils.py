@@ -72,7 +72,7 @@ if production:
 else:
     DB_HOST = "localhost"
     DB_USER = "root"
-    DB_PASS = "root"
+    DB_PASS = ""
     DB_PORT = 3306
     DB_NAME = "deliver_me"
 
@@ -4724,20 +4724,10 @@ def build_pdf(booking_ids, vx_freight_provider):
             # start check if pdfs folder exists
             if production:
                 local_filepath = "/opt/s3_public/pdfs/dhl_au/"
-                local_filepath_dup = (
-                    "/opt/s3_public/pdfs/dhl_au/archive/"
-                    + str(datetime.now().strftime("%Y_%m_%d"))
-                    + "/"
-                )
+                local_filepath_dup = f"/opt/s3_public/pdfs/dhl_au/archive/{str(datetime.now().strftime('%Y_%m_%d'))}/"
             else:
-                local_filepath = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/"
-                )
-                local_filepath_dup = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/archive/"
-                    + str(datetime.now().strftime("%Y_%m_%d"))
-                    + "/"
-                )
+                local_filepath = "./static/pdfs/dhl_au/"
+                local_filepath_dup = f"./static/pdfs/dhl_au/archive/{str(datetime.now().strftime('%Y_%m_%d'))}/"
 
             if not os.path.exists(local_filepath):
                 os.makedirs(local_filepath)
@@ -5092,7 +5082,7 @@ def build_pdf(booking_ids, vx_freight_provider):
                 sql2 = "UPDATE dme_bookings \
                     SET z_label_url = %s \
                     WHERE pk_booking_id = %s"
-                adr2 = ("dhl_au/" + filename, booking["pk_booking_id"])
+                adr2 = (f"dhl_au/{filename}", booking["pk_booking_id"])
                 mycursor.execute(sql2, adr2)
                 mysqlcon.commit()
 

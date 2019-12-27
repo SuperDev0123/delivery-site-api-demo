@@ -13,6 +13,7 @@ from django.http import JsonResponse
 
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
+from api.utils import build_pdf
 from django.conf import settings
 
 from .payload_builder import (
@@ -233,6 +234,8 @@ def book(request, fp_name):
                         booking.v_FPBookingNumber = (
                             f"DME000{str(booking.b_bookingID_Visual)}"
                         )
+                    elif booking.vx_freight_provider.lower() == "dhl":
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
@@ -272,6 +275,8 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
+                    elif booking.vx_freight_provider.lower() == "dhl":
+                        build_pdf([booking.id], "dhl")
                     elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
@@ -805,7 +810,9 @@ def pod(request, fp_name):
                 podData = json_data[0]["podImage"]
             else:
                 if json_data["errors"]:
-                    error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+                    error_msg = json.dumps(
+                        json_data["errors"], indent=2, sort_keys=True
+                    )
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg})
                 elif "podData" not in json_data["pod"]:
