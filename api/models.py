@@ -1272,11 +1272,11 @@ class Bookings(models.Model):
     b_booking_tail_lift_deliver = models.BooleanField(
         verbose_name=_("Booking Tail Lift DE"), default=False, blank=True, null=True
     )
-    b_booking_no_operator_pickup = models.IntegerField(
-        verbose_name=_("Booking No Operator PU"), blank=True, default=0, null=True
+    b_booking_no_operator_pickup = models.BooleanField(
+        verbose_name=_("Booking No Operator PU"), blank=True, default=False, null=True
     )
-    b_bookingNoOperatorDeliver = models.IntegerField(
-        verbose_name=_("Booking No Operator DE"), blank=True, default=0, null=True
+    b_bookingNoOperatorDeliver = models.BooleanField(
+        verbose_name=_("Booking No Operator DE"), blank=True, default=False, null=True
     )
     b_ImportedFromFile = models.CharField(
         verbose_name=_("Imported File Filed"),
@@ -1908,8 +1908,8 @@ class BOK_1_headers(models.Model):
     b_019_b_pu_tail_lift = models.BooleanField(
         verbose_name=_("b_019_b_pu_tail_lift"), default=False, blank=True, null=True
     )
-    b_020_b_pu_num_operators = models.IntegerField(
-        verbose_name=_("b_020_b_pu_num_operators"), blank=True, default=0, null=True
+    b_020_b_pu_num_operators = models.BooleanField(
+        verbose_name=_("b_020_b_pu_num_operators"), blank=True, default=False, null=True
     )
     b_022_b_pu_avail_from_time_hour = models.IntegerField(
         verbose_name=_("b_022_b_pu_avail_from_time_hour"),
@@ -2001,8 +2001,11 @@ class BOK_1_headers(models.Model):
     b_041_b_del_tail_lift = models.BooleanField(
         verbose_name=_("b_041_b_del_tail_lift"), default=False, blank=True, null=True
     )
-    b_042_b_del_num_operators = models.IntegerField(
-        verbose_name=_("b_042_b_del_num_operators"), blank=True, default=0, null=True
+    b_042_b_del_num_operators = models.BooleanField(
+        verbose_name=_("b_042_b_del_num_operators"),
+        blank=True,
+        default=False,
+        null=True,
     )
     b_043_b_del_instructions_contact = models.CharField(
         verbose_name=_("b_043_b_del_instructions_contact"),
