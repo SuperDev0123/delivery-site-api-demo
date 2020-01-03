@@ -827,6 +827,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     dme_status_history.z_createdByAccount = request.user.username
                     dme_status_history.save()
 
+                    if status == "Delivered":
+                        booking.z_api_issue_update_flag_500 = 0
+                        booking.save()
+
                     if not booking.delivery_kpi_days:
                         delivery_kpi_days = 14
                     else:
@@ -2913,6 +2917,13 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     calc_collect_after_status_change(
                         request.data["fk_booking_id"], request.data["status_last"]
                     )
+                elif request.data["status_last"] == "Delivered":
+                    booking = Bookings.objects.get(
+                        pk_booking_id=request.data["fk_booking_id"]
+                    )
+                    booking.z_api_issue_update_flag_500 = 0
+                    booking.save()
+
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
