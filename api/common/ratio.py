@@ -4,9 +4,9 @@ def _get_dim_amount(uom):
     elif uom == "m" or uom == "ms" or uom == "meter" or uom == "meters":
         return 1
     elif uom == "cm" or uom == "cms" or uom == "centimeter" or uom == "centimeters":
-        return 0.001
+        return 0.01
     elif uom == "mm" or uom == "mms" or uom == "millimeter" or uom == "millimeters":
-        return 0.0001
+        return 0.001
 
 
 def _get_weight_amount(uom):
@@ -15,7 +15,7 @@ def _get_weight_amount(uom):
     elif uom == "kg" or uom == "kgs" or uom == "kilogram" or uom == "kilograms":
         return 1
     elif uom == "g" or uom == "gs" or uom == "gram" or uom == "grams":
-        return 0.0001
+        return 0.001
 
 
 # type: dim, weight

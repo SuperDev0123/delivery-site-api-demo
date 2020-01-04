@@ -34,7 +34,6 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
-from api.common import convert_price
 
 from .serializers import *
 from .models import *
@@ -875,6 +874,7 @@ class BookingsViewSet(viewsets.ViewSet):
             )
 
         vx_freight_provider = request.data["vx_freight_provider"]
+        pk_id_dme_client = request.data["pk_id_dme_client"]
         report_type = request.data["report_type"]
         email_addr = request.data["emailAddr"]
         show_field_name = request.data["showFieldName"]
@@ -951,6 +951,11 @@ class BookingsViewSet(viewsets.ViewSet):
         # Freight Provider filter
         if vx_freight_provider != "All":
             queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+
+        # Client filter
+        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
+            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         build_xls_and_send(
             queryset,
@@ -1935,7 +1940,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
                     "insuranceValueEach": booking_line_detail.insuranceValueEach,
                     "gap_ra": booking_line_detail.gap_ra,
                     "clientRefNumber": booking_line_detail.clientRefNumber,
-                    "fk_id_booking_lines": booking_line_detail.fk_id_booking_lines,
+                    "fk_booking_lines_id": booking_line_detail.fk_booking_lines_id,
                 }
             )
 
@@ -1964,7 +1969,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             "insuranceValueEach": booking_line_detail.insuranceValueEach,
             "gap_ra": booking_line_detail.gap_ra,
             "clientRefNumber": booking_line_detail.clientRefNumber,
-            "fk_id_booking_lines": booking_line_detail.fk_id_booking_lines,
+            "fk_booking_lines_id": booking_line_detail.fk_booking_lines_id,
         }
         serializer = BookingLineDetailSerializer(data=newbooking_line_detail)
 
@@ -3060,10 +3065,25 @@ class DmeReportsViewSet(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
+        dme_employee = (
+            DME_employees.objects.select_related()
+            .filter(fk_id_user=request.user.id)
+            .first()
+        )
+
+        if dme_employee is not None:
+            user_type = "DME"
+            fields_to_exclude = []
+        else:
+            user_type = "CLIENT"
+            fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
+
         fk_booking_id = request.GET["fk_booking_id"]
         queryset = API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
-        serializer = ApiBookingQuotesSerializer(queryset, many=True)
-        return Response(convert_price.fp_price_2_dme_price(serializer.data))
+        serializer = ApiBookingQuotesSerializer(
+            queryset, many=True, fields_to_exclude=fields_to_exclude
+        )
+        return Response(serializer.data)
 
 
 class FileUploadView(views.APIView):

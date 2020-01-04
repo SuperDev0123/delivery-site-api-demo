@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger("dme_api")
 
 from .payload_builder import get_service_provider
+from api.common import convert_price
 
 
 def parse_pricing_response(response, fp_name, booking):
@@ -63,6 +64,11 @@ def parse_pricing_response(response, fp_name, booking):
                 price["serviceName"] if "serviceName" in price else None
             )
             results.append(result)
+        for index, result in enumerate(results):
+            (
+                results[index]["client_mu_1_minimum_values"],
+                results[index]["mu_percentage_fuel_levy"],
+            ) = convert_price.fp_price_2_dme_price(result)
         return results
     except Exception as e:
         error_msg = f"Error while parse Pricing response: {e}"

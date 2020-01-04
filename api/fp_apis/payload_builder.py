@@ -273,8 +273,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     maxLength = 0
     for line in booking_lines:
         width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
         weight = _convert(
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
@@ -328,7 +328,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["collectionCloseTime"] = "1700"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
-        payload["consignmentNoteNumber"] = "DME000100372"
+        payload["consignmentNoteNumber"] = f"DME000{str(booking.b_bookingID_Visual)}"
         payload["customerReference"] = "CS00301476"
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
@@ -436,8 +436,8 @@ def get_getlabel_payload(booking, fp_name):
     items = []
     for line in booking_lines:
         width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
         weight = _convert(
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
@@ -679,8 +679,8 @@ def get_pricing_payload(booking, fp_name, account_code_key):
     items = []
     for line in booking_lines:
         width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
         weight = _convert(
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )

@@ -107,7 +107,7 @@ def tracking(request, fp_name):
                 ]
                 booking.b_status_API = last_consignmentStatus["status"][0]
                 event_time = last_consignmentStatus["statusDate"][0]
-                event_time = str(datetime.strptime(event_time, "%m/%d/%Y"))
+                event_time = str(datetime.strptime(event_time, "%d/%m/%Y"))
             elif fp_name.lower() in ["hunter"]:
                 last_consignmentStatus = consignmentStatuses[
                     len(consignmentStatuses) - 1
@@ -121,6 +121,7 @@ def tracking(request, fp_name):
             if booking.b_status_API:
                 booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
                 booking.save()
+                status_history.create(booking, booking.b_status, request.user.username)
             return JsonResponse(
                 {
                     "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
@@ -229,7 +230,9 @@ def book(request, fp_name):
                         booking.jobNumber = json_data["jobNumber"]
                         booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":
-                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                        booking.v_FPBookingNumber = (
+                            f"DME000{str(booking.b_bookingID_Visual)}"
+                        )
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
@@ -348,9 +351,12 @@ def edit_book(request, fp_name):
                 error_msg = "State for pickup postal address is required."
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
-
-            if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
+            elif booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
                 error_msg = "Suburb name for pickup postal address is required."
+                _set_error(booking, error_msg)
+                return booking_id({"message": error_msg})
+            elif booking.z_manifest_url is not None or booking.z_manifest_url != "":
+                error_msg = "This booking is manifested."
                 _set_error(booking, error_msg)
                 return booking_id({"message": error_msg})
 
@@ -577,7 +583,7 @@ def get_label(request, fp_name):
                 logger.error(f"### Response ({fp_name} get_label): {s0}")
 
             if fp_name.lower() in ["startrack"]:
-                label_url = download_external.pdf(
+                z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
             elif fp_name.lower() in ["tnt"]:
@@ -594,11 +600,13 @@ def get_label(request, fp_name):
                     with open(label_url, "wb") as f:
                         f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
                         f.close()
+
+                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            booking.z_label_url = label_url
+            booking.z_label_url = z_label_url
             booking.save()
 
             Log(
@@ -796,6 +804,14 @@ def pod(request, fp_name):
             if fp_name.lower() in ["hunter"]:
                 podData = json_data[0]["podImage"]
             else:
+                if json_data["errors"]:
+                    error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg})
+                elif "podData" not in json_data["pod"]:
+                    error_msg = "Unknown error, please contact support center."
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg})
                 podData = json_data["pod"]["podData"]
 
             try:
