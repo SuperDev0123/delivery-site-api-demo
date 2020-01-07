@@ -5165,7 +5165,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
             worksheet.write("B1", "b_dateBookedDate(Time)", bold)
-            worksheet.write("C1", "fp_received_date_time", bold)
+            worksheet.write(
+                "C1", "fp_received_date_time/b_given_to_transport_date_time", bold
+            )
             worksheet.write("D1", "pu_Address_State", bold)
             worksheet.write("E1", "business_group", bold)
             worksheet.write("F1", "deToCompanyName", bold)
@@ -5201,7 +5203,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
-            worksheet.write("C2", "WHS Sent Date", bold)
+            worksheet.write("C2", "Given to / Received by Transport", bold)
             worksheet.write("D2", "From State", bold)
             worksheet.write("E2", "To Entity Group Name", bold)
             worksheet.write("F2", "To Entity", bold)
@@ -5239,7 +5241,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         else:
             worksheet.write("A1", "Booked Date", bold)
             worksheet.write("B1", "Booked Time", bold)
-            worksheet.write("C1", "WHS Sent Date", bold)
+            worksheet.write("C1", "Given to / Received by Transport", bold)
             worksheet.write("D1", "From State", bold)
             worksheet.write("E1", "To Entity Group Name", bold)
             worksheet.write("F1", "To Entity", bold)
@@ -5306,6 +5308,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
                     row, col + 2, booking.fp_received_date_time, date_format
+                )
+            elif booking.b_given_to_transport_date_time:
+                worksheet.write_datetime(
+                    row, col + 2, booking.b_given_to_transport_date_time, date_format
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -5455,7 +5461,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("B1", "dme_bookings:v_FPBookingNumber", bold)
             worksheet.write("C1", "dme_bookings:b_dateBookedDate(Date)", bold)
             worksheet.write("D1", "dme_bookings:b_dateBookedDate(Time)", bold)
-            worksheet.write("E1", "fp_received_date_time", bold)
+            worksheet.write(
+                "E1", "fp_received_date_time/b_given_to_transport_date_time", bold
+            )
             worksheet.write(
                 "F1",
                 "api_booking_confirmation_lines:fp_event_date and fp_event_time",
@@ -5500,7 +5508,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("B2", "Consignment No", bold)
             worksheet.write("C2", "Booked Date", bold)
             worksheet.write("D2", "Booked Time", bold)
-            worksheet.write("E2", "WHS Sent Date", bold)
+            worksheet.write("E2", "Given to / Received by Transport", bold)
             worksheet.write("F2", "Date Scanned", bold)
             worksheet.write("G2", "Freight Provider", bold)
             worksheet.write("H2", "Pickup Entity", bold)
@@ -5543,7 +5551,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("B1", "Consignment No", bold)
             worksheet.write("C1", "Booked Date", bold)
             worksheet.write("D1", "Booked Time", bold)
-            worksheet.write("E1", "WHS Sent Date", bold)
+            worksheet.write("E1", "Given to / Received by Transport", bold)
             worksheet.write("F1", "Date Scanned", bold)
             worksheet.write("G1", "Freight Provider", bold)
             worksheet.write("H1", "Pickup Entity", bold)
@@ -5624,6 +5632,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     if booking.fp_received_date_time:
                         worksheet.write_datetime(
                             row, col + 4, booking.fp_received_date_time, date_format
+                        )
+                    elif booking.b_given_to_transport_date_time:
+                        worksheet.write_datetime(
+                            row,
+                            col + 4,
+                            booking.b_given_to_transport_date_time,
+                            date_format,
                         )
 
                     api_bcl = Api_booking_confirmation_lines.objects.filter(
@@ -5745,7 +5760,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
             worksheet.write("B1", "b_dateBookedDate(Time)", bold)
-            worksheet.write("C1", "fp_received_date_time", bold)
+            worksheet.write(
+                "C1", "fp_received_date_time/b_given_to_transport_date_time", bold
+            )
             worksheet.write("D1", "pu_Address_State", bold)
             worksheet.write("E1", "business_group", bold)
             worksheet.write("F1", "deToCompanyName", bold)
@@ -5778,7 +5795,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
-            worksheet.write("C2", "WHS Sent Date", bold)
+            worksheet.write("C2", "Given to / Received by Transport", bold)
             worksheet.write("D2", "From State", bold)
             worksheet.write("E2", "To Entity Group Name", bold)
             worksheet.write("F2", "To Entity", bold)
@@ -5813,7 +5830,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         else:
             worksheet.write("A1", "Booked Date", bold)
             worksheet.write("B1", "Booked Time", bold)
-            worksheet.write("C1", "WHS Sent Date", bold)
+            worksheet.write("C1", "Given to / Received by Transport", bold)
             worksheet.write("D1", "From State", bold)
             worksheet.write("E1", "To Entity Group Name", bold)
             worksheet.write("F1", "To Entity", bold)
@@ -5884,6 +5901,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
                     row, col + 2, booking.fp_received_date_time, date_format
+                )
+            elif booking.b_given_to_transport_date_time:
+                worksheet.write_datetime(
+                    row, col + 2, booking.b_given_to_transport_date_time, date_format
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -6031,7 +6052,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             cell_format = workbook.add_format(
                 {"font_color": "red", "bold": 1, "align": "left"}
             )
-            worksheet.write("B1", "fp_received_date_time", bold)
+            worksheet.write(
+                "B1", "fp_received_date_time/b_given_to_transport_date_time", bold
+            )
             worksheet.write("C1", "Pickup Days Late", cell_format)
             worksheet.write("D1", "Delivery Days Early / Late", cell_format)
             worksheet.write("E1", "Query With", bold)
@@ -6065,7 +6088,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AG1", "de_Deliver_By_Date(Date)", bold)
 
             worksheet.write("A2", "Booked Date", bold)
-            worksheet.write("B2", "WHS Sent Date", bold)
+            worksheet.write("B2", "Given to / Received by Transport", bold)
             worksheet.write("C2", "Pickup Days Late", cell_format)
             worksheet.write("D2", "Delivery Days Early / Late", cell_format)
             worksheet.write("E2", "Query With", bold)
@@ -6108,7 +6131,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             cell_format = workbook.add_format(
                 {"font_color": "red", "bold": 1, "align": "left"}
             )
-            worksheet.write("B1", "WHS Sent Date", bold)
+            worksheet.write("B1", "Given to / Received by Transport", bold)
             worksheet.write("C1", "Pickup Days Late", cell_format)
             worksheet.write("D1", "Delivery Days Early / Late", cell_format)
             worksheet.write("E1", "Query With", bold)
@@ -6179,6 +6202,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
                     row, col + 1, booking.fp_received_date_time, date_format
+                )
+            elif booking.b_given_to_transport_date_time:
+                worksheet.write_datetime(
+                    row, col + 1, booking.b_given_to_transport_date_time, date_format
                 )
 
             if booking.b_status is not None and "booked" in booking.b_status.lower():
