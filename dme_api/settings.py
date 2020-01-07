@@ -92,28 +92,15 @@ WSGI_APPLICATION = "dme_api.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-#DATABASES = {  # Local
-#    "default": {
-#        "ENGINE": "django.db.backends.mysql",
-#        "NAME": "deliver_me",
-#        "USER": "root",
-#        "PASSWORD": "root",
-#        "HOST": "localhost",
-#        "PORT": "3306",
-#    }
-#}
-
-DATABASES = {  # Dev
- "default": {
-     "ENGINE": "django.db.backends.mysql",
-     "NAME": "dme_db_dev",
-     "USER": "fmadmin",
-     # 'PASSWORD': 'Fmadmin1', # Old db password
-     "PASSWORD": "oU8pPQxh",  # New db password
-     # 'HOST': 'fm-dev-database.cbx3p5w50u7o.us-west-2.rds.amazonaws.com', # Old db
-     "HOST": "deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com",  # New db
-     "PORT": "3306",
- }
+DATABASES = {  # Local
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "deliver_me",
+        "USER": "root",
+        "PASSWORD": "",
+        "HOST": "localhost",
+        "PORT": "3306",
+    }
 }
 
 # Password validation
