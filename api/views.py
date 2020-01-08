@@ -2969,30 +2969,29 @@ class OptionsViewSet(viewsets.ViewSet):
             resultObjects = []
             resultObjects = DME_Options.objects.all()
             for resultObject in resultObjects:
-                if not resultObject.fp_inactive_date:
-                    return_data.append(
-                        {
-                            "id": resultObject.id,
-                            "option_name": resultObject.option_name,
-                            "option_value": resultObject.option_value,
-                            "option_description": resultObject.option_description,
-                            "option_schedule": resultObject.option_schedule,
-                            "start_time": resultObject.start_time,
-                            "end_time": resultObject.end_time,
-                            "start_count": resultObject.start_count,
-                            "end_count": resultObject.end_count,
-                            "elapsed_seconds": resultObject.elapsed_seconds,
-                            "is_running": resultObject.is_running,
-                            "z_createdByAccount": resultObject.z_createdByAccount,
-                            "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                            "z_downloadedByAccount": resultObject.z_downloadedByAccount,
-                            "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
-                        }
-                    )
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "option_name": resultObject.option_name,
+                        "option_value": resultObject.option_value,
+                        "option_description": resultObject.option_description,
+                        "option_schedule": resultObject.option_schedule,
+                        "start_time": resultObject.start_time,
+                        "end_time": resultObject.end_time,
+                        "start_count": resultObject.start_count,
+                        "end_count": resultObject.end_count,
+                        "elapsed_seconds": resultObject.elapsed_seconds,
+                        "is_running": resultObject.is_running,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                    }
+                )
             return JsonResponse({"results": return_data})
         except Exception as e:
             # print('@Exception', e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"error": str(e)})
 
 
 class StatusViewSet(viewsets.ViewSet):
