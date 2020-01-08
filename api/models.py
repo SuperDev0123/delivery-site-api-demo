@@ -3270,6 +3270,35 @@ class DME_Email_Templates(models.Model):
         db_table = "dme_email_templates"
 
 
+class DME_Options(models.Model):
+    id = models.AutoField(primary_key=True)
+    option_name = models.CharField(max_length=255, blank=True, null=False)
+    option_value = models.CharField(max_length=8, blank=True, null=False)
+    option_description = models.TextField(max_length=1024, blank=True, null=False)
+    option_schedule = models.IntegerField(blank=True, null=True, default=0)
+    start_time = models.DateTimeField(default=None, blank=True, null=True)
+    end_time = models.DateTimeField(default=None, blank=True, null=True)
+    start_count = models.IntegerField(blank=True, null=True, default=0)
+    end_count = models.IntegerField(blank=True, null=True, default=0)
+    elapsed_seconds = models.IntegerField(blank=True, null=True, default=0)
+    is_running = models.BooleanField(blank=True, null=True, default=False)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "dme_options"
+
+
 @receiver(pre_save, sender=Bookings)
 def pre_save_booking(sender, instance: Bookings, **kwargs):
     if instance.id is None:  # new object will be created
