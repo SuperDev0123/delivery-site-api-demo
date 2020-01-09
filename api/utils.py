@@ -96,6 +96,12 @@ styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 ROWS_PER_PAGE = 20
 #####################
 
+###     TODAY     ###
+sydney = pytz.timezone("Australia/Sydney")
+sydney_today = sydney.localize(datetime.now())
+sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
+#####################
+
 
 def redis_con():
     try:
@@ -5200,6 +5206,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AG1", "inv_billing_status_note", bold)
             worksheet.write("AH1", "b_booking_project", bold)
             worksheet.write("AI1", "de_Deliver_By_Date", bold)
+            worksheet.write("AJ1", '=IF(N1="In Transit",IF(Z1=7,C1+5,C1+12),"")', bold)
+            worksheet.write("AK1", '=IF(AD1="";AJ1-TODAY;"Store Booked")', bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
@@ -5236,6 +5244,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AG2", "Invoice Billing Status Note", bold)
             worksheet.write("AH2", "Project Name", bold)
             worksheet.write("AI2", "Project Due Date", bold)
+            worksheet.write("AJ2", "Store Booking Date Due", bold)
+            worksheet.write("AK2", "Store Booking Early Late", bold)
 
             row = 2
         else:
@@ -5274,6 +5284,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AG1", "Invoice Billing Status Note", bold)
             worksheet.write("AH1", "Project Name", bold)
             worksheet.write("AI1", "Project Due Date", bold)
+            worksheet.write("AJ1", "Store Booking Date Due", bold)
+            worksheet.write("AK1", "Store Booking Early Late", bold)
 
             row = 1
 
@@ -5447,6 +5459,41 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 32, booking.inv_billing_status_note)
             worksheet.write(row, col + 33, booking.b_booking_project)
             worksheet.write(row, col + 34, booking.de_Deliver_By_Date, date_format)
+
+            # Store Booking Date Due
+            if booking.b_status == "In Transit" and booking.delivery_kpi_days:
+                if booking.fp_received_date_time:
+                    worksheet.write_datetime(
+                        row,
+                        col + 35,
+                        booking.fp_received_date_time
+                        + timedelta(days=int(booking.delivery_kpi_days)),
+                        date_format,
+                    )
+                elif booking.b_given_to_transport_date_time:
+                    worksheet.write_datetime(
+                        row,
+                        col + 35,
+                        booking.b_given_to_transport_date_time
+                        + timedelta(days=int(booking.delivery_kpi_days)),
+                        date_format,
+                    )
+
+            # Store Booking Early Late
+            if not booking.fp_store_event_date:
+                store_booking_early_late = 0
+
+                if booking.fp_received_date_time:
+                    store_booking_early_late = (
+                        sydney_today - booking.fp_received_date_time
+                    ).days - int(booking.delivery_kpi_days)
+                elif booking.b_given_to_transport_date_time:
+                    store_booking_early_late = (
+                        sydney_today - booking.b_given_to_transport_date_time
+                    ).days - int(booking.delivery_kpi_days)
+                worksheet.write(row, col + 36, str(store_booking_early_late))
+            else:
+                worksheet.write(row, col + 36, "Store Booked")
 
             row += 1
 
@@ -6178,9 +6225,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
             ).filter(fk_booking_id=booking.pk_booking_id)
-            sydney = pytz.timezone("Australia/Sydney")
-            sydney_today = sydney.localize(datetime.now())
-            sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
 
             e_qty_total = 0
             e_qty_scanned_fp_total = 0
