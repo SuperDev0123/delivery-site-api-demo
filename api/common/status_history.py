@@ -28,3 +28,7 @@ def create(booking, status, username):
             dme_status_history.status_update_via = ""
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
+
+            if status == "Delivered":
+                booking.z_api_issue_update_flag_500 = 0
+                booking.save()
