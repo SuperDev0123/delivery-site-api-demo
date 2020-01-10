@@ -3,6 +3,8 @@ import datetime
 import requests
 import logging
 
+from .models import *
+
 logger = logging.getLogger("dme_api")
 
 TEMPO_CREDENTIALS = {
@@ -14,7 +16,12 @@ TEMPO_CREDENTIALS = {
 
 
 def push_via_api(booking):
-    if booking.kf_client_id == "461162D2-90C7-BF4E-A905-092A1A5F73F3":
+    dme_option = DME_Options.objects.get(option_name="tempo_push")
+
+    if (
+        booking.kf_client_id == "461162D2-90C7-BF4E-A905-092A1A5F73F3"
+        and int(dme_option.opiton_value) == 1
+    ):
         json_booking = {}
         json_booking["bookedDate"] = (
             booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S")
