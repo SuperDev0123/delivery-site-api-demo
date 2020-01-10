@@ -1,12 +1,13 @@
 from datetime import datetime, date, timedelta
 
 from api.models import Dme_status_history
-
+from api.outputs import tempo
 
 # Create new status_history
 def create(booking, status, username):
     if not booking.z_lock_status:
         last_status_history = None
+
         try:
             last_status_history = (
                 Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -32,3 +33,5 @@ def create(booking, status, username):
             if status == "Delivered":
                 booking.z_api_issue_update_flag_500 = 0
                 booking.save()
+
+        tempo.push_via_api(booking)

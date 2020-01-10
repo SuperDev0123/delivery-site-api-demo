@@ -52,6 +52,8 @@ from .utils import (
     calc_collect_after_status_change,
 )
 from api.outputs import emails as email_module
+from api.common import status_history
+from api.outputs import tempo
 
 logger = logging.getLogger("dme_api")
 
@@ -812,25 +814,6 @@ class BookingsViewSet(viewsets.ViewSet):
                 for booking_id in booking_ids:
                     booking = Bookings.objects.get(pk=booking_id)
 
-                    # Create new status_history
-                    dme_status_history = Dme_status_history(
-                        fk_booking_id=booking.pk_booking_id
-                    )
-                    dme_status_history.status_old = booking.b_status
-                    dme_status_history.notes = (
-                        str(booking.b_status) + " ---> " + str(status)
-                    )
-                    dme_status_history.status_last = status
-                    dme_status_history.event_time_stamp = optional_value
-                    dme_status_history.recipient_name = ""
-                    dme_status_history.status_update_via = ""
-                    dme_status_history.z_createdByAccount = request.user.username
-                    dme_status_history.save()
-
-                    if status == "Delivered":
-                        booking.z_api_issue_update_flag_500 = 0
-                        booking.save()
-
                     if not booking.delivery_kpi_days:
                         delivery_kpi_days = 14
                     else:
@@ -845,6 +828,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             optional_value, "%Y-%m-%d %H:%M:%S"
                         )
 
+                    status_history.create(booking, status, request.user.username)
                     booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
@@ -2913,17 +2897,19 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
+                booking = Bookings.objects.get(
+                    pk_booking_id=request.data["fk_booking_id"]
+                )
+
                 if request.data["status_last"] == "In Transit":
                     calc_collect_after_status_change(
                         request.data["fk_booking_id"], request.data["status_last"]
                     )
                 elif request.data["status_last"] == "Delivered":
-                    booking = Bookings.objects.get(
-                        pk_booking_id=request.data["fk_booking_id"]
-                    )
                     booking.z_api_issue_update_flag_500 = 0
                     booking.save()
 
+                tempo.push_via_api(booking)
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
