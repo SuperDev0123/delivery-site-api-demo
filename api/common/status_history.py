@@ -26,7 +26,7 @@ def create(booking, status, username):
             dme_status_history.status_last = status
             dme_status_history.event_time_stamp = datetime.now()
             dme_status_history.recipient_name = ""
-            dme_status_history.status_update_via = ""
+            dme_status_history.status_update_via = "Django"
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
 

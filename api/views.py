@@ -2957,6 +2957,7 @@ class FPViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({"results": ""})
 
+
 class OptionsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
@@ -3480,6 +3481,7 @@ def generate_csv(request):
                 # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
                 ############################################################################################
                 booking.b_dateBookedDate = get_sydney_now_time()
+                status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 booking.save()
@@ -3507,6 +3509,7 @@ def generate_csv(request):
                         index = index + 1
             elif vx_freight_provider == "dhl":
                 booking.b_dateBookedDate = get_sydney_now_time()
+                status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.save()
 
