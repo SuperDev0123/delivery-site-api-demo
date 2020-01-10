@@ -3,7 +3,7 @@ import datetime
 import requests
 import logging
 
-from .models import *
+from api.models import *
 
 logger = logging.getLogger("dme_api")
 
