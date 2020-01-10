@@ -1045,9 +1045,9 @@ class Bookings(models.Model):
     b_error_code = models.CharField(
         verbose_name=_("Error Code"), max_length=20, blank=True, null=True, default=""
     )
-    b_booking_Category = models.TextField(
+    b_booking_Category = models.CharField(
         verbose_name=_("Booking Categroy"),
-        max_length=400,
+        max_length=64,
         blank=True,
         null=True,
         default="",
@@ -1272,11 +1272,11 @@ class Bookings(models.Model):
     b_booking_tail_lift_deliver = models.BooleanField(
         verbose_name=_("Booking Tail Lift DE"), default=False, blank=True, null=True
     )
-    b_booking_no_operator_pickup = models.IntegerField(
-        verbose_name=_("Booking No Operator PU"), blank=True, default=0, null=True
+    b_booking_no_operator_pickup = models.BooleanField(
+        verbose_name=_("Booking No Operator PU"), blank=True, default=False, null=True
     )
-    b_bookingNoOperatorDeliver = models.IntegerField(
-        verbose_name=_("Booking No Operator DE"), blank=True, default=0, null=True
+    b_bookingNoOperatorDeliver = models.BooleanField(
+        verbose_name=_("Booking No Operator DE"), blank=True, default=False, null=True
     )
     b_ImportedFromFile = models.CharField(
         verbose_name=_("Imported File Filed"),
@@ -1862,7 +1862,7 @@ class BOK_1_headers(models.Model):
         verbose_name=_("b_007_b_ready_status"), max_length=24, blank=True, null=True
     )
     b_008_b_category = models.CharField(
-        verbose_name=_("b_008_b_category"), max_length=24, blank=True, null=True
+        verbose_name=_("b_008_b_category"), max_length=64, blank=True, null=True
     )
     b_009_b_priority = models.CharField(
         verbose_name=_("b_009_b_priority"), max_length=20, blank=True, null=True
@@ -1906,8 +1906,8 @@ class BOK_1_headers(models.Model):
     b_019_b_pu_tail_lift = models.BooleanField(
         verbose_name=_("b_019_b_pu_tail_lift"), default=False, blank=True, null=True
     )
-    b_020_b_pu_num_operators = models.IntegerField(
-        verbose_name=_("b_020_b_pu_num_operators"), blank=True, default=0, null=True
+    b_020_b_pu_num_operators = models.BooleanField(
+        verbose_name=_("b_020_b_pu_num_operators"), blank=True, default=False, null=True
     )
     b_022_b_pu_avail_from_time_hour = models.IntegerField(
         verbose_name=_("b_022_b_pu_avail_from_time_hour"),
@@ -1994,8 +1994,11 @@ class BOK_1_headers(models.Model):
     b_041_b_del_tail_lift = models.BooleanField(
         verbose_name=_("b_041_b_del_tail_lift"), default=False, blank=True, null=True
     )
-    b_042_b_del_num_operators = models.IntegerField(
-        verbose_name=_("b_042_b_del_num_operators"), blank=True, default=0, null=True
+    b_042_b_del_num_operators = models.BooleanField(
+        verbose_name=_("b_042_b_del_num_operators"),
+        blank=True,
+        default=False,
+        null=True,
     )
     b_043_b_del_instructions_contact = models.CharField(
         verbose_name=_("b_043_b_del_instructions_contact"),
@@ -2179,6 +2182,9 @@ class BOK_2_lines(models.Model):
     pk_booking_lines_id = models.CharField(max_length=64, blank=True, null=True)
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
+    )
+    pk_booking_lines_id = models.CharField(
+        verbose_name=_("PK Booking Line"), max_length=64, blank=True, null=True
     )
     l_501_client_UOM = models.CharField(
         verbose_name=_("Client UOM"), max_length=10, blank=True, null=True
@@ -3249,6 +3255,35 @@ class DME_Email_Templates(models.Model):
         db_table = "dme_email_templates"
 
 
+class DME_Options(models.Model):
+    id = models.AutoField(primary_key=True)
+    option_name = models.CharField(max_length=255, blank=True, null=False)
+    option_value = models.CharField(max_length=8, blank=True, null=False)
+    option_description = models.TextField(max_length=1024, blank=True, null=False)
+    option_schedule = models.IntegerField(blank=True, null=True, default=0)
+    start_time = models.DateTimeField(default=None, blank=True, null=True)
+    end_time = models.DateTimeField(default=None, blank=True, null=True)
+    start_count = models.IntegerField(blank=True, null=True, default=0)
+    end_count = models.IntegerField(blank=True, null=True, default=0)
+    elapsed_seconds = models.IntegerField(blank=True, null=True, default=0)
+    is_running = models.BooleanField(blank=True, null=True, default=False)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_downloadedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_downloadedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=None, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "dme_options"
+
+
 @receiver(pre_save, sender=Bookings)
 def pre_save_booking(sender, instance: Bookings, **kwargs):
     if instance.id is None:  # new object will be created
@@ -3289,7 +3324,7 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
                     instance.dme_status_detail_updated_by = "user"
                     instance.prev_dme_status_detail = previous.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
-                if status == "Delivered":
+                elif instance.b_status == "Delivered":
                     instance.dme_status_detail = ""
                     instance.dme_status_detail_updated_by = "user"
                     instance.prev_dme_status_detail = previous.dme_status_detail
