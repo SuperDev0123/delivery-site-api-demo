@@ -52,6 +52,8 @@ from .utils import (
     calc_collect_after_status_change,
 )
 from api.outputs import emails as email_module
+from api.common import status_history
+from api.outputs import tempo
 
 logger = logging.getLogger("dme_api")
 
@@ -812,21 +814,6 @@ class BookingsViewSet(viewsets.ViewSet):
                 for booking_id in booking_ids:
                     booking = Bookings.objects.get(pk=booking_id)
 
-                    # Create new status_history
-                    dme_status_history = Dme_status_history(
-                        fk_booking_id=booking.pk_booking_id
-                    )
-                    dme_status_history.status_old = booking.b_status
-                    dme_status_history.notes = (
-                        str(booking.b_status) + " ---> " + str(status)
-                    )
-                    dme_status_history.status_last = status
-                    dme_status_history.event_time_stamp = optional_value
-                    dme_status_history.recipient_name = ""
-                    dme_status_history.status_update_via = ""
-                    dme_status_history.z_createdByAccount = request.user.username
-                    dme_status_history.save()
-
                     if not booking.delivery_kpi_days:
                         delivery_kpi_days = 14
                     else:
@@ -841,6 +828,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             optional_value, "%Y-%m-%d %H:%M:%S"
                         )
 
+                    status_history.create(booking, status, request.user.username)
                     booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
@@ -2909,10 +2897,19 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
         try:
             if serializer.is_valid():
+                booking = Bookings.objects.get(
+                    pk_booking_id=request.data["fk_booking_id"]
+                )
+
                 if request.data["status_last"] == "In Transit":
                     calc_collect_after_status_change(
                         request.data["fk_booking_id"], request.data["status_last"]
                     )
+                elif request.data["status_last"] == "Delivered":
+                    booking.z_api_issue_update_flag_500 = 0
+                    booking.save()
+
+                tempo.push_via_api(booking)
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2959,6 +2956,40 @@ class FPViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"results": ""})
+
+
+class OptionsViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Options.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "option_name": resultObject.option_name,
+                        "option_value": resultObject.option_value,
+                        "option_description": resultObject.option_description,
+                        "option_schedule": resultObject.option_schedule,
+                        "start_time": resultObject.start_time,
+                        "end_time": resultObject.end_time,
+                        "start_count": resultObject.start_count,
+                        "end_count": resultObject.end_count,
+                        "elapsed_seconds": resultObject.elapsed_seconds,
+                        "is_running": resultObject.is_running,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"error": str(e)})
 
 
 class StatusViewSet(viewsets.ViewSet):
@@ -3450,6 +3481,7 @@ def generate_csv(request):
                 # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
                 ############################################################################################
                 booking.b_dateBookedDate = get_sydney_now_time()
+                status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 booking.save()
@@ -3477,6 +3509,7 @@ def generate_csv(request):
                         index = index + 1
             elif vx_freight_provider == "dhl":
                 booking.b_dateBookedDate = get_sydney_now_time()
+                status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.save()
 
