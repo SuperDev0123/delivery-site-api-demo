@@ -1487,6 +1487,7 @@ class Bookings(models.Model):
     dme_status_detail_updated_by = models.CharField(
         max_length=64, blank=True, null=True, default=""
     )
+    fp_store_scheduled_date = models.DateField(default=None, blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -3297,6 +3298,22 @@ class DME_Options(models.Model):
 
     class Meta:
         db_table = "dme_options"
+
+
+class FP_Store_Booking_Log(models.Model):
+    id = models.AutoField(primary_key=True)
+    v_FPBookingNumber = models.CharField(
+        max_length=40, blank=True, null=True, default=None,
+    )
+    fp_store_scheduled_date = models.DateField(default=None, blank=True, null=True)
+    fp_store_event_date = models.DateField(default=None, blank=True, null=True)
+    fp_store_event_time = models.TimeField(default=None, blank=True, null=True)
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "fp_store_booking_log"
 
 
 @receiver(pre_save, sender=Bookings)
