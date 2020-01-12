@@ -5206,7 +5206,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AG1", "inv_billing_status_note", bold)
             worksheet.write("AH1", "b_booking_project", bold)
             worksheet.write("AI1", "de_Deliver_By_Date", bold)
-            worksheet.write("AJ1", "fp_store_scheduled_date", bold)
+            worksheet.write("AJ1", "delivery_booking", bold)
             worksheet.write("AK1", '=IF(N1="In Transit",IF(Z1=7,C1+5,C1+12),"")', bold)
             worksheet.write("AL1", '=IF(AD1="";AJ1-TODAY;"Store Booked")', bold)
 
@@ -5239,13 +5239,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AA2", "Delivery Days from Booked", bold)
             worksheet.write("AB2", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AC2", "Calculated ETA", bold)
-            worksheet.write("AD2", "Store Booking Date", bold)
-            worksheet.write("AE2", "Store Booking Time", bold)
+            worksheet.write("AD2", "1st Contact For Delivery Booking Date", bold)
+            worksheet.write("AE2", "1st Contact For Delivery Booking Time", bold)
             worksheet.write("AF2", "Invoice Billing Status", bold)
             worksheet.write("AG2", "Invoice Billing Status Note", bold)
             worksheet.write("AH2", "Project Name", bold)
             worksheet.write("AI2", "Project Due Date", bold)
-            worksheet.write("AJ2", "Store Scheduled Date", bold)
+            worksheet.write("AJ2", "Delivery Booking", bold)
             worksheet.write("AK2", "Store Booking Date Due", bold)
             worksheet.write("AL2", "Store Booking Early Late", bold)
 
@@ -5280,8 +5280,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AA1", "Delivery Days from Booked", bold)
             worksheet.write("AB1", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AC1", "Calculated ETA", bold)
-            worksheet.write("AD1", "Store Booking Date", bold)
-            worksheet.write("AE1", "Store Booking Time", bold)
+            worksheet.write("AD1", "1st Contact For Delivery Booking Date", bold)
+            worksheet.write("AE1", "1st Contact For Delivery Booking Time", bold)
             worksheet.write("AF1", "Invoice Billing Status", bold)
             worksheet.write("AG1", "Invoice Billing Status Note", bold)
             worksheet.write("AH1", "Project Name", bold)
@@ -5464,7 +5464,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 34, booking.de_Deliver_By_Date, date_format)
 
             # Store Scheduled Date
-            worksheet.write(row, col + 35, booking.fp_store_scheduled_date, date_format)
+            worksheet.write(row, col + 35, booking.delivery_booking, date_format)
 
             # Store Booking Date Due
             if booking.b_status == "In Transit" and booking.delivery_kpi_days:
@@ -5868,8 +5868,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AA2", "Delivery Days from Booked", bold)
             worksheet.write("AB2", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AC2", "Calculated ETA", bold)
-            worksheet.write("AD2", "Store Booking Date", bold)
-            worksheet.write("AE2", "Store Booking Time", bold)
+            worksheet.write("AD2", "1st Contact For Delivery Booking Date", bold)
+            worksheet.write("AE2", "1st Contact For Delivery Booking Time", bold)
             worksheet.write("AF2", "Gaps", bold)
 
             row = 2
@@ -5903,8 +5903,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AA1", "Delivery Days from Booked", bold)
             worksheet.write("AB1", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AC1", "Calculated ETA", bold)
-            worksheet.write("AD1", "Store Booking Date", bold)
-            worksheet.write("AE1", "Store Booking Time", bold)
+            worksheet.write("AD1", "1st Contact For Delivery Booking Date", bold)
+            worksheet.write("AE1", "1st Contact For Delivery Booking Time", bold)
             worksheet.write("AF1", "Gaps", bold)
 
             row = 1
@@ -6169,7 +6169,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AD2", "Delivery Days from Booked", bold)
             worksheet.write("AE2", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AF2", "Calculated ETA", bold)
-            worksheet.write("AG2", "Store Booking Date", bold)
+            worksheet.write("AG2", "1st Contact For Delivery Booking Date", bold)
 
             row = 2
         else:
@@ -6212,7 +6212,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AD1", "Delivery Days from Booked", bold)
             worksheet.write("AE1", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AF1", "Calculated ETA", bold)
-            worksheet.write("AG1", "Store Booking Date", bold)
+            worksheet.write("AG1", "1st Contact For Delivery Booking Date", bold)
 
             row = 1
 

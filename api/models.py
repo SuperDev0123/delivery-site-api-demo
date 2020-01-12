@@ -1487,7 +1487,7 @@ class Bookings(models.Model):
     dme_status_detail_updated_by = models.CharField(
         max_length=64, blank=True, null=True, default=""
     )
-    fp_store_scheduled_date = models.DateField(default=None, blank=True, null=True)
+    delivery_booking = models.DateField(default=None, blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -3305,9 +3305,12 @@ class FP_Store_Booking_Log(models.Model):
     v_FPBookingNumber = models.CharField(
         max_length=40, blank=True, null=True, default=None,
     )
-    fp_store_scheduled_date = models.DateField(default=None, blank=True, null=True)
+    delivery_booking = models.DateField(default=None, blank=True, null=True)
     fp_store_event_date = models.DateField(default=None, blank=True, null=True)
     fp_store_event_time = models.TimeField(default=None, blank=True, null=True)
+    csv_file_name = models.CharField(
+        max_length=255, blank=True, null=True, default=None,
+    )
     z_createdTimeStamp = models.DateTimeField(
         verbose_name=_("Created Timestamp"), default=datetime.now
     )
