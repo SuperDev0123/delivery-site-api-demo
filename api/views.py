@@ -3106,7 +3106,7 @@ class FPStoreBookingLog(viewsets.ViewSet):
         v_FPBookingNumber = request.GET["v_FPBookingNumber"]
         queryset = FP_Store_Booking_Log.objects.filter(
             v_FPBookingNumber=v_FPBookingNumber
-        )
+        ).order_by("-id")
         serializer = FPStoreBookingLogSerializer(queryset, many=True)
         return Response(serializer.data)
 
