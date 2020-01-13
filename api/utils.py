@@ -5473,41 +5473,37 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 else:
                     time_delta = 12
 
-                if booking.fp_received_date_time:
-                    worksheet.write_datetime(
-                        row,
-                        col + 36,
-                        booking.fp_received_date_time + timedelta(days=int(time_delta)),
-                        date_format,
-                    )
-                elif booking.b_given_to_transport_date_time:
-                    worksheet.write_datetime(
-                        row,
-                        col + 36,
-                        booking.b_given_to_transport_date_time
-                        + timedelta(days=int(time_delta)),
-                        date_format,
-                    )
+                # if booking.fp_received_date_time:
+                worksheet.write_datetime(
+                    row,
+                    col + 36,
+                    booking.fp_received_date_time + timedelta(days=int(time_delta)),
+                    date_format,
+                )
+                # elif booking.b_given_to_transport_date_time:
+                #     worksheet.write_datetime(
+                #         row,
+                #         col + 36,
+                #         booking.b_given_to_transport_date_time
+                #         + timedelta(days=int(time_delta)),
+                #         date_format,
+                #     )
 
             # Store Booking Early Late
-            if (
-                not booking.fp_store_event_date
-                and booking.b_given_to_transport_date_time
-            ):
+            if booking.fp_store_event_date:
                 store_booking_early_late = 0
                 if int(booking.delivery_kpi_days) == 7:
                     time_delta = 5
                 else:
                     time_delta = 12
 
-                if booking.fp_received_date_time:
-                    store_booking_early_late = (
-                        sydney_today - booking.fp_received_date_time
-                    ).days + time_delta
-                elif booking.b_given_to_transport_date_time:
-                    store_booking_early_late = (
-                        sydney_today - booking.b_given_to_transport_date_time
-                    ).days + time_delta
+                store_booking_early_late = (
+                    sydney_today - booking.fp_received_date_time
+                ).days + time_delta
+                # elif booking.b_given_to_transport_date_time:
+                #     store_booking_early_late = (
+                #         sydney_today - booking.b_given_to_transport_date_time
+                #     ).days + time_delta
                 worksheet.write(row, col + 37, str(store_booking_early_late))
             else:
                 worksheet.write(row, col + 37, "Store Booked")
