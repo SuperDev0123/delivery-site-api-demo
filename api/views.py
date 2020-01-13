@@ -2993,6 +2993,20 @@ class OptionsViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({"error": str(e)})
 
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        dme_option = DME_Options.objects.get(pk=pk)
+        serializer = DmeOptionsSerializer(dme_option, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class StatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])

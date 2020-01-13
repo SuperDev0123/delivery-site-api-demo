@@ -11,6 +11,7 @@ from .models import (
     Dme_status_history,
     DME_reports,
     API_booking_quotes,
+    DME_Options
 )
 
 
@@ -63,6 +64,11 @@ class CommSerializer(serializers.ModelSerializer):
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dme_comm_notes
+        fields = "__all__"
+
+class DmeOptionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Options
         fields = "__all__"
 
 
