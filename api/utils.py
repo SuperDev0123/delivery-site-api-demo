@@ -5286,7 +5286,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AG1", "Invoice Billing Status Note", bold)
             worksheet.write("AH1", "Project Name", bold)
             worksheet.write("AI1", "Project Due Date", bold)
-            worksheet.write("AJ1", "Store Scheduled Date", bold)
+            worksheet.write("AJ1", "Delivery Booking", bold)
             worksheet.write("AK1", "Store Booking Date Due By", bold)
             worksheet.write("AL1", "Store Booking Early Late", bold)
 
