@@ -353,8 +353,8 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
-            column_filter = column_filters["fp_store_event_date"]
-            queryset = queryset.filter(fp_store_event_date__icontains=column_filter)
+            column_filter = column_filters["delivery_booking"]
+            queryset = queryset.filter(delivery_booking__icontains=column_filter)
         except KeyError:
             column_filter = ""
 
@@ -758,6 +758,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                     "z_calculated_ETA": booking.z_calculated_ETA,
                     "b_project_due_date": booking.b_project_due_date,
+                    "delivery_booking": booking.delivery_booking,
                     "fp_store_event_date": booking.fp_store_event_date,
                     "fp_store_event_time": booking.fp_store_event_time,
                     "fp_received_date_time": booking.fp_received_date_time,
@@ -1149,10 +1150,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     delivery_kpi_days = int(booking.delivery_kpi_days)
 
                 if field_name == "b_project_due_date" and field_content:
-                    if not booking.fp_store_event_date:
+                    if not booking.delivery_booking:
                         booking.de_Deliver_From_Date = field_content
                         booking.de_Deliver_By_Date = field_content
-                elif field_name == "fp_store_event_date" and field_content:
+                elif field_name == "delivery_booking" and field_content:
                     booking.de_Deliver_From_Date = field_content
                     booking.de_Deliver_By_Date = field_content
                 elif (
@@ -1543,6 +1544,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_project_dd_receive_date": booking.b_project_dd_receive_date,
                         "z_calculated_ETA": booking.z_calculated_ETA,
                         "b_project_due_date": booking.b_project_due_date,
+                        "delivery_booking": booking.delivery_booking,
                         "fp_store_event_date": booking.fp_store_event_date,
                         "fp_store_event_time": booking.fp_store_event_time,
                         "fp_received_date_time": booking.fp_received_date_time,
@@ -3214,6 +3216,22 @@ class DmeReportsViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = DME_reports.objects.all()
         serializer = DmeReportsSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class FPStoreBookingLog(viewsets.ViewSet):
+    # def list(self, request):
+    #     queryset = FP_Store_Booking_Log.objects.all()
+    #     serializer = FPStoreBookingLogSerializer(queryset, many=True)
+    #     return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def get_store_booking_logs(self, request, pk=None):
+        v_FPBookingNumber = request.GET["v_FPBookingNumber"]
+        queryset = FP_Store_Booking_Log.objects.filter(
+            v_FPBookingNumber=v_FPBookingNumber
+        ).order_by("-id")
+        serializer = FPStoreBookingLogSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
