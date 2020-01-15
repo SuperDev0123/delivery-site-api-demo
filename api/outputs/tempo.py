@@ -20,7 +20,7 @@ def push_via_api(booking):
 
     if (
         booking.kf_client_id == "461162D2-90C7-BF4E-A905-092A1A5F73F3"
-        and int(dme_option.opiton_value) == 1
+        and int(dme_option.option_value) == 1
     ):
         json_booking = {}
         json_booking["bookedDate"] = (
