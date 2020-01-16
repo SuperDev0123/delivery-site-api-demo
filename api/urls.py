@@ -29,6 +29,7 @@ router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(
     r"fp-store-booking-log", FPStoreBookingLog, basename="fp-store-booking-log"
 )
+
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -72,4 +73,8 @@ urlpatterns += [
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
+    #dme api inv
+    url(r"^dme_api_inv/get_bookings/", get_BOK_1_headers),
+    url(r"^dme_api_inv/get_booking_lines/", get_BOK_2_lines),
+    url(r"^dme_api_inv/get_booking_lines_data/", get_BOK_3_lines_data),
 ]

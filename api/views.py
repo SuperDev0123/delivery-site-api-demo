@@ -57,7 +57,6 @@ from api.outputs import tempo
 
 logger = logging.getLogger("dme_api")
 
-
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def username(self, request, format=None):
@@ -3746,3 +3745,107 @@ def getSuburbs(request):
         return JsonResponse({"type": requestType, "suburbs": return_data})
     except Exception as e:
         return JsonResponse({"type": requestType, "suburbs": ""})
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def get_BOK_1_headers(request):
+    return_data = []
+
+    bookings = BOK_1_headers.objects.values_list('pk_header_id', 'fk_client_id', 'b_client_warehouse_code', 'b_clientPU_Warehouse', 'b_000_1_b_clientReference_RA_Numbers', 'b_000_2_b_price', 'b_001_b_freight_provider', 'b_002_b_vehicle_type', 'b_003_b_service_name', 'b_005_b_created_for', 'b_006_b_created_for_email', 'b_006_b_created_for_email', 'b_007_b_ready_status', 'b_008_b_category', 'b_009_b_priority', 'b_010_b_notes', 'b_012_b_driver_bring_connote', 'b_013_b_package_job', 'b_016_b_pu_instructions_address', 'b_019_b_pu_tail_lift', 'b_020_b_pu_num_operators', 'b_021_b_pu_avail_from_date', 'b_022_b_pu_avail_from_time_hour', 'b_049_b_del_avail_from_time_minute', 'b_050_b_del_by_date', 'b_051_b_del_by_time_hour', 'b_052_b_del_by_time_minute', 'b_054_b_del_company', 'b_055_b_del_address_street_1', 'b_056_b_del_address_street_2', 'b_057_b_del_address_state', 'b_058_b_del_address_suburb', 'b_059_b_del_address_postalcode', 'b_060_b_del_address_country', 'b_061_b_del_contact_full_name', 'b_063_b_del_email', 'b_064_b_del_phone_main', 'b_066_b_del_communicate_via', 'b_065_b_del_phone_mobile', 'b_000_3_consignment_number')[:50]
+
+    for booking in bookings:
+        return_data.append(
+            {
+                "pk_header_id": booking[0],
+                "fk_client_id": booking[1],
+                "b_client_warehouse_code": booking[2],
+                "b_clientPU_Warehouse": booking[3],
+                "b_000_1_b_clientreference_ra_numbers": booking[4],
+                "b_000_2_b_price": booking[5],
+                "b_001_b_freight_provider": booking[6],
+                "b_002_b_vehicle_type": booking[7],
+                "b_003_b_service_name": booking[8],
+                "b_005_b_created_for": booking[9],
+                "b_006_b_created_for_email": booking[10],
+                "b_0061_b_created_for_phone": booking[11],
+                "b_007_b_ready_status": booking[12],
+                "b_008_b_category": booking[13],
+                "b_009_b_priority": booking[14],
+                "b_010_b_notes": booking[15],
+                "b_012_b_driver_bring_connote": booking[16],
+                "b_013_b_package_job": booking[17],
+                "b_016_b_pu_instructions_address": booking[18],
+                "b_019_b_pu_tail_lift": booking[19],
+                "b_020_b_pu_num_operators": booking[20],
+                "b_021_b_pu_avail_from_date": booking[21],
+                "b_022_b_pu_avail_from_time_hour": booking[22],
+                "b_049_b_del_avail_from_time_minute": booking[23],
+                "b_050_b_del_by_date": booking[24],
+                "b_051_b_del_by_time_hour": booking[25],
+                "b_052_b_del_by_time_minute": booking[26],
+                "b_054_b_del_company": booking[27],
+                "b_055_b_del_address_street_1": booking[28],
+                "b_056_b_del_address_street_2": booking[29],
+                "b_057_b_del_address_state": booking[30],
+                "b_058_b_del_address_suburb": booking[31],
+                "b_059_b_del_address_postalcode": booking[32],
+                "b_060_b_del_address_country": booking[33],
+                "b_061_b_del_contact_full_name": booking[34],
+                "b_063_b_del_email": booking[35],
+                "b_064_b_del_phone_main": booking[36],
+                "b_066_b_del_communicate_via": booking[37],
+                "b_065_b_del_phone_mobile": booking[38],
+                "b_000_3_consignment_number": booking[39]
+            }
+        )
+
+    return JsonResponse({"result": return_data})
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def get_BOK_2_lines(request):
+    return_data = []
+
+    bookings = BOK_2_lines.objects.all()[:50]
+
+    for booking in bookings:
+        return_data.append(
+            {
+                "l_001_type_of_packaging": booking.l_001_type_of_packaging,
+                "l_002_qty": booking.l_002_qty,
+                "l_003_item": booking.l_003_item,
+                "l_004_dim_UOM": booking.l_004_dim_UOM,
+                "l_005_dim_length": booking.l_005_dim_length,
+                "l_006_dim_width": booking.l_006_dim_width,
+                "l_007_dim_height": booking.l_007_dim_height,
+                "l_008_weight_UOM": booking.l_008_weight_UOM,
+                "l_009_weight_per_each": booking.l_009_weight_per_each,
+            }
+        )
+
+    return JsonResponse({"result": return_data})
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def get_BOK_3_lines_data(request):
+    return_data = []
+
+    bookings = BOK_3_lines_data.objects.all()[:50]
+
+    for booking in bookings:
+        return_data.append(
+            {
+                "ld_002_model_number": booking.ld_002_model_number,
+                "ld_001_qty": booking.ld_001_qty,
+                "ld_003_item_description": booking.ld_003_item_description,
+                "ld_004_fault_description": booking.ld_004_fault_description,
+                "ld_005_item_serial_number": booking.ld_005_item_serial_number,
+                "ld_006_insurance_value": booking.ld_006_insurance_value,
+                "ld_007_gap_ra": booking.ld_007_gap_ra,
+                "ld_008_client_ref_number": booking.ld_008_client_ref_number,
+            }
+        )
+
+    return JsonResponse({"result": return_data})   
+
+
