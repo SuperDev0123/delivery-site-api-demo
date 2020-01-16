@@ -25,7 +25,7 @@ def push_via_api(booking):
         json_booking = {}
         json_booking["bookedDate"] = booking.b_dateBookedDate
 
-        if booking.b_dateBookedDate and isinstance(booking.b_dateBookedDate, str):
+        if booking.b_dateBookedDate and not isinstance(booking.b_dateBookedDate, str):
             json_booking["bookedDate"] = booking.b_dateBookedDate.strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
