@@ -23,11 +23,13 @@ def push_via_api(booking):
         and int(dme_option.option_value) == 1
     ):
         json_booking = {}
-        json_booking["bookedDate"] = (
-            booking.b_dateBookedDate.strftime("%Y-%m-%d %H:%M:%S")
-            if booking.b_dateBookedDate
-            else ""
-        )
+        json_booking["bookedDate"] = booking.b_dateBookedDate
+
+        if booking.b_dateBookedDate and not isinstance(booking.b_dateBookedDate, str):
+            json_booking["bookedDate"] = booking.b_dateBookedDate.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
         json_booking["fromState"] = booking.de_To_Address_State
         json_booking["toEntity"] = booking.deToCompanyName
         json_booking["toPostalCode"] = booking.de_To_Address_PostalCode
