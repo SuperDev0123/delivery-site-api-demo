@@ -56,6 +56,7 @@ urlpatterns += [
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
     # BIOPAK push apis
+    url(r"^boks/", boks),
     url(r"^bok_0_bookingskeys/", bok_0_bookingkeys),
     url(r"^bok_1_headers/", bok_1_headers),
     url(r"^bok_2_lines/", bok_2_lines),

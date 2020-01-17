@@ -1233,7 +1233,7 @@ class Bookings(models.Model):
         verbose_name=_("DME GST Percentage"), blank=True, default=0, null=True
     )
     x_ReadyStatus = models.CharField(
-        verbose_name=_("Ready Status"), max_length=5, blank=True, null=True, default=""
+        verbose_name=_("Ready Status"), max_length=32, blank=True, null=True, default=""
     )
     DME_Notes = models.CharField(
         verbose_name=_("DME Notes"), max_length=500, blank=True, null=True, default=""
@@ -1562,9 +1562,7 @@ class Booking_lines(models.Model):
     fk_booking_id = models.CharField(
         verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
     )
-    pk_booking_lines_id = models.CharField(
-        verbose_name=_("PK Booking Line"), max_length=64, blank=True, null=True
-    )
+    pk_booking_lines_id = models.CharField(max_length=64, blank=True, null=True)
     e_type_of_packaging = models.CharField(
         verbose_name=_("Type Of Packaging"), max_length=36, blank=True, null=True
     )
@@ -1783,7 +1781,7 @@ class BOK_1_headers(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
-    b_021_b_pu_avail_from_date = models.DateTimeField(
+    b_021_b_pu_avail_from_date = models.DateField(
         verbose_name=_("Available From"), default=datetime.now, blank=True
     )
     b_003_b_service_name = models.CharField(
@@ -1924,12 +1922,7 @@ class BOK_1_headers(models.Model):
         default=0,
         null=True,
     )
-    b_024_b_pu_by_date = models.DateTimeField(
-        verbose_name=_("b_024_b_pu_by_date"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
+    b_024_b_pu_by_date = models.DateField(default=datetime.now, blank=True, null=True)
     b_025_b_pu_by_time_hour = models.IntegerField(
         verbose_name=_("b_025_b_pu_by_time_hour"), blank=True, default=0, null=True
     )
@@ -2032,11 +2025,8 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_047_b_del_avail_from_date = models.DateTimeField(
-        verbose_name=_("b_047_b_del_avail_from_date"),
-        default=datetime.now,
-        blank=True,
-        null=True,
+    b_047_b_del_avail_from_date = models.DateField(
+        default=datetime.now, blank=True, null=True
     )
     b_048_b_del_avail_from_time_hour = models.IntegerField(
         verbose_name=_("b_048_b_del_avail_from_time_hour"),
@@ -2050,12 +2040,7 @@ class BOK_1_headers(models.Model):
         default=0,
         null=True,
     )
-    b_050_b_del_by_date = models.DateTimeField(
-        verbose_name=_("b_050_b_del_by_date"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
+    b_050_b_del_by_date = models.DateField(default=datetime.now, blank=True, null=True)
     b_051_b_del_by_time_hour = models.IntegerField(
         verbose_name=_("b_051_b_del_by_time_hour"), blank=True, default=0, null=True
     )
@@ -2189,6 +2174,13 @@ class BOK_1_headers(models.Model):
 
 class BOK_2_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
+    success = models.CharField(
+        verbose_name=_("Success"), max_length=1, default=0, blank=True, null=True
+    )
+    fk_header_id = models.CharField(
+        verbose_name=_("Header id"), max_length=64, blank=True, null=True
+    )
+    pk_booking_lines_id = models.CharField(max_length=64, blank=True, null=True)
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
@@ -2221,12 +2213,6 @@ class BOK_2_lines(models.Model):
     )
     l_002_qty = models.IntegerField(
         verbose_name=_("Address Postal Code"), blank=True, null=True
-    )
-    success = models.CharField(
-        verbose_name=_("Success"), max_length=1, default=0, blank=True, null=True
-    )
-    fk_header_id = models.CharField(
-        verbose_name=_("Header id"), max_length=64, blank=True, null=True
     )
     e_pallet_type = models.CharField(
         verbose_name=_("Pallet Type"), max_length=24, blank=True, null=True
@@ -2300,9 +2286,8 @@ class BOK_3_lines_data(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
-    fk_booking_lines_id = models.CharField(
-        verbose_name=_("FK Booking Lines Id"), max_length=64, blank=True, null=True
-    )
+    fk_header_id = models.CharField(max_length=64, blank=True)
+    fk_booking_lines_id = models.CharField(max_length=64, blank=True)
     v_client_pk_consigment_num = models.CharField(
         verbose_name=_("Consigment num"), max_length=64, blank=True, null=True
     )
