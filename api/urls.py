@@ -59,7 +59,8 @@ urlpatterns += [
     url(r"^bok_0_bookingskeys/", bok_0_bookingkeys),
     url(r"^bok_1_headers/", bok_1_headers),
     url(r"^bok_2_lines/", bok_2_lines),
-    url(r"^bok_1_to_bookings/", bok_1_to_bookings),
+    url(r"^bok_3_lines_data/", bok_3_lines_data),
+    # url(r"^bok_1_to_bookings/", bok_1_to_bookings),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),
@@ -73,8 +74,4 @@ urlpatterns += [
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
-    #dme api inv
-    url(r"^dme_api_inv/get_bookings/", get_BOK_1_headers),
-    url(r"^dme_api_inv/get_booking_lines/", get_BOK_2_lines),
-    url(r"^dme_api_inv/get_booking_lines_data/", get_BOK_3_lines_data),
 ]
