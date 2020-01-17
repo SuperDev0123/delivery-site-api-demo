@@ -53,7 +53,7 @@ class BOK_0_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_0_bookingkeys = BOK_0_BookingKeys.objects.all()
+        bok_0_bookingkeys = BOK_0_BookingKeys.objects.all()[:50]
         serializer = BOK_0_Serializer(bok_0_bookingkeys, many=True)
         return Response(serializer.data)
 
@@ -69,7 +69,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_1_headers = BOK_1_headers.objects.all()
+        bok_1_headers = BOK_1_headers.objects.all()[:50]
         serializer = BOK_1_Serializer(bok_1_headers, many=True)
         return Response(serializer.data)
 
@@ -91,7 +91,7 @@ class BOK_2_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_2_lines = BOK_2_lines.objects.all()
+        bok_2_lines = BOK_2_lines.objects.all()[:50]
         serializer = BOK_2_Serializer(bok_2_lines, many=True)
         return Response(serializer.data)
 
