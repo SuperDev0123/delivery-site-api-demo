@@ -32,6 +32,7 @@ def create(booking, status, username):
 
             if status == "Delivered":
                 booking.z_api_issue_update_flag_500 = 0
+                booking.z_lock_status = 1
                 booking.save()
 
         tempo.push_via_api(booking)

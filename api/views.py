@@ -3479,7 +3479,9 @@ def generate_csv(request):
     label_names = []
 
     if len(booking_ids) == 0:
-        return JsonResponse({"filename": "", "status": "No bookings to build CSV"})
+        return JsonResponse(
+            {"filename": "", "status": "No bookings to build CSV"}, status=400
+        )
 
     if not vx_freight_provider:
         vx_freight_provider = Bookings.objects.get(
