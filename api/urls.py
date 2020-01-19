@@ -21,10 +21,14 @@ router.register(r"packagetype", PackageTypesViewSet, basename="packagetype")
 router.register(r"bookingstatus", BookingStatusViewSet, basename="bookingstatus")
 router.register(r"statushistory", StatusHistoryViewSet, basename="statushistory")
 router.register(r"fp", FPViewSet, basename="fp")
+router.register(r"options", OptionsViewSet, basename="options")
 router.register(r"status", StatusViewSet, basename="status")
 router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
 router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
+router.register(
+    r"fp-store-booking-log", FPStoreBookingLog, basename="fp-store-booking-log"
+)
 urlpatterns = router.urls
 
 urlpatterns += [

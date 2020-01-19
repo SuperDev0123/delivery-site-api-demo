@@ -328,7 +328,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["collectionCloseTime"] = "1700"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
-        payload["consignmentNoteNumber"] = f"DME000{str(booking.b_bookingID_Visual)}"
+        payload["consignmentNoteNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["customerReference"] = "CS00301476"
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
@@ -468,7 +468,7 @@ def get_getlabel_payload(booking, fp_name):
 
     # Detail for each FP
     if fp_name.lower() == "tnt":
-        payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
+        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
