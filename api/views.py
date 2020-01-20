@@ -1344,12 +1344,28 @@ class BookingsViewSet(viewsets.ViewSet):
         return JsonResponse({"results": list(results)})
 
     @action(detail=False, methods=["get"])
-    def send_email(self, request, format=None):
+    def send_email_booking(self, request, format=None):
         user_id = int(self.request.user.id)
         template_name = self.request.query_params.get("templateName", None)
         booking_id = self.request.query_params.get("bookingId", None)
-        email_module.send_booking_email_using_template(booking_id, template_name)
-        return JsonResponse({"message": "success"}, status=200)
+
+        try:
+            email_module.send_booking_email_using_template(booking_id, template_name)
+            return JsonResponse({"status": "success"}, status=200)
+        except Exception:
+            return JsonResponse({"status": "failed"}, status=400)
+
+    @action(detail=False, methods=["post"])
+    def send_email_bookings(self, request, format=None):
+        email_addr = request.data["emailAddr"]
+        booking_ids = request.data["bookingIds"]
+
+        try:
+            email_module.send_bookings(email_addr, booking_ids)
+            return JsonResponse({"status": "success"}, status=200)
+        except Exception as e:
+            print("#601 - ", e)
+            return JsonResponse({"status": "failed"}, status=400)
 
 
 class BookingViewSet(viewsets.ViewSet):

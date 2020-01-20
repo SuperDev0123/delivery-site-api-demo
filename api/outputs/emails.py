@@ -280,6 +280,151 @@ def send_booking_email_using_template(bookingId, emailName):
     if booking.booking_Created_For_Email:
         to_emails.append(booking.booking_Created_For_Email)
 
-    subject = f"Tempo ${emailName} - DME#${booking.v_FPBookingNumber} - FP#${booking.vx_freight_provider}"
+    subject = f"Tempo {emailName} - DME#{booking.v_FPBookingNumber} - FP#{booking.vx_freight_provider}"
     mime_type = "html"
     send_email(to_emails, subject, html, label_files, mime_type)
+
+
+def send_bookings(email_addr, booking_ids):
+    header = """
+        <figure class="table">
+            <table>
+                <tbody>
+                    <tr>
+                        <td colspan="3">Hi {TOADDRESSCONTACT},</td></tr><tr><td colspan="3">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">Please book this in for tomorrow and let me know how many vehicles are you going to use. Please ask the driver to have the attached delivery dockets signed by the store as it will serve as the POD. Thank you.</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><strong>Will be collected from ACFS. Please ask the driver to go through the breezeway to avoid longer waiting time.&nbsp;</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">&nbsp;</td></tr><tr><td>Delivery window is between {DELIVERY_OPERATING_HOURS}.</td><td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">&nbsp;</td></tr><tr><td>these are the bookings that are checked on all bookings page.</td><td>&nbsp;</td><td>&nbsp;</td>
+                    </tr>
+                </tbody>
+            </table>
+        </figure>
+    """
+
+    footer = """
+        <figure class="table">
+        <TABLE style = 'border-collapse: collapse; font-family: verdana; text-align: justify; text-justify: inter-word;line-height: 7px;'>
+            <tr>
+                <TD colspan = '3' width = '600px'>&nbsp;</TD>
+            </tr>
+            <tr>
+                <TD colspan = '3' width = '600px'>&nbsp;</TD>
+            </tr>
+            <tr>
+                <td colspan="3">Kind Regards,</td></tr><tr><td colspan="3">&nbsp;</td>
+            </tr>
+            <tr>
+                <td colspan="3"><b>Nen - Bookings @ Deliver ME</b></td></tr><tr><td colspan="3">&nbsp;</td>
+            </tr>
+            <tr>
+                <td colspan="3">DELIVER-ME PTY LTD</td></tr><tr><td colspan="3">&nbsp;</td>
+            </tr>
+            <tr>
+                <td colspan="3"><b>T:</b> +61 2 8311 1500 <b>E:</b> bookings@deliver-me.com.au</td></tr><tr><td colspan="3">&nbsp;</td>
+            </tr>
+        </TABLE>
+        </figure>
+    """
+
+    html = """\
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+    <html>
+
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A responsive two column example</title>
+        
+    </head>
+
+    <body>"""
+
+    html += header
+
+    html += """ 
+        <figure class="table">   
+        <table border="1" cellpadding="5" style = 'border-collapse: collapse; font-family: verdana;'>
+            <thead>
+                <TR style='color:#ffffff; '>
+                <TD height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Document No.</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Location Code</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Order Number</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>External Document No.</TD>
+                <TD height='25px' width = '100px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Sell-to Customer No.</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Sell-to Customer Name</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Ship-to Name</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Ship-to Address</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Ship-to City</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Ship-to Country</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Ship-to Postcode</TD>
+                <TD height='25px' width = '200px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #fff1c6; color: #000000; text-align: center'>Pallet Count</TD>
+              </TR>
+            </thead>
+        <tbody>
+        </figure>
+    """
+
+    bookings = Bookings.objects.filter(pk__in=booking_ids)
+    for booking in bookings:
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        )
+
+        totalQty = 0
+        totalWeight = 0
+        for booking_line in booking_lines:
+            totalQty = totalQty + booking_line.e_qty if booking_line.e_qty else 0
+            totalWeight = (
+                totalWeight + booking_line.e_Total_KG_weight
+                if booking_line.e_Total_KG_weight
+                else 0
+            )
+        html += """
+            <tr>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+                <td height='25px' width = '900px' style='font-weight: bold; border:1px solid #b3b3b3; background-color: #ffffff; text-align: center'>%s</td>
+            </tr>
+            """ % (
+            booking.b_bookingID_Visual,
+            booking.de_To_Address_Suburb,
+            booking.vx_fp_order_id,
+            booking.fp_invoice_no,
+            booking.de_to_Phone_Main,
+            booking.de_to_Contact_F_LName,
+            booking.de_to_Contact_F_LName,
+            booking.de_To_Address_Street_1,
+            booking.de_To_Address_City,
+            booking.de_To_Address_Country,
+            booking.de_To_Address_PostalCode,
+            totalQty,
+        )
+
+    html += footer
+    html += "</body></html>"
+
+    # fp1 = open("dme_booking_process_email.html", "w+")
+    # fp1.write(html)
+
+    to_emails = [email_addr, "bookings@deliver-me.com.au"]
+    subject = f"Tempo"
+    mime_type = "html"
+    send_email(to_emails, subject, html, None, mime_type)
