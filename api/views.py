@@ -1359,9 +1359,10 @@ class BookingsViewSet(viewsets.ViewSet):
     def send_email_bookings(self, request, format=None):
         email_addr = request.data["emailAddr"]
         booking_ids = request.data["bookingIds"]
+        username = request.user.username
 
         try:
-            email_module.send_bookings(email_addr, booking_ids)
+            email_module.send_bookings(email_addr, booking_ids, username)
             return JsonResponse({"status": "success"}, status=200)
         except Exception as e:
             print("#601 - ", e)

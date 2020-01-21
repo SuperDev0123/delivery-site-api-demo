@@ -285,13 +285,13 @@ def send_booking_email_using_template(bookingId, emailName):
     send_email(to_emails, subject, html, label_files, mime_type)
 
 
-def send_bookings(email_addr, booking_ids):
+def send_bookings(email_addr, booking_ids, username):
     header = """
         <figure class="table">
             <table>
                 <tbody>
                     <tr>
-                        <td colspan="3">Hi {TOADDRESSCONTACT},</td></tr><tr><td colspan="3">&nbsp;</td>
+                        <td colspan="3">Hi %s,</td></tr><tr><td colspan="3">&nbsp;</td>
                     </tr>
                     <tr>
                         <td colspan="3">Please book this in for tomorrow and let me know how many vehicles are you going to use. Please ask the driver to have the attached delivery dockets signed by the store as it will serve as the POD. Thank you.</td>
@@ -308,7 +308,9 @@ def send_bookings(email_addr, booking_ids):
                 </tbody>
             </table>
         </figure>
-    """
+    """ % (
+        username
+    )
 
     footer = """
         <figure class="table">
