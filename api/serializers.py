@@ -11,6 +11,7 @@ from .models import (
     Dme_status_history,
     DME_reports,
     API_booking_quotes,
+    FP_Store_Booking_Log,
 )
 
 
@@ -81,6 +82,12 @@ class DmeReportsSerializer(serializers.ModelSerializer):
 
     def get_username(self, obj):
         return obj.user.username
+
+
+class FPStoreBookingLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_Store_Booking_Log
+        fields = "__all__"
 
 
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
