@@ -272,6 +272,25 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
+                            
+                    # Save Label for Capital
+                    elif booking.vx_freight_provider.lower() == "capital":
+                        json_label_data = json.loads(response.content)
+                        file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+
+                        if IS_PRODUCTION:
+                            file_url = (
+                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                            )
+                        else:
+                            file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                        with open(file_url, "wb") as f:
+                            f.write(base64.b64decode(json_label_data["Label"]))
+                            f.close()
+                            booking.z_label_url = f"capital_au/{file_name}"
+                            booking.save()
+
                     elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
