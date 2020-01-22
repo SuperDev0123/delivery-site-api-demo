@@ -761,6 +761,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "delivery_booking": booking.delivery_booking,
                     "fp_store_event_date": booking.fp_store_event_date,
                     "fp_store_event_time": booking.fp_store_event_time,
+                    "fp_store_event_desc": booking.fp_store_event_desc,
                     "fp_received_date_time": booking.fp_received_date_time,
                     "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
                 }
@@ -1547,6 +1548,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "delivery_booking": booking.delivery_booking,
                         "fp_store_event_date": booking.fp_store_event_date,
                         "fp_store_event_time": booking.fp_store_event_time,
+                        "fp_store_event_desc": booking.fp_store_event_desc,
                         "fp_received_date_time": booking.fp_received_date_time,
                         "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
                         "delivery_kpi_days": 14
