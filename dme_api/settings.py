@@ -97,7 +97,7 @@ DATABASES = {  # Local
         "ENGINE": "django.db.backends.mysql",
         "NAME": "deliver_me",
         "USER": "root",
-        "PASSWORD": "",
+        "PASSWORD": "root",
         "HOST": "localhost",
         "PORT": "3306",
     }
@@ -182,9 +182,12 @@ LOGGING = {
         },
         "file": {
             "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": "./logs/debug.log",
-            "formatter": "simple",
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
+            'backupCount': 5, # keep at most 10 log files
+            'maxBytes': 5242880, # 5*1024*1024 bytes (5MB)
+            # "filename": "./logs/debug.log",
+            # "formatter": "simple",
         },
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
