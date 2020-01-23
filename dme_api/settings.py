@@ -186,9 +186,10 @@ LOGGING = {
         },
         "file": {
             "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": os.environ["LOG_URL"],
-            "formatter": "simple",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+            "backupCount": 10,  # keep at most 10 log files
+            "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
         },
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
