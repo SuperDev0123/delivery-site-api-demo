@@ -1,10 +1,12 @@
 amqp==2.3.2
 ApiDoc==1.4.0
-asn1crypto==0.24.0
-attrs==17.4.0
+appdirs==1.4.3
+asn1crypto==1.2.0
+attrs==19.3.0
 Automat==0.6.0
 bcrypt==3.1.6
 billiard==3.5.0.4
+black==19.10b0
 blinker==1.4
 celery==4.2.1
 certifi==2018.1.18
@@ -20,6 +22,7 @@ cryptography==2.1.4
 Django==2.1.2
 django-base64field==1.0
 django-cors-headers==2.4.0
+django-dotenv==1.4.2
 django-filter==2.0.0
 django-next-prev==1.0.1
 django-redis==4.10.0
@@ -45,6 +48,7 @@ MarkupSafe==1.0
 mysqlclient==1.3.13
 oauthlib==2.0.6
 paramiko==2.4.2
+pathspec==0.6.0
 Pillow==6.0.0
 pyasn1==0.4.5
 pycparser==2.19
@@ -56,9 +60,12 @@ pysftp==0.2.9
 pytz==2018.7
 PyYAML==3.11
 redis==3.0.1
+regex==2019.12.20
 reportlab==3.5.23
 requests==2.20.1
 six==1.11.0
+toml==0.10.0
+typed-ast==1.4.0
 uritemplate==3.0.0
 urllib3==1.24.1
 vine==1.1.4
