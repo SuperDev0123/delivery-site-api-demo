@@ -64,6 +64,21 @@ def parse_pricing_response(response, fp_name, booking):
                 price["serviceName"] if "serviceName" in price else None
             )
             results.append(result)
+        elif fp_name == "startrack" and json_data["price"]:  # Startrack
+            for price in json_data["price"]:
+                result = {}
+                result["api_results_id"] = json_data["requestId"]
+                result["fk_booking_id"] = booking.pk_booking_id
+                result["fk_client_id"] = booking.b_client_name
+                result["fk_freight_provider_id"] = get_service_provider(fp_name.lower())
+                result["fk_freight_provider_id"] = fp_name.upper()
+                result["fee"] = price["netPrice"]
+                result["tax_value_1"] = price["totalTaxes"]
+                result["service_name"] = (
+                    price["serviceName"] if "serviceName" in price else None
+                )
+                results.append(result)
+
         for index, result in enumerate(results):
             (
                 results[index]["client_mu_1_minimum_values"],

@@ -272,7 +272,7 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
-                            
+
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -824,7 +824,9 @@ def pod(request, fp_name):
                 podData = json_data[0]["podImage"]
             else:
                 if json_data["errors"]:
-                    error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+                    error_msg = json.dumps(
+                        json_data["errors"], indent=2, sort_keys=True
+                    )
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg})
                 elif "podData" not in json_data["pod"]:
@@ -930,9 +932,7 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            # fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Allied", "Fastway"]
-            #fp_names = ["Sendle", "Hunter", "TNT", "Hunter"]
-            fp_names = ["Capital"]
+            fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
 
             try:
                 for fp_name in fp_names:

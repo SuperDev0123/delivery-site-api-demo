@@ -1409,6 +1409,9 @@ class Bookings(models.Model):
     b_status_sub_fp = models.CharField(max_length=50, blank=True, null=True, default="")
     fp_store_event_date = models.DateField(blank=True, null=True)
     fp_store_event_time = models.TimeField(blank=True, null=True)
+    fp_store_event_desc = models.CharField(
+        max_length=255, blank=True, null=True, default=None
+    )
     e_qty_scanned_fp_total = models.IntegerField(blank=True, null=True, default=0)
     dme_status_history_notes = models.CharField(
         max_length=500, blank=True, null=True, default=""
@@ -3308,6 +3311,9 @@ class FP_Store_Booking_Log(models.Model):
     delivery_booking = models.DateField(default=None, blank=True, null=True)
     fp_store_event_date = models.DateField(default=None, blank=True, null=True)
     fp_store_event_time = models.TimeField(default=None, blank=True, null=True)
+    fp_store_event_desc = models.CharField(
+        max_length=255, blank=True, null=True, default=None,
+    )
     csv_file_name = models.CharField(
         max_length=255, blank=True, null=True, default=None,
     )
