@@ -31,6 +31,10 @@ ALLOWED_HOSTS = ["*"]
 # Env setting - local, dev, prod
 ENV = os.environ["ENV"]
 
+
+BUGSNAG = {
+    'api_key': '26ba06525b21a92cd0863ce94f8f718d'
+}
 # Application definition
 
 INSTALLED_APPS = [
@@ -55,6 +59,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "bugsnag.django.middleware.BugsnagMiddleware",
 ]
 
 ROOT_URLCONF = "dme_api.urls"
@@ -178,6 +183,10 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
+    'root': {
+        'level': 'ERROR',
+        'handlers': ['bugsnag'],
+    },
     "handlers": {
         "console": {
             "level": "INFO",
@@ -191,9 +200,14 @@ LOGGING = {
             "backupCount": 10,  # keep at most 10 log files
             "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
         },
+        'bugsnag': {
+            'level': 'INFO',
+            'class': 'bugsnag.handlers.BugsnagHandler',
+        },
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
 }
 
 # S3 url
 S3_URL = os.environ["S3_URL"]
+

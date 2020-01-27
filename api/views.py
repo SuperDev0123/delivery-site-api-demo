@@ -3750,3 +3750,4 @@ def getSuburbs(request):
         return JsonResponse({"type": requestType, "suburbs": return_data})
     except Exception as e:
         return JsonResponse({"type": requestType, "suburbs": ""})
+
