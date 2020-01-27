@@ -11,3 +11,9 @@ mkdir logs
 cp .env.sample .env
 ```
 - Populate all vars on .env (Contact PM if you have doubt on a var)
+
+* SECRET_KEY
+```shell
+from django.core.management.utils import get_random_secret_key
+get_random_secret_key()
+```
