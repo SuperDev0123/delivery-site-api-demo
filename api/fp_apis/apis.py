@@ -32,6 +32,7 @@ from .utils import get_dme_status_from_fp_status, get_account_code_key
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
+from .calc_vehicle import find_vehicle
 from api.common import status_history, download_external
 
 if settings.ENV == "local":
@@ -922,17 +923,20 @@ def reprint(request, fp_name):
 def pricing(request):
     try:
         body = literal_eval(request.body.decode("utf8"))
+        
         booking_id = body["booking_id"]
 
         try:
             booking = Bookings.objects.get(id=booking_id)
+            
 
             if not booking.puPickUpAvailFrom_Date:
                 error_msg = "PU Available From Date is required."
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+            fp_names = ["Startrack"]
 
             try:
                 for fp_name in fp_names:
@@ -945,7 +949,7 @@ def pricing(request):
                         payload = get_pricing_payload(
                             booking, fp_name.lower(), account_code_key
                         )
-
+                        find_vehicle(payload)
                         logger.error(
                             f"### Payload ({fp_name.upper()} PRICING): {payload}"
                         )
