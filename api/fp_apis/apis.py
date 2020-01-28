@@ -28,7 +28,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
-from .utils import get_dme_status_from_fp_status, get_account_code_key
+from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
@@ -932,7 +932,8 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+            fp_names = ["Hunter"]
 
             try:
                 for fp_name in fp_names:
@@ -1015,6 +1016,8 @@ def pricing(request):
                 results = API_booking_quotes.objects.filter(
                     fk_booking_id=booking.pk_booking_id
                 )
+
+                auto_select(booking, results)
 
                 return JsonResponse(
                     {
