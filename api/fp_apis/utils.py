@@ -27,15 +27,11 @@ def get_account_code_key(booking, fp_name):
             booking.save()
             return None
 
-    if not booking.api_booking_quote:
-        booking.b_errorCapture = f"Please select a Pricing"
-        booking.save()
-        return None
-    elif fp_name.lower() not in ACCOUTN_CODES:
+    if fp_name.lower() not in ACCOUTN_CODES:
         booking.b_errorCapture = f"Not supported FP"
         booking.save()
         return None
-    else:
+    elif booking.api_booking_quote:
         account_code = booking.api_booking_quote.account_code
         account_code_key = None
 
@@ -48,3 +44,5 @@ def get_account_code_key(booking, fp_name):
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
             booking.save()
             return None
+    elif not booking.api_booking_quote:
+        return "live_0"
