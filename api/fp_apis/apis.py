@@ -928,15 +928,14 @@ def pricing(request):
 
         try:
             booking = Bookings.objects.get(id=booking_id)
-            
+
 
             if not booking.puPickUpAvailFrom_Date:
                 error_msg = "PU Available From Date is required."
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
-            fp_names = ["Startrack"]
+            fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
 
             try:
                 for fp_name in fp_names:
