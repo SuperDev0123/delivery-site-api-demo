@@ -944,12 +944,14 @@ def pricing(request):
 
                     for account_code_key in ACCOUTN_CODES[fp_name.lower()]:
                         if (
-                            "TEMPO BUNNING" in booking.b_clientPU_Warehouse
+                            "SWYTEMPBUN"
+                            in booking.fk_client_warehouse.client_warehouse_code
                             and not "bunnings" in account_code_key
                         ):
                             continue
                         elif (
-                            not "TEMPO BUNNING" in booking.b_clientPU_Warehouse
+                            not "SWYTEMPBUN"
+                            in booking.fk_client_warehouse.client_warehouse_code
                             and "bunnings" in account_code_key
                         ):
                             continue
