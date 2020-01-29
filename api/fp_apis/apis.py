@@ -932,7 +932,8 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+            fp_names = ["Hunter"]
 
             try:
                 for fp_name in fp_names:
@@ -942,6 +943,17 @@ def pricing(request):
                         )
 
                     for account_code_key in ACCOUTN_CODES[fp_name.lower()]:
+                        if (
+                            "TEMPO BUNNING" in booking.b_clientPU_Warehouse
+                            and not "bunnings" in account_code_key
+                        ):
+                            continue
+                        elif (
+                            not "TEMPO BUNNING" in booking.b_clientPU_Warehouse
+                            and "bunnings" in account_code_key
+                        ):
+                            continue
+
                         payload = get_pricing_payload(
                             booking, fp_name.lower(), account_code_key
                         )

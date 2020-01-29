@@ -17,6 +17,16 @@ def get_dme_status_from_fp_status(fp_name, booking):
 
 
 def get_account_code_key(booking, fp_name):
+    if "TEMPO BUNNING" in booking.b_clientPU_Warehouse:
+        if booking.pu_Address_State == "SA":
+            return ACCOUTN_CODES[fp_name.lower()]["live_bunnings_0"]
+        elif booking.pu_Address_State == "QLD":
+            return ACCOUTN_CODES[fp_name.lower()]["live_bunnings_1"]
+        else:
+            booking.b_errorCapture = f"Not supported State"
+            booking.save()
+            return None
+
     if not booking.api_booking_quote:
         booking.b_errorCapture = f"Please select a Pricing"
         booking.save()
@@ -27,12 +37,12 @@ def get_account_code_key(booking, fp_name):
         return None
     else:
         account_code = booking.api_booking_quote.account_code
-        account_key = None
+        account_code_key = None
 
         for key in ACCOUTN_CODES[fp_name.lower()]:
             if ACCOUTN_CODES[fp_name.lower()][key] == account_code:
                 account_key = key
-                return account_key
+                return account_code_key
 
         if not account_key:
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
