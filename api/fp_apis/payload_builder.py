@@ -205,14 +205,22 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-        "instruction": ""
-        if booking.pu_PickUp_Instructions_Contact is None
-        else booking.pu_PickUp_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0267651109"
         if booking.pu_Phone_Main is None
         else booking.pu_Phone_Main,
     }
+
+    if booking.pu_pickup_instructions_address:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f"Address: {booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
         if booking.pu_Address_Street_1 is None
@@ -242,14 +250,22 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-        "instruction": ""
-        if booking.de_to_Pick_Up_Instructions_Contact is None
-        else booking.de_to_Pick_Up_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0393920020"
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
+
+    if booking.de_to_PickUp_Instructions_Address:
+        payload["dropAddress"][
+            "instruction"
+        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        payload["dropAddress"][
+            "instruction"
+        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
         if booking.de_To_Address_Street_1 is None
@@ -365,6 +381,16 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["collectionCloseTime"] = "1700"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
+
+        if payload["pickupAddress"]["instruction"]:
+            payload[
+                "collectionInstructions"
+            ] = f"PU instruction: {payload['pickupAddress']['instruction']}"
+        if payload["dropAddress"]["instruction"]:
+            payload[
+                "collectionInstructions"
+            ] += f" DE instruction: {payload['dropAddress']['instruction']}"
+
         payload[
             "consignmentNoteNumber"
         ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
@@ -401,14 +427,22 @@ def get_getlabel_payload(booking, fp_name):
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-        "instruction": ""
-        if booking.pu_PickUp_Instructions_Contact is None
-        else booking.pu_PickUp_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0267651109"
         if booking.pu_Phone_Main is None
         else booking.pu_Phone_Main,
     }
+
+    if booking.pu_pickup_instructions_address:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f"Address: {booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
         if booking.pu_Address_Street_1 is None
@@ -438,14 +472,22 @@ def get_getlabel_payload(booking, fp_name):
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-        "instruction": ""
-        if booking.de_to_Pick_Up_Instructions_Contact is None
-        else booking.de_to_Pick_Up_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0393920020"
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
+
+    if booking.de_to_PickUp_Instructions_Address:
+        payload["dropAddress"][
+            "instruction"
+        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        payload["dropAddress"][
+            "instruction"
+        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
         if booking.de_To_Address_Street_1 is None
@@ -647,13 +689,21 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-        "instruction": ""
-        if booking.pu_PickUp_Instructions_Contact is None
-        else booking.pu_PickUp_Instructions_Contact,
+        "instruction": "",
         "phoneNumber": "0267651109"
         if booking.pu_Phone_Main is None
         else booking.pu_Phone_Main,
     }
+
+    if booking.pu_pickup_instructions_address:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f"Address: {booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
         if booking.pu_Address_Street_1 is None
@@ -683,13 +733,21 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-        "instruction": ""
-        if booking.de_to_Pick_Up_Instructions_Contact is None
-        else booking.de_to_Pick_Up_Instructions_Contact,
+        "instruction": "",
         "phoneNumber": "0393920020"
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
+
+    if booking.de_to_PickUp_Instructions_Address:
+        payload["dropAddress"][
+            "instruction"
+        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        payload["dropAddress"][
+            "instruction"
+        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
         if booking.de_To_Address_Street_1 is None
