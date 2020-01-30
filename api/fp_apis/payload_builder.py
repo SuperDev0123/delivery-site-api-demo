@@ -25,6 +25,8 @@ ACCOUTN_CODES = {
         "live_4": "DMEPAL",
         # "live_5": "DEMELK",
         # "live_6": "DMEADL",
+        "live_bunnings_0": "DELIMB",
+        "live_bunnings_1": "DELIMS",
     },
     "tnt": {"live_0": "30021385"},
     "capital": {"live_0": "DMENSW"},
@@ -56,6 +58,14 @@ KEY_CHAINS = {
         "live_4": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"},
         # "live_5": {"accountKey": "REVNRUxLOmRlbGl2ZXI=", "accountPassword": "deliver"},
         # "live_6": {"accountKey": "RE1FQURMOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        "live_bunnings_0": {
+            "accountKey": "REVMSU1COmRlbGl2ZXIyMA==",
+            "accountPassword": "deliver20",
+        },
+        "live_bunnings_1": {
+            "accountKey": "REVMSU1TOmRlbGl2ZXIyMA==",
+            "accountPassword": "deliver20",
+        },
     },
     "tnt": {
         "live_0": {
@@ -195,14 +205,22 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-        "instruction": ""
-        if booking.pu_PickUp_Instructions_Contact is None
-        else booking.pu_PickUp_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0267651109"
         if booking.pu_Phone_Main is None
         else booking.pu_Phone_Main,
     }
+
+    if booking.pu_pickup_instructions_address:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f"Address: {booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
         if booking.pu_Address_Street_1 is None
@@ -232,14 +250,22 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-        "instruction": ""
-        if booking.de_to_Pick_Up_Instructions_Contact is None
-        else booking.de_to_Pick_Up_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0393920020"
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
+
+    if booking.de_to_PickUp_Instructions_Address:
+        payload["dropAddress"][
+            "instruction"
+        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        payload["dropAddress"][
+            "instruction"
+        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
         if booking.de_To_Address_Street_1 is None
@@ -324,11 +350,50 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["maxWidth"] = int(maxWidth)
         payload["maxLength"] = int(maxLength)
         payload["packagingCode"] = "CT"
-        payload["collectionDateTime"] = common_times.get_sydney_now_time("ISO")
+        payload["collectionDateTime"] = booking.puPickUpAvailFrom_Date.strftime(
+            "%Y-%m-%d"
+        )
+
+        if booking.pu_PickUp_Avail_Time_Hours:
+            if booking.pu_PickUp_Avail_Time_Hours < 10:
+                payload[
+                    "collectionDateTime"
+                ] += f"T0{booking.pu_PickUp_Avail_Time_Hours}"
+            else:
+                payload[
+                    "collectionDateTime"
+                ] += f"T{booking.pu_PickUp_Avail_Time_Hours}"
+        else:
+            payload["collectionDateTime"] += "T00"
+
+        if booking.pu_PickUp_Avail_Time_Minutes:
+            if booking.pu_PickUp_Avail_Time_Minutes < 10:
+                payload[
+                    "collectionDateTime"
+                ] += f"0{booking.pu_PickUp_Avail_Time_Minutes}"
+            else:
+                payload[
+                    "collectionDateTime"
+                ] += f"{booking.pu_PickUp_Avail_Time_Minutes}"
+        else:
+            payload["collectionDateTime"] += ":00:00"
+
         payload["collectionCloseTime"] = "1700"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
-        payload["consignmentNoteNumber"] = f"DME000{str(booking.b_bookingID_Visual)}"
+
+        if payload["pickupAddress"]["instruction"]:
+            payload[
+                "collectionInstructions"
+            ] = f"PU instruction: {payload['pickupAddress']['instruction']}"
+        if payload["dropAddress"]["instruction"]:
+            payload[
+                "collectionInstructions"
+            ] += f" DE instruction: {payload['dropAddress']['instruction']}"
+
+        payload[
+            "consignmentNoteNumber"
+        ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["customerReference"] = "CS00301476"
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
@@ -362,14 +427,22 @@ def get_getlabel_payload(booking, fp_name):
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-        "instruction": ""
-        if booking.pu_PickUp_Instructions_Contact is None
-        else booking.pu_PickUp_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0267651109"
         if booking.pu_Phone_Main is None
         else booking.pu_Phone_Main,
     }
+
+    if booking.pu_pickup_instructions_address:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f"Address: {booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
         if booking.pu_Address_Street_1 is None
@@ -399,14 +472,22 @@ def get_getlabel_payload(booking, fp_name):
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-        "instruction": ""
-        if booking.de_to_Pick_Up_Instructions_Contact is None
-        else booking.de_to_Pick_Up_Instructions_Contact,
+        "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": "0393920020"
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
+
+    if booking.de_to_PickUp_Instructions_Address:
+        payload["dropAddress"][
+            "instruction"
+        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        payload["dropAddress"][
+            "instruction"
+        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
         if booking.de_To_Address_Street_1 is None
@@ -468,7 +549,7 @@ def get_getlabel_payload(booking, fp_name):
 
     # Detail for each FP
     if fp_name.lower() == "tnt":
-        payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
+        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
@@ -608,13 +689,21 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
-        "instruction": ""
-        if booking.pu_PickUp_Instructions_Contact is None
-        else booking.pu_PickUp_Instructions_Contact,
+        "instruction": "",
         "phoneNumber": "0267651109"
         if booking.pu_Phone_Main is None
         else booking.pu_Phone_Main,
     }
+
+    if booking.pu_pickup_instructions_address:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f"Address: {booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        payload["pickupAddress"][
+            "instruction"
+        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
         if booking.pu_Address_Street_1 is None
@@ -644,13 +733,21 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
-        "instruction": ""
-        if booking.de_to_Pick_Up_Instructions_Contact is None
-        else booking.de_to_Pick_Up_Instructions_Contact,
+        "instruction": "",
         "phoneNumber": "0393920020"
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
+
+    if booking.de_to_PickUp_Instructions_Address:
+        payload["dropAddress"][
+            "instruction"
+        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        payload["dropAddress"][
+            "instruction"
+        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
         if booking.de_To_Address_Street_1 is None

@@ -272,6 +272,25 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
+
+                    # Save Label for Capital
+                    elif booking.vx_freight_provider.lower() == "capital":
+                        json_label_data = json.loads(response.content)
+                        file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+
+                        if IS_PRODUCTION:
+                            file_url = (
+                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                            )
+                        else:
+                            file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                        with open(file_url, "wb") as f:
+                            f.write(base64.b64decode(json_label_data["Label"]))
+                            f.close()
+                            booking.z_label_url = f"capital_au/{file_name}"
+                            booking.save()
+
                     elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
@@ -810,7 +829,9 @@ def pod(request, fp_name):
                 podData = json_data[0]["podImage"]
             else:
                 if json_data["errors"]:
-                    error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+                    error_msg = json.dumps(
+                        json_data["errors"], indent=2, sort_keys=True
+                    )
                     _set_error(booking, error_msg)
                     return JsonResponse({"message": error_msg})
                 elif "podData" not in json_data["pod"]:
@@ -916,7 +937,7 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            # fp_names = ["Sendle", "Capital", "Hunter", "TNT", "Allied", "Fastway"]
+            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
             fp_names = ["Sendle", "Hunter", "TNT"]
 
             try:
@@ -927,6 +948,19 @@ def pricing(request):
                         )
 
                     for account_code_key in ACCOUTN_CODES[fp_name.lower()]:
+                        if (
+                            "SWYTEMPBUN"
+                            in booking.fk_client_warehouse.client_warehouse_code
+                            and not "bunnings" in account_code_key
+                        ):
+                            continue
+                        elif (
+                            not "SWYTEMPBUN"
+                            in booking.fk_client_warehouse.client_warehouse_code
+                            and "bunnings" in account_code_key
+                        ):
+                            continue
+
                         payload = get_pricing_payload(
                             booking, fp_name.lower(), account_code_key
                         )

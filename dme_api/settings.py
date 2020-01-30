@@ -21,15 +21,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "7^$d$0@sx&h&@377dtqh%z+r&#o0q#n#)m2+1vgqs(pb((ysh4"
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ["DEBUG"]
 
 ALLOWED_HOSTS = ["*"]
 
-# Env setting
-ENV = "local"  # local, dev, prod
+# Env setting - local, dev, prod
+ENV = os.environ["ENV"]
 
 # Application definition
 
@@ -94,12 +94,12 @@ WSGI_APPLICATION = "dme_api.wsgi.application"
 
 DATABASES = {  # Local
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "deliver_me",
-        "USER": "root",
-        "PASSWORD": "",
-        "HOST": "localhost",
-        "PORT": "3306",
+        "ENGINE": os.environ["DB_ENGINE"],
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": int(os.environ["DB_PORT"]),
     }
 }
 
@@ -159,15 +159,19 @@ CORS_ALLOW_HEADERS = (
     "cache-control",
 )
 
-JWT_AUTH = {"JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=36000)}  # Test case
+JWT_AUTH = {
+    "JWT_EXPIRATION_DELTA": datetime.timedelta(
+        seconds=int(os.environ["JWT_EXPIRATION_DELTA"])
+    )
+}  # Test case
 
 # Email setting
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_USE_TLS = True
-EMAIL_HOST = "smtp.office365.com"
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "bookings@deliver-me.com.au"
-EMAIL_HOST_PASSWORD = "Dme35718&*"
+EMAIL_BACKEND = os.environ["EMAIL_BACKEND"]
+EMAIL_USE_TLS = os.environ["EMAIL_USE_TLS"]
+EMAIL_HOST = os.environ["EMAIL_HOST"]
+EMAIL_PORT = int(os.environ["EMAIL_PORT"])
+EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
+EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
 
 # Logging setting
 LOGGING = {
@@ -182,13 +186,14 @@ LOGGING = {
         },
         "file": {
             "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": "./logs/debug.log",
-            "formatter": "simple",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+            "backupCount": 10,  # keep at most 10 log files
+            "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
         },
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
 }
 
 # S3 url
-S3_URL = "https://dme-pod-api-static.s3-ap-southeast-2.amazonaws.com"
+S3_URL = os.environ["S3_URL"]
