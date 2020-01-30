@@ -334,7 +334,34 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["maxWidth"] = int(maxWidth)
         payload["maxLength"] = int(maxLength)
         payload["packagingCode"] = "CT"
-        payload["collectionDateTime"] = common_times.get_sydney_now_time("ISO")
+        payload["collectionDateTime"] = booking["puPickUpAvailFrom_Date"].strftime(
+            "%Y-%m-%d"
+        )
+
+        if booking["pu_PickUp_Avail_Time_Hours"]:
+            if booking["pu_PickUp_Avail_Time_Hours"] < 10:
+                payload[
+                    "collectionDateTime"
+                ] += f"T0{booking['pu_PickUp_Avail_Time_Hours']}"
+            else:
+                payload[
+                    "collectionDateTime"
+                ] += f"T{booking['pu_PickUp_Avail_Time_Hours']}"
+        else:
+            payload["collectionDateTime"] += "T00"
+
+        if booking["pu_PickUp_Avail_Time_Minutes"]:
+            if booking["pu_PickUp_Avail_Time_Minutes"] < 10:
+                payload[
+                    "collectionDateTime"
+                ] += f"0{booking['pu_PickUp_Avail_Time_Minutes']}"
+            else:
+                payload[
+                    "collectionDateTime"
+                ] += f"{booking['pu_PickUp_Avail_Time_Minutes']}"
+        else:
+            payload["collectionDateTime"] += ":00:00"
+
         payload["collectionCloseTime"] = "1700"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
