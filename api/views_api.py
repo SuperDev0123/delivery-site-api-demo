@@ -137,6 +137,12 @@ def boks(request):
                 {"success": False, "message": "Warehouse code is not valid."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        except Exception as e:
+            logger.error(f"@882 BOKS API Error - {e}")
+            return JsonResponse(
+                {"success": False, "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["success"] = 2
@@ -179,7 +185,7 @@ def boks(request):
                         bok_3_serializer.save()
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
     except Exception as e:
-        logger.error(f"@882 BOKS API Error - {e}")
+        logger.error(f"@883 BOKS API Error - {e}")
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
