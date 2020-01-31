@@ -4,6 +4,7 @@ import time
 import uuid
 import json
 import datetime
+import logging
 from ast import literal_eval
 from urllib.request import urlopen
 import urllib, requests
@@ -31,6 +32,7 @@ from .serializers_api import *
 from .models import *
 from api.common import auth as common_auth
 
+logger = logging.getLogger("dme_api")
 
 if settings.ENV == "local":
     production = False  # Local
@@ -174,6 +176,7 @@ def boks(request):
                         bok_3_serializer.save()
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
     except Exception as e:
+        logger.error(f"@882 BOKS API Error - {e}")
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
