@@ -131,7 +131,7 @@ def boks(request):
             )
         except Client_warehouses.DoesNotExist:
             logger.error(
-                f"@881 BOKS API Error - bok_1['b_client_warehouse_code'] : Warehouse code is not valid"
+                f"@881 BOKS API Error - {bok_1['b_client_warehouse_code']} : Warehouse code is not valid"
             )
             return JsonResponse(
                 {"success": False, "message": "Warehouse code is not valid."},
