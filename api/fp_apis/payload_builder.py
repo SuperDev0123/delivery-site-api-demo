@@ -553,6 +553,18 @@ def get_getlabel_payload(booking, fp_name):
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
+        payload["collectionInstructions"] = ""
+
+        if payload["pickupAddress"]["instruction"]:
+            payload[
+                "collectionInstructions"
+            ] = f"PU instruction: {payload['pickupAddress']['instruction']}"
+
+        if payload["dropAddress"]["instruction"]:
+            payload[
+                "collectionInstructions"
+            ] += f" DE instruction: {payload['dropAddress']['instruction']}"
+
     return payload
 
 
