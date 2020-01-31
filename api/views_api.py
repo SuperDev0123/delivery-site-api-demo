@@ -177,6 +177,7 @@ def boks(request):
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
     except Exception as e:
         logger.error(f"@882 BOKS API Error - {e}")
+        print("@882 BOKS API Error - ", e)
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
