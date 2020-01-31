@@ -130,6 +130,7 @@ def boks(request):
                 client_warehouse_code=bok_1["b_client_warehouse_code"]
             )
         except Client_warehouses.DoesNotExist:
+            logger.error(f"@881 BOKS API Error - {e}")
             return JsonResponse(
                 {"success": False, "message": "Warehouse code is not valid."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -177,7 +178,6 @@ def boks(request):
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
     except Exception as e:
         logger.error(f"@882 BOKS API Error - {e}")
-        print("@882 BOKS API Error - ", e)
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
