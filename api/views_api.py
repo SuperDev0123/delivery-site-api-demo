@@ -169,6 +169,11 @@ def boks(request):
                 bok_2_serializer = BOK_2_linesSerializer(data=bok_2["booking_line"])
                 if bok_2_serializer.is_valid():
                     bok_2_serializer.save()
+                else:
+                    logger.error(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                    return Response(
+                        bok_2_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Save bok_3
                 for bok_3 in bok_3s:
@@ -182,7 +187,17 @@ def boks(request):
                     bok_3_serializer = BOK_3_Serializer(data=bok_3)
                     if bok_3_serializer.is_valid():
                         bok_3_serializer.save()
+                    else:
+                        logger.error(
+                            f"@8823 BOKS API Error - {bok_3_serializer.errors}"
+                        )
+                        return Response(
+                            bok_3_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                        )
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
+        else:
+            logger.error(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
+            return Response(bok_1_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         logger.error(f"@883 BOKS API Error - {e}")
         return JsonResponse(
