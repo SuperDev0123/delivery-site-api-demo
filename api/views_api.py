@@ -120,7 +120,6 @@ def bok_3_lines_data(request):
 @api_view(["POST"])
 def boks(request):
     boks_json = request.data
-    logger.error(f"@880 BOKS req - : {boks_json}")
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
 
