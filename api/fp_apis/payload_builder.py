@@ -299,7 +299,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
-                "volume": "{0:.2f}".format(width * height * length / 1000000),
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
                 "description": line.e_item,
             }
@@ -467,11 +467,11 @@ def get_getlabel_payload(booking, fp_name):
     if booking.de_to_PickUp_Instructions_Address:
         payload["dropAddress"][
             "instruction"
-        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+        ] += f"{booking.de_to_PickUp_Instructions_Address}"
     if booking.de_to_Pick_Up_Instructions_Contact:
         payload["dropAddress"][
             "instruction"
-        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+        ] += f"{booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
@@ -516,7 +516,7 @@ def get_getlabel_payload(booking, fp_name):
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
-                "volume": "{0:.2f}".format(width * height * length / 1000000),
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
                 "description": line.e_item,
             }
@@ -793,7 +793,7 @@ def get_pricing_payload(booking, fp_name, account_code_key):
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
-                "volume": "{0:.2f}".format(width * height * length / 1000000),
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
                 "description": line.e_item,
             }
