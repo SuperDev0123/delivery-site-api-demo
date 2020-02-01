@@ -1,7 +1,20 @@
 from django.conf import settings
 from api.models import *
 
-from .payload_builder import ACCOUTN_CODES
+FP_UOM = {
+    "startrack": {"dim": "cm", "weight": "kg"},
+    "hunter": {"dim": "cm", "weight": "kg"},
+    "tnt": {"dim": "cm", "weight": "kg"},
+    "capital": {"dim": "cm", "weight": "kg"},
+    "sendle": {"dim": "cm", "weight": "kg"},
+    "fastway": {"dim": "cm", "weight": "kg"},
+    "allied": {"dim": "cm", "weight": "kg"},
+}
+
+
+def _convert_UOM(value, uom, type, fp_name):
+    converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+    return round(converted_value, 2)
 
 
 def get_dme_status_from_fp_status(fp_name, booking):
@@ -17,6 +30,9 @@ def get_dme_status_from_fp_status(fp_name, booking):
 
 
 def get_account_code_key(booking, fp_name):
+    from .payload_builder import ACCOUTN_CODES
+
+    # Exceptional case for Bunnings
     if "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code:
         if booking.pu_Address_State == "QLD":
             return "live_bunnings_0"
