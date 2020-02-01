@@ -363,7 +363,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         else:
             payload["collectionDateTime"] += ":00:00"
 
-        payload["collectionCloseTime"] = "1700"
+        payload["collectionCloseTime"] = "1500"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
 
