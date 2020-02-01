@@ -317,6 +317,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 if not line.total_2_cubic_mass_factor_calc
                 else line.total_2_cubic_mass_factor_calc,
                 "weight": 0 if not line.e_weightPerEach else weight,
+                "description": line.e_item
             }
 
             if fp_name.lower() == "startrack":
@@ -326,6 +327,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             elif fp_name.lower() == "tnt":
                 item["packagingType"] = "D"
 
+            print(item)
             items.append(item)
 
             if line.e_weightPerEach:
@@ -564,6 +566,11 @@ def get_getlabel_payload(booking, fp_name):
                 "collectionInstructions"
             ] += f" DE instruction: {payload['dropAddress']['instruction']}"
 
+        payload["clientSalesInvNum"] = (
+        ""
+        if booking.b_client_sales_inv_num is None
+        else booking.b_client_sales_inv_num
+        )
     return payload
 
 
