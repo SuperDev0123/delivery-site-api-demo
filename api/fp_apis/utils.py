@@ -87,12 +87,12 @@ def auto_select(booking, pricings):
                     filtered_pricing["etd_max"] = etd_max
 
     if filtered_pricing:
-        print("@1 - ")
+        print("@101 - ")
         print(pricing.etd)
         return None
     else:
-        print("@2 - ")
-        print("#840 - Could not find proper pricing")
+        print("@102 - ")
+        print("#855 - Could not find proper pricing")
         return None
 
 
