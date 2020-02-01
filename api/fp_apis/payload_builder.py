@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from api.models import *
-from api.common import ratio, common_times
+from api.common import common_times
 from api.common import common_times
 from .utils import _convert_UOM
 

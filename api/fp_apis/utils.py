@@ -1,5 +1,7 @@
 from django.conf import settings
+
 from api.models import *
+from api.common import ratio
 
 FP_UOM = {
     "startrack": {"dim": "cm", "weight": "kg"},
