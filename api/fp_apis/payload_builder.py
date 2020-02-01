@@ -327,7 +327,6 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             elif fp_name.lower() == "tnt":
                 item["packagingType"] = "D"
 
-            print(item)
             items.append(item)
 
             if line.e_weightPerEach:
@@ -344,6 +343,11 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     # Detail for each FP
     if fp_name.lower() == "hunter":
         payload["serviceType"] = "RF"
+        payload["reference1"] = (
+        ""
+        if booking.b_client_sales_inv_num is None
+        else booking.b_client_sales_inv_num
+        )
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
