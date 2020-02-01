@@ -3498,7 +3498,7 @@ def generate_csv(request):
         for booking_id in booking_ids:
             booking = Bookings.objects.get(id=booking_id)
 
-            if vx_freight_provider == "cope":
+            if vx_freight_provider.lower() == "cope":
                 ############################################################################################
                 # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
                 ############################################################################################
