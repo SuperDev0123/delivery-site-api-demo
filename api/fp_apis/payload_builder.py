@@ -238,7 +238,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "0393920020"
+        "phoneNumber": ""
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
@@ -464,7 +464,7 @@ def get_getlabel_payload(booking, fp_name):
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "0393920020"
+        "phoneNumber": ""
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
@@ -741,7 +741,7 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
         "instruction": "",
-        "phoneNumber": "0393920020"
+        "phoneNumber": ""
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
