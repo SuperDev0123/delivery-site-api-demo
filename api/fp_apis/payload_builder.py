@@ -187,7 +187,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     payload["bookedBy"] = "Mr.CharlieBrown"
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
-        "contact": "Rosie Stokeld"
+        "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
@@ -232,7 +232,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         "companyName": ""
         if booking.deToCompanyName is None
         else booking.deToCompanyName,
-        "contact": "James Sam"
+        "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
@@ -413,7 +413,7 @@ def get_getlabel_payload(booking, fp_name):
     payload["serviceProvider"] = get_service_provider(fp_name)
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
-        "contact": "Rosie Stokeld"
+        "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
@@ -458,7 +458,7 @@ def get_getlabel_payload(booking, fp_name):
         "companyName": ""
         if booking.deToCompanyName is None
         else booking.deToCompanyName,
-        "contact": "James Sam"
+        "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
@@ -691,7 +691,7 @@ def get_pricing_payload(booking, fp_name, account_code_key):
     payload["bookedBy"] = "Mr.CharlieBrown"
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
-        "contact": "Rosie Stokeld"
+        "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
@@ -736,7 +736,7 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         "companyName": ""
         if booking.deToCompanyName is None
         else booking.deToCompanyName,
-        "contact": "James Sam"
+        "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
