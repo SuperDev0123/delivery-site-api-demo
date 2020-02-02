@@ -1696,10 +1696,12 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.fk_booking_id = newBooking["pk_booking_id"]
                 booking_line.e_qty_delivered = 0
                 booking_line.e_qty_adjusted_delivered = 0
+                booking_line.z_createdTimeStamp = datetime.now()
                 booking_line.save()
             for booking_line_detail in booking_line_details:
                 booking_line_detail.pk_id_lines_data = None
                 booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
+                booking_line_detail.z_createdTimeStamp = datetime.now()
                 booking_line_detail.save()
 
         serializer = BookingSerializer(data=newBooking)
