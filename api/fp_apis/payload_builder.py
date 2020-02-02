@@ -662,7 +662,7 @@ def get_reprint_payload(booking, fp_name):
 
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
-        payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
+        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["labelType"] = "A"
         # payload["consignmentNumber"] = 'DME000106541'
         return payload
