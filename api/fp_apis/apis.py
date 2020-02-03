@@ -937,8 +937,7 @@ def pricing(request):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
 
-            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
-            fp_names = ["Sendle", "Hunter", "TNT"]
+            fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
 
             try:
                 for fp_name in fp_names:
