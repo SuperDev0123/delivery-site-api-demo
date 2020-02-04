@@ -1,7 +1,11 @@
-from django.conf import settings
-from api.models import *
+import logging
 
+from django.conf import settings
+
+from api.models import *
 from .payload_builder import ACCOUTN_CODES
+
+logger = logging.getLogger("dme_api")
 
 
 def get_dme_status_from_fp_status(fp_name, booking):
@@ -67,7 +71,7 @@ def auto_select(booking, pricings):
                     delta_min -= booking.de_Deliver_By_Minutes
 
                 delta_min = timeDelta.total_seconds() / 60 + delta_min
-                print("@100 - ", delta_min)
+
                 if delta_min > etd_max and not filtered_pricing:
                     filtered_pricing["pricing"] = pricing
                     filtered_pricing["etd_max"] = etd_max
@@ -87,13 +91,16 @@ def auto_select(booking, pricings):
                     filtered_pricing["etd_max"] = etd_max
 
     if filtered_pricing:
-        print("@101 - ")
-        print(pricing.etd)
-        return None
+        logger.error(f"#854 Filtered Pricing - {filtered_pricing}")
+        booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
+        booking.vx_account_code = filtered_pricing["pricing"].account_code
+        booking.vx_serviceName = filtered_pricing["pricing"].service_name
+        booking.api_booking_quote = filtered_pricing["pricing"]
+        booking.save()
+        return True
     else:
-        print("@102 - ")
-        print("#855 - Could not find proper pricing")
-        return None
+        logger.error("#855 - Could not find proper pricing")
+        return False
 
 
 def _get_etd(pricing):

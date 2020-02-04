@@ -1017,12 +1017,16 @@ def pricing(request):
                     fk_booking_id=booking.pk_booking_id
                 )
 
-                auto_select(booking, results)
+                is_auto_selected = False
+                dme_option = DME_Options.objects.get(option_name="auto_select_pricing")
+                if int(dme_option.option_value) == 1:
+                    is_auto_selected = auto_select(booking, results)
 
                 return JsonResponse(
                     {
                         "message": f"Retrieved all Pricing info",
                         "results": ApiBookingQuotesSerializer(results, many=True).data,
+                        "isAutoSelected": is_auto_selected,
                     },
                     status=200,
                 )

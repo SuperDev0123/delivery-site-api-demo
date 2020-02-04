@@ -1,9 +1,14 @@
+import logging
+
 from datetime import datetime
 
 from django.conf import settings
 from api.models import *
 from api.common import ratio, common_times
 from api.common import common_times
+
+logger = logging.getLogger("dme_api")
+
 
 ACCOUTN_CODES = {
     "startrack": {
@@ -136,11 +141,23 @@ def _get_account_details(booking, fp_name, account_code_key=None):
     return account_detail
 
 
-def get_service_provider(fp_name):
-    if fp_name.lower() == "startrack":
-        return "ST"
-    else:
-        return fp_name.upper()
+def get_service_provider(fp_name, upper=True):
+    try:
+        fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
+
+        if fp_name.lower() == "startrack":
+            if upper:
+                return "ST"
+            else:
+                return fp.fp_company_name
+        else:
+            if upper:
+                return fp_name.upper()
+            else:
+                return fp.fp_company_name
+    except Fp_freight_providers.DoesNotExist:
+        logger.error("#810 - Not supported FP!")
+        return None
 
 
 def _set_error(booking, error_msg):
@@ -328,7 +345,9 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["collectionCloseTime"] = "1700"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
-        payload["consignmentNoteNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload[
+            "consignmentNoteNumber"
+        ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["customerReference"] = "CS00301476"
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
