@@ -33,7 +33,7 @@ ENV = os.environ["ENV"]
 
 
 BUGSNAG = {
-    'api_key': '26ba06525b21a92cd0863ce94f8f718d'
+    'api_key': os.environ["BUGSNAG_API_KEY"]
 }
 # Application definition
 
@@ -179,14 +179,41 @@ EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
 EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
 
 # Logging setting
-LOGGING = {
+
+if ENV == "prod":  
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
+        'root': {
+            'level': 'ERROR',
+            'handlers': ['bugsnag'],
+        },
+        "handlers": {
+            "console": {
+                "level": "INFO",
+                "class": "logging.StreamHandler",
+                "formatter": "simple",
+            },
+            "file": {
+                "level": "INFO",
+                "class": "logging.handlers.RotatingFileHandler",
+                "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+                "backupCount": 10,  # keep at most 10 log files
+                "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
+            },
+            'bugsnag': {
+                'level': 'INFO',
+                'class': 'bugsnag.handlers.BugsnagHandler',
+            },
+        },
+        "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
+    }
+else:
+    LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
-    'root': {
-        'level': 'ERROR',
-        'handlers': ['bugsnag'],
-    },
     "handlers": {
         "console": {
             "level": "INFO",
@@ -195,14 +222,9 @@ LOGGING = {
         },
         "file": {
             "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
-            "backupCount": 10,  # keep at most 10 log files
-            "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
-        },
-        'bugsnag': {
-            'level': 'INFO',
-            'class': 'bugsnag.handlers.BugsnagHandler',
+            "class": "logging.FileHandler",
+            "filename": "./logs/debug.log",
+            "formatter": "simple",
         },
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
