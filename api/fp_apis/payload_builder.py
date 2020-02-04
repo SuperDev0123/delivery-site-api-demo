@@ -2,8 +2,9 @@ from datetime import datetime
 
 from django.conf import settings
 from api.models import *
-from api.common import ratio, common_times
 from api.common import common_times
+from api.common import common_times
+from .utils import _convert_UOM
 
 ACCOUTN_CODES = {
     "startrack": {
@@ -105,16 +106,6 @@ KEY_CHAINS = {
     },
 }
 
-FP_UOM = {
-    "startrack": {"dim": "cm", "weight": "kg"},
-    "hunter": {"dim": "cm", "weight": "kg"},
-    "tnt": {"dim": "cm", "weight": "kg"},
-    "capital": {"dim": "cm", "weight": "kg"},
-    "sendle": {"dim": "cm", "weight": "kg"},
-    "fastway": {"dim": "cm", "weight": "kg"},
-    "allied": {"dim": "cm", "weight": "kg"},
-}
-
 
 def _get_account_details(booking, fp_name, account_code_key=None):
     account_detail = None
@@ -172,11 +163,6 @@ def _set_error(booking, error_msg):
     booking.save()
 
 
-def _convert(value, uom, type, fp_name):
-    converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
-    return round(converted_value, 2)
-
-
 def get_tracking_payload(booking, fp_name, account_code_key=None):
     try:
         payload = {}
@@ -215,7 +201,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     payload["bookedBy"] = "Mr.CharlieBrown"
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
-        "contact": "Rosie Stokeld"
+        "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
@@ -229,11 +215,11 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     if booking.pu_pickup_instructions_address:
         payload["pickupAddress"][
             "instruction"
-        ] += f"Address: {booking.pu_pickup_instructions_address}"
+        ] += f"{booking.pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
-        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+        ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
@@ -260,13 +246,13 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         "companyName": ""
         if booking.deToCompanyName is None
         else booking.deToCompanyName,
-        "contact": "James Sam"
+        "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "0393920020"
+        "phoneNumber": ""
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
@@ -274,11 +260,11 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     if booking.de_to_PickUp_Instructions_Address:
         payload["dropAddress"][
             "instruction"
-        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+        ] += f"{booking.de_to_PickUp_Instructions_Address}"
     if booking.de_to_Pick_Up_Instructions_Contact:
         payload["dropAddress"][
             "instruction"
-        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+        ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
@@ -312,10 +298,10 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     maxWidth = 0
     maxLength = 0
     for line in booking_lines:
-        width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert(
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
+        weight = _convert_UOM(
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
 
@@ -327,9 +313,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
-                "volume": 0
-                if not line.total_2_cubic_mass_factor_calc
-                else line.total_2_cubic_mass_factor_calc,
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
                 "description": line.e_item
             }
@@ -402,18 +386,18 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         else:
             payload["collectionDateTime"] += ":00:00"
 
-        payload["collectionCloseTime"] = "1700"
+        payload["collectionCloseTime"] = "1500"
         payload["serviceCode"] = "76"
         payload["collectionInstructions"] = ""
 
         if payload["pickupAddress"]["instruction"]:
             payload[
                 "collectionInstructions"
-            ] = f"PU instruction: {payload['pickupAddress']['instruction']}"
+            ] = f"{payload['pickupAddress']['instruction']}"
         if payload["dropAddress"]["instruction"]:
             payload[
                 "collectionInstructions"
-            ] += f" DE instruction: {payload['dropAddress']['instruction']}"
+            ] += f" {payload['dropAddress']['instruction']}"
 
         payload[
             "consignmentNoteNumber"
@@ -447,7 +431,7 @@ def get_getlabel_payload(booking, fp_name):
     payload["serviceProvider"] = get_service_provider(fp_name)
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
-        "contact": "Rosie Stokeld"
+        "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
@@ -461,11 +445,11 @@ def get_getlabel_payload(booking, fp_name):
     if booking.pu_pickup_instructions_address:
         payload["pickupAddress"][
             "instruction"
-        ] += f"Address: {booking.pu_pickup_instructions_address}"
+        ] += f"{booking.pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
-        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+        ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
@@ -492,13 +476,13 @@ def get_getlabel_payload(booking, fp_name):
         "companyName": ""
         if booking.deToCompanyName is None
         else booking.deToCompanyName,
-        "contact": "James Sam"
+        "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "0393920020"
+        "phoneNumber": ""
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
@@ -506,11 +490,11 @@ def get_getlabel_payload(booking, fp_name):
     if booking.de_to_PickUp_Instructions_Address:
         payload["dropAddress"][
             "instruction"
-        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
+        ] += f"{booking.de_to_PickUp_Instructions_Address}"
     if booking.de_to_Pick_Up_Instructions_Contact:
         payload["dropAddress"][
             "instruction"
-        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+        ] += f"{booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
@@ -540,10 +524,10 @@ def get_getlabel_payload(booking, fp_name):
 
     items = []
     for line in booking_lines:
-        width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert(
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
+        weight = _convert_UOM(
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
 
@@ -555,10 +539,9 @@ def get_getlabel_payload(booking, fp_name):
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
-                "volume": 0
-                if not line.total_2_cubic_mass_factor_calc
-                else line.total_2_cubic_mass_factor_calc,
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
+                "description": line.e_item,
             }
             items.append(item)
 
@@ -696,7 +679,7 @@ def get_reprint_payload(booking, fp_name):
 
         payload["spAccountDetails"] = _get_account_details(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
-        payload["consignmentNumber"] = f"DME000{booking.b_bookingID_Visual}"
+        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["labelType"] = "A"
         # payload["consignmentNumber"] = 'DME000106541'
         return payload
@@ -725,7 +708,7 @@ def get_pricing_payload(booking, fp_name, account_code_key):
     payload["bookedBy"] = "Mr.CharlieBrown"
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
-        "contact": "Rosie Stokeld"
+        "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
@@ -735,14 +718,15 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         else booking.pu_Phone_Main,
     }
 
-    if booking.pu_pickup_instructions_address:
-        payload["pickupAddress"][
-            "instruction"
-        ] += f"Address: {booking.pu_pickup_instructions_address}"
-    if booking.pu_PickUp_Instructions_Contact:
-        payload["pickupAddress"][
-            "instruction"
-        ] += f" Contact: {booking.pu_PickUp_Instructions_Contact}"
+    """ We do not need to send this info for Pricing """
+    # if booking.pu_pickup_instructions_address:
+    #     payload["pickupAddress"][
+    #         "instruction"
+    #     ] += f"{booking.pu_pickup_instructions_address}"
+    # if booking.pu_PickUp_Instructions_Contact:
+    #     payload["pickupAddress"][
+    #         "instruction"
+    #     ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
@@ -769,24 +753,25 @@ def get_pricing_payload(booking, fp_name, account_code_key):
         "companyName": ""
         if booking.deToCompanyName is None
         else booking.deToCompanyName,
-        "contact": "James Sam"
+        "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
         "emailAddress": "" if booking.de_Email is None else booking.de_Email,
         "instruction": "",
-        "phoneNumber": "0393920020"
+        "phoneNumber": ""
         if booking.de_to_Phone_Main is None
         else booking.de_to_Phone_Main,
     }
 
-    if booking.de_to_PickUp_Instructions_Address:
-        payload["dropAddress"][
-            "instruction"
-        ] += f"Address: {booking.de_to_PickUp_Instructions_Address}"
-    if booking.de_to_Pick_Up_Instructions_Contact:
-        payload["dropAddress"][
-            "instruction"
-        ] += f" Contact: {booking.de_to_Pick_Up_Instructions_Contact}"
+    """ We do not need to send this info for Pricing """
+    # if booking.de_to_PickUp_Instructions_Address:
+    #     payload["dropAddress"][
+    #         "instruction"
+    #     ] += f"{booking.de_to_PickUp_Instructions_Address}"
+    # if booking.de_to_Pick_Up_Instructions_Contact:
+    #     payload["dropAddress"][
+    #         "instruction"
+    #     ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
@@ -815,10 +800,10 @@ def get_pricing_payload(booking, fp_name, account_code_key):
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
     items = []
     for line in booking_lines:
-        width = _convert(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert(
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
+        weight = _convert_UOM(
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
 
@@ -830,10 +815,9 @@ def get_pricing_payload(booking, fp_name, account_code_key):
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
                 "quantity": 1,
-                "volume": 0
-                if not line.total_2_cubic_mass_factor_calc
-                else line.total_2_cubic_mass_factor_calc,
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
+                "description": line.e_item,
             }
 
             if fp_name.lower() == "startrack":
