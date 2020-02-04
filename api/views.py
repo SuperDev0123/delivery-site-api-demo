@@ -1768,6 +1768,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "vx_freight_provider": booking.vx_freight_provider,
                 "kf_client_id": booking.kf_client_id,
                 "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
+                "vx_serviceName": booking.vx_serviceName,
+                "z_CreatedTimestamp": datetime.now(),
             }
         else:
             newBooking = {
@@ -1802,6 +1804,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "vx_freight_provider": booking.vx_freight_provider,
                 "kf_client_id": booking.kf_client_id,
                 "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
+                "vx_serviceName": booking.vx_serviceName,
+                "z_CreatedTimestamp": datetime.now(),
             }
 
         if dup_line_and_linedetail == "true":
@@ -1820,6 +1824,8 @@ class BookingViewSet(viewsets.ViewSet):
             for booking_line_detail in booking_line_details:
                 booking_line_detail.pk_id_lines_data = None
                 booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
+                booking_line_detail.z_createdTimeStamp = datetime.now()
+                booking_line_detail.z_modifiedTimeStamp = datetime.now()
                 booking_line_detail.save()
 
         serializer = BookingSerializer(data=newBooking)
@@ -3622,7 +3628,7 @@ def generate_csv(request):
         for booking_id in booking_ids:
             booking = Bookings.objects.get(id=booking_id)
 
-            if vx_freight_provider == "cope":
+            if vx_freight_provider.lower() == "cope":
                 ############################################################################################
                 # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
                 ############################################################################################
