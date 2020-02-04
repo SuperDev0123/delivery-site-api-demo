@@ -3,7 +3,6 @@ import logging
 from django.conf import settings
 
 from api.models import *
-from .payload_builder import ACCOUTN_CODES
 from api.common import ratio
 
 
