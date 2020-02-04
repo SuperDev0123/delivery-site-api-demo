@@ -933,7 +933,7 @@ def pricing(request):
                 return JsonResponse({"message": error_msg}, status=400)
 
             # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
-            fp_names = ["Hunter"]
+            fp_names = ["Sendle", "Hunter", "TNT"]
 
             try:
                 for fp_name in fp_names:
@@ -1013,8 +1013,12 @@ def pricing(request):
                                     except Exception as e:
                                         logger.error(f"@402 Exception: {e}")
 
-                results = API_booking_quotes.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
+                results = (
+                    API_booking_quotes.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    )
+                    .exclude(service_name="Air Freight")
+                    .order_by("client_mu_1_minimum_values")
                 )
 
                 is_auto_selected = False
