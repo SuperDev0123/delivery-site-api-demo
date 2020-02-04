@@ -36,6 +36,7 @@ def parse_pricing_response(response, fp_name, booking):
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
                 result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
                 results.append(result)
