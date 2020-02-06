@@ -28,7 +28,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
-from .utils import get_dme_status_from_fp_status, get_account_code_key
+from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
@@ -115,6 +115,13 @@ def tracking(request, fp_name):
                 booking.b_status_API = last_consignmentStatus["status"]
                 event_time = last_consignmentStatus["statusUpdate"]
                 event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
+            elif fp_name.lower() == "sendle":
+                last_consignmentStatus = consignmentStatuses[
+                    len(consignmentStatuses) - 1
+                ]
+                booking.b_status_API = last_consignmentStatus["status"]
+                event_time = last_consignmentStatus["statusUpdate"]
+                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ"))
             else:
                 event_time = None
 
@@ -235,6 +242,8 @@ def book(request, fp_name):
                         booking.v_FPBookingNumber = (
                             f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
                         )
+                    elif booking.vx_freight_provider.lower() == "sendle":
+                        booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
@@ -274,7 +283,6 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
-
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -292,7 +300,7 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
                             booking.save()
-
+                    # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
@@ -541,6 +549,11 @@ def get_label(request, fp_name):
         booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
 
+        error_msg = pre_check_label(booking)
+
+        if error_msg:
+            return JsonResponse({"message": error_msg}, status=400)
+
         payload = {}
         if fp_name.lower() in ["startrack"]:
             try:
@@ -573,9 +586,8 @@ def get_label(request, fp_name):
                 error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
-        elif fp_name.lower() in ["tnt"]:
+        elif fp_name.lower() in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
-
         try:
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
@@ -597,6 +609,10 @@ def get_label(request, fp_name):
                 time.sleep(5)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
+
+                if fp_name.lower() in ["sendle"]:
+                    res_content = response.content.decode("utf8")
+
                 json_data = json.loads(res_content)
                 s0 = json.dumps(
                     json_data, indent=2, sort_keys=True, default=str
@@ -607,11 +623,16 @@ def get_label(request, fp_name):
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
-            elif fp_name.lower() in ["tnt"]:
+            elif fp_name.lower() in ["tnt", "sendle"]:
                 try:
                     file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
 
-                    if IS_PRODUCTION:
+                    if fp_name.lower() == "tnt":
+                        label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
+                    elif fp_name.lower() == "sendle":
+                        label_data = str(json_data["pdfData"]).encode()
+
+                    if settings.env == "prod":
                         label_url = (
                             f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                         )
@@ -619,15 +640,13 @@ def get_label(request, fp_name):
                         label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                     with open(label_url, "wb") as f:
-                        f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
+                        f.write(label_data)
                         f.close()
-
-                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            booking.z_label_url = z_label_url
+            booking.z_label_url = f"{fp_name.lower()}_au/{file_name}"
             booking.save()
 
             Log(
@@ -949,12 +968,14 @@ def pricing(request):
                             "SWYTEMPBUN"
                             in booking.fk_client_warehouse.client_warehouse_code
                             and not "bunnings" in account_code_key
+                            and fp_name.lower() == "hunter"
                         ):
                             continue
                         elif (
                             not "SWYTEMPBUN"
                             in booking.fk_client_warehouse.client_warehouse_code
                             and "bunnings" in account_code_key
+                            and fp_name.lower() == "hunter"
                         ):
                             continue
 
@@ -1028,14 +1049,24 @@ def pricing(request):
                                     except Exception as e:
                                         logger.error(f"@402 Exception: {e}")
 
-                results = API_booking_quotes.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
+                results = (
+                    API_booking_quotes.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    )
+                    .exclude(service_name="Air Freight")
+                    .order_by("client_mu_1_minimum_values")
                 )
+
+                is_auto_selected = False
+                dme_option = DME_Options.objects.get(option_name="auto_select_pricing")
+                if int(dme_option.option_value) == 1:
+                    is_auto_selected = auto_select(booking, results)
 
                 return JsonResponse(
                     {
                         "message": f"Retrieved all Pricing info",
                         "results": ApiBookingQuotesSerializer(results, many=True).data,
+                        "isAutoSelected": is_auto_selected,
                     },
                     status=200,
                 )
