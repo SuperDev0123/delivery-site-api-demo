@@ -954,12 +954,14 @@ def pricing(request):
                             "SWYTEMPBUN"
                             in booking.fk_client_warehouse.client_warehouse_code
                             and not "bunnings" in account_code_key
+                            and fp_name.lower() == "hunter"
                         ):
                             continue
                         elif (
                             not "SWYTEMPBUN"
                             in booking.fk_client_warehouse.client_warehouse_code
                             and "bunnings" in account_code_key
+                            and fp_name.lower() == "hunter"
                         ):
                             continue
 

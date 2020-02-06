@@ -40,7 +40,10 @@ def get_account_code_key(booking, fp_name):
     from .payload_builder import ACCOUTN_CODES
 
     # Exceptional case for Bunnings
-    if "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code:
+    if (
+        "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code
+        and fp_name.lower() == "hunter"
+    ):
         if booking.pu_Address_State == "QLD":
             return "live_bunnings_0"
         elif booking.pu_Address_State == "NSW":
