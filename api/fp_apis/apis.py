@@ -571,9 +571,11 @@ def get_label(request, fp_name):
                 error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
-        elif fp_name.lower() in ["tnt"]:
+        elif fp_name.lower() in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
 
+        print(payload)
+        
         try:
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
