@@ -553,6 +553,9 @@ def get_getlabel_payload(booking, fp_name):
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
+    elif fp_name.lower() == "sendle":
+        payload["consignmentNumber"] = f"{str(booking.v_FPBookingNumber)}"
+
     return payload
 
 
