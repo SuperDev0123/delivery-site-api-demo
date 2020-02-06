@@ -14,7 +14,10 @@ def fp_price_2_dme_price(api_booking_quote):
     client_mu_min_val = fp_mu_val + client.client_min_markup_value
 
     if float(api_booking_quote["fee"]) > client.client_min_markup_startingcostvalue:
-        return client_mu_val, fp.fp_markupfuel_levy_percent
+        return (
+            float(api_booking_quote["fee"]) * (1 + client.client_mark_up_percent),
+            fp.fp_markupfuel_levy_percent,
+        )
 
     greater = client_mu_val if client_mu_val > client_mu_min_val else client_mu_min_val
 
