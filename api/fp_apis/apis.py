@@ -125,7 +125,6 @@ def tracking(request, fp_name):
             else:
                 event_time = None
 
-
             if booking.b_status_API:
                 booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
                 booking.save()
@@ -581,9 +580,6 @@ def get_label(request, fp_name):
                 return JsonResponse({"message": error_msg}, status=400)
         elif fp_name.lower() in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
-
-        print(payload)
-
         try:
             logger.error(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
@@ -609,7 +605,6 @@ def get_label(request, fp_name):
                 if fp_name.lower() in ["sendle"]:
                     res_content = response.content.decode("utf8")
 
-
                 json_data = json.loads(res_content)
                 s0 = json.dumps(
                     json_data, indent=2, sort_keys=True, default=str
@@ -634,12 +629,9 @@ def get_label(request, fp_name):
                     with open(label_url, "wb") as f:
                         f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
                         f.close()
-
-                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
-
             elif fp_name.lower() in ["sendle"]:
                 try:
                     file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
@@ -651,16 +643,14 @@ def get_label(request, fp_name):
                     else:
                         label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
-                    print('SENDLE', file_name)
                     with open(label_url, "wb") as f:
                         f.write(str(json_data["pdfData"]).encode())
-                        print('ASDFSSFAF')
                         f.close()
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            booking.z_label_url = label_url
+            booking.z_label_url = f"{fp_name.lower()}_au/{file_name}"
             booking.save()
 
             if not fp_name.lower() in ["sendle"]:
@@ -672,7 +662,6 @@ def get_label(request, fp_name):
                     response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
-
 
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
