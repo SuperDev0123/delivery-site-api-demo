@@ -28,7 +28,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
-from .utils import get_dme_status_from_fp_status, get_account_code_key
+from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
