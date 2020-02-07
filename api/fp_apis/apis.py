@@ -625,12 +625,12 @@ def get_label(request, fp_name):
                 )
             elif fp_name.lower() in ["tnt", "sendle"]:
                 try:
-                    file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
-
                     if fp_name.lower() == "tnt":
                         label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
+                        file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
                     elif fp_name.lower() == "sendle":
                         label_data = str(json_data["pdfData"]).encode()
+                        file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
                     if settings.ENV == "prod":
                         label_url = (
