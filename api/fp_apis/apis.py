@@ -649,13 +649,15 @@ def get_label(request, fp_name):
             booking.z_label_url = f"{fp_name.lower()}_au/{file_name}"
             booking.save()
 
-            Log(
-                request_payload=payload,
-                request_status="SUCCESS",
-                request_type=f"{fp_name.upper()} GET LABEL",
-                response=res_content,
-                fk_booking_id=booking.id,
-            ).save()
+            if not fp_name.lower() in ["sendle"]:
+
+                Log(
+                    request_payload=payload,
+                    request_status="SUCCESS",
+                    request_type=f"{fp_name.upper()} GET LABEL",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
 
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
