@@ -576,7 +576,7 @@ def get_getlabel_payload(booking, fp_name):
             else booking.b_client_sales_inv_num
         )
     elif fp_name.lower() == "sendle":
-        payload["consignmentNumber"] = f"{str(booking.v_FPBookingNumber)}"
+        payload["consignmentNumber"] = f"{str(booking.fk_fp_pickup_id)}"
 
     return payload
 

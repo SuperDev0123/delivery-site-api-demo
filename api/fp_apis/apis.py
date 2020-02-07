@@ -242,6 +242,8 @@ def book(request, fp_name):
                         booking.v_FPBookingNumber = (
                             f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
                         )
+                    elif booking.vx_freight_provider.lower() == "sendle":
+                        booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
@@ -281,7 +283,6 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
-
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -299,7 +300,7 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
                             booking.save()
-
+                    # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
@@ -622,11 +623,16 @@ def get_label(request, fp_name):
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
-            elif fp_name.lower() in ["tnt"]:
+            elif fp_name.lower() in ["tnt", "sendle"]:
                 try:
                     file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
 
-                    if IS_PRODUCTION:
+                    if fp_name.lower() == "tnt":
+                        label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
+                    elif fp_name.lower() == "sendle":
+                        label_data = str(json_data["pdfData"]).encode()
+
+                    if settings.env == "prod":
                         label_url = (
                             f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                         )
@@ -634,24 +640,7 @@ def get_label(request, fp_name):
                         label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
                     with open(label_url, "wb") as f:
-                        f.write(base64.b64decode(json_data["anyType"]["LabelPDF"]))
-                        f.close()
-                except KeyError as e:
-                    error_msg = f"KeyError: {e}"
-                    _set_error(booking, error_msg)
-            elif fp_name.lower() in ["sendle"]:
-                try:
-                    file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
-
-                    if IS_PRODUCTION:
-                        label_url = (
-                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
-                        )
-                    else:
-                        label_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
-
-                    with open(label_url, "wb") as f:
-                        f.write(str(json_data["pdfData"]).encode())
+                        f.write(label_data)
                         f.close()
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
