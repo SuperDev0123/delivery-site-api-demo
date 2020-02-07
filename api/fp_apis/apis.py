@@ -632,7 +632,7 @@ def get_label(request, fp_name):
                     elif fp_name.lower() == "sendle":
                         label_data = str(json_data["pdfData"]).encode()
 
-                    if settings.env == "prod":
+                    if settings.ENV == "prod":
                         label_url = (
                             f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
                         )
