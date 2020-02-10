@@ -5,7 +5,6 @@ from django.conf import settings
 from api.models import *
 from api.common import ratio
 
-
 logger = logging.getLogger("dme_api")
 
 FP_UOM = {
