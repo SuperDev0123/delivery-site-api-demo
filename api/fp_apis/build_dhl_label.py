@@ -159,7 +159,7 @@ def build_dhl_label(booking_id):
 
         document = []
 
-        dme_logo = "/home/administrator/Documents/projects/dme_api/static/DME-LOGO.png"
+        dme_logo = "/home/administrator/Documents/dme_api/static/DME-LOGO.png"
         dme_im = Image(dme_logo, 30 * mm, 8 * mm)
 
         Story=[]
