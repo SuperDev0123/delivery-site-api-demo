@@ -3310,6 +3310,121 @@ class FP_Store_Booking_Log(models.Model):
         db_table = "fp_store_booking_log"
 
 
+class FP_vehicles(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    description = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    max_length = models.FloatField(default=0, null=True, blank=True)
+    max_width = models.FloatField(default=0, null=True, blank=True)
+    max_height = models.FloatField(default=0, null=True, blank=True)
+    mass_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    max_mass = models.IntegerField(default=0, null=True, blank=True)
+    pallets = models.IntegerField(default=0, null=True, blank=True)
+    pallet_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    max_pallet_length = models.FloatField(default=0, null=True, blank=True)
+    max_pallet_width = models.FloatField(default=0, null=True, blank=True)
+    max_pallet_height = models.FloatField(default=0, null=True, blank=True)
+    base_charge = models.IntegerField(default=0, null=True, blank=True)
+    min_charge = models.IntegerField(default=0, null=True, blank=True)
+    limited_state = models.CharField(
+        max_length=16, blank=True, null=True, default=None,
+    )
+
+    class Meta:
+        db_table = "fp_vehicles"
+
+
+class FP_availabilities(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    code = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    mon_start = models.TimeField(default=None, blank=True, null=True)
+    mon_end = models.TimeField(default=None, blank=True, null=True)
+    tue_start = models.TimeField(default=None, blank=True, null=True)
+    tue_end = models.TimeField(default=None, blank=True, null=True)
+    wed_start = models.TimeField(default=None, blank=True, null=True)
+    wed_end = models.TimeField(default=None, blank=True, null=True)
+    thu_start = models.TimeField(default=None, blank=True, null=True)
+    thu_end = models.TimeField(default=None, blank=True, null=True)
+    fri_start = models.TimeField(default=None, blank=True, null=True)
+    fri_end = models.TimeField(default=None, blank=True, null=True)
+    sat_start = models.TimeField(default=None, blank=True, null=True)
+    sat_end = models.TimeField(default=None, blank=True, null=True)
+    sun_start = models.TimeField(default=None, blank=True, null=True)
+    sun_end = models.TimeField(default=None, blank=True, null=True)
+
+    class Meta:
+        db_table = "fp_availabilities"
+
+
+class FP_timings(models.Model):
+    id = models.AutoField(primary_key=True)
+    time_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    min = models.IntegerField(default=0, null=True, blank=True)
+    max = models.IntegerField(default=0, null=True, blank=True)
+    booking_cut_off_time = models.TimeField(default=None, blank=True, null=True)
+    collected_by = models.TimeField(default=None, blank=True, null=True)
+    delivered_by = models.TimeField(default=None, blank=True, null=True)
+
+    class Meta:
+        db_table = "fp_timings"
+
+
+class FP_costs(models.Model):
+    id = models.AutoField(primary_key=True)
+    UOM_charge = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    start_qty = models.IntegerField(default=0, null=True, blank=True)
+    end_qty = models.IntegerField(default=0, null=True, blank=True)
+    basic_charge = models.FloatField(default=0, null=True, blank=True)
+    min_charge = models.FloatField(default=0, null=True, blank=True)
+    per_UOM_charge = models.FloatField(default=0, null=True, blank=True)
+    oversize_premium = models.FloatField(default=0, null=True, blank=True)
+    oversize_price = models.FloatField(default=0, null=True, blank=True)
+    m3_to_kg_factor = models.IntegerField(default=0, null=True, blank=True)
+    dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    price_up_to_length = models.FloatField(default=0, null=True, blank=True)
+    price_up_to_width = models.FloatField(default=0, null=True, blank=True)
+    price_up_to_heigth = models.FloatField(default=0, null=True, blank=True)
+    weight_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    price_up_to_weight = models.FloatField(default=0, null=True, blank=True)
+    max_length = models.FloatField(default=0, null=True, blank=True)
+    max_width = models.FloatField(default=0, null=True, blank=True)
+    max_height = models.FloatField(default=0, null=True, blank=True)
+    max_weight = models.FloatField(default=0, null=True, blank=True)
+
+    class Meta:
+        db_table = "fp_costs"
+
+
+class FP_pricing_rules(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    cost = models.ForeignKey(FP_costs, on_delete=models.CASCADE, null=True)
+    timing = models.ForeignKey(FP_timings, on_delete=models.CASCADE, null=True)
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    service_type = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    service_timing_code = models.CharField(
+        max_length=32, blank=True, null=True, default=None,
+    )
+    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
+    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
+    both_way = models.BooleanField(blank=True, null=True, default=False)
+    pu_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
+    pu_state = models.CharField(max_length=32, blank=True, null=True, default=None)
+    pu_postal_code = models.CharField(max_length=8, blank=True, null=True, default=None)
+    pu_suburb = models.CharField(max_length=32, blank=True, null=True, default=None)
+    de_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
+    de_state = models.CharField(max_length=32, blank=True, null=True, default=None)
+    de_postal_code = models.CharField(max_length=8, blank=True, null=True, default=None)
+    de_suburb = models.CharField(max_length=32, blank=True, null=True, default=None)
+
+    class Meta:
+        db_table = "fp_pricing_rules"
+
+
 @receiver(pre_save, sender=Bookings)
 def pre_save_booking(sender, instance: Bookings, **kwargs):
     if instance.id is None:  # new object will be created
