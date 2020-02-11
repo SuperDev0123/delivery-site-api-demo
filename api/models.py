@@ -3415,20 +3415,26 @@ class FP_costs(models.Model):
 class FP_pricing_rules(models.Model):
     id = models.AutoField(primary_key=True)
     freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
-    serivce_type = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    cost = models.ForeignKey(FP_costs, on_delete=models.CASCADE, null=True)
+    timing = models.ForeignKey(FP_timings, on_delete=models.CASCADE, null=True)
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    service_type = models.CharField(max_length=64, blank=True, null=True, default=None,)
     service_timing_code = models.CharField(
         max_length=32, blank=True, null=True, default=None,
     )
-    pu_zone = models.ForeignKey(
-        FP_zones, on_delete=models.CASCADE, related_name="pu_zone"
-    )
-    de_zone = models.ForeignKey(
-        FP_zones, on_delete=models.CASCADE, related_name="de_zone"
-    )
     calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
-    charge_rule = models.CharField(max_length=128, blank=True, null=True, default=None,)
-    cost = models.ForeignKey(FP_costs, on_delete=models.CASCADE, null=True)
-    timing = models.ForeignKey(FP_timings, on_delete=models.CASCADE, null=True)
+    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
+    both_way = models.BooleanField(blank=True, null=True, default=False)
+    pu_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
+    pu_state = models.CharField(max_length=32, blank=True, null=True, default=None)
+    pu_postal_code = models.CharField(max_length=8, blank=True, null=True, default=None)
+    pu_suburb = models.CharField(max_length=32, blank=True, null=True, default=None)
+    de_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
+    de_state = models.CharField(max_length=32, blank=True, null=True, default=None)
+    de_postal_code = models.CharField(max_length=8, blank=True, null=True, default=None)
+    de_suburb = models.CharField(max_length=32, blank=True, null=True, default=None)
 
     class Meta:
         db_table = "fp_pricing_rules"
