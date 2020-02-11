@@ -39,6 +39,7 @@ ACCOUTN_CODES = {
     "sendle": {"live_0": "XXX"},
     "fastway": {"live_0": "XXX"},
     "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
+    "dhl": {"live_0": "XXX"}
 }
 
 KEY_CHAINS = {
@@ -107,6 +108,20 @@ KEY_CHAINS = {
             "accountState": "NSW",
         },
     },
+    "dhl": {
+        "live_0": {"accountKey": "DELIVER_ME_CARRIER_API", "accountPassword": "RGVsaXZlcmNhcnJpZXJhcGkxMjM="}
+    }
+}
+
+FP_UOM = {
+    "startrack": {"dim": "cm", "weight": "kg"},
+    "hunter": {"dim": "cm", "weight": "kg"},
+    "tnt": {"dim": "cm", "weight": "kg"},
+    "capital": {"dim": "cm", "weight": "kg"},
+    "sendle": {"dim": "cm", "weight": "kg"},
+    "fastway": {"dim": "cm", "weight": "kg"},
+    "allied": {"dim": "cm", "weight": "kg"},
+    "dhl": {"dim": "cm", "weight": "kg"},
 }
 
 
@@ -127,7 +142,7 @@ def _get_account_details(booking, fp_name, account_code_key=None):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway"]:
+    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway", "dhl"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()][default_account_code_key],
