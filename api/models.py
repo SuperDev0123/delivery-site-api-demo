@@ -503,9 +503,9 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    pu_pickup_instructions_address = models.CharField(
+    pu_pickup_instructions_address = models.TextField(
         verbose_name=_("Pickup instrunctions address"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -706,9 +706,9 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    pu_PickUp_Instructions_Contact = models.CharField(
+    pu_PickUp_Instructions_Contact = models.TextField(
         verbose_name=_("PU Instructions Contact"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -821,16 +821,16 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    de_to_Pick_Up_Instructions_Contact = models.CharField(
+    de_to_Pick_Up_Instructions_Contact = models.TextField(
         verbose_name=_("DE Instructions Contact"),
-        max_length=120,
+        max_length=512,
         blank=True,
         null=True,
         default="",
     )
-    de_to_PickUp_Instructions_Address = models.CharField(
+    de_to_PickUp_Instructions_Address = models.TextField(
         verbose_name=_("DE Instructions Address"),
-        max_length=120,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -912,7 +912,7 @@ class Bookings(models.Model):
     s_21_Actual_Delivery_TimeStamp = models.DateTimeField(
         verbose_name=_("Actual DE TimeStamp"), blank=True, null=True
     )
-    b_handling_Instructions = models.CharField(
+    b_handling_Instructions = models.TextField(
         verbose_name=_("Handling Instructions"),
         max_length=120,
         blank=True,
@@ -1885,21 +1885,21 @@ class BOK_1_headers(models.Model):
     b_013_b_package_job = models.BooleanField(
         verbose_name=_("b_013_b_package_job"), default=False, blank=True, null=True
     )
-    b_014_b_pu_handling_instructions = models.CharField(
+    b_014_b_pu_handling_instructions = models.TextField(
         verbose_name=_("b_014_b_pu_handling_instructions"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
-    b_015_b_pu_instructions_contact = models.CharField(
+    b_015_b_pu_instructions_contact = models.TextField(
         verbose_name=_("b_015_b_pu_instructions_contact"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
-    b_016_b_pu_instructions_address = models.CharField(
+    b_016_b_pu_instructions_address = models.TextField(
         verbose_name=_("b_016_b_pu_instructions_address"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
@@ -2011,15 +2011,15 @@ class BOK_1_headers(models.Model):
         default=False,
         null=True,
     )
-    b_043_b_del_instructions_contact = models.CharField(
+    b_043_b_del_instructions_contact = models.TextField(
         verbose_name=_("b_043_b_del_instructions_contact"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
-    b_044_b_del_instructions_address = models.CharField(
+    b_044_b_del_instructions_address = models.TextField(
         verbose_name=_("b_044_b_del_instructions_address"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
@@ -2163,6 +2163,9 @@ class BOK_1_headers(models.Model):
     )
     b_000_3_consignment_number = models.CharField(
         max_length=32, blank=True, null=True, default=""
+    )
+    b_000_0_b_client_agent_code = models.CharField(
+        max_length=32, blank=True, null=True, default=None
     )
     z_test = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default="")
