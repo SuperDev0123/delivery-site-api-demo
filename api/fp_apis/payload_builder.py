@@ -10,8 +10,9 @@ from .utils import _convert_UOM
 
 logger = logging.getLogger("dme_api")
 
+BUILT_IN_PRICINGS = ["Century"]
 
-ACCOUTN_CODES = {
+ACCOUNT_CODES = {
     "startrack": {
         "test_bed_0": "00956684",  # Original
         "test_bed_1": "00251522",  # ST Premium and ST Express
@@ -39,7 +40,7 @@ ACCOUTN_CODES = {
     "sendle": {"live_0": "XXX"},
     "fastway": {"live_0": "XXX"},
     "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
-    "dhl": {"live_0": "XXX"}
+    "dhl": {"live_0": "XXX"},
 }
 
 KEY_CHAINS = {
@@ -109,8 +110,11 @@ KEY_CHAINS = {
         },
     },
     "dhl": {
-        "live_0": {"accountKey": "DELIVER_ME_CARRIER_API", "accountPassword": "RGVsaXZlcmNhcnJpZXJhcGkxMjM="}
-    }
+        "live_0": {
+            "accountKey": "DELIVER_ME_CARRIER_API",
+            "accountPassword": "RGVsaXZlcmNhcnJpZXJhcGkxMjM=",
+        }
+    },
 }
 
 FP_UOM = {
@@ -132,12 +136,12 @@ def _get_account_details(booking, fp_name, account_code_key=None):
     if fp_name.lower() in ["startrack", "allied"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()]["test_bed_1"],
+                "accountCode": ACCOUNT_CODES[fp_name.lower()]["test_bed_1"],
                 **KEY_CHAINS[fp_name.lower()]["test_bed_1"],
             }
         else:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()][
+                "accountCode": ACCOUNT_CODES[fp_name.lower()][
                     booking.fk_client_warehouse.client_warehouse_code
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
@@ -145,12 +149,12 @@ def _get_account_details(booking, fp_name, account_code_key=None):
     elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway", "dhl"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()][default_account_code_key],
+                "accountCode": ACCOUNT_CODES[fp_name.lower()][default_account_code_key],
                 **KEY_CHAINS[fp_name.lower()][default_account_code_key],
             }
         else:
             account_detail = {
-                "accountCode": ACCOUTN_CODES[fp_name.lower()][default_account_code_key],
+                "accountCode": ACCOUNT_CODES[fp_name.lower()][default_account_code_key],
                 **KEY_CHAINS[fp_name.lower()][default_account_code_key],
             }
 

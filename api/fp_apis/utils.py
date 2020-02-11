@@ -36,7 +36,7 @@ def get_dme_status_from_fp_status(fp_name, booking):
 
 
 def get_account_code_key(booking, fp_name):
-    from .payload_builder import ACCOUTN_CODES
+    from .payload_builder import ACCOUNT_CODES
 
     # Exceptional case for Bunnings
     if (
@@ -52,7 +52,7 @@ def get_account_code_key(booking, fp_name):
             booking.save()
             return None
 
-    if fp_name.lower() not in ACCOUTN_CODES:
+    if fp_name.lower() not in ACCOUNT_CODES:
         booking.b_errorCapture = f"Not supported FP"
         booking.save()
         return None
@@ -60,8 +60,8 @@ def get_account_code_key(booking, fp_name):
         account_code = booking.api_booking_quote.account_code
         account_code_key = None
 
-        for key in ACCOUTN_CODES[fp_name.lower()]:
-            if ACCOUTN_CODES[fp_name.lower()][key] == account_code:
+        for key in ACCOUNT_CODES[fp_name.lower()]:
+            if ACCOUNT_CODES[fp_name.lower()][key] == account_code:
                 account_key = key
                 return account_code_key
 
