@@ -16,7 +16,8 @@ from api.serializers import ApiBookingQuotesSerializer
 from django.conf import settings
 
 from .payload_builder import (
-    ACCOUTN_CODES,
+    ACCOUNT_CODES,
+    BUILT_IN_PRICINGS,
     get_tracking_payload,
     get_book_payload,
     get_cancel_book_payload,
@@ -28,6 +29,7 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
+from .self_pricing import get_pricing
 from .utils import get_dme_status_from_fp_status, get_account_code_key
 from .response_parser import *
 from .pre_check import *
@@ -925,123 +927,117 @@ def pricing(request):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
+        booking = Bookings.objects.get(id=booking_id)
+    except Exception as e:
+        return JsonResponse({"message": f"Booking is not exist"}, status=400)
 
-        try:
-            booking = Bookings.objects.get(id=booking_id)
+    if not booking.puPickUpAvailFrom_Date:
+        error_msg = "PU Available From Date is required."
+        _set_error(booking, error_msg)
+        return JsonResponse({"message": error_msg}, status=400)
 
-            if not booking.puPickUpAvailFrom_Date:
-                error_msg = "PU Available From Date is required."
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+    # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+    fp_names = ["Century"]
 
-            # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
-            fp_names = ["Sendle", "Hunter", "TNT"]
+    try:
+        for fp_name in fp_names:
+            if (
+                fp_name.lower() not in ACCOUNT_CODES
+                and fp_name.lower() not in BUILT_IN_PRICINGS
+            ):
+                return JsonResponse({"message": f"Not supported FP"}, status=400)
+            elif fp_name.lower() in ACCOUNT_CODES:
+                for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
+                    if (
+                        "SWYTEMPBUN"
+                        in booking.fk_client_warehouse.client_warehouse_code
+                        and not "bunnings" in account_code_key
+                    ):
+                        continue
+                    elif (
+                        not "SWYTEMPBUN"
+                        in booking.fk_client_warehouse.client_warehouse_code
+                        and "bunnings" in account_code_key
+                    ):
+                        continue
 
-            try:
-                for fp_name in fp_names:
-                    if fp_name.lower() not in ACCOUTN_CODES:
-                        return JsonResponse(
-                            {"message": f"Not supported FP"}, status=400
-                        )
+                    payload = get_pricing_payload(
+                        booking, fp_name.lower(), account_code_key
+                    )
 
-                    for account_code_key in ACCOUTN_CODES[fp_name.lower()]:
-                        if (
-                            "SWYTEMPBUN"
-                            in booking.fk_client_warehouse.client_warehouse_code
-                            and not "bunnings" in account_code_key
-                        ):
-                            continue
-                        elif (
-                            not "SWYTEMPBUN"
-                            in booking.fk_client_warehouse.client_warehouse_code
-                            and "bunnings" in account_code_key
-                        ):
-                            continue
+                    logger.error(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+                    response = requests.post(url, params={}, json=payload)
+                    res_content = response.content.decode("utf8").replace("'", '"')
+                    json_data = json.loads(res_content)
+                    s0 = json.dumps(
+                        json_data, indent=2, sort_keys=True
+                    )  # Just for visual
+                    logger.error(f"### Response ({fp_name.upper()} PRICING): {s0}")
 
-                        payload = get_pricing_payload(
-                            booking, fp_name.lower(), account_code_key
-                        )
+                    Log.objects.create(
+                        request_payload=payload,
+                        request_status="SUCCESS",
+                        request_type=f"{fp_name.upper()} PRICING",
+                        response=res_content,
+                        fk_booking_id=booking.id,
+                    )
 
-                        logger.error(
-                            f"### Payload ({fp_name.upper()} PRICING): {payload}"
-                        )
-                        url = DME_LEVEL_API_URL + "/pricing/calculateprice"
-                        response = requests.post(url, params={}, json=payload)
-                        res_content = response.content.decode("utf8").replace("'", '"')
-                        json_data = json.loads(res_content)
-                        s0 = json.dumps(
-                            json_data, indent=2, sort_keys=True
-                        )  # Just for visual
-                        logger.error(f"### Response ({fp_name.upper()} PRICING): {s0}")
+                    parse_results = parse_pricing_response(
+                        response, fp_name.lower(), booking
+                    )
 
-                        Log.objects.create(
-                            request_payload=payload,
-                            request_status="SUCCESS",
-                            request_type=f"{fp_name.upper()} PRICING",
-                            response=res_content,
-                            fk_booking_id=booking.id,
-                        )
+                    if parse_results and not "error" in parse_results:
+                        for parse_result in parse_results:
+                            try:
+                                parse_result["account_code"] = payload[
+                                    "spAccountDetails"
+                                ]["accountCode"]
+                                api_booking_quote = API_booking_quotes.objects.get(
+                                    fk_booking_id=booking.pk_booking_id,
+                                    fk_freight_provider_id=parse_result[
+                                        "fk_freight_provider_id"
+                                    ].upper(),
+                                    service_name=parse_result["service_name"],
+                                    account_code=payload["spAccountDetails"][
+                                        "accountCode"
+                                    ],
+                                )
+                                serializer = ApiBookingQuotesSerializer(
+                                    api_booking_quote, data=parse_result
+                                )
 
-                        parse_results = parse_pricing_response(
-                            response, fp_name.lower(), booking
-                        )
-
-                        if parse_results and not "error" in parse_results:
-                            for parse_result in parse_results:
                                 try:
-                                    parse_result["account_code"] = payload[
-                                        "spAccountDetails"
-                                    ]["accountCode"]
-                                    api_booking_quote = API_booking_quotes.objects.get(
-                                        fk_booking_id=booking.pk_booking_id,
-                                        fk_freight_provider_id=parse_result[
-                                            "fk_freight_provider_id"
-                                        ].upper(),
-                                        service_name=parse_result["service_name"],
-                                        account_code=payload["spAccountDetails"][
-                                            "accountCode"
-                                        ],
-                                    )
-                                    serializer = ApiBookingQuotesSerializer(
-                                        api_booking_quote, data=parse_result
-                                    )
+                                    if serializer.is_valid():
+                                        serializer.save()
+                                except Exception as e:
+                                    logger.error("Exception: ", e)
 
-                                    try:
-                                        if serializer.is_valid():
-                                            serializer.save()
-                                    except Exception as e:
-                                        logger.error("Exception: ", e)
+                                api_booking_quote.save()
+                            except API_booking_quotes.DoesNotExist:
+                                serializer = ApiBookingQuotesSerializer(
+                                    data=parse_result
+                                )
 
-                                    api_booking_quote.save()
-                                except API_booking_quotes.DoesNotExist:
-                                    serializer = ApiBookingQuotesSerializer(
-                                        data=parse_result
-                                    )
+                                try:
+                                    if serializer.is_valid():
+                                        serializer.save()
+                                    else:
+                                        logger.error(
+                                            f"@401 Serializer error: {serializer.errors}"
+                                        )
+                                except Exception as e:
+                                    logger.error(f"@402 Exception: {e}")
+            elif fp_name.lower() in BUILT_IN_PRICINGS:
+                get_pricing(fp_name.lower(), booking)
 
-                                    try:
-                                        if serializer.is_valid():
-                                            serializer.save()
-                                        else:
-                                            logger.error(
-                                                f"@401 Serializer error: {serializer.errors}"
-                                            )
-                                    except Exception as e:
-                                        logger.error(f"@402 Exception: {e}")
-
-                results = API_booking_quotes.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                )
-
-                return JsonResponse(
-                    {
-                        "message": f"Retrieved all Pricing info",
-                        "results": ApiBookingQuotesSerializer(results, many=True).data,
-                    },
-                    status=200,
-                )
-            except Exception as e:
-                return JsonResponse({"message": f"Error: {e}"}, status=400)
-        except Exception as e:
-            return JsonResponse({"message": f"Booking is not exist"}, status=400)
-    except SyntaxError as e:
-        return JsonResponse({"message": f"SyntaxError {e}"}, status=400)
+        results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
+        return JsonResponse(
+            {
+                "message": f"Retrieved all Pricing info",
+                "results": ApiBookingQuotesSerializer(results, many=True).data,
+            },
+            status=200,
+        )
+    except Exception as e:
+        return JsonResponse({"message": f"Error: {e}"}, status=400)
