@@ -1,6 +1,7 @@
 from api.models import *
 import logging
 
+
 def is_in_zone(zone_code, suburb, postal_code, state):
     zones = FP_zones.objects.filter(zone=zone_code)
 
@@ -65,4 +66,4 @@ def get_pricing(fp_name, booking):
     rules = address_filter(booking, rules)
 
     if not rules:
-        
+        print("@1 - ")
