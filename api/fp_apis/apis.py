@@ -627,9 +627,9 @@ def get_label(request, fp_name):
                     _set_error(booking, error_msg)
 
             elif fp_name.lower() in ["dhl"]:
-                z_label_url = build_dhl_label(booking.id)
-                
-            booking.z_label_url = z_label_url
+                z_label_url = build_dhl_label(booking)
+
+            # booking.z_label_url = z_label_url
             booking.save()
 
             Log(

@@ -40,7 +40,7 @@ styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
 
 
 if os.environ["ENV"] == "local":
-    filepath = "/home/administrator/Documents/projects/dme_api/static/dhl_au/"
+    filepath = "/home/administrator/Documents/dme_api/static/dhl_au/"
 elif os.environ["ENV"] == "dev":
     filepath = "/var/www/html/dme_api/static/dhl_au/labels/"
 elif os.environ["ENV"] == "prod":
@@ -52,32 +52,7 @@ DB_PASS = os.environ["DB_PASSWORD"]
 DB_PORT = os.environ["DB_PORT"]
 DB_NAME = os.environ["DB_NAME"]
 
-
-def get_booking(mysqlcon, id):
-    with mysqlcon.cursor() as cursor:
-        sql = f"SELECT pk_booking_id, b_bookingID_Visual, v_FPBookingNumber, b_clientReference_RA_Numbers, b_client_warehouse_code, b_dateBookedDate, vx_freight_provider, puCompany, pu_Contact_F_L_Name, pu_Phone_Main, pu_Address_Street_1, pu_Address_Street_2, pu_Address_Suburb, pu_Address_State, pu_Address_PostalCode, pu_Address_Country, deToCompanyName, puPickUpAvailFrom_Date, pu_PickUp_By_Date, vx_serviceName, de_to_Contact_F_LName, de_to_PickUp_Instructions_Address, de_to_Pick_Up_Instructions_Contact,  de_To_Address_Street_1, de_To_Address_Street_2, de_To_Address_Suburb, de_To_Address_State, de_To_Address_PostalCode, de_To_Address_Country, de_to_Contact_FName, de_to_Contact_Lname, de_to_Phone_Main, vx_account_code, s_06_LatestDeliveryDateTimeFinal, vx_fp_pu_eta_time, vx_fp_del_eta_time FROM `dme_bookings` WHERE id={id}  ORDER BY dme_bookings.pk_booking_id ASC LIMIT 0,1"
-        cursor.execute(sql)
-        result = cursor.fetchall()
-        if result is None:
-            print('@102 - booking empty')
-            return None
-        else:
-            if len(result) > 0:
-                return result[0]
-            else:
-                return None
-
-def get_booking_lines(mysqlcon, booking_id):
-    with mysqlcon.cursor() as cursor:
-        sql = "SELECT e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight, client_item_reference, e_dangerousGoods, e_1_Total_dimCubicMeter, e_weightUOM FROM dme_booking_lines WHERE fk_booking_id = %s"
-        adr = (booking_id, )
-        cursor.execute(sql, adr)
-        result = cursor.fetchall()
-        if result is None:
-            print('@102 - booking empty')
-            return None
-        else:
-            return result
+from api.models import *
 
 def get_label_settings( dimension_length, dimension_width ):
     with mysqlcon.cursor() as cursor:
@@ -116,40 +91,24 @@ class RotatedImage(Image):
         self.canv.rotate(90)
         Image.draw(self)
 
-def build_dhl_label(booking_id):
-    mysqlcon = None
+def build_dhl_label(booking):
     filename = ""
     try:
-        mysqlcon = pymysql.connect(host=DB_HOST,
-                                   port=DB_PORT,
-                                   user=DB_USER,
-                                   password=DB_PASS,
-                                   db=DB_NAME,
-                                   charset='utf8mb4',
-                                   cursorclass=pymysql.cursors.DictCursor)
         if not os.path.exists(filepath):
             os.makedirs(filepath)
 
-        
-        booking = get_booking(mysqlcon, booking_id)
-        print(booking)
-        print(booking['pk_booking_id'])
-        booking_lines = get_booking_lines(mysqlcon, booking['pk_booking_id'])
-        # print('ASC')
-                #end db query for fetching data from dme_booking_lines table
-        totalQty = 0
-        for booking_line in booking_lines:
-            totalQty = totalQty + booking_line['e_qty']
         #start pdf file name using naming convention
         #date = datetime.datetime.now().strftime("%Y%m%d")+"_"+datetime.datetime.now().strftime("")
-        filename = booking['pu_Address_State'] + "_" + str(booking['v_FPBookingNumber']) + "_"  + str(booking['b_bookingID_Visual']) + ".pdf"
+
+        filename = booking.pu_Address_State + "_" + str(booking.v_FPBookingNumber) + "_"  + str(booking.b_bookingID_Visual) + ".pdf"
         file = open(filepath+filename, "w") 
-        #file.write("Your text goes here") 
+
+        booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+        totalQty = 0
+        for booking_line in booking_lines:
+            totalQty = totalQty + booking_line.e_qty
         
-        #end pdf file name using naming convention
-
-        date = datetime.datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
-
         # label_settings = get_label_settings( 146, 104 )[0]
         # print(label_settings)
 
@@ -163,16 +122,16 @@ def build_dhl_label(booking_id):
         dme_im = Image(dme_logo, 30 * mm, 8 * mm)
 
         Story=[]
+
         j = 1
         for booking_line in booking_lines:
-            for k in range(booking_line["e_qty"]):
-
+            for k in range(booking_line.e_qty):
                 tbl_data1 = [
                     [
                         dme_im
                     ],
                     [
-                        Paragraph('<font size=%s><b>Pickup up by :</b> %s </font>' % (label_settings['font_size_extra_small'], (booking["vx_freight_provider"]) if (booking["vx_freight_provider"]) else ''), style_left)
+                        Paragraph('<font size=%s><b>Pickup up by :</b> %s </font>' % (label_settings['font_size_extra_small'], (booking.vx_freight_provider) if (booking.vx_freight_provider) else ''), style_left)
                     ]
                 ]
 
@@ -189,7 +148,7 @@ def build_dhl_label(booking_id):
                         Paragraph('<font size=%s><b>%s:</b></font>' % (label_settings['font_size_small'], 'CONNOTE'), style_left)
                     ],
                     [
-                        Paragraph('<font size=%s> %s</font>' % (label_settings['font_size_medium'], booking["v_FPBookingNumber"]), style_left)
+                        Paragraph('<font size=%s> %s</font>' % (label_settings['font_size_medium'], booking.v_FPBookingNumber), style_left)
                     ]
                 ]
 
@@ -240,19 +199,19 @@ def build_dhl_label(booking_id):
 
                 tbl_data1 = [
                     [
-                        Paragraph('<font size=%s><b>TO:</b> %s %s</font>' % (label_settings['font_size_medium'], booking["de_to_Contact_F_LName"],  (booking["puCompany"]) if (booking["puCompany"]) else ''), style_left)
+                        Paragraph('<font size=%s><b>TO:</b> %s %s</font>' % (label_settings['font_size_medium'], booking.de_to_Contact_F_LName,  (booking.puCompany) if (booking.puCompany) else ''), style_left)
                     ],
                     [
-                        Paragraph('<font size=%s>  %s</font>' % (label_settings['font_size_medium'],booking["de_To_Address_Street_1"]), style_left),
-                        Paragraph('<font size=%s>  %s</font>' % (label_settings['font_size_medium'],booking["de_To_Address_Street_2"]), style_left)
+                        Paragraph('<font size=%s>  %s</font>' % (label_settings['font_size_medium'],booking.de_To_Address_Street_1), style_left),
+                        Paragraph('<font size=%s>  %s</font>' % (label_settings['font_size_medium'],booking.de_To_Address_Street_2), style_left)
                     ],
                     [
                         Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], ''), style_left)
                     ],
                     [
-                        Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], booking["de_To_Address_Suburb"]), style_left),
-                        Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], booking["de_To_Address_State"]), style_left),
-                        Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], booking["de_To_Address_PostalCode"]), style_left)
+                        Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], booking.de_To_Address_Suburb), style_left),
+                        Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], booking.de_To_Address_State), style_left),
+                        Paragraph('<font size=%s>  %s</font> ' % (label_settings['font_size_medium'], booking.de_To_Address_PostalCode), style_left)
                     ]
                 ]
 
@@ -268,7 +227,7 @@ def build_dhl_label(booking_id):
 
                 tbl_data1 = [
                     [
-                        Paragraph('<font size=%s><b>PH:</b> %s</font>' % (label_settings['font_size_medium'], booking["de_to_Phone_Main"]), style_left)
+                        Paragraph('<font size=%s><b>PH:</b> %s</font>' % (label_settings['font_size_medium'], booking.de_to_Phone_Main), style_left)
                     ]
                 ]
 
@@ -281,8 +240,8 @@ def build_dhl_label(booking_id):
 
                 tbl_data2 = [
                     [
-                        Paragraph('<font size=%s>%s</font>' % (label_settings['font_size_extra_large'], booking["de_To_Address_Suburb"]), style_left),
-                        Paragraph('<font size=%s>%s</font>' % (label_settings['font_size_extra_large'], booking["de_To_Address_PostalCode"]), style_left)
+                        Paragraph('<font size=%s>%s</font>' % (label_settings['font_size_extra_large'], booking.de_To_Address_Suburb), style_left),
+                        Paragraph('<font size=%s>%s</font>' % (label_settings['font_size_extra_large'], booking.de_To_Address_PostalCode), style_left)
                     ]
                 ]
 
@@ -331,7 +290,7 @@ def build_dhl_label(booking_id):
                 Story.append(t1)
                 Story.append(Spacer(1, 5))
 
-                barcode = 'PRD'+booking["de_To_Address_PostalCode"]+'R1'
+                barcode = 'PRD'+booking.de_To_Address_PostalCode+'R1'
 
                 tbl_data1 = [
                     [
@@ -383,14 +342,14 @@ def build_dhl_label(booking_id):
 
                 tbl_data1 = [
                     [
-                        Paragraph('<font size=%s><b>FROM:</b> %s <b>PH:</b> %s</font>' % ( label_settings['font_size_medium'], (booking["pu_Contact_F_L_Name"]) if (booking["pu_Contact_F_L_Name"]) else '', str(booking['pu_Phone_Main']) if booking['pu_Phone_Main'] else '' ), style_left)
+                        Paragraph('<font size=%s><b>FROM:</b> %s <b>PH:</b> %s</font>' % ( label_settings['font_size_medium'], (booking.pu_Contact_F_L_Name) if (booking.pu_Contact_F_L_Name) else '', str(booking.pu_Phone_Main) if booking.pu_Phone_Main else '' ), style_left)
                     ],
                     [
-                        Paragraph('<font size=%s>%s %s</font>' % (label_settings['font_size_medium'], str(booking['pu_Address_Street_1']) if booking['pu_Address_Street_1'] else '', str(booking['pu_Address_Street_2']) if booking['pu_Address_Street_2'] else ''), style_left),
+                        Paragraph('<font size=%s>%s %s</font>' % (label_settings['font_size_medium'], str(booking.pu_Address_Street_1) if booking.pu_Address_Street_1 else '', str(booking.pu_Address_street_2) if booking.pu_Address_street_2 else ''), style_left),
                         
                     ],
                     [
-                        Paragraph('<font size=%s>%s %s</font>' % (label_settings['font_size_medium'], str(booking['pu_Address_Suburb']) if booking['pu_Address_Suburb'] else '', str(booking['pu_Address_PostalCode']) if booking['pu_Address_PostalCode'] else ''), style_left),
+                        Paragraph('<font size=%s>%s %s</font>' % (label_settings['font_size_medium'], str(booking.pu_Address_Suburb) if booking.pu_Address_Suburb else '', str(booking.pu_Address_PostalCode) if booking.pu_Address_PostalCode else ''), style_left),
                         
                     ]
                 ]
@@ -407,7 +366,7 @@ def build_dhl_label(booking_id):
 
                 tbl_data1 = [
                     [
-                        Paragraph('<font size=%s>%s %s</font>' % (label_settings['font_size_extra_small'], str(booking['de_to_PickUp_Instructions_Address']) if booking['de_to_PickUp_Instructions_Address'] else '', str(booking['de_to_Pick_Up_Instructions_Contact']) if booking['de_to_Pick_Up_Instructions_Contact'] else ''), style_left)
+                        Paragraph('<font size=%s>%s %s</font>' % (label_settings['font_size_extra_small'], str(booking.de_to_PickUp_Instructions_Address) if booking.de_to_PickUp_Instructions_Address else '', str(booking.de_to_Pick_Up_Instructions_Contact) if booking.de_to_Pick_Up_Instructions_Contact else ''), style_left)
                     ]
                 ]
 
@@ -423,10 +382,10 @@ def build_dhl_label(booking_id):
                         Paragraph('<font size=%s>BOOK-IN:</font>' % (label_settings['font_size_medium']), style_left),
                     ],
                     [
-                        Paragraph('<font size=%s>NOT BEFORE: %s</font>' % (label_settings['font_size_medium'], booking["vx_fp_pu_eta_time"].strftime("%d/%m/%y") if booking["vx_fp_pu_eta_time"] else 'N/A'), style_left),
+                        Paragraph('<font size=%s>NOT BEFORE: %s</font>' % (label_settings['font_size_medium'], booking.vx_fp_pu_eta_time.strftime("%d/%m/%y") if booking.vx_fp_pu_eta_time else 'N/A'), style_left),
                     ],
                     [
-                        Paragraph('<font size=%s>NOT AFTER: %s</font>' % (label_settings['font_size_medium'], booking["vx_fp_del_eta_time"].strftime("%d/%m/%y") if booking["vx_fp_del_eta_time"] else 'N/A'), style_left)
+                        Paragraph('<font size=%s>NOT AFTER: %s</font>' % (label_settings['font_size_medium'], booking.vx_fp_del_eta_time.strftime("%d/%m/%y") if booking.vx_fp_del_eta_time else 'N/A'), style_left)
                     ]
                 ]
 
@@ -457,7 +416,7 @@ def build_dhl_label(booking_id):
                 
                 tbl_data1 = [
                     [
-                        Paragraph('<font size=%s>DATE: %s UNIT: %s ITEM: %s OF %s WEIGHT: %s CUBE: %s</font>' % (label_settings['font_size_small'], booking["b_dateBookedDate"].strftime("%d/%m/%y") if booking["b_dateBookedDate"] else 'N/A', booking_line["e_weightUOM"],j, totalQty, booking_line['e_Total_KG_weight'], booking_line["e_1_Total_dimCubicMeter"]), style_center)
+                        Paragraph('<font size=%s>DATE: %s UNIT: %s ITEM: %s OF %s WEIGHT: %s CUBE: %s</font>' % (label_settings['font_size_small'], booking.b_dateBookedDate.strftime("%d/%m/%y") if booking.b_dateBookedDate else 'N/A', booking_line.e_weightUOM,j, totalQty, booking_line.e_Total_KG_weight, booking_line.e_1_Total_dimCubicMeter), style_center)
                     ]
                 ]
 
@@ -471,7 +430,7 @@ def build_dhl_label(booking_id):
 
                 Story.append(t1)
 
-                barcode = booking["v_FPBookingNumber"]+'DESC'+str(k+1).zfill(10)+booking["de_To_Address_PostalCode"]
+                barcode = booking.v_FPBookingNumber+'DESC'+str(k+1).zfill(10)+booking.de_To_Address_PostalCode
 
                 tbl_data = [
                     [
@@ -503,8 +462,5 @@ def build_dhl_label(booking_id):
         #print("Error: unable to fecth data")
         print("Error1: "+str(e))
 
-    print('#901 - Finished %s' % datetime.datetime.now())
-
-    if mysqlcon is not None:
-        mysqlcon.close()
+    # print('#901 - Finished %s' % datetime.datetime.now())
     return filename
