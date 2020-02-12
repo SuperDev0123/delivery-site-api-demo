@@ -6,27 +6,27 @@ from api.common import ratio
 logger = logging.getLogger("dme_api")
 
 vehicles = [
-{"desc": "Courier", "length": 0.8, "width": 0.5, "height": 0.5},
-{"desc": "Station Wagon", "length": 1.2, "width": 0.7, "height": 0.7},
-{"desc": "Ute", "length": 1.5, "width": 1, "height": 1},
-{"desc": "1 Ton Van/Tray", "length": 2.4, "width": 1.8, "height": 1.6},
-{"desc": "2 Ton Tray", "length": 3.6, "width": 1.8, "height": 1.6},
-{"desc": "4 Ton Tray", "length": 4.3, "width": 2.4, "height": 1.8},
-{"desc": "6 Ton Tray", "length": 5.2, "width": 2.4, "height": 1.8},
-{"desc": "8 Ton Tray", "length": 6, "width": 2.4, "height": 2},
-{"desc": "12 Ton Tray", "length": 7.3, "width": 2.4, "height": 2},
-{"desc": "4 Ton Tuatliner", "length": 4.3, "width": 2.4, "height": 2.1},
-{"desc": "6 Ton Tuatliner", "length": 5.2, "width": 2.4, "height": 2.4},
-{"desc": "8 Ton Tuatliner", "length": 6, "width": 2.4, "height": 2.4},
-{"desc": "12 Ton Tuatliner", "length": 7.3, "width": 2.4, "height": 2.4},
-{"desc": "14 Ton Tuatliner", "length": 8.4, "width": 2.4, "height": 2.4},
-{"desc": "1 Ton Van", "length": 2.4, "width": 1.2, "height": 1.2},
-{"desc": "Double Drop Deck Tautliner", "length": 21, "width": 2.4, "height": 3.2},
-{"desc": "Double Tautliner", "length": 21, "width": 2.4, "height": 3.2},
-{"desc": "Extendable Trailer", "length": 22, "width": 2.4, "height": 3.2},
-{"desc": "Flat Top", "length": 13.2, "width": 2.4, "height": 3.2},
-{"desc": "Transit van", "length": 3.2, "width": 1.6, "height": 1.7},
-{"desc": "Panel van", "length": 1.5, "width": 1.2, "height": 1.2},
+{"desc": "Courier", "max_length": 0.8, "max_width": 0.5, "max_height": 0.5, "max_pallet_length": 0.8, "max_pallet_width": 0.5, "max_pallet_height": 0.5},
+{"desc": "Station Wagon", "max_length": 1.2, "max_width": 0.7, "max_height": 0.7, "max_pallet_length": 1.2, "max_pallet_width": 0.7, "max_pallet_height": 0.7},
+{"desc": "Ute", "max_length": 1.5, "max_width": 1, "max_height": 1, "max_pallet_length": 1.5, "max_pallet_width": 1, "max_pallet_height": 1},
+{"desc": "1 Ton Van/Tray", "max_length": 2.4, "max_width": 1.8, "max_height": 1.6, "max_pallet_length": 2.4, "max_pallet_width": 1.8, "max_pallet_height": 1.6},
+{"desc": "2 Ton Tray", "max_length": 3.6, "max_width": 1.8, "max_height": 1.6,"max_pallet_length": 3.6, "max_pallet_width": 1.8, "max_pallet_height": 1.6 },
+{"desc": "4 Ton Tray", "max_length": 4.3, "max_width": 2.4, "max_height": 1.8, "max_pallet_length": 4.3, "max_pallet_width": 2.4, "max_pallet_height": 1.8},
+{"desc": "6 Ton Tray", "max_length": 5.2, "max_width": 2.4, "max_height": 1.8, "max_pallet_length": 5.2, "max_pallet_width": 2.4, "max_pallet_height": 1.8},
+{"desc": "8 Ton Tray", "max_length": 6, "max_width": 2.4, "max_height": 2, "max_pallet_length": 6, "max_pallet_width": 2.4, "max_pallet_height": 2},
+{"desc": "12 Ton Tray", "max_length": 7.3, "max_width": 2.4, "max_height": 2, "max_pallet_length": 7.3, "max_pallet_width": 2.4, "max_pallet_height": 2},
+{"desc": "4 Ton Tuatliner", "max_length": 4.3, "max_width": 2.4, "max_height": 2.1, "max_pallet_length": 4.3, "max_pallet_width": 2.4, "max_pallet_height": 2.1},
+{"desc": "6 Ton Tuatliner", "max_length": 5.2, "max_width": 2.4, "max_height": 2.4, "max_pallet_length": 5.2, "max_pallet_width": 2.4, "max_pallet_height": 2.4},
+{"desc": "8 Ton Tuatliner", "max_length": 6, "max_width": 2.4, "max_height": 2.4, "max_pallet_length": 6, "max_pallet_width": 2.4, "max_pallet_height": 2.4},
+{"desc": "12 Ton Tuatliner", "max_length": 7.3, "max_width": 2.4, "max_height": 2.4, "max_pallet_length": 7.3, "max_pallet_width": 2.4, "max_pallet_height": 2.4},
+{"desc": "14 Ton Tuatliner", "max_length": 8.4, "max_width": 2.4, "max_height": 2.4, "max_pallet_length": 8.4, "max_pallet_width": 2.4, "max_pallet_height": 2.4},
+{"desc": "1 Ton Van", "max_length": 2.4, "max_width": 1.2, "max_height": 1.2, "max_pallet_length": 2.4, "max_pallet_width": 1.2, "max_pallet_height": 1.2},
+{"desc": "Double Drop Deck Tautliner", "max_length": 21, "max_width": 2.4, "max_height": 3.2, "max_pallet_length": 21, "max_pallet_width": 2.4, "max_pallet_height": 3.2},
+{"desc": "Double Tautliner", "max_length": 21, "max_width": 2.4, "max_height": 3.2, "max_pallet_length": 21, "max_pallet_width": 2.4, "max_pallet_height": 3.2},
+{"desc": "Extendable Trailer", "max_length": 22, "max_width": 2.4, "max_height": 3.2, "max_pallet_length": 22, "max_pallet_width": 2.4, "max_pallet_height": 3.2},
+{"desc": "Flat Top", "max_length": 13.2, "max_width": 2.4, "max_height": 3.2, "max_pallet_length": 13.2, "max_pallet_width": 2.4, "max_pallet_height": 3.2},
+{"desc": "Transit van", "max_length": 3.2, "max_width": 1.6, "max_height": 1.7, "max_pallet_length": 3.2, "max_pallet_width": 1.6, "max_pallet_height": 1.7},
+{"desc": "Panel van", "max_length": 1.5, "max_width": 1.2, "max_height": 1.2, "max_pallet_length": 1.5, "max_pallet_width": 1.2, "max_pallet_height": 1.2},
 ]
 
 print(vehicles)
@@ -66,10 +66,17 @@ def find_vehicle(payload):
         print(f"Sum Cube = {sum_cube}")
 
         for vehicle in vehicles:
-            vehicle_cube = vehicle["width"] * vehicle["height"] * vehicle["length"]
+            if item["palletType"] == 'Pallet':
+                vmax_width  = vehicle["max_width"]
+                vmax_height  = vehicle["max_height"]
+                vmax_length  = vehicle["max_length"]
+            else:
+                vmax_width  = vehicle["max_pallet_width"]
+                vmax_height  = vehicle["max_pallet_height"]
+                vmax_length  = vehicle["max_pallet_length"]
+            vehicle_cube = vmax_width * vmax_height * vmax_length
 
-            if vehicle["width"] >= max_width and vehicle["height"] >= max_height and vehicle["length"] >= max_length:
-                if vehicle_cube * 0.8 >= sum_cube:
+            if (vmax_width >= max_width and vmax_height >= max_height and vmax_length >= max_length and vehicle_cube * 0.8 >= sum_cube):
                     results.append(vehicle)
 
         if len(results) > 0:

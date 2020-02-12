@@ -697,6 +697,7 @@ def get_pricing_payload(booking, fp_name, account_code_key):
                 if not line.total_2_cubic_mass_factor_calc
                 else line.total_2_cubic_mass_factor_calc,
                 "weight": 0 if not line.e_weightPerEach else weight,
+                "palletType": line.e_pallet_type
             }
 
             if fp_name.lower() == "startrack":
