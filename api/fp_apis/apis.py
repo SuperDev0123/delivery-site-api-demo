@@ -936,8 +936,8 @@ def pricing(request):
         _set_error(booking, error_msg)
         return JsonResponse({"message": error_msg}, status=400)
 
-    fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
-    # fp_names = ["Century"]
+    # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
+    fp_names = ["Century"]
 
     try:
         for fp_name in fp_names:
@@ -1029,7 +1029,42 @@ def pricing(request):
                                 except Exception as e:
                                     logger.error(f"@402 Exception: {e}")
             elif fp_name.lower() in BUILT_IN_PRICINGS:
-                get_pricing(fp_name.lower(), booking)
+                results = get_pricing(fp_name.lower(), booking)
+                parse_results = parse_pricing_response(
+                    results, fp_name.lower(), booking, True
+                )
+
+                for parse_result in parse_results:
+                    try:
+                        api_booking_quote = API_booking_quotes.objects.get(
+                            fk_booking_id=booking.pk_booking_id,
+                            fk_freight_provider_id=parse_result[
+                                "fk_freight_provider_id"
+                            ].upper(),
+                            service_name=parse_result["service_name"],
+                        )
+
+                        serializer = ApiBookingQuotesSerializer(
+                            api_booking_quote, data=parse_result
+                        )
+                        if serializer.is_valid():
+                            serializer.save()
+                        else:
+                            logger.error(f"@403 Serializer error: {serializer.errors}")
+
+                        api_booking_quote.save()
+                    except API_booking_quotes.DoesNotExist:
+                        serializer = ApiBookingQuotesSerializer(data=parse_result)
+
+                        try:
+                            if serializer.is_valid():
+                                serializer.save()
+                            else:
+                                logger.error(
+                                    f"@404 Serializer error: {serializer.errors}"
+                                )
+                        except Exception as e:
+                            logger.error(f"@405 Exception: {e}")
 
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
         return JsonResponse(

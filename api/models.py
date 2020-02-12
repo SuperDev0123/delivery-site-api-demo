@@ -3094,6 +3094,7 @@ class Fp_freight_providers(models.Model):
     fp_manifest_cnt = models.IntegerField(default=1, blank=True, null=True)
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
     fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
+    prices_count = models.IntegerField(default=1, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
