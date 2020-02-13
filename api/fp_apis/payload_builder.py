@@ -6,7 +6,7 @@ from api.common import common_times
 from api.common import common_times
 from .utils import _convert_UOM
 
-BUILT_IN_PRICINGS = ["century"]
+BUILT_IN_PRICINGS = {"century": {"service_types": ["standard", "vip", "premium"],}}
 
 ACCOUNT_CODES = {
     "startrack": {

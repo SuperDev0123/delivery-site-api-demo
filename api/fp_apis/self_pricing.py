@@ -4,6 +4,7 @@ import logging
 from api.models import *
 from api.common.ratio import _get_dim_amount
 from .response_parser import parse_pricing_response
+from .payload_builder import BUILT_IN_PRICINGS
 
 logger = logging.getLogger("dme_api")
 
@@ -77,50 +78,64 @@ def find_vehicle(booking, fp):
 
     try:
         sum_cube = 0
+        max_length = 0
         max_width = 0
         max_height = 0
-        max_length = 0
         vehicle_ids = []
 
         for item in booking_lines:
-            length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength * 5
-            width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth * 5
-            height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight * 5
+            length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+            width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+            height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
 
-            # Take the largest length, width and height on the largest package
-            if max_length < length:
-                max_length = length
+            max_length = length if max_length < length else max_length
+            max_width = width if max_width < width else max_width
+            max_height = height if max_height < height else max_height
+            sum_cube += width * height * length * item.e_qty
 
-            if max_width < width:
-                max_width = width
+        # print(
+        #     f"Max width: {max_width}, Max height: {max_height}, Max length: {max_length}"
+        # )
+        print(f"Sum Cube = {sum_cube}")
 
-            if max_height < height:
-                max_height = height
+        if booking_lines.first().e_type_of_packaging and booking_lines.first().e_type_of_packaging.lower() in [
+            "pallet",
+            "plt",
+        ]:
+            for vehicle in vehicles:
+                vmax_width = (
+                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
+                )
+                vmax_height = (
+                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
+                )
+                vmax_length = (
+                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
+                )
 
-            # Work out the cube of all the packages and add together
-            cube = width * height * length
-            sum_cube += cube * item.e_qty
+                if (
+                    vmax_width >= max_width
+                    and max_height >= max_height
+                    and vmax_length >= max_length
+                    and vehicle.pallets >= len(booking_lines)
+                ):
+                    vehicle_ids.append(vehicle.id)
+        else:
+            for vehicle in vehicles:
+                vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+                vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+                vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+                vehicle_cube = vmax_width * vmax_height * vmax_length
 
-        # print(f"Max width = {max_width}")
-        # print(f"Max height = {max_height}")
-        # print(f"Max length = {max_length}")
-        # print(f"Sum Cube = {sum_cube}")
+                if (
+                    vmax_width >= max_width
+                    and max_height >= max_height
+                    and vmax_length >= max_length
+                    and vehicle_cube * 0.8 >= sum_cube
+                ):
+                    vehicle_ids.append(vehicle.id)
 
-        for vehicle in vehicles:
-            vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-            vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-            vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-            vehicle_cube = vmax_width * vmax_height * vmax_length
-
-            if (
-                vmax_width >= max_width
-                and max_height >= max_height
-                and vmax_length >= max_length
-                and vehicle_cube * 0.8 >= sum_cube
-            ):
-                vehicle_ids.append(vehicle.id)
-
-        return vehicle_ids
+            return vehicle_ids
     except Exception as e:
         logger.info(f"@833 Century - error while find vehicle")
         return
@@ -132,36 +147,40 @@ def dim_filter(fp, booking, rules):
     if fp.fp_company_name.lower() == "century":
         vehicle_ids = find_vehicle(booking, fp)
 
-        if not vehicle_ids:
-            logger.info(f"@834 Century - no proper vehicles")
-            return
-
-        rules = rules.filter(vehicle_id__in=vehicle_ids)
-        return rules
+        if vehicle_ids:
+            rules = rules.filter(vehicle_id__in=vehicle_ids)
+            return rules
 
 
 def get_pricing(fp_name, booking):
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-    rules = FP_pricing_rules.objects.filter(freight_provider_id=fp.id)
-
-    # Address Filter
-    rules = address_filter(booking, rules)
-
-    if not rules:
-        logger.info(f"@831 Century - not supported addresses")
-        return
-
-    # Size(dim) Filter
-    rules = dim_filter(fp, booking, rules)
-    costs = FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules]).order_by(
-        "per_UOM_charge"
-    )
-
-    if fp.fp_company_name.lower() == "century":  # If FP's Charge UOM is `vehicle`
-        costs = costs[: fp.prices_count]
+    service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
 
     pricies = []
-    for cost in costs:
+    for service_type in service_types:
+        rules = FP_pricing_rules.objects.filter(
+            freight_provider_id=fp.id, service_timing_code__iexact=service_type
+        )
+
+        # Address Filter
+        rules = address_filter(booking, rules)
+
+        if not rules:
+            logger.info(f"@831 Century - not supported addresses")
+            continue
+
+        # Size(dim) Filter
+        rules = dim_filter(fp, booking, rules)
+
+        if not rules:
+            logger.info(f"@832 Century - no proper vehicles")
+            continue
+
+        cost = (
+            FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules])
+            .order_by("per_UOM_charge")
+            .first()
+        )
         rule = rules.get(cost_id=cost.id)
         etd = (
             f"{rule.timing.min}, {rule.timing.max}"
@@ -171,9 +190,8 @@ def get_pricing(fp_name, booking):
         price = {
             "netPrice": cost.per_UOM_charge,
             "totalTaxes": 0,
-            "service_name": f"{rule.service_timing_code}",
+            "serviceName": f"{rule.service_timing_code}",
             "etd": etd,
-            "fk_freight_provider_id": fp.id,
         }
         pricies.append(price)
 

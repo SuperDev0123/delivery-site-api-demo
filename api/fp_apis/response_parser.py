@@ -74,7 +74,6 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
                 result["fk_freight_provider_id"] = get_service_provider(fp_name.lower())
-                result["fk_freight_provider_id"] = fp_name.upper()
                 result["fee"] = price["netPrice"]
                 result["tax_value_1"] = price["totalTaxes"]
                 result["service_name"] = (
@@ -89,8 +88,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
                 result["fk_freight_provider_id"] = get_service_provider(fp_name.lower())
-                result["fk_freight_provider_id"] = fp_name.upper()
                 result["fee"] = price["netPrice"]
+                result["etd"] = price["etd"]
                 result["tax_value_1"] = price["totalTaxes"]
                 result["service_name"] = (
                     price["serviceName"] if "serviceName" in price else None
@@ -105,7 +104,6 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             ) = convert_price.fp_price_2_dme_price(result)
         return results
     except Exception as e:
-        print("@1 - ", e)
         error_msg = f"Error while parse Pricing response: {e}"
         logger.error(error_msg)
         return None
