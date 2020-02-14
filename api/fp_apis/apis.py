@@ -33,7 +33,7 @@ from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from api.common import status_history, download_external
-from .build_dhl_label import *
+from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
