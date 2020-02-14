@@ -3404,7 +3404,7 @@ class FP_costs(models.Model):
     dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
     price_up_to_length = models.FloatField(default=0, null=True, blank=True)
     price_up_to_width = models.FloatField(default=0, null=True, blank=True)
-    price_up_to_heigth = models.FloatField(default=0, null=True, blank=True)
+    price_up_to_height = models.FloatField(default=0, null=True, blank=True)
     weight_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
     price_up_to_weight = models.FloatField(default=0, null=True, blank=True)
     max_length = models.FloatField(default=0, null=True, blank=True)

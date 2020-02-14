@@ -10,7 +10,10 @@ from .utils import _convert_UOM
 
 logger = logging.getLogger("dme_api")
 
-BUILT_IN_PRICINGS = {"century": {"service_types": ["standard", "vip", "premium"],}}
+BUILT_IN_PRICINGS = {
+    "century": {"service_types": ["standard", "vip", "premium"]},
+    "camerons": {"service_types": ["standard", "express"]},
+}
 
 ACCOUNT_CODES = {
     "startrack": {

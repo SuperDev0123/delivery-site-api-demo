@@ -2,15 +2,16 @@ import json
 import logging
 
 from api.models import *
-from api.common.ratio import _get_dim_amount
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 from .response_parser import parse_pricing_response
 from .payload_builder import BUILT_IN_PRICINGS
 
 logger = logging.getLogger("dme_api")
+PALLETS = ["pallet", "plt"]
 
 
-def is_in_zone(zone_code, suburb, postal_code, state):
-    zones = FP_zones.objects.filter(zone=zone_code)
+def is_in_zone(fp, zone_code, suburb, postal_code, state):
+    zones = FP_zones.objects.filter(zone=zone_code, fk_fp=fp.id)
 
     if zones:
         for zone in zones:
@@ -26,7 +27,7 @@ def is_in_zone(zone_code, suburb, postal_code, state):
     return False
 
 
-def address_filter(booking, rules):
+def address_filter(booking, rules, fp):
     pu_suburb = booking.pu_Address_Suburb.lower()
     pu_postal_code = booking.pu_Address_PostalCode.lower()
     pu_state = booking.pu_Address_State.lower()
@@ -56,11 +57,11 @@ def address_filter(booking, rules):
             continue
 
         if rule.pu_zone:
-            if not is_in_zone(rules.pu_zone, pu_suburb, pu_postal_code, pu_state):
+            if not is_in_zone(fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state):
                 continue
 
         if rule.de_zone:
-            if not is_in_zone(rule.de_zone, de_suburb, de_postal_code, de_state):
+            if not is_in_zone(fp, rule.de_zone, de_suburb, de_postal_code, de_state):
                 continue
 
         filtered_rule_ids.append(rule.id)
@@ -68,9 +69,8 @@ def address_filter(booking, rules):
     return rules.filter(pk__in=filtered_rule_ids)
 
 
-def find_vehicle(booking, fp):
+def find_vehicle_ids(booking_lines, fp):
     vehicles = FP_vehicles.objects.filter(freight_provider_id=fp.id)
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     if len(booking_lines) == 0:
         logger.info(f"@832 Century - no Booking Lines to deliver")
@@ -97,10 +97,10 @@ def find_vehicle(booking, fp):
         #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
         # )
 
-        if booking_lines.first().e_type_of_packaging and booking_lines.first().e_type_of_packaging.lower() in [
-            "pallet",
-            "plt",
-        ]:
+        if (
+            booking_lines.first().e_type_of_packaging
+            and booking_lines.first().e_type_of_packaging.lower() in PALLETS
+        ):
             for vehicle in vehicles:
                 vmax_width = (
                     _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
@@ -140,15 +140,163 @@ def find_vehicle(booking, fp):
         return
 
 
-def dim_filter(fp, booking, rules):
-    filtered_rules = []
+def find_rule_ids_by_dim(booking_lines, rules, fp):
+    rule_ids = []
 
-    if fp.fp_company_name.lower() == "century":
-        vehicle_ids = find_vehicle(booking, fp)
+    for rule in rules:
+        cost = rule.cost
+
+        if cost.UOM_charge in PALLETS:  # Pallet Count Filter
+            if cost.start_qty and cost.start_qty > len(booking_lines):
+                continue
+            if cost.end_qty and cost.end_qty < len(booking_lines):
+                continue
+
+        if cost.oversize_price and cost.max_length:
+            c_width = _get_dim_amount(cost.dim_UOM) * cost.max_width
+            c_length = _get_dim_amount(cost.dim_UOM) * cost.max_length
+            c_height = _get_dim_amount(cost.dim_UOM) * cost.max_height
+        else:
+            c_width = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_width
+            c_length = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_length
+            c_height = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_height
+
+        comp_count = 0
+        for item in booking_lines:
+            if not item.e_type_of_packaging.lower() in PALLETS:
+                logger.error(f"@833 {fp.fp_company_name} - only support `Pallet`")
+                return
+            else:
+                width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+                height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+                length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+
+                if width < c_width and height < c_height and length < c_length:
+                    comp_count += 1
+
+        if comp_count == len(booking_lines):
+            rule_ids.append(rule.id)
+
+    return rule_ids
+
+
+def find_rule_ids_by_weight(booking_lines, rules, fp):
+    rule_ids = []
+
+    for rule in rules:
+        cost = rule.cost
+
+        if cost.oversize_price and cost.max_weight:
+            c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
+        else:
+            c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
+
+        comp_count = 0
+        for booking_line in booking_lines:
+            if (
+                cost.UOM_charge.lower() in PALLETS
+                and not booking_line.e_type_of_packaging.lower() in PALLETS
+            ):
+                logger.error(f"@833 {fp.fp_company_name} - only support `Pallet`")
+                return
+            else:
+                total_weight = (
+                    booking_line.e_qty
+                    * _get_weight_amount(booking_line.e_weightUOM)
+                    * booking_line.e_weightPerEach
+                )
+
+                if total_weight < c_weight:
+                    comp_count += 1
+
+        if comp_count == len(booking_lines):
+            rule_ids.append(rule.id)
+
+    return rule_ids
+
+
+def is_oversize(booking_lines, rule):
+    cost = rule.cost
+
+    if cost.oversize_price and cost.max_length:
+        c_width = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_width
+        c_length = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_length
+        c_height = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_height
+
+        for item in booking_lines:
+            width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+            height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+            length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+
+            if width >= c_width or height >= c_height or length >= c_length:
+                return True
+
+    return False
+
+
+def is_overweight(booking_lines, rule):
+    cost = rule.cost
+
+    if cost.oversize_price and cost.max_weight:
+        c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
+
+        for booking_line in booking_lines:
+            total_weight = (
+                booking_line.e_qty
+                * _get_weight_amount(booking_line.e_weightUOM)
+                * booking_line.e_weightPerEach
+            )
+
+            if total_weight >= c_weight:
+                return True
+
+    return False
+
+
+def dim_filter(booking, rules, fp):
+    filtered_rules = []
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+    if fp.fp_company_name.lower() == "century":  # Vehicle
+        vehicle_ids = find_vehicle_ids(booking_lines, fp)
 
         if vehicle_ids:
             rules = rules.filter(vehicle_id__in=vehicle_ids)
-            return rules
+            filtered_rules = rules
+    elif fp.fp_company_name.lower() in ["camerons"]:  # Over size & Normal size
+        rule_ids = find_rule_ids_by_dim(booking_lines, rules, fp)
+
+        if rule_ids:
+            filtered_rules = rules.filter(pk__in=rule_ids)
+
+    return filtered_rules
+
+
+def weight_filter(booking_lines, rules, fp):
+    filtered_rules = []
+
+    if fp.fp_company_name.lower() in ["camerons"]:  # Over weight & Normal weight
+        rule_ids = find_rule_ids_by_weight(booking_lines, rules, fp)
+        filtered_rules = rules.filter(pk__in=rule_ids)
+
+    return filtered_rules
+
+
+def find_cost(booking_lines, rules, fp):
+    lowest_cost = None
+
+    for rule in rules:
+        cost = rule.cost
+
+        if is_oversize(booking_lines, rule) or is_overweight(booking_lines, rule):
+            per_UOM_charge = cost.oversize_price
+        else:
+            per_UOM_charge = cost.per_UOM_charge
+
+        if not lowest_cost or per_UOM_charge < lowest_cost.per_UOM_charge:
+            lowest_cost = cost
+
+    return lowest_cost
 
 
 def get_pricing(fp_name, booking):
@@ -162,24 +310,34 @@ def get_pricing(fp_name, booking):
         )
 
         # Address Filter
-        rules = address_filter(booking, rules)
+        rules = address_filter(booking, rules, fp)
 
         if not rules:
-            logger.info(f"@831 Century - not supported addresses")
+            logger.info(f"@831 {fp_name.upper()} - not supported addresses")
             continue
 
         # Size(dim) Filter
-        rules = dim_filter(fp, booking, rules)
+        if fp.fp_company_name.lower() in ["century", "camerons"]:
+            rules = dim_filter(booking, rules, fp)
 
-        if not rules:
-            logger.info(f"@832 Century - no proper vehicles")
-            continue
+            if not rules:
+                continue
 
-        cost = (
-            FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules])
-            .order_by("per_UOM_charge")
-            .first()
-        )
+        if fp.fp_company_name.lower() in ["century"]:
+            cost = (
+                FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules])
+                .order_by("per_UOM_charge")
+                .first()
+            )
+            net_price = cost.per_UOM_charge
+        elif fp.fp_company_name.lower() in ["camerons"]:
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+            rules = weight_filter(booking_lines, rules, fp)
+            cost = find_cost(booking_lines, rules, fp)
+            net_price = cost.per_UOM_charge * len(booking_lines)
+
         rule = rules.get(cost_id=cost.id)
         etd = (
             f"{rule.timing.min}, {rule.timing.max}"
@@ -187,7 +345,7 @@ def get_pricing(fp_name, booking):
             else f"{rule.timing.min}"
         )
         price = {
-            "netPrice": cost.per_UOM_charge,
+            "netPrice": net_price,
             "totalTaxes": 0,
             "serviceName": f"{rule.service_timing_code}",
             "etd": etd,
