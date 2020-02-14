@@ -16,6 +16,7 @@ FP_UOM = {
     "sendle": {"dim": "cm", "weight": "kg"},
     "fastway": {"dim": "cm", "weight": "kg"},
     "allied": {"dim": "cm", "weight": "kg"},
+    "dhl": {"dim": "cm", "weight": "kg"},
 }
 
 
