@@ -33,6 +33,7 @@ from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from api.common import status_history, download_external
+from .build_dhl_label import *
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -645,6 +646,9 @@ def get_label(request, fp_name):
                 except KeyError as e:
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
+
+            elif fp_name.lower() in ["dhl"]:
+                z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
             booking.save()
