@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime
 
 from django.conf import settings
@@ -5,6 +7,8 @@ from api.models import *
 from api.common import common_times
 from api.common import common_times
 from .utils import _convert_UOM
+
+logger = logging.getLogger("dme_api")
 
 BUILT_IN_PRICINGS = {"century": {"service_types": ["standard", "vip", "premium"],}}
 
@@ -36,6 +40,7 @@ ACCOUNT_CODES = {
     "sendle": {"live_0": "XXX"},
     "fastway": {"live_0": "XXX"},
     "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
+    "dhl": {"live_0": "XXX"},
 }
 
 KEY_CHAINS = {
@@ -104,6 +109,23 @@ KEY_CHAINS = {
             "accountState": "NSW",
         },
     },
+    "dhl": {
+        "live_0": {
+            "accountKey": "DELIVER_ME_CARRIER_API",
+            "accountPassword": "RGVsaXZlcmNhcnJpZXJhcGkxMjM=",
+        }
+    },
+}
+
+FP_UOM = {
+    "startrack": {"dim": "cm", "weight": "kg"},
+    "hunter": {"dim": "cm", "weight": "kg"},
+    "tnt": {"dim": "cm", "weight": "kg"},
+    "capital": {"dim": "cm", "weight": "kg"},
+    "sendle": {"dim": "cm", "weight": "kg"},
+    "fastway": {"dim": "cm", "weight": "kg"},
+    "allied": {"dim": "cm", "weight": "kg"},
+    "dhl": {"dim": "cm", "weight": "kg"},
 }
 
 
@@ -124,7 +146,7 @@ def _get_account_details(booking, fp_name, account_code_key=None):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway"]:
+    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway", "dhl"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUNT_CODES[fp_name.lower()][default_account_code_key],
@@ -139,11 +161,23 @@ def _get_account_details(booking, fp_name, account_code_key=None):
     return account_detail
 
 
-def get_service_provider(fp_name):
-    if fp_name.lower() == "startrack":
-        return "ST"
-    else:
-        return fp_name.upper()
+def get_service_provider(fp_name, upper=True):
+    try:
+        fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
+
+        if fp_name.lower() == "startrack":
+            if upper:
+                return "ST"
+            else:
+                return fp.fp_company_name
+        else:
+            if upper:
+                return fp_name.upper()
+            else:
+                return fp.fp_company_name
+    except Fp_freight_providers.DoesNotExist:
+        logger.error("#810 - Not supported FP!")
+        return None
 
 
 def _set_error(booking, error_msg):
@@ -560,6 +594,8 @@ def get_getlabel_payload(booking, fp_name):
             if booking.b_client_sales_inv_num is None
             else booking.b_client_sales_inv_num
         )
+    elif fp_name.lower() == "sendle":
+        payload["consignmentNumber"] = f"{str(booking.fk_fp_pickup_id)}"
 
     return payload
 
