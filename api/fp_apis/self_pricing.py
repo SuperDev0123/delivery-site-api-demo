@@ -94,9 +94,8 @@ def find_vehicle(booking, fp):
             sum_cube += width * height * length * item.e_qty
 
         # print(
-        #     f"Max width: {max_width}, Max height: {max_height}, Max length: {max_length}"
+        #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
         # )
-        print(f"Sum Cube = {sum_cube}")
 
         if booking_lines.first().e_type_of_packaging and booking_lines.first().e_type_of_packaging.lower() in [
             "pallet",
