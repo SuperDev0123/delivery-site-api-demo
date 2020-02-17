@@ -89,7 +89,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"@841 BOK_1 POST - {e}")
+            logger.error(f"@841 BOK_1 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -110,7 +110,7 @@ class BOK_2_ViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"@842 BOK_2 POST - {e}")
+            logger.error(f"@842 BOK_2 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
