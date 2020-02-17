@@ -4,6 +4,8 @@ import time
 import uuid
 import json
 import datetime
+import logging
+
 from ast import literal_eval
 from urllib.request import urlopen
 import urllib, requests
@@ -48,6 +50,8 @@ else:
 
 DME_LEVEL_API_URL = "http://localhost:3000"
 
+logger = logging.getLogger("dme_api")
+
 
 class BOK_0_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -84,7 +88,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            logger.error(f"@841 BOK_1 POST - {e}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BOK_2_ViewSet(viewsets.ViewSet):
@@ -103,7 +109,9 @@ class BOK_2_ViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            logger.error(f"@842 BOK_2 POST - {e}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BOK_3_ViewSet(viewsets.ViewSet):
