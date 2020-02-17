@@ -5,6 +5,7 @@ import uuid
 import json
 import datetime
 import logging
+
 from ast import literal_eval
 from urllib.request import urlopen
 import urllib, requests
@@ -50,12 +51,16 @@ else:
 
 DME_LEVEL_API_URL = "http://localhost:3000"
 
+logger = logging.getLogger("dme_api")
+
 
 class BOK_0_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_0_bookingkeys = BOK_0_BookingKeys.objects.all()[:50]
+        bok_0_bookingkeys = BOK_0_BookingKeys.objects.all().order_by(
+            "-z_CreatedTimestamp"
+        )[:50]
         serializer = BOK_0_Serializer(bok_0_bookingkeys, many=True)
         return Response(serializer.data)
 
@@ -71,7 +76,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_1_headers = BOK_1_headers.objects.all()[:50]
+        bok_1_headers = BOK_1_headers.objects.all().order_by("-z_CreatedTimestamp")[:50]
         serializer = BOK_1_Serializer(bok_1_headers, many=True)
         return Response(serializer.data)
 
@@ -86,14 +91,16 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            logger.error(f"@841 BOK_1 POST - {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BOK_2_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_2_lines = BOK_2_lines.objects.all()[:50]
+        bok_2_lines = BOK_2_lines.objects.all().order_by("-z_CreatedTimestamp")[:50]
         serializer = BOK_2_Serializer(bok_2_lines, many=True)
         return Response(serializer.data)
 
@@ -105,14 +112,18 @@ class BOK_2_ViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            logger.error(f"@842 BOK_2 POST - {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BOK_3_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_3_lines_data = BOK_3_lines_data.objects.all()
+        bok_3_lines_data = BOK_3_lines_data.objects.all().order_by(
+            "-z_CreatedTimestamp"
+        )
         serializer = BOK_3_Serializer(bok_3_lines_data, many=True)
         return Response(serializer.data)
 

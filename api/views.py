@@ -3041,6 +3041,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     )
                 elif request.data["status_last"] == "Delivered":
                     booking.z_api_issue_update_flag_500 = 0
+                    booking.delivery_booking = datetime.now()
                     booking.save()
 
                 tempo.push_via_api(booking)
