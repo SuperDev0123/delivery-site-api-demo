@@ -1591,6 +1591,130 @@ class BookingViewSet(viewsets.ViewSet):
                 }
             )
 
+    @action(detail=False, methods=["get"])
+    def get_status(self, request, format=None):
+        pk_booking_id = request.GET["pk_header_id"]
+        user_id = request.user.id
+
+        try:
+            dme_employee = (
+                DME_employees.objects.select_related()
+                .filter(fk_id_user=user_id)
+                .first()
+            )
+
+            if dme_employee is not None:
+                user_type = "DME"
+            else:
+                user_type = "CLIENT"
+
+            if user_type == "CLIENT":
+                client_employee = (
+                    Client_employees.objects.select_related()
+                    .filter(fk_id_user=user_id)
+                    .first()
+                )
+                client = DME_clients.objects.get(
+                    pk_id_dme_client=client_employee.fk_id_dme_client_id
+                )
+
+                if client is None:
+                    return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
+
+            try:
+                booking = (
+                    Bookings.objects.select_related()
+                    .filter(pk_booking_id=pk_booking_id)
+                    .values(
+                        "b_status",
+                        "v_FPBookingNumber",
+                        "vx_account_code",
+                        "kf_client_id",
+                    )
+                )
+
+                if (
+                    user_type == "CLIENT"
+                    and booking.kf_client_id != client.dme_account_num
+                ):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "message": "You don't have permission to get status of this booking.",
+                            "pk_header_id": pk_booking_id,
+                        }
+                    )
+
+                if booking.vx_account_code:
+                    quote = booking.api_booking_quote
+
+                if booking.vx_account_code and booking.b_status == "Ready for Booking":
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Pricing is selected but not booked yet",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": {
+                                "fee": quote.client_mu_1_minimum_values,
+                                "tax": qutoe.mu_percentage_fuel_levy,
+                            },
+                        }
+                    )
+                elif (
+                    not booking.vx_account_code
+                    and booking.b_status == "Ready for Booking"
+                ):
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Pricing is not selected.",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": None,
+                        }
+                    )
+                elif booking.vx_account_code and booking.b_status == "Booked":
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Booking is booked.",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": {
+                                "fee": quote.client_mu_1_minimum_values,
+                                "tax": qutoe.mu_percentage_fuel_levy,
+                            },
+                            "connote": booking.v_FPBookingNumber,
+                        }
+                    )
+                elif booking.vx_account_code and booking.b_status == "Closed":
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Booking is cancelled.",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": {
+                                "fee": quote.client_mu_1_minimum_values,
+                                "tax": qutoe.mu_percentage_fuel_levy,
+                            },
+                            "connote": booking.v_FPBookingNumber,
+                        }
+                    )
+            except Bookings.DoesNotExist:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "Booking is not exist with provided pk_header_id.",
+                        "pk_header_id": pk_booking_id,
+                    }
+                )
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": str(e), "pk_header_id": pk_booking_id}
+            )
+
     @action(detail=False, methods=["post"])
     def create_booking(self, request, format=None):
         bookingData = request.data
