@@ -446,11 +446,14 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 else:
                     h25 = wrap_in_quote(booking.get("b_client_order_num"))
 
-                if booking["de_to_PickUp_Instructions_Address"] is None:
-                    h26 = ""
-                else:
+                h26 = ""
+                if booking["de_to_PickUp_Instructions_Address"]:
                     h26 = wrap_in_quote(
                         booking.get("de_to_PickUp_Instructions_Address")
+                    )
+                if booking["de_to_Pick_Up_Instructions_Contact"]:
+                    h26 += " " + wrap_in_quote(
+                        booking.get("de_to_Pick_Up_Instructions_Contact")
                     )
 
                 h27 = ""
@@ -5200,13 +5203,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AA1", "delivery_days_from_booked", bold)
             worksheet.write("AB1", "delivery_actual_kpi_days", bold)
             worksheet.write("AC1", "z_calculated_ETA", bold)
-            worksheet.write("AD1", "de_Deliver_By_Date(Date)", bold)
-            worksheet.write("AE1", "de_Deliver_By_Date(Time)", bold)
-            worksheet.write("AF1", "inv_billing_status", bold)
-            worksheet.write("AG1", "inv_billing_status_note", bold)
-            worksheet.write("AH1", "b_booking_project", bold)
-            worksheet.write("AI1", "b_project_due_date", bold)
-            worksheet.write("AJ1", "delivery_booking", bold)
+            worksheet.write("AD1", "fp_store_event_date", bold)
+            worksheet.write("AE1", "fp_store_event_time", bold)
+            worksheet.write("AF2", "fp_store_event_desc", bold)
+            worksheet.write("AG1", "inv_billing_status", bold)
+            worksheet.write("AH1", "inv_billing_status_note", bold)
+            worksheet.write("AI1", "b_booking_project", bold)
+            worksheet.write("AJ1", "b_project_due_date", bold)
+            worksheet.write("AK1", "delivery_booking", bold)
             # worksheet.write("AI1", '=IF(N1="In Transit",IF(Z1=7,C1+5,C1+12),"")', bold)
             # worksheet.write("AJ1", '=IF(AD1="";AK1-TODAY;"Store Booked")', bold)
 
@@ -5241,11 +5245,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AC2", "Calculated ETA", bold)
             worksheet.write("AD2", "1st Contact For Delivery Booking Date", bold)
             worksheet.write("AE2", "1st Contact For Delivery Booking Time", bold)
-            worksheet.write("AF2", "Invoice Billing Status", bold)
-            worksheet.write("AG2", "Invoice Billing Status Note", bold)
-            worksheet.write("AH2", "Project Name", bold)
-            worksheet.write("AI2", "Project Due Date", bold)
-            worksheet.write("AJ2", "Delivery Booking Date", bold)
+            worksheet.write("AF2", "FP Store Activity Description", bold)
+            worksheet.write("AG2", "Invoice Billing Status", bold)
+            worksheet.write("AH2", "Invoice Billing Status Note", bold)
+            worksheet.write("AI2", "Project Name", bold)
+            worksheet.write("AJ2", "Project Due Date", bold)
+            worksheet.write("AK2", "Delivery Booking Date", bold)
             # worksheet.write("AI2", "Delivery Booking Target Date", bold)
             # worksheet.write("AJ2", "Delivery Booking - Days To Target", bold)
 
@@ -5282,11 +5287,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AC1", "Calculated ETA", bold)
             worksheet.write("AD1", "1st Contact For Delivery Booking Date", bold)
             worksheet.write("AE1", "1st Contact For Delivery Booking Time", bold)
-            worksheet.write("AF1", "Invoice Billing Status", bold)
-            worksheet.write("AG1", "Invoice Billing Status Note", bold)
-            worksheet.write("AH1", "Project Name", bold)
-            worksheet.write("AI1", "Project Due Date", bold)
-            worksheet.write("AJ1", "Delivery Booking Date", bold)
+            worksheet.write("AF1", "FP Store Activity Description", bold)
+            worksheet.write("AG1", "Invoice Billing Status", bold)
+            worksheet.write("AH1", "Invoice Billing Status Note", bold)
+            worksheet.write("AI1", "Project Name", bold)
+            worksheet.write("AJ1", "Project Due Date", bold)
+            worksheet.write("AK1", "Delivery Booking Date", bold)
             # worksheet.write("AI1", "Delivery Booking Target Date", bold)
             # worksheet.write("AJ1", "Delivery Booking - Days To Target", bold)
 
@@ -5458,13 +5464,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 30, booking.fp_store_event_time, time_format
                 )
 
-            worksheet.write(row, col + 31, booking.inv_billing_status)
-            worksheet.write(row, col + 32, booking.inv_billing_status_note)
-            worksheet.write(row, col + 33, booking.b_booking_project)
-            worksheet.write(row, col + 34, booking.b_project_due_date, date_format)
+            worksheet.write(row, col + 31, booking.fp_store_event_desc)
+            worksheet.write(row, col + 32, booking.inv_billing_status)
+            worksheet.write(row, col + 33, booking.inv_billing_status_note)
+            worksheet.write(row, col + 34, booking.b_booking_project)
+            worksheet.write(row, col + 35, booking.b_project_due_date, date_format)
 
             # Store Scheduled Date
-            worksheet.write(row, col + 35, booking.delivery_booking, date_format)
+            worksheet.write(row, col + 36, booking.delivery_booking, date_format)
 
             # # Store Booking Date Due By
             # if booking.b_status == "In Transit" and booking.delivery_kpi_days:
@@ -5840,8 +5847,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AA1", "delivery_days_from_booked", bold)
             worksheet.write("AB1", "delivery_actual_kpi_days", bold)
             worksheet.write("AC1", "z_calculated_ETA", bold)
-            worksheet.write("AD1", "de_Deliver_By_Date(Date)", bold)
-            worksheet.write("AE1", "de_Deliver_By_Date(Time)", bold)
+            worksheet.write("AD1", "fp_store_event_date", bold)
+            worksheet.write("AE1", "fp_store_event_time", bold)
+            worksheet.write("AE1", "fp_store_event_desc", bold)
             worksheet.write("AF1", "client_item_reference", bold)
 
             worksheet.write("A2", "Booked Date", bold)
@@ -5875,7 +5883,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AC2", "Calculated ETA", bold)
             worksheet.write("AD2", "1st Contact For Delivery Booking Date", bold)
             worksheet.write("AE2", "1st Contact For Delivery Booking Time", bold)
-            worksheet.write("AF2", "Gaps", bold)
+            worksheet.write("AF2", "FP Store Activity Description", bold)
+            worksheet.write("AG2", "Gaps", bold)
 
             row = 2
         else:
@@ -5910,7 +5919,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AC1", "Calculated ETA", bold)
             worksheet.write("AD1", "1st Contact For Delivery Booking Date", bold)
             worksheet.write("AE1", "1st Contact For Delivery Booking Time", bold)
-            worksheet.write("AF1", "Gaps", bold)
+            worksheet.write("AF1", "FP Store Activity Description", bold)
+            worksheet.write("AG1", "Gaps", bold)
 
             row = 1
 
@@ -6083,7 +6093,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 30, booking.fp_store_event_time, time_format
                 )
 
-            worksheet.write(row, col + 31, gaps)
+            worksheet.write(row, col + 31, booking.fp_store_event_desc)
+            worksheet.write(row, col + 32, gaps)
 
             row += 1
 
@@ -6136,7 +6147,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AD1", "delivery_days_from_booked", bold)
             worksheet.write("AE1", "delivery_actual_kpi_days", bold)
             worksheet.write("AF1", "z_calculated_ETA", bold)
-            worksheet.write("AG1", "de_Deliver_By_Date(Date)", bold)
+            worksheet.write("AG1", "fp_store_event_date", bold)
+            worksheet.write("AH1", "fp_store_event_desc", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Given to / Received by Transport", bold)
@@ -6175,6 +6187,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AE2", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AF2", "Calculated ETA", bold)
             worksheet.write("AG2", "1st Contact For Delivery Booking Date", bold)
+            worksheet.write("AH2", "FP Store Activity Description", bold)
 
             row = 2
         else:
@@ -6218,6 +6231,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AE1", "Actual Delivery KPI (Days)", bold)
             worksheet.write("AF1", "Calculated ETA", bold)
             worksheet.write("AG1", "1st Contact For Delivery Booking Date", bold)
+            worksheet.write("AH1", "FP Store Activity Description", bold)
 
             row = 1
 
@@ -6441,6 +6455,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_datetime(
                     row, col + 32, booking.fp_store_event_date, date_format
                 )
+
+            worksheet.write(row, col + 33, booking.fp_store_event_desc)
 
             row += 1
 

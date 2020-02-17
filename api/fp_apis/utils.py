@@ -1,7 +1,27 @@
-from django.conf import settings
-from api.models import *
+import logging
 
-from .payload_builder import ACCOUTN_CODES
+from django.conf import settings
+
+from api.models import *
+from api.models import *
+from api.common import ratio
+
+logger = logging.getLogger("dme_api")
+
+FP_UOM = {
+    "startrack": {"dim": "cm", "weight": "kg"},
+    "hunter": {"dim": "cm", "weight": "kg"},
+    "tnt": {"dim": "cm", "weight": "kg"},
+    "capital": {"dim": "cm", "weight": "kg"},
+    "sendle": {"dim": "cm", "weight": "kg"},
+    "fastway": {"dim": "cm", "weight": "kg"},
+    "allied": {"dim": "cm", "weight": "kg"},
+}
+
+
+def _convert_UOM(value, uom, type, fp_name):
+    converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+    return round(converted_value, 2)
 
 
 def get_dme_status_from_fp_status(fp_name, booking):
@@ -17,24 +37,112 @@ def get_dme_status_from_fp_status(fp_name, booking):
 
 
 def get_account_code_key(booking, fp_name):
-    if not booking.api_booking_quote:
-        booking.b_errorCapture = f"Please select a Pricing"
-        booking.save()
-        return None
-    elif fp_name.lower() not in ACCOUTN_CODES:
+    from .payload_builder import ACCOUTN_CODES
+
+    # Exceptional case for Bunnings
+    if "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code:
+        if booking.pu_Address_State == "QLD":
+            return "live_bunnings_0"
+        elif booking.pu_Address_State == "NSW":
+            return "live_bunnings_1"
+        else:
+            booking.b_errorCapture = f"Not supported State"
+            booking.save()
+            return None
+
+    if fp_name.lower() not in ACCOUTN_CODES:
         booking.b_errorCapture = f"Not supported FP"
         booking.save()
         return None
-    else:
+    elif booking.api_booking_quote:
         account_code = booking.api_booking_quote.account_code
-        account_key = None
+        account_code_key = None
 
         for key in ACCOUTN_CODES[fp_name.lower()]:
             if ACCOUTN_CODES[fp_name.lower()][key] == account_code:
                 account_key = key
-                return account_key
+                return account_code_key
 
         if not account_key:
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
             booking.save()
             return None
+    elif not booking.api_booking_quote:
+        return "live_0"
+
+
+def auto_select(booking, pricings):
+    if len(pricings) == 0:
+        booking.b_errorCapture = "No Freight Provider is available"
+        booking.save()
+        return None
+
+    filtered_pricing = {}
+    for pricing in pricings:
+        if not pricing.service_name or (
+            pricing.service_name and pricing.service_name != "Air Freight"
+        ):
+            etd_min, etd_max = _get_etd(pricing)
+
+            if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
+                timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
+                delta_min = 0
+
+                if booking.pu_PickUp_Avail_Time_Hours:
+                    delta_min = booking.pu_PickUp_Avail_Time_Hours * 60
+                if booking.pu_PickUp_Avail_Time_Minutes:
+                    delta_min += pu_PickUp_Avail_Time_Minutes
+                if booking.de_Deliver_By_Hours:
+                    delta_min -= booking.de_Deliver_By_Hours * 60
+                if booking.de_Deliver_By_Minutes:
+                    delta_min -= booking.de_Deliver_By_Minutes
+
+                delta_min = timeDelta.total_seconds() / 60 + delta_min
+
+                if delta_min > etd_max and not filtered_pricing:
+                    filtered_pricing["pricing"] = pricing
+                    filtered_pricing["etd_max"] = etd_max
+                elif (
+                    delta_min > etd_max
+                    and filtered_pricing
+                    and filtered_pricing["pricing"].fee > pricing.fee
+                ):
+                    filtered_pricing["pricing"] = pricing
+                    filtered_pricing["etd_max"] = etd_max
+            else:
+                if not filtered_pricing:
+                    filtered_pricing["pricing"] = pricing
+                    filtered_pricing["etd_max"] = etd_max
+                elif filtered_pricing and filtered_pricing["pricing"].fee > pricing.fee:
+                    filtered_pricing["pricing"] = pricing
+                    filtered_pricing["etd_max"] = etd_max
+
+    if filtered_pricing:
+        logger.error(f"#854 Filtered Pricing - {filtered_pricing}")
+        booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
+        booking.vx_account_code = filtered_pricing["pricing"].account_code
+        booking.vx_serviceName = filtered_pricing["pricing"].service_name
+        booking.api_booking_quote = filtered_pricing["pricing"]
+        booking.save()
+        return True
+    else:
+        logger.error("#855 - Could not find proper pricing")
+        return False
+
+
+def _get_etd(pricing):
+    if not pricing.etd:
+        return None, None
+
+    if pricing.fk_freight_provider_id.lower() == "hunter":
+        temp = pricing.etd.lower().split("days")[0]
+        min = float(temp.split("-")[0])
+        max = float(temp.split("-")[1])
+    elif pricing.fk_freight_provider_id.lower() == "sendle":
+        min = float(pricing.etd.split(",")[0])
+        max = float(pricing.etd.split(",")[1])
+    elif pricing.fk_freight_provider_id.lower() == "tnt":
+        min = 0
+        max = float(pricing.etd.lower().split("days")[0])
+
+    return min * 24 * 60, max * 24 * 60
