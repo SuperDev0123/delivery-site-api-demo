@@ -10,7 +10,10 @@ from .utils import _convert_UOM
 
 logger = logging.getLogger("dme_api")
 
-BUILT_IN_PRICINGS = ["Century"]
+BUILT_IN_PRICINGS = {
+    "century": {"service_types": ["standard", "vip", "premium"]},
+    "camerons": {"service_types": ["standard", "express"]},
+}
 
 ACCOUNT_CODES = {
     "startrack": {
@@ -426,7 +429,17 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload["receiver_Account"] = "30021385"
     elif fp_name.lower() == "capital":
         payload["serviceType"] = "EC"
-
+    elif fp_name.lower() == "dhl":
+        if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
+            payload["clientType"] = "aldi"
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name__iexact=fp_name.lower()
+            )
+            payload[
+                "consignmentNoteNumber"
+            ] = f"DME{str(fp.new_connot_index + 100000).zfill(6)}"
+        else:
+            payload["clientType"] = "***"
     return payload
 
 

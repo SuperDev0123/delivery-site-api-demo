@@ -29,12 +29,13 @@ from .payload_builder import (
     get_reprint_payload,
     get_pricing_payload,
 )
-from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .self_pricing import get_pricing
+from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from api.common import status_history, download_external
+from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -309,6 +310,26 @@ def book(request, fp_name):
                                 fk_booking_id=booking.pk_booking_id,
                                 api_item_id=item["item_id"],
                             ).save()
+                    # Increase Conote Number and Manifest Count for DHL
+                    elif booking.vx_freight_provider.lower() == "dhl":
+                        if (
+                            booking.kf_client_id
+                            == "461162D2-90C7-BF4E-A905-000000000002"
+                        ):
+                            fp = Fp_freight_providers.objects.get(
+                                fp_company_name__iexact=fp_name.lower()
+                            )
+                            fp.new_connot_index = fp.new_connot_index + 1
+                            fp.fp_manifest_cnt = fp.fp_manifest_cnt + 1
+
+                            booking.v_FPBookingNumber = (
+                                f"{str(fp.fp_manifest_cnt + 1000000).zfill(7)}"
+                            )
+                            fp.save()
+                            booking.save()
+                        else:
+                            booking.v_FPBookingNumber = str(json_data["orderNumber"])
+                            booking.save()
 
                     if booking.b_client_name.lower() == "biopak":
                         update_biopak_with_booked_booking(booking_id)
@@ -648,6 +669,9 @@ def get_label(request, fp_name):
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
+            elif fp_name.lower() in ["dhl"]:
+                z_label_url = build_dhl_label(booking)
+
             booking.z_label_url = z_label_url
             booking.save()
 
@@ -957,8 +981,8 @@ def pricing(request):
         _set_error(booking, error_msg)
         return JsonResponse({"message": error_msg}, status=400)
 
-    fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack"]
-    # fp_names = ["Century"]
+    # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack", "Century"]
+    fp_names = ["Camerons"]
 
     try:
         for fp_name in fp_names:
@@ -1050,7 +1074,42 @@ def pricing(request):
                                 except Exception as e:
                                     logger.error(f"@402 Exception: {e}")
             elif fp_name.lower() in BUILT_IN_PRICINGS:
-                get_pricing(fp_name.lower(), booking)
+                results = get_pricing(fp_name.lower(), booking)
+                parse_results = parse_pricing_response(
+                    results, fp_name.lower(), booking, True
+                )
+
+                for parse_result in parse_results:
+                    try:
+                        api_booking_quote = API_booking_quotes.objects.get(
+                            fk_booking_id=booking.pk_booking_id,
+                            fk_freight_provider_id=parse_result[
+                                "fk_freight_provider_id"
+                            ].upper(),
+                            service_name=parse_result["service_name"],
+                        )
+
+                        serializer = ApiBookingQuotesSerializer(
+                            api_booking_quote, data=parse_result
+                        )
+                        if serializer.is_valid():
+                            serializer.save()
+                        else:
+                            logger.error(f"@403 Serializer error: {serializer.errors}")
+
+                        api_booking_quote.save()
+                    except API_booking_quotes.DoesNotExist:
+                        serializer = ApiBookingQuotesSerializer(data=parse_result)
+
+                        try:
+                            if serializer.is_valid():
+                                serializer.save()
+                            else:
+                                logger.error(
+                                    f"@404 Serializer error: {serializer.errors}"
+                                )
+                        except Exception as e:
+                            logger.error(f"@405 Exception: {e}")
 
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
         return JsonResponse(

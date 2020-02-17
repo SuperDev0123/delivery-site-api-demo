@@ -3079,6 +3079,7 @@ class Fp_freight_providers(models.Model):
     fp_manifest_cnt = models.IntegerField(default=1, blank=True, null=True)
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
     fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
+    prices_count = models.IntegerField(default=1, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -3388,7 +3389,7 @@ class FP_costs(models.Model):
     dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
     price_up_to_length = models.FloatField(default=0, null=True, blank=True)
     price_up_to_width = models.FloatField(default=0, null=True, blank=True)
-    price_up_to_heigth = models.FloatField(default=0, null=True, blank=True)
+    price_up_to_height = models.FloatField(default=0, null=True, blank=True)
     weight_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
     price_up_to_weight = models.FloatField(default=0, null=True, blank=True)
     max_length = models.FloatField(default=0, null=True, blank=True)
