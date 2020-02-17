@@ -59,7 +59,7 @@ class BOK_0_ViewSet(viewsets.ViewSet):
 
     def list(self, request):
         bok_0_bookingkeys = BOK_0_BookingKeys.objects.all().order_by(
-            "-z_CreatedTimestamp"
+            "-z_createdTimeStamp"
         )[:50]
         serializer = BOK_0_Serializer(bok_0_bookingkeys, many=True)
         return Response(serializer.data)
@@ -76,7 +76,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_1_headers = BOK_1_headers.objects.all().order_by("-z_CreatedTimestamp")[:50]
+        bok_1_headers = BOK_1_headers.objects.all().order_by("-z_createdTimeStamp")[:50]
         serializer = BOK_1_Serializer(bok_1_headers, many=True)
         return Response(serializer.data)
 
@@ -100,7 +100,7 @@ class BOK_2_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
-        bok_2_lines = BOK_2_lines.objects.all().order_by("-z_CreatedTimestamp")[:50]
+        bok_2_lines = BOK_2_lines.objects.all().order_by("-z_createdTimeStamp")[:50]
         serializer = BOK_2_Serializer(bok_2_lines, many=True)
         return Response(serializer.data)
 
@@ -122,7 +122,7 @@ class BOK_3_ViewSet(viewsets.ViewSet):
 
     def list(self, request):
         bok_3_lines_data = BOK_3_lines_data.objects.all().order_by(
-            "-z_CreatedTimestamp"
+            "-z_createdTimeStamp"
         )
         serializer = BOK_3_Serializer(bok_3_lines_data, many=True)
         return Response(serializer.data)
