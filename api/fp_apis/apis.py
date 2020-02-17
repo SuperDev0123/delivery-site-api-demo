@@ -308,6 +308,19 @@ def book(request, fp_name):
                                 fk_booking_id=booking.pk_booking_id,
                                 api_item_id=item["item_id"],
                             ).save()
+                    # Increase Conote Number and Manifest Count for DHL
+                    elif booking.vx_freight_provider.lower() == "dhl":
+                        if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
+                            fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name.lower())
+                            fp.new_connot_index = fp.new_connot_index + 1
+                            fp.fp_manifest_cnt = fp.fp_manifest_cnt + 1
+
+                            booking.v_FPBookingNumber = f"{str(fp.fp_manifest_cnt + 1000000).zfill(7)}"
+                            fp.save()
+                            booking.save()
+                        else:
+                            booking.v_FPBookingNumber = str(json_data["orderNumber"])
+                            booking.save()
 
                     if booking.b_client_name.lower() == "biopak":
                         update_biopak_with_booked_booking(booking_id)
