@@ -436,9 +436,10 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=fp_name.lower()
             )
+            fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
             payload[
                 "consignmentNoteNumber"
-            ] = f"DME{str(fp.new_connot_index + 100000).zfill(6)}"
+            ] = f"DME{str( fp_carrier.connote_start_value + fp_carrier.current_value).zfill(6)}"
         else:
             payload["clientType"] = "***"
     return payload
