@@ -57,9 +57,9 @@ styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 if os.environ["ENV"] == "local":
     filepath = "./static/pdfs/dhl_au/"  
 elif os.environ["ENV"] == "dev":
-    filepath = "/opt/s3_public/pdfs/dhl_au"
+    filepath = "/opt/s3_public/pdfs/dhl_au/"
 elif os.environ["ENV"] == "prod":
-    filepath = "/opt/s3_public/pdfs/dhl_au"
+    filepath = "/opt/s3_public/pdfs/dhl_au/"
 
 def myFirstPage(canvas, doc):
     canvas.saveState()
@@ -410,4 +410,4 @@ def build_dhl_label(booking):
         print("Error1: " + str(e))
 
     # print('#901 - Finished %s' % datetime.datetime.now())
-    return "dhl_au/" + filename
+    return filename
