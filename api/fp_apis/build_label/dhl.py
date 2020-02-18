@@ -410,4 +410,4 @@ def build_dhl_label(booking):
         print("Error1: " + str(e))
 
     # print('#901 - Finished %s' % datetime.datetime.now())
-    return filename
+    return "dhl_au/" + filename
