@@ -54,8 +54,12 @@ style_center = ParagraphStyle(
 )
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 
-
-filepath = "./static/pdfs/dhl_au/"
+if os.environ["ENV"] == "local":
+    filepath = "./static/pdfs/dhl_au/"  
+elif os.environ["ENV"] == "dev":
+    filepath = "/opt/s3_public/pdfs/dhl_au"
+elif os.environ["ENV"] == "prod":
+    filepath = "/opt/s3_public/pdfs/dhl_au"
 
 def myFirstPage(canvas, doc):
     canvas.saveState()
