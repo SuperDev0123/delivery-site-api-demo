@@ -82,7 +82,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 )
                 results.append(result)
         # Built-in: Century, Camerons
-        elif fp_name in ["century", "camerons"] and json_data["price"]:
+        elif fp_name in ["century", "camerons", "toll"] and json_data["price"]:
             for price in json_data["price"]:
                 result = {}
                 print

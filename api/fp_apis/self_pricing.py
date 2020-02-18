@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from api.models import *
-from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.common.ratio import _get_dim_amount, _get_weight_amount, _m3_to_kg
 from .response_parser import parse_pricing_response
 from .payload_builder import BUILT_IN_PRICINGS
 
@@ -339,6 +339,7 @@ def get_pricing(fp_name, booking):
                 continue
 
         if fp.fp_company_name.lower() in ["century"]:
+            # Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge'
             cost = (
                 FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules])
                 .order_by("per_UOM_charge")
@@ -346,10 +347,23 @@ def get_pricing(fp_name, booking):
             )
             net_price = cost.per_UOM_charge
         elif fp.fp_company_name.lower() in ["camerons"]:
+            # Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
             rules = weight_filter(booking_lines, rules, fp)
             cost = find_cost(booking_lines, rules, fp)
-            print(cost)
             net_price = cost.per_UOM_charge * get_booking_lines_count(booking_lines)
+        elif fp.fp_company_name.lower() in ["toll"]:
+            # Greater of 1) or 2)
+            # 1) 'Basic Charge' + (Booking Qty of the matching 'Charge UOM' x 'Per UOM Charge')
+            # 2) 'Basic Charge' + ((Length in meters x width in meters x height in meters x 'M3 to KG Factor)
+            #    x 'Per UOM Charge')
+            cost = rules.first().cost
+            price1 = get_booking_lines_count(booking_lines) * cost.per_UOM_charge
+            price2 = (
+                _m3_to_kg(booking_lines, cost.m3_to_kg_factor) * cost.per_UOM_charge
+            )
+            price0 = price1 if price1 > price2 else price2
+            price0 += cost.basic_charge
+            net_price = price0 if price0 > cost.min_charge else cost.min_charge
 
         rule = rules.get(cost_id=cost.id)
         etd = (
