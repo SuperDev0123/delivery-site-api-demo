@@ -34,7 +34,7 @@ from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_sel
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
-from api.common import status_history, download_external
+from api.common import status_history, download_external, trace_error
 from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
@@ -142,11 +142,14 @@ def tracking(request, fp_name):
                 status=200,
             )
         except KeyError:
+            trace_error.print()
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Bookings.DoesNotExist:
+        trace_error.print()
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
     except Exception as e:
+        trace_error.print()
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
@@ -179,6 +182,7 @@ def book(request, fp_name):
                 else:
                     payload = get_book_payload(booking, fp_name)
             except Exception as e:
+                trace_error.print()
                 logger.error(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
                     {"message": f"Error while build payload {str(e)}"}, status=400
@@ -338,6 +342,7 @@ def book(request, fp_name):
                         {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
                     )
                 except KeyError as e:
+                    trace_error.print()
                     Log(
                         request_payload=payload,
                         request_status="ERROR",
@@ -381,10 +386,12 @@ def book(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except Exception as e:
+            trace_error.print()
             error_msg = str(e)
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except SyntaxError as e:
+        trace_error.print()
         return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
 
 
@@ -470,6 +477,7 @@ def edit_book(request, fp_name):
                     {"message": f"Successfully edit book({booking.v_FPBookingNumber})"}
                 )
             except KeyError as e:
+                trace_error.print()
                 Log(
                     request_payload=payload,
                     request_status="ERROR",
@@ -482,8 +490,10 @@ def edit_book(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
         except IndexError as e:
+            trace_error.print()
             return JsonResponse({"message": f"IndexError {e}"}, status=400)
     except SyntaxError as e:
+        trace_error.print()
         return JsonResponse({"message": f"SyntaxError {e}"}, status=400)
 
 
@@ -540,6 +550,7 @@ def cancel_book(request, fp_name):
                             {"message": "Failed to cancel book"}, status=400
                         )
                 except KeyError as e:
+                    trace_error.print()
                     Log(
                         request_payload=payload,
                         request_status="ERROR",
@@ -558,8 +569,10 @@ def cancel_book(request, fp_name):
         else:
             return JsonResponse({"message": "Booking is already cancelled"}, status=400)
     except IndexError as e:
+        trace_error.print()
         return JsonResponse({"message": f"IndexError: {e}"}, status=400)
     except SyntaxError as e:
+        trace_error.print()
         return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
 
 
@@ -596,6 +609,7 @@ def get_label(request, fp_name):
 
                 payload["consignmentNumber"] = json_data[0]["request_id"]
             except Exception as e:
+                trace_error.print()
                 request_type = f"{fp_name.upper()} CREATE LABEL"
                 request_status = "ERROR"
                 oneLog = Log(
@@ -666,6 +680,7 @@ def get_label(request, fp_name):
                         f.write(label_data)
                         f.close()
                 except KeyError as e:
+                    trace_error.print()
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
@@ -690,6 +705,7 @@ def get_label(request, fp_name):
                 status=200,
             )
         except KeyError as e:
+            trace_error.print()
             Log(
                 request_payload=payload,
                 request_status="ERROR",
@@ -702,6 +718,7 @@ def get_label(request, fp_name):
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except IndexError as e:
+        trace_error.print()
         return JsonResponse({"message": "IndexError: {e}"}, status=400)
 
 
@@ -757,6 +774,7 @@ def create_order(request, fp_name):
                 {"message": f"Successfully create order({booking.vx_fp_order_id})"}
             )
         except KeyError as e:
+            trace_error.print()
             booking.b_error_Capture = json_data["errorMsg"]
             booking.save()
             Log(
@@ -771,6 +789,7 @@ def create_order(request, fp_name):
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg})
     except IndexError as e:
+        trace_error.print()
         return JsonResponse({"message": f"IndexError: e"})
 
 
@@ -827,6 +846,7 @@ def get_order_summary(request, fp_name):
 
                 return JsonResponse({"message": "Manifest is created successfully."})
             except KeyError as e:
+                trace_error.print()
                 Log(
                     request_payload=payload,
                     request_status="FAILED",
@@ -839,10 +859,12 @@ def get_order_summary(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0})
         except IndexError as e:
+            trace_error.print()
             error_msg = "Order is not created for this booking."
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg})
     except SyntaxError:
+        trace_error.print()
         return JsonResponse({"message": "Booking id is required"})
 
 
@@ -906,12 +928,15 @@ def pod(request, fp_name):
 
                 return JsonResponse({"message": "POD is fetched successfully."})
             except KeyError as e:
+                trace_error.print()
                 error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0})
         except KeyError as e:
+            trace_error.print()
             return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
+        trace_error.print()
         return JsonResponse({"message": "Booking id is required"}, status=400)
 
 
@@ -956,12 +981,15 @@ def reprint(request, fp_name):
 
                 return JsonResponse({"message": "Label is reprinted successfully."})
             except KeyError as e:
+                trace_error.print()
                 error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0})
         except KeyError as e:
+            trace_error.print()
             return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
+        trace_error.print()
         return JsonResponse({"message": "Booking id is required"}, status=400)
 
 
@@ -974,6 +1002,7 @@ def pricing(request):
         booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
     except Exception as e:
+        trace_error.print()
         return JsonResponse({"message": f"Booking is not exist"}, status=400)
 
     if not booking.puPickUpAvailFrom_Date:
@@ -981,8 +1010,8 @@ def pricing(request):
         _set_error(booking, error_msg)
         return JsonResponse({"message": error_msg}, status=400)
 
-    # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack", "Century"]
-    fp_names = ["Camerons"]
+    # fp_names = ["Sendle", "Hunter", "TNT", "Capital", "Startrack", "Century", "Camerons"]
+    fp_names = ["Toll"]
 
     try:
         for fp_name in fp_names:
@@ -1056,10 +1085,12 @@ def pricing(request):
                                     if serializer.is_valid():
                                         serializer.save()
                                 except Exception as e:
+                                    trace_error.print()
                                     logger.error("Exception: ", e)
 
                                 api_booking_quote.save()
                             except API_booking_quotes.DoesNotExist:
+                                trace_error.print()
                                 serializer = ApiBookingQuotesSerializer(
                                     data=parse_result
                                 )
@@ -1072,6 +1103,7 @@ def pricing(request):
                                             f"@401 Serializer error: {serializer.errors}"
                                         )
                                 except Exception as e:
+                                    trace_error.print()
                                     logger.error(f"@402 Exception: {e}")
             elif fp_name.lower() in BUILT_IN_PRICINGS:
                 results = get_pricing(fp_name.lower(), booking)
@@ -1099,6 +1131,7 @@ def pricing(request):
 
                         api_booking_quote.save()
                     except API_booking_quotes.DoesNotExist:
+                        trace_error.print()
                         serializer = ApiBookingQuotesSerializer(data=parse_result)
 
                         try:
@@ -1109,8 +1142,8 @@ def pricing(request):
                                     f"@404 Serializer error: {serializer.errors}"
                                 )
                         except Exception as e:
+                            trace_error.print()
                             logger.error(f"@405 Exception: {e}")
-
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
         return JsonResponse(
             {
@@ -1120,4 +1153,5 @@ def pricing(request):
             status=200,
         )
     except Exception as e:
+        trace_error.print()
         return JsonResponse({"message": f"Error: {e}"}, status=400)

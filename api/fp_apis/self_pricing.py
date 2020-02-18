@@ -1,8 +1,9 @@
 import json
 import logging
+import traceback
 
 from api.models import *
-from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.common.ratio import _get_dim_amount, _get_weight_amount, _m3_to_kg
 from .response_parser import parse_pricing_response
 from .payload_builder import BUILT_IN_PRICINGS
 
@@ -27,7 +28,7 @@ def is_in_zone(fp, zone_code, suburb, postal_code, state):
     return False
 
 
-def address_filter(booking, rules, fp):
+def address_filter(booking, booking_lines, rules, fp):
     pu_suburb = booking.pu_Address_Suburb.lower()
     pu_postal_code = booking.pu_Address_PostalCode.lower()
     pu_state = booking.pu_Address_State.lower()
@@ -140,6 +141,15 @@ def find_vehicle_ids(booking_lines, fp):
         return
 
 
+def get_booking_lines_count(booking_lines):
+    cnt = 0
+
+    for item in booking_lines:
+        cnt += item.e_qty
+
+    return cnt
+
+
 def find_rule_ids_by_dim(booking_lines, rules, fp):
     rule_ids = []
 
@@ -147,9 +157,11 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
         cost = rule.cost
 
         if cost.UOM_charge in PALLETS:  # Pallet Count Filter
-            if cost.start_qty and cost.start_qty > len(booking_lines):
+            pallet_cnt = get_booking_lines_count(booking_lines)
+
+            if cost.start_qty and cost.start_qty > pallet_cnt:
                 continue
-            if cost.end_qty and cost.end_qty < len(booking_lines):
+            if cost.end_qty and cost.end_qty < pallet_cnt:
                 continue
 
         if cost.oversize_price and cost.max_length:
@@ -163,7 +175,10 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
 
         comp_count = 0
         for item in booking_lines:
-            if not item.e_type_of_packaging.lower() in PALLETS:
+            if not item.e_type_of_packaging or (
+                item.e_type_of_packaging
+                and not item.e_type_of_packaging.lower() in PALLETS
+            ):
                 logger.error(f"@833 {fp.fp_company_name} - only support `Pallet`")
                 return
             else:
@@ -253,9 +268,8 @@ def is_overweight(booking_lines, rule):
     return False
 
 
-def dim_filter(booking, rules, fp):
+def dim_filter(booking, booking_lines, rules, fp):
     filtered_rules = []
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     if fp.fp_company_name.lower() == "century":  # Vehicle
         vehicle_ids = find_vehicle_ids(booking_lines, fp)
@@ -302,6 +316,7 @@ def find_cost(booking_lines, rules, fp):
 def get_pricing(fp_name, booking):
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     pricies = []
     for service_type in service_types:
@@ -310,7 +325,7 @@ def get_pricing(fp_name, booking):
         )
 
         # Address Filter
-        rules = address_filter(booking, rules, fp)
+        rules = address_filter(booking, booking_lines, rules, fp)
 
         if not rules:
             logger.info(f"@831 {fp_name.upper()} - not supported addresses")
@@ -318,12 +333,13 @@ def get_pricing(fp_name, booking):
 
         # Size(dim) Filter
         if fp.fp_company_name.lower() in ["century", "camerons"]:
-            rules = dim_filter(booking, rules, fp)
+            rules = dim_filter(booking, booking_lines, rules, fp)
 
             if not rules:
                 continue
 
         if fp.fp_company_name.lower() in ["century"]:
+            # Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge'
             cost = (
                 FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules])
                 .order_by("per_UOM_charge")
@@ -331,12 +347,23 @@ def get_pricing(fp_name, booking):
             )
             net_price = cost.per_UOM_charge
         elif fp.fp_company_name.lower() in ["camerons"]:
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            )
+            # Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
             rules = weight_filter(booking_lines, rules, fp)
             cost = find_cost(booking_lines, rules, fp)
-            net_price = cost.per_UOM_charge * len(booking_lines)
+            net_price = cost.per_UOM_charge * get_booking_lines_count(booking_lines)
+        elif fp.fp_company_name.lower() in ["toll"]:
+            # Greater of 1) or 2)
+            # 1) 'Basic Charge' + (Booking Qty of the matching 'Charge UOM' x 'Per UOM Charge')
+            # 2) 'Basic Charge' + ((Length in meters x width in meters x height in meters x 'M3 to KG Factor)
+            #    x 'Per UOM Charge')
+            cost = rules.first().cost
+            price1 = get_booking_lines_count(booking_lines) * cost.per_UOM_charge
+            price2 = (
+                _m3_to_kg(booking_lines, cost.m3_to_kg_factor) * cost.per_UOM_charge
+            )
+            price0 = price1 if price1 > price2 else price2
+            price0 += cost.basic_charge
+            net_price = price0 if price0 > cost.min_charge else cost.min_charge
 
         rule = rules.get(cost_id=cost.id)
         etd = (
