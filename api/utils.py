@@ -1368,9 +1368,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/allied_au/"
+            local_filepath = "./static/xmls/allied_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/allied_au/archive/"
+                "./static/xmls/allied_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -1581,9 +1581,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/tas_au/"
+            local_filepath = "./static/xmls/tas_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/tas_au/archive/"
+                "./static/xmls/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -2236,9 +2236,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/act_au/"
+            local_filepath = "./static/xmls/act_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/act_au/archive/"
+                "./static/xmls/act_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -2480,9 +2480,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/jet_au/"
+            local_filepath = "./static/xmls/jet_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/jet_au/archive/"
+                "./static/xmls/jet_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -2752,9 +2752,9 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/"
+            local_filepath = "./static/pdfs/tas_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/archive/"
+                "./static/pdfs/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -3457,9 +3457,9 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/"
+            local_filepath = "./static/pdfs/dhl_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/archive/"
+                "./static/pdfs/dhl_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -4247,11 +4247,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                     + "/"
                 )
             else:
-                local_filepath = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/"
-                )
+                local_filepath = "./static/pdfs/tas_au/"
                 local_filepath_dup = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/archive/"
+                    "./static/pdfs/tas_au/archive/"
                     + str(datetime.now().strftime("%Y_%m_%d"))
                     + "/"
                 )
@@ -4739,11 +4737,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                     + "/"
                 )
             else:
-                local_filepath = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/"
-                )
+                local_filepath = "./static/pdfs/dhl_au/"
                 local_filepath_dup = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/archive/"
+                    "./static/pdfs/dhl_au/archive/"
                     + str(datetime.now().strftime("%Y_%m_%d"))
                     + "/"
                 )
@@ -5124,7 +5120,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     if production:
         local_filepath = "/opt/s3_private/xlss/"
     else:
-        local_filepath = "/Users/admin/work/goldmine/dme_api/static/xlss/"
+        local_filepath = "./static/xlss/"
 
     if not os.path.exists(local_filepath):
         os.makedirs(local_filepath)
