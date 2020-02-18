@@ -28,7 +28,7 @@ def is_in_zone(fp, zone_code, suburb, postal_code, state):
     return False
 
 
-def address_filter(booking, rules, fp):
+def address_filter(booking, booking_lines, rules, fp):
     pu_suburb = booking.pu_Address_Suburb.lower()
     pu_postal_code = booking.pu_Address_PostalCode.lower()
     pu_state = booking.pu_Address_State.lower()
@@ -141,6 +141,15 @@ def find_vehicle_ids(booking_lines, fp):
         return
 
 
+def get_booking_lines_count(booking_lines):
+    cnt = 0
+
+    for item in booking_lines:
+        cnt += item.e_qty
+
+    return cnt
+
+
 def find_rule_ids_by_dim(booking_lines, rules, fp):
     rule_ids = []
 
@@ -148,9 +157,11 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
         cost = rule.cost
 
         if cost.UOM_charge in PALLETS:  # Pallet Count Filter
-            if cost.start_qty and cost.start_qty > len(booking_lines):
+            pallet_cnt = get_booking_lines_count(booking_lines)
+
+            if cost.start_qty and cost.start_qty > pallet_cnt:
                 continue
-            if cost.end_qty and cost.end_qty < len(booking_lines):
+            if cost.end_qty and cost.end_qty < pallet_cnt:
                 continue
 
         if cost.oversize_price and cost.max_length:
@@ -257,9 +268,8 @@ def is_overweight(booking_lines, rule):
     return False
 
 
-def dim_filter(booking, rules, fp):
+def dim_filter(booking, booking_lines, rules, fp):
     filtered_rules = []
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     if fp.fp_company_name.lower() == "century":  # Vehicle
         vehicle_ids = find_vehicle_ids(booking_lines, fp)
@@ -306,6 +316,7 @@ def find_cost(booking_lines, rules, fp):
 def get_pricing(fp_name, booking):
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
+    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     pricies = []
     for service_type in service_types:
@@ -314,7 +325,7 @@ def get_pricing(fp_name, booking):
         )
 
         # Address Filter
-        rules = address_filter(booking, rules, fp)
+        rules = address_filter(booking, booking_lines, rules, fp)
 
         if not rules:
             logger.info(f"@831 {fp_name.upper()} - not supported addresses")
@@ -322,7 +333,7 @@ def get_pricing(fp_name, booking):
 
         # Size(dim) Filter
         if fp.fp_company_name.lower() in ["century", "camerons"]:
-            rules = dim_filter(booking, rules, fp)
+            rules = dim_filter(booking, booking_lines, rules, fp)
 
             if not rules:
                 continue
@@ -335,12 +346,10 @@ def get_pricing(fp_name, booking):
             )
             net_price = cost.per_UOM_charge
         elif fp.fp_company_name.lower() in ["camerons"]:
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            )
             rules = weight_filter(booking_lines, rules, fp)
             cost = find_cost(booking_lines, rules, fp)
-            net_price = cost.per_UOM_charge * len(booking_lines)
+            print(cost)
+            net_price = cost.per_UOM_charge * get_booking_lines_count(booking_lines)
 
         rule = rules.get(cost_id=cost.id)
         etd = (
