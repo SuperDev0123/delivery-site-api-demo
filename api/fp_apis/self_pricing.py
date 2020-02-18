@@ -1,5 +1,6 @@
 import json
 import logging
+import traceback
 
 from api.models import *
 from api.common.ratio import _get_dim_amount, _get_weight_amount
@@ -163,7 +164,10 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
 
         comp_count = 0
         for item in booking_lines:
-            if not item.e_type_of_packaging.lower() in PALLETS:
+            if not item.e_type_of_packaging or (
+                item.e_type_of_packaging
+                and not item.e_type_of_packaging.lower() in PALLETS
+            ):
                 logger.error(f"@833 {fp.fp_company_name} - only support `Pallet`")
                 return
             else:
