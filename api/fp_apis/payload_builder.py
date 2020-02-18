@@ -425,8 +425,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     elif fp_name.lower() == "dhl":
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
             payload["clientType"] = "aldi"
-            fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name.lower())
-            payload["consignmentNoteNumber"] = f"DME{str(fp.new_connot_index + 100000).zfill(6)}"
+            fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
+            payload["consignmentNoteNumber"] = f"DME{str( fp_carrier.connote_start_value + fp_carrier.current_value).zfill(6)}"
         else:
             payload["clientType"] = "***"
     return payload
