@@ -311,10 +311,10 @@ def book(request, fp_name):
                     # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
                     elif booking.vx_freight_provider.lower() == "dhl":
                         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
-                            fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
-                            booking.v_FPBookingNumber = f"DME{str( fp_carrier.connote_start_value + fp_carrier.current_value).zfill(6)}"
-                            fp_carrier.current_value = fp_carrier.current_value + 1
-                            fp_carrier.save()
+                            booking.v_FPBookingNumber = f"DME{booking.b_bookingID_Visual}"
+                            # fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
+                            # fp_carrier.current_value = fp_carrier.current_value + 1
+                            # fp_carrier.save()
                             booking.save()
                         else:
                             booking.v_FPBookingNumber = str(json_data["orderNumber"])
