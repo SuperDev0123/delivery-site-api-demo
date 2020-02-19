@@ -353,8 +353,30 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             elif fp_name.lower() == "dhl":
                 item["packagingType"] = "PLT"
                 fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
-                consignmentNoteNumber = f"DME{str( fp_carrier.connote_start_value + fp_carrier.current_value).zfill(6)}"
-                item["packageCode"] = consignmentNoteNumber+'|DESC'+str(i+1).zfill(10)+ '|' + booking.de_To_Address_PostalCode
+                consignmentNoteNumber = f"DME{booking.b_bookingID_Visual}"
+
+                labelCode = str(fp_carrier.label_start_value + fp_carrier.current_value)
+                fp_carrier.current_value = fp_carrier.current_value + 1
+                fp_carrier.save()
+
+                # Create api_bcls
+                api_booking_confirmation_line = Api_booking_confirmation_lines(
+                    fk_booking_id=booking.pk_booking_id,
+                    fk_booking_line_id=line.pk_lines_id,
+                    api_item_id=labelCode,
+                    service_provider=booking.vx_freight_provider,
+                    label_code=labelCode,
+                    client_item_reference=line.client_item_reference,
+                )
+                api_booking_confirmation_line.save()
+
+                item["packageCode"] = (
+                    consignmentNoteNumber
+                    + "|"
+                    + labelCode
+                    + "|"
+                    + booking.de_To_Address_PostalCode
+                )
 
             items.append(item)
 
@@ -438,13 +460,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     elif fp_name.lower() == "dhl":
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
             payload["clientType"] = "aldi"
-            fp = Fp_freight_providers.objects.get(
-                fp_company_name__iexact=fp_name.lower()
-            )
-            fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
-            payload[
-                "consignmentNoteNumber"
-            ] = f"DME{str( fp_carrier.connote_start_value + fp_carrier.current_value).zfill(6)}"
+            payload["consignmentNoteNumber"] = f"DME{booking.b_bookingID_Visual}"
         else:
             payload["clientType"] = "***"
     return payload
