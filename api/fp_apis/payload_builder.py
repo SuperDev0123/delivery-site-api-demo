@@ -350,6 +350,11 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 item["packagingType"] = "PAL"
             elif fp_name.lower() == "tnt":
                 item["packagingType"] = "D"
+            elif fp_name.lower() == "dhl":
+                item["packagingType"] = "PLT"
+                fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
+                consignmentNoteNumber = f"DME{str( fp_carrier.connote_start_value + fp_carrier.current_value).zfill(6)}"
+                item["packageCode"] = consignmentNoteNumber+'|DESC'+str(i+1).zfill(10)+ '|' + booking.de_To_Address_PostalCode
 
             items.append(item)
 
