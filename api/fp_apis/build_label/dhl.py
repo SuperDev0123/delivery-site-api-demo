@@ -135,7 +135,7 @@ def build_dhl_label(booking):
         booking_lines = Booking_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id
         )
-        api_bcls = Api_booking_confirmation_lines.filter(
+        api_bcls = Api_booking_confirmation_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id
         ).order_by("-id")
 
