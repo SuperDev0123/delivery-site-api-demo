@@ -404,7 +404,7 @@ def build_dhl_label(booking):
 
                 barcode = (
                     booking.v_FPBookingNumber
-                    + api_bcls[j].label_code
+                    + api_bcls[j - 1].label_code
                     + booking.de_To_Address_PostalCode
                 )
                 barcode128 = get_barcode_rotated(
