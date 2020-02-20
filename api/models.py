@@ -2628,6 +2628,9 @@ class Utl_states(models.Model):
     state_name = models.CharField(
         verbose_name=_("State Name"), max_length=64, blank=True, null=True
     )
+    sender_code = models.CharField(
+        verbose_name=_("Sender Code"), max_length=64, blank=True, null=True
+    )
     borderExpress_pu_emails = models.CharField(
         verbose_name=_("Border Express PU Emails"), max_length=64, blank=True, null=True
     )
