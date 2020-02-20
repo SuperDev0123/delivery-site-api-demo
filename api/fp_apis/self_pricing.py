@@ -22,6 +22,14 @@ def is_in_zone(fp, zone_code, suburb, postal_code, state):
                 continue
             if zone.state and zone.state.lower() != state:
                 continue
+            if (
+                zone.start_postal_code
+                and zone.end_postal_code
+                and postal_code
+                and int(postal_code) < int(zone.start_postal_code)
+                and int(postal_code) > int(zone.end_postal_code)
+            ):
+                continue
 
             return True
 

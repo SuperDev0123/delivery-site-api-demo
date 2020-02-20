@@ -48,4 +48,11 @@ class Migration(migrations.Migration):
             name="fp_store_scheduled_date",
             field=models.DateField(blank=True, default=None, null=True),
         ),
+        migrations.AlterField(
+            model_name="bok_1_headers",
+            name="b_024_b_pu_by_date",
+            field=models.DateField(
+                blank=True, default=datetime.datetime.now, null=True
+            ),
+        ),
     ]

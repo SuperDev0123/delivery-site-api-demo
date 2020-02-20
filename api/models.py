@@ -1684,7 +1684,11 @@ class Booking_lines(models.Model):
 class Booking_lines_data(models.Model):
     pk_id_lines_data = models.AutoField(primary_key=True)
     fk_booking_lines_id = models.CharField(
-        verbose_name=_("FK Booking Lines Id"), max_length=64, blank=True, null=True
+        verbose_name=_("FK Booking Lines Id"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
     )
     fk_booking_id = models.CharField(
         verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
@@ -2293,7 +2297,7 @@ class BOK_3_lines_data(models.Model):
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
     fk_header_id = models.CharField(max_length=64, blank=True)
-    fk_booking_lines_id = models.CharField(max_length=64, blank=True)
+    fk_booking_lines_id = models.CharField(max_length=64, blank=True, default=None)
     v_client_pk_consigment_num = models.CharField(
         verbose_name=_("Consigment num"), max_length=64, blank=True, null=True
     )
@@ -3150,6 +3154,12 @@ class FP_zones(models.Model):
     service = models.CharField(max_length=50, blank=True, null=True)
     sender_code = models.CharField(max_length=50, blank=True, null=True)
     fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+    start_postal_code = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
+    end_postal_code = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
 
     class Meta:
         db_table = "fp_zones"

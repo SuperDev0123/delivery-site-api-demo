@@ -51,4 +51,15 @@ class Migration(migrations.Migration):
                 verbose_name="Booking No Operator PU",
             ),
         ),
+        migrations.AlterField(
+            model_name="bookings",
+            name="x_ReadyStatus",
+            field=models.CharField(
+                blank=True,
+                default="",
+                max_length=32,
+                null=True,
+                verbose_name="Ready Status",
+            ),
+        ),
     ]

@@ -27,4 +27,20 @@ class Migration(migrations.Migration):
                 verbose_name="Booking Categroy",
             ),
         ),
+        migrations.RemoveField(model_name="bok_3_lines_data", name="fk_booking_id"),
+        migrations.AddField(
+            model_name="bok_2_lines",
+            name="pk_booking_lines_id",
+            field=models.CharField(blank=True, max_length=64, null=True),
+        ),
+        migrations.AddField(
+            model_name="bok_3_lines_data",
+            name="fk_booking_lines_id",
+            field=models.CharField(blank=True, max_length=64),
+        ),
+        migrations.AddField(
+            model_name="bok_3_lines_data",
+            name="fk_header_id",
+            field=models.CharField(blank=True, max_length=64),
+        ),
     ]

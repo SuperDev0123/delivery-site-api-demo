@@ -368,7 +368,6 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                     label_code=labelCode,
                     client_item_reference=line.client_item_reference,
                 ).save()
-
                 item["packageCode"] = labelCode
 
             items.append(item)
