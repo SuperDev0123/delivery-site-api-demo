@@ -6266,7 +6266,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 1, booking.b_given_to_transport_date_time, date_format
                 )
 
-            if booking.b_status is not None and "booked" in booking.b_status.lower():
+            if (
+                booking.b_dateBookedDate is not None
+                and booking.b_status is not None
+                and "booked" in booking.b_status.lower()
+            ):
                 pickup_days_late = (
                     booking.b_dateBookedDate.date()
                     + timedelta(days=2)
