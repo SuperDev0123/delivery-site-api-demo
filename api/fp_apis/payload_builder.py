@@ -360,23 +360,16 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 fp_carrier.save()
 
                 # Create api_bcls
-                api_booking_confirmation_line = Api_booking_confirmation_lines(
+                Api_booking_confirmation_lines(
                     fk_booking_id=booking.pk_booking_id,
                     fk_booking_line_id=line.pk_lines_id,
                     api_item_id=labelCode,
                     service_provider=booking.vx_freight_provider,
                     label_code=labelCode,
                     client_item_reference=line.client_item_reference,
-                )
-                api_booking_confirmation_line.save()
+                ).save()
 
-                item["packageCode"] = (
-                    consignmentNoteNumber
-                    + "|"
-                    + labelCode
-                    + "|"
-                    + booking.de_To_Address_PostalCode
-                )
+                item["packageCode"] = labelCode
 
             items.append(item)
 
