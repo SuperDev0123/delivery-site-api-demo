@@ -152,8 +152,8 @@ def build_dhl_label(booking):
             "label_dimension_width": "104",
             "label_image_size_length": "138",
             "label_image_size_width": "90",
-            "barcode_dimension_length": "81",
-            "barcode_dimension_width": "30",
+            "barcode_dimension_length": "65",
+            "barcode_dimension_width": "25",
             "barcode_font_size": "18",
             "line_height_small": "5",
             "line_height_medium": "6",
@@ -190,6 +190,11 @@ def build_dhl_label(booking):
 
         Story = []
         j = 1
+
+         
+
+        utl_state = Utl_states.objects.get(state_code = booking.de_To_Address_State)
+
         for booking_line in booking_lines:
 
             for k in range(booking_line.e_qty):
@@ -205,9 +210,7 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                (booking.puCompany[:15] + "...")
-                                if len(booking.puCompany) > 15
-                                else booking.puCompany,
+                                utl_state.sender_code,
                             ),
                             styles["BodyText"],
                         ),
@@ -222,7 +225,8 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                booking.pu_Phone_Main,
+                                '1300362194',
+                                # booking.pu_Phone_Main,
                             ),
                             styles["BodyText"],
                         ),
@@ -237,9 +241,10 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                booking.vx_serviceName
-                                if booking.vx_serviceName
-                                else "EXPRESS",
+                                'PFM',
+                                # booking.vx_serviceName
+                                # if booking.vx_serviceName
+                                # else "EXPRESS",
                             ),
                             styles["BodyText"],
                         ),
@@ -250,8 +255,13 @@ def build_dhl_label(booking):
                             % label_settings["font_size_small"],
                             style_left,
                         ),
+                        # Paragraph(
+                        #     "<font size=%s><b>DESC</b></font>"
+                        #     % label_settings["font_size_large"],
+                        #     styles["BodyText"],
+                        # ),
                         Paragraph(
-                            "<font size=%s><b>DESC</b></font>"
+                            "<font size=%s><b>PFM</b></font>"
                             % label_settings["font_size_large"],
                             styles["BodyText"],
                         ),
