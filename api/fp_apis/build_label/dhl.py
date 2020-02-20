@@ -55,11 +55,11 @@ style_center = ParagraphStyle(
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 
 if os.environ["ENV"] == "local":
-    filepath = "/home/administrator/Documents/dme_api/static/dhl_au/"
+    filepath = "./static/pdfs/dhl_au/"  
 elif os.environ["ENV"] == "dev":
-    filepath = "/var/www/html/dme_api/static/dhl_au/labels/"
+    filepath = "/opt/s3_public/pdfs/dhl_au/"
 elif os.environ["ENV"] == "prod":
-    filepath = "/var/www/html/dme_api/static/dhl_au/labels/"
+    filepath = "/opt/s3_public/pdfs/dhl_au/"
 
 def myFirstPage(canvas, doc):
     canvas.saveState()
