@@ -269,10 +269,6 @@ def book(request, fp_name):
                         fk_booking_id=booking.id,
                     ).save()
 
-                    Api_booking_confirmation_lines.objects.filter(
-                        fk_booking_id=booking.pk_booking_id
-                    ).delete()
-
                     # Save Label for Hunter
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
@@ -309,6 +305,10 @@ def book(request, fp_name):
                             booking.save()
                     # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
+                        Api_booking_confirmation_lines.objects.filter(
+                            fk_booking_id=booking.pk_booking_id
+                        ).delete()
+
                         for item in json_data["items"]:
                             book_con = Api_booking_confirmation_lines(
                                 fk_booking_id=booking.pk_booking_id,
