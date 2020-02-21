@@ -141,7 +141,9 @@ def boks(request):
                 client_warehouse_code=bok_1["b_client_warehouse_code"]
             )
         except Client_warehouses.DoesNotExist:
-            logger.error(f"@881 BOKS API Error - : Warehouse code is not valid")
+            logger.error(
+                f"@881 BOKS API Error - : Warehouse code is not valid({bok_1['b_client_warehouse_code']}"
+            )
             return JsonResponse(
                 {"success": False, "message": "Warehouse code is not valid."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -157,6 +159,7 @@ def boks(request):
         bok_1["success"] = 2
 
         if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).count() > 0:
+            logger.error(f"@883 BOKS API Error - Same object is already exist.")
             return JsonResponse(
                 {"success": False, "message": "Same object is already exist."},
                 status=status.HTTP_400_BAD_REQUEST,
