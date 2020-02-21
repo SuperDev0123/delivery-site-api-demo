@@ -1789,7 +1789,7 @@ class BOK_1_headers(models.Model):
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
     b_021_b_pu_avail_from_date = models.DateField(
-        verbose_name=_("Available From"), default=datetime.now, blank=True
+        verbose_name=_("Available From"), default=None, blank=True
     )
     b_003_b_service_name = models.CharField(
         verbose_name=_("Service Name"), max_length=31, blank=True, null=True
@@ -1929,7 +1929,7 @@ class BOK_1_headers(models.Model):
         default=0,
         null=True,
     )
-    b_024_b_pu_by_date = models.DateField(default=datetime.now, blank=True, null=True)
+    b_024_b_pu_by_date = models.DateField(default=None, blank=True, null=True)
     b_025_b_pu_by_time_hour = models.IntegerField(
         verbose_name=_("b_025_b_pu_by_time_hour"), blank=True, default=0, null=True
     )
@@ -2032,9 +2032,7 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_047_b_del_avail_from_date = models.DateField(
-        default=datetime.now, blank=True, null=True
-    )
+    b_047_b_del_avail_from_date = models.DateField(default=None, blank=True, null=True)
     b_048_b_del_avail_from_time_hour = models.IntegerField(
         verbose_name=_("b_048_b_del_avail_from_time_hour"),
         blank=True,
@@ -2047,7 +2045,7 @@ class BOK_1_headers(models.Model):
         default=0,
         null=True,
     )
-    b_050_b_del_by_date = models.DateField(default=datetime.now, blank=True, null=True)
+    b_050_b_del_by_date = models.DateField(default=None, blank=True, null=True)
     b_051_b_del_by_time_hour = models.IntegerField(
         verbose_name=_("b_051_b_del_by_time_hour"), blank=True, default=0, null=True
     )
