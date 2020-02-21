@@ -453,6 +453,12 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
             payload["clientType"] = "aldi"
             payload["consignmentNoteNumber"] = f"DME{booking.b_bookingID_Visual}"
+            utl_state = Utl_states.objects.get(state_code=booking.pu_Address_State)
+
+            if not utl_state.sender_code:
+                error_msg = "Not supported PU state"
+                _set_error(error_msg)
+                raise Exception(error_msg)
         else:
             payload["clientType"] = "***"
     return payload

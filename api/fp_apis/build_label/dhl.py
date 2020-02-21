@@ -191,9 +191,7 @@ def build_dhl_label(booking):
         Story = []
         j = 1
 
-         
-
-        utl_state = Utl_states.objects.get(state_code = booking.de_To_Address_State)
+        utl_state = Utl_states.objects.get(state_code=booking.pu_Address_State)
 
         for booking_line in booking_lines:
 
@@ -210,7 +208,7 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                utl_state.sender_code,
+                                "DHL(" + utl_state.sender_code + ")",
                             ),
                             styles["BodyText"],
                         ),
@@ -225,7 +223,7 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                '1300362194',
+                                "1300362194",
                                 # booking.pu_Phone_Main,
                             ),
                             styles["BodyText"],
@@ -241,7 +239,7 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                'PFM',
+                                "PFM",
                                 # booking.vx_serviceName
                                 # if booking.vx_serviceName
                                 # else "EXPRESS",
@@ -524,10 +522,7 @@ def build_dhl_label(booking):
                     [
                         Paragraph(
                             "<font size=%s><b>Total Items %s</b></font> "
-                            % (
-                                label_settings["font_size_small"],
-                                str(totalQty).zfill(4),
-                            ),
+                            % (label_settings["font_size_small"], str(totalQty)),
                             style_left,
                         )
                     ],
