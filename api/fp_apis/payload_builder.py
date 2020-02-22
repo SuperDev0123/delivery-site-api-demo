@@ -24,6 +24,7 @@ ACCOUTN_CODES = {
         "BIO - HTW": "10160226",
     },
     "hunter": {
+        "test_bed": "DUMMY",
         "live_0": "DELIME",
         "live_1": "DEMELP",
         "live_2": "DMEMEL",
@@ -58,6 +59,7 @@ KEY_CHAINS = {
         },
     },
     "hunter": {
+        "test_bed": {"accountKey": "aHh3czpoeHdz", "accountPassword": "hxws"},
         "live_0": {"accountKey": "REVMSU1FOmRlbGl2ZXI=", "accountPassword": "deliver"},
         "live_1": {"accountKey": "REVNRUxQOmRlbGl2ZXI=", "accountPassword": "deliver"},
         "live_2": {"accountKey": "RE1FTUVMOmRlbGl2ZXI=", "accountPassword": "deliver"},
@@ -142,11 +144,24 @@ def _get_account_details(booking, fp_name, account_code_key=None):
                 ],
                 **KEY_CHAINS[fp_name.lower()]["live"],
             }
-    elif fp_name.lower() in ["hunter", "tnt", "capital", "sendle", "fastway", "dhl"]:
+
+    elif fp_name.lower() in ["tnt", "capital", "sendle", "fastway"]:
         if settings.ENV in ["local", "dev"]:
             account_detail = {
                 "accountCode": ACCOUTN_CODES[fp_name.lower()][default_account_code_key],
                 **KEY_CHAINS[fp_name.lower()][default_account_code_key],
+            }
+        else:
+            account_detail = {
+                "accountCode": ACCOUTN_CODES[fp_name.lower()][default_account_code_key],
+                **KEY_CHAINS[fp_name.lower()][default_account_code_key],
+            }
+
+    elif fp_name.lower() in ["hunter"]:
+        if settings.ENV in ["local", "dev"]:
+            account_detail = {
+                "accountCode": ACCOUTN_CODES[fp_name.lower()]["test_bed"],
+                **KEY_CHAINS[fp_name.lower()]["test_bed"],
             }
         else:
             account_detail = {
@@ -333,7 +348,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": line.e_item,
+                "description": line.e_item
             }
 
             if fp_name.lower() == "startrack":
@@ -360,10 +375,14 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     if fp_name.lower() == "hunter":
         payload["serviceType"] = "RF"
         payload["reference1"] = (
-            ""
-            if booking.b_client_sales_inv_num is None
-            else booking.b_client_sales_inv_num
+        ""
+        if booking.b_client_sales_inv_num is None
+        else booking.b_client_sales_inv_num
         )
+
+        if payload["reference1"] == "":
+            payload["reference1"] = "ADMIN"
+
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
@@ -585,19 +604,17 @@ def get_getlabel_payload(booking, fp_name):
         if payload["pickupAddress"]["instruction"]:
             payload[
                 "collectionInstructions"
-            ] = f"{payload['pickupAddress']['instruction']}"
+            ] = f"PU instruction: {payload['pickupAddress']['instruction']}"
         if payload["dropAddress"]["instruction"]:
             payload[
                 "collectionInstructions"
-            ] += f" {payload['dropAddress']['instruction']}"
+            ] += f" DE instruction: {payload['dropAddress']['instruction']}"
 
         payload["clientSalesInvNum"] = (
-            ""
-            if booking.b_client_sales_inv_num is None
-            else booking.b_client_sales_inv_num
+        ""
+        if booking.b_client_sales_inv_num is None
+        else booking.b_client_sales_inv_num
         )
-    elif fp_name.lower() == "sendle":
-        payload["consignmentNumber"] = f"{str(booking.fk_fp_pickup_id)}"
 
     return payload
 
