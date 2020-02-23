@@ -350,7 +350,7 @@ def build_dhl_label(booking):
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 label_settings["font_size_small"],
-                                booking_line.client_item_reference,
+                                booking.b_client_sales_inv_num,
                             ),
                             style_left,
                         )
