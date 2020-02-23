@@ -348,13 +348,24 @@ def build_dhl_label(booking):
                             style_left,
                         )
                     ],
+                    Paragraph(
+                        "<font size=%s><b>Date:&nbsp;%s</b></font>"
+                        % (
+                            label_settings["font_size_small"],
+                            booking.b_dateBookedDate.strftime("%d/%m/%y")
+                            if booking.b_dateBookedDate
+                            else "N/A",
+                        ),
+                        style_left,
+                    ),
                 ]
                 t2 = Table(
                     tbl_data2,
                     colWidths=(
-                        float(label_settings["label_image_size_length"]) * (1 / 5) * mm
+                        float(label_settings["label_image_size_length"]) * (2 / 5) * mm
                     ),
                     rowHeights=(
+                        float(label_settings["line_height_small"]) * mm,
                         float(label_settings["line_height_small"]) * mm,
                         float(label_settings["line_height_small"]) * mm,
                     ),
@@ -362,37 +373,6 @@ def build_dhl_label(booking):
                     vAlign="TOP",
                     style=[
                         # ('BACKGROUND', (0,0), (-1,-1), colors.black),
-                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                        ("TOPPADDING", (0, 0), (-1, -1), 0),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                        # ('BOX', (0, 0), (-1, -1), 1, colors.black)
-                    ],
-                )
-
-                tbl_data3 = [
-                    [
-                        Paragraph(
-                            "<font size=%s><b>Date:&nbsp;%s</b></font>"
-                            % (
-                                label_settings["font_size_small"],
-                                booking.b_dateBookedDate.strftime("%d/%m/%y")
-                                if booking.b_dateBookedDate
-                                else "N/A",
-                            ),
-                            style_left,
-                        )
-                    ],
-                ]
-
-                t3 = Table(
-                    tbl_data3,
-                    colWidths=(
-                        float(label_settings["label_image_size_length"]) * (1 / 5) * mm
-                    ),
-                    rowHeights=(float(label_settings["line_height_small"]) * mm,),
-                    style=[
                         ("VALIGN", (0, 0), (-1, -1), "TOP"),
                         ("TOPPADDING", (0, 0), (-1, -1), 0),
                         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),

@@ -158,6 +158,9 @@ def boks(request):
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["success"] = 2
 
+        if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002":
+            bok_1["vx_freight_provider"] = "DHL"
+
         if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).count() > 0:
             logger.error(f"@883 BOKS API Error - Same object is already exist.")
             return JsonResponse(
