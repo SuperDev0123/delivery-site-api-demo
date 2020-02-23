@@ -357,7 +357,6 @@ def build_dhl_label(booking):
                     rowHeights=(
                         float(label_settings["line_height_small"]) * mm,
                         float(label_settings["line_height_small"]) * mm,
-                        float(label_settings["line_height_small"]) * mm,
                     ),
                     hAlign="LEFT",
                     vAlign="TOP",
