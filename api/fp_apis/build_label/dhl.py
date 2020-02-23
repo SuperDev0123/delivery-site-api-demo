@@ -396,12 +396,12 @@ def build_dhl_label(booking):
                     True,
                 )
 
-                tbl_data4 = [
+                tbl_data3 = [
                     [""],
                     [barcode128],
                 ]
-                t4 = Table(
-                    tbl_data4,
+                t3 = Table(
+                    tbl_data3,
                     colWidths=(
                         float(label_settings["label_image_size_length"]) * (1 / 5) * mm
                     ),
@@ -417,15 +417,14 @@ def build_dhl_label(booking):
                     ],
                 )
 
-                data = [[t1, t2, t3, t4]]
+                data = [[t1, t2, t4]]
                 # adjust the length of tables
                 t1_w = float(label_settings["label_image_size_length"]) * (2 / 5) * mm
-                t2_w = float(label_settings["label_image_size_length"]) * (1 / 5) * mm
+                t2_w = float(label_settings["label_image_size_length"]) * (2 / 5) * mm
                 t3_w = float(label_settings["label_image_size_length"]) * (1 / 5) * mm
-                t4_w = float(label_settings["label_image_size_length"]) * (1 / 5) * mm
                 shell_table = Table(
                     data,
-                    colWidths=[t1_w, t2_w, t3_w, t4_w],
+                    colWidths=[t1_w, t2_w, t3_w],
                     style=[
                         ("VALIGN", (0, 0), (-1, -1), "TOP"),
                         # ('SPAN',(0,0),(0,-1)),
