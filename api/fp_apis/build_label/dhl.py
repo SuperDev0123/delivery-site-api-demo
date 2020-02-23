@@ -340,7 +340,7 @@ def build_dhl_label(booking):
                     ],
                     [
                         Paragraph(
-                            "<font size=%s><b>Reference No:</b></font>"
+                            "<font size=%s><b>Reference No: %s</b></font>"
                             % (
                                 label_settings["font_size_small"],
                                 booking.b_client_sales_inv_num,
