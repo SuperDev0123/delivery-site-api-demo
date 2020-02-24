@@ -1146,6 +1146,7 @@ def pricing(request):
                             trace_error.print()
                             logger.error(f"@405 Exception: {e}")
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
+        auto_select(booking, results)
         return JsonResponse(
             {
                 "message": f"Retrieved all Pricing info",
