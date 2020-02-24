@@ -35,6 +35,13 @@ from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
 
+from django.core.mail import EmailMultiAlternatives
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+
+from django_rest_passwordreset.signals import reset_password_token_created, post_password_reset, pre_password_reset
+
 from .serializers import *
 from .models import *
 from .utils import (
@@ -57,6 +64,59 @@ from api.outputs import tempo
 
 logger = logging.getLogger("dme_api")
 
+@receiver(pre_password_reset)
+def pre_password_reset(user, *args, **kwargs):
+    print(user)
+
+@receiver(post_password_reset)
+def post_password_reset(user, *args, **kwargs):
+    print(user)
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    """
+    Handles password reset tokens
+    When a token is created, an e-mail needs to be sent to the user
+    :param sender: View Class that sent the signal
+    :param instance: View Instance that sent the signal
+    :param reset_password_token: Token Model Object
+    :param args:
+    :param kwargs:
+    :return:
+    """
+
+    import socket
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
+
+    if settings.ENV == "local":
+        url = "http://localhost:9000"
+    else:
+        url = f"http://{ip}"
+
+    context = {
+        'current_user': reset_password_token.user,
+        'username': reset_password_token.user.username,
+        'email': reset_password_token.user.email,
+        'reset_password_url': f"{url}/reset-password?token="+reset_password_token.key
+    }
+
+    from django.utils.datastructures import MultiValueDictKeyError
+
+    try:
+        filepath = settings.EMAIL_ROOT + '/user_reset_password.html'
+    except MultiValueDictKeyError:
+        print("Either the file is missing or not readable")
+
+    email_html_message = render_to_string(settings.EMAIL_ROOT + '/user_reset_password.html', context)
+    email_plaintext_message = render_to_string(settings.EMAIL_ROOT + '/user_reset_password.txt', context)  
+    
+    msg = EmailMultiAlternatives("Password Reset for Deliver Me", email_plaintext_message, "noreply@deliverme.com", [reset_password_token.user.email])
+    msg.attach_alternative(email_html_message, "text/html")
+    try:
+        msg.send()
+    except Exception as e:
+        print('Exception: ', str(e))
 
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
