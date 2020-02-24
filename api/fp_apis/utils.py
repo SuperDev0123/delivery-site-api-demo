@@ -144,7 +144,7 @@ def _get_etd(pricing):
     elif pricing.fk_freight_provider_id.lower() == "sendle":
         min = float(pricing.etd.split(",")[0])
         max = float(pricing.etd.split(",")[1])
-    elif pricing.fk_freight_provider_id.lower() == "tnt":
+    elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll"]:
         min = 0
         max = float(pricing.etd.lower().split("days")[0])
 
