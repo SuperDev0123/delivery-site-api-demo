@@ -349,7 +349,7 @@ def build_dhl_label(booking):
                         )
                     ],
                     Paragraph(
-                        "<font size=%s><b>Date:&nbsp;%s</b></font>"
+                        "<font size=%s><b>Date: %s</b></font>"
                         % (
                             label_settings["font_size_small"],
                             booking.b_dateBookedDate.strftime("%d/%m/%y")
@@ -417,7 +417,7 @@ def build_dhl_label(booking):
                     ],
                 )
 
-                data = [[t1, t2, t4]]
+                data = [[t1, t2, t3]]
                 # adjust the length of tables
                 t1_w = float(label_settings["label_image_size_length"]) * (2 / 5) * mm
                 t2_w = float(label_settings["label_image_size_length"]) * (2 / 5) * mm
