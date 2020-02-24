@@ -348,16 +348,18 @@ def build_dhl_label(booking):
                             style_left,
                         )
                     ],
-                    Paragraph(
-                        "<font size=%s><b>Date: %s</b></font>"
-                        % (
-                            label_settings["font_size_small"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%y")
-                            if booking.b_dateBookedDate
-                            else "N/A",
-                        ),
-                        style_left,
-                    ),
+                    [
+                        Paragraph(
+                            "<font size=%s><b>Date: %s</b></font>"
+                            % (
+                                label_settings["font_size_small"],
+                                booking.b_dateBookedDate.strftime("%d/%m/%y")
+                                if booking.b_dateBookedDate
+                                else "N/A",
+                            ),
+                            style_left,
+                        )
+                    ],
                 ]
                 t2 = Table(
                     tbl_data2,
