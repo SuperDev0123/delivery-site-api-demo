@@ -43,6 +43,7 @@ urlpatterns += [
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
     url(r"^suburb/", getSuburbs),
     url(r"^attachments/", getAttachmentsHistory),
+    url(r'^password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     # Uploads
     url(r"^share/upload/(?P<filename>[^/]+)$", FileUploadView.as_view()),
     url(r"^upload/attachments/", AttachmentsUploadView.as_view()),
