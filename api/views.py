@@ -125,9 +125,9 @@ def password_reset_token_created(
     subject = f"Reset Your Password"
     mime_type = "html"
     try:
-        send_email(context["email"], subject, email_html_message, None, mime_type)
+        send_email([context["email"]], subject, email_html_message, None, mime_type)
     except Exception as e:
-        logger.error(f"Error #102: {str(e)}")
+        logger.error(f"Error #102: {e}")
 
 
 class UserViewSet(viewsets.ViewSet):

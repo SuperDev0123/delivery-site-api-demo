@@ -197,7 +197,6 @@ def send_email(
     msg["To"] = COMMASPACE.join(send_to)
     msg["Date"] = formatdate(localtime=True)
     msg["Subject"] = subject
-
     msg.attach(MIMEText(text, mime_type))
 
     for f in files or []:
