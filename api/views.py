@@ -61,6 +61,7 @@ from .utils import (
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
+    send_email,
 )
 from api.outputs import emails as email_module
 from api.common import status_history
@@ -120,19 +121,11 @@ def password_reset_token_created(
     email_html_message = render_to_string(
         settings.EMAIL_ROOT + "/user_reset_password.html", context
     )
-    email_plaintext_message = render_to_string(
-        settings.EMAIL_ROOT + "/user_reset_password.txt", context
-    )
 
-    msg = EmailMultiAlternatives(
-        "Password Reset for Deliver Me",
-        email_plaintext_message,
-        "noreply@deliverme.com",
-        [reset_password_token.user.email],
-    )
-    msg.attach_alternative(email_html_message, "text/html")
+    subject = f"Reset Your Password"
+    mime_type = "html"
     try:
-        msg.send()
+        send_email(context["email"], subject, email_html_message, None, mime_type)
     except Exception as e:
         logger.error(f"Error #102: {str(e)}")
 
