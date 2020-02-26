@@ -70,39 +70,18 @@ from api.outputs import tempo
 logger = logging.getLogger("dme_api")
 
 
-@receiver(pre_password_reset)
-def pre_password_reset(user, *args, **kwargs):
-    print(user)
-
-
-@receiver(post_password_reset)
-def post_password_reset(user, *args, **kwargs):
-    print(user)
-
-
 @receiver(reset_password_token_created)
 def password_reset_token_created(
     sender, instance, reset_password_token, *args, **kwargs
 ):
-    """
-    Handles password reset tokens
-    When a token is created, an e-mail needs to be sent to the user
-    :param sender: View Class that sent the signal
-    :param instance: View Instance that sent the signal
-    :param reset_password_token: Token Model Object
-    :param args:
-    :param kwargs:
-    :return:
-    """
-
     if settings.ENV == "local":
-        url = "http://localhost:9000"
-    else:
-        import socket
+        ip = "localhost:9000"
+    elif settings.ENV == "dev":
+        ip = f"3.104.30.210"
+    elif settings.ENV == "dev":
+        ip = f"13.55.160.158"
 
-        hostname = socket.gethostname()
-        ip = socket.gethostbyname(hostname)
-        url = f"http://{ip}"
+    url = f"http://{ip}"
 
     context = {
         "current_user": reset_password_token.user,
