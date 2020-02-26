@@ -134,7 +134,7 @@ def password_reset_token_created(
     try:
         msg.send()
     except Exception as e:
-        logger.error("Error #102:", str(e))
+        logger.error(f"Error #102: {str(e)}")
 
 
 class UserViewSet(viewsets.ViewSet):
