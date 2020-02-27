@@ -266,7 +266,7 @@ def send_booking_email_using_template(bookingId, emailName):
 
         html += emailBody
 
-    # TEST Use
+    # TEST Usage
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
