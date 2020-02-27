@@ -134,6 +134,9 @@ def auto_select(booking, pricings):
 
 
 def _get_etd(pricing):
+    min = None
+    max = None
+
     if not pricing.etd:
         return None, None
 
@@ -141,11 +144,14 @@ def _get_etd(pricing):
         temp = pricing.etd.lower().split("days")[0]
         min = float(temp.split("-")[0])
         max = float(temp.split("-")[1])
-    elif pricing.fk_freight_provider_id.lower() == "sendle":
+    elif pricing.fk_freight_provider_id.lower() in ["sendle", "century"]:
         min = float(pricing.etd.split(",")[0])
         max = float(pricing.etd.split(",")[1])
     elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll"]:
         min = 0
         max = float(pricing.etd.lower().split("days")[0])
 
-    return min * 24 * 60, max * 24 * 60
+    if max:
+        return min * 24 * 60, max * 24 * 60
+    else:
+        return ""
