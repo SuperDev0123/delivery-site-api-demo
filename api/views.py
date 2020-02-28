@@ -2278,7 +2278,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
                 os.makedirs(folder_name)
 
             file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
-            full_path = f"{folder_name}/{filename}"
+            full_path = f"{folder_name}/{file_name}"
 
             if upload_type == "label":
                 booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
