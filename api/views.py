@@ -15,6 +15,7 @@ from functools import reduce
 from pydash import _
 import requests
 import tempfile
+import re
 
 from django.shortcuts import render
 from django.core import serializers, files
@@ -46,6 +47,10 @@ from django_rest_passwordreset.signals import (
     pre_password_reset,
 )
 
+from django.db import connection
+import MySQLdb
+
+
 from .serializers import *
 from .models import *
 from .utils import (
@@ -62,6 +67,7 @@ from .utils import (
     get_client_name,
     calc_collect_after_status_change,
     send_email,
+    tables_in_query
 )
 from api.outputs import emails as email_module
 from api.common import status_history
@@ -208,6 +214,114 @@ class UserViewSet(viewsets.ViewSet):
             return JsonResponse(
                 {"user_date_filter_field": client.client_filter_date_field}
             )
+    
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+        client_pk = self.request.query_params.get("clientPK", None)
+
+        if client_pk is not None:
+            filter_data = Client_employees.objects.filter(
+                    fk_id_dme_client_id=int(client_pk)
+                )
+
+            filter_arr = []
+            for data in filter_data:
+                filter_arr.append(
+                    data.fk_id_user_id
+                )
+
+        try:
+            resultObjects = []
+            if len(filter_arr) == 0:
+                resultObjects = User.objects.all().order_by('username')
+            else:
+                resultObjects = User.objects.filter(pk__in=filter_arr).order_by('username')
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "first_name": resultObject.first_name,
+                        "last_name": resultObject.last_name,
+                        "username": resultObject.username,
+                        "email": resultObject.email,
+                        "last_login": resultObject.last_login,
+                        "is_staff": resultObject.is_staff,
+                        "is_active": resultObject.is_active,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = User.objects.get(pk=pk)
+            
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "first_name": resultObject.first_name,
+                    "last_name": resultObject.last_name,
+                    "username": resultObject.username,
+                    "email": resultObject.email,
+                    "last_login": resultObject.last_login,
+                    "is_staff": resultObject.is_staff,
+                    "is_active": resultObject.is_active,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = User.objects.create(fk_idEmailParent = request.data["fk_idEmailParent"],emailName = request.data["emailName"],emailBody = request.data["emailBody"],sectionName = request.data["sectionName"],emailBodyRepeatEven = request.data["emailBodyRepeatEven"],emailBodyRepeatOdd = request.data["emailBodyRepeatOdd"],whenAttachmentUnavailable = request.data["whenAttachmentUnavailable"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
+            return JsonResponse({"results": request.data})
+            #if serializer.is_valid():
+                #try:
+                    #serializer.save()
+                    #return Response(serializer.data)
+                #except Exception as e:
+                    #print('%s (%s)' % (e.message, type(e)))
+                    #return Response({"results": e.message})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            #print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            #user.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
 
 
 class BookingsViewSet(viewsets.ViewSet):
@@ -3123,6 +3237,8 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
 
 class FPViewSet(viewsets.ViewSet):
+    serializer_class = FpSerializer
+
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         return_data = []
@@ -3136,9 +3252,317 @@ class FPViewSet(viewsets.ViewSet):
                         {
                             "id": resultObject.id,
                             "fp_company_name": resultObject.fp_company_name,
+                            "fp_address_country": resultObject.fp_address_country
                         }
                     )
             return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.get(pk=pk)
+            if not resultObjects.fp_inactive_date:
+                return_data.append(
+                    {
+                        "id": resultObjects.id,
+                        "fp_company_name": resultObjects.fp_company_name,
+                        "fp_address_country": resultObjects.fp_address_country
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            #print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.create(fp_company_name=request.data["fp_company_name"], fp_address_country=request.data["fp_address_country"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
+        serializer = FpSerializer(fp_freight_providers, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
+
+        try:
+            fp_freight_providers.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get_carriers(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = FP_carriers.objects.filter(fk_fp=fp_id)
+                        
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_fp": resultObject.fk_fp,
+                        "carrier": resultObject.carrier,
+                        "connote_start_value": resultObject.connote_start_value,
+                        "connote_end_value": resultObject.connote_end_value,
+                        "current_value": resultObject.current_value,
+                        "label_end_value": resultObject.label_end_value,
+                        "label_start_value": resultObject.label_start_value
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            #print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add_carrier(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_carriers.objects.create(fk_fp=request.data["fk_fp"], carrier=request.data["carrier"], connote_start_value=request.data["connote_start_value"], connote_end_value=request.data["connote_end_value"], current_value=request.data["current_value"], label_start_value=request.data["label_start_value"], label_end_value=request.data["label_end_value"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit_carrier(self, request, pk, format=None):
+        fp_carrier = FP_carriers.objects.get(pk=pk)
+        serializer = CarrierSerializer(fp_carrier, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete_carrier(self, request, pk, format=None):
+        fp_carrier = FP_carriers.objects.get(id=pk)
+
+        try:
+            fp_carrier.delete()
+            return JsonResponse({"results": fp_carrier})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get_zones(self, request, pk=None):
+        fp_id = self.request.GET["fp_id"]
+        page_item_cnt = self.request.query_params.get("pageItemCnt", 10)
+        page_ind = self.request.query_params.get("pageInd", 0)
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = FP_zones.objects.filter(fk_fp=fp_id)
+            # Count
+            zones_cnt = resultObjects.count()
+
+            # Pagination
+            page_cnt = (
+                int(zones_cnt / int(page_item_cnt))
+                if zones_cnt % int(page_item_cnt) == 0
+                else int(zones_cnt / int(page_item_cnt)) + 1
+            )
+            resultObjects = resultObjects[
+                int(page_item_cnt)
+                * int(page_ind) : int(page_item_cnt)
+                * (int(page_ind) + 1)
+            ]
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_fp": resultObject.fk_fp,
+                        "suburb": resultObject.suburb,
+                        "state": resultObject.state,
+                        "postal_code": resultObject.postal_code,
+                        "zone": resultObject.zone,
+                        "carrier": resultObject.carrier,
+                        "service": resultObject.service,
+                        "sender_code": resultObject.sender_code
+                    }
+                )
+            return JsonResponse({"results": return_data, 'page_cnt': page_cnt, 'page_ind': page_ind, 'page_item_cnt': page_item_cnt})
+        except Exception as e:
+            #print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add_zone(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_zones.objects.create(fk_fp=request.data["fk_fp"], suburb=request.data["suburb"], state=request.data["state"], postal_code=request.data["postal_code"], zone=request.data["zone"], carrier=request.data["carrier"], service=request.data["service"], sender_code=request.data["sender_code"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit_zone(self, request, pk, format=None):
+        fp_zone = FP_zones.objects.get(pk=pk)
+        serializer = ZoneSerializer(fp_zone, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete_zone(self, request, pk, format=None):
+        fp_zone = FP_zones.objects.get(pk=pk)
+
+        try:
+            fp_zone.delete()
+            return JsonResponse({"results": fp_zone})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+class EmailTemplatesViewSet(viewsets.ViewSet):
+    serializer_class = EmailTemplatesSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Email_Templates.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_idEmailParent": resultObject.fk_idEmailParent,
+                        "emailName": resultObject.emailName,
+                        "emailBody": resultObject.emailBody,
+                        "sectionName": resultObject.sectionName,
+                        "emailBodyRepeatEven": resultObject.emailBodyRepeatEven,
+                        "emailBodyRepeatOdd": resultObject.emailBodyRepeatOdd,
+                        "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = DME_Email_Templates.objects.get(pk=pk)
+            
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "fk_idEmailParent": resultObject.fk_idEmailParent,
+                    "emailName": resultObject.emailName,
+                    "emailBody": resultObject.emailBody,
+                    "sectionName": resultObject.sectionName,
+                    "emailBodyRepeatEven": resultObject.emailBodyRepeatEven,
+                    "emailBodyRepeatOdd": resultObject.emailBodyRepeatOdd,
+                    "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
+                    "z_createdByAccount": resultObject.z_createdByAccount,
+                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                    "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                    "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Email_Templates.objects.create(fk_idEmailParent = request.data["fk_idEmailParent"],emailName = request.data["emailName"],emailBody = request.data["emailBody"],sectionName = request.data["sectionName"],emailBodyRepeatEven = request.data["emailBodyRepeatEven"],emailBodyRepeatOdd = request.data["emailBodyRepeatOdd"],whenAttachmentUnavailable = request.data["whenAttachmentUnavailable"])
+            
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        email_template = DME_Email_Templates.objects.get(pk=pk)
+        #return JsonResponse({"results": (email_template.emailBody)})
+        #serializer = EmailTemplatesSerializer(email_template, data=request.data)
+
+        try:
+            DME_Email_Templates.objects.filter(pk=pk).update(emailBody=request.data["emailBody"])
+            return JsonResponse({"results": request.data})
+            #if serializer.is_valid():
+                #try:
+                    #serializer.save()
+                    #return Response(serializer.data)
+                #except Exception as e:
+                    #print('%s (%s)' % (e.message, type(e)))
+                    #return Response({"results": e.message})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            #print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        email_template = DME_Email_Templates.objects.get(pk=pk)
+
+        try:
+            email_template.delete()
+            return JsonResponse({"results": fp_freight_providers})
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"results": ""})
@@ -3177,6 +3601,19 @@ class OptionsViewSet(viewsets.ViewSet):
             # print('@Exception', e)
             return JsonResponse({"error": str(e)})
 
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        dme_options = DME_Options.objects.get(pk=pk)
+        serializer = OptionsSerializer(dme_options, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class StatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
@@ -3934,3 +4371,139 @@ def getSuburbs(request):
         return JsonResponse({"type": requestType, "suburbs": return_data})
     except Exception as e:
         return JsonResponse({"type": requestType, "suburbs": ""})
+
+class SqlQueriesViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Utl_sql_queries.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "sql_title": resultObject.sql_title,
+                        "sql_query": resultObject.sql_query,
+                        "sql_description": resultObject.sql_description,
+                        "sql_notes": resultObject.sql_notes,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_modifiedByAccount": resultObject.z_modifiedByAccount,
+                        "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = Utl_sql_queries.objects.get(pk=pk)
+            
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "sql_title": resultObject.sql_title,
+                    "sql_query": resultObject.sql_query,
+                    "sql_description": resultObject.sql_description,
+                    "sql_notes": resultObject.sql_notes,
+                    "z_createdByAccount": resultObject.z_createdByAccount,
+                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                    "z_modifiedByAccount": resultObject.z_modifiedByAccount,
+                    "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+        
+        try:
+            resultObjects = []
+            resultObjects = Utl_sql_queries.objects.create(sql_title = request.data["sql_title"], sql_query = request.data["sql_query"], sql_description = request.data["sql_description"], sql_notes = request.data["sql_notes"])
+            
+            return JsonResponse({"results": request.data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        data = Utl_sql_queries.objects.get(pk=pk)
+
+        try:
+            Utl_sql_queries.objects.filter(pk=pk).update(sql_query = request.data["sql_query"], sql_description = request.data["sql_description"], sql_notes = request.data["sql_notes"])
+            return JsonResponse({"results": request.data})
+        except Exception as e:
+            #print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        data = Utl_sql_queries.objects.get(pk=pk)
+
+        try:
+            data.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def validate(self, request, pk=None):
+        return_data = []
+        query_tables = tables_in_query(request.data["sql_query"])
+        #return JsonResponse({"results": str(query_tables)})  
+        if (re.search('select', request.data["sql_query"], flags=re.IGNORECASE)):
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(request.data["sql_query"])
+                    columns = cursor.description
+                    row = cursor.fetchall()
+                    cursor.execute("SHOW KEYS FROM "+query_tables[0]+" WHERE Key_name = 'PRIMARY'")
+                    row1 = cursor.fetchone()
+                    result = []
+                    for value in row:
+                        tmp = {}
+                        for (index,column) in enumerate(value):
+                            tmp[columns[index][0]] = column
+                        result.append(tmp)
+                    return JsonResponse({"results": result, "tables": row1})
+                except Exception as e:
+                    # print('@Exception', e)
+                    return JsonResponse({"error": str(e)})
+        else:
+            return JsonResponse({"error": 'Sorry only SELECT statement allowed'})
+
+    @action(detail=False, methods=["post"])
+    def update_query(self, request, pk=None):
+        return_data = []
+        if (re.search('update', request.data["sql_query"], flags=re.IGNORECASE)):
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(request.data["sql_query"])
+                    columns = cursor.description
+                    row = cursor.fetchall()
+                    result = []
+                    for value in row:
+                        tmp = {}
+                        for (index,column) in enumerate(value):
+                            tmp[columns[index][0]] = column
+                        result.append(tmp)
+                    return JsonResponse({"results": result})
+                except Exception as e:
+                    # print('@Exception', e)
+                    return JsonResponse({"error": str(e)})
+        else:
+            return JsonResponse({"error": 'Sorry only UPDATE statement allowed'})
