@@ -2290,6 +2290,8 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
                 booking.z_pod_signed_url = f"{fp.company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
                 booking.z_downloaded_pod_sog_timestamp = datetime.now()
 
+            booking.save()
+
         with open(full_path, "wb+") as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
@@ -2306,7 +2308,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
 
         return "ok"
     except Exception as e:
-        # print('Exception: ', e)
+        print("Exception: ", e)
         return "failed"
 
 
