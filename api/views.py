@@ -2272,7 +2272,10 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
                 + extension
             )
         elif upload_type in ["label", "pod"]:
-            folder_name = f"/opt/s3_public/pdfs/{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/"
+            if upload_type == "label":
+                folder_name = f"/opt/s3_public/pdfs/{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/"
+            else:
+                folder_name = f"/opt/s3_public/imgs/{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/"
 
             if not os.path.isdir(folder_name):
                 os.makedirs(folder_name)
