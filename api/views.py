@@ -2282,13 +2282,10 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
 
             if upload_type == "label":
                 booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-                booking.z_downloaded_pod_timestamp = datetime.now()
             elif upload_type == "pod" and not "SOG" in name:
                 booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-                booking.z_downloaded_shipping_label_timestamp = datetime.now()
             elif upload_type == "pod" and "SOG" in name:
                 booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-                booking.z_downloaded_pod_sog_timestamp = datetime.now()
 
             booking.save()
 
