@@ -2258,6 +2258,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
         user_id = request.user.id
         client = DME_clients.objects.get(pk_id_dme_client=user_id)
         booking = Bookings.objects.get(id=bookingId)
+        fp = Fp_freight_providers.get(fp_company_name=booking.vx_freight_provider)
         name, extension = os.path.splitext(f.name)
 
         if upload_type == "attachments":
@@ -2268,20 +2269,13 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
                 + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
                 + extension
             )
-        elif upload_type == "label":
-            fileName = (
-                "/home/cope_au/dme_sftp/cope_au/labels/indata/"
-                + "DME"
-                + str(booking.b_bookingID_Visual)
-                + extension
-            )
-        elif upload_type == "pod":
-            fileName = (
-                "/home/cope_au/dme_sftp/cope_au/pods/indata/"
-                + "DME"
-                + str(booking.b_bookingID_Visual)
-                + extension
-            )
+        elif upload_type == ["label", "pod"]:
+            folder_name = f"/opt/s3_public/pdfs/{fp.company_name.lower()}_{fp.fp_address_country.lower()}/"
+
+            if not os.path.isdir(folder_name):
+                os.makedirs(folder_name)
+
+            fileName = f"{folder_name}/DME{str(booking.b_bookingID_Visual)}{extension}"
 
         with open(fileName, "wb+") as destination:
             for chunk in f.chunks():
@@ -2296,6 +2290,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
                 upload_Date=datetime.now(),
             )
             dme_attachment.save()
+
         return "ok"
     except Exception as e:
         # print('Exception: ', e)
