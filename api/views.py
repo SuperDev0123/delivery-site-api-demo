@@ -2271,7 +2271,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
                 + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
                 + extension
             )
-        elif upload_type == ["label", "pod"]:
+        elif upload_type in ["label", "pod"]:
             folder_name = f"/opt/s3_public/pdfs/{fp.company_name.lower()}_{fp.fp_address_country.lower()}/"
 
             if not os.path.isdir(folder_name):
