@@ -2258,11 +2258,13 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
         user_id = request.user.id
         client = DME_clients.objects.get(pk_id_dme_client=user_id)
         booking = Bookings.objects.get(id=bookingId)
-        fp = Fp_freight_providers.get(fp_company_name=booking.vx_freight_provider)
+        fp = Fp_freight_providers.objects.get(
+            fp_company_name=booking.vx_freight_provider
+        )
         name, extension = os.path.splitext(f.name)
 
         if upload_type == "attachments":
-            fileName = (
+            full_path = (
                 "/opt/s3_private/attachments/"
                 + name
                 + "_"
@@ -2275,9 +2277,20 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
             if not os.path.isdir(folder_name):
                 os.makedirs(folder_name)
 
-            fileName = f"{folder_name}/DME{str(booking.b_bookingID_Visual)}{extension}"
+            file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
+            full_path = f"{folder_name}/{filename}"
 
-        with open(fileName, "wb+") as destination:
+            if upload_type == "label":
+                booking.z_label_url = f"{fp.company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+                booking.z_downloaded_pod_timestamp = datetime.now()
+            elif upload_type == "pod" and not "SOG" in name:
+                booking.z_pod_url = f"{fp.company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+                booking.z_downloaded_shipping_label_timestamp = datetime.now()
+            elif upload_type == "pod" and "SOG" in name:
+                booking.z_pod_signed_url = f"{fp.company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+                booking.z_downloaded_pod_sog_timestamp = datetime.now()
+
+        with open(full_path, "wb+") as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
 
@@ -2285,7 +2298,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
             dme_attachment = Dme_attachments(
                 fk_id_dme_client=client,
                 fk_id_dme_booking=booking.pk_booking_id,
-                fileName=fileName,
+                fileName=full_path,
                 linkurl="22",
                 upload_Date=datetime.now(),
             )
