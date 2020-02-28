@@ -2308,7 +2308,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
 
         return "ok"
     except Exception as e:
-        print("Exception: ", e)
+        # print("Exception: ", e)
         return "failed"
 
 
