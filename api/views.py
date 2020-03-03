@@ -35,7 +35,7 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
-
+from django.utils.datastructures import MultiValueDictKeyError
 from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -73,6 +73,20 @@ from api.outputs import emails as email_module
 from api.common import status_history
 from api.outputs import tempo
 
+
+if settings.ENV == "local":
+    SERVER_IP = "localhost:9000"
+    STATIC_PUBLIC = "./static"
+    STATIC_PRIVATE = "./static"
+elif settings.ENV == "dev":
+    SERVER_IP = f"3.104.30.210"
+    STATIC_PUBLIC = "/opt/s3_public"
+    STATIC_PRIVATE = "/opt/s3_private"
+elif settings.ENV == "dev":
+    SERVER_IP = f"13.55.160.158"
+    STATIC_PUBLIC = "/opt/s3_public"
+    STATIC_PRIVATE = "/opt/s3_private"
+
 logger = logging.getLogger("dme_api")
 
 
@@ -80,23 +94,13 @@ logger = logging.getLogger("dme_api")
 def password_reset_token_created(
     sender, instance, reset_password_token, *args, **kwargs
 ):
-    if settings.ENV == "local":
-        ip = "localhost:9000"
-    elif settings.ENV == "dev":
-        ip = f"3.104.30.210"
-    elif settings.ENV == "dev":
-        ip = f"13.55.160.158"
-
-    url = f"http://{ip}"
-
+    url = f"http://{SERVER_IP}"
     context = {
         "current_user": reset_password_token.user,
         "username": reset_password_token.user.username,
         "email": reset_password_token.user.email,
         "reset_password_url": f"{url}/reset-password?token=" + reset_password_token.key,
     }
-
-    from django.utils.datastructures import MultiValueDictKeyError
 
     try:
         filepath = settings.EMAIL_ROOT + "/user_reset_password.html"
@@ -1639,6 +1643,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "pk_booking_id": booking.pk_booking_id,
                         "vx_freight_provider": booking.vx_freight_provider,
                         "z_label_url": booking.z_label_url,
+                        "z_pod_url": booking.z_pod_url,
+                        "z_pod_signed_url": booking.z_pod_signed_url,
                         "pu_Address_State": booking.pu_Address_State,
                         "de_To_Address_State": booking.de_To_Address_State,
                         "b_status": booking.b_status,
@@ -2372,32 +2378,51 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
         user_id = request.user.id
         client = DME_clients.objects.get(pk_id_dme_client=user_id)
         booking = Bookings.objects.get(id=bookingId)
+        fp = Fp_freight_providers.objects.get(
+            fp_company_name=booking.vx_freight_provider
+        )
         name, extension = os.path.splitext(f.name)
 
         if upload_type == "attachments":
-            fileName = (
-                "/opt/s3_private/attachments/"
-                + name
-                + "_"
-                + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-                + extension
+            fp_dir_name = (
+                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
             )
-        elif upload_type == "label":
-            fileName = (
-                "/home/cope_au/dme_sftp/cope_au/labels/indata/"
-                + "DME"
-                + str(booking.b_bookingID_Visual)
-                + extension
+            file_path = f"{STATIC_PUBLIC}/attachments/{fp_dir_name}/"
+
+            if not os.path.isdir(file_path):
+                os.makedirs(file_path)
+
+            file_name = (
+                f"{name}-{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}{extension}"
             )
-        elif upload_type == "pod":
-            fileName = (
-                "/home/cope_au/dme_sftp/cope_au/pods/indata/"
-                + "DME"
-                + str(booking.b_bookingID_Visual)
-                + extension
+            full_path = f"{file_path}/{file_name}"
+        elif upload_type in ["label", "pod"]:
+            fp_dir_name = (
+                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
             )
 
-        with open(fileName, "wb+") as destination:
+            if upload_type == "label":
+                file_path = f"{STATIC_PUBLIC}/pdfs/{fp_dir_name}/"
+            else:
+                file_path = f"{STATIC_PUBLIC}/imgs/{fp_dir_name}/"
+
+            if not os.path.isdir(file_path):
+                os.makedirs(file_path)
+
+            if upload_type == "label":
+                file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+            elif upload_type == "pod" and not "sog" in name.lower():
+                file_name = f"POD_DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+            elif upload_type == "pod" and "sog" in name.lower():
+                file_name = f"POD_SOG_DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+
+            full_path = f"{file_path}/{file_name}"
+            booking.save()
+
+        with open(full_path, "wb+") as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
 
@@ -2405,15 +2430,24 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
             dme_attachment = Dme_attachments(
                 fk_id_dme_client=client,
                 fk_id_dme_booking=booking.pk_booking_id,
-                fileName=fileName,
+                fileName=full_path,
                 linkurl="22",
                 upload_Date=datetime.now(),
             )
             dme_attachment.save()
-        return "ok"
+
+        return {
+            "status": "success",
+            "file_path": f"{fp_dir_name}/{file_name}",
+            "type": upload_type,
+        }
     except Exception as e:
-        # print('Exception: ', e)
-        return "failed"
+        print("Exception: ", e)
+        return {
+            "status": "failed",
+            "file_path": f"{fp_dir_name}/{file_name}",
+            "type": upload_type,
+        }
 
 
 class CommsViewSet(viewsets.ViewSet):
@@ -3849,7 +3883,7 @@ def download_pdf(request):
             #         continue
 
             #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
-            #     file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
+            #     file_path = f"STATIC_PUBLIC/pdfs/atc_au/{label_name}"  # Dev & Prod
             #     # file_path = f"./static/pdfs/atc_au/{label_name}" # Local (Test Case)
             #     file = open(file_path, "wb+")
             #     for block in request.iter_content(1024 * 8):
@@ -3862,7 +3896,7 @@ def download_pdf(request):
             #     label_names.append(label_name)
             # else:
             file_paths.append(
-                f"/opt/s3_public/pdfs/{booking.z_label_url}"
+                f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
             )  # Dev & Prod
             # file_paths.append('./static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
@@ -3891,9 +3925,9 @@ def download_manifest(request):
     z_manifest_url = body["z_manifest_url"]
 
     if settings.ENV in ["prod", "dev"]:
-        file_path = "/opt/s3_public/pdfs/" + z_manifest_url  # Prod & Dev
+        file_path = f"{STATIC_PUBLIC}/pdfs/{z_manifest_url}"  # Prod & Dev
     else:
-        file_path = "./static/pdfs/" + z_manifest_url  # Prod
+        file_path = f"./static/pdfs/{z_manifest_url}"  # Prod
 
     manifest_name = z_manifest_url.split("/")[1]
 
@@ -3928,7 +3962,7 @@ def download_pod(request):
 
             if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                 file_paths.append(
-                    "/opt/s3_public/imgs/" + booking.z_pod_url
+                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                 )  # Dev & Prod
                 # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_url)
@@ -3944,7 +3978,7 @@ def download_pod(request):
                 and len(booking.z_pod_signed_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/s3_public/imgs/" + booking.z_pod_signed_url
+                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                 )  # Dev & Prod
                 # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_signed_url)
@@ -3958,7 +3992,7 @@ def download_pod(request):
             if booking.z_downloaded_pod_timestamp is None:
                 if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                     file_paths.append(
-                        "/opt/s3_public/imgs/" + booking.z_pod_url
+                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                     )  # Dev & Prod
                     # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_url)
@@ -3974,7 +4008,7 @@ def download_pod(request):
                     and len(booking.z_pod_signed_url) is not 0
                 ):
                     file_paths.append(
-                        "/opt/s3_public/imgs/" + booking.z_pod_signed_url
+                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                     )  # Dev & Prod
                     # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_signed_url)
@@ -4016,7 +4050,7 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/s3_private/connotes/" + booking.z_connote_url
+                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "./static/connotes/"
@@ -4036,7 +4070,7 @@ def download_connote(request):
                     and len(booking.z_connote_url) is not 0
                 ):
                     file_paths.append(
-                        "/opt/s3_private/connotes/" + booking.z_connote_url
+                        "STATIC_PRIVATE/connotes/" + booking.z_connote_url
                     )  # Dev & Prod
                     # file_paths.append(
                     #     "./static/connotes/"
@@ -4055,7 +4089,7 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/s3_private/connotes/" + booking.z_connote_url
+                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "./static/connotes/"
@@ -4066,7 +4100,7 @@ def download_connote(request):
                 booking.save()
             if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
                 file_paths.append(
-                    "/opt/s3_public/pdfs/" + booking.z_label_url
+                    f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "./static/pdfs/"
@@ -4199,10 +4233,10 @@ def generate_manifest(request):
 
         if vx_freight_provider.upper() == "TASFR":
             for filename in filenames:
-                file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
+                file_paths.append(f"{STATIC_PUBLIC}/pdfs/tas_au/{filename}")
         elif vx_freight_provider.upper() == "DHL":
             for filename in filenames:
-                file_paths.append("/opt/s3_public/pdfs/dhl_au/" + filename)
+                file_paths.append(f"{STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
