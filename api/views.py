@@ -2295,16 +2295,17 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
             if not os.path.isdir(file_path):
                 os.makedirs(file_path)
 
-            file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
-            full_path = f"{file_path}/{file_name}"
-
             if upload_type == "label":
+                file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
                 booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-            elif upload_type == "pod" and not "SOG" in name:
-                booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/POD_{file_name}"
-            elif upload_type == "pod" and "SOG" in name:
-                booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/POD_SOG_{file_name}"
+            elif upload_type == "pod" and not "sog" in name.lower():
+                file_name = f"POD_DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+            elif upload_type == "pod" and "sog" in name.lower():
+                file_name = f"POD_SOG_DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
 
+            full_path = f"{file_path}/{file_name}"
             booking.save()
 
         with open(full_path, "wb+") as destination:
