@@ -79,4 +79,11 @@ class Migration(migrations.Migration):
             old_name="fk_id_booking_lines",
             new_name="fk_booking_lines_id",
         ),
+        migrations.AlterField(
+            model_name="bok_1_headers",
+            name="b_021_b_pu_avail_from_date",
+            field=models.DateField(
+                blank=True, default=datetime.datetime.now, verbose_name="Available From"
+            ),
+        ),
     ]

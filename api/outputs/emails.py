@@ -18,6 +18,9 @@ def send_booking_email_using_template(bookingId, emailName):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines_data = Booking_lines_data.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    )
 
     totalQty = 0
     totalWeight = 0
@@ -25,7 +28,7 @@ def send_booking_email_using_template(bookingId, emailName):
         totalQty += booking_line.e_qty
         totalWeight += booking_line.e_qty * booking_line.e_weightPerEach
 
-    label_files = []
+    files = []
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
     BOOKEDDATE = booking.b_dateBookedDate
     DELIVERYDATE = booking.s_21_Actual_Delivery_TimeStamp
@@ -83,7 +86,7 @@ def send_booking_email_using_template(bookingId, emailName):
         }
 
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            label_files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+            files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
 
     elif emailName == "Return Booking":
         emailVarList = {
@@ -144,6 +147,9 @@ def send_booking_email_using_template(bookingId, emailName):
             "ATTENTION_NOTES": ATTENTION_NOTES,
         }
 
+        if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+            files.append("/opt/s3_public/pdfs/" + booking.z_pod_url)
+
     elif emailName == "Futile Pickup":
         emailVarList = {
             "TOADDRESSCONTACT": TOADDRESSCONTACT,
@@ -182,13 +188,15 @@ def send_booking_email_using_template(bookingId, emailName):
             str(template.emailBodyRepeatOdd) if template.emailBodyRepeatOdd else ""
         )
 
+        gaps = []
+
+        for lines_data in booking_lines_data:
+            if lines_data.gap_ra:
+                gaps.append(lines_data.gap_ra)
+
         for idx, booking_line in enumerate(booking_lines):
             PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
-            RA = (
-                str(booking_line.e_spec_clientRMA_Number)
-                if booking_line.e_spec_clientRMA_Number
-                else ""
-            )
+            RA = ", ".join(gaps)
             DESCRIPTION = str(booking_line.e_item) if booking_line.e_item else ""
             QTY = str(booking_line.e_qty) if booking_line.e_qty else ""
             REF = (
@@ -248,6 +256,7 @@ def send_booking_email_using_template(bookingId, emailName):
                     "LENGTH": LENGTH,
                     "WEIGHT": WEIGHT,
                 }
+
                 for key in emailVarListOdd.keys():
                     emailBodyRepeatOdd = emailBodyRepeatOdd.replace(
                         "{" + str(key) + "}",
@@ -255,8 +264,6 @@ def send_booking_email_using_template(bookingId, emailName):
                     )
 
         emailVarList["BODYREPEAT"] = emailBodyRepeatOdd + emailBodyRepeatEven
-
-        # print(emailVarList)
 
         for key in emailVarList.keys():
             emailBody = emailBody.replace(
@@ -266,7 +273,7 @@ def send_booking_email_using_template(bookingId, emailName):
 
         html += emailBody
 
-    # TEST Use
+    # TEST Usage
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
@@ -282,4 +289,4 @@ def send_booking_email_using_template(bookingId, emailName):
 
     subject = f"Tempo ${emailName} - DME#${booking.v_FPBookingNumber} - FP#${booking.vx_freight_provider}"
     mime_type = "html"
-    send_email(to_emails, subject, html, label_files, mime_type)
+    send_email(to_emails, subject, html, files, mime_type)

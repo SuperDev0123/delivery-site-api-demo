@@ -9,17 +9,19 @@ def fp_price_2_dme_price(api_booking_quote):
         company_name__iexact=api_booking_quote["fk_client_id"].lower()
     )
 
-    dme_price = float(api_booking_quote["fee"]) * fp.fp_markupfuel_levy_percent + float(
-        api_booking_quote["fee"]
-    )
-    mu_percentage_total = dme_price * client.client_mark_up_percent + dme_price
-    min_mu_total = dme_price + client.client_min_markup_value
+    fp_mu_val = float(api_booking_quote["fee"]) * (1 + fp.fp_markupfuel_levy_percent)
+    client_mu_val = fp_mu_val * (1 + client.client_mark_up_percent)
+    client_mu_min_val = fp_mu_val + client.client_min_markup_value
 
-    greater = (
-        mu_percentage_total if mu_percentage_total > min_mu_total else min_mu_total
-    )
+    if float(api_booking_quote["fee"]) > client.client_min_markup_startingcostvalue:
+        return (
+            float(api_booking_quote["fee"]) * (1 + client.client_mark_up_percent),
+            fp.fp_markupfuel_levy_percent,
+        )
 
-    if dme_price < client.client_min_markup_startingcostvalue:
-        return mu_percentage_total, client.client_mark_up_percent
+    greater = client_mu_val if client_mu_val > client_mu_min_val else client_mu_min_val
+
+    if fp_mu_val < client.client_min_markup_startingcostvalue:
+        return client_mu_val, fp.fp_markupfuel_levy_percent
     else:
         return greater, fp.fp_markupfuel_levy_percent

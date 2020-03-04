@@ -503,9 +503,9 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    pu_pickup_instructions_address = models.CharField(
+    pu_pickup_instructions_address = models.TextField(
         verbose_name=_("Pickup instrunctions address"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -706,9 +706,9 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    pu_PickUp_Instructions_Contact = models.CharField(
+    pu_PickUp_Instructions_Contact = models.TextField(
         verbose_name=_("PU Instructions Contact"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -821,16 +821,16 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    de_to_Pick_Up_Instructions_Contact = models.CharField(
+    de_to_Pick_Up_Instructions_Contact = models.TextField(
         verbose_name=_("DE Instructions Contact"),
-        max_length=120,
+        max_length=512,
         blank=True,
         null=True,
         default="",
     )
-    de_to_PickUp_Instructions_Address = models.CharField(
+    de_to_PickUp_Instructions_Address = models.TextField(
         verbose_name=_("DE Instructions Address"),
-        max_length=120,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -912,7 +912,7 @@ class Bookings(models.Model):
     s_21_Actual_Delivery_TimeStamp = models.DateTimeField(
         verbose_name=_("Actual DE TimeStamp"), blank=True, null=True
     )
-    b_handling_Instructions = models.CharField(
+    b_handling_Instructions = models.TextField(
         verbose_name=_("Handling Instructions"),
         max_length=120,
         blank=True,
@@ -1233,7 +1233,7 @@ class Bookings(models.Model):
         verbose_name=_("DME GST Percentage"), blank=True, default=0, null=True
     )
     x_ReadyStatus = models.CharField(
-        verbose_name=_("Ready Status"), max_length=5, blank=True, null=True, default=""
+        verbose_name=_("Ready Status"), max_length=32, blank=True, null=True, default=""
     )
     DME_Notes = models.CharField(
         verbose_name=_("DME Notes"), max_length=500, blank=True, null=True, default=""
@@ -1565,9 +1565,7 @@ class Booking_lines(models.Model):
     fk_booking_id = models.CharField(
         verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
     )
-    pk_booking_lines_id = models.CharField(
-        verbose_name=_("PK Booking Line"), max_length=64, blank=True, null=True
-    )
+    pk_booking_lines_id = models.CharField(max_length=64, blank=True, null=True)
     e_type_of_packaging = models.CharField(
         verbose_name=_("Type Of Packaging"), max_length=36, blank=True, null=True
     )
@@ -1686,7 +1684,11 @@ class Booking_lines(models.Model):
 class Booking_lines_data(models.Model):
     pk_id_lines_data = models.AutoField(primary_key=True)
     fk_booking_lines_id = models.CharField(
-        verbose_name=_("FK Booking Lines Id"), max_length=64, blank=True, null=True
+        verbose_name=_("FK Booking Lines Id"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
     )
     fk_booking_id = models.CharField(
         verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
@@ -1786,8 +1788,8 @@ class BOK_1_headers(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
-    b_021_b_pu_avail_from_date = models.DateTimeField(
-        verbose_name=_("Available From"), default=datetime.now, blank=True
+    b_021_b_pu_avail_from_date = models.DateField(
+        verbose_name=_("Available From"), default=None, blank=True
     )
     b_003_b_service_name = models.CharField(
         verbose_name=_("Service Name"), max_length=31, blank=True, null=True
@@ -1885,21 +1887,21 @@ class BOK_1_headers(models.Model):
     b_013_b_package_job = models.BooleanField(
         verbose_name=_("b_013_b_package_job"), default=False, blank=True, null=True
     )
-    b_014_b_pu_handling_instructions = models.CharField(
+    b_014_b_pu_handling_instructions = models.TextField(
         verbose_name=_("b_014_b_pu_handling_instructions"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
-    b_015_b_pu_instructions_contact = models.CharField(
+    b_015_b_pu_instructions_contact = models.TextField(
         verbose_name=_("b_015_b_pu_instructions_contact"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
-    b_016_b_pu_instructions_address = models.CharField(
+    b_016_b_pu_instructions_address = models.TextField(
         verbose_name=_("b_016_b_pu_instructions_address"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
@@ -1927,12 +1929,7 @@ class BOK_1_headers(models.Model):
         default=0,
         null=True,
     )
-    b_024_b_pu_by_date = models.DateTimeField(
-        verbose_name=_("b_024_b_pu_by_date"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
+    b_024_b_pu_by_date = models.DateField(default=None, blank=True, null=True)
     b_025_b_pu_by_time_hour = models.IntegerField(
         verbose_name=_("b_025_b_pu_by_time_hour"), blank=True, default=0, null=True
     )
@@ -2011,15 +2008,15 @@ class BOK_1_headers(models.Model):
         default=False,
         null=True,
     )
-    b_043_b_del_instructions_contact = models.CharField(
+    b_043_b_del_instructions_contact = models.TextField(
         verbose_name=_("b_043_b_del_instructions_contact"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
-    b_044_b_del_instructions_address = models.CharField(
+    b_044_b_del_instructions_address = models.TextField(
         verbose_name=_("b_044_b_del_instructions_address"),
-        max_length=100,
+        max_length=512,
         blank=True,
         null=True,
     )
@@ -2035,12 +2032,7 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_047_b_del_avail_from_date = models.DateTimeField(
-        verbose_name=_("b_047_b_del_avail_from_date"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
+    b_047_b_del_avail_from_date = models.DateField(default=None, blank=True, null=True)
     b_048_b_del_avail_from_time_hour = models.IntegerField(
         verbose_name=_("b_048_b_del_avail_from_time_hour"),
         blank=True,
@@ -2053,12 +2045,7 @@ class BOK_1_headers(models.Model):
         default=0,
         null=True,
     )
-    b_050_b_del_by_date = models.DateTimeField(
-        verbose_name=_("b_050_b_del_by_date"),
-        default=datetime.now,
-        blank=True,
-        null=True,
-    )
+    b_050_b_del_by_date = models.DateField(default=None, blank=True, null=True)
     b_051_b_del_by_time_hour = models.IntegerField(
         verbose_name=_("b_051_b_del_by_time_hour"), blank=True, default=0, null=True
     )
@@ -2164,6 +2151,9 @@ class BOK_1_headers(models.Model):
     b_000_3_consignment_number = models.CharField(
         max_length=32, blank=True, null=True, default=""
     )
+    b_000_0_b_client_agent_code = models.CharField(
+        max_length=32, blank=True, null=True, default=None
+    )
     z_test = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default="")
@@ -2192,6 +2182,13 @@ class BOK_1_headers(models.Model):
 
 class BOK_2_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
+    success = models.CharField(
+        verbose_name=_("Success"), max_length=1, default=0, blank=True, null=True
+    )
+    fk_header_id = models.CharField(
+        verbose_name=_("Header id"), max_length=64, blank=True, null=True
+    )
+    pk_booking_lines_id = models.CharField(max_length=64, blank=True, null=True)
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
@@ -2224,12 +2221,6 @@ class BOK_2_lines(models.Model):
     )
     l_002_qty = models.IntegerField(
         verbose_name=_("Address Postal Code"), blank=True, null=True
-    )
-    success = models.CharField(
-        verbose_name=_("Success"), max_length=1, default=0, blank=True, null=True
-    )
-    fk_header_id = models.CharField(
-        verbose_name=_("Header id"), max_length=64, blank=True, null=True
     )
     e_pallet_type = models.CharField(
         verbose_name=_("Pallet Type"), max_length=24, blank=True, null=True
@@ -2303,9 +2294,8 @@ class BOK_3_lines_data(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
-    fk_booking_lines_id = models.CharField(
-        verbose_name=_("FK Booking Lines Id"), max_length=64, blank=True, null=True
-    )
+    fk_header_id = models.CharField(max_length=64, blank=True)
+    fk_booking_lines_id = models.CharField(max_length=64, blank=True, default=None)
     v_client_pk_consigment_num = models.CharField(
         verbose_name=_("Consigment num"), max_length=64, blank=True, null=True
     )
@@ -2639,6 +2629,9 @@ class Utl_states(models.Model):
     )
     state_name = models.CharField(
         verbose_name=_("State Name"), max_length=64, blank=True, null=True
+    )
+    sender_code = models.CharField(
+        verbose_name=_("Sender Code"), max_length=64, blank=True, null=True
     )
     borderExpress_pu_emails = models.CharField(
         verbose_name=_("Border Express PU Emails"), max_length=64, blank=True, null=True
@@ -3091,6 +3084,7 @@ class Fp_freight_providers(models.Model):
     fp_manifest_cnt = models.IntegerField(default=1, blank=True, null=True)
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
     fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
+    prices_count = models.IntegerField(default=1, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -3158,6 +3152,12 @@ class FP_zones(models.Model):
     service = models.CharField(max_length=50, blank=True, null=True)
     sender_code = models.CharField(max_length=50, blank=True, null=True)
     fk_fp = models.CharField(max_length=32, blank=True, null=True, default=None)
+    start_postal_code = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
+    end_postal_code = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
 
     class Meta:
         db_table = "fp_zones"
@@ -3323,6 +3323,121 @@ class FP_Store_Booking_Log(models.Model):
 
     class Meta:
         db_table = "fp_store_booking_log"
+
+
+class FP_vehicles(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    description = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    max_length = models.FloatField(default=0, null=True, blank=True)
+    max_width = models.FloatField(default=0, null=True, blank=True)
+    max_height = models.FloatField(default=0, null=True, blank=True)
+    mass_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    max_mass = models.IntegerField(default=0, null=True, blank=True)
+    pallets = models.IntegerField(default=0, null=True, blank=True)
+    pallet_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    max_pallet_length = models.FloatField(default=0, null=True, blank=True)
+    max_pallet_width = models.FloatField(default=0, null=True, blank=True)
+    max_pallet_height = models.FloatField(default=0, null=True, blank=True)
+    base_charge = models.IntegerField(default=0, null=True, blank=True)
+    min_charge = models.IntegerField(default=0, null=True, blank=True)
+    limited_state = models.CharField(
+        max_length=16, blank=True, null=True, default=None,
+    )
+
+    class Meta:
+        db_table = "fp_vehicles"
+
+
+class FP_availabilities(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    code = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    mon_start = models.TimeField(default=None, blank=True, null=True)
+    mon_end = models.TimeField(default=None, blank=True, null=True)
+    tue_start = models.TimeField(default=None, blank=True, null=True)
+    tue_end = models.TimeField(default=None, blank=True, null=True)
+    wed_start = models.TimeField(default=None, blank=True, null=True)
+    wed_end = models.TimeField(default=None, blank=True, null=True)
+    thu_start = models.TimeField(default=None, blank=True, null=True)
+    thu_end = models.TimeField(default=None, blank=True, null=True)
+    fri_start = models.TimeField(default=None, blank=True, null=True)
+    fri_end = models.TimeField(default=None, blank=True, null=True)
+    sat_start = models.TimeField(default=None, blank=True, null=True)
+    sat_end = models.TimeField(default=None, blank=True, null=True)
+    sun_start = models.TimeField(default=None, blank=True, null=True)
+    sun_end = models.TimeField(default=None, blank=True, null=True)
+
+    class Meta:
+        db_table = "fp_availabilities"
+
+
+class FP_timings(models.Model):
+    id = models.AutoField(primary_key=True)
+    time_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    min = models.IntegerField(default=0, null=True, blank=True)
+    max = models.IntegerField(default=0, null=True, blank=True)
+    booking_cut_off_time = models.TimeField(default=None, blank=True, null=True)
+    collected_by = models.TimeField(default=None, blank=True, null=True)
+    delivered_by = models.TimeField(default=None, blank=True, null=True)
+
+    class Meta:
+        db_table = "fp_timings"
+
+
+class FP_costs(models.Model):
+    id = models.AutoField(primary_key=True)
+    UOM_charge = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    start_qty = models.IntegerField(default=0, null=True, blank=True)
+    end_qty = models.IntegerField(default=0, null=True, blank=True)
+    basic_charge = models.FloatField(default=0, null=True, blank=True)
+    min_charge = models.FloatField(default=0, null=True, blank=True)
+    per_UOM_charge = models.FloatField(default=0, null=True, blank=True)
+    oversize_premium = models.FloatField(default=0, null=True, blank=True)
+    oversize_price = models.FloatField(default=0, null=True, blank=True)
+    m3_to_kg_factor = models.IntegerField(default=0, null=True, blank=True)
+    dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    price_up_to_length = models.FloatField(default=0, null=True, blank=True)
+    price_up_to_width = models.FloatField(default=0, null=True, blank=True)
+    price_up_to_height = models.FloatField(default=0, null=True, blank=True)
+    weight_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    price_up_to_weight = models.FloatField(default=0, null=True, blank=True)
+    max_length = models.FloatField(default=0, null=True, blank=True)
+    max_width = models.FloatField(default=0, null=True, blank=True)
+    max_height = models.FloatField(default=0, null=True, blank=True)
+    max_weight = models.FloatField(default=0, null=True, blank=True)
+
+    class Meta:
+        db_table = "fp_costs"
+
+
+class FP_pricing_rules(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    cost = models.ForeignKey(FP_costs, on_delete=models.CASCADE, null=True)
+    timing = models.ForeignKey(FP_timings, on_delete=models.CASCADE, null=True)
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    service_type = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    service_timing_code = models.CharField(
+        max_length=32, blank=True, null=True, default=None,
+    )
+    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
+    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
+    both_way = models.BooleanField(blank=True, null=True, default=False)
+    pu_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
+    pu_state = models.CharField(max_length=32, blank=True, null=True, default=None)
+    pu_postal_code = models.CharField(max_length=8, blank=True, null=True, default=None)
+    pu_suburb = models.CharField(max_length=32, blank=True, null=True, default=None)
+    de_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
+    de_state = models.CharField(max_length=32, blank=True, null=True, default=None)
+    de_postal_code = models.CharField(max_length=8, blank=True, null=True, default=None)
+    de_suburb = models.CharField(max_length=32, blank=True, null=True, default=None)
+
+    class Meta:
+        db_table = "fp_pricing_rules"
 
 
 @receiver(pre_save, sender=Bookings)

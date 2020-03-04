@@ -34,6 +34,17 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
 from django.utils import timezone
 from django.conf import settings
+from django.utils.datastructures import MultiValueDictKeyError
+from django.core.mail import EmailMultiAlternatives
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.urls import reverse
+
+from django_rest_passwordreset.signals import (
+    reset_password_token_created,
+    post_password_reset,
+    pre_password_reset,
+)
 
 from .serializers import *
 from .models import *
@@ -50,12 +61,56 @@ from .utils import (
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
+    send_email,
 )
 from api.outputs import emails as email_module
 from api.common import status_history
 from api.outputs import tempo
 
+
+if settings.ENV == "local":
+    SERVER_IP = "localhost:9000"
+    STATIC_PUBLIC = "./static"
+    STATIC_PRIVATE = "./static"
+elif settings.ENV == "dev":
+    SERVER_IP = f"3.104.30.210"
+    STATIC_PUBLIC = "/opt/s3_public"
+    STATIC_PRIVATE = "/opt/s3_private"
+elif settings.ENV == "dev":
+    SERVER_IP = f"13.55.160.158"
+    STATIC_PUBLIC = "/opt/s3_public"
+    STATIC_PRIVATE = "/opt/s3_private"
+
 logger = logging.getLogger("dme_api")
+
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(
+    sender, instance, reset_password_token, *args, **kwargs
+):
+    url = f"http://{SERVER_IP}"
+    context = {
+        "current_user": reset_password_token.user,
+        "username": reset_password_token.user.username,
+        "email": reset_password_token.user.email,
+        "reset_password_url": f"{url}/reset-password?token=" + reset_password_token.key,
+    }
+
+    try:
+        filepath = settings.EMAIL_ROOT + "/user_reset_password.html"
+    except MultiValueDictKeyError:
+        logger.error("Error #101: Either the file is missing or not readable")
+
+    email_html_message = render_to_string(
+        settings.EMAIL_ROOT + "/user_reset_password.html", context
+    )
+
+    subject = f"Reset Your Password"
+    mime_type = "html"
+    try:
+        send_email([context["email"]], subject, email_html_message, None, mime_type)
+    except Exception as e:
+        logger.error(f"Error #102: {e}")
 
 
 class UserViewSet(viewsets.ViewSet):
@@ -1474,6 +1529,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "pk_booking_id": booking.pk_booking_id,
                         "vx_freight_provider": booking.vx_freight_provider,
                         "z_label_url": booking.z_label_url,
+                        "z_pod_url": booking.z_pod_url,
+                        "z_pod_signed_url": booking.z_pod_signed_url,
                         "pu_Address_State": booking.pu_Address_State,
                         "de_To_Address_State": booking.de_To_Address_State,
                         "b_status": booking.b_status,
@@ -1591,6 +1648,130 @@ class BookingViewSet(viewsets.ViewSet):
                 }
             )
 
+    @action(detail=False, methods=["get"])
+    def get_status(self, request, format=None):
+        pk_booking_id = request.GET["pk_header_id"]
+        user_id = request.user.id
+
+        try:
+            dme_employee = (
+                DME_employees.objects.select_related()
+                .filter(fk_id_user=user_id)
+                .first()
+            )
+
+            if dme_employee is not None:
+                user_type = "DME"
+            else:
+                user_type = "CLIENT"
+
+            if user_type == "CLIENT":
+                client_employee = (
+                    Client_employees.objects.select_related()
+                    .filter(fk_id_user=user_id)
+                    .first()
+                )
+                client = DME_clients.objects.get(
+                    pk_id_dme_client=client_employee.fk_id_dme_client_id
+                )
+
+                if client is None:
+                    return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
+
+            try:
+                booking = (
+                    Bookings.objects.select_related()
+                    .filter(pk_booking_id=pk_booking_id)
+                    .values(
+                        "b_status",
+                        "v_FPBookingNumber",
+                        "vx_account_code",
+                        "kf_client_id",
+                    )
+                )
+
+                if (
+                    user_type == "CLIENT"
+                    and booking.kf_client_id != client.dme_account_num
+                ):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "message": "You don't have permission to get status of this booking.",
+                            "pk_header_id": pk_booking_id,
+                        }
+                    )
+
+                if booking.vx_account_code:
+                    quote = booking.api_booking_quote
+
+                if booking.vx_account_code and booking.b_status == "Ready for Booking":
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Pricing is selected but not booked yet",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": {
+                                "fee": quote.client_mu_1_minimum_values,
+                                "tax": qutoe.mu_percentage_fuel_levy,
+                            },
+                        }
+                    )
+                elif (
+                    not booking.vx_account_code
+                    and booking.b_status == "Ready for Booking"
+                ):
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Pricing is not selected.",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": None,
+                        }
+                    )
+                elif booking.vx_account_code and booking.b_status == "Booked":
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Booking is booked.",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": {
+                                "fee": quote.client_mu_1_minimum_values,
+                                "tax": qutoe.mu_percentage_fuel_levy,
+                            },
+                            "connote": booking.v_FPBookingNumber,
+                        }
+                    )
+                elif booking.vx_account_code and booking.b_status == "Closed":
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Booking is cancelled.",
+                            "pk_header_id": pk_booking_id,
+                            "status": booking.b_status,
+                            "price": {
+                                "fee": quote.client_mu_1_minimum_values,
+                                "tax": qutoe.mu_percentage_fuel_levy,
+                            },
+                            "connote": booking.v_FPBookingNumber,
+                        }
+                    )
+            except Bookings.DoesNotExist:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "Booking is not exist with provided pk_header_id.",
+                        "pk_header_id": pk_booking_id,
+                    }
+                )
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": str(e), "pk_header_id": pk_booking_id}
+            )
+
     @action(detail=False, methods=["post"])
     def create_booking(self, request, format=None):
         bookingData = request.data
@@ -1644,6 +1825,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "vx_freight_provider": booking.vx_freight_provider,
                 "kf_client_id": booking.kf_client_id,
                 "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
+                "vx_serviceName": booking.vx_serviceName,
+                "z_CreatedTimestamp": datetime.now(),
             }
         else:
             newBooking = {
@@ -1678,6 +1861,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "vx_freight_provider": booking.vx_freight_provider,
                 "kf_client_id": booking.kf_client_id,
                 "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
+                "vx_serviceName": booking.vx_serviceName,
+                "z_CreatedTimestamp": datetime.now(),
             }
 
         if dup_line_and_linedetail == "true":
@@ -1696,6 +1881,8 @@ class BookingViewSet(viewsets.ViewSet):
             for booking_line_detail in booking_line_details:
                 booking_line_detail.pk_id_lines_data = None
                 booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
+                booking_line_detail.z_createdTimeStamp = datetime.now()
+                booking_line_detail.z_modifiedTimeStamp = datetime.now()
                 booking_line_detail.save()
 
         serializer = BookingSerializer(data=newBooking)
@@ -2077,32 +2264,51 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
         user_id = request.user.id
         client = DME_clients.objects.get(pk_id_dme_client=user_id)
         booking = Bookings.objects.get(id=bookingId)
+        fp = Fp_freight_providers.objects.get(
+            fp_company_name=booking.vx_freight_provider
+        )
         name, extension = os.path.splitext(f.name)
 
         if upload_type == "attachments":
-            fileName = (
-                "/opt/s3_private/attachments/"
-                + name
-                + "_"
-                + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-                + extension
+            fp_dir_name = (
+                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
             )
-        elif upload_type == "label":
-            fileName = (
-                "/home/cope_au/dme_sftp/cope_au/labels/indata/"
-                + "DME"
-                + str(booking.b_bookingID_Visual)
-                + extension
+            file_path = f"{STATIC_PUBLIC}/attachments/{fp_dir_name}/"
+
+            if not os.path.isdir(file_path):
+                os.makedirs(file_path)
+
+            file_name = (
+                f"{name}-{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}{extension}"
             )
-        elif upload_type == "pod":
-            fileName = (
-                "/home/cope_au/dme_sftp/cope_au/pods/indata/"
-                + "DME"
-                + str(booking.b_bookingID_Visual)
-                + extension
+            full_path = f"{file_path}/{file_name}"
+        elif upload_type in ["label", "pod"]:
+            fp_dir_name = (
+                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
             )
 
-        with open(fileName, "wb+") as destination:
+            if upload_type == "label":
+                file_path = f"{STATIC_PUBLIC}/pdfs/{fp_dir_name}/"
+            else:
+                file_path = f"{STATIC_PUBLIC}/imgs/{fp_dir_name}/"
+
+            if not os.path.isdir(file_path):
+                os.makedirs(file_path)
+
+            if upload_type == "label":
+                file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+            elif upload_type == "pod" and not "sog" in name.lower():
+                file_name = f"POD_DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+            elif upload_type == "pod" and "sog" in name.lower():
+                file_name = f"POD_SOG_DME{str(booking.b_bookingID_Visual)}{extension}"
+                booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
+
+            full_path = f"{file_path}/{file_name}"
+            booking.save()
+
+        with open(full_path, "wb+") as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
 
@@ -2110,15 +2316,24 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
             dme_attachment = Dme_attachments(
                 fk_id_dme_client=client,
                 fk_id_dme_booking=booking.pk_booking_id,
-                fileName=fileName,
+                fileName=full_path,
                 linkurl="22",
                 upload_Date=datetime.now(),
             )
             dme_attachment.save()
-        return "ok"
+
+        return {
+            "status": "success",
+            "file_path": f"{fp_dir_name}/{file_name}",
+            "type": upload_type,
+        }
     except Exception as e:
-        # print('Exception: ', e)
-        return "failed"
+        print("Exception: ", e)
+        return {
+            "status": "failed",
+            "file_path": f"{fp_dir_name}/{file_name}",
+            "type": upload_type,
+        }
 
 
 class CommsViewSet(viewsets.ViewSet):
@@ -2911,6 +3126,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     )
                 elif request.data["status_last"] == "Delivered":
                     booking.z_api_issue_update_flag_500 = 0
+                    booking.delivery_booking = datetime.now()
                     booking.save()
 
                 tempo.push_via_api(booking)
@@ -3130,7 +3346,11 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
 
         fk_booking_id = request.GET["fk_booking_id"]
-        queryset = API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
+        queryset = (
+            API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
+            .exclude(service_name="Air Freight")
+            .order_by("client_mu_1_minimum_values")
+        )
         serializer = ApiBookingQuotesSerializer(
             queryset, many=True, fields_to_exclude=fields_to_exclude
         )
@@ -3226,8 +3446,8 @@ def download_pdf(request):
             #         continue
 
             #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
-            #     file_path = f"/opt/s3_public/pdfs/atc_au/{label_name}"  # Dev & Prod
-            #     # file_path = f"/Users/admin/work/goldmine/dme_api/static/pdfs/atc_au/{label_name}" # Local (Test Case)
+            #     file_path = f"STATIC_PUBLIC/pdfs/atc_au/{label_name}"  # Dev & Prod
+            #     # file_path = f"./static/pdfs/atc_au/{label_name}" # Local (Test Case)
             #     file = open(file_path, "wb+")
             #     for block in request.iter_content(1024 * 8):
             #         if not block:
@@ -3239,9 +3459,9 @@ def download_pdf(request):
             #     label_names.append(label_name)
             # else:
             file_paths.append(
-                f"/opt/s3_public/pdfs/{booking.z_label_url}"
+                f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
             )  # Dev & Prod
-            # file_paths.append('/Users/admin/work/goldmine/dme_api/static/pdfs/' + booking.z_label_url) # Local (Test Case)
+            # file_paths.append('./static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
             booking.save()
@@ -3268,11 +3488,9 @@ def download_manifest(request):
     z_manifest_url = body["z_manifest_url"]
 
     if settings.ENV in ["prod", "dev"]:
-        file_path = "/opt/s3_public/pdfs/" + z_manifest_url  # Prod & Dev
+        file_path = f"{STATIC_PUBLIC}/pdfs/{z_manifest_url}"  # Prod & Dev
     else:
-        file_path = (
-            "/Users/admin/work/goldmine/dme_api/static/pdfs/" + z_manifest_url
-        )  # Prod
+        file_path = f"./static/pdfs/{z_manifest_url}"  # Prod
 
     manifest_name = z_manifest_url.split("/")[1]
 
@@ -3307,9 +3525,9 @@ def download_pod(request):
 
             if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                 file_paths.append(
-                    "/opt/s3_public/imgs/" + booking.z_pod_url
+                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                 )  # Dev & Prod
-                # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_url) # Local (Test Case)
+                # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_url)
                 booking.z_downloaded_pod_timestamp = timezone.now()
                 booking.save()
@@ -3323,9 +3541,9 @@ def download_pod(request):
                 and len(booking.z_pod_signed_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/s3_public/imgs/" + booking.z_pod_signed_url
+                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                 )  # Dev & Prod
-                # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
+                # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_signed_url)
                 booking.z_downloaded_pod_sog_timestamp = timezone.now()
                 booking.save()
@@ -3337,9 +3555,9 @@ def download_pod(request):
             if booking.z_downloaded_pod_timestamp is None:
                 if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                     file_paths.append(
-                        "/opt/s3_public/imgs/" + booking.z_pod_url
+                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                     )  # Dev & Prod
-                    # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_url) # Local (Test Case)
+                    # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_url)
                     booking.z_downloaded_pod_timestamp = timezone.now()
                     booking.save()
@@ -3353,9 +3571,9 @@ def download_pod(request):
                     and len(booking.z_pod_signed_url) is not 0
                 ):
                     file_paths.append(
-                        "/opt/s3_public/imgs/" + booking.z_pod_signed_url
+                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                     )  # Dev & Prod
-                    # file_paths.append('/Users/admin/work/goldmine/dme_api/static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
+                    # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_signed_url)
                     booking.z_downloaded_pod_sog_timestamp = timezone.now()
                     booking.save()
@@ -3395,10 +3613,10 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/s3_private/connotes/" + booking.z_connote_url
+                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
-                #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                #     "./static/connotes/"
                 #     + booking.z_connote_url
                 # )  # Local (Test Case)
                 connote_names.append(booking.z_connote_url)
@@ -3415,10 +3633,10 @@ def download_connote(request):
                     and len(booking.z_connote_url) is not 0
                 ):
                     file_paths.append(
-                        "/opt/s3_private/connotes/" + booking.z_connote_url
+                        "STATIC_PRIVATE/connotes/" + booking.z_connote_url
                     )  # Dev & Prod
                     # file_paths.append(
-                    #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                    #     "./static/connotes/"
                     #     + booking.z_connote_url
                     # )  # Local (Test Case)
                     connote_names.append(booking.z_connote_url)
@@ -3434,10 +3652,10 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "/opt/s3_private/connotes/" + booking.z_connote_url
+                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
-                #     "/Users/admin/work/goldmine/dme_api/static/connotes/"
+                #     "./static/connotes/"
                 #     + booking.z_connote_url
                 # )  # Local (Test Case)
                 connote_names.append(booking.z_connote_url)
@@ -3445,10 +3663,10 @@ def download_connote(request):
                 booking.save()
             if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
                 file_paths.append(
-                    "/opt/s3_public/pdfs/" + booking.z_label_url
+                    f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )  # Dev & Prod
                 # file_paths.append(
-                #     "/Users/admin/work/goldmine/dme_api/static/pdfs/"
+                #     "./static/pdfs/"
                 #     + booking.z_label_url
                 # )  # Local (Test Case)
                 connote_names.append(booking.z_label_url)
@@ -3498,7 +3716,7 @@ def generate_csv(request):
         for booking_id in booking_ids:
             booking = Bookings.objects.get(id=booking_id)
 
-            if vx_freight_provider == "cope":
+            if vx_freight_provider.lower() == "cope":
                 ############################################################################################
                 # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
                 ############################################################################################
@@ -3578,10 +3796,10 @@ def generate_manifest(request):
 
         if vx_freight_provider.upper() == "TASFR":
             for filename in filenames:
-                file_paths.append("/opt/s3_public/pdfs/tas_au/" + filename)
+                file_paths.append(f"{STATIC_PUBLIC}/pdfs/tas_au/{filename}")
         elif vx_freight_provider.upper() == "DHL":
             for filename in filenames:
-                file_paths.append("/opt/s3_public/pdfs/dhl_au/" + filename)
+                file_paths.append(f"{STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir

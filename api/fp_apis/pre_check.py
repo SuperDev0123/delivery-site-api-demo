@@ -26,4 +26,20 @@ def pre_check_book(booking):
         _set_error(booking, error_msg)
         return error_msg
 
-    return None
+
+def pre_check_label(booking):
+    if booking.vx_freight_provider.lower() == "tnt":
+        if not booking.pu_Contact_F_L_Name or not booking.de_to_Contact_F_LName:
+            error_msg = "Address.ContactName must be between 0 and 20 characters."
+            _set_error(booking, error_msg)
+            return error_msg
+
+        if booking.pu_Contact_F_L_Name and len(booking.pu_Contact_F_L_Name) > 20:
+            error_msg = "Address.ContactName must be between 0 and 20 characters."
+            _set_error(booking, error_msg)
+            return error_msg
+
+        if booking.de_to_Contact_F_LName and len(booking.de_to_Contact_F_LName) > 20:
+            error_msg = "Address.ContactName must be between 0 and 20 characters."
+            _set_error(booking, error_msg)
+            return error_msg

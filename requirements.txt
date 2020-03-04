@@ -77,3 +77,4 @@ vine==1.1.4
 WebOb==1.8.6
 XlsxWriter==1.1.2
 zeep==3.4.0
+django-rest-passwordreset==1.0.0

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django_filters",
     "api",
     "rest_framework",
+    "django_rest_passwordreset",
     "corsheaders",
 ]
 
@@ -177,6 +178,10 @@ EMAIL_HOST = os.environ["EMAIL_HOST"]
 EMAIL_PORT = int(os.environ["EMAIL_PORT"])
 EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
 EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
+
+EMAIL_URL = "/templates/email/"
+EMAIL_ROOT = os.path.join(BASE_DIR, 'templates/email')
+
 
 # Logging setting
 

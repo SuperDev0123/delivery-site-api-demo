@@ -197,7 +197,6 @@ def send_email(
     msg["To"] = COMMASPACE.join(send_to)
     msg["Date"] = formatdate(localtime=True)
     msg["Subject"] = subject
-
     msg.attach(MIMEText(text, mime_type))
 
     for f in files or []:
@@ -446,11 +445,14 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 else:
                     h25 = wrap_in_quote(booking.get("b_client_order_num"))
 
-                if booking["de_to_PickUp_Instructions_Address"] is None:
-                    h26 = ""
-                else:
+                h26 = ""
+                if booking["de_to_PickUp_Instructions_Address"]:
                     h26 = wrap_in_quote(
                         booking.get("de_to_PickUp_Instructions_Address")
+                    )
+                if booking["de_to_Pick_Up_Instructions_Contact"]:
+                    h26 += " " + wrap_in_quote(
+                        booking.get("de_to_Pick_Up_Instructions_Contact")
                     )
 
                 h27 = ""
@@ -1365,9 +1367,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/allied_au/"
+            local_filepath = "./static/xmls/allied_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/allied_au/archive/"
+                "./static/xmls/allied_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -1578,9 +1580,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/tas_au/"
+            local_filepath = "./static/xmls/tas_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/tas_au/archive/"
+                "./static/xmls/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -2233,9 +2235,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/act_au/"
+            local_filepath = "./static/xmls/act_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/act_au/archive/"
+                "./static/xmls/act_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -2477,9 +2479,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/xmls/jet_au/"
+            local_filepath = "./static/xmls/jet_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/xmls/jet_au/archive/"
+                "./static/xmls/jet_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -2749,9 +2751,9 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/"
+            local_filepath = "./static/pdfs/tas_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/archive/"
+                "./static/pdfs/tas_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -3454,9 +3456,9 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 + "/"
             )
         else:
-            local_filepath = "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/"
+            local_filepath = "./static/pdfs/dhl_au/"
             local_filepath_dup = (
-                "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/archive/"
+                "./static/pdfs/dhl_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
@@ -4244,11 +4246,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                     + "/"
                 )
             else:
-                local_filepath = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/"
-                )
+                local_filepath = "./static/pdfs/tas_au/"
                 local_filepath_dup = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/tas_au/archive/"
+                    "./static/pdfs/tas_au/archive/"
                     + str(datetime.now().strftime("%Y_%m_%d"))
                     + "/"
                 )
@@ -4736,11 +4736,9 @@ def build_pdf(booking_ids, vx_freight_provider):
                     + "/"
                 )
             else:
-                local_filepath = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/"
-                )
+                local_filepath = "./static/pdfs/dhl_au/"
                 local_filepath_dup = (
-                    "/Users/admin/work/goldmine/dme_api/static/pdfs/dhl_au/archive/"
+                    "./static/pdfs/dhl_au/archive/"
                     + str(datetime.now().strftime("%Y_%m_%d"))
                     + "/"
                 )
@@ -5121,7 +5119,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     if production:
         local_filepath = "/opt/s3_private/xlss/"
     else:
-        local_filepath = "/Users/admin/work/goldmine/dme_api/static/xlss/"
+        local_filepath = "./static/xlss/"
 
     if not os.path.exists(local_filepath):
         os.makedirs(local_filepath)
@@ -6267,7 +6265,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 1, booking.b_given_to_transport_date_time, date_format
                 )
 
-            if booking.b_status is not None and "booked" in booking.b_status.lower():
+            if (
+                booking.b_dateBookedDate is not None
+                and booking.b_status is not None
+                and "booked" in booking.b_status.lower()
+            ):
                 pickup_days_late = (
                     booking.b_dateBookedDate.date()
                     + timedelta(days=2)

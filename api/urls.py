@@ -29,6 +29,11 @@ router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(
     r"fp-store-booking-log", FPStoreBookingLog, basename="fp-store-booking-log"
 )
+router.register(r"bok_0_bookingskeys", BOK_0_ViewSet, basename="bok0")
+router.register(r"bok_1_headers", BOK_1_ViewSet, basename="bok1")
+router.register(r"bok_2_lines", BOK_2_ViewSet, basename="bok2")
+router.register(r"bok_3_lines_data", BOK_3_ViewSet, basename="bok3")
+
 urlpatterns = router.urls
 
 urlpatterns += [
@@ -38,6 +43,7 @@ urlpatterns += [
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
     url(r"^suburb/", getSuburbs),
     url(r"^attachments/", getAttachmentsHistory),
+    url(r'^password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     # Uploads
     url(r"^share/upload/(?P<filename>[^/]+)$", FileUploadView.as_view()),
     url(r"^upload/attachments/", AttachmentsUploadView.as_view()),
@@ -54,11 +60,9 @@ urlpatterns += [
     url(r"^generate-xml/", generate_xml),
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
-    # BIOPAK push apis
-    url(r"^bok_0_bookingskeys/", bok_0_bookingkeys),
-    url(r"^bok_1_headers/", bok_1_headers),
-    url(r"^bok_2_lines/", bok_2_lines),
-    url(r"^bok_1_to_bookings/", bok_1_to_bookings),
+    # BOK apis(BIOPAK push apis, Get API - no auth)
+    url(r"^boks/", boks),
+    # url(r"^bok_1_to_bookings/", bok_1_to_bookings),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),
