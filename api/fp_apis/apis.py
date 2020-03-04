@@ -990,11 +990,12 @@ def reprint(request, fp_name):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def pricing(request):
+    body = literal_eval(request.body.decode("utf8"))
+    booking_id = body["booking_id"]
+
     try:
-        body = literal_eval(request.body.decode("utf8"))
-        booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
-    except Exception as e:
+    except Bookings.DoesNotExist as e:
         trace_error.print()
         return JsonResponse({"message": f"Booking is not exist"}, status=400)
 

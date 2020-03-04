@@ -31,11 +31,9 @@ ALLOWED_HOSTS = ["*"]
 # Env setting - local, dev, prod
 ENV = os.environ["ENV"]
 
-
 BUGSNAG = {
     'api_key': os.environ["BUGSNAG_API_KEY"]
 }
-# Application definition
 
 INSTALLED_APPS = [
     "django.contrib.admin",
