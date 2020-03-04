@@ -2198,7 +2198,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             user_type = "CLIENT"
 
         if user_type == "DME":
-            clientWarehouseObject_list = Client_warehouses.objects.all()
+            clientWarehouseObject_list = Client_warehouses.objects.all().order_by("warehousename")
             queryset = clientWarehouseObject_list
             return queryset
         else:
@@ -2214,7 +2214,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                     Client_warehouses.objects.select_related()
                     .filter(
                         fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
-                    )
+                    ).order_by("warehousename")
                 )
                 queryset = clientWarehouseObject_list
                 return queryset
@@ -3160,7 +3160,7 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = Fp_freight_providers.objects.all()
+            resultObjects = Fp_freight_providers.objects.all().order_by("fp_company_name")
             for resultObject in resultObjects:
                 if not resultObject.fp_inactive_date:
                     return_data.append(
