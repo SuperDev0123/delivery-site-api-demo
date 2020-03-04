@@ -2198,9 +2198,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             user_type = "CLIENT"
 
         if user_type == "DME":
-            clientWarehouseObject_list = Client_warehouses.objects.all().exclude(
-                pk_id_client_warehouses=100
-            )
+            clientWarehouseObject_list = Client_warehouses.objects.all()
             queryset = clientWarehouseObject_list
             return queryset
         else:
@@ -2217,7 +2215,6 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                     .filter(
                         fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
                     )
-                    .exclude(pk_id_client_warehouses=100)
                 )
                 queryset = clientWarehouseObject_list
                 return queryset
