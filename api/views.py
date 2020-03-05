@@ -76,7 +76,7 @@ elif settings.ENV == "dev":
     SERVER_IP = f"3.104.30.210"
     STATIC_PUBLIC = "/opt/s3_public"
     STATIC_PRIVATE = "/opt/s3_private"
-elif settings.ENV == "dev":
+elif settings.ENV == "prod":
     SERVER_IP = f"13.55.160.158"
     STATIC_PUBLIC = "/opt/s3_public"
     STATIC_PRIVATE = "/opt/s3_private"
