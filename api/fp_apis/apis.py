@@ -999,6 +999,7 @@ def pricing(request):
     if not booking_id and "booking" in body:
         is_pricing_only = True
         booking = Struct(**body["booking"])
+        client_warehouse_code = booking.client_warehouse_code
         booking_lines = []
 
         for booking_line in body["booking_lines"]:
@@ -1007,6 +1008,7 @@ def pricing(request):
     if not is_pricing_only:
         try:
             booking = Bookings.objects.get(id=booking_id)
+            client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
         except Exception as e:
             trace_error.print()
             return JsonResponse({"message": f"Booking is not exist"}, status=400)
@@ -1040,20 +1042,18 @@ def pricing(request):
             elif fp_name.lower() in ACCOUNT_CODES:
                 for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
                     if (
-                        "SWYTEMPBUN"
-                        in booking.fk_client_warehouse.client_warehouse_code
+                        "SWYTEMPBUN" in client_warehouse_code
                         and not "bunnings" in account_code_key
                     ):
                         continue
                     elif (
-                        not "SWYTEMPBUN"
-                        in booking.fk_client_warehouse.client_warehouse_code
+                        not "SWYTEMPBUN" in client_warehouse_code
                         and "bunnings" in account_code_key
                     ):
                         continue
 
                     payload = get_pricing_payload(
-                        booking, fp_name.lower(), account_code_key
+                        booking, fp_name.lower(), account_code_key, booking_lines
                     )
 
                     logger.error(f"### Payload ({fp_name.upper()} PRICING): {payload}")
@@ -1066,13 +1066,14 @@ def pricing(request):
                     )  # Just for visual
                     logger.error(f"### Response ({fp_name.upper()} PRICING): {s0}")
 
-                    Log.objects.create(
-                        request_payload=payload,
-                        request_status="SUCCESS",
-                        request_type=f"{fp_name.upper()} PRICING",
-                        response=res_content,
-                        fk_booking_id=booking.id,
-                    )
+                    if not is_pricing_only:
+                        Log.objects.create(
+                            request_payload=payload,
+                            request_status="SUCCESS",
+                            request_type=f"{fp_name.upper()} PRICING",
+                            response=res_content,
+                            fk_booking_id=booking.id,
+                        )
 
                     parse_results = parse_pricing_response(
                         response, fp_name.lower(), booking
@@ -1162,13 +1163,17 @@ def pricing(request):
                             trace_error.print()
                             logger.error(f"@405 Exception: {e}")
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
-        auto_select(booking, results)
+        results = ApiBookingQuotesSerializer(results, many=True).data
+
+        if is_pricing_only:
+            API_booking_quotes.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            ).delet()
+        else:
+            auto_select(booking, results)
+
         return JsonResponse(
-            {
-                "message": f"Retrieved all Pricing info",
-                "results": ApiBookingQuotesSerializer(results, many=True).data,
-            },
-            status=200,
+            {"message": f"Retrieved all Pricing info", "results": results,}, status=200,
         )
     except Exception as e:
         trace_error.print()
