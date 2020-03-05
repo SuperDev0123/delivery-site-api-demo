@@ -2198,7 +2198,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             user_type = "CLIENT"
 
         if user_type == "DME":
-            clientWarehouseObject_list = Client_warehouses.objects.all().order_by("warehousename")
+            clientWarehouseObject_list = Client_warehouses.objects.all().order_by("client_warehouse_code")
             queryset = clientWarehouseObject_list
             return queryset
         else:
@@ -2214,7 +2214,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                     Client_warehouses.objects.select_related()
                     .filter(
                         fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
-                    ).order_by("warehousename")
+                    ).order_by("client_warehouse_code")
                 )
                 queryset = clientWarehouseObject_list
                 return queryset
