@@ -990,17 +990,29 @@ def reprint(request, fp_name):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def pricing(request):
-    try:
-        body = literal_eval(request.body.decode("utf8"))
-        booking_id = body["booking_id"]
-        booking = Bookings.objects.get(id=booking_id)
-    except Exception as e:
-        trace_error.print()
-        return JsonResponse({"message": f"Booking is not exist"}, status=400)
+    body = literal_eval(request.body.decode("utf8"))
+    booking_id = body["booking_id"]
+    is_pricing_only = False
+
+    # Only quote
+    if not booking_id and "booking" in body:
+        booking = body["booking"]
+        booking_lines = body["booking_lines"]
+        is_pricing_only = True
+
+    if not is_pricing_only:
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+        except Exception as e:
+            trace_error.print()
+            return JsonResponse({"message": f"Booking is not exist"}, status=400)
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
-        _set_error(booking, error_msg)
+
+        if not is_pricing_only:
+            _set_error(booking, error_msg)
+
         return JsonResponse({"message": error_msg}, status=400)
 
     fp_names = [
