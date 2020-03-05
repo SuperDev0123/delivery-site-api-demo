@@ -35,6 +35,7 @@ from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from api.common import status_history, download_external, trace_error
+from api.common.build_object import Struct
 from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
@@ -996,9 +997,12 @@ def pricing(request):
 
     # Only quote
     if not booking_id and "booking" in body:
-        booking = body["booking"]
-        booking_lines = body["booking_lines"]
         is_pricing_only = True
+        booking = Struct(**body["booking"])
+        booking_lines = []
+
+        for booking_line in body["booking_lines"]:
+            booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
         try:
