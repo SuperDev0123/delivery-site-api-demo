@@ -1168,7 +1168,7 @@ def pricing(request):
         if is_pricing_only:
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
-            ).delet()
+            ).delete()
         else:
             auto_select(booking, results)
 
