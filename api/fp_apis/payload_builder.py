@@ -42,7 +42,7 @@ ACCOUNT_CODES = {
     },
     "tnt": {"live_0": "30021385"},
     "capital": {"live_0": "DMENSW"},
-    "sendle": {"live_0": "XXX"},
+    "sendle": {"test_bed_1": "XXX", "live_0": "XXX"},
     "fastway": {"live_0": "XXX"},
     "allied": {"test_bed_1": "DELVME", "live_0": "DELVME"},
     "dhl": {"live_0": "XXX"},
@@ -97,7 +97,14 @@ KEY_CHAINS = {
         }
     },
     "sendle": {
-        "live_0": {"accountKey": "FAKE_KEY_01", "accountState": "FAKE_STATE_01"}
+        "test_bed_1": {
+            "accountKey": "greatroyalone_outloo",
+            "accountPassword": "KJJrS7xDZZfvfQccyrdStKhh",
+        },
+        "live_0": {
+            "accountKey": "bookings_tempo_deliv", 
+            "accountPassword": "3KZRdXVpfTkFTPknqzjqDXw6"
+        }
     },
     "fastway": {
         "live_0": {
@@ -140,12 +147,12 @@ def _get_account_details(booking, fp_name, initial_account_code=None):
     account_code_key = "live_0" if not initial_account_code else initial_account_code
 
     if settings.ENV in ["local", "dev"]:
-        if fp_name.lower() in ["startrack", "allied", "hunter"]:
+        if fp_name.lower() in ["startrack", "allied", "hunter", "sendle"]:
             account_detail = {
                 "accountCode": ACCOUNT_CODES[fp_name.lower()]["test_bed_1"],
                 **KEY_CHAINS[fp_name.lower()]["test_bed_1"],
             }
-        elif fp_name.lower() in ["tnt", "capital", "sendle", "fastway"]:
+        elif fp_name.lower() in ["tnt", "capital", "fastway"]:
             account_detail = {
                 "accountCode": ACCOUNT_CODES[fp_name.lower()][account_code_key],
                 **KEY_CHAINS[fp_name.lower()][account_code_key],
