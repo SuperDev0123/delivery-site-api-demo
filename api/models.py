@@ -3488,3 +3488,26 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
             except Exception as e:
                 logger.info(f"Error 515 {e}")
                 pass
+
+class DME_Files(models.Model):
+    id = models.AutoField(primary_key=True)
+    file_name = models.CharField(
+        verbose_name=_("Role Code"), max_length=255, blank=False
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
+    )
+    z_createdByAccount  = models.CharField(
+        verbose_name=_("Role Description"), max_length=32, blank=False
+    )
+    file_type = models.CharField(
+        verbose_name=_("Role Description"), max_length=16, blank=False
+    )
+    file_extension = models.CharField(
+        verbose_name=_("Role Description"), max_length=8, blank=False
+    )
+    note = models.TextField(
+        verbose_name=_("Role Description"), max_length=512, blank=False
+    )
+    class Meta:
+        db_table = "dme_files"

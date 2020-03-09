@@ -71,6 +71,22 @@ class BOK_0_ViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class DME_Files_ViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def list(self, request):
+        dme_files = DME_Files.objects.all().order_by(
+            "-z_createdTimeStamp"
+        )[:50]
+        serializer = DME_Files_Serializer(dme_files, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = DME_Files_Serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BOK_1_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
