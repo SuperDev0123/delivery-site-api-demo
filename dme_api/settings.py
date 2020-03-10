@@ -31,7 +31,9 @@ ALLOWED_HOSTS = ["*"]
 # Env setting - local, dev, prod
 ENV = os.environ["ENV"]
 
-# Application definition
+BUGSNAG = {
+    'api_key': os.environ["BUGSNAG_API_KEY"]
+}
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -56,6 +58,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "bugsnag.django.middleware.BugsnagMiddleware",
 ]
 
 ROOT_URLCONF = "dme_api.urls"
@@ -179,7 +182,38 @@ EMAIL_ROOT = os.path.join(BASE_DIR, 'templates/email')
 
 
 # Logging setting
-LOGGING = {
+
+if ENV == "prod":  
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
+        'root': {
+            'level': 'ERROR',
+            'handlers': ['bugsnag'],
+        },
+        "handlers": {
+            "console": {
+                "level": "INFO",
+                "class": "logging.StreamHandler",
+                "formatter": "simple",
+            },
+            "file": {
+                "level": "INFO",
+                "class": "logging.handlers.RotatingFileHandler",
+                "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+                "backupCount": 10,  # keep at most 10 log files
+                "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
+            },
+            'bugsnag': {
+                'level': 'INFO',
+                'class': 'bugsnag.handlers.BugsnagHandler',
+            },
+        },
+        "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
+    }
+else:
+    LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
@@ -191,10 +225,9 @@ LOGGING = {
         },
         "file": {
             "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
-            "backupCount": 10,  # keep at most 10 log files
-            "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
+            "class": "logging.FileHandler",
+            "filename": "./logs/debug.log",
+            "formatter": "simple",
         },
     },
     "loggers": {"dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}},
@@ -202,3 +235,4 @@ LOGGING = {
 
 # S3 url
 S3_URL = os.environ["S3_URL"]
+

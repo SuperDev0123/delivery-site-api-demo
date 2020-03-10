@@ -82,7 +82,7 @@ elif settings.ENV == "dev":
     SERVER_IP = f"3.104.30.210"
     STATIC_PUBLIC = "/opt/s3_public"
     STATIC_PRIVATE = "/opt/s3_private"
-elif settings.ENV == "dev":
+elif settings.ENV == "prod":
     SERVER_IP = f"13.55.160.158"
     STATIC_PUBLIC = "/opt/s3_public"
     STATIC_PRIVATE = "/opt/s3_private"
@@ -2312,9 +2312,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             user_type = "CLIENT"
 
         if user_type == "DME":
-            clientWarehouseObject_list = Client_warehouses.objects.all().exclude(
-                pk_id_client_warehouses=100
-            )
+            clientWarehouseObject_list = Client_warehouses.objects.all().order_by("client_warehouse_code")
             queryset = clientWarehouseObject_list
             return queryset
         else:
@@ -2330,8 +2328,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                     Client_warehouses.objects.select_related()
                     .filter(
                         fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
-                    )
-                    .exclude(pk_id_client_warehouses=100)
+                    ).order_by("client_warehouse_code")
                 )
                 queryset = clientWarehouseObject_list
                 return queryset
@@ -3279,7 +3276,7 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = Fp_freight_providers.objects.all()
+            resultObjects = Fp_freight_providers.objects.all().order_by("fp_company_name")
             for resultObject in resultObjects:
                 if not resultObject.fp_inactive_date:
                     return_data.append(
