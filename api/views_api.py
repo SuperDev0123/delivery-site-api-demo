@@ -32,7 +32,7 @@ from rest_framework.decorators import (
 from django.db.models import Q
 from django.conf import settings
 
-
+from .serializers import DME_Files_Serializer
 from .serializers_api import *
 from .models import *
 from api.common import auth as common_auth
