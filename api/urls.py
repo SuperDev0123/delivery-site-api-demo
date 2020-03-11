@@ -43,6 +43,9 @@ urlpatterns += [
     url(r"^api-token-verify/", verify_jwt_token),
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
     url(r"^suburb/", getSuburbs),
+    url(r"^auto_augment/", autoAugment),
+    url(r"^check_augmented/", checkAugmented),
+    url(r"^revert_augment/", revertAugment),
     url(r"^attachments/", getAttachmentsHistory),
     url(r'^password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     # Uploads
