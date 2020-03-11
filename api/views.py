@@ -2198,7 +2198,9 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             user_type = "CLIENT"
 
         if user_type == "DME":
-            clientWarehouseObject_list = Client_warehouses.objects.all().order_by("client_warehouse_code")
+            clientWarehouseObject_list = Client_warehouses.objects.all().order_by(
+                "client_warehouse_code"
+            )
             queryset = clientWarehouseObject_list
             return queryset
         else:
@@ -2214,7 +2216,8 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                     Client_warehouses.objects.select_related()
                     .filter(
                         fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
-                    ).order_by("client_warehouse_code")
+                    )
+                    .order_by("client_warehouse_code")
                 )
                 queryset = clientWarehouseObject_list
                 return queryset
@@ -2252,14 +2255,19 @@ class PodUploadView(views.APIView):
 
 
 def handle_uploaded_file_4_booking(request, f, upload_type):
+    user_id = request.user.id
+
     try:
         bookingId = request.POST.get("booking_id", None)
 
         if not bookingId:
             return "failed"
 
-        user_id = request.user.id
-        client = DME_clients.objects.get(pk_id_dme_client=user_id)
+        try:
+            client = DME_clients.objects.get(pk_id_dme_client=user_id)
+        except DME_clients.DoesNotExist as e:
+            client = "dme"
+
         booking = Bookings.objects.get(id=bookingId)
         fp = Fp_freight_providers.objects.get(
             fp_company_name=booking.vx_freight_provider
@@ -2325,7 +2333,7 @@ def handle_uploaded_file_4_booking(request, f, upload_type):
             "type": upload_type,
         }
     except Exception as e:
-        print("Exception: ", e)
+        # print("Exception: ", e)
         return {
             "status": "failed",
             "file_path": f"{fp_dir_name}/{file_name}",
@@ -3160,7 +3168,9 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = Fp_freight_providers.objects.all().order_by("fp_company_name")
+            resultObjects = Fp_freight_providers.objects.all().order_by(
+                "fp_company_name"
+            )
             for resultObject in resultObjects:
                 if not resultObject.fp_inactive_date:
                     return_data.append(
@@ -3684,6 +3694,40 @@ def download_connote(request):
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
     response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
     return response
+
+
+@api_view(["DELETE"])
+@permission_classes((AllowAny,))
+def delete_file(request):
+    body = literal_eval(request.body.decode("utf8"))
+    booking_id = body["bookingId"]
+    file_option = body["deleteFileOption"]
+
+    try:
+        booking = Bookings.objects.get(id=booking_id)
+    except Bookings.DoesNotExist as e:
+        return JsonResponse(
+            {"message": "Booking does not exist", "status": "failure"}, status=400
+        )
+
+    if file_option == "label":
+        filename = f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+        booking.z_label_url = None
+        booking.z_downloaded_shipping_label_timestamp = None
+    elif file_option == "pod":
+        filename = f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
+        booking.z_pod_url = None
+        booking.z_downloaded_pod_timestamp = None
+
+    booking.save()
+
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+    return JsonResponse(
+        {"filename": "", "status": "success", "message": "Deleted successfully!"},
+        status=200,
+    )
 
 
 @api_view(["POST"])
