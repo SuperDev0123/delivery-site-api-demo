@@ -3517,3 +3517,140 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
             except Exception as e:
                 logger.info(f"Error 515 {e}")
                 pass
+
+class DME_Files(models.Model):
+    id = models.AutoField(primary_key=True)
+    file_name = models.CharField(max_length=255, blank=False)
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now, blank=True)
+    z_createdByAccount  = models.CharField(max_length=32, blank=False)
+    file_type = models.CharField(verbose_name=_("File Type"), max_length=16, blank=False)
+    file_extension = models.CharField(verbose_name=_("File Extension"), max_length=8, blank=False)
+    note = models.TextField(verbose_name=_("Note"), max_length=512, blank=False)
+    
+    class Meta:
+        db_table = "dme_files"
+
+class Client_Auto_Augment(models.Model):
+    tic_de_Email = models.CharField(
+        verbose_name=_("TIC DE Email"), max_length=64, blank=True, null=True, default="itassets@ticgroup.com.au"
+    )
+
+    tic_de_Email_Group_Emails = models.CharField(
+        verbose_name=_("TIC DE Email Group Emails"),
+        max_length=30,
+        blank=True,
+        null=True,
+        default="rloqa@ticgroup.com.au",
+    )
+
+    tic_de_To_Address_Street_1 = models.CharField(
+        verbose_name=_("TIC DE Address Street 1"),
+        max_length=40,
+        blank=True,
+        null=True,
+        default="Door 13, Building 2",
+    )
+
+    tic_de_To_Address_Street_2 = models.CharField(
+        verbose_name=_("TIC DE Address Street 2"),
+        max_length=40,
+        blank=True,
+        null=True,
+        default="207 Sunshine Road",
+    )
+
+    sales_club_de_Email = models.CharField(
+        verbose_name=_("Sales Club DE Email"), max_length=64, blank=True, null=True, default="alan.bortz@salesclub.com.au"
+    )
+
+    sales_club_de_Email_Group_Emails = models.TextField(
+        verbose_name=_("Sales Club DE Email Group Emails"),
+        max_length=512,
+        blank=True,
+        null=True,
+        default="stock@salesclub.com.au, suraj@salesclub.com.au, Patrick@factoryseconds.biz, david@factoryseconds.biz",
+    )
+
+    class Meta:
+        db_table = "client_auto_augment"
+
+class Client_Process_Mgr(models.Model):
+    fk_booking_id = models.CharField(
+        verbose_name=_("Booking ID"), max_length=64, blank=True, null=True, default=""
+    )
+
+    process_name = models.CharField(
+        verbose_name=_("Process Name"), max_length=40, blank=False
+    )
+
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
+    )
+
+    origin_puCompany = models.CharField(
+        verbose_name=_("Origin PU Company"), max_length=128, blank=False
+    )
+
+    origin_pu_Address_Street_1 = models.CharField(
+        verbose_name=_("Origin PU Address Street1"), max_length=40, blank=False
+    )
+
+    origin_pu_Address_Street_2 = models.CharField(
+        verbose_name=_("Origin PU Address Street2"), max_length=40, blank=False
+    )
+
+    origin_pu_pickup_instructions_address = models.TextField(
+        verbose_name=_("Origin PU instrunctions address"),
+        max_length=512,
+        blank=True,
+        null=True,
+        default="",
+    )
+
+    origin_deToCompanyName = models.CharField(
+        verbose_name=_("Origin DE Company Name"),
+        max_length=128,
+        blank=True,
+        null=True,
+        default="",
+    )
+
+    origin_de_Email = models.CharField(
+        verbose_name=_("Origin DE Email"), max_length=64, blank=True, null=True, default=""
+    )
+
+    origin_de_Email_Group_Emails = models.CharField(
+        verbose_name=_("Origin DE Email Group Emails"),
+        max_length=30,
+        blank=True,
+        null=True,
+        default="",
+    )
+
+    origin_de_To_Address_Street_1 = models.CharField(
+        verbose_name=_("Origin DE Address Street 1"),
+        max_length=40,
+        blank=True,
+        null=True,
+        default="",
+    )
+
+    origin_de_To_Address_Street_2 = models.CharField(
+        verbose_name=_("Origin DE Address Street 2"),
+        max_length=40,
+        blank=True,
+        null=True,
+        default="",
+    )
+
+    origin_pu_PickUp_By_Date = models.DateField(
+        verbose_name=_("Origin PU By Date DME"), blank=True, null=True
+    )
+
+    origin_pu_PickUp_Avail_Time_Hours = models.IntegerField(
+        verbose_name=_("Origin PU Available Time Hours"), blank=True, default=0, null=True
+    )
+
+    class Meta:
+        db_table = "client_process_mgr"
+

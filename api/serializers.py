@@ -16,7 +16,8 @@ from .models import (
     Fp_freight_providers,
     FP_carriers,
     FP_zones,
-    DME_Options
+    DME_Options,
+    DME_Files,
 )
 
 
@@ -112,27 +113,38 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         model = API_booking_quotes
         fields = "__all__"
 
+
 class EmailTemplatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Email_Templates
         fields = "__all__"
+
 
 class FpSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fp_freight_providers
         fields = "__all__"
 
+
 class CarrierSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_carriers
         fields = "__all__"
+
 
 class ZoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_zones
         fields = "__all__"
 
+
 class OptionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Options
+        fields = "__all__"
+
+
+class DME_Files_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Files
         fields = "__all__"
