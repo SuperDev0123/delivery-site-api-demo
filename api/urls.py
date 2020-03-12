@@ -6,6 +6,7 @@ from .views import *
 from .views_api import *
 from .views_external_apis import *
 from .fp_apis import apis as fp_apis
+from .file_operations.uploads import get_upload_status
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet, basename="user")
@@ -51,11 +52,11 @@ urlpatterns += [
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
     # Uploads
-    url(r"^share/upload/(?P<filename>[^/]+)$", FileUploadView.as_view()),
-    url(r"^upload/attachments/", AttachmentsUploadView.as_view()),
-    url(r"^upload/label/", LabelUploadView.as_view()),
-    url(r"^upload/pod/", PodUploadView.as_view()),
-    url(r"^share/upload-status/", upload_status),
+    url(r"^upload/import/", FileUploadView.as_view()),
+    url(r"^upload/attachments/", FileUploadView.as_view()),
+    url(r"^upload/label/", FileUploadView.as_view()),
+    url(r"^upload/pod/", FileUploadView.as_view()),
+    url(r"^upload/status/", get_upload_status),
     # Downloads
     url(r"^download-pdf/", download_pdf),
     url(r"^download-pod/", download_pod),

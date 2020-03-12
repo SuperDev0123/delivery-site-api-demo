@@ -7,15 +7,15 @@ import uuid
 import time
 import logging
 import operator
+import requests
+import tempfile
+import re
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 from time import gmtime, strftime
 from ast import literal_eval
 from functools import reduce
 from pydash import _
-import requests
-import tempfile
-import re
 
 from django.shortcuts import render
 from django.core import serializers, files
@@ -33,6 +33,7 @@ from rest_framework.decorators import (
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
+from django.db import connection
 from django.utils import timezone
 from django.conf import settings
 from django.utils.datastructures import MultiValueDictKeyError
@@ -47,16 +48,9 @@ from django_rest_passwordreset.signals import (
     pre_password_reset,
 )
 
-from django.db import connection
-import MySQLdb
-
-
 from .serializers import *
 from .models import *
 from .utils import (
-    clearFileCheckHistory,
-    getFileCheckHistory,
-    save2Redis,
     _generate_csv,
     build_xml,
     build_pdf,
@@ -67,25 +61,11 @@ from .utils import (
     get_client_name,
     calc_collect_after_status_change,
     send_email,
-    tables_in_query
+    tables_in_query,
 )
-from api.outputs import emails as email_module
+from api.outputs import tempo, emails as email_module
 from api.common import status_history
-from api.outputs import tempo
-
-
-if settings.ENV == "local":
-    SERVER_IP = "localhost:9000"
-    STATIC_PUBLIC = "./static"
-    STATIC_PRIVATE = "./static"
-elif settings.ENV == "dev":
-    SERVER_IP = f"3.104.30.210"
-    STATIC_PUBLIC = "/opt/s3_public"
-    STATIC_PRIVATE = "/opt/s3_private"
-elif settings.ENV == "prod":
-    SERVER_IP = f"13.55.160.158"
-    STATIC_PUBLIC = "/opt/s3_public"
-    STATIC_PRIVATE = "/opt/s3_private"
+from api.file_operations import uploads as upload_lib
 
 logger = logging.getLogger("dme_api")
 
@@ -94,7 +74,7 @@ logger = logging.getLogger("dme_api")
 def password_reset_token_created(
     sender, instance, reset_password_token, *args, **kwargs
 ):
-    url = f"http://{SERVER_IP}"
+    url = f"http://{settings.WEB_SITE_IP}"
     context = {
         "current_user": reset_password_token.user,
         "username": reset_password_token.user.username,
@@ -218,7 +198,7 @@ class UserViewSet(viewsets.ViewSet):
             return JsonResponse(
                 {"user_date_filter_field": client.client_filter_date_field}
             )
-    
+
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         return_data = []
@@ -226,21 +206,21 @@ class UserViewSet(viewsets.ViewSet):
 
         if client_pk is not None:
             filter_data = Client_employees.objects.filter(
-                    fk_id_dme_client_id=int(client_pk)
-                )
+                fk_id_dme_client_id=int(client_pk)
+            )
 
             filter_arr = []
             for data in filter_data:
-                filter_arr.append(
-                    data.fk_id_user_id
-                )
+                filter_arr.append(data.fk_id_user_id)
 
         try:
             resultObjects = []
             if len(filter_arr) == 0:
-                resultObjects = User.objects.all().order_by('username')
+                resultObjects = User.objects.all().order_by("username")
             else:
-                resultObjects = User.objects.filter(pk__in=filter_arr).order_by('username')
+                resultObjects = User.objects.filter(pk__in=filter_arr).order_by(
+                    "username"
+                )
             for resultObject in resultObjects:
                 return_data.append(
                     {
@@ -265,7 +245,7 @@ class UserViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObject = User.objects.get(pk=pk)
-            
+
             return_data.append(
                 {
                     "id": resultObject.id,
@@ -280,7 +260,7 @@ class UserViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print('@Exception', e)
+            print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -289,8 +269,16 @@ class UserViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = User.objects.create(fk_idEmailParent = request.data["fk_idEmailParent"],emailName = request.data["emailName"],emailBody = request.data["emailBody"],sectionName = request.data["sectionName"],emailBodyRepeatEven = request.data["emailBodyRepeatEven"],emailBodyRepeatOdd = request.data["emailBodyRepeatOdd"],whenAttachmentUnavailable = request.data["whenAttachmentUnavailable"])
-            
+            resultObjects = User.objects.create(
+                fk_idEmailParent=request.data["fk_idEmailParent"],
+                emailName=request.data["emailName"],
+                emailBody=request.data["emailBody"],
+                sectionName=request.data["sectionName"],
+                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
+                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
+                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
+            )
+
             return JsonResponse({"results": resultObjects})
         except Exception as e:
             # print('@Exception', e)
@@ -303,25 +291,25 @@ class UserViewSet(viewsets.ViewSet):
         try:
             User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
             return JsonResponse({"results": request.data})
-            #if serializer.is_valid():
-                #try:
-                    #serializer.save()
-                    #return Response(serializer.data)
-                #except Exception as e:
-                    #print('%s (%s)' % (e.message, type(e)))
-                    #return Response({"results": e.message})
-            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # if serializer.is_valid():
+            # try:
+            # serializer.save()
+            # return Response(serializer.data)
+            # except Exception as e:
+            # print('%s (%s)' % (e.message, type(e)))
+            # return Response({"results": e.message})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            #print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({"results": str(e)})
-            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
     def delete(self, request, pk, format=None):
         user = User.objects.get(pk=pk)
 
         try:
-            #user.delete()
+            # user.delete()
             return JsonResponse({"results": fp_freight_providers})
         except Exception as e:
             # print('@Exception', e)
@@ -2344,117 +2332,6 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                 return queryset
 
 
-class AttachmentsUploadView(views.APIView):
-    def post(self, request, format=None):
-        uploadResult = handle_uploaded_file_4_booking(
-            request, request.FILES["file"], "attachments"
-        )
-        return Response(uploadResult)
-
-
-class LabelUploadView(views.APIView):
-    def post(self, request, format=None):
-        uploadResult = handle_uploaded_file_4_booking(
-            request, request.FILES["file"], "label"
-        )
-        return Response(uploadResult)
-
-
-class PodUploadView(views.APIView):
-    def post(self, request, format=None):
-        uploadResult = handle_uploaded_file_4_booking(
-            request, request.FILES["file"], "pod"
-        )
-        return Response(uploadResult)
-
-
-def handle_uploaded_file_4_booking(request, f, upload_type):
-    user_id = request.user.id
-
-    try:
-        bookingId = request.POST.get("booking_id", None)
-
-        if not bookingId:
-            return "failed"
-
-        try:
-            client = DME_clients.objects.get(pk_id_dme_client=user_id)
-        except DME_clients.DoesNotExist as e:
-            client = "dme"
-
-        booking = Bookings.objects.get(id=bookingId)
-        fp = Fp_freight_providers.objects.get(
-            fp_company_name=booking.vx_freight_provider
-        )
-        name, extension = os.path.splitext(f.name)
-
-        if upload_type == "attachments":
-            fp_dir_name = (
-                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
-            )
-            file_path = f"{STATIC_PUBLIC}/attachments/{fp_dir_name}/"
-
-            if not os.path.isdir(file_path):
-                os.makedirs(file_path)
-
-            file_name = (
-                f"{name}-{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}{extension}"
-            )
-            full_path = f"{file_path}/{file_name}"
-        elif upload_type in ["label", "pod"]:
-            fp_dir_name = (
-                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
-            )
-
-            if upload_type == "label":
-                file_path = f"{STATIC_PUBLIC}/pdfs/{fp_dir_name}/"
-            else:
-                file_path = f"{STATIC_PUBLIC}/imgs/{fp_dir_name}/"
-
-            if not os.path.isdir(file_path):
-                os.makedirs(file_path)
-
-            if upload_type == "label":
-                file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
-                booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-            elif upload_type == "pod" and not "sog" in name.lower():
-                file_name = f"POD_DME{str(booking.b_bookingID_Visual)}{extension}"
-                booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-            elif upload_type == "pod" and "sog" in name.lower():
-                file_name = f"POD_SOG_DME{str(booking.b_bookingID_Visual)}{extension}"
-                booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-
-            full_path = f"{file_path}/{file_name}"
-            booking.save()
-
-        with open(full_path, "wb+") as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-        if upload_type == "attachments":
-            dme_attachment = Dme_attachments(
-                fk_id_dme_client=client,
-                fk_id_dme_booking=booking.pk_booking_id,
-                fileName=full_path,
-                linkurl="22",
-                upload_Date=datetime.now(),
-            )
-            dme_attachment.save()
-
-        return {
-            "status": "success",
-            "file_path": f"{fp_dir_name}/{file_name}",
-            "type": upload_type,
-        }
-    except Exception as e:
-        # print("Exception: ", e)
-        return {
-            "status": "failed",
-            "file_path": f"{fp_dir_name}/{file_name}",
-            "type": upload_type,
-        }
-
-
 class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_comms(self, request, pk=None):
@@ -3293,7 +3170,7 @@ class FPViewSet(viewsets.ViewSet):
                         {
                             "id": resultObject.id,
                             "fp_company_name": resultObject.fp_company_name,
-                            "fp_address_country": resultObject.fp_address_country
+                            "fp_address_country": resultObject.fp_address_country,
                         }
                     )
             return JsonResponse({"results": return_data})
@@ -3312,12 +3189,12 @@ class FPViewSet(viewsets.ViewSet):
                     {
                         "id": resultObjects.id,
                         "fp_company_name": resultObjects.fp_company_name,
-                        "fp_address_country": resultObjects.fp_address_country
+                        "fp_address_country": resultObjects.fp_address_country,
                     }
                 )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            #print('@Exception', e)
+            # print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -3326,8 +3203,11 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = Fp_freight_providers.objects.create(fp_company_name=request.data["fp_company_name"], fp_address_country=request.data["fp_address_country"])
-            
+            resultObjects = Fp_freight_providers.objects.create(
+                fp_company_name=request.data["fp_company_name"],
+                fp_address_country=request.data["fp_address_country"],
+            )
+
             return JsonResponse({"results": resultObjects})
         except Exception as e:
             # print('@Exception', e)
@@ -3365,7 +3245,7 @@ class FPViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObjects = FP_carriers.objects.filter(fk_fp=fp_id)
-                        
+
             for resultObject in resultObjects:
                 return_data.append(
                     {
@@ -3376,12 +3256,12 @@ class FPViewSet(viewsets.ViewSet):
                         "connote_end_value": resultObject.connote_end_value,
                         "current_value": resultObject.current_value,
                         "label_end_value": resultObject.label_end_value,
-                        "label_start_value": resultObject.label_start_value
+                        "label_start_value": resultObject.label_start_value,
                     }
                 )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            #print('@Exception', e)
+            # print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -3390,8 +3270,16 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = FP_carriers.objects.create(fk_fp=request.data["fk_fp"], carrier=request.data["carrier"], connote_start_value=request.data["connote_start_value"], connote_end_value=request.data["connote_end_value"], current_value=request.data["current_value"], label_start_value=request.data["label_start_value"], label_end_value=request.data["label_end_value"])
-            
+            resultObjects = FP_carriers.objects.create(
+                fk_fp=request.data["fk_fp"],
+                carrier=request.data["carrier"],
+                connote_start_value=request.data["connote_start_value"],
+                connote_end_value=request.data["connote_end_value"],
+                current_value=request.data["current_value"],
+                label_start_value=request.data["label_start_value"],
+                label_end_value=request.data["label_end_value"],
+            )
+
             return JsonResponse({"results": resultObjects})
         except Exception as e:
             # print('@Exception', e)
@@ -3456,12 +3344,19 @@ class FPViewSet(viewsets.ViewSet):
                         "zone": resultObject.zone,
                         "carrier": resultObject.carrier,
                         "service": resultObject.service,
-                        "sender_code": resultObject.sender_code
+                        "sender_code": resultObject.sender_code,
                     }
                 )
-            return JsonResponse({"results": return_data, 'page_cnt': page_cnt, 'page_ind': page_ind, 'page_item_cnt': page_item_cnt})
+            return JsonResponse(
+                {
+                    "results": return_data,
+                    "page_cnt": page_cnt,
+                    "page_ind": page_ind,
+                    "page_item_cnt": page_item_cnt,
+                }
+            )
         except Exception as e:
-            #print('@Exception', e)
+            # print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -3470,8 +3365,17 @@ class FPViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = FP_zones.objects.create(fk_fp=request.data["fk_fp"], suburb=request.data["suburb"], state=request.data["state"], postal_code=request.data["postal_code"], zone=request.data["zone"], carrier=request.data["carrier"], service=request.data["service"], sender_code=request.data["sender_code"])
-            
+            resultObjects = FP_zones.objects.create(
+                fk_fp=request.data["fk_fp"],
+                suburb=request.data["suburb"],
+                state=request.data["state"],
+                postal_code=request.data["postal_code"],
+                zone=request.data["zone"],
+                carrier=request.data["carrier"],
+                service=request.data["service"],
+                sender_code=request.data["sender_code"],
+            )
+
             return JsonResponse({"results": resultObjects})
         except Exception as e:
             # print('@Exception', e)
@@ -3501,6 +3405,7 @@ class FPViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"results": ""})
+
 
 class EmailTemplatesViewSet(viewsets.ViewSet):
     serializer_class = EmailTemplatesSerializer
@@ -3540,7 +3445,7 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObject = DME_Email_Templates.objects.get(pk=pk)
-            
+
             return_data.append(
                 {
                     "id": resultObject.id,
@@ -3559,7 +3464,7 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print('@Exception', e)
+            print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -3568,8 +3473,16 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = DME_Email_Templates.objects.create(fk_idEmailParent = request.data["fk_idEmailParent"],emailName = request.data["emailName"],emailBody = request.data["emailBody"],sectionName = request.data["sectionName"],emailBodyRepeatEven = request.data["emailBodyRepeatEven"],emailBodyRepeatOdd = request.data["emailBodyRepeatOdd"],whenAttachmentUnavailable = request.data["whenAttachmentUnavailable"])
-            
+            resultObjects = DME_Email_Templates.objects.create(
+                fk_idEmailParent=request.data["fk_idEmailParent"],
+                emailName=request.data["emailName"],
+                emailBody=request.data["emailBody"],
+                sectionName=request.data["sectionName"],
+                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
+                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
+                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
+            )
+
             return JsonResponse({"results": resultObjects})
         except Exception as e:
             # print('@Exception', e)
@@ -3578,24 +3491,26 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         email_template = DME_Email_Templates.objects.get(pk=pk)
-        #return JsonResponse({"results": (email_template.emailBody)})
-        #serializer = EmailTemplatesSerializer(email_template, data=request.data)
+        # return JsonResponse({"results": (email_template.emailBody)})
+        # serializer = EmailTemplatesSerializer(email_template, data=request.data)
 
         try:
-            DME_Email_Templates.objects.filter(pk=pk).update(emailBody=request.data["emailBody"])
+            DME_Email_Templates.objects.filter(pk=pk).update(
+                emailBody=request.data["emailBody"]
+            )
             return JsonResponse({"results": request.data})
-            #if serializer.is_valid():
-                #try:
-                    #serializer.save()
-                    #return Response(serializer.data)
-                #except Exception as e:
-                    #print('%s (%s)' % (e.message, type(e)))
-                    #return Response({"results": e.message})
-            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # if serializer.is_valid():
+            # try:
+            # serializer.save()
+            # return Response(serializer.data)
+            # except Exception as e:
+            # print('%s (%s)' % (e.message, type(e)))
+            # return Response({"results": e.message})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            #print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({"results": str(e)})
-            #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
     def delete(self, request, pk, format=None):
@@ -3655,6 +3570,7 @@ class OptionsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class StatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
@@ -3801,77 +3717,6 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class FileUploadView(views.APIView):
-    parser_classes = (MultiPartParser,)
-
-    def post(self, request, filename, format=None):
-        file_obj = request.FILES["file"]
-        user_id = request.user.id
-        username = request.user.username
-
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-
-        if dme_employee is not None:
-            user_type = "DME"
-        else:
-            user_type = "CLIENT"
-
-        if user_type == "DME":
-            uploader = request.POST["uploader"]
-            dme_account_num = DME_clients.objects.get(
-                company_name=uploader
-            ).dme_account_num
-            client_company_name = "DME"
-        else:
-            client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
-            dme_account_num = client_employee.fk_id_dme_client.dme_account_num
-            client_company_name = DME_clients.objects.get(
-                pk_id_dme_client=client_employee.fk_id_dme_client_id
-            ).company_name
-
-        upload_file_name = request.FILES["file"].name
-        prepend_name = str(dme_account_num) + "_" + upload_file_name
-
-        save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
-
-        handle_uploaded_file(
-            dme_account_num, request.FILES["file"], client_company_name
-        )
-
-        html = prepend_name
-        return Response(prepend_name)
-
-
-def handle_uploaded_file(dme_account_num, f, client_company_name):
-    if settings.ENV in ["prod", "dev"]:  # PROD & DEV
-        filename = (
-            f"/var/www/html/dme_api/media/onedrive/{str(dme_account_num)}_{f.name}"
-            if client_company_name != "Tempo"
-            else f"/dme_sftp/tempo_au/pickup_ext/{f.name}"
-        )
-    else:  # LOCAL
-        filename = f"/Users/admin/work/goldmine/xlsimport/upload/{f.name}"
-
-    with open(filename, "wb+") as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
-
-    clearFileCheckHistory(f"str(dme_account_num)_{f.name}")
-
-
-def upload_status(request):
-    result = getFileCheckHistory(request.GET.get("filename"))
-
-    if result == 0:
-        return JsonResponse({"status_code": 0})
-    elif result == "success":
-        return JsonResponse({"status_code": 1})
-    else:
-        return JsonResponse({"status_code": 2, "errors": result})
-
-
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def download_pdf(request):
@@ -3890,7 +3735,7 @@ def download_pdf(request):
             #         continue
 
             #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
-            #     file_path = f"STATIC_PUBLIC/pdfs/atc_au/{label_name}"  # Dev & Prod
+            #     file_path = f"settings.STATIC_PUBLIC/pdfs/atc_au/{label_name}"  # Dev & Prod
             #     # file_path = f"./static/pdfs/atc_au/{label_name}" # Local (Test Case)
             #     file = open(file_path, "wb+")
             #     for block in request.iter_content(1024 * 8):
@@ -3903,7 +3748,7 @@ def download_pdf(request):
             #     label_names.append(label_name)
             # else:
             file_paths.append(
-                f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
             )  # Dev & Prod
             # file_paths.append('./static/pdfs/' + booking.z_label_url) # Local (Test Case)
             label_names.append(booking.z_label_url)
@@ -3932,7 +3777,7 @@ def download_manifest(request):
     z_manifest_url = body["z_manifest_url"]
 
     if settings.ENV in ["prod", "dev"]:
-        file_path = f"{STATIC_PUBLIC}/pdfs/{z_manifest_url}"  # Prod & Dev
+        file_path = f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}"  # Prod & Dev
     else:
         file_path = f"./static/pdfs/{z_manifest_url}"  # Prod
 
@@ -3969,7 +3814,7 @@ def download_pod(request):
 
             if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                 file_paths.append(
-                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
+                    f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                 )  # Dev & Prod
                 # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_url)
@@ -3985,7 +3830,7 @@ def download_pod(request):
                 and len(booking.z_pod_signed_url) is not 0
             ):
                 file_paths.append(
-                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
+                    f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                 )  # Dev & Prod
                 # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                 pod_and_pod_signed_names.append(booking.z_pod_signed_url)
@@ -3999,7 +3844,7 @@ def download_pod(request):
             if booking.z_downloaded_pod_timestamp is None:
                 if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
                     file_paths.append(
-                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
+                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                     )  # Dev & Prod
                     # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_url)
@@ -4015,7 +3860,7 @@ def download_pod(request):
                     and len(booking.z_pod_signed_url) is not 0
                 ):
                     file_paths.append(
-                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
+                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                     )  # Dev & Prod
                     # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
                     pod_and_pod_signed_names.append(booking.z_pod_signed_url)
@@ -4057,7 +3902,7 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
+                    "settings.STATIC_PRIVATE/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "./static/connotes/"
@@ -4077,7 +3922,7 @@ def download_connote(request):
                     and len(booking.z_connote_url) is not 0
                 ):
                     file_paths.append(
-                        "STATIC_PRIVATE/connotes/" + booking.z_connote_url
+                        "settings.STATIC_PRIVATE/connotes/" + booking.z_connote_url
                     )  # Dev & Prod
                     # file_paths.append(
                     #     "./static/connotes/"
@@ -4096,7 +3941,7 @@ def download_connote(request):
                 and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
-                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
+                    "settings.STATIC_PRIVATE/connotes/" + booking.z_connote_url
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "./static/connotes/"
@@ -4107,7 +3952,7 @@ def download_connote(request):
                 booking.save()
             if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
                 file_paths.append(
-                    f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )  # Dev & Prod
                 # file_paths.append(
                 #     "./static/pdfs/"
@@ -4148,11 +3993,11 @@ def delete_file(request):
         )
 
     if file_option == "label":
-        filename = f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+        filename = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
         booking.z_label_url = None
         booking.z_downloaded_shipping_label_timestamp = None
     elif file_option == "pod":
-        filename = f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
+        filename = f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
         booking.z_pod_url = None
         booking.z_downloaded_pod_timestamp = None
 
@@ -4274,10 +4119,10 @@ def generate_manifest(request):
 
         if vx_freight_provider.upper() == "TASFR":
             for filename in filenames:
-                file_paths.append(f"{STATIC_PUBLIC}/pdfs/tas_au/{filename}")
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
         elif vx_freight_provider.upper() == "DHL":
             for filename in filenames:
-                file_paths.append(f"{STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
@@ -4447,8 +4292,8 @@ def getSuburbs(request):
     except Exception as e:
         return JsonResponse({"type": requestType, "suburbs": ""})
 
-class SqlQueriesViewSet(viewsets.ViewSet):
 
+class SqlQueriesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         return_data = []
@@ -4481,7 +4326,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObject = Utl_sql_queries.objects.get(pk=pk)
-            
+
             return_data.append(
                 {
                     "id": resultObject.id,
@@ -4497,17 +4342,22 @@ class SqlQueriesViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print('@Exception', e)
+            print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         return_data = []
-        
+
         try:
             resultObjects = []
-            resultObjects = Utl_sql_queries.objects.create(sql_title = request.data["sql_title"], sql_query = request.data["sql_query"], sql_description = request.data["sql_description"], sql_notes = request.data["sql_notes"])
-            
+            resultObjects = Utl_sql_queries.objects.create(
+                sql_title=request.data["sql_title"],
+                sql_query=request.data["sql_query"],
+                sql_description=request.data["sql_description"],
+                sql_notes=request.data["sql_notes"],
+            )
+
             return JsonResponse({"results": request.data})
         except Exception as e:
             # print('@Exception', e)
@@ -4518,10 +4368,14 @@ class SqlQueriesViewSet(viewsets.ViewSet):
         data = Utl_sql_queries.objects.get(pk=pk)
 
         try:
-            Utl_sql_queries.objects.filter(pk=pk).update(sql_query = request.data["sql_query"], sql_description = request.data["sql_description"], sql_notes = request.data["sql_notes"])
+            Utl_sql_queries.objects.filter(pk=pk).update(
+                sql_query=request.data["sql_query"],
+                sql_description=request.data["sql_description"],
+                sql_notes=request.data["sql_notes"],
+            )
             return JsonResponse({"results": request.data})
         except Exception as e:
-            #print('Exception: ', e)
+            # print('Exception: ', e)
             return JsonResponse({"results": str(e)})
 
     @action(detail=True, methods=["delete"])
@@ -4539,19 +4393,23 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     def validate(self, request, pk=None):
         return_data = []
         query_tables = tables_in_query(request.data["sql_query"])
-        #return JsonResponse({"results": str(query_tables)})  
-        if (re.search('select', request.data["sql_query"], flags=re.IGNORECASE)):
+        # return JsonResponse({"results": str(query_tables)})
+        if re.search("select", request.data["sql_query"], flags=re.IGNORECASE):
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(request.data["sql_query"])
                     columns = cursor.description
                     row = cursor.fetchall()
-                    cursor.execute("SHOW KEYS FROM "+query_tables[0]+" WHERE Key_name = 'PRIMARY'")
+                    cursor.execute(
+                        "SHOW KEYS FROM "
+                        + query_tables[0]
+                        + " WHERE Key_name = 'PRIMARY'"
+                    )
                     row1 = cursor.fetchone()
                     result = []
                     for value in row:
                         tmp = {}
-                        for (index,column) in enumerate(value):
+                        for (index, column) in enumerate(value):
                             tmp[columns[index][0]] = column
                         result.append(tmp)
                     return JsonResponse({"results": result, "tables": row1})
@@ -4559,12 +4417,12 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     # print('@Exception', e)
                     return JsonResponse({"error": str(e)})
         else:
-            return JsonResponse({"error": 'Sorry only SELECT statement allowed'})
+            return JsonResponse({"error": "Sorry only SELECT statement allowed"})
 
     @action(detail=False, methods=["post"])
     def update_query(self, request, pk=None):
         return_data = []
-        if (re.search('update', request.data["sql_query"], flags=re.IGNORECASE)):
+        if re.search("update", request.data["sql_query"], flags=re.IGNORECASE):
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(request.data["sql_query"])
@@ -4573,7 +4431,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     result = []
                     for value in row:
                         tmp = {}
-                        for (index,column) in enumerate(value):
+                        for (index, column) in enumerate(value):
                             tmp[columns[index][0]] = column
                         result.append(tmp)
                     return JsonResponse({"results": result})
@@ -4581,4 +4439,25 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     # print('@Exception', e)
                     return JsonResponse({"error": str(e)})
         else:
-            return JsonResponse({"error": 'Sorry only UPDATE statement allowed'})
+            return JsonResponse({"error": "Sorry only UPDATE statement allowed"})
+
+
+class FileUploadView(views.APIView):
+    parser_classes = (MultiPartParser,)
+
+    def post(self, request, format=None):
+        user_id = request.user.id
+        username = request.user.username
+        file = request.FILES["file"]
+        upload_option = request.POST.get("uploadOption", None)
+
+        if upload_option == "import":
+            uploader = request.POST["uploader"]
+            file_name = upload_lib.upload_import_file(user_id, file, uploader)
+        elif upload_option in ["pod", "label", "attachment"]:
+            booking_id = request.POST.get("bookingId", None)
+            file_name = upload_lib.upload_attachment_file(
+                user_id, file, booking_id, upload_option
+            )
+
+        return Response(file_name)
