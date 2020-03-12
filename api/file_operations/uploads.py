@@ -51,9 +51,7 @@ def _save_import_file(dme_account_num, file, client_company_name):
 
 
 def upload_import_file(user_id, file, uploader):
-    dme_employee = (
-        DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-    )
+    dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
     user_type = "DME" if dme_employee else "CLIENT"
 
     if user_type == "DME":
@@ -150,3 +148,7 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
             "status": "failed",
             "type": upload_option,
         }
+
+
+def upload_pricing_only_file(user_id, username, file, upload_option):
+    a = 1

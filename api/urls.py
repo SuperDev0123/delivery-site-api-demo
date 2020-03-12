@@ -52,10 +52,7 @@ urlpatterns += [
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
     # Uploads
-    url(r"^upload/import/", FileUploadView.as_view()),
-    url(r"^upload/attachments/", FileUploadView.as_view()),
-    url(r"^upload/label/", FileUploadView.as_view()),
-    url(r"^upload/pod/", FileUploadView.as_view()),
+    url(r"^upload/", FileUploadView.as_view()),
     url(r"^upload/status/", get_upload_status),
     # Downloads
     url(r"^download-pdf/", download_pdf),

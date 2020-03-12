@@ -4459,5 +4459,9 @@ class FileUploadView(views.APIView):
             file_name = upload_lib.upload_attachment_file(
                 user_id, file, booking_id, upload_option
             )
+        elif upload_option == "pricing-only":
+            file_name = upload_lib.upload_pricing_only_file(
+                user_id, username, file, upload_option
+            )
 
         return Response(file_name)
