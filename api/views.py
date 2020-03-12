@@ -4036,7 +4036,7 @@ def autoAugment(request):
 
             client_auto_augment = Client_Auto_Augment.objects.first()
 
-            if booking.b_client_name == 'Tempo Pty Ltd' and booking.b_booking_Category == 'Salvage Expense':
+            if 'Tempo' in booking.b_client_name and booking.b_booking_Category == 'Salvage Expense':
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name 
                 puCompany = booking.puCompany
                 deToCompanyName  = booking.deToCompanyName 
@@ -4075,7 +4075,10 @@ def autoAugment(request):
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
             else:
-                return JsonResponse({"message": 'Client is not Tempo', "type": 'Failure'}, status=status.HTTP_400_BAD_REQUEST)
+                if not 'Tempo' in booking.b_client_name:
+                    return JsonResponse({"message": 'Client is not Tempo', "type": 'Failure'}, status=status.HTTP_400_BAD_REQUEST)
+                if booking.b_booking_Category != 'Salvage Expense':
+                    return JsonResponse({"message": 'Booking Category is not  Salvage Expense', "type": 'Failure'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return JsonResponse({"message": 'Already Augmented', "type": "Failure"}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
