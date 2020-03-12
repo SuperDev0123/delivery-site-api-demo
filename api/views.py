@@ -4083,7 +4083,7 @@ def autoAugment(request):
             return JsonResponse({"message": 'Already Augmented', "type": "Failure"}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         print(str(e))
-        return JsonResponse({"type": "Failure", "message": "Exception occurred"}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({"type": "Failure", "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
