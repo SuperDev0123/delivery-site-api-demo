@@ -4077,7 +4077,7 @@ def autoAugment(request):
             else:
                 if not 'Tempo' in booking.b_client_name:
                     return JsonResponse({"message": 'Client is not Tempo', "type": 'Failure'}, status=status.HTTP_400_BAD_REQUEST)
-                if booking.b_booking_Category != 'Salvage Expense':
+                elif booking.b_booking_Category != 'Salvage Expense':
                     return JsonResponse({"message": 'Booking Category is not  Salvage Expense', "type": 'Failure'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return JsonResponse({"message": 'Already Augmented', "type": "Failure"}, status=status.HTTP_400_BAD_REQUEST)
