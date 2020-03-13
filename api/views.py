@@ -22,7 +22,11 @@ from django.core import serializers, files
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets, views, status, authentication, permissions
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AllowAny,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.decorators import (
     api_view,
@@ -4675,3 +4679,22 @@ class FileUploadView(views.APIView):
             )
 
         return Response(file_name)
+
+
+class DME_Files_ViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def list(self, request):
+        file_type = request.GET["fileType"]
+        dme_files = DME_Files.objects.filter(file_type=file_type).order_by(
+            "-z_createdTimeStamp"
+        )[:50]
+        serializer = DME_Files_Serializer(dme_files, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = DME_Files_Serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
