@@ -152,8 +152,17 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
 
 
 def upload_pricing_only_file(user_id, username, file, upload_option):
+    dme_file = DME_Files.objects.create(
+        file_name=f"{file.name}",
+        z_createdByAccount=username,
+        file_type="pricing-only",
+        file_extension="xlsx",
+        note="Uploaded to get Pricings only",
+    )
+
+    file_index = DME_Files.objects.all().order_by("id").last().id
     dir_path = f"./static/uploaded/pricing_only/indata/"
-    full_path = f"./static/uploaded/pricing_only/indata/{file.name}"
+    full_path = f"./static/uploaded/pricing_only/indata/{file_index}__{file.name}"
 
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
@@ -162,16 +171,11 @@ def upload_pricing_only_file(user_id, username, file, upload_option):
         for chunk in file.chunks():
             destination.write(chunk)
 
-    DME_Files.objects.create(
-        file_name=file.name,
-        z_createdByAccount=username,
-        file_type="pricing-only",
-        file_extension="xlsx",
-        note="Uploaded to get Pricings only",
-    )
-
+    dme_file.file_name = f"{file_index}__{file.name}"
+    dme_file.file_path = full_path
+    dme_file.save()
     return {
         "status": "success",
-        "file_name": file.name,
+        "file_name": f"{file_index}__{file.name}",
         "type": upload_option,
     }

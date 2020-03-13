@@ -2680,20 +2680,17 @@ class Utl_country_codes(models.Model):
     class Meta:
         db_table = "utl_country_codes"
 
+
 class Utl_sql_queries(models.Model):
     id = models.AutoField(primary_key=True)
     sql_title = models.CharField(
         verbose_name=_("SQL Title"), max_length=36, blank=True, null=True
     )
-    sql_query = models.TextField(
-        verbose_name=_("SQL Query"), blank=True, null=True
-    )
+    sql_query = models.TextField(verbose_name=_("SQL Query"), blank=True, null=True)
     sql_description = models.TextField(
         verbose_name=_("SQL Description"), blank=True, null=True
     )
-    sql_notes = models.TextField(
-        verbose_name=_("SQL Notes"), blank=True, null=True
-    )
+    sql_notes = models.TextField(verbose_name=_("SQL Notes"), blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2709,6 +2706,7 @@ class Utl_sql_queries(models.Model):
 
     class Meta:
         db_table = "utl_sql_queries"
+
 
 class Dme_status_history(models.Model):
     id = models.AutoField(primary_key=True)
@@ -3518,21 +3516,34 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
                 logger.info(f"Error 515 {e}")
                 pass
 
+
 class DME_Files(models.Model):
     id = models.AutoField(primary_key=True)
-    file_name = models.CharField(max_length=255, blank=False)
-    z_createdTimeStamp = models.DateTimeField(default=datetime.now, blank=True)
-    z_createdByAccount  = models.CharField(max_length=32, blank=False)
-    file_type = models.CharField(verbose_name=_("File Type"), max_length=16, blank=False)
-    file_extension = models.CharField(verbose_name=_("File Extension"), max_length=8, blank=False)
-    note = models.TextField(verbose_name=_("Note"), max_length=512, blank=False)
-    
+    file_name = models.CharField(max_length=255, blank=False, null=True, default=None)
+    file_path = models.TextField(max_length=1024, blank=False, null=True, default=None)
+    file_type = models.CharField(max_length=16, blank=False, null=True, default=None)
+    file_extension = models.CharField(
+        max_length=8, blank=False, null=True, default=None
+    )
+    note = models.TextField(max_length=2048, blank=False, null=True, default=None)
+    z_createdTimeStamp = models.DateTimeField(
+        default=datetime.now, blank=True, null=True
+    )
+    z_createdByAccount = models.CharField(
+        max_length=32, blank=False, null=True, default=None
+    )
+
     class Meta:
         db_table = "dme_files"
 
+
 class Client_Auto_Augment(models.Model):
     tic_de_Email = models.CharField(
-        verbose_name=_("TIC DE Email"), max_length=64, blank=True, null=True, default="itassets@ticgroup.com.au"
+        verbose_name=_("TIC DE Email"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default="itassets@ticgroup.com.au",
     )
 
     tic_de_Email_Group_Emails = models.CharField(
@@ -3560,7 +3571,11 @@ class Client_Auto_Augment(models.Model):
     )
 
     sales_club_de_Email = models.CharField(
-        verbose_name=_("Sales Club DE Email"), max_length=64, blank=True, null=True, default="alan.bortz@salesclub.com.au"
+        verbose_name=_("Sales Club DE Email"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default="alan.bortz@salesclub.com.au",
     )
 
     sales_club_de_Email_Group_Emails = models.TextField(
@@ -3573,6 +3588,7 @@ class Client_Auto_Augment(models.Model):
 
     class Meta:
         db_table = "client_auto_augment"
+
 
 class Client_Process_Mgr(models.Model):
     fk_booking_id = models.CharField(
@@ -3616,7 +3632,11 @@ class Client_Process_Mgr(models.Model):
     )
 
     origin_de_Email = models.CharField(
-        verbose_name=_("Origin DE Email"), max_length=64, blank=True, null=True, default=""
+        verbose_name=_("Origin DE Email"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default="",
     )
 
     origin_de_Email_Group_Emails = models.CharField(
@@ -3648,9 +3668,11 @@ class Client_Process_Mgr(models.Model):
     )
 
     origin_pu_PickUp_Avail_Time_Hours = models.IntegerField(
-        verbose_name=_("Origin PU Available Time Hours"), blank=True, default=0, null=True
+        verbose_name=_("Origin PU Available Time Hours"),
+        blank=True,
+        default=0,
+        null=True,
     )
 
     class Meta:
         db_table = "client_process_mgr"
-
