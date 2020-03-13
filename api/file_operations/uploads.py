@@ -152,8 +152,8 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
 
 
 def upload_pricing_only_file(user_id, username, file, upload_option):
-    dir_path = f"./static/uploaded/pricing_only/"
-    full_path = f"./static/uploaded/pricing_only/{file.name}"
+    dir_path = f"./static/uploaded/pricing_only/indata/"
+    full_path = f"./static/uploaded/pricing_only/indata/{file.name}"
 
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
