@@ -226,6 +226,18 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["b_client_name"]
+            queryset = queryset.filter(b_client_name__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_client_name"]
+            queryset = queryset.filter(b_client_name_sub__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["b_dateBookedDate"]
             queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
         except KeyError:
@@ -418,11 +430,9 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_bookings(self, request, format=None):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id)
 
-        if dme_employee is not None:
+        if len(dme_employee) > 0:
             user_type = "DME"
         else:
             user_type = "CLIENT"
@@ -801,6 +811,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "dme_status_action": booking.dme_status_action,
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                     "b_client_name": booking.b_client_name,
+                    "b_client_name_sub": booking.b_client_name_sub,
                     "check_pod": booking.check_pod,
                     "fk_manifest_id": booking.fk_manifest_id,
                     "b_is_flagged_add_on_services": booking.b_is_flagged_add_on_services,
