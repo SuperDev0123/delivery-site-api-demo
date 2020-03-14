@@ -56,10 +56,7 @@ urlpatterns += [
     url(r"^upload/", FileUploadView.as_view()),
     url(r"^upload/status/", get_upload_status),
     # Downloads
-    url(r"^download-pdf/", download_pdf),
-    url(r"^download-pod/", download_pod),
-    url(r"^download-connote/", download_connote),
-    url(r"^download-manifest/", download_manifest),
+    url(r"^download/", download),
     # Delete
     url(r"^delete-file/", delete_file),
     # Generates

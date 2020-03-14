@@ -1,8 +1,6 @@
 import pytz
 import os
-import io
 import json
-import zipfile
 import uuid
 import time
 import logging
@@ -69,7 +67,11 @@ from .utils import (
 )
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
-from api.file_operations import uploads as upload_lib
+from api.file_operations import (
+    uploads as upload_lib,
+    delete as delete_lib,
+    downloads as download_libs,
+)
 
 logger = logging.getLogger("dme_api")
 
@@ -3932,296 +3934,143 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
 
 
 @api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_pdf(request):
+@permission_classes((IsAuthenticated,))
+def download(request):
     body = literal_eval(request.body.decode("utf8"))
-    bookingIds = body["ids"]
-    bookings = Bookings.objects.filter(id__in=bookingIds)
+    download_option = body["downloadOption"]
     file_paths = []
-    label_names = []
 
-    for booking in bookings:
-        if booking.z_label_url is not None and len(booking.z_label_url) > 0:
-            # if "https://ap-prod" in booking.z_label_url:  # PYTHON CODE to download from url
-            #     request = requests.get(booking.z_label_url, stream=True)
+    if download_option == "pricing-only":
+        file_name = body["fileName"]
+    elif download_option == "manifest":
+        z_manifest_url = body["z_manifest_url"]
+    else:
+        bookingIds = body["ids"]
+        bookings = Bookings.objects.filter(id__in=bookingIds)
 
-            #     if request.status_code != requests.codes.ok:
-            #         continue
+    if download_option == "pricing-only":
+        src_file_path = f"./static/uploaded/pricing_only/achieve/{file_name}"
+        file_paths.append(src_file_path)
+        file_name_without_ext = file_name.split(".")[0]
+        result_file_record = DME_Files.objects.filter(
+            file_name__icontains=file_name_without_ext, file_type="pricing-result"
+        )
 
-            #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
-            #     file_path = f"settings.STATIC_PUBLIC/pdfs/atc_au/{label_name}"  # Dev & Prod
-            #     # file_path = f"./static/pdfs/atc_au/{label_name}" # Local (Test Case)
-            #     file = open(file_path, "wb+")
-            #     for block in request.iter_content(1024 * 8):
-            #         if not block:
-            #             break
-
-            #         file.write(block)
-            #     file.close()
-            #     file_paths.append(file_path)
-            #     label_names.append(label_name)
-            # else:
-            file_paths.append(
-                f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-            )  # Dev & Prod
-            # file_paths.append('./static/pdfs/' + booking.z_label_url) # Local (Test Case)
-            label_names.append(booking.z_label_url)
+        if result_file_record:
+            file_paths.append(result_file_record.first().file_path)
+    elif download_option == "label":
+        if booking.z_label_url and len(booking.z_label_url) > 0:
+            file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}")
             booking.z_downloaded_shipping_label_timestamp = datetime.now()
             booking.save()
-
-    zip_subdir = "labels"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    for index, file_path in enumerate(file_paths):
-        zf.write(file_path, "labels/" + label_names[index])
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-    return response
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_manifest(request):
-    body = literal_eval(request.body.decode("utf8"))
-    z_manifest_url = body["z_manifest_url"]
-
-    if settings.ENV in ["prod", "dev"]:
-        file_path = f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}"  # Prod & Dev
-    else:
-        file_path = f"./static/pdfs/{z_manifest_url}"  # Prod
-
-    manifest_name = z_manifest_url.split("/")[1]
-
-    zip_subdir = "manifests"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    zip_path = os.path.join(zip_subdir, file_path)
-    zf.write(file_path, manifest_name)
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-    return response
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_pod(request):
-    body = literal_eval(request.body.decode("utf8"))
-    bookingIds = body["ids"]
-    download_option = body["downloadOption"]
-
-    file_paths = []
-    pod_and_pod_signed_names = []
-
-    if download_option == "pod":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
-                )  # Dev & Prod
-                # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
-                pod_and_pod_signed_names.append(booking.z_pod_url)
+    elif download_option == "manifest":
+        file_paths.appned(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
+    elif download_option == "pod":
+        if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
+            file_paths.append(f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}")
+            booking.z_downloaded_pod_timestamp = timezone.now()
+            booking.save()
+    elif download_option == "pod_sog":
+        if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
+            file_paths.append(
+                f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
+            )
+            booking.z_downloaded_pod_sog_timestamp = timezone.now()
+            booking.save()
+    elif download_option == "new_pod":
+        if booking.z_downloaded_pod_timestamp is None:
+            if booking.z_pod_url and len(booking.z_pod_url) > 0:
+                file_paths.append(f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}")
                 booking.z_downloaded_pod_timestamp = timezone.now()
                 booking.save()
-
-    elif download_option == "pod_sog":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if (
-                booking.z_pod_signed_url is not None
-                and len(booking.z_pod_signed_url) is not 0
-            ):
+    elif download_option == "new_pod_sog":
+        if booking.z_downloaded_pod_sog_timestamp is None:
+            if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
                 file_paths.append(
                     f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
-                )  # Dev & Prod
-                # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
-                pod_and_pod_signed_names.append(booking.z_pod_signed_url)
+                )
                 booking.z_downloaded_pod_sog_timestamp = timezone.now()
                 booking.save()
-
-    elif download_option == "new_pod":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if booking.z_downloaded_pod_timestamp is None:
-                if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-                    file_paths.append(
-                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
-                    )  # Dev & Prod
-                    # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
-                    pod_and_pod_signed_names.append(booking.z_pod_url)
-                    booking.z_downloaded_pod_timestamp = timezone.now()
-                    booking.save()
-
-    elif download_option == "new_pod_sog":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-            if booking.z_downloaded_pod_sog_timestamp is None:
-                if (
-                    booking.z_pod_signed_url is not None
-                    and len(booking.z_pod_signed_url) is not 0
-                ):
-                    file_paths.append(
-                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
-                    )  # Dev & Prod
-                    # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
-                    pod_and_pod_signed_names.append(booking.z_pod_signed_url)
-                    booking.z_downloaded_pod_sog_timestamp = timezone.now()
-                    booking.save()
-
-    zip_subdir = "pod_and_pod_signed"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    for index, file_path in enumerate(file_paths):
-        zip_path = os.path.join(zip_subdir, file_path)
-        zf.write(file_path, "pod_and_pod_signed/" + pod_and_pod_signed_names[index])
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-    return response
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_connote(request):
-    body = literal_eval(request.body.decode("utf8"))
-    bookingIds = body["ids"]
-    download_option = body["downloadOption"]
-
-    file_paths = []
-    connote_names = []
-
-    if download_option == "connote":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if (
-                booking.z_connote_url is not None
-                and len(booking.z_connote_url) is not 0
-            ):
-                file_paths.append(
-                    "settings.STATIC_PRIVATE/connotes/" + booking.z_connote_url
-                )  # Dev & Prod
-                # file_paths.append(
-                #     "./static/connotes/"
-                #     + booking.z_connote_url
-                # )  # Local (Test Case)
-                connote_names.append(booking.z_connote_url)
-                booking.z_downloaded_connote_timestamp = timezone.now()
-                booking.save()
-
+    elif download_option == "connote":
+        if booking.z_connote_url and len(booking.z_connote_url) is not 0:
+            file_paths.append(
+                f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+            )
+            booking.z_downloaded_connote_timestamp = timezone.now()
+            booking.save()
     elif download_option == "new_connote":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if booking.z_downloaded_pod_timestamp is None:
-                if (
-                    booking.z_connote_url is not None
-                    and len(booking.z_connote_url) is not 0
-                ):
-                    file_paths.append(
-                        "settings.STATIC_PRIVATE/connotes/" + booking.z_connote_url
-                    )  # Dev & Prod
-                    # file_paths.append(
-                    #     "./static/connotes/"
-                    #     + booking.z_connote_url
-                    # )  # Local (Test Case)
-                    connote_names.append(booking.z_connote_url)
-                    booking.z_downloaded_connote_timestamp = timezone.now()
-                    booking.save()
-
-    elif download_option == "label_and_connote":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if (
-                booking.z_connote_url is not None
-                and len(booking.z_connote_url) is not 0
-            ):
+        if booking.z_downloaded_pod_timestamp is None:
+            if booking.z_connote_url and len(booking.z_connote_url) > 0:
                 file_paths.append(
-                    "settings.STATIC_PRIVATE/connotes/" + booking.z_connote_url
-                )  # Dev & Prod
-                # file_paths.append(
-                #     "./static/connotes/"
-                #     + booking.z_connote_url
-                # )  # Local (Test Case)
-                connote_names.append(booking.z_connote_url)
+                    f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+                )
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
-            if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )  # Dev & Prod
-                # file_paths.append(
-                #     "./static/pdfs/"
-                #     + booking.z_label_url
-                # )  # Local (Test Case)
-                connote_names.append(booking.z_label_url)
-                booking.z_downloaded_shipping_label_timestamp = timezone.now()
-                booking.save()
+    elif download_option == "label_and_connote":
+        if booking.z_connote_url and len(booking.z_connote_url) > 0:
+            file_paths.append(
+                f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+            )
+            booking.z_downloaded_connote_timestamp = timezone.now()
+            booking.save()
+        if booking.z_label_url and len(booking.z_label_url) > 0:
+            file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}")
+            booking.z_downloaded_shipping_label_timestamp = timezone.now()
+            booking.save()
 
-    zip_subdir = "connote"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    for index, file_path in enumerate(file_paths):
-        zip_path = os.path.join(zip_subdir, file_path)
-        zf.write(file_path, "connote/" + connote_names[index])
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+    response = download_libs.download_from_disk(download_option, file_paths)
     return response
 
 
 @api_view(["DELETE"])
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
 def delete_file(request):
     body = literal_eval(request.body.decode("utf8"))
-    booking_id = body["bookingId"]
     file_option = body["deleteFileOption"]
 
-    try:
-        booking = Bookings.objects.get(id=booking_id)
-    except Bookings.DoesNotExist as e:
-        return JsonResponse(
-            {"message": "Booking does not exist", "status": "failure"}, status=400
+    if file_option in ["label", "pod"]:
+        try:
+            booking_id = body["bookingId"]
+            booking = Bookings.objects.get(id=booking_id)
+        except Bookings.DoesNotExist as e:
+            return JsonResponse(
+                {"message": "Booking does not exist", "status": "failure"}, status=400
+            )
+
+        if file_option == "label":
+            file_name = f"{booking.z_label_url}"
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{file_name}"
+            booking.z_label_url = None
+            booking.z_downloaded_shipping_label_timestamp = None
+        elif file_option == "pod":
+            file_name = f"{booking.z_pod_url}"
+            file_path = f"{settings.STATIC_PUBLIC}/imgs/"
+            booking.z_pod_url = None
+            booking.z_downloaded_pod_timestamp = None
+
+        booking.save()
+        delete_lib.delete(file_path)
+    elif file_option in ["pricing-only"]:
+        file_name = body["fileName"]
+        delete_lib.delete(f"./static/uploaded/pricing_only/indata/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_only/inprogress/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_only/achieve/{file_name}")
+        file_name_without_ext = file_name.split(".")[0]
+        result_file_record = DME_Files.objects.filter(
+            file_name__icontains=file_name_without_ext, file_type="pricing-result"
         )
 
-    if file_option == "label":
-        filename = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-        booking.z_label_url = None
-        booking.z_downloaded_shipping_label_timestamp = None
-    elif file_option == "pod":
-        filename = f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
-        booking.z_pod_url = None
-        booking.z_downloaded_pod_timestamp = None
+        if result_file_record:
+            delete_lib.delete(result_file_record.first().file_path)
 
-    booking.save()
-
-    if os.path.isfile(filename):
-        os.remove(filename)
+        DME_Files.objects.filter(file_name__icontains=file_name_without_ext).delete()
 
     return JsonResponse(
-        {"filename": "", "status": "success", "message": "Deleted successfully!"},
+        {
+            "filename": file_name,
+            "status": "success",
+            "message": "Deleted successfully!",
+        },
         status=200,
     )
 
