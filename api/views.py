@@ -643,6 +643,8 @@ class BookingsViewSet(viewsets.ViewSet):
                         | Q(
                             de_to_PickUp_Instructions_Address__icontains=simple_search_keyword
                         )
+                        | Q(b_client_name__icontains=simple_search_keyword)
+                        | Q(b_client_name_sub__icontains=simple_search_keyword)
                     )
                 else:
                     if "&" in simple_search_keyword:
