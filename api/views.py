@@ -2014,7 +2014,7 @@ class BookingViewSet(viewsets.ViewSet):
                         booking.pu_Address_street_2 = booking.pu_Address_Street_1
                         custRefNumVerbage = (
                             "Ref: "
-                            + str(booking.b_clientReference_RA_Numbers or "")
+                            + str(booking.get_client_item_references() or "")
                             + " Returns 4 "
                             + booking.b_client_name
                             + ". Fragile"
