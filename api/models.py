@@ -1550,6 +1550,22 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
+    def get_clientRefNumbers(self):
+        try:
+            clientRefNumbers = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.clientRefNumber is not None:
+                    clientRefNumbers.append(booking_line_data.clientRefNumber)
+
+            return ", ".join(clientRefNumbers)
+        except Exception as e:
+            # print('Exception: ', e)
+            return ""
+
 
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
