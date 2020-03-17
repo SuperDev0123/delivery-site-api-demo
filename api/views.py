@@ -4241,3 +4241,22 @@ def getSuburbs(request):
         return JsonResponse({"type": requestType, "suburbs": return_data})
     except Exception as e:
         return JsonResponse({"type": requestType, "suburbs": ""})
+
+
+class DME_Files_ViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def list(self, request):
+        file_type = request.GET["fileType"]
+        dme_files = DME_Files.objects.filter(file_type=file_type).order_by(
+            "-z_createdTimeStamp"
+        )[:50]
+        serializer = DME_Files_Serializer(dme_files, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = DME_Files_Serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
