@@ -2090,7 +2090,7 @@ class BookingViewSet(viewsets.ViewSet):
                 client_auto_augment = Client_Auto_Augment.objects.first()
 
                 if (
-                    "Tempo" in booking.b_client_name
+                    "Tempo Pty Ltd" == booking.b_client_name
                     and booking.b_booking_Category == "Salvage Expense"
                 ):
                     pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
