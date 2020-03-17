@@ -1555,6 +1555,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
                         "booking_Created_For": booking.booking_Created_For,
                         "booking_Created_For_Email": booking.booking_Created_For_Email,
+                        "b_booking_Category": booking.b_booking_Category,
+                        "b_booking_Priority": booking.b_booking_Priority,
                         "vx_fp_pu_eta_time": booking.vx_fp_pu_eta_time,
                         "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                         "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
