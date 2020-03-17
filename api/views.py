@@ -2056,21 +2056,23 @@ class BookingViewSet(viewsets.ViewSet):
                         and booking.pu_PickUp_By_Date == None
                         and booking.pu_PickUp_By_Time_Hours == None
                     ):
-                        booking.pu_PickUp_By_Date = str(datetime.now())
+                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
 
                     if (
                         booking.x_ReadyStatus == "Available From"
                         and booking.puPickUpAvailFrom_Date == None
                         and booking.pu_PickUp_Avail_Time_Hours == None
                     ):
-                        booking.pu_PickUp_Avail_Time_Hours = str(datetime.now())
+                        booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime(
+                            "%Y-%m-%d"
+                        )
 
                     if (
                         booking.x_ReadyStatus == "Available From"
                         and booking.pu_PickUp_By_Date == None
                         and booking.pu_PickUp_Avail_Time_Hours == None
                     ):
-                        booking.pu_PickUp_By_Date = str(datetime.now())
+                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
 
                     client_process.save()
                     booking.save()
