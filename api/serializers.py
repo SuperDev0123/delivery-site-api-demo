@@ -18,6 +18,9 @@ from .models import (
     FP_zones,
     DME_Options,
     DME_Files,
+    FP_vehicles,
+    FP_timings,
+    FP_availabilities,
 )
 
 
@@ -148,3 +151,20 @@ class DME_Files_Serializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Files
         fields = "__all__"
+
+class VehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_vehicles
+        fields = "__all__"
+
+class TimingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_timings
+        fields = "__all__"
+
+class AvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_availabilities
+        fields = "__all__"
+
+

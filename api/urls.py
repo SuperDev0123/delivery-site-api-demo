@@ -29,6 +29,9 @@ router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
 router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
+router.register(r"vehicles", VehiclesViewSet, basename="vehicles")
+router.register(r"timing", TimingViewSet, basename="timing")
+router.register(r"availabilities", AvailabilityViewSet, basename="availabilities")
 
 router.register(
     r"fp-store-booking-log", FPStoreBookingLog, basename="fp-store-booking-log"

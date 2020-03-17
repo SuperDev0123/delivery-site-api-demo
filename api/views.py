@@ -4547,3 +4547,117 @@ class DME_Files_ViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VehiclesViewSet(viewsets.ViewSet):
+    serializer_class = VehicleSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_vehicles.objects.all()
+
+            for resultObject in resultObjects:
+                fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "description": resultObject.description,
+                        "dim_UOM": resultObject.dim_UOM,
+                        "max_length": resultObject.max_length,
+                        "max_width": resultObject.max_width,
+                        "max_height": resultObject.max_height,
+                        "mass_UOM": resultObject.mass_UOM,
+                        "pallets": resultObject.pallets,
+                        "pallet_UOM": resultObject.pallet_UOM,
+                        "max_pallet_length": resultObject.max_pallet_length,
+                        "max_pallet_height": resultObject.max_pallet_height,
+                        "base_charge": resultObject.base_charge,
+                        "min_charge": resultObject.min_charge,
+                        "limited_state": resultObject.limited_state,
+                        "freight_provider": fp_freight_provider.fp_company_name,
+                        "max_mass": resultObject.max_mass,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+
+class TimingViewSet(viewsets.ViewSet):
+    serializer_class = TimingSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_timings.objects.all()
+
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "time_UOM": resultObject.time_UOM,
+                        "min": resultObject.max_length,
+                        "max": resultObject.max_width,
+                        "booking_cut_off_time": resultObject.booking_cut_off_time,
+                        "collected_by": resultObject.collected_by,
+                        "delivered_by": resultObject.delivered_by,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+
+class AvailabilityViewSet(viewsets.ViewSet):
+    serializer_class = AvailabilitySerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_timings.objects.all()
+            fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "code": resultObject.code,
+                        "mon_start": resultObject.mon_start,
+                        "mon_end": resultObject.mon_end,
+                        "tue_start": resultObject.tue_start,
+                        "tue_end": resultObject.tue_end,
+                        "wed_start": resultObject.wed_start,
+                        "wed_end": resultObject.wed_end,
+                        "thu_start": resultObject.thu_start,
+                        "thu_end": resultObject.thu_end,
+                        "fri_start": resultObject.fri_start,
+                        "fri_end": resultObject.fri_end,
+                        "sat_start": resultObject.sat_start,
+                        "sat_end": resultObject.sat_end,
+                        "sun_start": resultObject.sun_start,
+                        "sun_end": resultObject.sun_end,
+                        "freight_provider": fp_freight_provider.fp_company_name,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+
+
