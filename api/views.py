@@ -333,6 +333,18 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["b_client_name"]
+            queryset = queryset.filter(b_client_name__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["b_client_name"]
+            queryset = queryset.filter(b_client_name_sub__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["b_dateBookedDate"]
             queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
         except KeyError:
@@ -525,11 +537,9 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_bookings(self, request, format=None):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id)
 
-        if dme_employee is not None:
+        if len(dme_employee) > 0:
             user_type = "DME"
         else:
             user_type = "CLIENT"
@@ -750,6 +760,8 @@ class BookingsViewSet(viewsets.ViewSet):
                         | Q(
                             de_to_PickUp_Instructions_Address__icontains=simple_search_keyword
                         )
+                        | Q(b_client_name__icontains=simple_search_keyword)
+                        | Q(b_client_name_sub__icontains=simple_search_keyword)
                     )
                 else:
                     if "&" in simple_search_keyword:
@@ -906,6 +918,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "dme_status_action": booking.dme_status_action,
                     "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                     "b_client_name": booking.b_client_name,
+                    "b_client_name_sub": booking.b_client_name_sub,
                     "check_pod": booking.check_pod,
                     "fk_manifest_id": booking.fk_manifest_id,
                     "b_is_flagged_add_on_services": booking.b_is_flagged_add_on_services,
@@ -1622,6 +1635,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "pu_Contact_F_L_Name": booking.pu_Contact_F_L_Name,
                         "pu_Phone_Main": booking.pu_Phone_Main,
                         "pu_Email": booking.pu_Email,
+                        "pu_email_Group_Name": booking.pu_email_Group_Name,
+                        "pu_email_Group": booking.pu_email_Group,
                         "de_To_Address_Street_1": booking.de_To_Address_Street_1,
                         "de_To_Address_Street_2": booking.de_To_Address_Street_2,
                         "de_To_Address_PostalCode": booking.de_To_Address_PostalCode,
@@ -1630,6 +1645,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_to_Contact_F_LName": booking.de_to_Contact_F_LName,
                         "de_to_Phone_Main": booking.de_to_Phone_Main,
                         "de_Email": booking.de_Email,
+                        "de_Email_Group_Name": booking.de_Email_Group_Name,
+                        "de_Email_Group_Emails": booking.de_Email_Group_Emails,
                         "deToCompanyName": booking.deToCompanyName,
                         "b_bookingID_Visual": booking.b_bookingID_Visual,
                         "v_FPBookingNumber": booking.v_FPBookingNumber,
@@ -1649,6 +1666,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
                         "booking_Created_For": booking.booking_Created_For,
                         "booking_Created_For_Email": booking.booking_Created_For_Email,
+                        "b_booking_Category": booking.b_booking_Category,
+                        "b_booking_Priority": booking.b_booking_Priority,
                         "vx_fp_pu_eta_time": booking.vx_fp_pu_eta_time,
                         "vx_fp_del_eta_time": booking.vx_fp_del_eta_time,
                         "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
@@ -1715,6 +1734,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "fp_store_event_desc": booking.fp_store_event_desc,
                         "fp_received_date_time": booking.fp_received_date_time,
                         "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
+                        "x_ReadyStatus": booking.x_ReadyStatus,
                         "delivery_kpi_days": 14
                         if not booking.delivery_kpi_days
                         else booking.delivery_kpi_days,
@@ -2107,7 +2127,7 @@ class BookingViewSet(viewsets.ViewSet):
                         booking.pu_Address_street_2 = booking.pu_Address_Street_1
                         custRefNumVerbage = (
                             "Ref: "
-                            + str(booking.b_clientReference_RA_Numbers or "")
+                            + str(booking.get_clientRefNumbers() or "")
                             + " Returns 4 "
                             + booking.b_client_name
                             + ". Fragile"
@@ -2149,28 +2169,30 @@ class BookingViewSet(viewsets.ViewSet):
                         and booking.pu_PickUp_By_Date == None
                         and booking.pu_PickUp_By_Time_Hours == None
                     ):
-                        booking.pu_PickUp_By_Date = datetime.now
+                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
 
                     if (
                         booking.x_ReadyStatus == "Available From"
                         and booking.puPickUpAvailFrom_Date == None
                         and booking.pu_PickUp_Avail_Time_Hours == None
                     ):
-                        booking.pu_PickUp_Avail_Time_Hours = datetime.now
+                        booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime(
+                            "%Y-%m-%d"
+                        )
 
                     if (
                         booking.x_ReadyStatus == "Available From"
                         and booking.pu_PickUp_By_Date == None
                         and booking.pu_PickUp_Avail_Time_Hours == None
                     ):
-                        booking.pu_PickUp_By_Date = datetime.now
+                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
 
                     client_process.save()
                     booking.save()
                     serializer = BookingSerializer(booking)
                     return Response(serializer.data)
                 else:
-                    if not "Tempo" in booking.b_client_name:
+                    if "Tempo Pty Ltd" == booking.b_client_name:
                         return JsonResponse(
                             {"message": "Client is not Tempo", "type": "Failure"},
                             status=status.HTTP_400_BAD_REQUEST,
