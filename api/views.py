@@ -1527,6 +1527,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "pu_Contact_F_L_Name": booking.pu_Contact_F_L_Name,
                         "pu_Phone_Main": booking.pu_Phone_Main,
                         "pu_Email": booking.pu_Email,
+                        "pu_email_Group_Name": booking.pu_email_Group_Name,
+                        "pu_email_Group": booking.pu_email_Group,
                         "de_To_Address_Street_1": booking.de_To_Address_Street_1,
                         "de_To_Address_Street_2": booking.de_To_Address_Street_2,
                         "de_To_Address_PostalCode": booking.de_To_Address_PostalCode,
@@ -1535,6 +1537,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_to_Contact_F_LName": booking.de_to_Contact_F_LName,
                         "de_to_Phone_Main": booking.de_to_Phone_Main,
                         "de_Email": booking.de_Email,
+                        "de_Email_Group_Name": booking.de_Email_Group_Name,
+                        "de_Email_Group_Emails": booking.de_Email_Group_Emails,
                         "deToCompanyName": booking.deToCompanyName,
                         "b_bookingID_Visual": booking.b_bookingID_Visual,
                         "v_FPBookingNumber": booking.v_FPBookingNumber,
@@ -1622,6 +1626,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "fp_store_event_desc": booking.fp_store_event_desc,
                         "fp_received_date_time": booking.fp_received_date_time,
                         "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
+                        "x_ReadyStatus": booking.x_ReadyStatus,
                         "delivery_kpi_days": 14
                         if not booking.delivery_kpi_days
                         else booking.delivery_kpi_days,

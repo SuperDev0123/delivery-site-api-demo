@@ -685,9 +685,9 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    pu_email_Group = models.CharField(
+    pu_email_Group = models.TextField(
         verbose_name=_("PU Email Group"),
-        max_length=25,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -988,9 +988,9 @@ class Bookings(models.Model):
         default="",
     )
     x_manual_booked_flag = models.BooleanField(default=False, blank=True, null=True)
-    de_Email_Group_Emails = models.CharField(
+    de_Email_Group_Emails = models.TextField(
         verbose_name=_("DE Email Group Emails"),
-        max_length=30,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -1988,9 +1988,7 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_036_b_pu_email_group = models.CharField(
-        verbose_name=_("b_036_b_pu_email_group"), max_length=50, blank=True, null=True
-    )
+    b_036_b_pu_email_group = models.TextField(max_length=512, blank=True, null=True)
     b_037_b_pu_email = models.CharField(
         verbose_name=_("b_037_b_pu_email"), max_length=50, blank=True, null=True
     )
@@ -2083,9 +2081,7 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_062_b_del_email_group = models.CharField(
-        verbose_name=_("b_062_b_del_email_group"), max_length=50, blank=True, null=True
-    )
+    b_062_b_del_email_group = models.TextField(max_length=512, blank=True, null=True)
     b_063_b_del_email = models.CharField(
         verbose_name=_("b_063_b_del_email"), max_length=50, blank=True, null=True
     )
@@ -3496,29 +3492,35 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
                 logger.info(f"Error 515 {e}")
                 pass
 
+
 class DME_Files(models.Model):
     id = models.AutoField(primary_key=True)
     file_name = models.CharField(max_length=255, blank=False)
     z_createdTimeStamp = models.DateTimeField(default=datetime.now, blank=True)
-    z_createdByAccount  = models.CharField(max_length=32, blank=False)
-    file_type = models.CharField(verbose_name=_("File Type"), max_length=16, blank=False)
-    file_extension = models.CharField(verbose_name=_("File Extension"), max_length=8, blank=False)
+    z_createdByAccount = models.CharField(max_length=32, blank=False)
+    file_type = models.CharField(
+        verbose_name=_("File Type"), max_length=16, blank=False
+    )
+    file_extension = models.CharField(
+        verbose_name=_("File Extension"), max_length=8, blank=False
+    )
     note = models.TextField(verbose_name=_("Note"), max_length=512, blank=False)
-    
+
     class Meta:
         db_table = "dme_files"
 
+
 class Client_Auto_Augment(models.Model):
     tic_de_Email = models.CharField(
-        verbose_name=_("TIC DE Email"), max_length=64, blank=True, null=True, default="itassets@ticgroup.com.au"
-    )
-
-    tic_de_Email_Group_Emails = models.CharField(
-        verbose_name=_("TIC DE Email Group Emails"),
-        max_length=30,
+        verbose_name=_("TIC DE Email"),
+        max_length=64,
         blank=True,
         null=True,
-        default="rloqa@ticgroup.com.au",
+        default="itassets@ticgroup.com.au",
+    )
+
+    tic_de_Email_Group_Emails = models.TextField(
+        max_length=512, blank=True, null=True, default="rloqa@ticgroup.com.au",
     )
 
     tic_de_To_Address_Street_1 = models.CharField(
@@ -3538,11 +3540,14 @@ class Client_Auto_Augment(models.Model):
     )
 
     sales_club_de_Email = models.CharField(
-        verbose_name=_("Sales Club DE Email"), max_length=64, blank=True, null=True, default="alan.bortz@salesclub.com.au"
+        verbose_name=_("Sales Club DE Email"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default="alan.bortz@salesclub.com.au",
     )
 
     sales_club_de_Email_Group_Emails = models.TextField(
-        verbose_name=_("Sales Club DE Email Group Emails"),
         max_length=512,
         blank=True,
         null=True,
@@ -3551,6 +3556,7 @@ class Client_Auto_Augment(models.Model):
 
     class Meta:
         db_table = "client_auto_augment"
+
 
 class Client_Process_Mgr(models.Model):
     fk_booking_id = models.CharField(
@@ -3594,15 +3600,15 @@ class Client_Process_Mgr(models.Model):
     )
 
     origin_de_Email = models.CharField(
-        verbose_name=_("Origin DE Email"), max_length=64, blank=True, null=True, default=""
-    )
-
-    origin_de_Email_Group_Emails = models.CharField(
-        verbose_name=_("Origin DE Email Group Emails"),
-        max_length=30,
+        verbose_name=_("Origin DE Email"),
+        max_length=64,
         blank=True,
         null=True,
         default="",
+    )
+
+    origin_de_Email_Group_Emails = models.TextField(
+        max_length=512, blank=True, null=True, default=None,
     )
 
     origin_de_To_Address_Street_1 = models.CharField(
@@ -3626,9 +3632,11 @@ class Client_Process_Mgr(models.Model):
     )
 
     origin_pu_PickUp_Avail_Time_Hours = models.IntegerField(
-        verbose_name=_("Origin PU Available Time Hours"), blank=True, default=0, null=True
+        verbose_name=_("Origin PU Available Time Hours"),
+        blank=True,
+        default=0,
+        null=True,
     )
 
     class Meta:
         db_table = "client_process_mgr"
-
