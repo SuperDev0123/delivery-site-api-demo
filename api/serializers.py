@@ -12,6 +12,7 @@ from .models import (
     DME_reports,
     API_booking_quotes,
     FP_Store_Booking_Log,
+    DME_Files
 )
 
 
@@ -105,4 +106,10 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = API_booking_quotes
+        fields = "__all__"
+
+
+class DME_Files_Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Files
         fields = "__all__"
