@@ -4736,7 +4736,6 @@ class PricingRulesViewSet(viewsets.ViewSet):
             resultObjects = []
             resultObjects = FP_pricing_rules.objects.all()
           
-
             for resultObject in resultObjects:
                 fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
                 fp_company_name = ""
