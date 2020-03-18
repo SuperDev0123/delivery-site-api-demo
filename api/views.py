@@ -806,7 +806,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_client_sales_inv_num": booking.b_client_sales_inv_num,
                     "z_lock_status": booking.z_lock_status,
                     "business_group": booking.get_group_name(),
-                    "pu_PickUp_By_Date_DME": booking.pu_PickUp_By_Date_DME,
+                    "pu_PickUp_By_Date": booking.pu_PickUp_By_Date,
                     "de_Deliver_By_Date": booking.de_Deliver_By_Date,
                     "de_Deliver_From_Date": booking.de_Deliver_From_Date,
                     "dme_delivery_status_category": booking.get_dme_delivery_status_category(),
@@ -865,7 +865,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"])
@@ -1574,7 +1574,6 @@ class BookingViewSet(viewsets.ViewSet):
                         "vx_serviceName": booking.vx_serviceName,
                         "consignment_label_link": booking.consignment_label_link,
                         "s_02_Booking_Cutoff_Time": booking.s_02_Booking_Cutoff_Time,
-                        "puPickUpAvailFrom_Date": booking.puPickUpAvailFrom_Date,
                         "z_CreatedTimestamp": booking.z_CreatedTimestamp,
                         "b_dateBookedDate": booking.b_dateBookedDate,
                         "total_lines_qty_override": booking.total_lines_qty_override,
@@ -1587,12 +1586,12 @@ class BookingViewSet(viewsets.ViewSet):
                         "dme_status_detail": booking.dme_status_detail,
                         "dme_status_action": booking.dme_status_action,
                         "dme_status_linked_reference_from_fp": booking.dme_status_linked_reference_from_fp,
-                        "pu_PickUp_Avail_From_Date_DME": booking.pu_PickUp_Avail_From_Date_DME,
+                        "puPickUpAvailFrom_Date": booking.puPickUpAvailFrom_Date,
                         "pu_PickUp_Avail_Time_Hours": booking.pu_PickUp_Avail_Time_Hours,
                         "pu_PickUp_Avail_Time_Minutes": booking.pu_PickUp_Avail_Time_Minutes,
-                        "pu_PickUp_By_Date_DME": booking.pu_PickUp_By_Date_DME,
-                        "pu_PickUp_By_Time_Hours_DME": booking.pu_PickUp_By_Time_Hours_DME,
-                        "pu_PickUp_By_Time_Minutes_DME": booking.pu_PickUp_By_Time_Minutes_DME,
+                        "pu_PickUp_By_Date": booking.pu_PickUp_By_Date,
+                        "pu_PickUp_By_Time_Hours": booking.pu_PickUp_By_Time_Hours,
+                        "pu_PickUp_By_Time_Minutes": booking.pu_PickUp_By_Time_Minutes,
                         "de_Deliver_From_Date": booking.de_Deliver_From_Date,
                         "de_Deliver_From_Hours": booking.de_Deliver_From_Hours,
                         "de_Deliver_From_Minutes": booking.de_Deliver_From_Minutes,
