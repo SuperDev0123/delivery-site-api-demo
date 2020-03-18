@@ -16,7 +16,7 @@ from pydash import _
 import requests
 import tempfile
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.core import serializers, files
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -67,7 +67,6 @@ from api.outputs import emails as email_module
 from api.common import status_history
 from api.outputs import tempo
 
-
 if settings.ENV == "local":
     SERVER_IP = "localhost:9000"
     STATIC_PUBLIC = "./static"
@@ -82,11 +81,16 @@ elif settings.ENV == "prod":
     STATIC_PRIVATE = "/opt/s3_private"
 
 logger = logging.getLogger("dme_api")
+CLIENT_ID_ZOHO = '1000.N6L4G4PPKWSFXB3ZY0SEOVC5RUIMUN'
+CLIENT_SECRET_ZOHO = 'c9a23cc8fb7ae71cd08e0126ce0c3dad58a2e5565c'
+ORG_ID = '7000200810'
+REDIRECT_URI_ZOHO = 'http://127.0.0.1:8000/api/bookings/get_all_zoho_tickets/'
+ZOHO_TICKET_DME_ID = ''
 
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(
-    sender, instance, reset_password_token, *args, **kwargs
+        sender, instance, reset_password_token, *args, **kwargs
 ):
     url = f"http://{SERVER_IP}"
     context = {
@@ -128,8 +132,8 @@ class UserViewSet(viewsets.ViewSet):
         else:
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client = DME_clients.objects.get(
                 pk_id_dme_client=client_employee.fk_id_dme_client_id
@@ -156,8 +160,8 @@ class UserViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
             dme_clients = DME_clients.objects.select_related().filter(
@@ -169,7 +173,6 @@ class UserViewSet(viewsets.ViewSet):
         else:
             return_data = []
             if user_type == "DME":
-
                 return_data = [
                     {
                         "pk_id_dme_client": 0,
@@ -203,8 +206,8 @@ class UserViewSet(viewsets.ViewSet):
         else:
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client = DME_clients.objects.get(
                 pk_id_dme_client=client_employee.fk_id_dme_client_id
@@ -428,14 +431,14 @@ class BookingsViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
             client = (
                 DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
+                    .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                    .first()
             )
 
         start_date = self.request.query_params.get("startDate", None)
@@ -518,9 +521,9 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         if (
-            "new" in download_option
-            or "check_pod" in download_option
-            or "flagged" in download_option
+                "new" in download_option
+                or "check_pod" in download_option
+                or "flagged" in download_option
         ):
             # New POD filter
             if download_option == "new_pod":
@@ -552,14 +555,14 @@ class BookingsViewSet(viewsets.ViewSet):
             if download_option == "check_pod":
                 queryset = (
                     queryset.exclude(b_status__icontains="delivered")
-                    .exclude(
+                        .exclude(
                         (Q(z_pod_url__isnull=True) | Q(z_pod_url__exact="")),
                         (
-                            Q(z_pod_signed_url__isnull=True)
-                            | Q(z_pod_signed_url__exact="")
+                                Q(z_pod_signed_url__isnull=True)
+                                | Q(z_pod_signed_url__exact="")
                         ),
                     )
-                    .order_by("-check_pod")
+                        .order_by("-check_pod")
                 )
 
             # Flagged
@@ -604,8 +607,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(**filter_kwargs).order_by(preserved)
             elif simple_search_keyword and len(simple_search_keyword) > 0:
                 if (
-                    not "&" in simple_search_keyword
-                    and not "|" in simple_search_keyword
+                        not "&" in simple_search_keyword
+                        and not "|" in simple_search_keyword
                 ):
                     queryset = queryset.filter(
                         Q(b_bookingID_Visual__icontains=simple_search_keyword)
@@ -710,8 +713,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         # Sort
         if download_option != "check_pod" and (
-            len(multi_find_values) == 0
-            or (len(multi_find_values) > 0 and sort_field not in ["id", "-id"])
+                len(multi_find_values) == 0
+                or (len(multi_find_values) > 0 and sort_field not in ["id", "-id"])
         ):
             if sort_field is None:
                 queryset = queryset.order_by("id")
@@ -738,11 +741,12 @@ class BookingsViewSet(viewsets.ViewSet):
             else int(bookings_cnt / int(page_item_cnt)) + 1
         )
         queryset = queryset[
-            int(page_item_cnt)
-            * int(page_ind) : int(page_item_cnt)
-            * (int(page_ind) + 1)
-        ]
+                   int(page_item_cnt)
+                   * int(page_ind): int(page_item_cnt)
+                                    * (int(page_ind) + 1)
+                   ]
 
+        tickets = self.get_auth_zoho_tickets()
         ret_data = []
         for booking in queryset:
             ret_data.append(
@@ -835,8 +839,74 @@ class BookingsViewSet(viewsets.ViewSet):
                 "missing_labels": missing_labels,
                 "to_process": to_process,
                 "closed": closed,
+                "ticket": tickets,
             }
         )
+
+    @action(detail=False, methods=["get"])
+    def get_auth_zoho_tickets(self, request):
+        if Tokens.objects.filter(type='access_token').count() == 0:
+            response = redirect(
+                'https://accounts.zoho.com.au/oauth/v2/auth?response_type=code&client_id=' + CLIENT_ID_ZOHO + '&scope=Desk.tickets.ALL&redirect_uri=' + REDIRECT_URI_ZOHO + '&state=-5466400890088961855' + '&prompt=consent&access_type=offline&dmeid=')
+            return response
+        else:
+            self.get_all_zoho_tickets(1)
+
+    @action(detail=False, methods=["get"])
+    def get_all_zoho_tickets(self, request):
+        dmeid = 0
+        if Tokens.objects.filter(type='access_token').count() == 0:
+            dat = self.request.GET.get('code')
+            response = requests.post(
+                'https://accounts.zoho.com.au/oauth/v2/token?code=' + dat + '&grant_type=authorization_code&client_id=' + CLIENT_ID_ZOHO + '&client_secret=' + CLIENT_SECRET_ZOHO + '&redirect_uri=' + REDIRECT_URI_ZOHO + '&prompt=consent&access_type=offline').json()
+            refresh_token = response['refresh_token']
+            access_token = response['access_token']
+            Tokens(value=access_token, type='access_token', z_createdTimeStamp=datetime.utcnow(),
+                   z_expiryTimeStamp=datetime.utcnow() + timedelta(hours=1)).save()
+            Tokens(value=refresh_token, type='refresh_token', z_createdTimeStamp=datetime.utcnow(),
+                   z_expiryTimeStamp=datetime.utcnow() + timedelta(hours=1)).save()
+            headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                   'Authorization': 'Zoho-oauthtoken ' + response["access_token"]}
+            get_tickets = requests.get('https://desk.zoho.com.au/api/v1/tickets', data={}, headers=headers_for_tickets)
+
+        else:
+            dmeid = self.request.GET.get('dmeid')
+            data = Tokens.objects.filter(type='access_token')
+            tz_info = data[0].z_expiryTimeStamp.tzinfo
+            present_time = datetime.now(tz_info)
+
+            if data[0].z_expiryTimeStamp > present_time:
+                headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                       'Authorization': 'Zoho-oauthtoken ' + data[0].value}
+                get_tickets = requests.get('https://desk.zoho.com.au/api/v1/tickets', data={},
+                                           headers=headers_for_tickets)
+            else:
+                data = Tokens.objects.filter(type='refresh_token')
+                response = requests.post('https://accounts.zoho.com.au/oauth/v2/token?refresh_token=' + data[
+                    0].value + '&grant_type=refresh_token&client_id=' + CLIENT_ID_ZOHO + '&client_secret=' + CLIENT_SECRET_ZOHO + '&redirect_uri=' + REDIRECT_URI_ZOHO + '&prompt=consent&access_type=offline').json()
+                updatedata = Tokens.objects.get(type='access_token')
+                updatedata.value = response['access_token']
+                updatedata.z_createdTimeStamp = datetime.now()
+                updatedata.save()
+                headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                       'Authorization': 'Zoho-oauthtoken ' + response['access_token']}
+                get_tickets = requests.get('https://desk.zoho.com.au/api/v1/tickets', data={},
+                                           headers=headers_for_tickets)
+        get_ticket = []
+        data = Tokens.objects.filter(type='access_token')
+        for ticket in get_tickets.json()["data"]:
+            headers_for_single_ticket = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                         'Authorization': 'Zoho-oauthtoken ' + data[0].value}
+            ticket_data = requests.get('https://desk.zoho.com.au/api/v1/tickets/' + ticket['id'], data={},
+                                       headers=headers_for_single_ticket).json()
+
+            if ticket_data['customFields']['DME Id/Consignment No.'] == dmeid:
+                get_ticket.append(ticket_data)
+        if not get_ticket:
+            return JsonResponse({'status': 'No ticket with this DME Id is available.'})
+        else:
+            final_ticket = {'status': 'success', 'tickets': get_ticket}
+            return JsonResponse(final_ticket)
 
     @action(detail=True, methods=["put"])
     def update_booking(self, request, pk, format=None):
@@ -878,8 +948,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
                     if status == "In Transit":
                         booking.z_calculated_ETA = (
-                            datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
-                            + timedelta(days=delivery_kpi_days)
+                                datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
+                                + timedelta(days=delivery_kpi_days)
                         ).date()
                         booking.b_given_to_transport_date_time = datetime.strptime(
                             optional_value, "%Y-%m-%d %H:%M:%S"
@@ -908,14 +978,14 @@ class BookingsViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
             client = (
                 DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
+                    .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                    .first()
             )
 
         vx_freight_provider = request.data["vx_freight_provider"]
@@ -1059,14 +1129,14 @@ class BookingsViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
             client = (
                 DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
+                    .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                    .first()
             )
 
         puPickUpAvailFrom_Date = request.GET["puPickUpAvailFrom_Date"]
@@ -1213,9 +1283,9 @@ class BookingsViewSet(viewsets.ViewSet):
                     booking.de_Deliver_From_Date = field_content
                     booking.de_Deliver_By_Date = field_content
                 elif (
-                    field_name == "fp_received_date_time"
-                    and field_content
-                    and not booking.b_given_to_transport_date_time
+                        field_name == "fp_received_date_time"
+                        and field_content
+                        and not booking.b_given_to_transport_date_time
                 ):
                     booking.z_calculated_ETA = datetime.strptime(
                         field_content, "%Y-%m-%d"
@@ -1248,14 +1318,14 @@ class BookingsViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
             client = (
                 DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
+                    .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                    .first()
             )
 
         start_date = self.request.query_params.get("startDate", None)
@@ -1323,8 +1393,8 @@ class BookingsViewSet(viewsets.ViewSet):
         if clientname in ["BioPak", "dme"]:
             st_bookings_has_manifest = (
                 Bookings.objects.exclude(manifest_timestamp__isnull=True)
-                .filter(vx_freight_provider__iexact="startrack")
-                .order_by("-manifest_timestamp")
+                    .filter(vx_freight_provider__iexact="startrack")
+                    .order_by("-manifest_timestamp")
             )
             manifest_dates = st_bookings_has_manifest.values_list(
                 "manifest_timestamp", flat=True
@@ -1366,14 +1436,14 @@ class BookingsViewSet(viewsets.ViewSet):
             user_type = "CLIENT"
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
             client = (
                 DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
+                    .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
+                    .first()
             )
 
         # DME & Client filter
@@ -1393,8 +1463,8 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset.exclude(
                 Q(b_booking_project__isnull=True) | Q(b_booking_project__exact="")
             )
-            .values_list("b_booking_project", flat=True)
-            .distinct()
+                .values_list("b_booking_project", flat=True)
+                .distinct()
         )
 
         return JsonResponse({"results": list(results)})
@@ -1420,8 +1490,8 @@ class BookingViewSet(viewsets.ViewSet):
         try:
             dme_employee = (
                 DME_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
 
             if dme_employee is not None:
@@ -1434,8 +1504,8 @@ class BookingViewSet(viewsets.ViewSet):
             else:
                 client_employee = (
                     Client_employees.objects.select_related()
-                    .filter(fk_id_user=user_id)
-                    .first()
+                        .filter(fk_id_user=user_id)
+                        .first()
                 )
 
                 if client_employee is None:
@@ -1656,8 +1726,8 @@ class BookingViewSet(viewsets.ViewSet):
         try:
             dme_employee = (
                 DME_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
 
             if dme_employee is not None:
@@ -1668,8 +1738,8 @@ class BookingViewSet(viewsets.ViewSet):
             if user_type == "CLIENT":
                 client_employee = (
                     Client_employees.objects.select_related()
-                    .filter(fk_id_user=user_id)
-                    .first()
+                        .filter(fk_id_user=user_id)
+                        .first()
                 )
                 client = DME_clients.objects.get(
                     pk_id_dme_client=client_employee.fk_id_dme_client_id
@@ -1681,8 +1751,8 @@ class BookingViewSet(viewsets.ViewSet):
             try:
                 booking = (
                     Bookings.objects.select_related()
-                    .filter(pk_booking_id=pk_booking_id)
-                    .values(
+                        .filter(pk_booking_id=pk_booking_id)
+                        .values(
                         "b_status",
                         "v_FPBookingNumber",
                         "vx_account_code",
@@ -1691,8 +1761,8 @@ class BookingViewSet(viewsets.ViewSet):
                 )
 
                 if (
-                    user_type == "CLIENT"
-                    and booking.kf_client_id != client.dme_account_num
+                        user_type == "CLIENT"
+                        and booking.kf_client_id != client.dme_account_num
                 ):
                     return JsonResponse(
                         {
@@ -1719,8 +1789,8 @@ class BookingViewSet(viewsets.ViewSet):
                         }
                     )
                 elif (
-                    not booking.vx_account_code
-                    and booking.b_status == "Ready for Booking"
+                        not booking.vx_account_code
+                        and booking.b_status == "Ready for Booking"
                 ):
                     return JsonResponse(
                         {
@@ -2206,18 +2276,18 @@ class WarehouseViewSet(viewsets.ModelViewSet):
         else:
             client_employee = (
                 Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
+                    .filter(fk_id_user=user_id)
+                    .first()
             )
             client_employee_role = client_employee.get_role()
 
             if client_employee_role == "company":
                 clientWarehouseObject_list = (
                     Client_warehouses.objects.select_related()
-                    .filter(
+                        .filter(
                         fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
                     )
-                    .order_by("client_warehouse_code")
+                        .order_by("client_warehouse_code")
                 )
                 queryset = clientWarehouseObject_list
                 return queryset
@@ -2553,8 +2623,8 @@ class CommsViewSet(viewsets.ViewSet):
                                     "dme_notes_type": comm.dme_notes_type,
                                     "dme_notes_external": comm.dme_notes_external,
                                     "due_by_datetime": str(comm.due_by_date)
-                                    + " "
-                                    + str(comm.due_by_time),
+                                                       + " "
+                                                       + str(comm.due_by_time),
                                     "due_by_date": convert_date(comm.due_by_date),
                                     "due_by_time": comm.due_by_time,
                                     "dme_action": comm.dme_action,
@@ -2584,8 +2654,8 @@ class CommsViewSet(viewsets.ViewSet):
                                     "dme_notes_type": comm.dme_notes_type,
                                     "dme_notes_external": comm.dme_notes_external,
                                     "due_by_datetime": str(comm.due_by_date)
-                                    + " "
-                                    + str(comm.due_by_time),
+                                                       + " "
+                                                       + str(comm.due_by_time),
                                     "due_by_date": convert_date(comm.due_by_date),
                                     "due_by_time": comm.due_by_time,
                                     "dme_action": comm.dme_action,
@@ -2619,8 +2689,8 @@ class CommsViewSet(viewsets.ViewSet):
                                 "dme_notes_type": comm.dme_notes_type,
                                 "dme_notes_external": comm.dme_notes_external,
                                 "due_by_datetime": str(comm.due_by_date)
-                                + " "
-                                + str(comm.due_by_time),
+                                                   + " "
+                                                   + str(comm.due_by_time),
                                 "due_by_date": convert_date(comm.due_by_date),
                                 "due_by_time": comm.due_by_time,
                                 "dme_action": comm.dme_action,
@@ -2770,8 +2840,8 @@ class CommsViewSet(viewsets.ViewSet):
                                         "dme_notes_type": comm.dme_notes_type,
                                         "dme_notes_external": comm.dme_notes_external,
                                         "due_by_datetime": str(comm.due_by_date)
-                                        + " "
-                                        + str(comm.due_by_time),
+                                                           + " "
+                                                           + str(comm.due_by_time),
                                         "due_by_date": convert_date(comm.due_by_date),
                                         "due_by_time": comm.due_by_time,
                                         "dme_action": comm.dme_action,
@@ -2801,8 +2871,8 @@ class CommsViewSet(viewsets.ViewSet):
                                         "dme_notes_type": comm.dme_notes_type,
                                         "dme_notes_external": comm.dme_notes_external,
                                         "due_by_datetime": str(comm.due_by_date)
-                                        + " "
-                                        + str(comm.due_by_time),
+                                                           + " "
+                                                           + str(comm.due_by_time),
                                         "due_by_date": convert_date(comm.due_by_date),
                                         "due_by_time": comm.due_by_time,
                                         "dme_action": comm.dme_action,
@@ -2836,8 +2906,8 @@ class CommsViewSet(viewsets.ViewSet):
                                     "dme_notes_type": comm.dme_notes_type,
                                     "dme_notes_external": comm.dme_notes_external,
                                     "due_by_datetime": str(comm.due_by_date)
-                                    + " "
-                                    + str(comm.due_by_time),
+                                                       + " "
+                                                       + str(comm.due_by_time),
                                     "due_by_date": convert_date(comm.due_by_date),
                                     "due_by_time": comm.due_by_time,
                                     "dme_action": comm.dme_action,
@@ -2867,13 +2937,13 @@ class CommsViewSet(viewsets.ViewSet):
         dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
 
         if (
-            dme_comm_and_task.closed != request.data["closed"]
-            and request.data["closed"]
+                dme_comm_and_task.closed != request.data["closed"]
+                and request.data["closed"]
         ):
             request.data["status_log_closed_time"] = datetime.now()
         elif (
-            dme_comm_and_task.closed != request.data["closed"]
-            and not request.data["closed"]
+                dme_comm_and_task.closed != request.data["closed"]
+                and not request.data["closed"]
         ):
             request.data["status_log_closed_time"] = None
 
@@ -3093,8 +3163,8 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             resultObjects = []
             resultObjects = (
                 Dme_status_history.objects.select_related()
-                .filter(fk_booking_id=pk_booking_id)
-                .order_by("-id")
+                    .filter(fk_booking_id=pk_booking_id)
+                    .order_by("-id")
             )
             for resultObject in resultObjects:
                 return_data.append(
@@ -3341,8 +3411,8 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
     def get_pricings(self, request):
         dme_employee = (
             DME_employees.objects.select_related()
-            .filter(fk_id_user=request.user.id)
-            .first()
+                .filter(fk_id_user=request.user.id)
+                .first()
         )
 
         if dme_employee is not None:
@@ -3355,8 +3425,8 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         fk_booking_id = request.GET["fk_booking_id"]
         queryset = (
             API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
-            .exclude(service_name="Air Freight")
-            .order_by("client_mu_1_minimum_values")
+                .exclude(service_name="Air Freight")
+                .order_by("client_mu_1_minimum_values")
         )
         serializer = ApiBookingQuotesSerializer(
             queryset, many=True, fields_to_exclude=fields_to_exclude
@@ -3544,8 +3614,8 @@ def download_pod(request):
             booking = Bookings.objects.get(id=id)
 
             if (
-                booking.z_pod_signed_url is not None
-                and len(booking.z_pod_signed_url) is not 0
+                    booking.z_pod_signed_url is not None
+                    and len(booking.z_pod_signed_url) is not 0
             ):
                 file_paths.append(
                     f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
@@ -3574,8 +3644,8 @@ def download_pod(request):
             booking = Bookings.objects.get(id=id)
             if booking.z_downloaded_pod_sog_timestamp is None:
                 if (
-                    booking.z_pod_signed_url is not None
-                    and len(booking.z_pod_signed_url) is not 0
+                        booking.z_pod_signed_url is not None
+                        and len(booking.z_pod_signed_url) is not 0
                 ):
                     file_paths.append(
                         f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
@@ -3616,8 +3686,8 @@ def download_connote(request):
             booking = Bookings.objects.get(id=id)
 
             if (
-                booking.z_connote_url is not None
-                and len(booking.z_connote_url) is not 0
+                    booking.z_connote_url is not None
+                    and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
                     "STATIC_PRIVATE/connotes/" + booking.z_connote_url
@@ -3636,8 +3706,8 @@ def download_connote(request):
 
             if booking.z_downloaded_pod_timestamp is None:
                 if (
-                    booking.z_connote_url is not None
-                    and len(booking.z_connote_url) is not 0
+                        booking.z_connote_url is not None
+                        and len(booking.z_connote_url) is not 0
                 ):
                     file_paths.append(
                         "STATIC_PRIVATE/connotes/" + booking.z_connote_url
@@ -3655,8 +3725,8 @@ def download_connote(request):
             booking = Bookings.objects.get(id=id)
 
             if (
-                booking.z_connote_url is not None
-                and len(booking.z_connote_url) is not 0
+                    booking.z_connote_url is not None
+                    and len(booking.z_connote_url) is not 0
             ):
                 file_paths.append(
                     "STATIC_PRIVATE/connotes/" + booking.z_connote_url
@@ -3778,12 +3848,12 @@ def generate_csv(request):
                             fk_booking_id=booking.pk_booking_id,
                             fk_booking_line_id=booking_line.pk_lines_id,
                             api_item_id=str("COPDME")
-                            + str(booking.b_bookingID_Visual)
-                            + make_3digit(index),
+                                        + str(booking.b_bookingID_Visual)
+                                        + make_3digit(index),
                             service_provider=booking.vx_freight_provider,
                             label_code=str("COPDME")
-                            + str(booking.b_bookingID_Visual)
-                            + make_3digit(index),
+                                       + str(booking.b_bookingID_Visual)
+                                       + make_3digit(index),
                             client_item_reference=booking_line.client_item_reference,
                         )
                         api_booking_confirmation_line.save()

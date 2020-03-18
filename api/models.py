@@ -3488,3 +3488,13 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
             except Exception as e:
                 logger.info(f"Error 515 {e}")
                 pass
+
+class Tokens(models.Model):
+    id = models.AutoField(primary_key=True)
+    value = models.CharField(max_length=255, default=None)
+    type = models.CharField(max_length=255, default=None)
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now())
+    z_expiryTimeStamp = models.DateTimeField(default=None)
+
+    class Meta:
+        db_table = "tokens"
