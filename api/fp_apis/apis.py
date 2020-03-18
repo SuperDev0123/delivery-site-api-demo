@@ -994,13 +994,13 @@ def pricing(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
     is_pricing_only = False
+    booking_lines = []
 
     # Only quote
     if not booking_id and "booking" in body:
         is_pricing_only = True
         booking = Struct(**body["booking"])
         client_warehouse_code = booking.client_warehouse_code
-        booking_lines = []
 
         for booking_line in body["booking_lines"]:
             booking_lines.append(Struct(**booking_line))

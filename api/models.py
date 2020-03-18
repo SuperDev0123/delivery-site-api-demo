@@ -685,9 +685,9 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    pu_email_Group = models.CharField(
+    pu_email_Group = models.TextField(
         verbose_name=_("PU Email Group"),
-        max_length=25,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -988,9 +988,9 @@ class Bookings(models.Model):
         default="",
     )
     x_manual_booked_flag = models.BooleanField(default=False, blank=True, null=True)
-    de_Email_Group_Emails = models.CharField(
+    de_Email_Group_Emails = models.TextField(
         verbose_name=_("DE Email Group Emails"),
-        max_length=30,
+        max_length=512,
         blank=True,
         null=True,
         default="",
@@ -1536,25 +1536,32 @@ class Bookings(models.Model):
 
     def get_client_item_references(self):
         try:
-            client_item_references = ""
+            client_item_references = []
             booking_lines = Booking_lines.objects.filter(
                 fk_booking_id=self.pk_booking_id
             )
 
             for booking_line in booking_lines:
                 if booking_line.client_item_reference is not None:
-                    if len(client_item_references) == 0:
-                        client_item_references = (
-                            client_item_references + booking_line.client_item_reference
-                        )
-                    else:
-                        client_item_references = (
-                            client_item_references
-                            + ", "
-                            + booking_line.client_item_reference
-                        )
+                    client_item_references.append(booking_line.client_item_reference)
 
-            return client_item_references
+            return ", ".join(client_item_references)
+        except Exception as e:
+            # print('Exception: ', e)
+            return ""
+
+    def get_clientRefNumbers(self):
+        try:
+            clientRefNumbers = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.clientRefNumber is not None:
+                    clientRefNumbers.append(booking_line_data.clientRefNumber)
+
+            return ", ".join(clientRefNumbers)
         except Exception as e:
             # print('Exception: ', e)
             return ""
@@ -1981,9 +1988,7 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_036_b_pu_email_group = models.CharField(
-        verbose_name=_("b_036_b_pu_email_group"), max_length=50, blank=True, null=True
-    )
+    b_036_b_pu_email_group = models.TextField(max_length=512, blank=True, null=True)
     b_037_b_pu_email = models.CharField(
         verbose_name=_("b_037_b_pu_email"), max_length=50, blank=True, null=True
     )
@@ -2076,9 +2081,7 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
-    b_062_b_del_email_group = models.CharField(
-        verbose_name=_("b_062_b_del_email_group"), max_length=50, blank=True, null=True
-    )
+    b_062_b_del_email_group = models.TextField(max_length=512, blank=True, null=True)
     b_063_b_del_email = models.CharField(
         verbose_name=_("b_063_b_del_email"), max_length=50, blank=True, null=True
     )
@@ -3551,7 +3554,11 @@ class Client_Auto_Augment(models.Model):
         max_length=30,
         blank=True,
         null=True,
-        default="rloqa@ticgroup.com.au",
+        default="itassets@ticgroup.com.au",
+    )
+
+    tic_de_Email_Group_Emails = models.TextField(
+        max_length=512, blank=True, null=True, default="rloqa@ticgroup.com.au",
     )
 
     tic_de_To_Address_Street_1 = models.CharField(
@@ -3579,7 +3586,6 @@ class Client_Auto_Augment(models.Model):
     )
 
     sales_club_de_Email_Group_Emails = models.TextField(
-        verbose_name=_("Sales Club DE Email Group Emails"),
         max_length=512,
         blank=True,
         null=True,
@@ -3645,6 +3651,10 @@ class Client_Process_Mgr(models.Model):
         blank=True,
         null=True,
         default="",
+    )
+
+    origin_de_Email_Group_Emails = models.TextField(
+        max_length=512, blank=True, null=True, default=None,
     )
 
     origin_de_To_Address_Street_1 = models.CharField(
