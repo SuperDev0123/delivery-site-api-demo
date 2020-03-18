@@ -887,6 +887,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 updatedata = Tokens.objects.get(type='access_token')
                 updatedata.value = response['access_token']
                 updatedata.z_createdTimeStamp = datetime.utcnow()
+                updatedata.z_expiryTimeStamp = (datetime.utcnow() + timedelta(hours=1))
                 updatedata.save()
                 headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
                                        'Authorization': 'Zoho-oauthtoken ' + response['access_token']}
