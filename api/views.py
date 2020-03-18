@@ -4530,7 +4530,7 @@ class FileUploadView(views.APIView):
         return Response(file_name)
 
 
-class DME_Files_ViewSet(viewsets.ViewSet):
+class FilesViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
@@ -4538,11 +4538,11 @@ class DME_Files_ViewSet(viewsets.ViewSet):
         dme_files = DME_Files.objects.filter(file_type=file_type).order_by(
             "-z_createdTimeStamp"
         )[:50]
-        serializer = DME_Files_Serializer(dme_files, many=True)
+        serializer = FilesSerializer(dme_files, many=True)
         return Response(serializer.data)
 
     def create(self, request):
-        serializer = DME_Files_Serializer(data=request.data)
+        serializer = FilesSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -4550,7 +4550,7 @@ class DME_Files_ViewSet(viewsets.ViewSet):
 
 
 class VehiclesViewSet(viewsets.ViewSet):
-    serializer_class = VehicleSerializer
+    serializer_class = VehiclesSerializer
 
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
@@ -4585,12 +4585,11 @@ class VehiclesViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": return_data})
         except Exception as e:
-            # print('@Exception', e)
             return JsonResponse({"results": str(e)})
 
 
-class TimingViewSet(viewsets.ViewSet):
-    serializer_class = TimingSerializer
+class TimingsViewSet(viewsets.ViewSet):
+    serializer_class = TimingsSerializer
 
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
@@ -4605,8 +4604,8 @@ class TimingViewSet(viewsets.ViewSet):
                     {
                         "id": resultObject.id,
                         "time_UOM": resultObject.time_UOM,
-                        "min": resultObject.max_length,
-                        "max": resultObject.max_width,
+                        "min": resultObject.min,
+                        "max": resultObject.max,
                         "booking_cut_off_time": resultObject.booking_cut_off_time,
                         "collected_by": resultObject.collected_by,
                         "delivered_by": resultObject.delivered_by,
@@ -4615,12 +4614,11 @@ class TimingViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": return_data})
         except Exception as e:
-            # print('@Exception', e)
             return JsonResponse({"results": str(e)})
 
 
-class AvailabilityViewSet(viewsets.ViewSet):
-    serializer_class = AvailabilitySerializer
+class AvailabilitiesViewSet(viewsets.ViewSet):
+    serializer_class = AvailabilitiesSerializer
 
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
@@ -4628,10 +4626,15 @@ class AvailabilityViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
-            resultObjects = FP_timings.objects.all()
-            fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
-
+            resultObjects = FP_availabilities.objects.all()
+            
             for resultObject in resultObjects:
+                fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+                fp_company_name = ""
+
+                if fp_freight_provider is not None:
+                    fp_company_name = fp_freight_provider.fp_company_name
+
                 return_data.append(
                     {
                         "id": resultObject.id,
@@ -4650,14 +4653,98 @@ class AvailabilityViewSet(viewsets.ViewSet):
                         "sat_end": resultObject.sat_end,
                         "sun_start": resultObject.sun_start,
                         "sun_end": resultObject.sun_end,
-                        "freight_provider": fp_freight_provider.fp_company_name,
+                        "freight_provider": fp_company_name,
                     }
                 )
 
             return JsonResponse({"results": return_data})
         except Exception as e:
-            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+class CostsViewSet(viewsets.ViewSet):
+    serializer_class = CostsSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_costs.objects.all()
+            
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "UOM_charge": resultObject.UOM_charge,
+                        "start_qty": resultObject.start_qty,
+                        "end_qty": resultObject.end_qty,
+                        "basic_charge": resultObject.basic_charge,
+                        "min_charge": resultObject.min_charge,
+                        "per_UOM_charge": resultObject.per_UOM_charge,
+                        "oversize_premium": resultObject.oversize_premium,
+                        "oversize_price": resultObject.oversize_price,
+                        "m3_to_kg_factor": resultObject.m3_to_kg_factor,
+                        "dim_UOM": resultObject.dim_UOM,
+                        "price_up_to_length": resultObject.price_up_to_length,
+                        "price_up_to_width": resultObject.price_up_to_width,
+                        "price_up_to_height": resultObject.price_up_to_height,
+                        "weight_UOM": resultObject.weight_UOM,
+                        "price_up_to_weight": resultObject.price_up_to_weight,
+                        "max_length": resultObject.max_length,
+                        "max_width": resultObject.max_width,
+                        "max_height": resultObject.max_height,
+                        "max_weight": resultObject.max_weight,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
             return JsonResponse({"results": str(e)})
 
 
+class PricingRulesViewSet(viewsets.ViewSet):
+    serializer_class = PricingRulesSerializer
 
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_pricing_rules.objects.all()
+          
+
+            for resultObject in resultObjects:
+                fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+                fp_company_name = ""
+
+                if fp_freight_provider is not None:
+                    fp_company_name = fp_freight_provider.fp_company_name
+
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "service_type": resultObject.service_type,
+                        "service_timing_code": resultObject.service_timing_code,
+                        "calc_type": resultObject.calc_type,
+                        "charge_rule": resultObject.charge_rule,
+                        "cost_id": resultObject.cost_id,
+                        "timing_id": resultObject.timing_id,
+                        "vehicle_id": resultObject.vehicle_id,
+                        "both_way": resultObject.both_way,
+                        "pu_zone": resultObject.pu_zone,
+                        "pu_state": resultObject.pu_state,
+                        "pu_postal_code": resultObject.pu_postal_code,
+                        "pu_suburb": resultObject.pu_suburb,
+                        "de_zone": resultObject.de_zone,
+                        "de_state": resultObject.de_state,
+                        "de_postal_code": resultObject.de_postal_code,
+                        "de_suburb": resultObject.de_suburb,
+                        "freight_provider": fp_company_name,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            return JsonResponse({"results": str(e)})
