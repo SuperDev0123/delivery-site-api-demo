@@ -85,7 +85,7 @@ CLIENT_ID_ZOHO = '1000.N6L4G4PPKWSFXB3ZY0SEOVC5RUIMUN'
 CLIENT_SECRET_ZOHO = 'c9a23cc8fb7ae71cd08e0126ce0c3dad58a2e5565c'
 ORG_ID = '7000200810'
 REDIRECT_URI_ZOHO = 'http://127.0.0.1:8000/api/bookings/get_all_zoho_tickets/'
-ZOHO_TICKET_DME_ID = ''
+
 
 
 @receiver(reset_password_token_created)
@@ -886,7 +886,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     0].value + '&grant_type=refresh_token&client_id=' + CLIENT_ID_ZOHO + '&client_secret=' + CLIENT_SECRET_ZOHO + '&redirect_uri=' + REDIRECT_URI_ZOHO + '&prompt=consent&access_type=offline').json()
                 updatedata = Tokens.objects.get(type='access_token')
                 updatedata.value = response['access_token']
-                updatedata.z_createdTimeStamp = datetime.now()
+                updatedata.z_createdTimeStamp = datetime.utcnow()
                 updatedata.save()
                 headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
                                        'Authorization': 'Zoho-oauthtoken ' + response['access_token']}
