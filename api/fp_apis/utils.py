@@ -140,7 +140,7 @@ def _get_etd(pricing):
     if not pricing.etd:
         return None, None
 
-    if pricing.etd == "overnight":
+    if pricing.etd.lower() == "overnight":
         min = 1
         max = 1
     else:
