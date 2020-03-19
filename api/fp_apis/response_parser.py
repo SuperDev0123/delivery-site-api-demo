@@ -85,7 +85,6 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         elif fp_name in ["century", "camerons", "toll"] and json_data["price"]:
             for price in json_data["price"]:
                 result = {}
-                print
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = booking.b_client_name
