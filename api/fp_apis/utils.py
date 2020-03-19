@@ -140,16 +140,20 @@ def _get_etd(pricing):
     if not pricing.etd:
         return None, None
 
-    if pricing.fk_freight_provider_id.lower() == "hunter":
-        temp = pricing.etd.lower().split("days")[0]
-        min = float(temp.split("-")[0])
-        max = float(temp.split("-")[1])
-    elif pricing.fk_freight_provider_id.lower() in ["sendle", "century"]:
-        min = float(pricing.etd.split(",")[0])
-        max = float(pricing.etd.split(",")[1])
-    elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll"]:
-        min = 0
-        max = float(pricing.etd.lower().split("days")[0])
+    if pricing.etd == "overnight":
+        min = 1
+        max = 1
+    else:
+        if pricing.fk_freight_provider_id.lower() == "hunter":
+            temp = pricing.etd.lower().split("days")[0]
+            min = float(temp.split("-")[0])
+            max = float(temp.split("-")[1])
+        elif pricing.fk_freight_provider_id.lower() in ["sendle", "century"]:
+            min = float(pricing.etd.split(",")[0])
+            max = float(pricing.etd.split(",")[1])
+        elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll"]:
+            min = 0
+            max = float(pricing.etd.lower().split("days")[0])
 
     if max:
         return min * 24 * 60, max * 24 * 60
