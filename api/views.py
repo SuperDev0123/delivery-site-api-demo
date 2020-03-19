@@ -2061,26 +2061,32 @@ class BookingViewSet(viewsets.ViewSet):
 
                     if (
                         booking.x_ReadyStatus == "Available Now"
-                        and booking.pu_PickUp_By_Date == None
-                        and booking.pu_PickUp_By_Time_Hours == None
+                        and not booking.pu_PickUp_By_Date
+                        and not booking.pu_PickUp_By_Time_Hours
                     ):
                         booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+                        booking.pu_PickUp_By_Time_Hours = 16
+                        booking.pu_PickUp_By_Time_Minutes = 0
 
                     if (
                         booking.x_ReadyStatus == "Available From"
-                        and booking.puPickUpAvailFrom_Date == None
-                        and booking.pu_PickUp_Avail_Time_Hours == None
+                        and not booking.puPickUpAvailFrom_Date
+                        and not booking.pu_PickUp_Avail_Time_Hours
                     ):
-                        booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime(
+                        booking.puPickUpAvailFrom_Date = datetime.now().strftime(
                             "%Y-%m-%d"
                         )
+                        booking.pu_PickUp_Avail_Time_Hours = 10
+                        booking.pu_PickUp_Avail_Time_Minutes = 0
 
                     if (
                         booking.x_ReadyStatus == "Available From"
-                        and booking.pu_PickUp_By_Date == None
-                        and booking.pu_PickUp_Avail_Time_Hours == None
+                        and not booking.pu_PickUp_By_Date
+                        and not booking.pu_PickUp_By_Time_Hours
                     ):
                         booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+                        booking.pu_PickUp_By_Time_Hours = 16
+                        booking.pu_PickUp_By_Time_Minutes = 0
 
                     client_process.save()
                     booking.save()
