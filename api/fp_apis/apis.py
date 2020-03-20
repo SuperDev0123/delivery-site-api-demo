@@ -130,6 +130,7 @@ def tracking(request, fp_name):
 
             if booking.b_status_API:
                 booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
+                booking.s_21_Actual_Delivery_TimeStamp = event_time
                 booking.save()
                 status_history.create(booking, booking.b_status, request.user.username)
             return JsonResponse(
