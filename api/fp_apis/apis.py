@@ -899,7 +899,12 @@ def pod(request, fp_name):
         logger.error(f"### Response ({fp_name} POD): {s0}")
 
         if fp_name.lower() in ["hunter"]:
-            podData = json_data[0]["podImage"]
+            try:
+                podData = json_data[0]["podImage"]
+            except KeyError as e:
+                error_msg = json_data["errorMessage"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg})
         else:
             if json_data["errors"]:
                 error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
