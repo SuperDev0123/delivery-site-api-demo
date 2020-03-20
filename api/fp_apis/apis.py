@@ -131,6 +131,7 @@ def tracking(request, fp_name):
 
             if booking.b_status_API:
                 booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
+                booking.s_21_Actual_Delivery_TimeStamp = event_time
                 booking.save()
                 status_history.create(booking, booking.b_status, request.user.username)
             return JsonResponse(
@@ -869,69 +870,75 @@ def pod(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
-
-        try:
-            booking = Bookings.objects.get(id=booking_id)
-            payload = get_pod_payload(booking, fp_name)
-
-            logger.error(f"### Payload ({fp_name} POD): {payload}")
-            url = DME_LEVEL_API_URL + "/pod/fetchpod"
-            response = requests.post(url, params={}, json=payload)
-            res_content = response.content.decode("utf8").replace("'", '"')
-            json_data = json.loads(res_content)
-            s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-            logger.error(f"### Response ({fp_name} POD): {s0}")
-
-            # if fp_name.lower() == "hunter" and json_data["errorMessage"] is not None:
-            #     return JsonResponse({"message": json_data["errorMessage"]})
-
-            if fp_name.lower() in ["hunter"]:
-                podData = json_data[0]["podImage"]
-            else:
-                if json_data["errors"]:
-                    error_msg = json.dumps(
-                        json_data["errors"], indent=2, sort_keys=True
-                    )
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg})
-                elif "podData" not in json_data["pod"]:
-                    error_msg = "Unknown error, please contact support center."
-                    _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg})
-                podData = json_data["pod"]["podData"]
-
-            try:
-                file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
-
-                if fp_name.lower() in ["hunter"]:
-                    file_name += ".jpeg"
-                else:
-                    file_name += ".png"
-
-                if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
-                else:
-                    file_url = f"./static/imgs/{file_name}"
-
-                with open(file_url, "wb") as f:
-                    f.write(base64.b64decode(podData))
-                    f.close()
-
-                booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
-                booking.save()
-
-                return JsonResponse({"message": "POD is fetched successfully."})
-            except KeyError as e:
-                trace_error.print()
-                error_msg = f"KeyError: {e}"
-                _set_error(booking, error_msg)
-                return JsonResponse({"message": s0})
-        except KeyError as e:
-            trace_error.print()
-            return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
         trace_error.print()
         return JsonResponse({"message": "Booking id is required"}, status=400)
+
+    try:
+        booking = Bookings.objects.get(id=booking_id)
+    except KeyError as e:
+        trace_error.print()
+        return JsonResponse({"message": str(e)}, status=400)
+
+    try:
+        if fp_name.lower() in ["hunter"]:
+            account_code_key = get_account_code_key(booking, fp_name)
+
+            if not account_code_key:
+                return JsonResponse({"message": booking.b_error_Capture}, status=400)
+
+            payload = get_pod_payload(booking, fp_name, account_code_key)
+        else:
+            payload = get_pod_payload(booking, fp_name)
+
+        logger.error(f"### Payload ({fp_name} POD): {payload}")
+        url = DME_LEVEL_API_URL + "/pod/fetchpod"
+        response = requests.post(url, params={}, json=payload)
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+        logger.error(f"### Response ({fp_name} POD): {s0}")
+
+        if fp_name.lower() in ["hunter"]:
+            try:
+                podData = json_data[0]["podImage"]
+            except KeyError as e:
+                error_msg = json_data["errorMessage"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg})
+        else:
+            if json_data["errors"]:
+                error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg})
+            elif "podData" not in json_data["pod"]:
+                error_msg = "Unknown error, please contact support center."
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg})
+            podData = json_data["pod"]["podData"]
+
+        file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
+
+        file_name += ".jpeg" if fp_name.lower() in ["hunter"] else ".png"
+
+        if IS_PRODUCTION:
+            file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
+        else:
+            file_url = f"./static/imgs/{file_name}"
+
+        f = open(file_url, "wb")
+        f.write(base64.b64decode(podData))
+        f.close()
+
+        booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
+        booking.save()
+
+        return JsonResponse({"message": "POD is fetched successfully."})
+    except Exception as e:
+        trace_error.print()
+        error_msg = f"KeyError: {e}"
+        _set_error(booking, error_msg)
+        return JsonResponse({"message": str(e)}, status=400)
 
 
 @api_view(["POST"])

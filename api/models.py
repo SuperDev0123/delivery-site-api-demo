@@ -63,6 +63,8 @@ class DME_clients(models.Model):
         default=0, null=True, blank=True
     )
     client_min_markup_value = models.FloatField(default=0, null=True, blank=True)
+    augment_pu_by_time = models.TimeField(blank=True, null=True, default=None)
+    augment_pu_available_time = models.TimeField(blank=True, null=True, default=None)
 
     class Meta:
         db_table = "dme_clients"
@@ -607,7 +609,7 @@ class Bookings(models.Model):
     )
     pu_Address_Street_1 = models.CharField(
         verbose_name=_("PU Address Street 1"),
-        max_length=40,
+        max_length=80,
         blank=True,
         null=True,
         default="",
@@ -3673,8 +3675,11 @@ class Client_Process_Mgr(models.Model):
         default="",
     )
 
-    origin_pu_PickUp_By_Date = models.DateField(
-        verbose_name=_("Origin PU By Date DME"), blank=True, null=True
+    origin_puPickUpAvailFrom_Date = models.DateField(
+        verbose_name=_("Origin PU Available From Date"),
+        blank=True,
+        default=None,
+        null=True,
     )
 
     origin_pu_PickUp_Avail_Time_Hours = models.IntegerField(
@@ -3682,6 +3687,25 @@ class Client_Process_Mgr(models.Model):
         blank=True,
         default=0,
         null=True,
+    )
+
+    origin_pu_PickUp_Avail_Time_Minutes = models.IntegerField(
+        verbose_name=_("Origin PU Available Time Minutes"),
+        blank=True,
+        default=0,
+        null=True,
+    )
+
+    origin_pu_PickUp_By_Date = models.DateField(
+        verbose_name=_("Origin PU By Date DME"), blank=True, null=True
+    )
+
+    origin_pu_PickUp_By_Time_Hours = models.IntegerField(
+        verbose_name=_("Origin PU By Time Hours"), blank=True, default=0, null=True,
+    )
+
+    origin_pu_PickUp_By_Time_Minutes = models.IntegerField(
+        verbose_name=_("Origin PU By Time Minutes"), blank=True, default=0, null=True,
     )
 
     class Meta:

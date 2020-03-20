@@ -2102,8 +2102,22 @@ class BookingViewSet(viewsets.ViewSet):
                     booking.de_To_Address_Street_2
                 )
                 client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
+                client_process.origin_puPickUpAvailFrom_Date = booking.puPickUpAvailFrom_Date
+
                 client_process.origin_pu_PickUp_Avail_Time_Hours = (
                     booking.pu_PickUp_Avail_Time_Hours
+                )
+
+                client_process.origin_pu_PickUp_Avail_Time_Minutes = (
+                    booking.pu_PickUp_Avail_Time_Minutes
+                )
+
+                client_process.origin_pu_PickUp_By_Time_Hours = (
+                    booking.pu_PickUp_Avail_Time_Hours
+                )
+
+                client_process.origin_pu_PickUp_By_Time_Minutes = (
+                    booking.pu_PickUp_Avail_Time_Minutes
                 )
 
                 client_auto_augment = Client_Auto_Augment.objects.first()
@@ -2131,6 +2145,7 @@ class BookingViewSet(viewsets.ViewSet):
                             + booking.b_client_name
                             + ". Fragile"
                         )
+
                         booking.pu_Address_Street_1 = custRefNumVerbage
                         booking.de_Email = str(booking.de_Email or "").replace(";", ",")
                         booking.de_Email_Group_Emails = str(
@@ -2163,14 +2178,35 @@ class BookingViewSet(viewsets.ViewSet):
                             client_auto_augment.sales_club_de_Email_Group_Emails
                         )
 
+                    tempo_client = DME_clients.objects.filter(company_name="Tempo").first()
+
+                    if tempo_client == None:
+                        pu_PickUp_By_Time_Hours = 16
+                        pu_PickUp_By_Time_Minutes = 0
+                        pu_PickUp_Avail_Time_Hours = 10
+                        pu_PickUp_Avail_Time_Minutes = 0
+                    else:
+                        pu_PickUp_By_Time_Hours = (
+                            tempo_client.augment_pu_by_time.strftime("%H")
+                        )
+                        pu_PickUp_By_Time_Minutes =  (
+                            tempo_client.augment_pu_by_time.strftime("%M")
+                        )
+                        pu_PickUp_Avail_Time_Hours = (
+                            tempo_client.augment_pu_available_time.strftime("%H")
+                        )
+                        pu_PickUp_Avail_Time_Minutes = (
+                            tempo_client.augment_pu_available_time.strftime("%M")
+                        )
+
                     if (
                         booking.x_ReadyStatus == "Available Now"
                         and not booking.pu_PickUp_By_Date
                         and not booking.pu_PickUp_By_Time_Hours
                     ):
                         booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                        booking.pu_PickUp_By_Time_Hours = 16
-                        booking.pu_PickUp_By_Time_Minutes = 0
+                        booking.pu_PickUp_By_Time_Hours = pu_PickUp_By_Time_Hours
+                        booking.pu_PickUp_By_Time_Minutes = pu_PickUp_By_Time_Minutes
 
                     if (
                         booking.x_ReadyStatus == "Available From"
@@ -2180,8 +2216,8 @@ class BookingViewSet(viewsets.ViewSet):
                         booking.puPickUpAvailFrom_Date = datetime.now().strftime(
                             "%Y-%m-%d"
                         )
-                        booking.pu_PickUp_Avail_Time_Hours = 10
-                        booking.pu_PickUp_Avail_Time_Minutes = 0
+                        booking.pu_PickUp_Avail_Time_Hours = pu_PickUp_Avail_Time_Hours
+                        booking.pu_PickUp_Avail_Time_Minutes = pu_PickUp_Avail_Time_Minutes
 
                     if (
                         booking.x_ReadyStatus == "Available From"
@@ -2189,8 +2225,8 @@ class BookingViewSet(viewsets.ViewSet):
                         and not booking.pu_PickUp_By_Time_Hours
                     ):
                         booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                        booking.pu_PickUp_By_Time_Hours = 16
-                        booking.pu_PickUp_By_Time_Minutes = 0
+                        booking.pu_PickUp_By_Time_Hours = pu_PickUp_By_Time_Hours
+                        booking.pu_PickUp_By_Time_Minutes =pu_PickUp_By_Time_Minutes
 
                     client_process.save()
                     booking.save()
@@ -2253,8 +2289,22 @@ class BookingViewSet(viewsets.ViewSet):
                     client_process.origin_de_To_Address_Street_2
                 )
                 booking.pu_PickUp_By_Date = client_process.origin_pu_PickUp_By_Date
+                booking.puPickUpAvailFrom_Date = client_process.origin_puPickUpAvailFrom_Date
+
                 booking.pu_PickUp_Avail_Time_Hours = (
                     client_process.origin_pu_PickUp_Avail_Time_Hours
+                )
+
+                booking.pu_PickUp_Avail_Time_Minutes = (
+                    client_process.origin_pu_PickUp_Avail_Time_Minutes
+                )
+
+                booking.pu_PickUp_By_Time_Hours = (
+                    client_process.origin_pu_PickUp_By_Time_Hours
+                )
+
+                booking.pu_PickUp_By_Time_Minutes = (
+                    client_process.origin_pu_PickUp_By_Time_Minutes
                 )
 
                 client_process.delete()
