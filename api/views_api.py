@@ -1,6 +1,7 @@
 import base64, os
 import codecs
 import time
+from datetime import datetime, date, timedelta
 import uuid
 import json
 import datetime
@@ -12,7 +13,7 @@ import urllib, requests
 import xlsxwriter as xlsxwriter
 
 from django.http import HttpResponse, JsonResponse, QueryDict
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -32,12 +33,16 @@ from rest_framework.decorators import (
 from django.db.models import Q
 from django.conf import settings
 
-
 from .serializers_api import *
 from .models import *
 from api.common import auth as common_auth
 
 logger = logging.getLogger("dme_api")
+
+CLIENT_ID_ZOHO = '1000.N6L4G4PPKWSFXB3ZY0SEOVC5RUIMUN'
+CLIENT_SECRET_ZOHO = 'c9a23cc8fb7ae71cd08e0126ce0c3dad58a2e5565c'
+ORG_ID = '7000200810'
+REDIRECT_URI_ZOHO = 'http://127.0.0.1:8000/api/bookings/get_all_zoho_tickets/'
 
 if settings.ENV == "local":
     production = False  # Local
@@ -1384,3 +1389,71 @@ def returntempexcel(request):
 
     workbook.close()
     return response
+
+
+@api_view(['GET'])
+def get_auth_zoho_tickets(request):
+    if Tokens.objects.filter(type='access_token').count() == 0:
+        response = redirect(
+            'https://accounts.zoho.com.au/oauth/v2/auth?response_type=code&client_id=' + CLIENT_ID_ZOHO + '&scope=Desk.tickets.ALL&redirect_uri=' + REDIRECT_URI_ZOHO + '&state=-5466400890088961855' + '&prompt=consent&access_type=offline&dmeid=')
+        return response
+    else:
+        get_all_zoho_tickets(1)
+
+
+@api_view(['GET'])
+def get_all_zoho_tickets(request):
+    dmeid = 0
+    if Tokens.objects.filter(type='access_token').count() == 0:
+        dat = request.GET.get('code')
+        response = requests.post(
+            'https://accounts.zoho.com.au/oauth/v2/token?code=' + dat + '&grant_type=authorization_code&client_id=' + CLIENT_ID_ZOHO + '&client_secret=' + CLIENT_SECRET_ZOHO + '&redirect_uri=' + REDIRECT_URI_ZOHO + '&prompt=consent&access_type=offline').json()
+        refresh_token = response['refresh_token']
+        access_token = response['access_token']
+        Tokens(value=access_token, type='access_token', z_createdTimeStamp=datetime.utcnow(),
+               z_expiryTimeStamp=datetime.utcnow() + timedelta(hours=1)).save()
+        Tokens(value=refresh_token, type='refresh_token', z_createdTimeStamp=datetime.utcnow(),
+               z_expiryTimeStamp=datetime.utcnow() + timedelta(hours=1)).save()
+        headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
+                               'Authorization': 'Zoho-oauthtoken ' + response["access_token"]}
+        get_tickets = requests.get('https://desk.zoho.com.au/api/v1/tickets', data={}, headers=headers_for_tickets)
+
+    else:
+        dmeid = request.GET.get('dmeid')
+        data = Tokens.objects.filter(type='access_token')
+        tz_info = data[0].z_expiryTimeStamp.tzinfo
+        present_time = datetime.now(tz_info)
+
+        if data[0].z_expiryTimeStamp > present_time:
+            headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                   'Authorization': 'Zoho-oauthtoken ' + data[0].value}
+            get_tickets = requests.get('https://desk.zoho.com.au/api/v1/tickets', data={},
+                                       headers=headers_for_tickets)
+        else:
+            data = Tokens.objects.filter(type='refresh_token')
+            response = requests.post('https://accounts.zoho.com.au/oauth/v2/token?refresh_token=' + data[
+                0].value + '&grant_type=refresh_token&client_id=' + CLIENT_ID_ZOHO + '&client_secret=' + CLIENT_SECRET_ZOHO + '&redirect_uri=' + REDIRECT_URI_ZOHO + '&prompt=consent&access_type=offline').json()
+            updatedata = Tokens.objects.get(type='access_token')
+            updatedata.value = response['access_token']
+            updatedata.z_createdTimeStamp = datetime.utcnow()
+            updatedata.z_expiryTimeStamp = (datetime.utcnow() + timedelta(hours=1))
+            updatedata.save()
+            headers_for_tickets = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                   'Authorization': 'Zoho-oauthtoken ' + response['access_token']}
+            get_tickets = requests.get('https://desk.zoho.com.au/api/v1/tickets', data={},
+                                       headers=headers_for_tickets)
+    get_ticket = []
+    data = Tokens.objects.filter(type='access_token')
+    for ticket in get_tickets.json()["data"]:
+        headers_for_single_ticket = {'content-type': 'application/json', 'orgId': ORG_ID,
+                                     'Authorization': 'Zoho-oauthtoken ' + data[0].value}
+        ticket_data = requests.get('https://desk.zoho.com.au/api/v1/tickets/' + ticket['id'], data={},
+                                   headers=headers_for_single_ticket).json()
+
+        if ticket_data['customFields']['DME Id/Consignment No.'] == dmeid:
+            get_ticket.append(ticket_data)
+    if not get_ticket:
+        return JsonResponse({'status': 'No ticket with this DME Id is available.'})
+    else:
+        final_ticket = {'status': 'success', 'tickets': get_ticket}
+        return JsonResponse(final_ticket)
