@@ -24,6 +24,22 @@ def _convert_UOM(value, uom, type, fp_name):
     return round(converted_value, 2)
 
 
+def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
+    limiter = "1"
+
+    for i in range(digit_len):
+        limiter += "0"
+
+    limiter = int(limiter)
+
+    prefix_index = int(booking_visual_id / limiter) + 1
+    prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
+        ((prefix_index - 1) % 26) + 65
+    )
+
+    return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+
+
 def get_dme_status_from_fp_status(fp_name, booking):
     try:
         status_info = Dme_utl_fp_statuses.objects.get(

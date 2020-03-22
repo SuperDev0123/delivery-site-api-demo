@@ -241,9 +241,7 @@ def book(request, fp_name):
                             "tracking_details"
                         ]["consignment_id"]
                     elif booking.vx_freight_provider.lower() == "hunter":
-                        booking.v_FPBookingNumber = (
-                            f"DMEH{str(booking.b_bookingID_Visual)}"
-                        )
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
                         booking.jobNumber = json_data["jobNumber"]
                         booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":

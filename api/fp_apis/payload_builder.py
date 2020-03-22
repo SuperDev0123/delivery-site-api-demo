@@ -6,7 +6,7 @@ from django.conf import settings
 from api.models import *
 from api.common import common_times
 from api.common import common_times
-from .utils import _convert_UOM
+from .utils import _convert_UOM, gen_consignment_num
 
 logger = logging.getLogger("dme_api")
 
@@ -400,6 +400,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             if booking.b_client_sales_inv_num is None
             else booking.b_client_sales_inv_num
         )
+        payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
 
         if payload["reference1"] == "":
             payload["reference1"] = "ADMIN"
