@@ -2247,7 +2247,6 @@ class BookingViewSet(viewsets.ViewSet):
                     )
 
         except Exception as e:
-            print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
