@@ -29,6 +29,11 @@ router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
 router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
+router.register(r"vehicles", VehiclesViewSet, basename="vehicles")
+router.register(r"timings", TimingsViewSet, basename="timing")
+router.register(r"availabilities", AvailabilitiesViewSet, basename="availabilities")
+router.register(r"costs", CostsViewSet, basename="costs")
+router.register(r"pricing_rules", PricingRulesViewSet, basename="pricing_rules")
 
 router.register(
     r"fp-store-booking-log", FPStoreBookingLog, basename="fp-store-booking-log"
@@ -37,7 +42,7 @@ router.register(r"bok_0_bookingskeys", BOK_0_ViewSet, basename="bok0")
 router.register(r"bok_1_headers", BOK_1_ViewSet, basename="bok1")
 router.register(r"bok_2_lines", BOK_2_ViewSet, basename="bok2")
 router.register(r"bok_3_lines_data", BOK_3_ViewSet, basename="bok3")
-router.register(r"files", DME_Files_ViewSet, basename="files")
+router.register(r"files", FilesViewSet, basename="files")
 
 urlpatterns = router.urls
 
