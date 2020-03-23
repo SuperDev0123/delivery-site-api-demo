@@ -1423,6 +1423,12 @@ class BookingsViewSet(viewsets.ViewSet):
         email_module.send_booking_email_using_template(booking_id, template_name)
         return JsonResponse({"message": "success"}, status=200)
 
+    @action(detail=False, methods=["post"])
+    def pricing_analysis(self, request, format=None):
+        bookingIds = request.data["bookingIds"]
+        print('bookingIds', bookingIds)
+            
+        return JsonResponse({"message": "success", "results": []}, status=200)
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
