@@ -1086,10 +1086,11 @@ def pricing(request):
 
                     if parse_results and not "error" in parse_results:
                         for parse_result in parse_results:
+                            parse_result["account_code"] = payload["spAccountDetails"][
+                                "accountCode"
+                            ]
+
                             try:
-                                parse_result["account_code"] = payload[
-                                    "spAccountDetails"
-                                ]["accountCode"]
                                 api_booking_quote = API_booking_quotes.objects.get(
                                     fk_booking_id=booking.pk_booking_id,
                                     fk_freight_provider_id=parse_result[
@@ -1112,7 +1113,7 @@ def pricing(request):
                                     logger.error("Exception: ", e)
 
                                 api_booking_quote.save()
-                            except API_booking_quotes.DoesNotExist:
+                            except API_booking_quotes.DoesNotExist as e:
                                 trace_error.print()
                                 serializer = ApiBookingQuotesSerializer(
                                     data=parse_result
@@ -1153,7 +1154,7 @@ def pricing(request):
                             logger.error(f"@403 Serializer error: {serializer.errors}")
 
                         api_booking_quote.save()
-                    except API_booking_quotes.DoesNotExist:
+                    except API_booking_quotes.DoesNotExist as e:
                         trace_error.print()
                         serializer = ApiBookingQuotesSerializer(data=parse_result)
 
@@ -1170,13 +1171,14 @@ def pricing(request):
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
 
         if is_pricing_only:
+            results = ApiBookingQuotesSerializer(results, many=True).data
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
             auto_select(booking, results)
+            results = ApiBookingQuotesSerializer(results, many=True).data
 
-        results = ApiBookingQuotesSerializer(results, many=True).data
         return JsonResponse(
             {"message": f"Retrieved all Pricing info", "results": results,}, status=200,
         )
