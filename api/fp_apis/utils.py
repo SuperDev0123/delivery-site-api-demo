@@ -101,6 +101,7 @@ def auto_select(booking, pricings):
         if not pricing.service_name or (
             pricing.service_name and pricing.service_name != "Air Freight"
         ):
+            print("@1 - ", pricing)
             etd_min, etd_max = _get_etd(pricing)
 
             if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
@@ -167,7 +168,7 @@ def _get_etd(pricing):
         elif pricing.fk_freight_provider_id.lower() in ["sendle", "century"]:
             min = float(pricing.etd.split(",")[0])
             max = float(pricing.etd.split(",")[1])
-        elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll"]:
+        elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll", "camerons"]:
             min = 0
             max = float(pricing.etd.lower().split("days")[0])
 
