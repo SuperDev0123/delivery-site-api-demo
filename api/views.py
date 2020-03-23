@@ -2313,7 +2313,6 @@ class BookingViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         except Exception as e:
-            print(str(e))
             return Response(
                 {"type": "Failure", "message": "Exception occurred"},
                 status=status.HTTP_400_BAD_REQUEST,
