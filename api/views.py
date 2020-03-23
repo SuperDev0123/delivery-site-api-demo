@@ -1977,176 +1977,171 @@ class BookingViewSet(viewsets.ViewSet):
                 .filter(fk_booking_id=bookingId)
                 .first()
             )
-            if client_process is None:
-                client_process = Client_Process_Mgr(fk_booking_id=bookingId)
-                client_process.process_name = "Auto Augment " + str(bookingId)
-                client_process.origin_puCompany = booking.puCompany
-                client_process.origin_pu_Address_Street_1 = booking.pu_Address_Street_1
-                client_process.origin_pu_Address_Street_2 = booking.pu_Address_street_2
-                client_process.origin_pu_pickup_instructions_address = (
-                    booking.pu_pickup_instructions_address
-                )
-                client_process.origin_deToCompanyName = booking.deToCompanyName
-                client_process.origin_de_Email = booking.de_Email
-                client_process.origin_de_Email_Group_Emails = (
-                    booking.de_Email_Group_Emails
-                )
-                client_process.origin_de_To_Address_Street_1 = (
-                    booking.de_To_Address_Street_1
-                )
-                client_process.origin_de_To_Address_Street_2 = (
-                    booking.de_To_Address_Street_2
-                )
-                client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
-                client_process.origin_puPickUpAvailFrom_Date = booking.puPickUpAvailFrom_Date
 
-                client_process.origin_pu_PickUp_Avail_Time_Hours = (
-                    booking.pu_PickUp_Avail_Time_Hours
-                )
-
-                client_process.origin_pu_PickUp_Avail_Time_Minutes = (
-                    booking.pu_PickUp_Avail_Time_Minutes
-                )
-
-                client_process.origin_pu_PickUp_By_Time_Hours = (
-                    booking.pu_PickUp_Avail_Time_Hours
-                )
-
-                client_process.origin_pu_PickUp_By_Time_Minutes = (
-                    booking.pu_PickUp_Avail_Time_Minutes
-                )
-
-                client_auto_augment = Client_Auto_Augment.objects.first()
-
-                if (
-                    "Tempo" in booking.b_client_name
-                    and booking.b_booking_Category == "Salvage Expense"
-                ):
-                    pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
-                    puCompany = booking.puCompany
-                    deToCompanyName = booking.deToCompanyName
-                    booking.puCompany = (
-                        puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
-                    )
-
-                    if (
-                        booking.pu_Address_street_2 == ""
-                        or booking.pu_Address_street_2 == None
-                    ):
-                        booking.pu_Address_street_2 = booking.pu_Address_Street_1
-                        custRefNumVerbage = (
-                            "Ref: "
-                            + str(booking.get_clientRefNumbers() or "")
-                            + " Returns 4 "
-                            + booking.b_client_name
-                            + ". Fragile"
-                        )
-
-                        booking.pu_Address_Street_1 = custRefNumVerbage
-                        booking.de_Email = str(booking.de_Email or "").replace(";", ",")
-                        booking.de_Email_Group_Emails = str(
-                            booking.de_Email_Group_Emails or ""
-                        ).replace(";", ",")
-                        booking.pu_pickup_instructions_address = (
-                            str(booking.pu_pickup_instructions_address or "")
-                            + " "
-                            + custRefNumVerbage
-                        )
-
-                    if "TIC" in booking.deToCompanyName:
-                        booking.deToCompanyName = (
-                            deToCompanyName + " (Open 7am-3pm, 1pm Fri)"
-                        )
-                        booking.de_Email = client_auto_augment.tic_de_Email
-                        booking.de_Email_Group_Emails = (
-                            client_auto_augment.tic_de_Email_Group_Emails
-                        )
-                        booking.de_To_Address_Street_1 = (
-                            client_auto_augment.tic_de_To_Address_Street_1
-                        )
-                        booking.de_To_Address_Street_2 = (
-                            client_auto_augment.tic_de_To_Address_Street_2
-                        )
-
-                    if "Sales Club" in booking.deToCompanyName:
-                        booking.de_Email = client_auto_augment.sales_club_de_Email
-                        booking.de_Email_Group_Emails = (
-                            client_auto_augment.sales_club_de_Email_Group_Emails
-                        )
-
-                    tempo_client = DME_clients.objects.filter(company_name="Tempo").first()
-
-                    if tempo_client == None:
-                        pu_PickUp_By_Time_Hours = 16
-                        pu_PickUp_By_Time_Minutes = 0
-                        pu_PickUp_Avail_Time_Hours = 10
-                        pu_PickUp_Avail_Time_Minutes = 0
-                    else:
-                        pu_PickUp_By_Time_Hours = (
-                            tempo_client.augment_pu_by_time.strftime("%H")
-                        )
-                        pu_PickUp_By_Time_Minutes =  (
-                            tempo_client.augment_pu_by_time.strftime("%M")
-                        )
-                        pu_PickUp_Avail_Time_Hours = (
-                            tempo_client.augment_pu_available_time.strftime("%H")
-                        )
-                        pu_PickUp_Avail_Time_Minutes = (
-                            tempo_client.augment_pu_available_time.strftime("%M")
-                        )
-
-                    if (
-                        booking.x_ReadyStatus == "Available Now"
-                        and not booking.pu_PickUp_By_Date
-                        and not booking.pu_PickUp_By_Time_Hours
-                    ):
-                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                        booking.pu_PickUp_By_Time_Hours = pu_PickUp_By_Time_Hours
-                        booking.pu_PickUp_By_Time_Minutes = pu_PickUp_By_Time_Minutes
-
-                    if (
-                        booking.x_ReadyStatus == "Available From"
-                        and not booking.puPickUpAvailFrom_Date
-                        and not booking.pu_PickUp_Avail_Time_Hours
-                    ):
-                        booking.puPickUpAvailFrom_Date = datetime.now().strftime(
-                            "%Y-%m-%d"
-                        )
-                        booking.pu_PickUp_Avail_Time_Hours = pu_PickUp_Avail_Time_Hours
-                        booking.pu_PickUp_Avail_Time_Minutes = pu_PickUp_Avail_Time_Minutes
-
-                    if (
-                        booking.x_ReadyStatus == "Available From"
-                        and not booking.pu_PickUp_By_Date
-                        and not booking.pu_PickUp_By_Time_Hours
-                    ):
-                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                        booking.pu_PickUp_By_Time_Hours = pu_PickUp_By_Time_Hours
-                        booking.pu_PickUp_By_Time_Minutes =pu_PickUp_By_Time_Minutes
-
-                    client_process.save()
-                    booking.save()
-                    serializer = BookingSerializer(booking)
-                    return Response(serializer.data)
-                else:
-                    if "Tempo Pty Ltd" == booking.b_client_name:
-                        return JsonResponse(
-                            {"message": "Client is not Tempo", "type": "Failure"},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    elif booking.b_booking_Category != "Salvage Expense":
-                        return JsonResponse(
-                            {
-                                "message": "Booking Category is not  Salvage Expense",
-                                "type": "Failure",
-                            },
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-            else:
+            if client_process:
                 return JsonResponse(
                     {"message": "Already Augmented", "type": "Failure"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            client_process = Client_Process_Mgr(fk_booking_id=bookingId)
+            client_process.process_name = "Auto Augment " + str(bookingId)
+            client_process.origin_puCompany = booking.puCompany
+            client_process.origin_pu_Address_Street_1 = booking.pu_Address_Street_1
+            client_process.origin_pu_Address_Street_2 = booking.pu_Address_street_2
+            client_process.origin_pu_pickup_instructions_address = (
+                booking.pu_pickup_instructions_address
+            )
+            client_process.origin_deToCompanyName = booking.deToCompanyName
+            client_process.origin_de_Email = booking.de_Email
+            client_process.origin_de_Email_Group_Emails = booking.de_Email_Group_Emails
+            client_process.origin_de_To_Address_Street_1 = (
+                booking.de_To_Address_Street_1
+            )
+            client_process.origin_de_To_Address_Street_2 = (
+                booking.de_To_Address_Street_2
+            )
+            client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
+            client_process.origin_puPickUpAvailFrom_Date = (
+                booking.puPickUpAvailFrom_Date
+            )
+
+            client_process.origin_pu_PickUp_Avail_Time_Hours = (
+                booking.pu_PickUp_Avail_Time_Hours
+            )
+
+            client_process.origin_pu_PickUp_Avail_Time_Minutes = (
+                booking.pu_PickUp_Avail_Time_Minutes
+            )
+
+            client_process.origin_pu_PickUp_By_Time_Hours = (
+                booking.pu_PickUp_Avail_Time_Hours
+            )
+
+            client_process.origin_pu_PickUp_By_Time_Minutes = (
+                booking.pu_PickUp_Avail_Time_Minutes
+            )
+
+            client_auto_augment = Client_Auto_Augment.objects.first()
+
+            if (
+                "Tempo" in booking.b_client_name
+                and booking.b_booking_Category == "Salvage Expense"
+            ):
+                pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
+                puCompany = booking.puCompany
+                deToCompanyName = booking.deToCompanyName
+                booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
+
+                if (
+                    booking.pu_Address_street_2 == ""
+                    or booking.pu_Address_street_2 == None
+                ):
+                    booking.pu_Address_street_2 = booking.pu_Address_Street_1
+                    custRefNumVerbage = (
+                        "Ref: "
+                        + str(booking.get_clientRefNumbers() or "")
+                        + " Returns 4 "
+                        + booking.b_client_name
+                        + ". Fragile"
+                    )
+
+                    booking.pu_Address_Street_1 = custRefNumVerbage
+                    booking.de_Email = str(booking.de_Email or "").replace(";", ",")
+                    booking.de_Email_Group_Emails = str(
+                        booking.de_Email_Group_Emails or ""
+                    ).replace(";", ",")
+                    booking.pu_pickup_instructions_address = (
+                        str(booking.pu_pickup_instructions_address or "")
+                        + " "
+                        + custRefNumVerbage
+                    )
+
+                if "TIC" in booking.deToCompanyName:
+                    booking.deToCompanyName = (
+                        deToCompanyName + " (Open 7am-3pm, 1pm Fri)"
+                    )
+                    booking.de_Email = client_auto_augment.tic_de_Email
+                    booking.de_Email_Group_Emails = (
+                        client_auto_augment.tic_de_Email_Group_Emails
+                    )
+                    booking.de_To_Address_Street_1 = (
+                        client_auto_augment.tic_de_To_Address_Street_1
+                    )
+                    booking.de_To_Address_Street_2 = (
+                        client_auto_augment.tic_de_To_Address_Street_2
+                    )
+
+                if "Sales Club" in booking.deToCompanyName:
+                    booking.de_Email = client_auto_augment.sales_club_de_Email
+                    booking.de_Email_Group_Emails = (
+                        client_auto_augment.sales_club_de_Email_Group_Emails
+                    )
+
+                tempo_client = DME_clients.objects.filter(company_name="Tempo").first()
+
+                if (
+                    booking.x_ReadyStatus == "Available From"
+                    and booking.puPickUpAvailFrom_Date is None
+                    and booking.pu_PickUp_Avail_Time_Hours is None
+                ):
+                    if not tempo_client.augment_pu_available_time:
+                        error_msg = "No augment data available!"
+                        return JsonResponse(
+                            {"type": "Failure", "message": str(error_msg)},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
+                    booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
+                        "%H"
+                    )
+                    booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
+                        "%M"
+                    )
+
+                if (
+                    (
+                        booking.x_ReadyStatus == "Available Now"
+                        or booking.x_ReadyStatus == "Available From"
+                    )
+                    and booking.pu_PickUp_By_Date is None
+                    and booking.pu_PickUp_By_Time_Hours is None
+                ):
+                    if not tempo_client.augment_pu_by_time:
+                        error_msg = "No augment data available!"
+                        return JsonResponse(
+                            {"type": "Failure", "message": str(error_msg)},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                        "%H"
+                    )
+                    booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                        "%M"
+                    )
+
+                client_process.save()
+                booking.save()
+                serializer = BookingSerializer(booking)
+                return Response(serializer.data)
+            else:
+                if "Tempo Pty Ltd" == booking.b_client_name:
+                    return JsonResponse(
+                        {"message": "Client is not Tempo", "type": "Failure"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                elif booking.b_booking_Category != "Salvage Expense":
+                    return JsonResponse(
+                        {
+                            "message": "Booking Category is not  Salvage Expense",
+                            "type": "Failure",
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
         except Exception as e:
             print(str(e))
             return JsonResponse(
@@ -2185,7 +2180,9 @@ class BookingViewSet(viewsets.ViewSet):
                     client_process.origin_de_To_Address_Street_2
                 )
                 booking.pu_PickUp_By_Date = client_process.origin_pu_PickUp_By_Date
-                booking.puPickUpAvailFrom_Date = client_process.origin_puPickUpAvailFrom_Date
+                booking.puPickUpAvailFrom_Date = (
+                    client_process.origin_puPickUpAvailFrom_Date
+                )
 
                 booking.pu_PickUp_Avail_Time_Hours = (
                     client_process.origin_pu_PickUp_Avail_Time_Hours
