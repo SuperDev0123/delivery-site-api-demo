@@ -1392,6 +1392,7 @@ def returntempexcel(request):
 
 
 @api_view(['GET'])
+
 def get_auth_zoho_tickets(request):
     if Tokens.objects.filter(type='access_token').count() == 0:
         response = redirect(
@@ -1402,6 +1403,7 @@ def get_auth_zoho_tickets(request):
 
 
 @api_view(['GET'])
+@permission_classes((AllowAny,))
 def get_all_zoho_tickets(request):
     dmeid = 0
     if Tokens.objects.filter(type='access_token').count() == 0:
