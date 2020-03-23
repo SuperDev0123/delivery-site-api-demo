@@ -2025,7 +2025,7 @@ class BookingViewSet(viewsets.ViewSet):
             client_auto_augment = Client_Auto_Augment.objects.first()
 
             if (
-                "Tempo" in booking.b_client_name
+                "Tempo Pty Ltd" in booking.b_client_name
                 and booking.b_booking_Category == "Salvage Expense"
             ):
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
@@ -2078,7 +2078,9 @@ class BookingViewSet(viewsets.ViewSet):
                         client_auto_augment.sales_club_de_Email_Group_Emails
                     )
 
-                tempo_client = DME_clients.objects.filter(company_name="Tempo").first()
+                tempo_client = DME_clients.objects.filter(
+                    company_name="Tempo Pty Ltd"
+                ).first()
 
                 if (
                     booking.x_ReadyStatus == "Available From"
@@ -2143,7 +2145,6 @@ class BookingViewSet(viewsets.ViewSet):
                     )
 
         except Exception as e:
-            print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -2210,7 +2211,6 @@ class BookingViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         except Exception as e:
-            print(str(e))
             return Response(
                 {"type": "Failure", "message": "Exception occurred"},
                 status=status.HTTP_400_BAD_REQUEST,
