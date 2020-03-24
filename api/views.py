@@ -4032,65 +4032,79 @@ def download(request):
 
         if result_file_record:
             file_paths.append(result_file_record.first().file_path)
-    elif download_option == "label":
-        if booking.z_label_url and len(booking.z_label_url) > 0:
-            file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}")
-            booking.z_downloaded_shipping_label_timestamp = datetime.now()
-            booking.save()
     elif download_option == "manifest":
-        file_paths.appned(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
+        file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
+    elif download_option == "label":
+        for booking in bookings:
+            if booking.z_label_url and len(booking.z_label_url) > 0:
+                file_paths.append(
+                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                )
+                booking.z_downloaded_shipping_label_timestamp = datetime.now()
+                booking.save()
     elif download_option == "pod":
-        if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
-            file_paths.append(f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}")
-            booking.z_downloaded_pod_timestamp = timezone.now()
-            booking.save()
-    elif download_option == "pod_sog":
-        if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
-            file_paths.append(
-                f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
-            )
-            booking.z_downloaded_pod_sog_timestamp = timezone.now()
-            booking.save()
-    elif download_option == "new_pod":
-        if booking.z_downloaded_pod_timestamp is None:
-            if booking.z_pod_url and len(booking.z_pod_url) > 0:
+        for booking in bookings:
+            if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                 file_paths.append(f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}")
                 booking.z_downloaded_pod_timestamp = timezone.now()
                 booking.save()
-    elif download_option == "new_pod_sog":
-        if booking.z_downloaded_pod_sog_timestamp is None:
+    elif download_option == "pod_sog":
+        for booking in bookings:
             if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
                 file_paths.append(
                     f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                 )
                 booking.z_downloaded_pod_sog_timestamp = timezone.now()
                 booking.save()
+    elif download_option == "new_pod":
+        for booking in bookings:
+            if booking.z_downloaded_pod_timestamp is None:
+                if booking.z_pod_url and len(booking.z_pod_url) > 0:
+                    file_paths.append(
+                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
+                    )
+                    booking.z_downloaded_pod_timestamp = timezone.now()
+                    booking.save()
+    elif download_option == "new_pod_sog":
+        for booking in bookings:
+            if booking.z_downloaded_pod_sog_timestamp is None:
+                if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
+                    file_paths.append(
+                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
+                    )
+                    booking.z_downloaded_pod_sog_timestamp = timezone.now()
+                    booking.save()
     elif download_option == "connote":
-        if booking.z_connote_url and len(booking.z_connote_url) is not 0:
-            file_paths.append(
-                f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
-            )
-            booking.z_downloaded_connote_timestamp = timezone.now()
-            booking.save()
+        for booking in bookings:
+            if booking.z_connote_url and len(booking.z_connote_url) is not 0:
+                file_paths.append(
+                    f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+                )
+                booking.z_downloaded_connote_timestamp = timezone.now()
+                booking.save()
     elif download_option == "new_connote":
-        if booking.z_downloaded_pod_timestamp is None:
+        for booking in bookings:
+            if booking.z_downloaded_pod_timestamp is None:
+                if booking.z_connote_url and len(booking.z_connote_url) > 0:
+                    file_paths.append(
+                        f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+                    )
+                    booking.z_downloaded_connote_timestamp = timezone.now()
+                    booking.save()
+    elif download_option == "label_and_connote":
+        for booking in bookings:
             if booking.z_connote_url and len(booking.z_connote_url) > 0:
                 file_paths.append(
                     f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
                 )
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
-    elif download_option == "label_and_connote":
-        if booking.z_connote_url and len(booking.z_connote_url) > 0:
-            file_paths.append(
-                f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
-            )
-            booking.z_downloaded_connote_timestamp = timezone.now()
-            booking.save()
-        if booking.z_label_url and len(booking.z_label_url) > 0:
-            file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}")
-            booking.z_downloaded_shipping_label_timestamp = timezone.now()
-            booking.save()
+            if booking.z_label_url and len(booking.z_label_url) > 0:
+                file_paths.append(
+                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                )
+                booking.z_downloaded_shipping_label_timestamp = timezone.now()
+                booking.save()
 
     response = download_libs.download_from_disk(download_option, file_paths)
     return response
@@ -4635,7 +4649,9 @@ class VehiclesViewSet(viewsets.ViewSet):
             resultObjects = FP_vehicles.objects.all()
 
             for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+                fp_freight_provider = Fp_freight_providers.objects.filter(
+                    id=resultObject.freight_provider_id
+                ).first()
                 return_data.append(
                     {
                         "id": resultObject.id,
@@ -4701,9 +4717,11 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObjects = FP_availabilities.objects.all()
-            
+
             for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+                fp_freight_provider = Fp_freight_providers.objects.filter(
+                    id=resultObject.freight_provider_id
+                ).first()
                 fp_company_name = ""
 
                 if fp_freight_provider is not None:
@@ -4735,6 +4753,7 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": str(e)})
 
+
 class CostsViewSet(viewsets.ViewSet):
     serializer_class = CostsSerializer
 
@@ -4745,7 +4764,7 @@ class CostsViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObjects = FP_costs.objects.all()
-            
+
             for resultObject in resultObjects:
                 return_data.append(
                     {
@@ -4787,9 +4806,11 @@ class PricingRulesViewSet(viewsets.ViewSet):
         try:
             resultObjects = []
             resultObjects = FP_pricing_rules.objects.all()
-          
+
             for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(id=resultObject.freight_provider_id).first()
+                fp_freight_provider = Fp_freight_providers.objects.filter(
+                    id=resultObject.freight_provider_id
+                ).first()
                 fp_company_name = ""
 
                 if fp_freight_provider is not None:
