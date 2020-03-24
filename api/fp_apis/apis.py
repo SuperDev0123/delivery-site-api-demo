@@ -169,7 +169,7 @@ def book(request, fp_name):
             error_msg = pre_check_book(booking)
 
             if error_msg:
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
 
             try:
                 if fp_name.lower() in ["hunter"]:
@@ -177,7 +177,8 @@ def book(request, fp_name):
 
                     if not account_code_key:
                         return JsonResponse(
-                            {"message": booking.b_error_Capture}, status=400
+                            {"message": f"#701 Error: {booking.b_error_Capture}"},
+                            status=400,
                         )
 
                     payload = get_book_payload(booking, fp_name, account_code_key)
