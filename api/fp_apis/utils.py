@@ -79,10 +79,10 @@ def get_account_code_key(booking, fp_name):
 
         for key in ACCOUNT_CODES[fp_name.lower()]:
             if ACCOUNT_CODES[fp_name.lower()][key] == account_code:
-                account_key = key
+                account_code_key = key
                 return account_code_key
 
-        if not account_key:
+        if not account_code_key:
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
             booking.save()
             return None
