@@ -1622,8 +1622,7 @@ class BookingViewSet(viewsets.ViewSet):
                     fk_id_dme_booking=booking.pk_booking_id
                 )
 
-                return_data = []
-                if booking is not None:
+                if booking:
                     return_data = {
                         "id": booking.id,
                         "puCompany": booking.puCompany,
@@ -1675,7 +1674,6 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
                         "pu_pickup_instructions_address": booking.pu_pickup_instructions_address,
                         "pu_PickUp_Instructions_Contact": booking.pu_PickUp_Instructions_Contact,
-                        "vx_serviceName": booking.vx_serviceName,
                         "consignment_label_link": booking.consignment_label_link,
                         "s_02_Booking_Cutoff_Time": booking.s_02_Booking_Cutoff_Time,
                         "z_CreatedTimestamp": booking.z_CreatedTimestamp,
@@ -1703,7 +1701,9 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
                         "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
                         "client_item_references": booking.get_client_item_references(),
-                        "v_service_Type_2": booking.v_service_Type_2,
+                        "v_service_Type": booking.v_service_Type,
+                        "vx_serviceName": booking.vx_serviceName,
+                        "vx_account_code": booking.vx_account_code,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
                         "inv_billing_status": booking.inv_billing_status,
@@ -1751,17 +1751,16 @@ class BookingViewSet(viewsets.ViewSet):
                             "cnt_attachments": len(attachments),
                         }
                     )
-            else:
-                return JsonResponse(
-                    {
-                        "booking": {},
-                        "nextid": 0,
-                        "previd": 0,
-                        "e_qty_total": 0,
-                        "cnt_comms": 0,
-                        "cnt_attachments": 0,
-                    }
-                )
+            return JsonResponse(
+                {
+                    "booking": {},
+                    "nextid": 0,
+                    "previd": 0,
+                    "e_qty_total": 0,
+                    "cnt_comms": 0,
+                    "cnt_attachments": 0,
+                }
+            )
         except Bookings.DoesNotExist:
             return JsonResponse(
                 {

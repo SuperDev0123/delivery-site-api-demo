@@ -1,5 +1,4 @@
-import time, json, requests, datetime, base64, os
-import logging
+import time, json, requests, datetime, base64, os, logging
 from ast import literal_eval
 
 from rest_framework.decorators import (
@@ -10,32 +9,21 @@ from rest_framework.decorators import (
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse
+from django.conf import settings
 
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
-from django.conf import settings
 
-from .payload_builder import (
-    ACCOUNT_CODES,
-    BUILT_IN_PRICINGS,
-    get_tracking_payload,
-    get_book_payload,
-    get_cancel_book_payload,
-    get_getlabel_payload,
-    get_create_label_payload,
-    get_create_order_payload,
-    get_get_order_summary_payload,
-    get_pod_payload,
-    get_reprint_payload,
-    get_pricing_payload,
-)
+from api.common import status_history, download_external, trace_error
+from api.common.build_object import Struct
+from api.file_operations.directory import create_dir_if_not_exist
+
+from .payload_builder import *
 from .self_pricing import get_pricing
 from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
-from api.common import status_history, download_external, trace_error
-from api.common.build_object import Struct
 from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
@@ -271,6 +259,7 @@ def book(request, fp_name):
                     ).save()
 
                     # Save Label for Hunter
+                    create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
                         file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
@@ -670,6 +659,7 @@ def get_label(request, fp_name):
                     else:
                         label_url = f"./static/pdfs/{z_label_url}"
 
+                    create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                     with open(label_url, "wb") as f:
                         f.write(label_data)
                         f.close()
@@ -818,6 +808,7 @@ def get_order_summary(request, fp_name):
                 else:
                     file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
+                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
                     f.close()
@@ -925,6 +916,7 @@ def pod(request, fp_name):
         else:
             file_url = f"./static/imgs/{file_name}"
 
+        create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
         f = open(file_url, "wb")
         f.write(base64.b64decode(podData))
         f.close()
@@ -972,6 +964,7 @@ def reprint(request, fp_name):
                 else:
                     file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
+                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
