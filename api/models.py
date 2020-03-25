@@ -155,8 +155,13 @@ class Client_warehouses(models.Model):
 
 class Client_employees(models.Model):
     pk_id_client_emp = models.AutoField(primary_key=True)
-    fk_id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
+    fk_id_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True
+    )
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, blank=True, null=True
+    )
+    role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, blank=True, null=True)
     name_last = models.CharField(
         verbose_name=_("last name"), max_length=30, blank=True, null=True
     )
@@ -167,7 +172,6 @@ class Client_employees(models.Model):
         verbose_name=_("email address"), max_length=254, unique=True, null=True
     )
     phone = models.IntegerField(verbose_name=_("phone number"), blank=True, null=True)
-    role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=True, null=True
     )
