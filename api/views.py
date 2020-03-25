@@ -3489,18 +3489,15 @@ class FPViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
-        return_data = []
-
         try:
-            resultObjects = []
-            resultObjects = Fp_freight_providers.objects.create(
+            resultObject = Fp_freight_providers.objects.get_or_create(
                 fp_company_name=request.data["fp_company_name"],
                 fp_address_country=request.data["fp_address_country"],
             )
 
-            return JsonResponse({"results": resultObjects})
+            return JsonResponse({"results": FpSerializer(resultObject[0]).data})
         except Exception as e:
-            # print('@Exception', e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=True, methods=["put"])
