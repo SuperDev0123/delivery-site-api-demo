@@ -2733,7 +2733,7 @@ class Dme_status_history(models.Model):
         null=True,
     )
     status_last = models.CharField(
-        verbose_name=_("Status Last"), max_length=32, blank=True, null=True
+        verbose_name=_("Status Last"), max_length=64, blank=True, null=True
     )
     notes = models.CharField(
         verbose_name=_("Notes"), max_length=200, blank=True, null=True
@@ -2745,7 +2745,7 @@ class Dme_status_history(models.Model):
         verbose_name=_("Notes Type"), max_length=24, blank=True, null=True
     )
     status_old = models.CharField(
-        verbose_name=_("Status Old"), max_length=32, blank=True, null=True
+        verbose_name=_("Status Old"), max_length=64, blank=True, null=True
     )
     api_status_pretranslation = models.CharField(
         verbose_name=_("Api Status Pretranslation"),
