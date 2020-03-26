@@ -289,8 +289,8 @@ def send_booking_email_using_template(bookingId, emailName):
         cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
 
     if emailName == "General Booking":
-        subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual}/{booking.vx_freight_provider} #{booking.v_FPBookingNumber}"
+        subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     else:
-        subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual}/{booking.vx_freight_provider} #{booking.v_FPBookingNumber}"
+        subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
     send_email(to_emails, cc_emails, subject, html, files, mime_type)
