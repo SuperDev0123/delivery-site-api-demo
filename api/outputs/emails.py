@@ -141,7 +141,7 @@ def send_booking_email_using_template(bookingId, emailName):
         }
 
         if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-            files.append("/opt/s3_public/pdfs/" + booking.z_pod_url)
+            files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
 
     elif emailName == "Futile Pickup":
         emailVarList = {
