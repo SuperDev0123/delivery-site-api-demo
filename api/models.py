@@ -155,8 +155,13 @@ class Client_warehouses(models.Model):
 
 class Client_employees(models.Model):
     pk_id_client_emp = models.AutoField(primary_key=True)
-    fk_id_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
+    fk_id_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True
+    )
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, blank=True, null=True
+    )
+    role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, blank=True, null=True)
     name_last = models.CharField(
         verbose_name=_("last name"), max_length=30, blank=True, null=True
     )
@@ -164,10 +169,9 @@ class Client_employees(models.Model):
         verbose_name=_("first name"), max_length=30, blank=True, null=True
     )
     email = models.EmailField(
-        verbose_name=_("email address"), max_length=254, unique=True, null=True
+        verbose_name=_("email address"), max_length=64, unique=True, null=True
     )
     phone = models.IntegerField(verbose_name=_("phone number"), blank=True, null=True)
-    role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=True, null=True
     )
@@ -1223,7 +1227,7 @@ class Bookings(models.Model):
     )
     booking_Created_For_Email = models.CharField(
         verbose_name=_("Booking Created For Email"),
-        max_length=35,
+        max_length=64,
         blank=True,
         null=True,
         default="",
@@ -1871,7 +1875,7 @@ class BOK_1_headers(models.Model):
     )
     b_006_b_created_for_email = models.CharField(
         verbose_name=_("b_006_b_created_for_email"),
-        max_length=50,
+        max_length=64,
         blank=True,
         null=True,
     )
@@ -2733,7 +2737,7 @@ class Dme_status_history(models.Model):
         null=True,
     )
     status_last = models.CharField(
-        verbose_name=_("Status Last"), max_length=32, blank=True, null=True
+        verbose_name=_("Status Last"), max_length=64, blank=True, null=True
     )
     notes = models.CharField(
         verbose_name=_("Notes"), max_length=200, blank=True, null=True
@@ -2745,7 +2749,7 @@ class Dme_status_history(models.Model):
         verbose_name=_("Notes Type"), max_length=24, blank=True, null=True
     )
     status_old = models.CharField(
-        verbose_name=_("Status Old"), max_length=32, blank=True, null=True
+        verbose_name=_("Status Old"), max_length=64, blank=True, null=True
     )
     api_status_pretranslation = models.CharField(
         verbose_name=_("Api Status Pretranslation"),
@@ -3551,14 +3555,6 @@ class Client_Auto_Augment(models.Model):
         default="itassets@ticgroup.com.au",
     )
 
-    tic_de_Email_Group_Emails = models.CharField(
-        verbose_name=_("TIC DE Email Group Emails"),
-        max_length=30,
-        blank=True,
-        null=True,
-        default="itassets@ticgroup.com.au",
-    )
-
     tic_de_Email_Group_Emails = models.TextField(
         max_length=512, blank=True, null=True, default="rloqa@ticgroup.com.au",
     )
@@ -3642,14 +3638,6 @@ class Client_Process_Mgr(models.Model):
     origin_de_Email = models.CharField(
         verbose_name=_("Origin DE Email"),
         max_length=64,
-        blank=True,
-        null=True,
-        default="",
-    )
-
-    origin_de_Email_Group_Emails = models.CharField(
-        verbose_name=_("Origin DE Email Group Emails"),
-        max_length=30,
         blank=True,
         null=True,
         default="",

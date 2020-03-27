@@ -99,8 +99,9 @@ def password_reset_token_created(
 
     subject = f"Reset Your Password"
     mime_type = "html"
+
     try:
-        send_email([context["email"]], subject, email_html_message, None, mime_type)
+        send_email([context["email"]], [], subject, email_html_message, None, mime_type)
     except Exception as e:
         logger.error(f"Error #102: {e}")
 
@@ -1622,8 +1623,7 @@ class BookingViewSet(viewsets.ViewSet):
                     fk_id_dme_booking=booking.pk_booking_id
                 )
 
-                return_data = []
-                if booking is not None:
+                if booking:
                     return_data = {
                         "id": booking.id,
                         "puCompany": booking.puCompany,
@@ -1675,7 +1675,6 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
                         "pu_pickup_instructions_address": booking.pu_pickup_instructions_address,
                         "pu_PickUp_Instructions_Contact": booking.pu_PickUp_Instructions_Contact,
-                        "vx_serviceName": booking.vx_serviceName,
                         "consignment_label_link": booking.consignment_label_link,
                         "s_02_Booking_Cutoff_Time": booking.s_02_Booking_Cutoff_Time,
                         "z_CreatedTimestamp": booking.z_CreatedTimestamp,
@@ -1703,7 +1702,9 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
                         "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
                         "client_item_references": booking.get_client_item_references(),
-                        "v_service_Type_2": booking.v_service_Type_2,
+                        "v_service_Type": booking.v_service_Type,
+                        "vx_serviceName": booking.vx_serviceName,
+                        "vx_account_code": booking.vx_account_code,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
                         "inv_billing_status": booking.inv_billing_status,
@@ -1751,17 +1752,16 @@ class BookingViewSet(viewsets.ViewSet):
                             "cnt_attachments": len(attachments),
                         }
                     )
-            else:
-                return JsonResponse(
-                    {
-                        "booking": {},
-                        "nextid": 0,
-                        "previd": 0,
-                        "e_qty_total": 0,
-                        "cnt_comms": 0,
-                        "cnt_attachments": 0,
-                    }
-                )
+            return JsonResponse(
+                {
+                    "booking": {},
+                    "nextid": 0,
+                    "previd": 0,
+                    "e_qty_total": 0,
+                    "cnt_comms": 0,
+                    "cnt_attachments": 0,
+                }
+            )
         except Bookings.DoesNotExist:
             return JsonResponse(
                 {
@@ -2105,27 +2105,6 @@ class BookingViewSet(viewsets.ViewSet):
             client_process.origin_de_To_Address_Street_2 = (
                 booking.de_To_Address_Street_2
             )
-            client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
-            client_process.origin_puPickUpAvailFrom_Date = (
-                booking.puPickUpAvailFrom_Date
-            )
-
-            client_process.origin_pu_PickUp_Avail_Time_Hours = (
-                booking.pu_PickUp_Avail_Time_Hours
-            )
-
-            client_process.origin_pu_PickUp_Avail_Time_Minutes = (
-                booking.pu_PickUp_Avail_Time_Minutes
-            )
-
-            client_process.origin_pu_PickUp_By_Time_Hours = (
-                booking.pu_PickUp_Avail_Time_Hours
-            )
-
-            client_process.origin_pu_PickUp_By_Time_Minutes = (
-                booking.pu_PickUp_Avail_Time_Minutes
-            )
-
             client_auto_augment = Client_Auto_Augment.objects.first()
 
             if (
@@ -2182,53 +2161,6 @@ class BookingViewSet(viewsets.ViewSet):
                         client_auto_augment.sales_club_de_Email_Group_Emails
                     )
 
-                tempo_client = DME_clients.objects.filter(
-                    company_name="Tempo Pty Ltd"
-                ).first()
-
-                if (
-                    booking.x_ReadyStatus == "Available From"
-                    and booking.puPickUpAvailFrom_Date is None
-                    and booking.pu_PickUp_Avail_Time_Hours is None
-                ):
-                    if not tempo_client.augment_pu_available_time:
-                        error_msg = "No augment data available!"
-                        return JsonResponse(
-                            {"type": "Failure", "message": str(error_msg)},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
-                    booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
-                    booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
-                        "%H"
-                    )
-                    booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
-                        "%M"
-                    )
-
-                if (
-                    (
-                        booking.x_ReadyStatus == "Available Now"
-                        or booking.x_ReadyStatus == "Available From"
-                    )
-                    and booking.pu_PickUp_By_Date is None
-                    and booking.pu_PickUp_By_Time_Hours is None
-                ):
-                    if not tempo_client.augment_pu_by_time:
-                        error_msg = "No augment data available!"
-                        return JsonResponse(
-                            {"type": "Failure", "message": str(error_msg)},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
-                    booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                    booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
-                        "%H"
-                    )
-                    booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
-                        "%M"
-                    )
-
                 client_process.save()
                 booking.save()
                 serializer = BookingSerializer(booking)
@@ -2249,6 +2181,66 @@ class BookingViewSet(viewsets.ViewSet):
                     )
 
         except Exception as e:
+            return JsonResponse(
+                {"type": "Failure", "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False, methods=["post"])
+    def set_pu_date_augment(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        bookingId = body["bookingId"]
+        booking = Bookings.objects.get(pk=bookingId)
+
+        try:
+            tempo_client = DME_clients.objects.filter(
+                company_name="Tempo Pty Ltd"
+            ).first()
+
+            if booking.x_ReadyStatus == "Available From":
+
+                weekno = datetime.today().weekday()
+
+                if weekno>4:
+                    booking.puPickUpAvailFrom_Date = (datetime.today() + timedelta(days=7-weekno)).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (datetime.today() + timedelta(days=7-weekno)).strftime("%Y-%m-%d")
+                else:
+                    booking.puPickUpAvailFrom_Date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+
+                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
+                    "%M"
+                )
+
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+
+            if booking.x_ReadyStatus == "Available Now":
+                booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
+                booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+
+                booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime("%H")
+                booking.pu_PickUp_Avail_Time_Minutes = 0
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+            
+            booking.save()
+            serializer = BookingSerializer(booking)
+            return Response(serializer.data)
+        
+        except Exception as e:
+            print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -2283,26 +2275,6 @@ class BookingViewSet(viewsets.ViewSet):
                 )
                 booking.de_To_Address_Street_2 = (
                     client_process.origin_de_To_Address_Street_2
-                )
-                booking.pu_PickUp_By_Date = client_process.origin_pu_PickUp_By_Date
-                booking.puPickUpAvailFrom_Date = (
-                    client_process.origin_puPickUpAvailFrom_Date
-                )
-
-                booking.pu_PickUp_Avail_Time_Hours = (
-                    client_process.origin_pu_PickUp_Avail_Time_Hours
-                )
-
-                booking.pu_PickUp_Avail_Time_Minutes = (
-                    client_process.origin_pu_PickUp_Avail_Time_Minutes
-                )
-
-                booking.pu_PickUp_By_Time_Hours = (
-                    client_process.origin_pu_PickUp_By_Time_Hours
-                )
-
-                booking.pu_PickUp_By_Time_Minutes = (
-                    client_process.origin_pu_PickUp_By_Time_Minutes
                 )
 
                 client_process.delete()

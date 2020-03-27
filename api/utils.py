@@ -184,6 +184,7 @@ def calc_collect_after_status_change(pk_booking_id, status):
 
 def send_email(
     send_to,
+    send_cc,
     subject,
     text,
     files=None,
@@ -196,6 +197,7 @@ def send_email(
     msg = MIMEMultipart()
     msg["From"] = settings.EMAIL_HOST_USER
     msg["To"] = COMMASPACE.join(send_to)
+    msg["Cc"] = COMMASPACE.join(send_cc)
     msg["Date"] = formatdate(localtime=True)
     msg["Subject"] = subject
     msg.attach(MIMEText(text, mime_type))
@@ -212,7 +214,7 @@ def send_email(
         smtp.starttls()
 
     smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-    smtp.sendmail(settings.EMAIL_HOST_USER, send_to, msg.as_string())
+    smtp.sendmail(settings.EMAIL_HOST_USER, send_to + send_cc, msg.as_string())
     smtp.close()
 
 
@@ -6584,6 +6586,7 @@ def build_xls_and_send(
         )
         send_email(
             [email_addr],  # Recipient email address(list)
+            [],  # CC
             "Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Bookings) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -6594,6 +6597,7 @@ def build_xls_and_send(
         )
         send_email(
             [email_addr],  # Recipient email address(list)
+            [],
             "BookingLines XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Booking Lines) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -6608,7 +6612,8 @@ def build_xls_and_send(
             show_field_name,
         )
         send_email(
-            [email_addr],  # Recipient email address(list)
+            [email_addr],
+            [],
             "Bookings with Gaps XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Booking With Gaps) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -6618,7 +6623,8 @@ def build_xls_and_send(
             bookings, "Whse", username, start_date, end_date, show_field_name
         )
         send_email(
-            [email_addr],  # Recipient email address(list)
+            [email_addr],
+            [],
             "Whse XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Whse) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -6642,7 +6648,8 @@ def build_xls_and_send(
             bookings, "Whse", username, start_date, end_date, show_field_name
         )
         send_email(
-            [email_addr],  # Recipient email address(list)
+            [email_addr],
+            [],
             "All XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Bookings & Booking Lines & Booking With Gaps & Whse) you generated from Deliver-Me.",  # Message of email
             [
@@ -6652,7 +6659,8 @@ def build_xls_and_send(
                 filepath_whse,
             ],  # Attachment file path(list)
         )
-        
+
+
 def tables_in_query(sql_str):
 
     # remove the /* */ comments

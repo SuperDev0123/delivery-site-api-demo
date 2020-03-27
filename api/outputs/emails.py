@@ -1,14 +1,7 @@
-import smtplib
 import sys, time
 import os, base64
 import datetime
-import email
-import email.mime.application
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
-from email.mime.text import MIMEText
+from django.conf import settings
 
 from api.models import *
 from api.utils import send_email
@@ -148,7 +141,7 @@ def send_booking_email_using_template(bookingId, emailName):
         }
 
         if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-            files.append("/opt/s3_public/pdfs/" + booking.z_pod_url)
+            files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
 
     elif emailName == "Futile Pickup":
         emailVarList = {
@@ -277,16 +270,27 @@ def send_booking_email_using_template(bookingId, emailName):
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
-    to_emails = ["bookings@deliver-me.com.au"]
+    if settings.ENV in ["local", "dev"]:
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+    else:
+        to_emails = ["bookings@deliver-me.com.au"]
+
+    cc_emails = []
+
     if booking.pu_Email:
         to_emails.append(booking.pu_Email)
+    if booking.de_Email:
+        cc_emails.append(booking.de_Email)
     if booking.pu_email_Group:
-        to_emails.append(booking.pu_email_Group)
+        cc_emails = cc_emails + booking.pu_email_Group.split(",")
     if booking.de_Email_Group_Emails:
-        to_emails.append(booking.de_Email_Group_Emails)
-    if booking.booking_Created_For_Email:
-        to_emails.append(booking.booking_Created_For_Email)
+        cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
+    if booking.de_Email_Group_Emails:
+        cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
 
-    subject = f"Tempo ${emailName} - DME#${booking.v_FPBookingNumber} - FP#${booking.vx_freight_provider}"
+    if emailName == "General Booking":
+        subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
+    else:
+        subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
-    send_email(to_emails, subject, html, files, mime_type)
+    send_email(to_emails, cc_emails, subject, html, files, mime_type)

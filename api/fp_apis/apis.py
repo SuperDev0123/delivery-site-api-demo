@@ -1,5 +1,4 @@
-import time, json, requests, datetime, base64, os
-import logging
+import time, json, requests, datetime, base64, os, logging
 from ast import literal_eval
 
 from rest_framework.decorators import (
@@ -10,32 +9,21 @@ from rest_framework.decorators import (
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse
+from django.conf import settings
 
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
-from django.conf import settings
 
-from .payload_builder import (
-    ACCOUNT_CODES,
-    BUILT_IN_PRICINGS,
-    get_tracking_payload,
-    get_book_payload,
-    get_cancel_book_payload,
-    get_getlabel_payload,
-    get_create_label_payload,
-    get_create_order_payload,
-    get_get_order_summary_payload,
-    get_pod_payload,
-    get_reprint_payload,
-    get_pricing_payload,
-)
+from api.common import status_history, download_external, trace_error
+from api.common.build_object import Struct
+from api.file_operations.directory import create_dir_if_not_exist
+
+from .payload_builder import *
 from .self_pricing import get_pricing
 from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
-from api.common import status_history, download_external, trace_error
-from api.common.build_object import Struct
 from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
@@ -155,7 +143,6 @@ def tracking(request, fp_name):
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
-
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -271,6 +258,7 @@ def book(request, fp_name):
                     ).save()
 
                     # Save Label for Hunter
+                    create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
                         file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
@@ -670,6 +658,7 @@ def get_label(request, fp_name):
                     else:
                         label_url = f"./static/pdfs/{z_label_url}"
 
+                    create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                     with open(label_url, "wb") as f:
                         f.write(label_data)
                         f.close()
@@ -818,6 +807,7 @@ def get_order_summary(request, fp_name):
                 else:
                     file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
+                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
                     f.close()
@@ -925,6 +915,7 @@ def pod(request, fp_name):
         else:
             file_url = f"./static/imgs/{file_name}"
 
+        create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
         f = open(file_url, "wb")
         f.write(base64.b64decode(podData))
         f.close()
@@ -972,6 +963,7 @@ def reprint(request, fp_name):
                 else:
                     file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
+                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
@@ -1186,3 +1178,135 @@ def pricing(request):
     except Exception as e:
         trace_error.print()
         return JsonResponse({"message": f"Error: {e}"}, status=400)
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def rebook(request, fp_name):
+    try:
+        body = literal_eval(request.body.decode("utf8"))
+        booking_id = body["booking_id"]
+
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+            
+            error_msg = pre_check_rebook(booking)
+
+            if error_msg:
+                return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
+
+            try:
+                payload = get_book_payload(booking, fp_name)
+            except Exception as e:
+                trace_error.print()
+                logger.error(f"#401 - Error while build payload: {e}")
+                return JsonResponse(
+                    {"message": f"Error while build payload {str(e)}"}, status=400
+                )
+
+            logger.error(f"### Payload ({fp_name} rebook): {payload}")
+            url = DME_LEVEL_API_URL + "/booking/rebookconsignment"
+            response = requests.post(url, params={}, json=payload)
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
+            s0 = json.dumps(
+                json_data, indent=2, sort_keys=True, default=str
+            )  # Just for visual
+            logger.error(f"### Response ({fp_name} rebook): {s0}")
+
+            if response.status_code == 200:
+                try:
+                    request_payload = {
+                        "apiUrl": "",
+                        "accountCode": "",
+                        "authKey": "",
+                        "trackingId": "",
+                    }
+                    request_payload["apiUrl"] = url
+                    request_payload["accountCode"] = payload["spAccountDetails"][
+                        "accountCode"
+                    ]
+                    request_payload["authKey"] = payload["spAccountDetails"][
+                        "accountKey"
+                    ]
+                    request_payload["trackingId"] = json_data["consignmentNumber"]
+
+                    if booking.vx_freight_provider.lower() == "tnt":
+                        booking.v_FPBookingNumber = (
+                            f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+                        )
+
+                    old_fk_fp_pickup_id = booking.fk_fp_pickup_id
+                    booking.fk_fp_pickup_id = json_data["consignmentNumber"]
+                    booking.b_dateBookedDate = str(datetime.now())
+                    booking.b_status = "PU Rebooked"
+                    booking.b_error_Capture = ""
+                    booking.save()
+                    
+                    status_history.create(
+                        booking, "PU Rebooked(Last pickup Id was " + str(old_fk_fp_pickup_id) + ")", request.user.username
+                    )
+
+                    Log(
+                        request_payload=request_payload,
+                        request_status="SUCCESS",
+                        request_type=f"{fp_name.upper()} REBOOK",
+                        response=res_content,
+                        fk_booking_id=booking.id,
+                    ).save()
+
+                    return JsonResponse(
+                        {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
+                    )
+                except KeyError as e:
+                    trace_error.print()
+                    Log(
+                        request_payload=payload,
+                        request_status="ERROR",
+                        request_type=f"{fp_name.upper()} REBOOK",
+                        response=res_content,
+                        fk_booking_id=booking.id,
+                    ).save()
+
+                    error_msg = s0
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
+            elif response.status_code == 400:
+                Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} REBOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                if "errors" in json_data:
+                    error_msg = json_data["errors"]
+                elif "errorMessage" in json_data:  # TNT Error
+                    error_msg = json_data["errorMessage"]
+                elif "errorMessage" in json_data[0]:  # Hunter Error
+                    error_msg = json_data[0]["errorMessage"]
+                else:
+                    error_msg = s0
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+            elif response.status_code == 500:
+                Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} REBOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                error_msg = "DME bot: Tried rebooking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+        except Exception as e:
+            trace_error.print()
+            error_msg = str(e)
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg}, status=400)
+    except SyntaxError as e:
+        trace_error.print()
+        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
