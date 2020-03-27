@@ -4703,6 +4703,23 @@ class TimingsViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": str(e)})
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            resultObject = FP_timings.objects.get_or_create(
+                time_UOM=request.data["time_UOM"],
+                min=request.data["min"],
+                max=request.data["max"],
+                booking_cut_off_time=request.data["booking_cut_off_time"],
+                collected_by=request.data["collected_by"],
+                delivered_by=request.data["delivered_by"],
+            )
+
+            return JsonResponse({"results": FpSerializer(resultObject[0]).data})
+        except Exception as e:
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
+
 
 class AvailabilitiesViewSet(viewsets.ViewSet):
     serializer_class = AvailabilitiesSerializer
