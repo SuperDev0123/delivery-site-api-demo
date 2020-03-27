@@ -2105,27 +2105,6 @@ class BookingViewSet(viewsets.ViewSet):
             client_process.origin_de_To_Address_Street_2 = (
                 booking.de_To_Address_Street_2
             )
-            client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
-            client_process.origin_puPickUpAvailFrom_Date = (
-                booking.puPickUpAvailFrom_Date
-            )
-
-            client_process.origin_pu_PickUp_Avail_Time_Hours = (
-                booking.pu_PickUp_Avail_Time_Hours
-            )
-
-            client_process.origin_pu_PickUp_Avail_Time_Minutes = (
-                booking.pu_PickUp_Avail_Time_Minutes
-            )
-
-            client_process.origin_pu_PickUp_By_Time_Hours = (
-                booking.pu_PickUp_Avail_Time_Hours
-            )
-
-            client_process.origin_pu_PickUp_By_Time_Minutes = (
-                booking.pu_PickUp_Avail_Time_Minutes
-            )
-
             client_auto_augment = Client_Auto_Augment.objects.first()
 
             if (
@@ -2182,53 +2161,6 @@ class BookingViewSet(viewsets.ViewSet):
                         client_auto_augment.sales_club_de_Email_Group_Emails
                     )
 
-                tempo_client = DME_clients.objects.filter(
-                    company_name="Tempo Pty Ltd"
-                ).first()
-
-                if (
-                    booking.x_ReadyStatus == "Available From"
-                    and booking.puPickUpAvailFrom_Date is None
-                    and booking.pu_PickUp_Avail_Time_Hours is None
-                ):
-                    if not tempo_client.augment_pu_available_time:
-                        error_msg = "No augment data available!"
-                        return JsonResponse(
-                            {"type": "Failure", "message": str(error_msg)},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
-                    booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
-                    booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
-                        "%H"
-                    )
-                    booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
-                        "%M"
-                    )
-
-                if (
-                    (
-                        booking.x_ReadyStatus == "Available Now"
-                        or booking.x_ReadyStatus == "Available From"
-                    )
-                    and booking.pu_PickUp_By_Date is None
-                    and booking.pu_PickUp_By_Time_Hours is None
-                ):
-                    if not tempo_client.augment_pu_by_time:
-                        error_msg = "No augment data available!"
-                        return JsonResponse(
-                            {"type": "Failure", "message": str(error_msg)},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
-                    booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                    booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
-                        "%H"
-                    )
-                    booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
-                        "%M"
-                    )
-
                 client_process.save()
                 booking.save()
                 serializer = BookingSerializer(booking)
@@ -2249,6 +2181,66 @@ class BookingViewSet(viewsets.ViewSet):
                     )
 
         except Exception as e:
+            return JsonResponse(
+                {"type": "Failure", "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False, methods=["post"])
+    def set_pu_date_augment(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        bookingId = body["bookingId"]
+        booking = Bookings.objects.get(pk=bookingId)
+
+        try:
+            tempo_client = DME_clients.objects.filter(
+                company_name="Tempo Pty Ltd"
+            ).first()
+
+            if booking.x_ReadyStatus == "Available From":
+
+                weekno = datetime.today().weekday()
+
+                if weekno>4:
+                    booking.puPickUpAvailFrom_Date = (datetime.today() + timedelta(days=7-weekno)).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (datetime.today() + timedelta(days=7-weekno)).strftime("%Y-%m-%d")
+                else:
+                    booking.puPickUpAvailFrom_Date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+
+                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
+                    "%M"
+                )
+
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+
+            if booking.x_ReadyStatus == "Available Now":
+                booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
+                booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+
+                booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime("%H")
+                booking.pu_PickUp_Avail_Time_Minutes = 0
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+            
+            booking.save()
+            serializer = BookingSerializer(booking)
+            return Response(serializer.data)
+        
+        except Exception as e:
+            print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -2283,26 +2275,6 @@ class BookingViewSet(viewsets.ViewSet):
                 )
                 booking.de_To_Address_Street_2 = (
                     client_process.origin_de_To_Address_Street_2
-                )
-                booking.pu_PickUp_By_Date = client_process.origin_pu_PickUp_By_Date
-                booking.puPickUpAvailFrom_Date = (
-                    client_process.origin_puPickUpAvailFrom_Date
-                )
-
-                booking.pu_PickUp_Avail_Time_Hours = (
-                    client_process.origin_pu_PickUp_Avail_Time_Hours
-                )
-
-                booking.pu_PickUp_Avail_Time_Minutes = (
-                    client_process.origin_pu_PickUp_Avail_Time_Minutes
-                )
-
-                booking.pu_PickUp_By_Time_Hours = (
-                    client_process.origin_pu_PickUp_By_Time_Hours
-                )
-
-                booking.pu_PickUp_By_Time_Minutes = (
-                    client_process.origin_pu_PickUp_By_Time_Minutes
                 )
 
                 client_process.delete()

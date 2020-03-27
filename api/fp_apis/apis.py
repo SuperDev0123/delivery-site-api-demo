@@ -143,7 +143,6 @@ def tracking(request, fp_name):
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
-
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -1179,3 +1178,135 @@ def pricing(request):
     except Exception as e:
         trace_error.print()
         return JsonResponse({"message": f"Error: {e}"}, status=400)
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def rebook(request, fp_name):
+    try:
+        body = literal_eval(request.body.decode("utf8"))
+        booking_id = body["booking_id"]
+
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+            
+            error_msg = pre_check_rebook(booking)
+
+            if error_msg:
+                return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
+
+            try:
+                payload = get_book_payload(booking, fp_name)
+            except Exception as e:
+                trace_error.print()
+                logger.error(f"#401 - Error while build payload: {e}")
+                return JsonResponse(
+                    {"message": f"Error while build payload {str(e)}"}, status=400
+                )
+
+            logger.error(f"### Payload ({fp_name} rebook): {payload}")
+            url = DME_LEVEL_API_URL + "/booking/rebookconsignment"
+            response = requests.post(url, params={}, json=payload)
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
+            s0 = json.dumps(
+                json_data, indent=2, sort_keys=True, default=str
+            )  # Just for visual
+            logger.error(f"### Response ({fp_name} rebook): {s0}")
+
+            if response.status_code == 200:
+                try:
+                    request_payload = {
+                        "apiUrl": "",
+                        "accountCode": "",
+                        "authKey": "",
+                        "trackingId": "",
+                    }
+                    request_payload["apiUrl"] = url
+                    request_payload["accountCode"] = payload["spAccountDetails"][
+                        "accountCode"
+                    ]
+                    request_payload["authKey"] = payload["spAccountDetails"][
+                        "accountKey"
+                    ]
+                    request_payload["trackingId"] = json_data["consignmentNumber"]
+
+                    if booking.vx_freight_provider.lower() == "tnt":
+                        booking.v_FPBookingNumber = (
+                            f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+                        )
+
+                    old_fk_fp_pickup_id = booking.fk_fp_pickup_id
+                    booking.fk_fp_pickup_id = json_data["consignmentNumber"]
+                    booking.b_dateBookedDate = str(datetime.now())
+                    booking.b_status = "PU Rebooked"
+                    booking.b_error_Capture = ""
+                    booking.save()
+                    
+                    status_history.create(
+                        booking, "PU Rebooked(Last pickup Id was " + str(old_fk_fp_pickup_id) + ")", request.user.username
+                    )
+
+                    Log(
+                        request_payload=request_payload,
+                        request_status="SUCCESS",
+                        request_type=f"{fp_name.upper()} REBOOK",
+                        response=res_content,
+                        fk_booking_id=booking.id,
+                    ).save()
+
+                    return JsonResponse(
+                        {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
+                    )
+                except KeyError as e:
+                    trace_error.print()
+                    Log(
+                        request_payload=payload,
+                        request_status="ERROR",
+                        request_type=f"{fp_name.upper()} REBOOK",
+                        response=res_content,
+                        fk_booking_id=booking.id,
+                    ).save()
+
+                    error_msg = s0
+                    _set_error(booking, error_msg)
+                    return JsonResponse({"message": error_msg}, status=400)
+            elif response.status_code == 400:
+                Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} REBOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                if "errors" in json_data:
+                    error_msg = json_data["errors"]
+                elif "errorMessage" in json_data:  # TNT Error
+                    error_msg = json_data["errorMessage"]
+                elif "errorMessage" in json_data[0]:  # Hunter Error
+                    error_msg = json_data[0]["errorMessage"]
+                else:
+                    error_msg = s0
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+            elif response.status_code == 500:
+                Log(
+                    request_payload=payload,
+                    request_status="ERROR",
+                    request_type=f"{fp_name.upper()} REBOOK",
+                    response=res_content,
+                    fk_booking_id=booking.id,
+                ).save()
+
+                error_msg = "DME bot: Tried rebooking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
+        except Exception as e:
+            trace_error.print()
+            error_msg = str(e)
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg}, status=400)
+    except SyntaxError as e:
+        trace_error.print()
+        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
