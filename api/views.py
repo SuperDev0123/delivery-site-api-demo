@@ -2201,12 +2201,20 @@ class BookingViewSet(viewsets.ViewSet):
 
                 weekno = datetime.today().weekday()
 
-                if weekno>4:
-                    booking.puPickUpAvailFrom_Date = (datetime.today() + timedelta(days=7-weekno)).strftime("%Y-%m-%d")
-                    booking.pu_PickUp_By_Date = (datetime.today() + timedelta(days=7-weekno)).strftime("%Y-%m-%d")
+                if weekno > 4:
+                    booking.puPickUpAvailFrom_Date = (
+                        datetime.today() + timedelta(days=7 - weekno)
+                    ).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (
+                        datetime.today() + timedelta(days=7 - weekno)
+                    ).strftime("%Y-%m-%d")
                 else:
-                    booking.puPickUpAvailFrom_Date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
-                    booking.pu_PickUp_By_Date = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+                    booking.puPickUpAvailFrom_Date = (
+                        datetime.today() + timedelta(days=1)
+                    ).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (
+                        datetime.today() + timedelta(days=1)
+                    ).strftime("%Y-%m-%d")
 
                 booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
                     "%H"
@@ -2234,11 +2242,11 @@ class BookingViewSet(viewsets.ViewSet):
                 booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
                     "%M"
                 )
-            
+
             booking.save()
             serializer = BookingSerializer(booking)
             return Response(serializer.data)
-        
+
         except Exception as e:
             print(str(e))
             return JsonResponse(
@@ -3467,10 +3475,15 @@ class FPViewSet(viewsets.ViewSet):
                 fp_address_country=request.data["fp_address_country"],
             )
 
-            return JsonResponse({"results": FpSerializer(resultObject[0]).data})
+            return JsonResponse(
+                {
+                    "result": FpSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"results": None})
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
@@ -4650,30 +4663,10 @@ class VehiclesViewSet(viewsets.ViewSet):
 class TimingsViewSet(viewsets.ViewSet):
     serializer_class = TimingsSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
-
-        try:
-            resultObjects = []
-            resultObjects = FP_timings.objects.all()
-
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "time_UOM": resultObject.time_UOM,
-                        "min": resultObject.min,
-                        "max": resultObject.max,
-                        "booking_cut_off_time": resultObject.booking_cut_off_time,
-                        "collected_by": resultObject.collected_by,
-                        "delivered_by": resultObject.delivered_by,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
-        except Exception as e:
-            return JsonResponse({"results": str(e)})
+    def list(self, request, pk=None):
+        queryset = FP_timings.objects.all()
+        serializer = TimingsSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
@@ -4687,7 +4680,12 @@ class TimingsViewSet(viewsets.ViewSet):
                 delivered_by=request.data["delivered_by"],
             )
 
-            return JsonResponse({"results": FpSerializer(resultObject[0]).data})
+            return JsonResponse(
+                {
+                    "result": TimingsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
             # print("@Exception", e)
             return JsonResponse({"results": ""})
