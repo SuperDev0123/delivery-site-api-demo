@@ -4622,43 +4622,41 @@ class FilesViewSet(viewsets.ViewSet):
 class VehiclesViewSet(viewsets.ViewSet):
     serializer_class = VehiclesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_vehicles.objects.all()
+        serializer = VehiclesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_vehicles.objects.all()
+            resultObject = FP_vehicles.objects.get_or_create(
+                description=request.data["time_UOM"],
+                dim_UOM=request.data["min"],
+                max_length=request.data["max"],
+                max_width=request.data["booking_cut_off_time"],
+                max_height=request.data["collected_by"],
+                mass_UOM=request.data["delivered_by"],
+                pallets=request.data["delivered_by"],
+                pallet_UOM=request.data["delivered_by"],
+                max_pallet_length=request.data["delivered_by"],
+                max_pallet_height=request.data["delivered_by"],
+                base_charge=request.data["delivered_by"],
+                min_charge=request.data["delivered_by"],
+                limited_state=request.data["delivered_by"],
+                freight_provider=request.data["freight_provider"],
+                max_mass=request.data["max_mass"],
+            )
 
-            for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(
-                    id=resultObject.freight_provider_id
-                ).first()
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "description": resultObject.description,
-                        "dim_UOM": resultObject.dim_UOM,
-                        "max_length": resultObject.max_length,
-                        "max_width": resultObject.max_width,
-                        "max_height": resultObject.max_height,
-                        "mass_UOM": resultObject.mass_UOM,
-                        "pallets": resultObject.pallets,
-                        "pallet_UOM": resultObject.pallet_UOM,
-                        "max_pallet_length": resultObject.max_pallet_length,
-                        "max_pallet_height": resultObject.max_pallet_height,
-                        "base_charge": resultObject.base_charge,
-                        "min_charge": resultObject.min_charge,
-                        "limited_state": resultObject.limited_state,
-                        "freight_provider": fp_freight_provider.fp_company_name,
-                        "max_mass": resultObject.max_mass,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": VehiclesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
-
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 class TimingsViewSet(viewsets.ViewSet):
     serializer_class = TimingsSerializer
@@ -4694,135 +4692,119 @@ class TimingsViewSet(viewsets.ViewSet):
 class AvailabilitiesViewSet(viewsets.ViewSet):
     serializer_class = AvailabilitiesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_availabilities.objects.all()
+        serializer = AvailabilitiesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_availabilities.objects.all()
+            resultObject = FP_availabilities.objects.get_or_create(
+                code=request.data["code"],
+                mon_start=request.data["mon_start"],
+                mon_end=request.data["mon_end"],
+                tue_start=request.data["tue_start"],
+                tue_end=request.data["tue_end"],
+                wed_start=request.data["wed_start"],
+                wed_end=request.data["wed_end"],
+                thu_start=request.data["thu_start"],
+                thu_end=request.data["thu_end"],
+                sat_start=request.data["sat_start"],
+                sat_end=request.data["sat_end"],
+                sun_start=request.data["sun_start"],
+                sun_end=request.data["sun_end"],
+                freight_provider=request.data["freight_provider"]
+            )
 
-            for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(
-                    id=resultObject.freight_provider_id
-                ).first()
-                fp_company_name = ""
-
-                if fp_freight_provider is not None:
-                    fp_company_name = fp_freight_provider.fp_company_name
-
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "code": resultObject.code,
-                        "mon_start": resultObject.mon_start,
-                        "mon_end": resultObject.mon_end,
-                        "tue_start": resultObject.tue_start,
-                        "tue_end": resultObject.tue_end,
-                        "wed_start": resultObject.wed_start,
-                        "wed_end": resultObject.wed_end,
-                        "thu_start": resultObject.thu_start,
-                        "thu_end": resultObject.thu_end,
-                        "fri_start": resultObject.fri_start,
-                        "fri_end": resultObject.fri_end,
-                        "sat_start": resultObject.sat_start,
-                        "sat_end": resultObject.sat_end,
-                        "sun_start": resultObject.sun_start,
-                        "sun_end": resultObject.sun_end,
-                        "freight_provider": fp_company_name,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": AvailabilitiesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
-
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 class CostsViewSet(viewsets.ViewSet):
     serializer_class = CostsSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_costs.objects.all()
+        serializer = CostsSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_costs.objects.all()
+            resultObject = FP_costs.objects.get_or_create(
+                UOM_charge=request.data["UOM_charge"],
+                start_qty=request.data["start_qty"],
+                end_qty=request.data["end_qty"],
+                basic_charge=request.data["basic_charge"],
+                min_charge=request.data["min_charge"],
+                per_UOM_charge=request.data["per_UOM_charge"],
+                oversize_premium=request.data["oversize_premium"],
+                oversize_price=request.data["oversize_price"],
+                m3_to_kg_factor=request.data["m3_to_kg_factor"],
+                dim_UOM=request.data["dim_UOM"],
+                price_up_to_length=request.data["price_up_to_length"],
+                price_up_to_width=request.data["price_up_to_width"],
+                price_up_to_height=request.data["price_up_to_height"],
+                weight_UOM=request.data["weight_UOM"],
+                max_length=request.data["max_length"],
+                max_width=request.data["max_width"],
+                max_height=request.data["max_height"],
+                max_weight=request.data["max_weight"],
+            )
 
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "UOM_charge": resultObject.UOM_charge,
-                        "start_qty": resultObject.start_qty,
-                        "end_qty": resultObject.end_qty,
-                        "basic_charge": resultObject.basic_charge,
-                        "min_charge": resultObject.min_charge,
-                        "per_UOM_charge": resultObject.per_UOM_charge,
-                        "oversize_premium": resultObject.oversize_premium,
-                        "oversize_price": resultObject.oversize_price,
-                        "m3_to_kg_factor": resultObject.m3_to_kg_factor,
-                        "dim_UOM": resultObject.dim_UOM,
-                        "price_up_to_length": resultObject.price_up_to_length,
-                        "price_up_to_width": resultObject.price_up_to_width,
-                        "price_up_to_height": resultObject.price_up_to_height,
-                        "weight_UOM": resultObject.weight_UOM,
-                        "price_up_to_weight": resultObject.price_up_to_weight,
-                        "max_length": resultObject.max_length,
-                        "max_width": resultObject.max_width,
-                        "max_height": resultObject.max_height,
-                        "max_weight": resultObject.max_weight,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": CostsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
-
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 class PricingRulesViewSet(viewsets.ViewSet):
     serializer_class = PricingRulesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_pricing_rules.objects.all()
+        serializer = PricingRulesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_pricing_rules.objects.all()
+            resultObject = FP_pricing_rules.objects.get_or_create(
+                service_type=request.data["service_type"],
+                service_timing_code=request.data["service_timing_code"],
+                calc_type=request.data["calc_type"],
+                cost=request.data["cost"],
+                timing=request.data["timing"],
+                vehicle=request.data["vehicle"],
+                both_way=request.data["both_way"],
+                pu_zone=request.data["pu_zone"],
+                pu_state=request.data["pu_state"],
+                pu_postal_code=request.data["pu_postal_code"],
+                pu_suburb=request.data["pu_suburb"],
+                de_zone=request.data["de_zone"],
+                de_state=request.data["de_state"],
+                de_postal_code=request.data["de_postal_code"],
+                de_suburb=request.data["de_suburb"],
+                freight_provider=request.data["freight_provider"],
+            )
 
-            for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(
-                    id=resultObject.freight_provider_id
-                ).first()
-                fp_company_name = ""
-
-                if fp_freight_provider is not None:
-                    fp_company_name = fp_freight_provider.fp_company_name
-
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "service_type": resultObject.service_type,
-                        "service_timing_code": resultObject.service_timing_code,
-                        "calc_type": resultObject.calc_type,
-                        "charge_rule": resultObject.charge_rule,
-                        "cost_id": resultObject.cost_id,
-                        "timing_id": resultObject.timing_id,
-                        "vehicle_id": resultObject.vehicle_id,
-                        "both_way": resultObject.both_way,
-                        "pu_zone": resultObject.pu_zone,
-                        "pu_state": resultObject.pu_state,
-                        "pu_postal_code": resultObject.pu_postal_code,
-                        "pu_suburb": resultObject.pu_suburb,
-                        "de_zone": resultObject.de_zone,
-                        "de_state": resultObject.de_state,
-                        "de_postal_code": resultObject.de_postal_code,
-                        "de_suburb": resultObject.de_suburb,
-                        "freight_provider": fp_company_name,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": PricingRulesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
