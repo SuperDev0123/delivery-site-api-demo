@@ -1,100 +1,87 @@
-from api.models import API_booking_quotes
+from django.db.models import Count
+
+from api.models import Bookings, API_booking_quotes
+
+
+def _is_new_diff(diffs, pricing):
+    for diff in diffs:
+        if (
+            diff["fp_name"] == pricing.fk_freight_provider_id
+            and diff["service_name"] == pricing.service_name
+            and diff["account_code"] == pricing.account_code
+        ):
+            return False
+
+    return True
+
 
 def analyse_booking_quotes_table(bookingIds):
-    analyses = {}
     results = []
-    num_no_pricing = 0
-    for bookingId in bookingIds:
-        print('bookingId', bookingId)
-        api_booking_quotes = API_booking_quotes.objects.filter(fk_booking_id = bookingId)
+    no_quotes_cnt = 0
+    bookings = Bookings.objects.filter(id__in=bookingIds)
+    pk_booking_ids = [booking.pk_booking_id for booking in bookings]
+    api_booking_quotes = API_booking_quotes.objects.filter(
+        fk_booking_id__in=pk_booking_ids
+    )
 
-        if len(api_booking_quotes) == 0:
-            num_no_pricing = num_no_pricing + 1
-
-        for api_booking_quote in api_booking_quotes:
-            print('api_booking_quote', api_booking_quote)
-
-            if not api_booking_quote.fk_freight_provider_id in analyses:
-                fp_analyses = {}
-                fp_analyses['*'] = {
-                    "count": 1,
-                    "min_price": api_booking_quote.fee,
-                    "avg_price": api_booking_quote.fee,
-                    "max_price": api_booking_quote.fee,
+    diffs = []
+    for pricing in api_booking_quotes:
+        if not diffs or _is_new_diff(diffs, pricing):
+            diffs.append(
+                {
+                    "fp_name": pricing.fk_freight_provider_id,
+                    "service_name": pricing.service_name,
+                    "account_code": pricing.account_code,
                 }
-            else:
-                fp_analyses = analyses[api_booking_quote.fk_freight_provider_id]
-                all_fp_analysis = fp_analyses["*"] 
-                if api_booking_quote.fee > all_fp_analysis["max_price"]:
-                    all_fp_analysis["max_price"] = api_booking_quote.fee
+            )
 
-                if api_booking_quote.fee < all_fp_analysis["min_price"]:                    
-                    all_fp_analysis["min_price"] = api_booking_quote.fee
+    for diff in diffs:
+        pricing_group = []
 
-                all_fp_analysis["avg_price"] = (
-                    (all_fp_analysis["avg_price"] * all_fp_analysis["count"] + api_booking_quote.fee )
-                    / 
-                    (all_fp_analysis["count"] + 1)
-                )
-                all_fp_analysis["count"] = all_fp_analysis["count"] + 1
-                fp_analyses["*"] = all_fp_analysis
+        for pricing in api_booking_quotes:
+            if (
+                diff["fp_name"] == pricing.fk_freight_provider_id
+                and diff["service_name"] == pricing.service_name
+                and diff["account_code"] == pricing.account_code
+            ):
+                pricing_group.append(pricing)
 
-            if api_booking_quote.service_name in fp_analyses:
-                service_analysis = fp_analyses[api_booking_quote.service_name]
+        min_price = max_price = None
+        group_total = 0
+        for pricing in pricing_group:
+            if not min_price or pricing.client_mu_1_minimum_values < min_price:
+                min_price = pricing.client_mu_1_minimum_values
 
-                if api_booking_quote.fee > service_analysis["max_price"]:
-                    service_analysis["max_price"] = api_booking_quote.fee
+            if not max_price or pricing.client_mu_1_minimum_values > max_price:
+                max_price = pricing.client_mu_1_minimum_values
 
-                if api_booking_quote.fee < service_analysis["min_price"]:                    
-                    service_analysis["min_price"] = api_booking_quote.fee
+            group_total += pricing.client_mu_1_minimum_values
 
-                service_analysis["avg_price"] = (
-                    (service_analysis["avg_price"] * service_analysis["count"] + api_booking_quote.fee )
-                    / 
-                    (service_analysis["count"] + 1)
-                )
+        results.append(
+            {
+                "fp_name": pricing_group[0].fk_freight_provider_id,
+                "service_name": pricing_group[0].service_name,
+                "account_code": pricing_group[0].account_code,
+                "count": len(pricing_group),
+                "min_price": min_price,
+                "avg_price": group_total / len(pricing_group),
+                "max_price": max_price,
+            }
+        )
 
-                service_analysis["count"] = service_analysis["count"] + 1
-                fp_analyses[api_booking_quote.service_name] = service_analysis
+    max_quotes_cnt = 0
+    for result in results:
+        if max_quotes_cnt < result["count"]:
+            max_quotes_cnt = result["count"]
 
-            # else if api_booking_quote.service_name is not None:
-            # Not sure how we can handle service name is None
-            else:
-                service_analysis = {
-                    "count": 1,
-                    "min_price": api_booking_quote.fee,
-                    "avg_price": api_booking_quote.fee,
-                    "max_price": api_booking_quote.fee,
-                }
-
-
-            fp_analyses[api_booking_quote.service_name] = service_analysis
-            analyses[api_booking_quote.fk_freight_provider_id] = fp_analyses
-
-    results.append({ 
-    	"fp_name": "No-Pricing", 
-    	"count" : num_no_pricing ,
-    	"min_price": "0",
-    	"avg_price": "0",
-    	"max_price": "0",
-    })
-
-    for fp_name in analyses:
-        fp_analyses = analyses[fp_name]
-
-        for service_name in fp_analyses:
-            print(service_name)
-            service_analysis = fp_analyses[service_name]
-
-            result = {}
-            result["fp_name"] = fp_name
-            result["service_name"] = service_name
-            result["count"] = service_analysis["count"]
-            result["min_price"] = service_analysis["min_price"]
-            result["avg_price"] = service_analysis["avg_price"]
-            result["max_price"] = service_analysis["max_price"]
-
-            results.append(result)
-            print(service_analysis)
+    results.append(
+        {
+            "fp_name": "No-Pricing",
+            "count": len(bookings) - max_quotes_cnt,
+            "min_price": "0",
+            "avg_price": "0",
+            "max_price": "0",
+        }
+    )
 
     return results

@@ -1531,10 +1531,7 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def pricing_analysis(self, request, format=None):
         bookingIds = request.data["bookingIds"]
-        print("bookingIds", bookingIds)
-        # bookingIds = ["d06688d4-6817-11ea-b6c2-06cff6918b42", "t29hhvovwg23ayyamme7om5zjqjvlahua490", "21cd7a16-5c28-11ea-b6c2-06cff6918b42", "9903558e-5c23-11ea-b6c2-06cff6918b42", "87e3b6a8-67ef-11ea-b6c2-06cff6918b42", "86a52d4a-67ef-11ea-b6c2-06cff6918b42"]
         results = analyse_booking_quotes_table(bookingIds)
-        print("results", results)
         return JsonResponse({"message": "success", "results": results}, status=200)
 
 
