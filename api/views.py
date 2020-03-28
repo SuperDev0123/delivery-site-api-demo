@@ -3996,7 +3996,7 @@ def download(request):
     download_option = body["downloadOption"]
     file_paths = []
 
-    if download_option == "pricing-only":
+    if download_option in ["pricing-only", "pricing-rule"]:
         file_name = body["fileName"]
     elif download_option == "manifest":
         z_manifest_url = body["z_manifest_url"]
@@ -4014,6 +4014,9 @@ def download(request):
 
         if result_file_record:
             file_paths.append(result_file_record.first().file_path)
+    elif download_option == "pricing-rule":
+        src_file_path = f"./static/uploaded/pricing_rule/achieve/{file_name}"
+        file_paths.append(src_file_path)
     elif download_option == "manifest":
         file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
     elif download_option == "label":
@@ -4120,7 +4123,7 @@ def delete_file(request):
 
         booking.save()
         delete_lib.delete(file_path)
-    elif file_option in ["pricing-only"]:
+    elif file_option == "pricing-only":
         file_name = body["fileName"]
         delete_lib.delete(f"./static/uploaded/pricing_only/indata/{file_name}")
         delete_lib.delete(f"./static/uploaded/pricing_only/inprogress/{file_name}")
@@ -4133,6 +4136,13 @@ def delete_file(request):
         if result_file_record:
             delete_lib.delete(result_file_record.first().file_path)
 
+        DME_Files.objects.filter(file_name__icontains=file_name_without_ext).delete()
+    elif file_option == "pricing-rule":
+        file_name = body["fileName"]
+        delete_lib.delete(f"./static/uploaded/pricing_rule/indata/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_rule/inprogress/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_rule/achieve/{file_name}")
+        file_name_without_ext = file_name.split(".")[0]
         DME_Files.objects.filter(file_name__icontains=file_name_without_ext).delete()
 
     return JsonResponse(
@@ -4596,6 +4606,11 @@ class FileUploadView(views.APIView):
             file_name = upload_lib.upload_pricing_only_file(
                 user_id, username, file, upload_option
             )
+        elif upload_option == "pricing-rule":
+            rule_type = request.POST.get("ruleType", None)
+            file_name = upload_lib.upload_pricing_rule_file(
+                user_id, username, file, upload_option, rule_type
+            )
 
         return Response(file_name)
 
@@ -4659,6 +4674,23 @@ class VehiclesViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": str(e)})
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = FP_vehicles.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": VehiclesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            # print("@Exception", e)
+            return JsonResponse({"result": None}, status=500)
+
 
 class TimingsViewSet(viewsets.ViewSet):
     serializer_class = TimingsSerializer
@@ -4671,24 +4703,19 @@ class TimingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            resultObject = FP_timings.objects.get_or_create(
-                time_UOM=request.data["time_UOM"],
-                min=request.data["min"],
-                max=request.data["max"],
-                booking_cut_off_time=request.data["booking_cut_off_time"],
-                collected_by=request.data["collected_by"],
-                delivered_by=request.data["delivered_by"],
-            )
+            request.data.pop("id", None)
+            resultObject = FP_timings.objects.get_or_create(**request.data)
 
             return JsonResponse(
                 {
                     "result": TimingsSerializer(resultObject[0]).data,
                     "isCreated": resultObject[1],
-                }
+                },
+                status=200,
             )
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"result": None}, status=500)
 
 
 class AvailabilitiesViewSet(viewsets.ViewSet):
@@ -4737,6 +4764,23 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": str(e)})
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = FP_availabilities.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": AvailabilitiesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            # print("@Exception", e)
+            return JsonResponse({"result": None}, status=500)
+
 
 class CostsViewSet(viewsets.ViewSet):
     serializer_class = CostsSerializer
@@ -4778,6 +4822,23 @@ class CostsViewSet(viewsets.ViewSet):
             return JsonResponse({"results": return_data})
         except Exception as e:
             return JsonResponse({"results": str(e)})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = FP_costs.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": CostsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            print("@Exception", e, request.data["per_UOM_charge"])
+            return JsonResponse({"result": None}, status=500)
 
 
 class PricingRulesViewSet(viewsets.ViewSet):
@@ -4826,3 +4887,20 @@ class PricingRulesViewSet(viewsets.ViewSet):
             return JsonResponse({"results": return_data})
         except Exception as e:
             return JsonResponse({"results": str(e)})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = FP_pricing_rules.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": PricingRulesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            print("@Exception", e)
+            return JsonResponse({"result": None}, status=500)
