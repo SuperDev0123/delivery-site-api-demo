@@ -24,6 +24,22 @@ def _convert_UOM(value, uom, type, fp_name):
     return round(converted_value, 2)
 
 
+def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
+    limiter = "1"
+
+    for i in range(digit_len):
+        limiter += "0"
+
+    limiter = int(limiter)
+
+    prefix_index = int(booking_visual_id / limiter) + 1
+    prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
+        ((prefix_index - 1) % 26) + 65
+    )
+
+    return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+
+
 def get_dme_status_from_fp_status(fp_name, booking):
     try:
         status_info = Dme_utl_fp_statuses.objects.get(
@@ -63,10 +79,10 @@ def get_account_code_key(booking, fp_name):
 
         for key in ACCOUNT_CODES[fp_name.lower()]:
             if ACCOUNT_CODES[fp_name.lower()][key] == account_code:
-                account_key = key
+                account_code_key = key
                 return account_code_key
 
-        if not account_key:
+        if not account_code_key:
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
             booking.save()
             return None
@@ -151,7 +167,7 @@ def _get_etd(pricing):
         elif pricing.fk_freight_provider_id.lower() in ["sendle", "century"]:
             min = float(pricing.etd.split(",")[0])
             max = float(pricing.etd.split(",")[1])
-        elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll"]:
+        elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll", "camerons"]:
             min = 0
             max = float(pricing.etd.lower().split("days")[0])
 

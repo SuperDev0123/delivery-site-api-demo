@@ -389,5 +389,5 @@ def get_pricing(fp_name, booking):
 
     return {
         "price": pricies,
-        "requestId": "Centry-DME",
+        "requestId": "",
     }

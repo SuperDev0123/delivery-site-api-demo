@@ -35,6 +35,7 @@ from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from api.common import status_history, download_external, trace_error
+from api.common.build_object import Struct
 from .build_label.dhl import build_dhl_label
 
 if settings.ENV == "local":
@@ -168,7 +169,7 @@ def book(request, fp_name):
             error_msg = pre_check_book(booking)
 
             if error_msg:
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
 
             try:
                 if fp_name.lower() in ["hunter"]:
@@ -176,7 +177,8 @@ def book(request, fp_name):
 
                     if not account_code_key:
                         return JsonResponse(
-                            {"message": booking.b_error_Capture}, status=400
+                            {"message": f"#701 Error: {booking.b_error_Capture}"},
+                            status=400,
                         )
 
                     payload = get_book_payload(booking, fp_name, account_code_key)
@@ -241,9 +243,7 @@ def book(request, fp_name):
                             "tracking_details"
                         ]["consignment_id"]
                     elif booking.vx_freight_provider.lower() == "hunter":
-                        booking.v_FPBookingNumber = (
-                            f"DMEH{str(booking.b_bookingID_Visual)}"
-                        )
+                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
                         booking.jobNumber = json_data["jobNumber"]
                         booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":
@@ -999,16 +999,32 @@ def reprint(request, fp_name):
 def pricing(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
+    is_pricing_only = False
+    booking_lines = []
 
-    try:
-        booking = Bookings.objects.get(id=booking_id)
-    except Bookings.DoesNotExist as e:
-        trace_error.print()
-        return JsonResponse({"message": f"Booking is not exist"}, status=400)
+    # Only quote
+    if not booking_id and "booking" in body:
+        is_pricing_only = True
+        booking = Struct(**body["booking"])
+        client_warehouse_code = booking.client_warehouse_code
+
+        for booking_line in body["booking_lines"]:
+            booking_lines.append(Struct(**booking_line))
+
+    if not is_pricing_only:
+        try:
+            booking = Bookings.objects.get(id=booking_id)
+            client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
+        except Exception as e:
+            trace_error.print()
+            return JsonResponse({"message": f"Booking is not exist"}, status=400)
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
-        _set_error(booking, error_msg)
+
+        if not is_pricing_only:
+            _set_error(booking, error_msg)
+
         return JsonResponse({"message": error_msg}, status=400)
 
     fp_names = [
@@ -1032,20 +1048,18 @@ def pricing(request):
             elif fp_name.lower() in ACCOUNT_CODES:
                 for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
                     if (
-                        "SWYTEMPBUN"
-                        in booking.fk_client_warehouse.client_warehouse_code
+                        "SWYTEMPBUN" in client_warehouse_code
                         and not "bunnings" in account_code_key
                     ):
                         continue
                     elif (
-                        not "SWYTEMPBUN"
-                        in booking.fk_client_warehouse.client_warehouse_code
+                        not "SWYTEMPBUN" in client_warehouse_code
                         and "bunnings" in account_code_key
                     ):
                         continue
 
                     payload = get_pricing_payload(
-                        booking, fp_name.lower(), account_code_key
+                        booking, fp_name.lower(), account_code_key, booking_lines
                     )
 
                     logger.error(f"### Payload ({fp_name.upper()} PRICING): {payload}")
@@ -1058,13 +1072,14 @@ def pricing(request):
                     )  # Just for visual
                     logger.error(f"### Response ({fp_name.upper()} PRICING): {s0}")
 
-                    Log.objects.create(
-                        request_payload=payload,
-                        request_status="SUCCESS",
-                        request_type=f"{fp_name.upper()} PRICING",
-                        response=res_content,
-                        fk_booking_id=booking.id,
-                    )
+                    if not is_pricing_only:
+                        Log.objects.create(
+                            request_payload=payload,
+                            request_status="SUCCESS",
+                            request_type=f"{fp_name.upper()} PRICING",
+                            response=res_content,
+                            fk_booking_id=booking.id,
+                        )
 
                     parse_results = parse_pricing_response(
                         response, fp_name.lower(), booking
@@ -1072,10 +1087,11 @@ def pricing(request):
 
                     if parse_results and not "error" in parse_results:
                         for parse_result in parse_results:
+                            parse_result["account_code"] = payload["spAccountDetails"][
+                                "accountCode"
+                            ]
+
                             try:
-                                parse_result["account_code"] = payload[
-                                    "spAccountDetails"
-                                ]["accountCode"]
                                 api_booking_quote = API_booking_quotes.objects.get(
                                     fk_booking_id=booking.pk_booking_id,
                                     fk_freight_provider_id=parse_result[
@@ -1098,7 +1114,7 @@ def pricing(request):
                                     logger.error("Exception: ", e)
 
                                 api_booking_quote.save()
-                            except API_booking_quotes.DoesNotExist:
+                            except API_booking_quotes.DoesNotExist as e:
                                 trace_error.print()
                                 serializer = ApiBookingQuotesSerializer(
                                     data=parse_result
@@ -1139,7 +1155,7 @@ def pricing(request):
                             logger.error(f"@403 Serializer error: {serializer.errors}")
 
                         api_booking_quote.save()
-                    except API_booking_quotes.DoesNotExist:
+                    except API_booking_quotes.DoesNotExist as e:
                         trace_error.print()
                         serializer = ApiBookingQuotesSerializer(data=parse_result)
 
@@ -1154,13 +1170,18 @@ def pricing(request):
                             trace_error.print()
                             logger.error(f"@405 Exception: {e}")
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
-        auto_select(booking, results)
+
+        if is_pricing_only:
+            results = ApiBookingQuotesSerializer(results, many=True).data
+            API_booking_quotes.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            ).delete()
+        else:
+            auto_select(booking, results)
+            results = ApiBookingQuotesSerializer(results, many=True).data
+
         return JsonResponse(
-            {
-                "message": f"Retrieved all Pricing info",
-                "results": ApiBookingQuotesSerializer(results, many=True).data,
-            },
-            status=200,
+            {"message": f"Retrieved all Pricing info", "results": results,}, status=200,
         )
     except Exception as e:
         trace_error.print()

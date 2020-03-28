@@ -2686,6 +2686,33 @@ class Utl_country_codes(models.Model):
         db_table = "utl_country_codes"
 
 
+class Utl_sql_queries(models.Model):
+    id = models.AutoField(primary_key=True)
+    sql_title = models.CharField(
+        verbose_name=_("SQL Title"), max_length=36, blank=True, null=True
+    )
+    sql_query = models.TextField(verbose_name=_("SQL Query"), blank=True, null=True)
+    sql_description = models.TextField(
+        verbose_name=_("SQL Description"), blank=True, null=True
+    )
+    sql_notes = models.TextField(verbose_name=_("SQL Notes"), blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "utl_sql_queries"
+
+
 class Dme_status_history(models.Model):
     id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(
@@ -3497,16 +3524,19 @@ def pre_save_booking(sender, instance: Bookings, **kwargs):
 
 class DME_Files(models.Model):
     id = models.AutoField(primary_key=True)
-    file_name = models.CharField(max_length=255, blank=False)
-    z_createdTimeStamp = models.DateTimeField(default=datetime.now, blank=True)
-    z_createdByAccount = models.CharField(max_length=32, blank=False)
-    file_type = models.CharField(
-        verbose_name=_("File Type"), max_length=16, blank=False
-    )
+    file_name = models.CharField(max_length=255, blank=False, null=True, default=None)
+    file_path = models.TextField(max_length=1024, blank=False, null=True, default=None)
+    file_type = models.CharField(max_length=16, blank=False, null=True, default=None)
     file_extension = models.CharField(
-        verbose_name=_("File Extension"), max_length=8, blank=False
+        max_length=8, blank=False, null=True, default=None
     )
-    note = models.TextField(verbose_name=_("Note"), max_length=512, blank=False)
+    note = models.TextField(max_length=2048, blank=False, null=True, default=None)
+    z_createdTimeStamp = models.DateTimeField(
+        default=datetime.now, blank=True, null=True
+    )
+    z_createdByAccount = models.CharField(
+        max_length=32, blank=False, null=True, default=None
+    )
 
     class Meta:
         db_table = "dme_files"
@@ -3516,6 +3546,14 @@ class Client_Auto_Augment(models.Model):
     tic_de_Email = models.CharField(
         verbose_name=_("TIC DE Email"),
         max_length=64,
+        blank=True,
+        null=True,
+        default="itassets@ticgroup.com.au",
+    )
+
+    tic_de_Email_Group_Emails = models.CharField(
+        verbose_name=_("TIC DE Email Group Emails"),
+        max_length=30,
         blank=True,
         null=True,
         default="itassets@ticgroup.com.au",
@@ -3604,6 +3642,14 @@ class Client_Process_Mgr(models.Model):
     origin_de_Email = models.CharField(
         verbose_name=_("Origin DE Email"),
         max_length=64,
+        blank=True,
+        null=True,
+        default="",
+    )
+
+    origin_de_Email_Group_Emails = models.CharField(
+        verbose_name=_("Origin DE Email Group Emails"),
+        max_length=30,
         blank=True,
         null=True,
         default="",

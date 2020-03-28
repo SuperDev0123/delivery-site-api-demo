@@ -6,6 +6,7 @@ from .views import *
 from .views_api import *
 from .views_external_apis import *
 from .fp_apis import apis as fp_apis
+from .file_operations.uploads import get_upload_status
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet, basename="user")
@@ -21,11 +22,19 @@ router.register(r"packagetype", PackageTypesViewSet, basename="packagetype")
 router.register(r"bookingstatus", BookingStatusViewSet, basename="bookingstatus")
 router.register(r"statushistory", StatusHistoryViewSet, basename="statushistory")
 router.register(r"fp", FPViewSet, basename="fp")
+router.register(r"emailtemplates", EmailTemplatesViewSet, basename="emailtemplates")
 router.register(r"options", OptionsViewSet, basename="options")
 router.register(r"status", StatusViewSet, basename="status")
 router.register(r"api_bcl", ApiBCLViewSet, basename="api_bcl")
 router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
+router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
+router.register(r"vehicles", VehiclesViewSet, basename="vehicles")
+router.register(r"timings", TimingsViewSet, basename="timing")
+router.register(r"availabilities", AvailabilitiesViewSet, basename="availabilities")
+router.register(r"costs", CostsViewSet, basename="costs")
+router.register(r"pricing_rules", PricingRulesViewSet, basename="pricing_rules")
+
 router.register(
     r"fp-store-booking-log", FPStoreBookingLog, basename="fp-store-booking-log"
 )
@@ -33,7 +42,7 @@ router.register(r"bok_0_bookingskeys", BOK_0_ViewSet, basename="bok0")
 router.register(r"bok_1_headers", BOK_1_ViewSet, basename="bok1")
 router.register(r"bok_2_lines", BOK_2_ViewSet, basename="bok2")
 router.register(r"bok_3_lines_data", BOK_3_ViewSet, basename="bok3")
-router.register(r"files", DME_Files_ViewSet, basename="files")
+router.register(r"files", FilesViewSet, basename="files")
 
 urlpatterns = router.urls
 
@@ -49,16 +58,10 @@ urlpatterns += [
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
     # Uploads
-    url(r"^share/upload/(?P<filename>[^/]+)$", FileUploadView.as_view()),
-    url(r"^upload/attachments/", AttachmentsUploadView.as_view()),
-    url(r"^upload/label/", LabelUploadView.as_view()),
-    url(r"^upload/pod/", PodUploadView.as_view()),
-    url(r"^share/upload-status/", upload_status),
+    url(r"^upload/", FileUploadView.as_view()),
+    url(r"^upload/status/", get_upload_status),
     # Downloads
-    url(r"^download-pdf/", download_pdf),
-    url(r"^download-pod/", download_pod),
-    url(r"^download-connote/", download_connote),
-    url(r"^download-manifest/", download_manifest),
+    url(r"^download/", download),
     # Delete
     url(r"^delete-file/", delete_file),
     # Generates

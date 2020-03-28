@@ -1,20 +1,19 @@
 import pytz
 import os
-import io
 import json
-import zipfile
 import uuid
 import time
 import logging
 import operator
+import requests
+import tempfile
+import re
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 from time import gmtime, strftime
 from ast import literal_eval
 from functools import reduce
 from pydash import _
-import requests
-import tempfile
 
 from django.shortcuts import render
 from django.core import serializers, files
@@ -36,6 +35,7 @@ from rest_framework.decorators import (
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When
+from django.db import connection
 from django.utils import timezone
 from django.conf import settings
 from django.utils.datastructures import MultiValueDictKeyError
@@ -53,9 +53,6 @@ from django_rest_passwordreset.signals import (
 from .serializers import *
 from .models import *
 from .utils import (
-    clearFileCheckHistory,
-    getFileCheckHistory,
-    save2Redis,
     _generate_csv,
     build_xml,
     build_pdf,
@@ -66,24 +63,16 @@ from .utils import (
     get_client_name,
     calc_collect_after_status_change,
     send_email,
+    tables_in_query,
 )
-from api.outputs import emails as email_module
+from api.outputs import tempo, emails as email_module
 from api.common import status_history
-from api.outputs import tempo
 from api.stats.pricing import analyse_booking_quotes_table
-
-if settings.ENV == "local":
-    SERVER_IP = "localhost:9000"
-    STATIC_PUBLIC = "./static"
-    STATIC_PRIVATE = "./static"
-elif settings.ENV == "dev":
-    SERVER_IP = f"3.104.30.210"
-    STATIC_PUBLIC = "/opt/s3_public"
-    STATIC_PRIVATE = "/opt/s3_private"
-elif settings.ENV == "prod":
-    SERVER_IP = f"13.55.160.158"
-    STATIC_PUBLIC = "/opt/s3_public"
-    STATIC_PRIVATE = "/opt/s3_private"
+from api.file_operations import (
+    uploads as upload_lib,
+    delete as delete_lib,
+    downloads as download_libs,
+)
 
 logger = logging.getLogger("dme_api")
 
@@ -92,7 +81,7 @@ logger = logging.getLogger("dme_api")
 def password_reset_token_created(
     sender, instance, reset_password_token, *args, **kwargs
 ):
-    url = f"http://{SERVER_IP}"
+    url = f"http://{settings.WEB_SITE_IP}"
     context = {
         "current_user": reset_password_token.user,
         "username": reset_password_token.user.username,
@@ -215,6 +204,122 @@ class UserViewSet(viewsets.ViewSet):
             return JsonResponse(
                 {"user_date_filter_field": client.client_filter_date_field}
             )
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+        client_pk = self.request.query_params.get("clientPK", None)
+
+        if client_pk is not None:
+            filter_data = Client_employees.objects.filter(
+                fk_id_dme_client_id=int(client_pk)
+            )
+
+            filter_arr = []
+            for data in filter_data:
+                filter_arr.append(data.fk_id_user_id)
+
+        try:
+            resultObjects = []
+            if len(filter_arr) == 0:
+                resultObjects = User.objects.all().order_by("username")
+            else:
+                resultObjects = User.objects.filter(pk__in=filter_arr).order_by(
+                    "username"
+                )
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "first_name": resultObject.first_name,
+                        "last_name": resultObject.last_name,
+                        "username": resultObject.username,
+                        "email": resultObject.email,
+                        "last_login": resultObject.last_login,
+                        "is_staff": resultObject.is_staff,
+                        "is_active": resultObject.is_active,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = User.objects.get(pk=pk)
+
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "first_name": resultObject.first_name,
+                    "last_name": resultObject.last_name,
+                    "username": resultObject.username,
+                    "email": resultObject.email,
+                    "last_login": resultObject.last_login,
+                    "is_staff": resultObject.is_staff,
+                    "is_active": resultObject.is_active,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print("@Exception", e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = User.objects.create(
+                fk_idEmailParent=request.data["fk_idEmailParent"],
+                emailName=request.data["emailName"],
+                emailBody=request.data["emailBody"],
+                sectionName=request.data["sectionName"],
+                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
+                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
+                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
+            )
+
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
+            return JsonResponse({"results": request.data})
+            # if serializer.is_valid():
+            # try:
+            # serializer.save()
+            # return Response(serializer.data)
+            # except Exception as e:
+            # print('%s (%s)' % (e.message, type(e)))
+            # return Response({"results": e.message})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            # user.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
 
 
 class BookingsViewSet(viewsets.ViewSet):
@@ -1426,11 +1531,12 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def pricing_analysis(self, request, format=None):
         bookingIds = request.data["bookingIds"]
-        print('bookingIds', bookingIds)
+        print("bookingIds", bookingIds)
         # bookingIds = ["d06688d4-6817-11ea-b6c2-06cff6918b42", "t29hhvovwg23ayyamme7om5zjqjvlahua490", "21cd7a16-5c28-11ea-b6c2-06cff6918b42", "9903558e-5c23-11ea-b6c2-06cff6918b42", "87e3b6a8-67ef-11ea-b6c2-06cff6918b42", "86a52d4a-67ef-11ea-b6c2-06cff6918b42"]
         results = analyse_booking_quotes_table(bookingIds)
-        print('results', results)
+        print("results", results)
         return JsonResponse({"message": "success", "results": results}, status=200)
+
 
 class BookingViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
@@ -1985,178 +2091,174 @@ class BookingViewSet(viewsets.ViewSet):
                 .filter(fk_booking_id=bookingId)
                 .first()
             )
-            if client_process is None:
-                client_process = Client_Process_Mgr(fk_booking_id=bookingId)
-                client_process.process_name = "Auto Augment " + str(bookingId)
-                client_process.origin_puCompany = booking.puCompany
-                client_process.origin_pu_Address_Street_1 = booking.pu_Address_Street_1
-                client_process.origin_pu_Address_Street_2 = booking.pu_Address_street_2
-                client_process.origin_pu_pickup_instructions_address = (
-                    booking.pu_pickup_instructions_address
-                )
-                client_process.origin_deToCompanyName = booking.deToCompanyName
-                client_process.origin_de_Email = booking.de_Email
-                client_process.origin_de_Email_Group_Emails = (
-                    booking.de_Email_Group_Emails
-                )
-                client_process.origin_de_To_Address_Street_1 = (
-                    booking.de_To_Address_Street_1
-                )
-                client_process.origin_de_To_Address_Street_2 = (
-                    booking.de_To_Address_Street_2
-                )
-                client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
-                client_process.origin_puPickUpAvailFrom_Date = booking.puPickUpAvailFrom_Date
 
-                client_process.origin_pu_PickUp_Avail_Time_Hours = (
-                    booking.pu_PickUp_Avail_Time_Hours
-                )
-
-                client_process.origin_pu_PickUp_Avail_Time_Minutes = (
-                    booking.pu_PickUp_Avail_Time_Minutes
-                )
-
-                client_process.origin_pu_PickUp_By_Time_Hours = (
-                    booking.pu_PickUp_Avail_Time_Hours
-                )
-
-                client_process.origin_pu_PickUp_By_Time_Minutes = (
-                    booking.pu_PickUp_Avail_Time_Minutes
-                )
-
-                client_auto_augment = Client_Auto_Augment.objects.first()
-
-                if (
-                    "Tempo" in booking.b_client_name
-                    and booking.b_booking_Category == "Salvage Expense"
-                ):
-                    pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
-                    puCompany = booking.puCompany
-                    deToCompanyName = booking.deToCompanyName
-                    booking.puCompany = (
-                        puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
-                    )
-
-                    if (
-                        booking.pu_Address_street_2 == ""
-                        or booking.pu_Address_street_2 == None
-                    ):
-                        booking.pu_Address_street_2 = booking.pu_Address_Street_1
-                        custRefNumVerbage = (
-                            "Ref: "
-                            + str(booking.get_clientRefNumbers() or "")
-                            + " Returns 4 "
-                            + booking.b_client_name
-                            + ". Fragile"
-                        )
-
-                        booking.pu_Address_Street_1 = custRefNumVerbage
-                        booking.de_Email = str(booking.de_Email or "").replace(";", ",")
-                        booking.de_Email_Group_Emails = str(
-                            booking.de_Email_Group_Emails or ""
-                        ).replace(";", ",")
-                        booking.pu_pickup_instructions_address = (
-                            str(booking.pu_pickup_instructions_address or "")
-                            + " "
-                            + custRefNumVerbage
-                        )
-
-                    if "TIC" in booking.deToCompanyName:
-                        booking.deToCompanyName = (
-                            deToCompanyName + " (Open 7am-3pm, 1pm Fri)"
-                        )
-                        booking.de_Email = client_auto_augment.tic_de_Email
-                        booking.de_Email_Group_Emails = (
-                            client_auto_augment.tic_de_Email_Group_Emails
-                        )
-                        booking.de_To_Address_Street_1 = (
-                            client_auto_augment.tic_de_To_Address_Street_1
-                        )
-                        booking.de_To_Address_Street_2 = (
-                            client_auto_augment.tic_de_To_Address_Street_2
-                        )
-
-                    if "Sales Club" in booking.deToCompanyName:
-                        booking.de_Email = client_auto_augment.sales_club_de_Email
-                        booking.de_Email_Group_Emails = (
-                            client_auto_augment.sales_club_de_Email_Group_Emails
-                        )
-
-                    tempo_client = DME_clients.objects.filter(company_name="Tempo").first()
-
-                    if tempo_client == None:
-                        pu_PickUp_By_Time_Hours = 16
-                        pu_PickUp_By_Time_Minutes = 0
-                        pu_PickUp_Avail_Time_Hours = 10
-                        pu_PickUp_Avail_Time_Minutes = 0
-                    else:
-                        pu_PickUp_By_Time_Hours = (
-                            tempo_client.augment_pu_by_time.strftime("%H")
-                        )
-                        pu_PickUp_By_Time_Minutes =  (
-                            tempo_client.augment_pu_by_time.strftime("%M")
-                        )
-                        pu_PickUp_Avail_Time_Hours = (
-                            tempo_client.augment_pu_available_time.strftime("%H")
-                        )
-                        pu_PickUp_Avail_Time_Minutes = (
-                            tempo_client.augment_pu_available_time.strftime("%M")
-                        )
-
-                    if (
-                        booking.x_ReadyStatus == "Available Now"
-                        and not booking.pu_PickUp_By_Date
-                        and not booking.pu_PickUp_By_Time_Hours
-                    ):
-                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                        booking.pu_PickUp_By_Time_Hours = pu_PickUp_By_Time_Hours
-                        booking.pu_PickUp_By_Time_Minutes = pu_PickUp_By_Time_Minutes
-
-                    if (
-                        booking.x_ReadyStatus == "Available From"
-                        and not booking.puPickUpAvailFrom_Date
-                        and not booking.pu_PickUp_Avail_Time_Hours
-                    ):
-                        booking.puPickUpAvailFrom_Date = datetime.now().strftime(
-                            "%Y-%m-%d"
-                        )
-                        booking.pu_PickUp_Avail_Time_Hours = pu_PickUp_Avail_Time_Hours
-                        booking.pu_PickUp_Avail_Time_Minutes = pu_PickUp_Avail_Time_Minutes
-
-                    if (
-                        booking.x_ReadyStatus == "Available From"
-                        and not booking.pu_PickUp_By_Date
-                        and not booking.pu_PickUp_By_Time_Hours
-                    ):
-                        booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                        booking.pu_PickUp_By_Time_Hours = pu_PickUp_By_Time_Hours
-                        booking.pu_PickUp_By_Time_Minutes =pu_PickUp_By_Time_Minutes
-
-                    client_process.save()
-                    booking.save()
-                    serializer = BookingSerializer(booking)
-                    return Response(serializer.data)
-                else:
-                    if "Tempo Pty Ltd" == booking.b_client_name:
-                        return JsonResponse(
-                            {"message": "Client is not Tempo", "type": "Failure"},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    elif booking.b_booking_Category != "Salvage Expense":
-                        return JsonResponse(
-                            {
-                                "message": "Booking Category is not  Salvage Expense",
-                                "type": "Failure",
-                            },
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-            else:
+            if client_process:
                 return JsonResponse(
                     {"message": "Already Augmented", "type": "Failure"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            client_process = Client_Process_Mgr(fk_booking_id=bookingId)
+            client_process.process_name = "Auto Augment " + str(bookingId)
+            client_process.origin_puCompany = booking.puCompany
+            client_process.origin_pu_Address_Street_1 = booking.pu_Address_Street_1
+            client_process.origin_pu_Address_Street_2 = booking.pu_Address_street_2
+            client_process.origin_pu_pickup_instructions_address = (
+                booking.pu_pickup_instructions_address
+            )
+            client_process.origin_deToCompanyName = booking.deToCompanyName
+            client_process.origin_de_Email = booking.de_Email
+            client_process.origin_de_Email_Group_Emails = booking.de_Email_Group_Emails
+            client_process.origin_de_To_Address_Street_1 = (
+                booking.de_To_Address_Street_1
+            )
+            client_process.origin_de_To_Address_Street_2 = (
+                booking.de_To_Address_Street_2
+            )
+            client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
+            client_process.origin_puPickUpAvailFrom_Date = (
+                booking.puPickUpAvailFrom_Date
+            )
+
+            client_process.origin_pu_PickUp_Avail_Time_Hours = (
+                booking.pu_PickUp_Avail_Time_Hours
+            )
+
+            client_process.origin_pu_PickUp_Avail_Time_Minutes = (
+                booking.pu_PickUp_Avail_Time_Minutes
+            )
+
+            client_process.origin_pu_PickUp_By_Time_Hours = (
+                booking.pu_PickUp_Avail_Time_Hours
+            )
+
+            client_process.origin_pu_PickUp_By_Time_Minutes = (
+                booking.pu_PickUp_Avail_Time_Minutes
+            )
+
+            client_auto_augment = Client_Auto_Augment.objects.first()
+
+            if (
+                "Tempo Pty Ltd" in booking.b_client_name
+                and booking.b_booking_Category == "Salvage Expense"
+            ):
+                pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
+                puCompany = booking.puCompany
+                deToCompanyName = booking.deToCompanyName
+                booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
+
+                if (
+                    booking.pu_Address_street_2 == ""
+                    or booking.pu_Address_street_2 == None
+                ):
+                    booking.pu_Address_street_2 = booking.pu_Address_Street_1
+                    custRefNumVerbage = (
+                        "Ref: "
+                        + str(booking.get_clientRefNumbers() or "")
+                        + " Returns 4 "
+                        + booking.b_client_name
+                        + ". Fragile"
+                    )
+
+                    booking.pu_Address_Street_1 = custRefNumVerbage
+                    booking.de_Email = str(booking.de_Email or "").replace(";", ",")
+                    booking.de_Email_Group_Emails = str(
+                        booking.de_Email_Group_Emails or ""
+                    ).replace(";", ",")
+                    booking.pu_pickup_instructions_address = (
+                        str(booking.pu_pickup_instructions_address or "")
+                        + " "
+                        + custRefNumVerbage
+                    )
+
+                if "TIC" in booking.deToCompanyName:
+                    booking.deToCompanyName = (
+                        deToCompanyName + " (Open 7am-3pm, 1pm Fri)"
+                    )
+                    booking.de_Email = client_auto_augment.tic_de_Email
+                    booking.de_Email_Group_Emails = (
+                        client_auto_augment.tic_de_Email_Group_Emails
+                    )
+                    booking.de_To_Address_Street_1 = (
+                        client_auto_augment.tic_de_To_Address_Street_1
+                    )
+                    booking.de_To_Address_Street_2 = (
+                        client_auto_augment.tic_de_To_Address_Street_2
+                    )
+
+                if "Sales Club" in booking.deToCompanyName:
+                    booking.de_Email = client_auto_augment.sales_club_de_Email
+                    booking.de_Email_Group_Emails = (
+                        client_auto_augment.sales_club_de_Email_Group_Emails
+                    )
+
+                tempo_client = DME_clients.objects.filter(
+                    company_name="Tempo Pty Ltd"
+                ).first()
+
+                if (
+                    booking.x_ReadyStatus == "Available From"
+                    and booking.puPickUpAvailFrom_Date is None
+                    and booking.pu_PickUp_Avail_Time_Hours is None
+                ):
+                    if not tempo_client.augment_pu_available_time:
+                        error_msg = "No augment data available!"
+                        return JsonResponse(
+                            {"type": "Failure", "message": str(error_msg)},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
+                    booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
+                        "%H"
+                    )
+                    booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
+                        "%M"
+                    )
+
+                if (
+                    (
+                        booking.x_ReadyStatus == "Available Now"
+                        or booking.x_ReadyStatus == "Available From"
+                    )
+                    and booking.pu_PickUp_By_Date is None
+                    and booking.pu_PickUp_By_Time_Hours is None
+                ):
+                    if not tempo_client.augment_pu_by_time:
+                        error_msg = "No augment data available!"
+                        return JsonResponse(
+                            {"type": "Failure", "message": str(error_msg)},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                        "%H"
+                    )
+                    booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                        "%M"
+                    )
+
+                client_process.save()
+                booking.save()
+                serializer = BookingSerializer(booking)
+                return Response(serializer.data)
+            else:
+                if "Tempo Pty Ltd" == booking.b_client_name:
+                    return JsonResponse(
+                        {"message": "Client is not Tempo", "type": "Failure"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                elif booking.b_booking_Category != "Salvage Expense":
+                    return JsonResponse(
+                        {
+                            "message": "Booking Category is not  Salvage Expense",
+                            "type": "Failure",
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
         except Exception as e:
-            print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -2193,7 +2295,9 @@ class BookingViewSet(viewsets.ViewSet):
                     client_process.origin_de_To_Address_Street_2
                 )
                 booking.pu_PickUp_By_Date = client_process.origin_pu_PickUp_By_Date
-                booking.puPickUpAvailFrom_Date = client_process.origin_puPickUpAvailFrom_Date
+                booking.puPickUpAvailFrom_Date = (
+                    client_process.origin_puPickUpAvailFrom_Date
+                )
 
                 booking.pu_PickUp_Avail_Time_Hours = (
                     client_process.origin_pu_PickUp_Avail_Time_Hours
@@ -2221,7 +2325,6 @@ class BookingViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         except Exception as e:
-            print(str(e))
             return Response(
                 {"type": "Failure", "message": "Exception occurred"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -2527,117 +2630,6 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                 )
                 queryset = [employee_warehouse]
                 return queryset
-
-
-class AttachmentsUploadView(views.APIView):
-    def post(self, request, format=None):
-        uploadResult = handle_uploaded_file_4_booking(
-            request, request.FILES["file"], "attachments"
-        )
-        return Response(uploadResult)
-
-
-class LabelUploadView(views.APIView):
-    def post(self, request, format=None):
-        uploadResult = handle_uploaded_file_4_booking(
-            request, request.FILES["file"], "label"
-        )
-        return Response(uploadResult)
-
-
-class PodUploadView(views.APIView):
-    def post(self, request, format=None):
-        uploadResult = handle_uploaded_file_4_booking(
-            request, request.FILES["file"], "pod"
-        )
-        return Response(uploadResult)
-
-
-def handle_uploaded_file_4_booking(request, f, upload_type):
-    user_id = request.user.id
-
-    try:
-        bookingId = request.POST.get("booking_id", None)
-
-        if not bookingId:
-            return "failed"
-
-        try:
-            client = DME_clients.objects.get(pk_id_dme_client=user_id)
-        except DME_clients.DoesNotExist as e:
-            client = "dme"
-
-        booking = Bookings.objects.get(id=bookingId)
-        fp = Fp_freight_providers.objects.get(
-            fp_company_name=booking.vx_freight_provider
-        )
-        name, extension = os.path.splitext(f.name)
-
-        if upload_type == "attachments":
-            fp_dir_name = (
-                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
-            )
-            file_path = f"{STATIC_PUBLIC}/attachments/{fp_dir_name}/"
-
-            if not os.path.isdir(file_path):
-                os.makedirs(file_path)
-
-            file_name = (
-                f"{name}-{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}{extension}"
-            )
-            full_path = f"{file_path}/{file_name}"
-        elif upload_type in ["label", "pod"]:
-            fp_dir_name = (
-                f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
-            )
-
-            if upload_type == "label":
-                file_path = f"{STATIC_PUBLIC}/pdfs/{fp_dir_name}/"
-            else:
-                file_path = f"{STATIC_PUBLIC}/imgs/{fp_dir_name}/"
-
-            if not os.path.isdir(file_path):
-                os.makedirs(file_path)
-
-            if upload_type == "label":
-                file_name = f"DME{str(booking.b_bookingID_Visual)}{extension}"
-                booking.z_label_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-            elif upload_type == "pod" and not "sog" in name.lower():
-                file_name = f"POD_DME{str(booking.b_bookingID_Visual)}{extension}"
-                booking.z_pod_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-            elif upload_type == "pod" and "sog" in name.lower():
-                file_name = f"POD_SOG_DME{str(booking.b_bookingID_Visual)}{extension}"
-                booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
-
-            full_path = f"{file_path}/{file_name}"
-            booking.save()
-
-        with open(full_path, "wb+") as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-        if upload_type == "attachments":
-            dme_attachment = Dme_attachments(
-                fk_id_dme_client=client,
-                fk_id_dme_booking=booking.pk_booking_id,
-                fileName=full_path,
-                linkurl="22",
-                upload_Date=datetime.now(),
-            )
-            dme_attachment.save()
-
-        return {
-            "status": "success",
-            "file_path": f"{fp_dir_name}/{file_name}",
-            "type": upload_type,
-        }
-    except Exception as e:
-        # print("Exception: ", e)
-        return {
-            "status": "failed",
-            "file_path": f"{fp_dir_name}/{file_name}",
-            "type": upload_type,
-        }
 
 
 class CommsViewSet(viewsets.ViewSet):
@@ -3461,6 +3453,8 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
 
 class FPViewSet(viewsets.ViewSet):
+    serializer_class = FpSerializer
+
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         return_data = []
@@ -3476,9 +3470,355 @@ class FPViewSet(viewsets.ViewSet):
                         {
                             "id": resultObject.id,
                             "fp_company_name": resultObject.fp_company_name,
+                            "fp_address_country": resultObject.fp_address_country,
                         }
                     )
             return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.get(pk=pk)
+            if not resultObjects.fp_inactive_date:
+                return_data.append(
+                    {
+                        "id": resultObjects.id,
+                        "fp_company_name": resultObjects.fp_company_name,
+                        "fp_address_country": resultObjects.fp_address_country,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Fp_freight_providers.objects.create(
+                fp_company_name=request.data["fp_company_name"],
+                fp_address_country=request.data["fp_address_country"],
+            )
+
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
+        serializer = FpSerializer(fp_freight_providers, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
+
+        try:
+            fp_freight_providers.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get_carriers(self, request, pk=None):
+        fp_id = request.GET["fp_id"]
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = FP_carriers.objects.filter(fk_fp=fp_id)
+
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_fp": resultObject.fk_fp,
+                        "carrier": resultObject.carrier,
+                        "connote_start_value": resultObject.connote_start_value,
+                        "connote_end_value": resultObject.connote_end_value,
+                        "current_value": resultObject.current_value,
+                        "label_end_value": resultObject.label_end_value,
+                        "label_start_value": resultObject.label_start_value,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add_carrier(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_carriers.objects.create(
+                fk_fp=request.data["fk_fp"],
+                carrier=request.data["carrier"],
+                connote_start_value=request.data["connote_start_value"],
+                connote_end_value=request.data["connote_end_value"],
+                current_value=request.data["current_value"],
+                label_start_value=request.data["label_start_value"],
+                label_end_value=request.data["label_end_value"],
+            )
+
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit_carrier(self, request, pk, format=None):
+        fp_carrier = FP_carriers.objects.get(pk=pk)
+        serializer = CarrierSerializer(fp_carrier, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete_carrier(self, request, pk, format=None):
+        fp_carrier = FP_carriers.objects.get(id=pk)
+
+        try:
+            fp_carrier.delete()
+            return JsonResponse({"results": fp_carrier})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["get"])
+    def get_zones(self, request, pk=None):
+        fp_id = self.request.GET["fp_id"]
+        page_item_cnt = self.request.query_params.get("pageItemCnt", 10)
+        page_ind = self.request.query_params.get("pageInd", 0)
+        return_data = []
+        try:
+            resultObjects = []
+            resultObjects = FP_zones.objects.filter(fk_fp=fp_id)
+            # Count
+            zones_cnt = resultObjects.count()
+
+            # Pagination
+            page_cnt = (
+                int(zones_cnt / int(page_item_cnt))
+                if zones_cnt % int(page_item_cnt) == 0
+                else int(zones_cnt / int(page_item_cnt)) + 1
+            )
+            resultObjects = resultObjects[
+                int(page_item_cnt)
+                * int(page_ind) : int(page_item_cnt)
+                * (int(page_ind) + 1)
+            ]
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_fp": resultObject.fk_fp,
+                        "suburb": resultObject.suburb,
+                        "state": resultObject.state,
+                        "postal_code": resultObject.postal_code,
+                        "zone": resultObject.zone,
+                        "carrier": resultObject.carrier,
+                        "service": resultObject.service,
+                        "sender_code": resultObject.sender_code,
+                    }
+                )
+            return JsonResponse(
+                {
+                    "results": return_data,
+                    "page_cnt": page_cnt,
+                    "page_ind": page_ind,
+                    "page_item_cnt": page_item_cnt,
+                }
+            )
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add_zone(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_zones.objects.create(
+                fk_fp=request.data["fk_fp"],
+                suburb=request.data["suburb"],
+                state=request.data["state"],
+                postal_code=request.data["postal_code"],
+                zone=request.data["zone"],
+                carrier=request.data["carrier"],
+                service=request.data["service"],
+                sender_code=request.data["sender_code"],
+            )
+
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit_zone(self, request, pk, format=None):
+        fp_zone = FP_zones.objects.get(pk=pk)
+        serializer = ZoneSerializer(fp_zone, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete_zone(self, request, pk, format=None):
+        fp_zone = FP_zones.objects.get(pk=pk)
+
+        try:
+            fp_zone.delete()
+            return JsonResponse({"results": fp_zone})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+
+class EmailTemplatesViewSet(viewsets.ViewSet):
+    serializer_class = EmailTemplatesSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Email_Templates.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "fk_idEmailParent": resultObject.fk_idEmailParent,
+                        "emailName": resultObject.emailName,
+                        "emailBody": resultObject.emailBody,
+                        "sectionName": resultObject.sectionName,
+                        "emailBodyRepeatEven": resultObject.emailBodyRepeatEven,
+                        "emailBodyRepeatOdd": resultObject.emailBodyRepeatOdd,
+                        "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = DME_Email_Templates.objects.get(pk=pk)
+
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "fk_idEmailParent": resultObject.fk_idEmailParent,
+                    "emailName": resultObject.emailName,
+                    "emailBody": resultObject.emailBody,
+                    "sectionName": resultObject.sectionName,
+                    "emailBodyRepeatEven": resultObject.emailBodyRepeatEven,
+                    "emailBodyRepeatOdd": resultObject.emailBodyRepeatOdd,
+                    "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
+                    "z_createdByAccount": resultObject.z_createdByAccount,
+                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                    "z_downloadedByAccount": resultObject.z_downloadedByAccount,
+                    "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print("@Exception", e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = DME_Email_Templates.objects.create(
+                fk_idEmailParent=request.data["fk_idEmailParent"],
+                emailName=request.data["emailName"],
+                emailBody=request.data["emailBody"],
+                sectionName=request.data["sectionName"],
+                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
+                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
+                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
+            )
+
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        email_template = DME_Email_Templates.objects.get(pk=pk)
+        # return JsonResponse({"results": (email_template.emailBody)})
+        # serializer = EmailTemplatesSerializer(email_template, data=request.data)
+
+        try:
+            DME_Email_Templates.objects.filter(pk=pk).update(
+                emailBody=request.data["emailBody"]
+            )
+            return JsonResponse({"results": request.data})
+            # if serializer.is_valid():
+            # try:
+            # serializer.save()
+            # return Response(serializer.data)
+            # except Exception as e:
+            # print('%s (%s)' % (e.message, type(e)))
+            # return Response({"results": e.message})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        email_template = DME_Email_Templates.objects.get(pk=pk)
+
+        try:
+            email_template.delete()
+            return JsonResponse({"results": fp_freight_providers})
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"results": ""})
@@ -3516,6 +3856,20 @@ class OptionsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"error": str(e)})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        dme_options = DME_Options.objects.get(pk=pk)
+        serializer = OptionsSerializer(dme_options, data=request.data)
+
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StatusViewSet(viewsets.ViewSet):
@@ -3663,368 +4017,158 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class FileUploadView(views.APIView):
-    parser_classes = (MultiPartParser,)
-
-    def post(self, request, filename, format=None):
-        file_obj = request.FILES["file"]
-        user_id = request.user.id
-        username = request.user.username
-
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-
-        if dme_employee is not None:
-            user_type = "DME"
-        else:
-            user_type = "CLIENT"
-
-        if user_type == "DME":
-            uploader = request.POST["uploader"]
-            dme_account_num = DME_clients.objects.get(
-                company_name=uploader
-            ).dme_account_num
-            client_company_name = "DME"
-        else:
-            client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
-            dme_account_num = client_employee.fk_id_dme_client.dme_account_num
-            client_company_name = DME_clients.objects.get(
-                pk_id_dme_client=client_employee.fk_id_dme_client_id
-            ).company_name
-
-        upload_file_name = request.FILES["file"].name
-        prepend_name = str(dme_account_num) + "_" + upload_file_name
-
-        save2Redis(prepend_name + "_l_000_client_acct_number", dme_account_num)
-
-        handle_uploaded_file(
-            dme_account_num, request.FILES["file"], client_company_name
-        )
-
-        html = prepend_name
-        return Response(prepend_name)
-
-
-def handle_uploaded_file(dme_account_num, f, client_company_name):
-    if settings.ENV in ["prod", "dev"]:  # PROD & DEV
-        filename = (
-            f"/var/www/html/dme_api/media/onedrive/{str(dme_account_num)}_{f.name}"
-            if client_company_name != "Tempo"
-            else f"/dme_sftp/tempo_au/pickup_ext/{f.name}"
-        )
-    else:  # LOCAL
-        filename = f"/Users/admin/work/goldmine/xlsimport/upload/{f.name}"
-
-    with open(filename, "wb+") as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
-
-    clearFileCheckHistory(f"str(dme_account_num)_{f.name}")
-
-
-def upload_status(request):
-    result = getFileCheckHistory(request.GET.get("filename"))
-
-    if result == 0:
-        return JsonResponse({"status_code": 0})
-    elif result == "success":
-        return JsonResponse({"status_code": 1})
-    else:
-        return JsonResponse({"status_code": 2, "errors": result})
-
-
 @api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_pdf(request):
+@permission_classes((IsAuthenticated,))
+def download(request):
     body = literal_eval(request.body.decode("utf8"))
-    bookingIds = body["ids"]
-    bookings = Bookings.objects.filter(id__in=bookingIds)
-    file_paths = []
-    label_names = []
-
-    for booking in bookings:
-        if booking.z_label_url is not None and len(booking.z_label_url) > 0:
-            # if "https://ap-prod" in booking.z_label_url:  # PYTHON CODE to download from url
-            #     request = requests.get(booking.z_label_url, stream=True)
-
-            #     if request.status_code != requests.codes.ok:
-            #         continue
-
-            #     label_name = f"{booking.pu_Address_State}_{booking.b_clientReference_RA_Numbers}_{booking.v_FPBookingNumber}.pdf"
-            #     file_path = f"STATIC_PUBLIC/pdfs/atc_au/{label_name}"  # Dev & Prod
-            #     # file_path = f"./static/pdfs/atc_au/{label_name}" # Local (Test Case)
-            #     file = open(file_path, "wb+")
-            #     for block in request.iter_content(1024 * 8):
-            #         if not block:
-            #             break
-
-            #         file.write(block)
-            #     file.close()
-            #     file_paths.append(file_path)
-            #     label_names.append(label_name)
-            # else:
-            file_paths.append(
-                f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-            )  # Dev & Prod
-            # file_paths.append('./static/pdfs/' + booking.z_label_url) # Local (Test Case)
-            label_names.append(booking.z_label_url)
-            booking.z_downloaded_shipping_label_timestamp = datetime.now()
-            booking.save()
-
-    zip_subdir = "labels"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    for index, file_path in enumerate(file_paths):
-        zf.write(file_path, "labels/" + label_names[index])
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-    return response
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_manifest(request):
-    body = literal_eval(request.body.decode("utf8"))
-    z_manifest_url = body["z_manifest_url"]
-
-    if settings.ENV in ["prod", "dev"]:
-        file_path = f"{STATIC_PUBLIC}/pdfs/{z_manifest_url}"  # Prod & Dev
-    else:
-        file_path = f"./static/pdfs/{z_manifest_url}"  # Prod
-
-    manifest_name = z_manifest_url.split("/")[1]
-
-    zip_subdir = "manifests"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    zip_path = os.path.join(zip_subdir, file_path)
-    zf.write(file_path, manifest_name)
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-    return response
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_pod(request):
-    body = literal_eval(request.body.decode("utf8"))
-    bookingIds = body["ids"]
     download_option = body["downloadOption"]
-
     file_paths = []
-    pod_and_pod_signed_names = []
 
-    if download_option == "pod":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
+    if download_option == "pricing-only":
+        file_name = body["fileName"]
+    elif download_option == "manifest":
+        z_manifest_url = body["z_manifest_url"]
+    else:
+        bookingIds = body["ids"]
+        bookings = Bookings.objects.filter(id__in=bookingIds)
 
-            if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+    if download_option == "pricing-only":
+        src_file_path = f"./static/uploaded/pricing_only/achieve/{file_name}"
+        file_paths.append(src_file_path)
+        file_name_without_ext = file_name.split(".")[0]
+        result_file_record = DME_Files.objects.filter(
+            file_name__icontains=file_name_without_ext, file_type="pricing-result"
+        )
+
+        if result_file_record:
+            file_paths.append(result_file_record.first().file_path)
+    elif download_option == "manifest":
+        file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
+    elif download_option == "label":
+        for booking in bookings:
+            if booking.z_label_url and len(booking.z_label_url) > 0:
                 file_paths.append(
-                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
-                )  # Dev & Prod
-                # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
-                pod_and_pod_signed_names.append(booking.z_pod_url)
+                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                )
+                booking.z_downloaded_shipping_label_timestamp = datetime.now()
+                booking.save()
+    elif download_option == "pod":
+        for booking in bookings:
+            if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
+                file_paths.append(f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}")
                 booking.z_downloaded_pod_timestamp = timezone.now()
                 booking.save()
-
     elif download_option == "pod_sog":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if (
-                booking.z_pod_signed_url is not None
-                and len(booking.z_pod_signed_url) is not 0
-            ):
+        for booking in bookings:
+            if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
                 file_paths.append(
-                    f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
-                )  # Dev & Prod
-                # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
-                pod_and_pod_signed_names.append(booking.z_pod_signed_url)
+                    f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
+                )
                 booking.z_downloaded_pod_sog_timestamp = timezone.now()
                 booking.save()
-
     elif download_option == "new_pod":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
+        for booking in bookings:
             if booking.z_downloaded_pod_timestamp is None:
-                if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+                if booking.z_pod_url and len(booking.z_pod_url) > 0:
                     file_paths.append(
-                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
-                    )  # Dev & Prod
-                    # file_paths.append('./static/imgs/' + booking.z_pod_url) # Local (Test Case)
-                    pod_and_pod_signed_names.append(booking.z_pod_url)
+                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
+                    )
                     booking.z_downloaded_pod_timestamp = timezone.now()
                     booking.save()
-
     elif download_option == "new_pod_sog":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
+        for booking in bookings:
             if booking.z_downloaded_pod_sog_timestamp is None:
-                if (
-                    booking.z_pod_signed_url is not None
-                    and len(booking.z_pod_signed_url) is not 0
-                ):
+                if booking.z_pod_signed_url and len(booking.z_pod_signed_url) > 0:
                     file_paths.append(
-                        f"{STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
-                    )  # Dev & Prod
-                    # file_paths.append('./static/imgs/' + booking.z_pod_signed_url) # Local (Test Case)
-                    pod_and_pod_signed_names.append(booking.z_pod_signed_url)
+                        f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
+                    )
                     booking.z_downloaded_pod_sog_timestamp = timezone.now()
                     booking.save()
-
-    zip_subdir = "pod_and_pod_signed"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    for index, file_path in enumerate(file_paths):
-        zip_path = os.path.join(zip_subdir, file_path)
-        zf.write(file_path, "pod_and_pod_signed/" + pod_and_pod_signed_names[index])
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-    return response
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-def download_connote(request):
-    body = literal_eval(request.body.decode("utf8"))
-    bookingIds = body["ids"]
-    download_option = body["downloadOption"]
-
-    file_paths = []
-    connote_names = []
-
-    if download_option == "connote":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if (
-                booking.z_connote_url is not None
-                and len(booking.z_connote_url) is not 0
-            ):
+    elif download_option == "connote":
+        for booking in bookings:
+            if booking.z_connote_url and len(booking.z_connote_url) is not 0:
                 file_paths.append(
-                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
-                )  # Dev & Prod
-                # file_paths.append(
-                #     "./static/connotes/"
-                #     + booking.z_connote_url
-                # )  # Local (Test Case)
-                connote_names.append(booking.z_connote_url)
+                    f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+                )
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
-
     elif download_option == "new_connote":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
+        for booking in bookings:
             if booking.z_downloaded_pod_timestamp is None:
-                if (
-                    booking.z_connote_url is not None
-                    and len(booking.z_connote_url) is not 0
-                ):
+                if booking.z_connote_url and len(booking.z_connote_url) > 0:
                     file_paths.append(
-                        "STATIC_PRIVATE/connotes/" + booking.z_connote_url
-                    )  # Dev & Prod
-                    # file_paths.append(
-                    #     "./static/connotes/"
-                    #     + booking.z_connote_url
-                    # )  # Local (Test Case)
-                    connote_names.append(booking.z_connote_url)
+                        f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+                    )
                     booking.z_downloaded_connote_timestamp = timezone.now()
                     booking.save()
-
     elif download_option == "label_and_connote":
-        for id in bookingIds:
-            booking = Bookings.objects.get(id=id)
-
-            if (
-                booking.z_connote_url is not None
-                and len(booking.z_connote_url) is not 0
-            ):
+        for booking in bookings:
+            if booking.z_connote_url and len(booking.z_connote_url) > 0:
                 file_paths.append(
-                    "STATIC_PRIVATE/connotes/" + booking.z_connote_url
-                )  # Dev & Prod
-                # file_paths.append(
-                #     "./static/connotes/"
-                #     + booking.z_connote_url
-                # )  # Local (Test Case)
-                connote_names.append(booking.z_connote_url)
+                    f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
+                )
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
-            if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+            if booking.z_label_url and len(booking.z_label_url) > 0:
                 file_paths.append(
-                    f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )  # Dev & Prod
-                # file_paths.append(
-                #     "./static/pdfs/"
-                #     + booking.z_label_url
-                # )  # Local (Test Case)
-                connote_names.append(booking.z_label_url)
+                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                )
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
 
-    zip_subdir = "connote"
-    zip_filename = "%s.zip" % zip_subdir
-
-    s = io.BytesIO()
-    zf = zipfile.ZipFile(s, "w")
-
-    for index, file_path in enumerate(file_paths):
-        zip_path = os.path.join(zip_subdir, file_path)
-        zf.write(file_path, "connote/" + connote_names[index])
-    zf.close()
-
-    response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-    response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+    response = download_libs.download_from_disk(download_option, file_paths)
     return response
 
 
 @api_view(["DELETE"])
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
 def delete_file(request):
     body = literal_eval(request.body.decode("utf8"))
-    booking_id = body["bookingId"]
     file_option = body["deleteFileOption"]
 
-    try:
-        booking = Bookings.objects.get(id=booking_id)
-    except Bookings.DoesNotExist as e:
-        return JsonResponse(
-            {"message": "Booking does not exist", "status": "failure"}, status=400
+    if file_option in ["label", "pod"]:
+        try:
+            booking_id = body["bookingId"]
+            booking = Bookings.objects.get(id=booking_id)
+        except Bookings.DoesNotExist as e:
+            return JsonResponse(
+                {"message": "Booking does not exist", "status": "failure"}, status=400
+            )
+
+        if file_option == "label":
+            file_name = f"{booking.z_label_url}"
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{file_name}"
+            booking.z_label_url = None
+            booking.z_downloaded_shipping_label_timestamp = None
+        elif file_option == "pod":
+            file_name = f"{booking.z_pod_url}"
+            file_path = f"{settings.STATIC_PUBLIC}/imgs/"
+            booking.z_pod_url = None
+            booking.z_downloaded_pod_timestamp = None
+
+        booking.save()
+        delete_lib.delete(file_path)
+    elif file_option in ["pricing-only"]:
+        file_name = body["fileName"]
+        delete_lib.delete(f"./static/uploaded/pricing_only/indata/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_only/inprogress/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_only/achieve/{file_name}")
+        file_name_without_ext = file_name.split(".")[0]
+        result_file_record = DME_Files.objects.filter(
+            file_name__icontains=file_name_without_ext, file_type="pricing-result"
         )
 
-    if file_option == "label":
-        filename = f"{STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-        booking.z_label_url = None
-        booking.z_downloaded_shipping_label_timestamp = None
-    elif file_option == "pod":
-        filename = f"{STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
-        booking.z_pod_url = None
-        booking.z_downloaded_pod_timestamp = None
+        if result_file_record:
+            delete_lib.delete(result_file_record.first().file_path)
 
-    booking.save()
-
-    if os.path.isfile(filename):
-        os.remove(filename)
+        DME_Files.objects.filter(file_name__icontains=file_name_without_ext).delete()
 
     return JsonResponse(
-        {"filename": "", "status": "success", "message": "Deleted successfully!"},
+        {
+            "filename": file_name,
+            "status": "success",
+            "message": "Deleted successfully!",
+        },
         status=200,
     )
 
@@ -4136,10 +4280,10 @@ def generate_manifest(request):
 
         if vx_freight_provider.upper() == "TASFR":
             for filename in filenames:
-                file_paths.append(f"{STATIC_PUBLIC}/pdfs/tas_au/{filename}")
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
         elif vx_freight_provider.upper() == "DHL":
             for filename in filenames:
-                file_paths.append(f"{STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
@@ -4310,7 +4454,181 @@ def getSuburbs(request):
         return JsonResponse({"type": requestType, "suburbs": ""})
 
 
-class DME_Files_ViewSet(viewsets.ViewSet):
+class SqlQueriesViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Utl_sql_queries.objects.all()
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "sql_title": resultObject.sql_title,
+                        "sql_query": resultObject.sql_query,
+                        "sql_description": resultObject.sql_description,
+                        "sql_notes": resultObject.sql_notes,
+                        "z_createdByAccount": resultObject.z_createdByAccount,
+                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                        "z_modifiedByAccount": resultObject.z_modifiedByAccount,
+                        "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
+                    }
+                )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = Utl_sql_queries.objects.get(pk=pk)
+
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "sql_title": resultObject.sql_title,
+                    "sql_query": resultObject.sql_query,
+                    "sql_description": resultObject.sql_description,
+                    "sql_notes": resultObject.sql_notes,
+                    "z_createdByAccount": resultObject.z_createdByAccount,
+                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
+                    "z_modifiedByAccount": resultObject.z_modifiedByAccount,
+                    "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            print("@Exception", e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = Utl_sql_queries.objects.create(
+                sql_title=request.data["sql_title"],
+                sql_query=request.data["sql_query"],
+                sql_description=request.data["sql_description"],
+                sql_notes=request.data["sql_notes"],
+            )
+
+            return JsonResponse({"results": request.data})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        data = Utl_sql_queries.objects.get(pk=pk)
+
+        try:
+            Utl_sql_queries.objects.filter(pk=pk).update(
+                sql_query=request.data["sql_query"],
+                sql_description=request.data["sql_description"],
+                sql_notes=request.data["sql_notes"],
+            )
+            return JsonResponse({"results": request.data})
+        except Exception as e:
+            # print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        data = Utl_sql_queries.objects.get(pk=pk)
+
+        try:
+            data.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def validate(self, request, pk=None):
+        return_data = []
+        query_tables = tables_in_query(request.data["sql_query"])
+        # return JsonResponse({"results": str(query_tables)})
+        if re.search("select", request.data["sql_query"], flags=re.IGNORECASE):
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(request.data["sql_query"])
+                    columns = cursor.description
+                    row = cursor.fetchall()
+                    cursor.execute(
+                        "SHOW KEYS FROM "
+                        + query_tables[0]
+                        + " WHERE Key_name = 'PRIMARY'"
+                    )
+                    row1 = cursor.fetchone()
+                    result = []
+                    for value in row:
+                        tmp = {}
+                        for (index, column) in enumerate(value):
+                            tmp[columns[index][0]] = column
+                        result.append(tmp)
+                    return JsonResponse({"results": result, "tables": row1})
+                except Exception as e:
+                    # print('@Exception', e)
+                    return JsonResponse({"error": str(e)})
+        else:
+            return JsonResponse({"error": "Sorry only SELECT statement allowed"})
+
+    @action(detail=False, methods=["post"])
+    def update_query(self, request, pk=None):
+        return_data = []
+        if re.search("update", request.data["sql_query"], flags=re.IGNORECASE):
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute(request.data["sql_query"])
+                    columns = cursor.description
+                    row = cursor.fetchall()
+                    result = []
+                    for value in row:
+                        tmp = {}
+                        for (index, column) in enumerate(value):
+                            tmp[columns[index][0]] = column
+                        result.append(tmp)
+                    return JsonResponse({"results": result})
+                except Exception as e:
+                    # print('@Exception', e)
+                    return JsonResponse({"error": str(e)})
+        else:
+            return JsonResponse({"error": "Sorry only UPDATE statement allowed"})
+
+
+class FileUploadView(views.APIView):
+    parser_classes = (MultiPartParser,)
+
+    def post(self, request, format=None):
+        user_id = request.user.id
+        username = request.user.username
+        file = request.FILES["file"]
+        upload_option = request.POST.get("uploadOption", None)
+
+        if upload_option == "import":
+            uploader = request.POST["uploader"]
+            file_name = upload_lib.upload_import_file(user_id, file, uploader)
+        elif upload_option in ["pod", "label", "attachment"]:
+            booking_id = request.POST.get("bookingId", None)
+            file_name = upload_lib.upload_attachment_file(
+                user_id, file, booking_id, upload_option
+            )
+        elif upload_option == "pricing-only":
+            file_name = upload_lib.upload_pricing_only_file(
+                user_id, username, file, upload_option
+            )
+
+        return Response(file_name)
+
+
+class FilesViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
@@ -4318,12 +4636,219 @@ class DME_Files_ViewSet(viewsets.ViewSet):
         dme_files = DME_Files.objects.filter(file_type=file_type).order_by(
             "-z_createdTimeStamp"
         )[:50]
-        serializer = DME_Files_Serializer(dme_files, many=True)
+        serializer = FilesSerializer(dme_files, many=True)
         return Response(serializer.data)
 
     def create(self, request):
-        serializer = DME_Files_Serializer(data=request.data)
+        serializer = FilesSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VehiclesViewSet(viewsets.ViewSet):
+    serializer_class = VehiclesSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_vehicles.objects.all()
+
+            for resultObject in resultObjects:
+                fp_freight_provider = Fp_freight_providers.objects.filter(
+                    id=resultObject.freight_provider_id
+                ).first()
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "description": resultObject.description,
+                        "dim_UOM": resultObject.dim_UOM,
+                        "max_length": resultObject.max_length,
+                        "max_width": resultObject.max_width,
+                        "max_height": resultObject.max_height,
+                        "mass_UOM": resultObject.mass_UOM,
+                        "pallets": resultObject.pallets,
+                        "pallet_UOM": resultObject.pallet_UOM,
+                        "max_pallet_length": resultObject.max_pallet_length,
+                        "max_pallet_height": resultObject.max_pallet_height,
+                        "base_charge": resultObject.base_charge,
+                        "min_charge": resultObject.min_charge,
+                        "limited_state": resultObject.limited_state,
+                        "freight_provider": fp_freight_provider.fp_company_name,
+                        "max_mass": resultObject.max_mass,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            return JsonResponse({"results": str(e)})
+
+
+class TimingsViewSet(viewsets.ViewSet):
+    serializer_class = TimingsSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_timings.objects.all()
+
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "time_UOM": resultObject.time_UOM,
+                        "min": resultObject.min,
+                        "max": resultObject.max,
+                        "booking_cut_off_time": resultObject.booking_cut_off_time,
+                        "collected_by": resultObject.collected_by,
+                        "delivered_by": resultObject.delivered_by,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            return JsonResponse({"results": str(e)})
+
+
+class AvailabilitiesViewSet(viewsets.ViewSet):
+    serializer_class = AvailabilitiesSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_availabilities.objects.all()
+
+            for resultObject in resultObjects:
+                fp_freight_provider = Fp_freight_providers.objects.filter(
+                    id=resultObject.freight_provider_id
+                ).first()
+                fp_company_name = ""
+
+                if fp_freight_provider is not None:
+                    fp_company_name = fp_freight_provider.fp_company_name
+
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "code": resultObject.code,
+                        "mon_start": resultObject.mon_start,
+                        "mon_end": resultObject.mon_end,
+                        "tue_start": resultObject.tue_start,
+                        "tue_end": resultObject.tue_end,
+                        "wed_start": resultObject.wed_start,
+                        "wed_end": resultObject.wed_end,
+                        "thu_start": resultObject.thu_start,
+                        "thu_end": resultObject.thu_end,
+                        "fri_start": resultObject.fri_start,
+                        "fri_end": resultObject.fri_end,
+                        "sat_start": resultObject.sat_start,
+                        "sat_end": resultObject.sat_end,
+                        "sun_start": resultObject.sun_start,
+                        "sun_end": resultObject.sun_end,
+                        "freight_provider": fp_company_name,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            return JsonResponse({"results": str(e)})
+
+
+class CostsViewSet(viewsets.ViewSet):
+    serializer_class = CostsSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_costs.objects.all()
+
+            for resultObject in resultObjects:
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "UOM_charge": resultObject.UOM_charge,
+                        "start_qty": resultObject.start_qty,
+                        "end_qty": resultObject.end_qty,
+                        "basic_charge": resultObject.basic_charge,
+                        "min_charge": resultObject.min_charge,
+                        "per_UOM_charge": resultObject.per_UOM_charge,
+                        "oversize_premium": resultObject.oversize_premium,
+                        "oversize_price": resultObject.oversize_price,
+                        "m3_to_kg_factor": resultObject.m3_to_kg_factor,
+                        "dim_UOM": resultObject.dim_UOM,
+                        "price_up_to_length": resultObject.price_up_to_length,
+                        "price_up_to_width": resultObject.price_up_to_width,
+                        "price_up_to_height": resultObject.price_up_to_height,
+                        "weight_UOM": resultObject.weight_UOM,
+                        "price_up_to_weight": resultObject.price_up_to_weight,
+                        "max_length": resultObject.max_length,
+                        "max_width": resultObject.max_width,
+                        "max_height": resultObject.max_height,
+                        "max_weight": resultObject.max_weight,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            return JsonResponse({"results": str(e)})
+
+
+class PricingRulesViewSet(viewsets.ViewSet):
+    serializer_class = PricingRulesSerializer
+
+    @action(detail=False, methods=["get"])
+    def get_all(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = FP_pricing_rules.objects.all()
+
+            for resultObject in resultObjects:
+                fp_freight_provider = Fp_freight_providers.objects.filter(
+                    id=resultObject.freight_provider_id
+                ).first()
+                fp_company_name = ""
+
+                if fp_freight_provider is not None:
+                    fp_company_name = fp_freight_provider.fp_company_name
+
+                return_data.append(
+                    {
+                        "id": resultObject.id,
+                        "service_type": resultObject.service_type,
+                        "service_timing_code": resultObject.service_timing_code,
+                        "calc_type": resultObject.calc_type,
+                        "charge_rule": resultObject.charge_rule,
+                        "cost_id": resultObject.cost_id,
+                        "timing_id": resultObject.timing_id,
+                        "vehicle_id": resultObject.vehicle_id,
+                        "both_way": resultObject.both_way,
+                        "pu_zone": resultObject.pu_zone,
+                        "pu_state": resultObject.pu_state,
+                        "pu_postal_code": resultObject.pu_postal_code,
+                        "pu_suburb": resultObject.pu_suburb,
+                        "de_zone": resultObject.de_zone,
+                        "de_state": resultObject.de_state,
+                        "de_postal_code": resultObject.de_postal_code,
+                        "de_suburb": resultObject.de_suburb,
+                        "freight_provider": fp_company_name,
+                    }
+                )
+
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            return JsonResponse({"results": str(e)})
