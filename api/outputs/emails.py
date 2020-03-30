@@ -76,10 +76,14 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
 
     elif emailName == "Return Booking":
         emailVarList = {
@@ -107,6 +111,7 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
     elif emailName == "POD":
@@ -138,10 +143,14 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
         if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-            files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
+            if settings.ENV == "local":
+                files.append("./static/imgs/" + booking.z_pod_url)
+            else:
+                files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
 
     elif emailName == "Futile Pickup":
         emailVarList = {
@@ -169,20 +178,14 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
     html = ""
     for template in templates:
         emailBody = template.emailBody
-        emailBodyRepeatEven = (
-            str(template.emailBodyRepeatEven) if template.emailBodyRepeatEven else ""
-        )
-        emailBodyRepeatOdd = (
-            str(template.emailBodyRepeatOdd) if template.emailBodyRepeatOdd else ""
-        )
 
         gaps = []
-
         for lines_data in booking_lines_data:
             if lines_data.gap_ra:
                 gaps.append(lines_data.gap_ra)
@@ -221,7 +224,12 @@ def send_booking_email_using_template(bookingId, emailName):
                 + (str(booking_line.e_weightUOM) if booking_line.e_weightUOM else "")
             )
 
-            if (idx % 2) == 0:
+            if idx % 2 == 0:
+                emailBodyRepeatEven = (
+                    str(template.emailBodyRepeatEven)
+                    if template.emailBodyRepeatEven
+                    else ""
+                )
                 emailVarListEven = {
                     "PRODUCT": PRODUCT,
                     "RA": RA,
@@ -232,13 +240,20 @@ def send_booking_email_using_template(bookingId, emailName):
                     "LENGTH": LENGTH,
                     "WEIGHT": WEIGHT,
                 }
+
                 for key in emailVarListEven.keys():
                     emailBodyRepeatEven = emailBodyRepeatEven.replace(
                         "{" + str(key) + "}",
                         str(emailVarListEven[key]) if emailVarListEven[key] else "",
                     )
 
+                emailVarList["BODYREPEAT"] += emailBodyRepeatEven
             else:
+                emailBodyRepeatOdd = (
+                    str(template.emailBodyRepeatOdd)
+                    if template.emailBodyRepeatOdd
+                    else ""
+                )
                 emailVarListOdd = {
                     "PRODUCT": PRODUCT,
                     "RA": RA,
@@ -256,7 +271,7 @@ def send_booking_email_using_template(bookingId, emailName):
                         str(emailVarListOdd[key]) if emailVarListOdd[key] else "",
                     )
 
-        emailVarList["BODYREPEAT"] = emailBodyRepeatOdd + emailBodyRepeatEven
+                emailVarList["BODYREPEAT"] += emailBodyRepeatOdd
 
         for key in emailVarList.keys():
             emailBody = emailBody.replace(
@@ -265,6 +280,7 @@ def send_booking_email_using_template(bookingId, emailName):
             )
 
         html += emailBody
+        emailVarList["BODYREPEAT"] = ""
 
     # TEST Usage
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")

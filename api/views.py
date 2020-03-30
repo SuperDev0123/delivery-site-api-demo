@@ -1741,6 +1741,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "api_booking_quote": booking.api_booking_quote.id
                         if booking.api_booking_quote
                         else None,
+                        "vx_futile_Booking_Notes": booking.vx_futile_Booking_Notes,
                     }
                     return JsonResponse(
                         {
@@ -4658,6 +4659,7 @@ class VehiclesViewSet(viewsets.ViewSet):
             # print("@Exception", e)
             return JsonResponse({"results": ""})
 
+
 class TimingsViewSet(viewsets.ViewSet):
     serializer_class = TimingsSerializer
 
@@ -4714,7 +4716,7 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
                 sat_end=request.data["sat_end"],
                 sun_start=request.data["sun_start"],
                 sun_end=request.data["sun_end"],
-                freight_provider=request.data["freight_provider"]
+                freight_provider=request.data["freight_provider"],
             )
 
             return JsonResponse(
@@ -4726,6 +4728,7 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
         except Exception as e:
             # print("@Exception", e)
             return JsonResponse({"results": ""})
+
 
 class CostsViewSet(viewsets.ViewSet):
     serializer_class = CostsSerializer
@@ -4768,6 +4771,7 @@ class CostsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print("@Exception", e)
             return JsonResponse({"results": ""})
+
 
 class PricingRulesViewSet(viewsets.ViewSet):
     serializer_class = PricingRulesSerializer
