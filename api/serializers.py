@@ -126,6 +126,14 @@ class EmailTemplatesSerializer(serializers.ModelSerializer):
 
 
 class FpSerializer(serializers.ModelSerializer):
+    rule_type_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_rule_type_code(self, fp):
+        if fp.rule_type:
+            return fp.rule_type.rule_type_code
+        else:
+            return None
+
     class Meta:
         model = Fp_freight_providers
         fields = "__all__"
@@ -154,25 +162,30 @@ class FilesSerializer(serializers.ModelSerializer):
         model = DME_Files
         fields = "__all__"
 
+
 class VehiclesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_vehicles
         fields = "__all__"
+
 
 class TimingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_timings
         fields = "__all__"
 
+
 class AvailabilitiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_availabilities
         fields = "__all__"
 
+
 class CostsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_costs
         fields = "__all__"
+
 
 class PricingRulesSerializer(serializers.ModelSerializer):
     class Meta:
