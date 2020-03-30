@@ -1525,7 +1525,9 @@ class BookingsViewSet(viewsets.ViewSet):
         user_id = int(self.request.user.id)
         template_name = self.request.query_params.get("templateName", None)
         booking_id = self.request.query_params.get("bookingId", None)
-        email_module.send_booking_email_using_template(booking_id, template_name)
+        email_module.send_booking_email_using_template(
+            booking_id, template_name, self.request.user.username
+        )
         return JsonResponse({"message": "success"}, status=200)
 
 

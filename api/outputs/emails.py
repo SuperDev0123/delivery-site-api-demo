@@ -1,13 +1,15 @@
 import sys, time
 import os, base64
-import datetime
+from datetime import datetime
+from email.utils import COMMASPACE
+
 from django.conf import settings
 
 from api.models import *
 from api.utils import send_email
 
-# start function to preprocess email booking from db table
-def send_booking_email_using_template(bookingId, emailName):
+
+def send_booking_email_using_template(bookingId, emailName, sender):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -309,4 +311,13 @@ def send_booking_email_using_template(bookingId, emailName):
     else:
         subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
-    send_email(to_emails, cc_emails, subject, html, files, mime_type)
+    # send_email(to_emails, cc_emails, subject, html, files, mime_type)
+
+    EmailLogs.objects.create(
+        booking_id=bookingId,
+        emailName=emailName,
+        to_emails=COMMASPACE.join(to_emails),
+        cc_emails=COMMASPACE.join(cc_emails),
+        z_createdTimeStamp=str(datetime.now()),
+        z_createdByAccount=sender,
+    )

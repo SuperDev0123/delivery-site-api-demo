@@ -3698,3 +3698,20 @@ class Client_Process_Mgr(models.Model):
 
     class Meta:
         db_table = "client_process_mgr"
+
+
+class EmailLogs(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    emailName = models.CharField(max_length=255, blank=True, null=True, default=None)
+    to_emails = models.CharField(max_length=255, blank=True, null=True, default=None)
+    cc_emails = models.TextField(max_length=512, blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+
+    class Meta:
+        db_table = "email_logs"
