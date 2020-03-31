@@ -86,10 +86,6 @@ KEY_CHAINS = {
             "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
             "accountPassword": "x81775935aece65541c9",
         },
-        "live_0": {
-            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-            "accountPassword": "x81775935aece65541c9",
-        },
     },
     "hunter": {
         "test_bed_1": {"accountKey": "aHh3czpoeHdz", "accountPassword": "hxws"},
@@ -170,7 +166,7 @@ FP_UOM = {
 }
 
 
-def _get_account_details(fp_name, account_code_key):
+def _get_account_details(fp_name, account_code_key, client_warehouse_code=None):
     account_detail = None
     account_code_key = account_code_key if account_code_key else "live_0"
 
@@ -186,10 +182,16 @@ def _get_account_details(fp_name, account_code_key):
                 **KEY_CHAINS[fp_name.lower()][account_code_key],
             }
     elif settings.ENV in ["prod"]:
-        account_detail = {
-            "accountCode": ACCOUNT_CODES[fp_name.lower()][account_code_key],
-            **KEY_CHAINS[fp_name.lower()][account_code_key],
-        }
+        if fp_name.lower() in ["startrack"]:
+            account_detail = {
+                "accountCode": ACCOUNT_CODES[fp_name.lower()][client_warehouse_code],
+                **KEY_CHAINS[fp_name.lower()][client_warehouse_code],
+            }
+        else:
+            account_detail = {
+                "accountCode": ACCOUNT_CODES[fp_name.lower()][account_code_key],
+                **KEY_CHAINS[fp_name.lower()][account_code_key],
+            }
 
     return account_detail
 
@@ -235,7 +237,9 @@ def get_tracking_payload(booking, fp_name, account_code_key=None):
 
 def get_book_payload(booking, fp_name, account_code_key=None):
     payload = {}
-    payload["spAccountDetails"] = _get_account_details(fp_name, account_code_key)
+    payload["spAccountDetails"] = _get_account_details(
+        fp_name, account_code_key, booking.fk_client_warehouse.client_warehouse_code
+    )
     payload["serviceProvider"] = get_service_provider(fp_name)
 
     payload["readyDate"] = (
@@ -512,7 +516,9 @@ def get_cancel_book_payload(booking, fp_name):
 
 def get_getlabel_payload(booking, fp_name):
     payload = {}
-    payload["spAccountDetails"] = _get_account_details(fp_name)
+    payload["spAccountDetails"] = _get_account_details(
+        fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+    )
     payload["serviceProvider"] = get_service_provider(fp_name)
     payload["pickupAddress"] = {
         "companyName": "" if booking.puCompany is None else booking.puCompany,
@@ -668,7 +674,9 @@ def get_getlabel_payload(booking, fp_name):
 def get_create_label_payload(booking, fp_name):
     try:
         payload = {}
-        payload["spAccountDetails"] = _get_account_details(fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumber"] = booking.fk_fp_pickup_id
 
@@ -705,7 +713,9 @@ def get_create_label_payload(booking, fp_name):
 def get_create_order_payload(bookings, fp_name):
     try:
         payload = {}
-        payload["spAccountDetails"] = _get_account_details(fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
 
         if fp_name.lower() == "startrack":
@@ -727,7 +737,9 @@ def get_create_order_payload(bookings, fp_name):
 def get_get_order_summary_payload(booking, fp_name):
     try:
         payload = {}
-        payload["spAccountDetails"] = _get_account_details(fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
         payload["orderId"] = booking.vx_fp_order_id
 
@@ -741,7 +753,9 @@ def get_pod_payload(booking, fp_name, account_code_key=None):
     try:
         payload = {}
 
-        payload["spAccountDetails"] = _get_account_details(fp_name, account_code_key)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, account_code_key, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
 
         if fp_name.lower() == "hunter":
@@ -761,7 +775,9 @@ def get_pod_payload(booking, fp_name, account_code_key=None):
 def get_reprint_payload(booking, fp_name):
     try:
         payload = {}
-        payload["spAccountDetails"] = _get_account_details(fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["labelType"] = "A"
@@ -779,7 +795,9 @@ def get_pricing_payload(booking, fp_name, account_code_key, booking_lines=None):
     # else:
     #     client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
 
-    payload["spAccountDetails"] = _get_account_details(fp_name, account_code_key)
+    payload["spAccountDetails"] = _get_account_details(
+        fp_name, account_code_key, booking.fk_client_warehouse.client_warehouse_code
+    )
     payload["serviceProvider"] = get_service_provider(fp_name)
 
     payload["readyDate"] = (
