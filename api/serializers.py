@@ -23,6 +23,7 @@ from .models import (
     FP_availabilities,
     FP_costs,
     FP_pricing_rules,
+    EmailLogs,
 )
 
 
@@ -154,27 +155,38 @@ class FilesSerializer(serializers.ModelSerializer):
         model = DME_Files
         fields = "__all__"
 
+
 class VehiclesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_vehicles
         fields = "__all__"
+
 
 class TimingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_timings
         fields = "__all__"
 
+
 class AvailabilitiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_availabilities
         fields = "__all__"
+
 
 class CostsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_costs
         fields = "__all__"
 
+
 class PricingRulesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_pricing_rules
+        fields = "__all__"
+
+
+class EmailLogsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailLogs
         fields = "__all__"

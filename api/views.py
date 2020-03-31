@@ -2318,6 +2318,25 @@ class BookingViewSet(viewsets.ViewSet):
         else:
             return JsonResponse({"isAutoAugmented": False})
 
+    @action(detail=False, methods=["get"])
+    def get_email_logs(self, request, format=None):
+        booking_id = request.GET["bookingId"]
+
+        if not booking_id:
+            return JsonResponse(
+                {"success": False, "message": "Booking id is required."}
+            )
+
+        email_logs = EmailLogs.objects.filter(booking_id=int(booking_id)).order_by(
+            "-z_createdTimeStamp"
+        )
+        return JsonResponse(
+            {
+                "success": True,
+                "results": EmailLogsSerializer(email_logs, many=True).data,
+            }
+        )
+
 
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
