@@ -714,7 +714,7 @@ def get_create_order_payload(bookings, fp_name):
     try:
         payload = {}
         payload["spAccountDetails"] = _get_account_details(
-            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+            fp_name, None, bookings[0].fk_client_warehouse.client_warehouse_code
         )
         payload["serviceProvider"] = get_service_provider(fp_name)
 
