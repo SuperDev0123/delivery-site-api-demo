@@ -58,7 +58,31 @@ KEY_CHAINS = {
             "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
             "accountPassword": "x9083d2fed4d50aa2ad5",
         },
-        "live_0": {
+        "BIO - BON": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
+        "BIO - ROC": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
+        "BIO - CAV": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
+        "BIO - TRU": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
+        "BIO - HAZ": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
+        "BIO - EAS": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
+        "BIO - HTW": {
             "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
             "accountPassword": "x81775935aece65541c9",
         },
