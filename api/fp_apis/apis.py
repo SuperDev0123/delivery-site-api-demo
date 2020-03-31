@@ -143,6 +143,7 @@ def tracking(request, fp_name):
         logger.error(f"ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
+
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -1039,6 +1040,10 @@ def pricing(request):
                 return JsonResponse({"message": f"Not supported FP"}, status=400)
             elif fp_name.lower() in ACCOUNT_CODES:
                 for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
+                    # Allow live pricing info only on PROD
+                    if settings.ENV == "prod" and "test" in account_code_key:
+                        continue
+
                     if (
                         "SWYTEMPBUN" in client_warehouse_code
                         and not "bunnings" in account_code_key
@@ -1179,6 +1184,7 @@ def pricing(request):
         trace_error.print()
         return JsonResponse({"message": f"Error: {e}"}, status=400)
 
+
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -1189,7 +1195,7 @@ def rebook(request, fp_name):
 
         try:
             booking = Bookings.objects.get(id=booking_id)
-            
+
             error_msg = pre_check_rebook(booking)
 
             if error_msg:
@@ -1242,9 +1248,13 @@ def rebook(request, fp_name):
                     booking.b_status = "PU Rebooked"
                     booking.b_error_Capture = ""
                     booking.save()
-                    
+
                     status_history.create(
-                        booking, "PU Rebooked(Last pickup Id was " + str(old_fk_fp_pickup_id) + ")", request.user.username
+                        booking,
+                        "PU Rebooked(Last pickup Id was "
+                        + str(old_fk_fp_pickup_id)
+                        + ")",
+                        request.user.username,
                     )
 
                     Log(
