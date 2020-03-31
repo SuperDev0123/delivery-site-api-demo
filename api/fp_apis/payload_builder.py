@@ -86,6 +86,10 @@ KEY_CHAINS = {
             "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
             "accountPassword": "x81775935aece65541c9",
         },
+        "live_0": {
+            "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+            "accountPassword": "x81775935aece65541c9",
+        },
     },
     "hunter": {
         "test_bed_1": {"accountKey": "aHh3czpoeHdz", "accountPassword": "hxws"},
@@ -166,8 +170,9 @@ FP_UOM = {
 }
 
 
-def _get_account_details(fp_name, account_code_key="live_0"):
+def _get_account_details(fp_name, account_code_key):
     account_detail = None
+    account_code_key = account_code_key if not None else "live_0"
 
     if settings.ENV in ["local", "dev"]:
         if fp_name.lower() in ["startrack", "allied", "hunter", "sendle"]:
