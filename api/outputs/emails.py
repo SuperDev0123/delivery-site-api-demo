@@ -1,20 +1,15 @@
-import smtplib
 import sys, time
 import os, base64
-import datetime
-import email
-import email.mime.application
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
-from email.mime.text import MIMEText
+from datetime import datetime
+from email.utils import COMMASPACE
+
+from django.conf import settings
 
 from api.models import *
 from api.utils import send_email
 
-# start function to preprocess email booking from db table
-def send_booking_email_using_template(bookingId, emailName):
+
+def send_booking_email_using_template(bookingId, emailName, sender):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -83,10 +78,14 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
         if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
-            files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
 
     elif emailName == "Return Booking":
         emailVarList = {
@@ -114,6 +113,7 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
     elif emailName == "POD":
@@ -145,10 +145,14 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
         if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-            files.append("/opt/s3_public/pdfs/" + booking.z_pod_url)
+            if settings.ENV == "local":
+                files.append("./static/imgs/" + booking.z_pod_url)
+            else:
+                files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
 
     elif emailName == "Futile Pickup":
         emailVarList = {
@@ -176,20 +180,14 @@ def send_booking_email_using_template(bookingId, emailName):
             "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
             "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
             "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
         }
 
     html = ""
     for template in templates:
         emailBody = template.emailBody
-        emailBodyRepeatEven = (
-            str(template.emailBodyRepeatEven) if template.emailBodyRepeatEven else ""
-        )
-        emailBodyRepeatOdd = (
-            str(template.emailBodyRepeatOdd) if template.emailBodyRepeatOdd else ""
-        )
 
         gaps = []
-
         for lines_data in booking_lines_data:
             if lines_data.gap_ra:
                 gaps.append(lines_data.gap_ra)
@@ -228,7 +226,12 @@ def send_booking_email_using_template(bookingId, emailName):
                 + (str(booking_line.e_weightUOM) if booking_line.e_weightUOM else "")
             )
 
-            if (idx % 2) == 0:
+            if idx % 2 == 0:
+                emailBodyRepeatEven = (
+                    str(template.emailBodyRepeatEven)
+                    if template.emailBodyRepeatEven
+                    else ""
+                )
                 emailVarListEven = {
                     "PRODUCT": PRODUCT,
                     "RA": RA,
@@ -239,13 +242,20 @@ def send_booking_email_using_template(bookingId, emailName):
                     "LENGTH": LENGTH,
                     "WEIGHT": WEIGHT,
                 }
+
                 for key in emailVarListEven.keys():
                     emailBodyRepeatEven = emailBodyRepeatEven.replace(
                         "{" + str(key) + "}",
                         str(emailVarListEven[key]) if emailVarListEven[key] else "",
                     )
 
+                emailVarList["BODYREPEAT"] += emailBodyRepeatEven
             else:
+                emailBodyRepeatOdd = (
+                    str(template.emailBodyRepeatOdd)
+                    if template.emailBodyRepeatOdd
+                    else ""
+                )
                 emailVarListOdd = {
                     "PRODUCT": PRODUCT,
                     "RA": RA,
@@ -263,7 +273,7 @@ def send_booking_email_using_template(bookingId, emailName):
                         str(emailVarListOdd[key]) if emailVarListOdd[key] else "",
                     )
 
-        emailVarList["BODYREPEAT"] = emailBodyRepeatOdd + emailBodyRepeatEven
+                emailVarList["BODYREPEAT"] += emailBodyRepeatOdd
 
         for key in emailVarList.keys():
             emailBody = emailBody.replace(
@@ -272,21 +282,42 @@ def send_booking_email_using_template(bookingId, emailName):
             )
 
         html += emailBody
+        emailVarList["BODYREPEAT"] = ""
 
     # TEST Usage
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
-    to_emails = ["bookings@deliver-me.com.au"]
+    if settings.ENV in ["local", "dev"]:
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+    else:
+        to_emails = ["bookings@deliver-me.com.au"]
+
+    cc_emails = []
+
     if booking.pu_Email:
         to_emails.append(booking.pu_Email)
+    if booking.de_Email:
+        cc_emails.append(booking.de_Email)
     if booking.pu_email_Group:
-        to_emails.append(booking.pu_email_Group)
+        cc_emails = cc_emails + booking.pu_email_Group.split(",")
     if booking.de_Email_Group_Emails:
-        to_emails.append(booking.de_Email_Group_Emails)
-    if booking.booking_Created_For_Email:
-        to_emails.append(booking.booking_Created_For_Email)
+        cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
+    if booking.de_Email_Group_Emails:
+        cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
 
-    subject = f"Tempo ${emailName} - DME#${booking.v_FPBookingNumber} - FP#${booking.vx_freight_provider}"
+    if emailName == "General Booking":
+        subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
+    else:
+        subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
-    send_email(to_emails, subject, html, files, mime_type)
+    # send_email(to_emails, cc_emails, subject, html, files, mime_type)
+
+    EmailLogs.objects.create(
+        booking_id=bookingId,
+        emailName=emailName,
+        to_emails=COMMASPACE.join(to_emails),
+        cc_emails=COMMASPACE.join(cc_emails),
+        z_createdTimeStamp=str(datetime.now()),
+        z_createdByAccount=sender,
+    )

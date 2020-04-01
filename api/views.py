@@ -100,8 +100,9 @@ def password_reset_token_created(
 
     subject = f"Reset Your Password"
     mime_type = "html"
+
     try:
-        send_email([context["email"]], subject, email_html_message, None, mime_type)
+        send_email([context["email"]], [], subject, email_html_message, None, mime_type)
     except Exception as e:
         logger.error(f"Error #102: {e}")
 
@@ -1525,7 +1526,9 @@ class BookingsViewSet(viewsets.ViewSet):
         user_id = int(self.request.user.id)
         template_name = self.request.query_params.get("templateName", None)
         booking_id = self.request.query_params.get("bookingId", None)
-        email_module.send_booking_email_using_template(booking_id, template_name)
+        email_module.send_booking_email_using_template(
+            booking_id, template_name, self.request.user.username
+        )
         return JsonResponse({"message": "success"}, status=200)
 
     @action(detail=False, methods=["post"])
@@ -1629,8 +1632,7 @@ class BookingViewSet(viewsets.ViewSet):
                     fk_id_dme_booking=booking.pk_booking_id
                 )
 
-                return_data = []
-                if booking is not None:
+                if booking:
                     return_data = {
                         "id": booking.id,
                         "puCompany": booking.puCompany,
@@ -1682,7 +1684,6 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_to_PickUp_Instructions_Address": booking.de_to_PickUp_Instructions_Address,
                         "pu_pickup_instructions_address": booking.pu_pickup_instructions_address,
                         "pu_PickUp_Instructions_Contact": booking.pu_PickUp_Instructions_Contact,
-                        "vx_serviceName": booking.vx_serviceName,
                         "consignment_label_link": booking.consignment_label_link,
                         "s_02_Booking_Cutoff_Time": booking.s_02_Booking_Cutoff_Time,
                         "z_CreatedTimestamp": booking.z_CreatedTimestamp,
@@ -1710,7 +1711,9 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
                         "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
                         "client_item_references": booking.get_client_item_references(),
-                        "v_service_Type_2": booking.v_service_Type_2,
+                        "v_service_Type": booking.v_service_Type,
+                        "vx_serviceName": booking.vx_serviceName,
+                        "vx_account_code": booking.vx_account_code,
                         "fk_fp_pickup_id": booking.fk_fp_pickup_id,
                         "v_vehicle_Type": booking.v_vehicle_Type,
                         "inv_billing_status": booking.inv_billing_status,
@@ -1747,6 +1750,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "api_booking_quote": booking.api_booking_quote.id
                         if booking.api_booking_quote
                         else None,
+                        "vx_futile_Booking_Notes": booking.vx_futile_Booking_Notes,
                     }
                     return JsonResponse(
                         {
@@ -1758,17 +1762,16 @@ class BookingViewSet(viewsets.ViewSet):
                             "cnt_attachments": len(attachments),
                         }
                     )
-            else:
-                return JsonResponse(
-                    {
-                        "booking": {},
-                        "nextid": 0,
-                        "previd": 0,
-                        "e_qty_total": 0,
-                        "cnt_comms": 0,
-                        "cnt_attachments": 0,
-                    }
-                )
+            return JsonResponse(
+                {
+                    "booking": {},
+                    "nextid": 0,
+                    "previd": 0,
+                    "e_qty_total": 0,
+                    "cnt_comms": 0,
+                    "cnt_attachments": 0,
+                }
+            )
         except Bookings.DoesNotExist:
             return JsonResponse(
                 {
@@ -2112,27 +2115,6 @@ class BookingViewSet(viewsets.ViewSet):
             client_process.origin_de_To_Address_Street_2 = (
                 booking.de_To_Address_Street_2
             )
-            client_process.origin_pu_PickUp_By_Date = booking.pu_PickUp_By_Date
-            client_process.origin_puPickUpAvailFrom_Date = (
-                booking.puPickUpAvailFrom_Date
-            )
-
-            client_process.origin_pu_PickUp_Avail_Time_Hours = (
-                booking.pu_PickUp_Avail_Time_Hours
-            )
-
-            client_process.origin_pu_PickUp_Avail_Time_Minutes = (
-                booking.pu_PickUp_Avail_Time_Minutes
-            )
-
-            client_process.origin_pu_PickUp_By_Time_Hours = (
-                booking.pu_PickUp_Avail_Time_Hours
-            )
-
-            client_process.origin_pu_PickUp_By_Time_Minutes = (
-                booking.pu_PickUp_Avail_Time_Minutes
-            )
-
             client_auto_augment = Client_Auto_Augment.objects.first()
 
             if (
@@ -2189,53 +2171,6 @@ class BookingViewSet(viewsets.ViewSet):
                         client_auto_augment.sales_club_de_Email_Group_Emails
                     )
 
-                tempo_client = DME_clients.objects.filter(
-                    company_name="Tempo Pty Ltd"
-                ).first()
-
-                if (
-                    booking.x_ReadyStatus == "Available From"
-                    and booking.puPickUpAvailFrom_Date is None
-                    and booking.pu_PickUp_Avail_Time_Hours is None
-                ):
-                    if not tempo_client.augment_pu_available_time:
-                        error_msg = "No augment data available!"
-                        return JsonResponse(
-                            {"type": "Failure", "message": str(error_msg)},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
-                    booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
-                    booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
-                        "%H"
-                    )
-                    booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
-                        "%M"
-                    )
-
-                if (
-                    (
-                        booking.x_ReadyStatus == "Available Now"
-                        or booking.x_ReadyStatus == "Available From"
-                    )
-                    and booking.pu_PickUp_By_Date is None
-                    and booking.pu_PickUp_By_Time_Hours is None
-                ):
-                    if not tempo_client.augment_pu_by_time:
-                        error_msg = "No augment data available!"
-                        return JsonResponse(
-                            {"type": "Failure", "message": str(error_msg)},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
-                    booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
-                    booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
-                        "%H"
-                    )
-                    booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
-                        "%M"
-                    )
-
                 client_process.save()
                 booking.save()
                 serializer = BookingSerializer(booking)
@@ -2256,6 +2191,74 @@ class BookingViewSet(viewsets.ViewSet):
                     )
 
         except Exception as e:
+            return JsonResponse(
+                {"type": "Failure", "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False, methods=["post"])
+    def set_pu_date_augment(self, request, format=None):
+        body = literal_eval(request.body.decode("utf8"))
+        bookingId = body["bookingId"]
+        booking = Bookings.objects.get(pk=bookingId)
+
+        try:
+            tempo_client = DME_clients.objects.filter(
+                company_name="Tempo Pty Ltd"
+            ).first()
+
+            if booking.x_ReadyStatus == "Available From":
+
+                weekno = datetime.today().weekday()
+
+                if weekno > 4:
+                    booking.puPickUpAvailFrom_Date = (
+                        datetime.today() + timedelta(days=7 - weekno)
+                    ).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (
+                        datetime.today() + timedelta(days=7 - weekno)
+                    ).strftime("%Y-%m-%d")
+                else:
+                    booking.puPickUpAvailFrom_Date = (
+                        datetime.today() + timedelta(days=1)
+                    ).strftime("%Y-%m-%d")
+                    booking.pu_PickUp_By_Date = (
+                        datetime.today() + timedelta(days=1)
+                    ).strftime("%Y-%m-%d")
+
+                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
+                    "%M"
+                )
+
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+
+            if booking.x_ReadyStatus == "Available Now":
+                booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
+                booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+
+                booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime("%H")
+                booking.pu_PickUp_Avail_Time_Minutes = 0
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+
+            booking.save()
+            serializer = BookingSerializer(booking)
+            return Response(serializer.data)
+
+        except Exception as e:
+            print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -2291,26 +2294,6 @@ class BookingViewSet(viewsets.ViewSet):
                 booking.de_To_Address_Street_2 = (
                     client_process.origin_de_To_Address_Street_2
                 )
-                booking.pu_PickUp_By_Date = client_process.origin_pu_PickUp_By_Date
-                booking.puPickUpAvailFrom_Date = (
-                    client_process.origin_puPickUpAvailFrom_Date
-                )
-
-                booking.pu_PickUp_Avail_Time_Hours = (
-                    client_process.origin_pu_PickUp_Avail_Time_Hours
-                )
-
-                booking.pu_PickUp_Avail_Time_Minutes = (
-                    client_process.origin_pu_PickUp_Avail_Time_Minutes
-                )
-
-                booking.pu_PickUp_By_Time_Hours = (
-                    client_process.origin_pu_PickUp_By_Time_Hours
-                )
-
-                booking.pu_PickUp_By_Time_Minutes = (
-                    client_process.origin_pu_PickUp_By_Time_Minutes
-                )
 
                 client_process.delete()
                 booking.save()
@@ -2341,6 +2324,25 @@ class BookingViewSet(viewsets.ViewSet):
             return JsonResponse({"isAutoAugmented": True})
         else:
             return JsonResponse({"isAutoAugmented": False})
+
+    @action(detail=False, methods=["get"])
+    def get_email_logs(self, request, format=None):
+        booking_id = request.GET["bookingId"]
+
+        if not booking_id:
+            return JsonResponse(
+                {"success": False, "message": "Booking id is required."}
+            )
+
+        email_logs = EmailLogs.objects.filter(booking_id=int(booking_id)).order_by(
+            "-z_createdTimeStamp"
+        )
+        return JsonResponse(
+            {
+                "success": True,
+                "results": EmailLogsSerializer(email_logs, many=True).data,
+            }
+        )
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
@@ -3496,19 +3498,21 @@ class FPViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
-        return_data = []
-
         try:
-            resultObjects = []
-            resultObjects = Fp_freight_providers.objects.create(
+            resultObject = Fp_freight_providers.objects.get_or_create(
                 fp_company_name=request.data["fp_company_name"],
                 fp_address_country=request.data["fp_address_country"],
             )
 
-            return JsonResponse({"results": resultObjects})
+            return JsonResponse(
+                {
+                    "result": FpSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+            # print("@Exception", e)
+            return JsonResponse({"results": None})
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
@@ -4647,205 +4651,192 @@ class FilesViewSet(viewsets.ViewSet):
 class VehiclesViewSet(viewsets.ViewSet):
     serializer_class = VehiclesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_vehicles.objects.all()
+        serializer = VehiclesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_vehicles.objects.all()
+            resultObject = FP_vehicles.objects.get_or_create(
+                description=request.data["time_UOM"],
+                dim_UOM=request.data["min"],
+                max_length=request.data["max"],
+                max_width=request.data["booking_cut_off_time"],
+                max_height=request.data["collected_by"],
+                mass_UOM=request.data["delivered_by"],
+                pallets=request.data["delivered_by"],
+                pallet_UOM=request.data["delivered_by"],
+                max_pallet_length=request.data["delivered_by"],
+                max_pallet_height=request.data["delivered_by"],
+                base_charge=request.data["delivered_by"],
+                min_charge=request.data["delivered_by"],
+                limited_state=request.data["delivered_by"],
+                freight_provider=request.data["freight_provider"],
+                max_mass=request.data["max_mass"],
+            )
 
-            for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(
-                    id=resultObject.freight_provider_id
-                ).first()
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "description": resultObject.description,
-                        "dim_UOM": resultObject.dim_UOM,
-                        "max_length": resultObject.max_length,
-                        "max_width": resultObject.max_width,
-                        "max_height": resultObject.max_height,
-                        "mass_UOM": resultObject.mass_UOM,
-                        "pallets": resultObject.pallets,
-                        "pallet_UOM": resultObject.pallet_UOM,
-                        "max_pallet_length": resultObject.max_pallet_length,
-                        "max_pallet_height": resultObject.max_pallet_height,
-                        "base_charge": resultObject.base_charge,
-                        "min_charge": resultObject.min_charge,
-                        "limited_state": resultObject.limited_state,
-                        "freight_provider": fp_freight_provider.fp_company_name,
-                        "max_mass": resultObject.max_mass,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": VehiclesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 
 class TimingsViewSet(viewsets.ViewSet):
     serializer_class = TimingsSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_timings.objects.all()
+        serializer = TimingsSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_timings.objects.all()
+            resultObject = FP_timings.objects.get_or_create(
+                time_UOM=request.data["time_UOM"],
+                min=request.data["min"],
+                max=request.data["max"],
+                booking_cut_off_time=request.data["booking_cut_off_time"],
+                collected_by=request.data["collected_by"],
+                delivered_by=request.data["delivered_by"],
+            )
 
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "time_UOM": resultObject.time_UOM,
-                        "min": resultObject.min,
-                        "max": resultObject.max,
-                        "booking_cut_off_time": resultObject.booking_cut_off_time,
-                        "collected_by": resultObject.collected_by,
-                        "delivered_by": resultObject.delivered_by,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": TimingsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 
 class AvailabilitiesViewSet(viewsets.ViewSet):
     serializer_class = AvailabilitiesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_availabilities.objects.all()
+        serializer = AvailabilitiesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_availabilities.objects.all()
+            resultObject = FP_availabilities.objects.get_or_create(
+                code=request.data["code"],
+                mon_start=request.data["mon_start"],
+                mon_end=request.data["mon_end"],
+                tue_start=request.data["tue_start"],
+                tue_end=request.data["tue_end"],
+                wed_start=request.data["wed_start"],
+                wed_end=request.data["wed_end"],
+                thu_start=request.data["thu_start"],
+                thu_end=request.data["thu_end"],
+                sat_start=request.data["sat_start"],
+                sat_end=request.data["sat_end"],
+                sun_start=request.data["sun_start"],
+                sun_end=request.data["sun_end"],
+                freight_provider=request.data["freight_provider"],
+            )
 
-            for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(
-                    id=resultObject.freight_provider_id
-                ).first()
-                fp_company_name = ""
-
-                if fp_freight_provider is not None:
-                    fp_company_name = fp_freight_provider.fp_company_name
-
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "code": resultObject.code,
-                        "mon_start": resultObject.mon_start,
-                        "mon_end": resultObject.mon_end,
-                        "tue_start": resultObject.tue_start,
-                        "tue_end": resultObject.tue_end,
-                        "wed_start": resultObject.wed_start,
-                        "wed_end": resultObject.wed_end,
-                        "thu_start": resultObject.thu_start,
-                        "thu_end": resultObject.thu_end,
-                        "fri_start": resultObject.fri_start,
-                        "fri_end": resultObject.fri_end,
-                        "sat_start": resultObject.sat_start,
-                        "sat_end": resultObject.sat_end,
-                        "sun_start": resultObject.sun_start,
-                        "sun_end": resultObject.sun_end,
-                        "freight_provider": fp_company_name,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": AvailabilitiesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 
 class CostsViewSet(viewsets.ViewSet):
     serializer_class = CostsSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_costs.objects.all()
+        serializer = CostsSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_costs.objects.all()
+            resultObject = FP_costs.objects.get_or_create(
+                UOM_charge=request.data["UOM_charge"],
+                start_qty=request.data["start_qty"],
+                end_qty=request.data["end_qty"],
+                basic_charge=request.data["basic_charge"],
+                min_charge=request.data["min_charge"],
+                per_UOM_charge=request.data["per_UOM_charge"],
+                oversize_premium=request.data["oversize_premium"],
+                oversize_price=request.data["oversize_price"],
+                m3_to_kg_factor=request.data["m3_to_kg_factor"],
+                dim_UOM=request.data["dim_UOM"],
+                price_up_to_length=request.data["price_up_to_length"],
+                price_up_to_width=request.data["price_up_to_width"],
+                price_up_to_height=request.data["price_up_to_height"],
+                weight_UOM=request.data["weight_UOM"],
+                max_length=request.data["max_length"],
+                max_width=request.data["max_width"],
+                max_height=request.data["max_height"],
+                max_weight=request.data["max_weight"],
+            )
 
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "UOM_charge": resultObject.UOM_charge,
-                        "start_qty": resultObject.start_qty,
-                        "end_qty": resultObject.end_qty,
-                        "basic_charge": resultObject.basic_charge,
-                        "min_charge": resultObject.min_charge,
-                        "per_UOM_charge": resultObject.per_UOM_charge,
-                        "oversize_premium": resultObject.oversize_premium,
-                        "oversize_price": resultObject.oversize_price,
-                        "m3_to_kg_factor": resultObject.m3_to_kg_factor,
-                        "dim_UOM": resultObject.dim_UOM,
-                        "price_up_to_length": resultObject.price_up_to_length,
-                        "price_up_to_width": resultObject.price_up_to_width,
-                        "price_up_to_height": resultObject.price_up_to_height,
-                        "weight_UOM": resultObject.weight_UOM,
-                        "price_up_to_weight": resultObject.price_up_to_weight,
-                        "max_length": resultObject.max_length,
-                        "max_width": resultObject.max_width,
-                        "max_height": resultObject.max_height,
-                        "max_weight": resultObject.max_weight,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": CostsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
 
 
 class PricingRulesViewSet(viewsets.ViewSet):
     serializer_class = PricingRulesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    def list(self, request, pk=None):
+        queryset = FP_pricing_rules.objects.all()
+        serializer = PricingRulesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = FP_pricing_rules.objects.all()
+            resultObject = FP_pricing_rules.objects.get_or_create(
+                service_type=request.data["service_type"],
+                service_timing_code=request.data["service_timing_code"],
+                calc_type=request.data["calc_type"],
+                cost=request.data["cost"],
+                timing=request.data["timing"],
+                vehicle=request.data["vehicle"],
+                both_way=request.data["both_way"],
+                pu_zone=request.data["pu_zone"],
+                pu_state=request.data["pu_state"],
+                pu_postal_code=request.data["pu_postal_code"],
+                pu_suburb=request.data["pu_suburb"],
+                de_zone=request.data["de_zone"],
+                de_state=request.data["de_state"],
+                de_postal_code=request.data["de_postal_code"],
+                de_suburb=request.data["de_suburb"],
+                freight_provider=request.data["freight_provider"],
+            )
 
-            for resultObject in resultObjects:
-                fp_freight_provider = Fp_freight_providers.objects.filter(
-                    id=resultObject.freight_provider_id
-                ).first()
-                fp_company_name = ""
-
-                if fp_freight_provider is not None:
-                    fp_company_name = fp_freight_provider.fp_company_name
-
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "service_type": resultObject.service_type,
-                        "service_timing_code": resultObject.service_timing_code,
-                        "calc_type": resultObject.calc_type,
-                        "charge_rule": resultObject.charge_rule,
-                        "cost_id": resultObject.cost_id,
-                        "timing_id": resultObject.timing_id,
-                        "vehicle_id": resultObject.vehicle_id,
-                        "both_way": resultObject.both_way,
-                        "pu_zone": resultObject.pu_zone,
-                        "pu_state": resultObject.pu_state,
-                        "pu_postal_code": resultObject.pu_postal_code,
-                        "pu_suburb": resultObject.pu_suburb,
-                        "de_zone": resultObject.de_zone,
-                        "de_state": resultObject.de_state,
-                        "de_postal_code": resultObject.de_postal_code,
-                        "de_suburb": resultObject.de_suburb,
-                        "freight_provider": fp_company_name,
-                    }
-                )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse(
+                {
+                    "result": PricingRulesSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                }
+            )
         except Exception as e:
-            return JsonResponse({"results": str(e)})
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
