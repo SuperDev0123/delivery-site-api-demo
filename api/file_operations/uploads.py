@@ -179,3 +179,35 @@ def upload_pricing_only_file(user_id, username, file, upload_option):
         "file_name": f"{file_index}__{file.name}",
         "type": upload_option,
     }
+
+
+def upload_pricing_rule_file(user_id, username, file, upload_option, rule_type):
+    dme_file = DME_Files.objects.create(
+        file_name=f"{file.name}",
+        z_createdByAccount=username,
+        file_type="pricing-rule",
+        file_extension="xlsx",
+        note="Uploaded to import Pricings Rules sheet",
+    )
+
+    file_index = DME_Files.objects.all().order_by("id").last().id
+    dir_path = f"./static/uploaded/pricing_rule/indata/"
+    full_path = (
+        f"./static/uploaded/pricing_rule/indata/{file_index}__{rule_type}__{file.name}"
+    )
+
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+
+    with open(full_path, "wb+") as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+
+    dme_file.file_name = f"{file_index}__{rule_type}__{file.name}"
+    dme_file.file_path = full_path
+    dme_file.save()
+    return {
+        "status": "success",
+        "file_name": dme_file.file_name,
+        "type": upload_option,
+    }

@@ -3112,6 +3112,26 @@ class Utl_fp_delivery_times(models.Model):
         db_table = "utl_fp_delivery_times"
 
 
+class RuleTypes(models.Model):
+    id = models.AutoField(primary_key=True)
+    rule_type_code = models.CharField(
+        max_length=16, blank=True, null=True, default=None,
+    )
+    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
+    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
+    z_createdByAccount = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now)
+    z_modifiedByAccount = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    z_modifiedTimeStamp = models.DateTimeField(default=datetime.now)
+
+    class Meta:
+        db_table = "rule_types"
+
+
 class Fp_freight_providers(models.Model):
     id = models.AutoField(primary_key=True)
     fp_company_name = models.CharField(max_length=64, blank=True, null=True)
@@ -3121,6 +3141,8 @@ class Fp_freight_providers(models.Model):
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
     fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
     prices_count = models.IntegerField(default=1, blank=True, null=True)
+    service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
+    rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -3460,8 +3482,6 @@ class FP_pricing_rules(models.Model):
     service_timing_code = models.CharField(
         max_length=32, blank=True, null=True, default=None,
     )
-    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
-    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
     both_way = models.BooleanField(blank=True, null=True, default=False)
     pu_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
     pu_state = models.CharField(max_length=32, blank=True, null=True, default=None)
@@ -3715,3 +3735,64 @@ class EmailLogs(models.Model):
 
     class Meta:
         db_table = "email_logs"
+
+
+class DME_Service_Codes(models.Model):
+    id = models.AutoField(primary_key=True)
+    service_code = models.CharField(max_length=32, blank=True, null=True, default=None)
+    service_name = models.CharField(max_length=32, blank=True, null=True, default=None)
+    description = models.CharField(max_length=128, blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, default=None
+    )
+    z_createdTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Created by account"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_modifiedTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=None, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "dme_service_codes"
+
+
+class FP_Service_ETDs(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    dme_service_code = models.ForeignKey(DME_Service_Codes, on_delete=models.CASCADE)
+    fp_delivery_service_code = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    fp_delivery_time_description = models.TextField(
+        max_length=512, blank=True, null=True, default=None
+    )
+    fp_service_time_uom = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
+    fp_03_delivery_hours = models.FloatField(blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, default=None
+    )
+    z_createdTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Created by account"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_modifiedTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=None, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "fp_service_etds"
