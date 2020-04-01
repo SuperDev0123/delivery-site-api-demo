@@ -3742,3 +3742,38 @@ class DME_Service_Codes(models.Model):
 
     class Meta:
         db_table = "dme_service_codes"
+
+
+class FP_Service_ETDs(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    dme_service_code = models.ForeignKey(DME_Service_Codes, on_delete=models.CASCADE)
+    fp_delivery_service_code = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    fp_delivery_time_description = models.TextField(
+        max_length=512, blank=True, null=True, default=None
+    )
+    fp_service_time_uom = models.CharField(
+        max_length=16, blank=True, null=True, default=None
+    )
+    fp_03_delivery_hours = models.FloatField(blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, default=None
+    )
+    z_createdTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Created by account"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_modifiedTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=None, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "fp_service_etds"
