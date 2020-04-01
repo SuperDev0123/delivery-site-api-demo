@@ -3121,6 +3121,7 @@ class Fp_freight_providers(models.Model):
     new_connot_index = models.IntegerField(default=1, blank=True, null=True)
     fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
     prices_count = models.IntegerField(default=1, blank=True, null=True)
+    service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -3715,3 +3716,29 @@ class EmailLogs(models.Model):
 
     class Meta:
         db_table = "email_logs"
+
+
+class DME_Service_Codes(models.Model):
+    id = models.AutoField(primary_key=True)
+    service_code = models.CharField(max_length=32, blank=True, null=True, default=None)
+    service_name = models.CharField(max_length=32, blank=True, null=True, default=None)
+    description = models.CharField(max_length=128, blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, default=None
+    )
+    z_createdTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Created by account"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_modifiedTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=None, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "dme_service_codes"
