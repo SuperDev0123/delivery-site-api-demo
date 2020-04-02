@@ -1020,12 +1020,12 @@ def pricing(request):
 
         return JsonResponse({"message": error_msg}, status=400)
 
+    # Startrack
     fp_names = [
         "Sendle",
         "Hunter",
         "TNT",
         "Capital",
-        "Startrack",
         "Century",
         "Camerons",
         "Toll",
@@ -1040,7 +1040,7 @@ def pricing(request):
                 return JsonResponse({"message": f"Not supported FP"}, status=400)
             elif fp_name.lower() in ACCOUNT_CODES:
                 for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
-                    # Allow live pricing info only on PROD
+                    # Allow live pricing credentials only on PROD
                     if settings.ENV == "prod" and "test" in account_code_key:
                         continue
 
