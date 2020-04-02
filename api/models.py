@@ -3796,3 +3796,30 @@ class FP_Service_ETDs(models.Model):
 
     class Meta:
         db_table = "fp_service_etds"
+
+
+class BookingSets(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=32, blank=True, null=True, default=None)
+    booking_ids = models.TextField(blank=True, null=True, default=None)
+    note = models.TextField(max_length=512, blank=True, null=True, default=None)
+    status = models.CharField(max_length=255, blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, default=None
+    )
+    z_createdTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Created by account"),
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_modifiedTimestamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=None, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "dme_booking_sets"
