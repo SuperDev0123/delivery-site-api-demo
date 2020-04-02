@@ -35,6 +35,8 @@ ACCOUNT_CODES = {
         "live_2": "DMEMEL",
         "live_3": "DMEBNE",
         "live_4": "DMEPAL",
+        "live_5": "DEMELK",
+        "live_6": "DMEADL",
         "live_bunnings_0": "DELIMB",
         "live_bunnings_1": "DELIMS",
     },
