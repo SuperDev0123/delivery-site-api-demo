@@ -1020,12 +1020,12 @@ def pricing(request):
 
         return JsonResponse({"message": error_msg}, status=400)
 
+    # Startrack
     fp_names = [
         "Sendle",
         "Hunter",
         "TNT",
         "Capital",
-        "Startrack",
         "Century",
         "Camerons",
         "Toll",
