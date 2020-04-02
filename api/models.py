@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from django.db import models
 from django.utils import timezone
@@ -11,7 +11,7 @@ from django.db.models import Max
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
-
+import pytz
 logger = logging.getLogger("dme_api")
 
 
@@ -1572,7 +1572,37 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
+    def get_eta_pu_by_datetime(self):
+        try:
+            if self.b_dateBookedDate is None:
+                sydney = pytz.timezone("Australia/Sydney")
+                pu_by_date = datetime.now().astimezone(sydney)
+                weekno = pu_by_date.weekday()
+                if weekno > 4:
+                    pu_by_date = pu_by_date + timedelta(days=7 - weekno)
 
+                pu_by_date = pu_by_date.replace(minute=0, hour=17, second=0)
+                return str(pu_by_date)
+            else:
+                return str(self.s_05_Latest_Pick_Up_Date_TimeSet)
+        except Exception as e:
+            print('Exception: ', e)
+            return ""
+
+    def get_eta_delivery_by_datetime(self):
+        try:
+            sydney = pytz.timezone("Australia/Sydney")
+            pu_by_date = datetime.strptime(self.get_eta_pu_by_datetime()[:-13], "%Y-%m-%d %H:%M:%S")
+            pu_by_date = sydney.localize(pu_by_date)
+
+            print(self.pk_booking_id)
+            quotes = API_booking_quotes.objects.filter(fk_booking_id=self.pk_booking_id, fk_freight_provider_id=self.vx_freight_provider)
+            print(quotes)
+            return ""
+        except Exception as e:
+            print('Exception: ', e)
+            return ""
+            
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(
