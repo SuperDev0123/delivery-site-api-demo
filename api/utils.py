@@ -6688,3 +6688,20 @@ def tables_in_query(sql_str):
         get_next = tok.lower() in ["from", "join"]
 
     return result
+
+
+def get_clientname(request):
+    user_id = request.user.id
+    dme_employee = (
+        DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+    )
+    if dme_employee is not None:
+        return "dme"
+    else:
+        client_employee = (
+            Client_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        )
+        client = DME_clients.objects.get(
+            pk_id_dme_client=client_employee.fk_id_dme_client_id
+        )
+        return client.company_name

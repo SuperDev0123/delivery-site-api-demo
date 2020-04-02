@@ -64,6 +64,7 @@ from .utils import (
     calc_collect_after_status_change,
     send_email,
     tables_in_query,
+    get_clientname,
 )
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
@@ -4791,3 +4792,50 @@ class PricingRulesViewSet(viewsets.ViewSet):
         except Exception as e:
             # print("@Exception", e)
             return JsonResponse({"result": None}, status=400)
+
+
+class BookingSetsViewSet(viewsets.ViewSet):
+    serializer_class = BookingSetsSerializer
+
+    def list(self, request, pk=None):
+        queryset = BookingSets.objects.all()
+
+        if get_clientname(request) != "dme":
+            queryset = queryset.filter(z_createdByAccount=get_clientname(request))
+
+        serializer = BookingSetsSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, pk=None):
+        bookingIds = []
+
+        for bookingId in request.data["bookingIds"]:
+            bookingIds.append(str(bookingId))
+
+        request.data["booking_ids"] = ", ".join(bookingIds)
+        request.data["status"] = "Created"
+        request.data["z_createdByAccount"] = get_clientname(request)
+        request.data["z_createdTimeStamp"] = datetime.now()
+        serializer = BookingSetsSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        bookingset = BookingSets.objects.get(pk=pk)
+        booking_ids = bookingset.booking_ids.split(", ")
+
+        for bookingId in request.data["bookingIds"]:
+            if not str(bookingId) in booking_ids:
+                booking_ids.append(str(bookingId))
+
+        request.data["booking_ids"] = ", ".join(booking_ids)
+        request.data["status"] = "Updated"
+        serializer = BookingSetsSerializer(bookingset, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

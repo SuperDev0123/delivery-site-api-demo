@@ -24,6 +24,7 @@ from .models import (
     FP_costs,
     FP_pricing_rules,
     EmailLogs,
+    BookingSets,
 )
 
 
@@ -197,4 +198,10 @@ class PricingRulesSerializer(serializers.ModelSerializer):
 class EmailLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailLogs
+        fields = "__all__"
+
+
+class BookingSetsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingSets
         fields = "__all__"
