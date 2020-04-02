@@ -11,6 +11,8 @@ from django.db.models import Max
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from .utils import next_business_day
+
 import pytz
 logger = logging.getLogger("dme_api")
 
@@ -1598,11 +1600,22 @@ class Bookings(models.Model):
             print(self.pk_booking_id)
             quotes = API_booking_quotes.objects.filter(fk_booking_id=self.pk_booking_id, fk_freight_provider_id=self.vx_freight_provider)
             print(quotes)
+
+            freight_provider = Fp_freight_providers.objects.filter(fp_company_name = self.vx_freight_provider).first()
+            print(freight_provider)
+
+            if freight_provider is not None:
+                print(freight_provider.id)
+                print(timedelta(**{"days": 7}))
+
+                pu_by_date = next_business_day(pu_by_date, 0, [])
+
+                print('pu_by_date', pu_by_date)
             return ""
         except Exception as e:
             print('Exception: ', e)
             return ""
-            
+
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(

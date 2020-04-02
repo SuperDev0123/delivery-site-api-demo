@@ -54,6 +54,7 @@ import re
 
 from django.conf import settings
 from .models import *
+from dateutil.rrule import *
 
 if settings.ENV == "local":
     production = False  # Local
@@ -102,7 +103,6 @@ sydney = pytz.timezone("Australia/Sydney")
 sydney_today = sydney.localize(datetime.now())
 sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
 #####################
-
 
 def redis_con():
     try:
@@ -6688,3 +6688,13 @@ def tables_in_query(sql_str):
         get_next = tok.lower() in ["from", "join"]
 
     return result
+
+def next_business_day(start_day, business_days, HOLIDAYS):
+    ONE_DAY = timedelta(days=1)
+    temp_day = start_day
+    for i in range(0, business_days):
+        next_day = temp_day + ONE_DAY
+        while next_day.weekday() in [5,6] or next_day in HOLIDAYS:
+            next_day += ONE_DAY
+        temp_day = next_day
+    return temp_day
