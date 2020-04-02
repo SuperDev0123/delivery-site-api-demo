@@ -504,7 +504,9 @@ def get_book_payload(booking, fp_name, account_code_key=None):
 def get_cancel_book_payload(booking, fp_name):
     try:
         payload = {}
-        payload["spAccountDetails"] = _get_account_details(fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumbers"] = [booking.fk_fp_pickup_id]
 
