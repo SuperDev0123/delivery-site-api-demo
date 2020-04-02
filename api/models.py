@@ -3142,6 +3142,26 @@ class Utl_fp_delivery_times(models.Model):
         db_table = "utl_fp_delivery_times"
 
 
+class RuleTypes(models.Model):
+    id = models.AutoField(primary_key=True)
+    rule_type_code = models.CharField(
+        max_length=16, blank=True, null=True, default=None,
+    )
+    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
+    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
+    z_createdByAccount = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now)
+    z_modifiedByAccount = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    z_modifiedTimeStamp = models.DateTimeField(default=datetime.now)
+
+    class Meta:
+        db_table = "rule_types"
+
+
 class Fp_freight_providers(models.Model):
     id = models.AutoField(primary_key=True)
     fp_company_name = models.CharField(max_length=64, blank=True, null=True)
@@ -3152,6 +3172,7 @@ class Fp_freight_providers(models.Model):
     fp_markupfuel_levy_percent = models.FloatField(default=0, blank=True, null=True)
     prices_count = models.IntegerField(default=1, blank=True, null=True)
     service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
+    rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -3491,8 +3512,6 @@ class FP_pricing_rules(models.Model):
     service_timing_code = models.CharField(
         max_length=32, blank=True, null=True, default=None,
     )
-    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
-    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
     both_way = models.BooleanField(blank=True, null=True, default=False)
     pu_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
     pu_state = models.CharField(max_length=32, blank=True, null=True, default=None)

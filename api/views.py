@@ -67,6 +67,7 @@ from .utils import (
 )
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
+from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
     delete as delete_lib,
@@ -1529,6 +1530,12 @@ class BookingsViewSet(viewsets.ViewSet):
             booking_id, template_name, self.request.user.username
         )
         return JsonResponse({"message": "success"}, status=200)
+
+    @action(detail=False, methods=["post"])
+    def pricing_analysis(self, request, format=None):
+        bookingIds = request.data["bookingIds"]
+        results = analyse_booking_quotes_table(bookingIds)
+        return JsonResponse({"message": "success", "results": results}, status=200)
 
 
 class BookingViewSet(viewsets.ViewSet):
@@ -4020,7 +4027,7 @@ def download(request):
     download_option = body["downloadOption"]
     file_paths = []
 
-    if download_option == "pricing-only":
+    if download_option in ["pricing-only", "pricing-rule"]:
         file_name = body["fileName"]
     elif download_option == "manifest":
         z_manifest_url = body["z_manifest_url"]
@@ -4038,6 +4045,9 @@ def download(request):
 
         if result_file_record:
             file_paths.append(result_file_record.first().file_path)
+    elif download_option == "pricing-rule":
+        src_file_path = f"./static/uploaded/pricing_rule/achieve/{file_name}"
+        file_paths.append(src_file_path)
     elif download_option == "manifest":
         file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
     elif download_option == "label":
@@ -4144,7 +4154,7 @@ def delete_file(request):
 
         booking.save()
         delete_lib.delete(file_path)
-    elif file_option in ["pricing-only"]:
+    elif file_option == "pricing-only":
         file_name = body["fileName"]
         delete_lib.delete(f"./static/uploaded/pricing_only/indata/{file_name}")
         delete_lib.delete(f"./static/uploaded/pricing_only/inprogress/{file_name}")
@@ -4157,6 +4167,13 @@ def delete_file(request):
         if result_file_record:
             delete_lib.delete(result_file_record.first().file_path)
 
+        DME_Files.objects.filter(file_name__icontains=file_name_without_ext).delete()
+    elif file_option == "pricing-rule":
+        file_name = body["fileName"]
+        delete_lib.delete(f"./static/uploaded/pricing_rule/indata/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_rule/inprogress/{file_name}")
+        delete_lib.delete(f"./static/uploaded/pricing_rule/achieve/{file_name}")
+        file_name_without_ext = file_name.split(".")[0]
         DME_Files.objects.filter(file_name__icontains=file_name_without_ext).delete()
 
     return JsonResponse(
@@ -4620,6 +4637,11 @@ class FileUploadView(views.APIView):
             file_name = upload_lib.upload_pricing_only_file(
                 user_id, username, file, upload_option
             )
+        elif upload_option == "pricing-rule":
+            rule_type = request.POST.get("ruleType", None)
+            file_name = upload_lib.upload_pricing_rule_file(
+                user_id, username, file, upload_option, rule_type
+            )
 
         return Response(file_name)
 
@@ -4654,33 +4676,19 @@ class VehiclesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            resultObject = FP_vehicles.objects.get_or_create(
-                description=request.data["time_UOM"],
-                dim_UOM=request.data["min"],
-                max_length=request.data["max"],
-                max_width=request.data["booking_cut_off_time"],
-                max_height=request.data["collected_by"],
-                mass_UOM=request.data["delivered_by"],
-                pallets=request.data["delivered_by"],
-                pallet_UOM=request.data["delivered_by"],
-                max_pallet_length=request.data["delivered_by"],
-                max_pallet_height=request.data["delivered_by"],
-                base_charge=request.data["delivered_by"],
-                min_charge=request.data["delivered_by"],
-                limited_state=request.data["delivered_by"],
-                freight_provider=request.data["freight_provider"],
-                max_mass=request.data["max_mass"],
-            )
+            request.data.pop("id", None)
+            resultObject = FP_vehicles.objects.get_or_create(**request.data)
 
             return JsonResponse(
                 {
                     "result": VehiclesSerializer(resultObject[0]).data,
                     "isCreated": resultObject[1],
-                }
+                },
+                status=200,
             )
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"result": None}, status=400)
 
 
 class TimingsViewSet(viewsets.ViewSet):
@@ -4694,24 +4702,19 @@ class TimingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            resultObject = FP_timings.objects.get_or_create(
-                time_UOM=request.data["time_UOM"],
-                min=request.data["min"],
-                max=request.data["max"],
-                booking_cut_off_time=request.data["booking_cut_off_time"],
-                collected_by=request.data["collected_by"],
-                delivered_by=request.data["delivered_by"],
-            )
+            request.data.pop("id", None)
+            resultObject = FP_timings.objects.get_or_create(**request.data)
 
             return JsonResponse(
                 {
                     "result": TimingsSerializer(resultObject[0]).data,
                     "isCreated": resultObject[1],
-                }
+                },
+                status=200,
             )
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"result": None}, status=400)
 
 
 class AvailabilitiesViewSet(viewsets.ViewSet):
@@ -4725,32 +4728,19 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            resultObject = FP_availabilities.objects.get_or_create(
-                code=request.data["code"],
-                mon_start=request.data["mon_start"],
-                mon_end=request.data["mon_end"],
-                tue_start=request.data["tue_start"],
-                tue_end=request.data["tue_end"],
-                wed_start=request.data["wed_start"],
-                wed_end=request.data["wed_end"],
-                thu_start=request.data["thu_start"],
-                thu_end=request.data["thu_end"],
-                sat_start=request.data["sat_start"],
-                sat_end=request.data["sat_end"],
-                sun_start=request.data["sun_start"],
-                sun_end=request.data["sun_end"],
-                freight_provider=request.data["freight_provider"],
-            )
+            request.data.pop("id", None)
+            resultObject = FP_availabilities.objects.get_or_create(**request.data)
 
             return JsonResponse(
                 {
                     "result": AvailabilitiesSerializer(resultObject[0]).data,
                     "isCreated": resultObject[1],
-                }
+                },
+                status=200,
             )
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"result": None}, status=400)
 
 
 class CostsViewSet(viewsets.ViewSet):
@@ -4764,36 +4754,19 @@ class CostsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            resultObject = FP_costs.objects.get_or_create(
-                UOM_charge=request.data["UOM_charge"],
-                start_qty=request.data["start_qty"],
-                end_qty=request.data["end_qty"],
-                basic_charge=request.data["basic_charge"],
-                min_charge=request.data["min_charge"],
-                per_UOM_charge=request.data["per_UOM_charge"],
-                oversize_premium=request.data["oversize_premium"],
-                oversize_price=request.data["oversize_price"],
-                m3_to_kg_factor=request.data["m3_to_kg_factor"],
-                dim_UOM=request.data["dim_UOM"],
-                price_up_to_length=request.data["price_up_to_length"],
-                price_up_to_width=request.data["price_up_to_width"],
-                price_up_to_height=request.data["price_up_to_height"],
-                weight_UOM=request.data["weight_UOM"],
-                max_length=request.data["max_length"],
-                max_width=request.data["max_width"],
-                max_height=request.data["max_height"],
-                max_weight=request.data["max_weight"],
-            )
+            request.data.pop("id", None)
+            resultObject = FP_costs.objects.get_or_create(**request.data)
 
             return JsonResponse(
                 {
                     "result": CostsSerializer(resultObject[0]).data,
                     "isCreated": resultObject[1],
-                }
+                },
+                status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            # print("@Exception", e, request.data["per_UOM_charge"])
+            return JsonResponse({"result": None}, status=400)
 
 
 class PricingRulesViewSet(viewsets.ViewSet):
@@ -4807,31 +4780,16 @@ class PricingRulesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            resultObject = FP_pricing_rules.objects.get_or_create(
-                service_type=request.data["service_type"],
-                service_timing_code=request.data["service_timing_code"],
-                calc_type=request.data["calc_type"],
-                cost=request.data["cost"],
-                timing=request.data["timing"],
-                vehicle=request.data["vehicle"],
-                both_way=request.data["both_way"],
-                pu_zone=request.data["pu_zone"],
-                pu_state=request.data["pu_state"],
-                pu_postal_code=request.data["pu_postal_code"],
-                pu_suburb=request.data["pu_suburb"],
-                de_zone=request.data["de_zone"],
-                de_state=request.data["de_state"],
-                de_postal_code=request.data["de_postal_code"],
-                de_suburb=request.data["de_suburb"],
-                freight_provider=request.data["freight_provider"],
-            )
+            request.data.pop("id", None)
+            resultObject = FP_pricing_rules.objects.get_or_create(**request.data)
 
             return JsonResponse(
                 {
                     "result": PricingRulesSerializer(resultObject[0]).data,
                     "isCreated": resultObject[1],
-                }
+                },
+                status=200,
             )
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"result": None}, status=400)
