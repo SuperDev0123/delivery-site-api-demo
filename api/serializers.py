@@ -135,6 +135,14 @@ class EmailTemplatesSerializer(serializers.ModelSerializer):
 
 
 class FpSerializer(serializers.ModelSerializer):
+    rule_type_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_rule_type_code(self, fp):
+        if fp.rule_type:
+            return fp.rule_type.rule_type_code
+        else:
+            return None
+
     class Meta:
         model = Fp_freight_providers
         fields = "__all__"
