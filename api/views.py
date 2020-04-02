@@ -1713,6 +1713,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "client_item_references": booking.get_client_item_references(),
                         "eta_pu_by_datetime": booking.get_eta_pu_by_datetime(),
                         "eta_delivery_by_datetime": booking.get_eta_delivery_by_datetime(),
+                        "pu_by_datetime": booking.get_pu_by_datetime(),
                         "v_service_Type": booking.v_service_Type,
                         "vx_serviceName": booking.vx_serviceName,
                         "vx_account_code": booking.vx_account_code,
