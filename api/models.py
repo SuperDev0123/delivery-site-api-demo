@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 
 from django.db import models
 from django.utils import timezone
@@ -1574,46 +1574,67 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
+    def get_pu_by_datetime(self):
+        if self.pu_PickUp_By_Date is not None:
+            pu_by_datetime = datetime.combine(self.pu_PickUp_By_Date, time(self.pu_PickUp_By_Time_Hours, self.pu_PickUp_By_Time_Minutes, 0))
+            sydney = pytz.timezone("Australia/Sydney")
+            pu_by_datetime = sydney.localize(pu_by_datetime)
+            return str(pu_by_datetime)
+        else:
+            return ""
+
     def get_eta_pu_by_datetime(self):
         try:
             if self.b_dateBookedDate is None:
-                sydney = pytz.timezone("Australia/Sydney")
-                pu_by_date = datetime.now().astimezone(sydney)
-                weekno = pu_by_date.weekday()
-                if weekno > 4:
-                    pu_by_date = pu_by_date + timedelta(days=7 - weekno)
+                if self.get_pu_by_datetime() is None:
+                    sydney = pytz.timezone("Australia/Sydney")
+                    pu_by_date = datetime.now().replace(microsecond=0).astimezone(sydney)
+                    weekno = pu_by_date.weekday()
+                    if weekno > 4:
+                        pu_by_date = pu_by_date + timedelta(days=7 - weekno)
 
-                pu_by_date = pu_by_date.replace(minute=0, hour=17, second=0)
-                return str(pu_by_date)
+                    pu_by_date = pu_by_date.replace(minute=0, hour=17, second=0)
+                    return str(pu_by_date)
+                else:
+                    return self.get_pu_by_datetime()
+
             else:
                 return str(self.s_05_Latest_Pick_Up_Date_TimeSet)
         except Exception as e:
-            print('Exception: ', e)
             return ""
 
     def get_eta_delivery_by_datetime(self):
         try:
-            sydney = pytz.timezone("Australia/Sydney")
-            pu_by_date = datetime.strptime(self.get_eta_pu_by_datetime()[:-13], "%Y-%m-%d %H:%M:%S")
-            pu_by_date = sydney.localize(pu_by_date)
+            if self.b_dateBookedDate is None:
+                sydney = pytz.timezone("Australia/Sydney")
+                pu_by_date = self.get_eta_pu_by_datetime()
+                etd_de_datetime = datetime.strptime(pu_by_date[:-6], "%Y-%m-%d %H:%M:%S")
+                etd_de_datetime = sydney.localize(etd_de_datetime)
 
-            print(self.pk_booking_id)
-            quotes = API_booking_quotes.objects.filter(fk_booking_id=self.pk_booking_id, fk_freight_provider_id=self.vx_freight_provider)
-            print(quotes)
+                quote = API_booking_quotes.objects.filter(fk_booking_id=self.pk_booking_id, fk_freight_provider_id=self.vx_freight_provider, service_name=self.vx_serviceName).first()
 
-            freight_provider = Fp_freight_providers.objects.filter(fp_company_name = self.vx_freight_provider).first()
-            print(freight_provider)
+                freight_provider = Fp_freight_providers.objects.filter(fp_company_name = self.vx_freight_provider).first()
+                if freight_provider is not None and quote is not None:
+                    service_etd = FP_Service_ETDs.objects.filter(freight_provider_id = freight_provider.id, fp_delivery_time_description=quote.etd).first()
+                    
+                    if service_etd is not None:
+                        if service_etd.fp_service_time_uom.lower() == 'days':
+                            etd_de_datetime = next_business_day(etd_de_datetime, service_etd.fp_03_delivery_hours, [])
 
-            if freight_provider is not None:
-                print(freight_provider.id)
-                print(timedelta(**{"days": 7}))
+                        if service_etd.fp_service_time_uom.lower() == 'hours':
+                            etd_de_datetime = etd_de_datetime + timedelta(hours = service_etd.fp_03_delivery_hours)
+                            weekno = etd_de_datetime.weekday()
+                            if weekno > 4:
+                                etd_de_datetime = etd_de_datetime + timedelta(days=7 - weekno)
+                    else:
+                        if quote.fk_freight_provider_id == 'TNT':
+                            days =  round(float(quote.etd))
+                            etd_de_datetime = next_business_day(etd_de_datetime, days, [])
 
-                pu_by_date = next_business_day(pu_by_date, 0, [])
-
-                print('pu_by_date', pu_by_date)
-            return ""
+                return str(etd_de_datetime)
+            else:
+                return str(self.s_06_Latest_Delivery_Date_TimeSet)
         except Exception as e:
-            print('Exception: ', e)
             return ""
 
 class Booking_lines(models.Model):

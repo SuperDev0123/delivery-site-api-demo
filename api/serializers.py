@@ -48,6 +48,7 @@ class BookingSerializer(serializers.ModelSerializer):
     client_item_references = serializers.SerializerMethodField()
     eta_pu_by_datetime = serializers.SerializerMethodField()
     eta_delivery_by_datetime = serializers.SerializerMethodField()
+    pu_by_datetime = serializers.SerializerMethodField()
 
     def get_client_item_references(self, obj):
         return Bookings.get_client_item_references(obj)
@@ -57,6 +58,9 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def get_eta_delivery_by_datetime(self, obj):
         return Bookings.get_eta_delivery_by_datetime(obj)
+
+    def pu_by_datetime(self, obj):
+        return Bookings.get_pu_by_datetime(obj)
 
     class Meta:
         model = Bookings
