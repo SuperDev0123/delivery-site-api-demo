@@ -2206,10 +2206,9 @@ class BookingViewSet(viewsets.ViewSet):
 
         try:
             tempo_client = DME_clients.objects.get(company_name="Tempo Pty Ltd")
+            sydney_now = get_sydney_now_time("datetime")
 
             if booking.x_ReadyStatus == "Available From":
-
-                sydney_now = get_sydney_now_time("datetime")
                 weekno = sydney_now.today().weekday()
 
                 if weekno > 4:
