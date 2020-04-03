@@ -98,11 +98,6 @@ styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 ROWS_PER_PAGE = 20
 #####################
 
-###     TODAY     ###
-sydney = pytz.timezone("Australia/Sydney")
-sydney_today = sydney.localize(datetime.now())
-sydney_today = sydney_today.replace(minute=0, hour=0, second=0)
-#####################
 
 def redis_con():
     try:
@@ -250,8 +245,7 @@ def upload_sftp(
 
 def get_sydney_now_time(return_type="char"):
     sydney_tz = pytz.timezone("Australia/Sydney")
-    sydney_now = sydney_tz.localize(datetime.utcnow())
-    sydney_now = sydney_now + timedelta(hours=10)
+    sydney_now = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
 
     if return_type == "char":
         return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
@@ -6689,12 +6683,13 @@ def tables_in_query(sql_str):
 
     return result
 
+
 def next_business_day(start_day, business_days, HOLIDAYS):
     ONE_DAY = timedelta(days=1)
     temp_day = start_day
     for i in range(0, business_days):
         next_day = temp_day + ONE_DAY
-        while next_day.weekday() in [5,6] or next_day in HOLIDAYS:
+        while next_day.weekday() in [5, 6] or next_day in HOLIDAYS:
             next_day += ONE_DAY
         temp_day = next_day
     return temp_day

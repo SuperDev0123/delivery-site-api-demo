@@ -2205,27 +2205,26 @@ class BookingViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(pk=bookingId)
 
         try:
-            tempo_client = DME_clients.objects.filter(
-                company_name="Tempo Pty Ltd"
-            ).first()
+            tempo_client = DME_clients.objects.get(company_name="Tempo Pty Ltd")
 
             if booking.x_ReadyStatus == "Available From":
 
-                weekno = datetime.today().weekday()
+                sydney_now = get_sydney_now_time("datetime")
+                weekno = sydney_now.today().weekday()
 
                 if weekno > 4:
                     booking.puPickUpAvailFrom_Date = (
-                        datetime.today() + timedelta(days=7 - weekno)
+                        sydney_now.today() + timedelta(days=7 - weekno)
                     ).date()
                     booking.pu_PickUp_By_Date = (
-                        datetime.today() + timedelta(days=7 - weekno)
+                        sydney_now.today() + timedelta(days=7 - weekno)
                     ).date()
                 else:
                     booking.puPickUpAvailFrom_Date = (
-                        datetime.today() + timedelta(days=1)
+                        sydney_now.today() + timedelta(days=1)
                     ).date()
                     booking.pu_PickUp_By_Date = (
-                        datetime.today() + timedelta(days=1)
+                        sydney_now.today() + timedelta(days=1)
                     ).date()
 
                 booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
@@ -2243,10 +2242,10 @@ class BookingViewSet(viewsets.ViewSet):
                 )
 
             elif booking.x_ReadyStatus == "Available Now":
-                booking.puPickUpAvailFrom_Date = datetime.now().date()
-                booking.pu_PickUp_By_Date = datetime.now().date()
+                booking.puPickUpAvailFrom_Date = sydney_now.now().date()
+                booking.pu_PickUp_By_Date = sydney_now.now().date()
 
-                booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime("%H")
+                booking.pu_PickUp_Avail_Time_Hours = sydney_now.now().strftime("%H")
                 booking.pu_PickUp_Avail_Time_Minutes = 0
                 booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
                     "%H"
@@ -2255,8 +2254,8 @@ class BookingViewSet(viewsets.ViewSet):
                     "%M"
                 )
             else:
-                booking.puPickUpAvailFrom_Date = datetime.now().date()
-                booking.pu_PickUp_By_Date = datetime.now().date()
+                booking.puPickUpAvailFrom_Date = sydney_now.now().date()
+                booking.pu_PickUp_By_Date = sydney_now.now().date()
 
                 booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
                     "%H"

@@ -1586,8 +1586,8 @@ class Bookings(models.Model):
                     0,
                 ),
             )
-            sydney = pytz.timezone("Australia/Sydney")
-            pu_by = sydney.localize(pu_by)
+            sydney_tz = pytz.timezone("Australia/Sydney")
+            pu_by = pu_by.replace(microsecond=0).astimezone(sydney_tz)
             return pu_by
         else:
             return None
@@ -1598,8 +1598,10 @@ class Bookings(models.Model):
                 return None
             else:
                 if self.get_pu_by() is None:
-                    sydney = pytz.timezone("Australia/Sydney")
-                    etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney)
+                    sydney_tz = pytz.timezone("Australia/Sydney")
+                    etd_pu_by = (
+                        datetime.now().replace(microsecond=0).astimezone(sydney_tz)
+                    )
                     weekno = etd_pu_by.weekday()
 
                     if weekno > 4:
