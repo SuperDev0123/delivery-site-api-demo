@@ -6697,4 +6697,5 @@ def next_business_day(start_day, business_days, HOLIDAYS):
         while next_day.weekday() in [5,6] or next_day in HOLIDAYS:
             next_day += ONE_DAY
         temp_day = next_day
+
     return temp_day
