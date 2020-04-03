@@ -60,7 +60,7 @@ class BookingSerializer(serializers.ModelSerializer):
         return Bookings.get_eta_de_by(obj)
 
     def pu_by_datetime(self, obj):
-        return Bookings.get_pu_by_datetime(obj)
+        return Bookings.get_pu_by(obj)
 
     class Meta:
         model = Bookings

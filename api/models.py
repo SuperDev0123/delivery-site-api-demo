@@ -1580,7 +1580,7 @@ class Bookings(models.Model):
         if self.pu_PickUp_By_Date:
             pu_by = datetime.combine(
                 self.pu_PickUp_By_Date,
-                time(self.pu_PickUp_By_Time_Hours, self.pu_PickUp_By_Time_Minutes, 0),
+                time(int(self.pu_PickUp_By_Time_Hours), int(self.pu_PickUp_By_Time_Minutes), 0),
             )
             sydney = pytz.timezone("Australia/Sydney")
             pu_by = sydney.localize(pu_by)
@@ -1615,9 +1615,7 @@ class Bookings(models.Model):
                 return str(self.s_06_Latest_Delivery_Date_TimeSet)
             else:
                 sydney = pytz.timezone("Australia/Sydney")
-                pu_by_date = self.get_eta_pu_by()
-                etd_de_by = sydney.localize(etd_de_by)
-
+                etd_de_by = self.get_eta_pu_by()
                 quote = API_booking_quotes.objects.filter(
                     fk_booking_id=self.pk_booking_id,
                     fk_freight_provider_id=self.vx_freight_provider,
@@ -1651,7 +1649,6 @@ class Bookings(models.Model):
                         if quote.fk_freight_provider_id == "TNT":
                             days = round(float(quote.etd))
                             etd_de_by = next_business_day(etd_de_by, days, [])
-
                 return etd_de_by
         except Exception as e:
             trace_error.print()
