@@ -66,7 +66,7 @@ from .utils import (
     tables_in_query,
 )
 from api.outputs import tempo, emails as email_module
-from api.common import status_history
+from api.common import status_history, trace_error
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -972,6 +972,7 @@ class BookingsViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # print("Exception: ", e)
+            trace_error.print()
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"])
@@ -1711,9 +1712,6 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
                         "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
                         "client_item_references": booking.get_client_item_references(),
-                        "eta_pu_by_datetime": booking.get_eta_pu_by_datetime(),
-                        "eta_delivery_by_datetime": booking.get_eta_delivery_by_datetime(),
-                        "pu_by_datetime": booking.get_pu_by_datetime(),
                         "v_service_Type": booking.v_service_Type,
                         "vx_serviceName": booking.vx_serviceName,
                         "vx_account_code": booking.vx_account_code,
@@ -1754,6 +1752,8 @@ class BookingViewSet(viewsets.ViewSet):
                         if booking.api_booking_quote
                         else None,
                         "vx_futile_Booking_Notes": booking.vx_futile_Booking_Notes,
+                        "s_05_Latest_Pick_Up_Date_TimeSet": booking.s_05_Latest_Pick_Up_Date_TimeSet,
+                        "s_06_Latest_Delivery_Date_TimeSet": booking.s_06_Latest_Delivery_Date_TimeSet,
                     }
                     return JsonResponse(
                         {
@@ -2261,7 +2261,7 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         except Exception as e:
-            print(str(e))
+            trace_error.print()
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
