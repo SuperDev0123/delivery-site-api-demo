@@ -1643,7 +1643,7 @@ class Bookings(models.Model):
                     if service_etd is not None:
                         if service_etd.fp_service_time_uom.lower() == "days":
                             etd_de_by = next_business_day(
-                                etd_de_by, service_etd.fp_03_delivery_hours, []
+                                etd_de_by, round(service_etd.fp_03_delivery_hours/24), []
                             )
 
                         if service_etd.fp_service_time_uom.lower() == "hours":
@@ -1657,6 +1657,7 @@ class Bookings(models.Model):
                         if quote.fk_freight_provider_id == "TNT":
                             days = round(float(quote.etd))
                             etd_de_by = next_business_day(etd_de_by, days, [])
+
                     return etd_de_by
 
                 else:
