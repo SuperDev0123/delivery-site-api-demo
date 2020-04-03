@@ -2241,10 +2241,10 @@ class BookingViewSet(viewsets.ViewSet):
                 )
 
             elif booking.x_ReadyStatus == "Available Now":
-                booking.puPickUpAvailFrom_Date = sydney_now.now().date()
-                booking.pu_PickUp_By_Date = sydney_now.now().date()
+                booking.puPickUpAvailFrom_Date = sydney_now.date()
+                booking.pu_PickUp_By_Date = sydney_now.date()
 
-                booking.pu_PickUp_Avail_Time_Hours = sydney_now.now().strftime("%H")
+                booking.pu_PickUp_Avail_Time_Hours = sydney_now.strftime("%H")
                 booking.pu_PickUp_Avail_Time_Minutes = 0
                 booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
                     "%H"
