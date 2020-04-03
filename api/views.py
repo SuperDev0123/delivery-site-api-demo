@@ -2243,12 +2243,28 @@ class BookingViewSet(viewsets.ViewSet):
                     "%M"
                 )
 
-            if booking.x_ReadyStatus == "Available Now":
+            elif booking.x_ReadyStatus == "Available Now":
                 booking.puPickUpAvailFrom_Date = datetime.now().date()
                 booking.pu_PickUp_By_Date = datetime.now().date()
 
                 booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime("%H")
                 booking.pu_PickUp_Avail_Time_Minutes = 0
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+            else:
+                booking.puPickUpAvailFrom_Date = datetime.now().date()
+                booking.pu_PickUp_By_Date = datetime.now().date()
+
+                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
                 booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
                     "%H"
                 )
