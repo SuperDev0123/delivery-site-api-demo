@@ -1580,7 +1580,11 @@ class Bookings(models.Model):
         if self.pu_PickUp_By_Date:
             pu_by = datetime.combine(
                 self.pu_PickUp_By_Date,
-                time(int(self.pu_PickUp_By_Time_Hours), int(self.pu_PickUp_By_Time_Minutes), 0),
+                time(
+                    int(self.pu_PickUp_By_Time_Hours),
+                    int(self.pu_PickUp_By_Time_Minutes),
+                    0,
+                ),
             )
             sydney = pytz.timezone("Australia/Sydney")
             pu_by = sydney.localize(pu_by)
@@ -1593,25 +1597,16 @@ class Bookings(models.Model):
             if self.b_dateBookedDate:
                 return None
             else:
-                quote = API_booking_quotes.objects.filter(
-                    fk_booking_id=self.pk_booking_id,
-                    fk_freight_provider_id=self.vx_freight_provider,
-                    service_name=self.vx_serviceName,
-                    ).first()
-
-                if quote is None:
-                    return None
-
                 if self.get_pu_by() is None:
                     sydney = pytz.timezone("Australia/Sydney")
                     etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney)
                     weekno = etd_pu_by.weekday()
+
                     if weekno > 4:
                         etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
 
                     etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
 
-                    
                     return etd_pu_by
                 else:
                     return self.get_pu_by()
