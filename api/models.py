@@ -1616,7 +1616,6 @@ class Bookings(models.Model):
             else:
                 sydney = pytz.timezone("Australia/Sydney")
                 pu_by_date = self.get_eta_pu_by()
-                etd_de_by = datetime.strptime(pu_by_date[:-6], "%Y-%m-%d %H:%M:%S")
                 etd_de_by = sydney.localize(etd_de_by)
 
                 quote = API_booking_quotes.objects.filter(
