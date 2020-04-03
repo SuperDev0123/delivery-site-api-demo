@@ -103,6 +103,9 @@ def auto_select(booking, pricings):
         ):
             etd_min, etd_max = _get_etd(pricing)
 
+            if not etd_max:
+                return False
+
             if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
                 timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
                 delta_min = 0
