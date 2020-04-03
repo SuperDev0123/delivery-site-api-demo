@@ -2209,22 +2209,20 @@ class BookingViewSet(viewsets.ViewSet):
             sydney_now = get_sydney_now_time("datetime")
 
             if booking.x_ReadyStatus == "Available From":
-                weekno = sydney_now.today().weekday()
+                weekno = sydney_now.weekday()
 
                 if weekno > 4:
                     booking.puPickUpAvailFrom_Date = (
-                        sydney_now.today() + timedelta(days=7 - weekno)
+                        sydney_now + timedelta(days=7 - weekno)
                     ).date()
                     booking.pu_PickUp_By_Date = (
-                        sydney_now.today() + timedelta(days=7 - weekno)
+                        sydney_now + timedelta(days=7 - weekno)
                     ).date()
                 else:
                     booking.puPickUpAvailFrom_Date = (
-                        sydney_now.today() + timedelta(days=1)
+                        sydney_now + timedelta(days=1)
                     ).date()
-                    booking.pu_PickUp_By_Date = (
-                        sydney_now.today() + timedelta(days=1)
-                    ).date()
+                    booking.pu_PickUp_By_Date = (sydney_now + timedelta(days=1)).date()
 
                 booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
                     "%H"
@@ -2274,7 +2272,7 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         except Exception as e:
-            print(str(e))
+            # print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
