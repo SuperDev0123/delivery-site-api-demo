@@ -1593,6 +1593,15 @@ class Bookings(models.Model):
             if self.b_dateBookedDate:
                 return None
             else:
+                quote = API_booking_quotes.objects.filter(
+                    fk_booking_id=self.pk_booking_id,
+                    fk_freight_provider_id=self.vx_freight_provider,
+                    service_name=self.vx_serviceName,
+                    ).first()
+
+                if quote is None:
+                    return None
+
                 if self.get_pu_by() is None:
                     sydney = pytz.timezone("Australia/Sydney")
                     etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney)
@@ -1601,6 +1610,8 @@ class Bookings(models.Model):
                         etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
 
                     etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
+
+                    
                     return etd_pu_by
                 else:
                     return self.get_pu_by()
@@ -1649,7 +1660,10 @@ class Bookings(models.Model):
                         if quote.fk_freight_provider_id == "TNT":
                             days = round(float(quote.etd))
                             etd_de_by = next_business_day(etd_de_by, days, [])
-                return etd_de_by
+                    return etd_de_by
+
+                else:
+                    return None
         except Exception as e:
             trace_error.print()
             logger.error(f"Error #1002: {e}")
