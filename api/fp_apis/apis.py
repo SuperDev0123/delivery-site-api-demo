@@ -1,4 +1,4 @@
-import time
+import time as t
 import json
 import requests
 import datetime
@@ -201,7 +201,7 @@ def book(request, fp_name):
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
-                    time.sleep(180)
+                    t.sleep(180)
                     logger.error(f"### Payload ({fp_name} book): {payload}")
                     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
                     response = requests.post(url, params={}, json=payload)
@@ -634,7 +634,7 @@ def get_label(request, fp_name):
                     and json_data["anyType"]["Status"] != "SUCCESS"
                 )
             ):
-                time.sleep(5)  # Delay to wait label is created
+                t.sleep(5)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
 
