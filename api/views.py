@@ -542,6 +542,13 @@ class BookingsViewSet(viewsets.ViewSet):
         user_id = int(self.request.user.id)
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id)
 
+        # Initialize values:
+        errors_to_correct = 0
+        missing_labels = 0
+        to_manifest = 0
+        to_process = 0
+        closed = 0
+
         if len(dme_employee) > 0:
             user_type = "DME"
         else:
@@ -589,9 +596,14 @@ class BookingsViewSet(viewsets.ViewSet):
         multi_find_field = self.request.query_params.get("multiFindField", None)
         multi_find_values = self.request.query_params.get("multiFindValues", "")
         project_name = self.request.query_params.get("projectName", None)
+        booking_ids = self.request.query_params.get("bookingIds", None)
 
         if multi_find_values:
             multi_find_values = multi_find_values.split(", ")
+
+        if booking_ids:
+            booking_ids = booking_ids.split(", ")
+
         # item_count_per_page = self.request.query_params.get('itemCountPerPage', 10)
 
         # if user_type == 'CLIENT':
@@ -632,203 +644,220 @@ class BookingsViewSet(viewsets.ViewSet):
                     fk_client_warehouse_id=employee_warehouse_id,
                 )
 
-        # Client filter
-        if client_pk is not "0":
-            client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
-            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+        # If booking_ids is not None
+        if booking_ids:
+            queryset = queryset.filter(pk__in=booking_ids)
 
-        if (
-            "new" in download_option
-            or "check_pod" in download_option
-            or "flagged" in download_option
-        ):
-            # New POD filter
-            if download_option == "new_pod":
-                queryset = queryset.filter(
-                    z_downloaded_pod_timestamp__isnull=True
-                ).exclude(Q(z_pod_url__isnull=True) | Q(z_pod_url__exact=""))
-
-            # New POD_SOG filter
-            if download_option == "new_pod_sog":
-                queryset = queryset.filter(
-                    z_downloaded_pod_sog_timestamp__isnull=True
-                ).exclude(
-                    Q(z_pod_signed_url__isnull=True) | Q(z_pod_signed_url__exact="")
-                )
-
-            # New Lable filter
-            if download_option == "new_label":
-                queryset = queryset.filter(
-                    z_downloaded_shipping_label_timestamp__isnull=True
-                ).exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=""))
-
-            # New Connote filter
-            if download_option == "new_connote":
-                queryset = queryset.filter(
-                    z_downloaded_connote_timestamp__isnull=True
-                ).exclude(Q(z_connote_url__isnull=True) | Q(z_connote_url__exact=""))
-
-            # Check POD
-            if download_option == "check_pod":
-                queryset = (
-                    queryset.exclude(b_status__icontains="delivered")
-                    .exclude(
-                        (Q(z_pod_url__isnull=True) | Q(z_pod_url__exact="")),
-                        (
-                            Q(z_pod_signed_url__isnull=True)
-                            | Q(z_pod_signed_url__exact="")
-                        ),
-                    )
-                    .order_by("-check_pod")
-                )
-
-            # Flagged
-            if download_option == "flagged":
-                queryset = queryset.filter(b_is_flagged_add_on_services=True)
-
-            if column_filters:
-                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
-
-        else:
-            if search_type == "FILTER":
-                # Date filter
-                if user_type == "DME":
-                    queryset = queryset.filter(
-                        z_CreatedTimestamp__range=(first_date, last_date)
-                    )
-                else:
-                    if client.company_name == "BioPak":
-                        queryset = queryset.filter(
-                            puPickUpAvailFrom_Date__range=(first_date, last_date)
-                        )
-                    else:
-                        queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
-                        )
-
-            # Warehouse filter
-            if int(warehouse_id) is not 0:
-                queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
-
-            # Mulitple search | Simple search | Project Name Search
-            if project_name and len(project_name) > 0:
-                queryset = queryset.filter(b_booking_project=project_name)
-            elif multi_find_values and len(multi_find_values) > 0:
-                preserved = Case(
-                    *[
-                        When(**{f"{multi_find_field}": multi_find_value, "then": pos})
-                        for pos, multi_find_value in enumerate(multi_find_values)
-                    ]
-                )
-                filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
-                queryset = queryset.filter(**filter_kwargs).order_by(preserved)
-            elif simple_search_keyword and len(simple_search_keyword) > 0:
-                if (
-                    not "&" in simple_search_keyword
-                    and not "|" in simple_search_keyword
-                ):
-                    queryset = queryset.filter(
-                        Q(b_bookingID_Visual__icontains=simple_search_keyword)
-                        | Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword)
-                        | Q(puCompany__icontains=simple_search_keyword)
-                        | Q(pu_Address_Suburb__icontains=simple_search_keyword)
-                        | Q(pu_Address_State__icontains=simple_search_keyword)
-                        | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
-                        | Q(deToCompanyName__icontains=simple_search_keyword)
-                        | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
-                        | Q(de_To_Address_State__icontains=simple_search_keyword)
-                        | Q(de_To_Address_PostalCode__icontains=simple_search_keyword)
-                        | Q(
-                            b_clientReference_RA_Numbers__icontains=simple_search_keyword
-                        )
-                        | Q(vx_freight_provider__icontains=simple_search_keyword)
-                        | Q(vx_serviceName__icontains=simple_search_keyword)
-                        | Q(v_FPBookingNumber__icontains=simple_search_keyword)
-                        | Q(b_status__icontains=simple_search_keyword)
-                        | Q(b_status_API__icontains=simple_search_keyword)
-                        | Q(
-                            s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
-                        )
-                        | Q(
-                            s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
-                        )
-                        | Q(
-                            s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword
-                        )
-                        | Q(
-                            s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword
-                        )
-                        | Q(b_client_sales_inv_num__icontains=simple_search_keyword)
-                        | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
-                        | Q(
-                            de_to_PickUp_Instructions_Address__icontains=simple_search_keyword
-                        )
-                        | Q(b_client_name__icontains=simple_search_keyword)
-                        | Q(b_client_name_sub__icontains=simple_search_keyword)
-                    )
-                else:
-                    if "&" in simple_search_keyword:
-                        search_keywords = simple_search_keyword.split("&")
-
-                        for search_keyword in search_keywords:
-                            search_keyword = search_keyword.replace(" ", "").lower()
-
-                            if len(search_keyword) > 0:
-                                queryset = queryset.filter(
-                                    de_to_PickUp_Instructions_Address__icontains=search_keyword
-                                )
-                    elif "|" in simple_search_keyword:
-                        search_keywords = simple_search_keyword.split("|")
-
-                        for index, search_keyword in enumerate(search_keywords):
-                            search_keywords[index] = search_keyword.replace(
-                                " ", ""
-                            ).lower()
-
-                        list_of_Q = [
-                            Q(**{"de_to_PickUp_Instructions_Address__icontains": val})
-                            for val in search_keywords
-                        ]
-                        queryset = queryset.filter(reduce(operator.or_, list_of_Q))
             # Column fitler
             queryset = self._column_filter_4_get_bookings(queryset, column_filters)
 
-        # active_tab_index count
-        errors_to_correct = 0
-        missing_labels = 0
-        to_manifest = 0
-        to_process = 0
-        closed = 0
+        else:
+            # Client filter
+            if client_pk is not "0":
+                client = DME_clients.objects.get(pk_id_dme_client=int(client_pk))
+                queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
-        for booking in queryset:
-            if booking.b_error_Capture is not None and len(booking.b_error_Capture) > 0:
-                errors_to_correct += 1
-            if booking.z_label_url is None or len(booking.z_label_url) == 0:
-                missing_labels += 1
-            if booking.b_status == "Booked" and not booking.z_manifest_url:
-                to_manifest += 1
-            if booking.b_status == "Ready to booking":
-                to_process += 1
-            if booking.b_status == "Closed":
-                closed += 1
+            if (
+                "new" in download_option
+                or "check_pod" in download_option
+                or "flagged" in download_option
+            ):
+                # New POD filter
+                if download_option == "new_pod":
+                    queryset = queryset.filter(
+                        z_downloaded_pod_timestamp__isnull=True
+                    ).exclude(Q(z_pod_url__isnull=True) | Q(z_pod_url__exact=""))
 
-        # active_tab_index 0 -> all, 1 -> errors_to_correct
-        if active_tab_index == 1:
-            queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
-                b_error_Capture__exact=""
-            )
-        if active_tab_index == 2:
-            queryset = queryset.filter(
-                Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
-            )
-        elif active_tab_index == 3:
-            queryset = queryset.filter(b_status__icontains="Booked")
-        elif active_tab_index == 4:
-            queryset = queryset.filter(b_status__icontains="Ready to booking")
-        elif active_tab_index == 5:
-            queryset = queryset.filter(b_status__icontains="Closed")
-        elif active_tab_index == 6:
-            queryset = queryset.filter(b_status=dme_status)
+                # New POD_SOG filter
+                if download_option == "new_pod_sog":
+                    queryset = queryset.filter(
+                        z_downloaded_pod_sog_timestamp__isnull=True
+                    ).exclude(
+                        Q(z_pod_signed_url__isnull=True) | Q(z_pod_signed_url__exact="")
+                    )
+
+                # New Lable filter
+                if download_option == "new_label":
+                    queryset = queryset.filter(
+                        z_downloaded_shipping_label_timestamp__isnull=True
+                    ).exclude(Q(z_label_url__isnull=True) | Q(z_label_url__exact=""))
+
+                # New Connote filter
+                if download_option == "new_connote":
+                    queryset = queryset.filter(
+                        z_downloaded_connote_timestamp__isnull=True
+                    ).exclude(
+                        Q(z_connote_url__isnull=True) | Q(z_connote_url__exact="")
+                    )
+
+                # Check POD
+                if download_option == "check_pod":
+                    queryset = (
+                        queryset.exclude(b_status__icontains="delivered")
+                        .exclude(
+                            (Q(z_pod_url__isnull=True) | Q(z_pod_url__exact="")),
+                            (
+                                Q(z_pod_signed_url__isnull=True)
+                                | Q(z_pod_signed_url__exact="")
+                            ),
+                        )
+                        .order_by("-check_pod")
+                    )
+
+                # Flagged
+                if download_option == "flagged":
+                    queryset = queryset.filter(b_is_flagged_add_on_services=True)
+
+                if column_filters:
+                    queryset = self._column_filter_4_get_bookings(
+                        queryset, column_filters
+                    )
+
+            else:
+                if search_type == "FILTER":
+                    # Date filter
+                    if user_type == "DME":
+                        queryset = queryset.filter(
+                            z_CreatedTimestamp__range=(first_date, last_date)
+                        )
+                    else:
+                        if client.company_name == "BioPak":
+                            queryset = queryset.filter(
+                                puPickUpAvailFrom_Date__range=(first_date, last_date)
+                            )
+                        else:
+                            queryset = queryset.filter(
+                                z_CreatedTimestamp__range=(first_date, last_date)
+                            )
+
+                # Warehouse filter
+                if int(warehouse_id) is not 0:
+                    queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+
+                # Mulitple search | Simple search | Project Name Search
+                if project_name and len(project_name) > 0:
+                    queryset = queryset.filter(b_booking_project=project_name)
+                elif multi_find_values and len(multi_find_values) > 0:
+                    preserved = Case(
+                        *[
+                            When(
+                                **{f"{multi_find_field}": multi_find_value, "then": pos}
+                            )
+                            for pos, multi_find_value in enumerate(multi_find_values)
+                        ]
+                    )
+                    filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
+                    queryset = queryset.filter(**filter_kwargs).order_by(preserved)
+                elif simple_search_keyword and len(simple_search_keyword) > 0:
+                    if (
+                        not "&" in simple_search_keyword
+                        and not "|" in simple_search_keyword
+                    ):
+                        queryset = queryset.filter(
+                            Q(b_bookingID_Visual__icontains=simple_search_keyword)
+                            | Q(puPickUpAvailFrom_Date__icontains=simple_search_keyword)
+                            | Q(puCompany__icontains=simple_search_keyword)
+                            | Q(pu_Address_Suburb__icontains=simple_search_keyword)
+                            | Q(pu_Address_State__icontains=simple_search_keyword)
+                            | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
+                            | Q(deToCompanyName__icontains=simple_search_keyword)
+                            | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
+                            | Q(de_To_Address_State__icontains=simple_search_keyword)
+                            | Q(
+                                de_To_Address_PostalCode__icontains=simple_search_keyword
+                            )
+                            | Q(
+                                b_clientReference_RA_Numbers__icontains=simple_search_keyword
+                            )
+                            | Q(vx_freight_provider__icontains=simple_search_keyword)
+                            | Q(vx_serviceName__icontains=simple_search_keyword)
+                            | Q(v_FPBookingNumber__icontains=simple_search_keyword)
+                            | Q(b_status__icontains=simple_search_keyword)
+                            | Q(b_status_API__icontains=simple_search_keyword)
+                            | Q(
+                                s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
+                            )
+                            | Q(
+                                s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
+                            )
+                            | Q(
+                                s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword
+                            )
+                            | Q(
+                                s_21_Actual_Delivery_TimeStamp__icontains=simple_search_keyword
+                            )
+                            | Q(b_client_sales_inv_num__icontains=simple_search_keyword)
+                            | Q(pu_Contact_F_L_Name__icontains=simple_search_keyword)
+                            | Q(
+                                de_to_PickUp_Instructions_Address__icontains=simple_search_keyword
+                            )
+                            | Q(b_client_name__icontains=simple_search_keyword)
+                            | Q(b_client_name_sub__icontains=simple_search_keyword)
+                        )
+                    else:
+                        if "&" in simple_search_keyword:
+                            search_keywords = simple_search_keyword.split("&")
+
+                            for search_keyword in search_keywords:
+                                search_keyword = search_keyword.replace(" ", "").lower()
+
+                                if len(search_keyword) > 0:
+                                    queryset = queryset.filter(
+                                        de_to_PickUp_Instructions_Address__icontains=search_keyword
+                                    )
+                        elif "|" in simple_search_keyword:
+                            search_keywords = simple_search_keyword.split("|")
+
+                            for index, search_keyword in enumerate(search_keywords):
+                                search_keywords[index] = search_keyword.replace(
+                                    " ", ""
+                                ).lower()
+
+                            list_of_Q = [
+                                Q(
+                                    **{
+                                        "de_to_PickUp_Instructions_Address__icontains": val
+                                    }
+                                )
+                                for val in search_keywords
+                            ]
+                            queryset = queryset.filter(reduce(operator.or_, list_of_Q))
+                # Column fitler
+                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+
+            # active_tab_index count
+            for booking in queryset:
+                if (
+                    booking.b_error_Capture is not None
+                    and len(booking.b_error_Capture) > 0
+                ):
+                    errors_to_correct += 1
+                if booking.z_label_url is None or len(booking.z_label_url) == 0:
+                    missing_labels += 1
+                if booking.b_status == "Booked" and not booking.z_manifest_url:
+                    to_manifest += 1
+                if booking.b_status == "Ready to booking":
+                    to_process += 1
+                if booking.b_status == "Closed":
+                    closed += 1
+
+            # active_tab_index 0 -> all, 1 -> errors_to_correct
+            if active_tab_index == 1:
+                queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
+                    b_error_Capture__exact=""
+                )
+            if active_tab_index == 2:
+                queryset = queryset.filter(
+                    Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
+                )
+            elif active_tab_index == 3:
+                queryset = queryset.filter(b_status__icontains="Booked")
+            elif active_tab_index == 4:
+                queryset = queryset.filter(b_status__icontains="Ready to booking")
+            elif active_tab_index == 5:
+                queryset = queryset.filter(b_status__icontains="Closed")
+            elif active_tab_index == 6:
+                queryset = queryset.filter(b_status=dme_status)
 
         # Sort
         if download_option != "check_pod" and (
@@ -851,7 +880,6 @@ class BookingsViewSet(viewsets.ViewSet):
             filtered_booking_ids.append(booking.id)
 
         bookings = queryset
-        ret_data = []
 
         # Pagination
         page_cnt = (
@@ -4821,6 +4849,7 @@ class BookingSetsViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk=None):
@@ -4839,3 +4868,8 @@ class BookingSetsViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk=None):
+        bookingset = BookingSets.objects.get(pk=pk).delete()
+        serializer = BookingSetsSerializer(bookingset)
+        return Response(serializer.data)
