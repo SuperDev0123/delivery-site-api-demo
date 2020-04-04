@@ -3469,7 +3469,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
             dme_status_history.notes = (
                 f"Rebooked PU Info - Current PU ID: {booking.pk_booking_id} "
-                f"Pickup From: ({pu_avail_date_str} {pu_avail_time_str})" + 
+                f"Pickup From: ({pu_avail_date_str} {pu_avail_time_str}) " + 
                 f"Pickup By: ({pu_by_date_str} {pu_by_time_str})"
             ) 
 
