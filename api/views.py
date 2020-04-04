@@ -3452,6 +3452,32 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["post"])
+    def update_last_with_pu_dates(self, request, pk=None):
+        booking_id = request.data["bookingId"]
+        booking = Bookings.objects.get(id=int(booking_id))
+
+        if booking is not None:
+            dme_status_history = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).last()
+            dme_status_history.id = None
+
+            pu_avail_date_str = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+            pu_avail_time_str = f"{booking.pu_PickUp_Avail_Time_Hours}-{booking.pu_PickUp_Avail_Time_Minutes}-00"
+
+            pu_by_date_str = booking.pu_PickUp_By_Date.strftime("%Y-%m-%d")
+            pu_by_time_str = f"{booking.pu_PickUp_By_Time_Hours}-{booking.pu_PickUp_By_Time_Minutes}-00"
+
+            dme_status_history.notes = (
+                f"Rebooked PU Info - Current PU ID: {booking.pk_booking_id} "
+                f"Pickup From: ({pu_avail_date_str} {pu_avail_time_str})" + 
+                f"Pickup By: ({pu_by_date_str} {pu_by_time_str})"
+            ) 
+
+            dme_status_history.save()
+
+        return JsonResponse({"success": True})
+            
+
 
 class FPViewSet(viewsets.ViewSet):
     serializer_class = FpSerializer
