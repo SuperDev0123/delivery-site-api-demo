@@ -35,8 +35,8 @@ ACCOUNT_CODES = {
         "live_2": "DMEMEL",
         "live_3": "DMEBNE",
         "live_4": "DMEPAL",
-        # "live_5": "DEMELK", # Deactivated
-        # "live_6": "DMEADL", # Deactivated
+        "live_5": "DEMELK",
+        "live_6": "DMEADL",
         "live_bunnings_0": "DELIMB",
         "live_bunnings_1": "DELIMS",
     },
@@ -94,8 +94,8 @@ KEY_CHAINS = {
         "live_2": {"accountKey": "RE1FTUVMOmRlbGl2ZXI=", "accountPassword": "deliver"},
         "live_3": {"accountKey": "RE1FQk5FOmRlbGl2ZXI=", "accountPassword": "deliver"},
         "live_4": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        # "live_5": {"accountKey": "REVNRUxLOmRlbGl2ZXI=", "accountPassword": "deliver"}, # Deactivated
-        # "live_6": {"accountKey": "RE1FQURMOmRlbGl2ZXI=", "accountPassword": "deliver"}, # Deactivated
+        "live_5": {"accountKey": "REVNRUxLOmRlbGl2ZXI=", "accountPassword": "deliver"},
+        "live_6": {"accountKey": "RE1FQURMOmRlbGl2ZXI=", "accountPassword": "deliver"},
         "live_bunnings_0": {
             "accountKey": "REVMSU1COmRlbGl2ZXIyMA==",
             "accountPassword": "deliver20",
@@ -504,7 +504,9 @@ def get_book_payload(booking, fp_name, account_code_key=None):
 def get_cancel_book_payload(booking, fp_name):
     try:
         payload = {}
-        payload["spAccountDetails"] = _get_account_details(fp_name)
+        payload["spAccountDetails"] = _get_account_details(
+            fp_name, None, booking.fk_client_warehouse.client_warehouse_code
+        )
         payload["serviceProvider"] = get_service_provider(fp_name)
         payload["consignmentNumbers"] = [booking.fk_fp_pickup_id]
 
