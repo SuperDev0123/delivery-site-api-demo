@@ -3475,9 +3475,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(id=int(booking_id))
 
         if booking and booking.fk_fp_pickup_id:
-            dme_status_history = Dme_status_history.objects.create(
-                fk_booking_id=booking.pk_booking_id
-            )
+            dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
 
             pu_avail_date_str = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
             pu_avail_time_str = f"{str(booking.pu_PickUp_Avail_Time_Hours).zfill(2)}-{str(booking.pu_PickUp_Avail_Time_Minutes).zfill(2)}-00"
@@ -3492,7 +3490,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             )
             dme_status_history.save()
 
-        return JsonResponse({"success": True})
+            return JsonResponse({"success": True})
+
+        return JsonResponse({"success": False})
 
 
 class FPViewSet(viewsets.ViewSet):
