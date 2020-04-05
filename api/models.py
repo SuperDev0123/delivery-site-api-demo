@@ -1586,8 +1586,6 @@ class Bookings(models.Model):
                     0,
                 ),
             )
-            sydney_tz = pytz.timezone("Australia/Sydney")
-            pu_by = pu_by.replace(microsecond=0).astimezone(sydney_tz)
             return pu_by
         else:
             return None
@@ -1622,7 +1620,6 @@ class Bookings(models.Model):
             if self.b_dateBookedDate:
                 return str(self.s_06_Latest_Delivery_Date_TimeSet)
             else:
-                sydney = pytz.timezone("Australia/Sydney")
                 etd_de_by = self.get_eta_pu_by()
                 quote = API_booking_quotes.objects.filter(
                     fk_booking_id=self.pk_booking_id,
@@ -1643,7 +1640,9 @@ class Bookings(models.Model):
                     if service_etd is not None:
                         if service_etd.fp_service_time_uom.lower() == "days":
                             etd_de_by = next_business_day(
-                                etd_de_by, round(service_etd.fp_03_delivery_hours/24), []
+                                etd_de_by,
+                                round(service_etd.fp_03_delivery_hours / 24),
+                                [],
                             )
 
                         if service_etd.fp_service_time_uom.lower() == "hours":

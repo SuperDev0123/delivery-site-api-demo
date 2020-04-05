@@ -3469,26 +3469,26 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         booking_id = request.data["bookingId"]
         booking = Bookings.objects.get(id=int(booking_id))
 
-        if booking is not None:
-            dme_status_history = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).last()
+        if booking and booking.fk_fp_pickup_id:
+            dme_status_history = Dme_status_history.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            ).last()
             dme_status_history.id = None
 
             pu_avail_date_str = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
-            pu_avail_time_str = f"{booking.pu_PickUp_Avail_Time_Hours}-{booking.pu_PickUp_Avail_Time_Minutes}-00"
+            pu_avail_time_str = f"{str(booking.pu_PickUp_Avail_Time_Hours).zfill(2)}-{str(booking.pu_PickUp_Avail_Time_Minutes).zfill(2)}-00"
 
             pu_by_date_str = booking.pu_PickUp_By_Date.strftime("%Y-%m-%d")
-            pu_by_time_str = f"{booking.pu_PickUp_By_Time_Hours}-{booking.pu_PickUp_By_Time_Minutes}-00"
+            pu_by_time_str = f"{str(booking.pu_PickUp_By_Time_Hours).zfill(2)}-{str(booking.pu_PickUp_By_Time_Minutes).zfill(2)}-00"
 
             dme_status_history.notes = (
-                f"Rebooked PU Info - Current PU ID: {booking.pk_booking_id} "
-                f"Pickup From: ({pu_avail_date_str} {pu_avail_time_str}) " + 
-                f"Pickup By: ({pu_by_date_str} {pu_by_time_str})"
-            ) 
-
+                f"Rebooked PU Info - Current PU ID: {booking.fk_fp_pickup_id} "
+                + f"Pickup From: ({pu_avail_date_str} {pu_avail_time_str}) "
+                + f"Pickup By: ({pu_by_date_str} {pu_by_time_str})"
+            )
             dme_status_history.save()
 
         return JsonResponse({"success": True})
-            
 
 
 class FPViewSet(viewsets.ViewSet):
