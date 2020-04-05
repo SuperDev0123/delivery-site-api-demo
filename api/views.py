@@ -3470,7 +3470,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
     # Code for only [TNT REBOOK]
     @action(detail=False, methods=["post"])
-    def update_last_with_pu_dates(self, request, pk=None):
+    def create_with_pu_dates(self, request, pk=None):
         booking_id = request.data["bookingId"]
         booking = Bookings.objects.get(id=int(booking_id))
 
@@ -3490,7 +3490,16 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             )
             dme_status_history.save()
 
-            return JsonResponse({"success": True})
+            status_histories = Dme_status_history.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    result: StatusHistorySerializer(dme_status_history).data,
+                }
+            )
 
         return JsonResponse({"success": False})
 
