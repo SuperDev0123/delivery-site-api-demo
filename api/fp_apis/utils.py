@@ -4,6 +4,7 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
+from datetime import datetime
 
 logger = logging.getLogger("dme_api")
 
@@ -103,6 +104,9 @@ def auto_select(booking, pricings):
         ):
             etd_min, etd_max = _get_etd(pricing)
 
+            if not etd_max:
+                return False
+
             if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
                 timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
                 delta_min = 0
@@ -142,6 +146,16 @@ def auto_select(booking, pricings):
         booking.vx_account_code = filtered_pricing["pricing"].account_code
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
         booking.api_booking_quote = filtered_pricing["pricing"]
+
+        fp_freight_provider = Fp_freight_providers.objects.filter(fp_company_name=booking.vx_freight_provider).first()
+
+        if ( fp_freight_provider is not None 
+            and 
+            fp_freight_provider.service_cutoff_time is not None):
+            booking.s_02_Booking_Cutoff_Time = fp_freight_provider.service_cutoff_time
+        else:
+            booking.s_02_Booking_Cutoff_Time = datetime.strptime('12:00:00', '%H:%M:%S').time()
+
         booking.save()
         return True
     else:

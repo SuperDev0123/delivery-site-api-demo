@@ -1740,6 +1740,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "de_Deliver_By_Hours": booking.de_Deliver_By_Hours,
                         "de_Deliver_By_Minutes": booking.de_Deliver_By_Minutes,
                         "client_item_references": booking.get_client_item_references(),
+                        "eta_pu_by": booking.get_eta_pu_by(),
+                        "eta_de_by": booking.get_eta_de_by(),
                         "v_service_Type": booking.v_service_Type,
                         "vx_serviceName": booking.vx_serviceName,
                         "vx_account_code": booking.vx_account_code,
@@ -2232,28 +2234,24 @@ class BookingViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(pk=bookingId)
 
         try:
-            tempo_client = DME_clients.objects.filter(
-                company_name="Tempo Pty Ltd"
-            ).first()
+            tempo_client = DME_clients.objects.get(company_name="Tempo Pty Ltd")
+            sydney_now = get_sydney_now_time("datetime")
 
             if booking.x_ReadyStatus == "Available From":
-
-                weekno = datetime.today().weekday()
+                weekno = sydney_now.weekday()
 
                 if weekno > 4:
                     booking.puPickUpAvailFrom_Date = (
-                        datetime.today() + timedelta(days=7 - weekno)
-                    ).strftime("%Y-%m-%d")
+                        sydney_now + timedelta(days=7 - weekno)
+                    ).date()
                     booking.pu_PickUp_By_Date = (
-                        datetime.today() + timedelta(days=7 - weekno)
-                    ).strftime("%Y-%m-%d")
+                        sydney_now + timedelta(days=7 - weekno)
+                    ).date()
                 else:
                     booking.puPickUpAvailFrom_Date = (
-                        datetime.today() + timedelta(days=1)
-                    ).strftime("%Y-%m-%d")
-                    booking.pu_PickUp_By_Date = (
-                        datetime.today() + timedelta(days=1)
-                    ).strftime("%Y-%m-%d")
+                        sydney_now + timedelta(days=1)
+                    ).date()
+                    booking.pu_PickUp_By_Date = (sydney_now + timedelta(days=1)).date()
 
                 booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
                     "%H"
@@ -2269,12 +2267,28 @@ class BookingViewSet(viewsets.ViewSet):
                     "%M"
                 )
 
-            if booking.x_ReadyStatus == "Available Now":
-                booking.puPickUpAvailFrom_Date = datetime.now().strftime("%Y-%m-%d")
-                booking.pu_PickUp_By_Date = datetime.now().strftime("%Y-%m-%d")
+            elif booking.x_ReadyStatus == "Available Now":
+                booking.puPickUpAvailFrom_Date = sydney_now.date()
+                booking.pu_PickUp_By_Date = sydney_now.date()
 
-                booking.pu_PickUp_Avail_Time_Hours = datetime.now().strftime("%H")
+                booking.pu_PickUp_Avail_Time_Hours = sydney_now.strftime("%H")
                 booking.pu_PickUp_Avail_Time_Minutes = 0
+                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
+                    "%M"
+                )
+            else:
+                booking.puPickUpAvailFrom_Date = sydney_now.date()
+                booking.pu_PickUp_By_Date = sydney_now.date()
+
+                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
+                    "%H"
+                )
+                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
+                    "%M"
+                )
                 booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
                     "%H"
                 )
@@ -2287,7 +2301,7 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         except Exception as e:
-            print(str(e))
+            # print(str(e))
             return JsonResponse(
                 {"type": "Failure", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -3478,6 +3492,32 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         except Exception as e:
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"])
+    def update_last_with_pu_dates(self, request, pk=None):
+        booking_id = request.data["bookingId"]
+        booking = Bookings.objects.get(id=int(booking_id))
+
+        if booking and booking.fk_fp_pickup_id:
+            dme_status_history = Dme_status_history.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            ).last()
+            dme_status_history.id = None
+
+            pu_avail_date_str = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+            pu_avail_time_str = f"{str(booking.pu_PickUp_Avail_Time_Hours).zfill(2)}-{str(booking.pu_PickUp_Avail_Time_Minutes).zfill(2)}-00"
+
+            pu_by_date_str = booking.pu_PickUp_By_Date.strftime("%Y-%m-%d")
+            pu_by_time_str = f"{str(booking.pu_PickUp_By_Time_Hours).zfill(2)}-{str(booking.pu_PickUp_By_Time_Minutes).zfill(2)}-00"
+
+            dme_status_history.notes = (
+                f"Rebooked PU Info - Current PU ID: {booking.fk_fp_pickup_id} "
+                + f"Pickup From: ({pu_avail_date_str} {pu_avail_time_str}) "
+                + f"Pickup By: ({pu_by_date_str} {pu_by_time_str})"
+            )
+            dme_status_history.save()
+
+        return JsonResponse({"success": True})
 
 
 class FPViewSet(viewsets.ViewSet):

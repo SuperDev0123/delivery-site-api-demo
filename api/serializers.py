@@ -47,9 +47,27 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 
 class BookingSerializer(serializers.ModelSerializer):
     client_item_references = serializers.SerializerMethodField()
+    eta_pu_by = serializers.SerializerMethodField()
+    eta_de_by = serializers.SerializerMethodField()
+    pu_by_datetime = serializers.SerializerMethodField()
 
     def get_client_item_references(self, obj):
         return Bookings.get_client_item_references(obj)
+
+    def get_eta_pu_by(self, obj):
+        if obj.api_booking_quote:
+            return Bookings.get_eta_pu_by(obj)
+
+        return None
+
+    def get_eta_de_by(self, obj):
+        if obj.api_booking_quote:
+            return Bookings.get_eta_de_by(obj)
+
+        return None
+
+    def pu_by_datetime(self, obj):
+        return Bookings.get_pu_by(obj)
 
     class Meta:
         model = Bookings

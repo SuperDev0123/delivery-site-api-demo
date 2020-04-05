@@ -1,5 +1,6 @@
+import pytz
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, time
 
 from django.db import models
 from django.utils import timezone
@@ -11,6 +12,9 @@ from django.db.models import Max
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+
+from .utils import next_business_day
+from api.common import trace_error
 
 logger = logging.getLogger("dme_api")
 
@@ -1571,6 +1575,96 @@ class Bookings(models.Model):
         except Exception as e:
             # print('Exception: ', e)
             return ""
+
+    def get_pu_by(self):
+        if self.pu_PickUp_By_Date:
+            pu_by = datetime.combine(
+                self.pu_PickUp_By_Date,
+                time(
+                    int(self.pu_PickUp_By_Time_Hours),
+                    int(self.pu_PickUp_By_Time_Minutes),
+                    0,
+                ),
+            )
+            return pu_by
+        else:
+            return None
+
+    def get_eta_pu_by(self):
+        try:
+            if self.b_dateBookedDate:
+                return None
+            else:
+                if self.get_pu_by() is None:
+                    sydney_tz = pytz.timezone("Australia/Sydney")
+                    etd_pu_by = (
+                        datetime.now().replace(microsecond=0).astimezone(sydney_tz)
+                    )
+                    weekno = etd_pu_by.weekday()
+
+                    if weekno > 4:
+                        etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
+
+                    etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
+
+                    return etd_pu_by
+                else:
+                    return self.get_pu_by()
+        except Exception as e:
+            trace_error.print()
+            logger.error(f"Error #1001: {e}")
+            return None
+
+    def get_eta_de_by(self):
+        try:
+            if self.b_dateBookedDate:
+                return str(self.s_06_Latest_Delivery_Date_TimeSet)
+            else:
+                etd_de_by = self.get_eta_pu_by()
+                quote = API_booking_quotes.objects.filter(
+                    fk_booking_id=self.pk_booking_id,
+                    fk_freight_provider_id=self.vx_freight_provider,
+                    service_name=self.vx_serviceName,
+                ).first()
+
+                freight_provider = Fp_freight_providers.objects.filter(
+                    fp_company_name=self.vx_freight_provider
+                ).first()
+
+                if freight_provider is not None and quote is not None:
+                    service_etd = FP_Service_ETDs.objects.filter(
+                        freight_provider_id=freight_provider.id,
+                        fp_delivery_time_description=quote.etd,
+                    ).first()
+
+                    if service_etd is not None:
+                        if service_etd.fp_service_time_uom.lower() == "days":
+                            etd_de_by = next_business_day(
+                                etd_de_by,
+                                round(service_etd.fp_03_delivery_hours / 24),
+                                [],
+                            )
+
+                        if service_etd.fp_service_time_uom.lower() == "hours":
+                            etd_de_by = etd_de_by + timedelta(
+                                hours=service_etd.fp_03_delivery_hours
+                            )
+                            weekno = etd_de_by.weekday()
+                            if weekno > 4:
+                                etd_de_by = etd_de_by + timedelta(days=7 - weekno)
+                    else:
+                        if quote.fk_freight_provider_id == "TNT":
+                            days = round(float(quote.etd))
+                            etd_de_by = next_business_day(etd_de_by, days, [])
+
+                    return etd_de_by
+
+                else:
+                    return None
+        except Exception as e:
+            trace_error.print()
+            logger.error(f"Error #1002: {e}")
+            return None
 
 
 class Booking_lines(models.Model):

@@ -1,4 +1,10 @@
-import time, json, requests, datetime, base64, os, logging
+import time as t
+import json
+import requests
+import datetime
+import base64
+import os
+import logging
 from ast import literal_eval
 
 from rest_framework.decorators import (
@@ -195,7 +201,7 @@ def book(request, fp_name):
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
-                    time.sleep(180)
+                    t.sleep(180)
                     logger.error(f"### Payload ({fp_name} book): {payload}")
                     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
                     response = requests.post(url, params={}, json=payload)
@@ -242,6 +248,8 @@ def book(request, fp_name):
                         booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
+                    booking.s_05_Latest_Pick_Up_Date_TimeSet = booking.get_eta_pu_by()
+                    booking.s_06_Latest_Delivery_Date_TimeSet = booking.get_eta_de_by()
                     booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
@@ -626,7 +634,7 @@ def get_label(request, fp_name):
                     and json_data["anyType"]["Status"] != "SUCCESS"
                 )
             ):
-                time.sleep(5)  # Delay to wait label is created
+                t.sleep(5)  # Delay to wait label is created
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
 
@@ -645,14 +653,14 @@ def get_label(request, fp_name):
                 )
             elif fp_name.lower() in ["tnt", "sendle"]:
                 try:
-                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
-
                     if fp_name.lower() == "tnt":
                         label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
                     elif fp_name.lower() == "sendle":
                         label_data = str(json_data["pdfData"]).encode()
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
+
+                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
 
                     if settings.ENV == "prod":
                         label_url = f"/opt/s3_public/pdfs/{z_label_url}"
