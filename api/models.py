@@ -1613,17 +1613,12 @@ class Bookings(models.Model):
     def get_eta_de_by(self):
         try:
             etd_de_by = self.get_eta_pu_by()
-            quote = API_booking_quotes.objects.filter(
-                fk_booking_id=self.pk_booking_id,
-                fk_freight_provider_id=self.vx_freight_provider,
-                service_name=self.vx_serviceName,
-            ).first()
-
-            freight_provider = Fp_freight_providers.objects.filter(
+            quote = self.api_booking_quote
+            freight_provider = Fp_freight_providers.objects.get(
                 fp_company_name=self.vx_freight_provider
-            ).first()
+            )
 
-            if freight_provider is not None and quote is not None:
+            if not freight_provider and not quote:
                 service_etd = FP_Service_ETDs.objects.filter(
                     freight_provider_id=freight_provider.id,
                     fp_delivery_time_description=quote.etd,
@@ -1648,7 +1643,6 @@ class Bookings(models.Model):
                         etd_de_by = next_business_day(etd_de_by, days, [])
 
                 return etd_de_by
-
             else:
                 return None
         except Exception as e:
