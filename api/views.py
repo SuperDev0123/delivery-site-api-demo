@@ -2246,7 +2246,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking.pu_PickUp_By_Date = sydney_now.date()
 
                 booking.pu_PickUp_Avail_Time_Hours = sydney_now.strftime("%H")
-                booking.pu_PickUp_Avail_Time_Minutes = sydney_now.strftime("%M")
+                booking.pu_PickUp_Avail_Time_Minutes = 0
                 booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
                     "%H"
                 )
