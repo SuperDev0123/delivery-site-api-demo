@@ -941,6 +941,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     "fp_store_event_desc": booking.fp_store_event_desc,
                     "fp_received_date_time": booking.fp_received_date_time,
                     "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
+                    "s_05_Latest_Pick_Up_Date_TimeSet": bookign.s_05_Latest_Pick_Up_Date_TimeSet,
+                    "s_06_Latest_Delivery_Date_TimeSet": booking.s_06_Latest_Delivery_Date_TimeSet,
                 }
             )
 
@@ -1753,6 +1755,8 @@ class BookingViewSet(viewsets.ViewSet):
                         if booking.api_booking_quote
                         else None,
                         "vx_futile_Booking_Notes": booking.vx_futile_Booking_Notes,
+                        "s_05_Latest_Pick_Up_Date_TimeSet": bookign.s_05_Latest_Pick_Up_Date_TimeSet,
+                        "s_06_Latest_Delivery_Date_TimeSet": booking.s_06_Latest_Delivery_Date_TimeSet,
                     }
                     return JsonResponse(
                         {
