@@ -3497,7 +3497,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             return JsonResponse(
                 {
                     "success": True,
-                    result: StatusHistorySerializer(dme_status_history).data,
+                    "result": StatusHistorySerializer(dme_status_history).data,
                 }
             )
 
