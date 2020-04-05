@@ -2217,10 +2217,10 @@ class BookingViewSet(viewsets.ViewSet):
 
                 if weekno > 4:
                     booking.puPickUpAvailFrom_Date = (
-                        sydney_now + timedelta(days=7 - weekno)
+                        sydney_now + timedelta(days=6 - weekno)
                     ).date()
                     booking.pu_PickUp_By_Date = (
-                        sydney_now + timedelta(days=7 - weekno)
+                        sydney_now + timedelta(days=6 - weekno)
                     ).date()
                 else:
                     booking.puPickUpAvailFrom_Date = (
