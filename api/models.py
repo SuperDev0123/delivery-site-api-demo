@@ -1618,7 +1618,7 @@ class Bookings(models.Model):
                 fp_company_name=self.vx_freight_provider
             )
 
-            if not freight_provider and not quote:
+            if freight_provider and quote:
                 service_etd = FP_Service_ETDs.objects.filter(
                     freight_provider_id=freight_provider.id,
                     fp_delivery_time_description=quote.etd,
