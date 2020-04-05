@@ -3468,16 +3468,16 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # Code for only [TNT REBOOK]
     @action(detail=False, methods=["post"])
     def update_last_with_pu_dates(self, request, pk=None):
         booking_id = request.data["bookingId"]
         booking = Bookings.objects.get(id=int(booking_id))
 
         if booking and booking.fk_fp_pickup_id:
-            dme_status_history = Dme_status_history.objects.filter(
+            dme_status_history = Dme_status_history.objects.create(
                 fk_booking_id=booking.pk_booking_id
-            ).last()
-            dme_status_history.id = None
+            )
 
             pu_avail_date_str = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
             pu_avail_time_str = f"{str(booking.pu_PickUp_Avail_Time_Hours).zfill(2)}-{str(booking.pu_PickUp_Avail_Time_Minutes).zfill(2)}-00"
