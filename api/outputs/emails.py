@@ -193,15 +193,20 @@ def send_booking_email_using_template(bookingId, emailName, sender):
                 gaps.append(lines_data.gap_ra)
 
         for idx, booking_line in enumerate(booking_lines):
+            REF = ""
+
+            for lines_data in booking_lines_data:
+                if booking_line.pk_booking_lines_id == lines_data.fk_booking_lines_id:
+                    REF = (
+                        str(lines_data.clientRefNumber)
+                        if lines_data.clientRefNumber
+                        else ""
+                    )
+
             PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
             RA = ", ".join(gaps)
             DESCRIPTION = str(booking_line.e_item) if booking_line.e_item else ""
             QTY = str(booking_line.e_qty) if booking_line.e_qty else ""
-            REF = (
-                str(booking_line.client_item_reference)
-                if booking_line.client_item_reference
-                else ""
-            )
             TYPE = (
                 str(booking_line.e_type_of_packaging)
                 if booking_line.e_type_of_packaging
