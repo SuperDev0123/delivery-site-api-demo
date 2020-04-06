@@ -1445,9 +1445,14 @@ class BookingsViewSet(viewsets.ViewSet):
         clientname = get_client_name(self.request)
 
         if clientname in ["BioPak", "dme"]:
+            first_date = get_sydney_now_time("datetime").date()
+            last_date = (sydney_now - timedelta(days=10)).date()
             st_bookings_has_manifest = (
                 Bookings.objects.exclude(manifest_timestamp__isnull=True)
-                .filter(vx_freight_provider__iexact="startrack")
+                .filter(
+                    vx_freight_provider__iexact="startrack",
+                    z_CreatedTimestamp__range=(first_date, last_date),
+                )
                 .order_by("-manifest_timestamp")
             )
             manifest_dates = st_bookings_has_manifest.values_list(
