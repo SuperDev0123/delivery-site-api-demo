@@ -1031,7 +1031,6 @@ def pricing(request):
     # Startrack
     fp_names = [
         "Sendle",
-        "Hunter",
         "TNT",
         "Capital",
         "Century",
