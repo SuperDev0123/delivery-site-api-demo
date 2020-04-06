@@ -636,7 +636,7 @@ def get_getlabel_payload(booking, fp_name):
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
                 "description": ", ".join(descriptions)[:20],
-                "gapRa": ", ".join(gaps)[:20],
+                "gapRa": ", ".join(gaps)[:15],
             }
 
             items.append(item)
