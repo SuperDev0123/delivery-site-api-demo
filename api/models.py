@@ -13,7 +13,6 @@ from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
-from .utils import next_business_day
 from api.common import trace_error
 
 logger = logging.getLogger("dme_api")
@@ -1611,6 +1610,8 @@ class Bookings(models.Model):
             return None
 
     def get_eta_de_by(self):
+        from .utils import next_business_day
+
         try:
             etd_de_by = self.get_eta_pu_by()
             quote = self.api_booking_quote
