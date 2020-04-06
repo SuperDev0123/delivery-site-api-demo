@@ -609,6 +609,15 @@ def get_getlabel_payload(booking, fp_name):
             fk_booking_lines_id=line.pk_booking_lines_id
         )
 
+        descriptions = []
+        gaps = []
+        for line_data in booking_lines_data:
+            if line_data.itemDescription:
+                descriptions.append(line_data.itemDescription)
+
+            if line_data.gap_ra:
+                gaps.append(line_data.gap_ra)
+
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
@@ -626,8 +635,8 @@ def get_getlabel_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": booking_lines_data.itemDescription,
-                "gapRa": booking_lines_data.gap_ra,
+                "description": ", ".join(descriptions)[:20],
+                "gapRa": ", ".join(gaps)[:20],
             }
 
             items.append(item)
