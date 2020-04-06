@@ -605,12 +605,9 @@ def get_getlabel_payload(booking, fp_name):
 
     items = []
     for line in booking_lines:
-        # booking_lines_data = Booking_lines_data.objects.filter(
-        #     fk_booking_line_id=line.pk_booking_lines_id
-        # )
         booking_lines_data = Booking_lines_data.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        ).first()
+            fk_booking_line_id=line.pk_booking_lines_id
+        )
 
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
