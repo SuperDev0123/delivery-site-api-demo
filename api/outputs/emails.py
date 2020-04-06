@@ -206,17 +206,28 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         emailBody = template.emailBody
 
         for idx, booking_line in enumerate(booking_lines):
-            for lines_data in booking_lines_data:
-                if booking_line.pk_booking_lines_id == lines_data.fk_booking_lines_id:
-                    REF = (
-                        str(lines_data.clientRefNumber)
-                        if lines_data.clientRefNumber
-                        else ""
-                    )
+            for line in booking_lines:
+                booking_lines_data = Booking_lines_data.objects.filter(
+                    fk_booking_lines_id=line.pk_booking_lines_id
+                )
 
-            PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
+                descriptions = []
+                gaps = []
+                refs
+                for line_data in booking_lines_data:
+                    if line_data.itemDescription:
+                        descriptions.append(line_data.itemDescription)
+
+                    if line_data.gap_ra:
+                        gaps.append(line_data.gap_ra)
+
+                    if line_data.clientRefNumber:
+                        refs.append(line_data.clientRefNumber)
+
+            REF = ", ".join(refs)
             RA = ", ".join(gaps)
-            DESCRIPTION = str(booking_line.e_item) if booking_line.e_item else ""
+            DESCRIPTION = ", ".join(descriptions)
+            PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
             QTY = str(booking_line.e_qty) if booking_line.e_qty else ""
             TYPE = (
                 str(booking_line.e_type_of_packaging)
