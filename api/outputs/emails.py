@@ -95,7 +95,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
                 files.append("./static/pdfs/" + booking.z_label_url)
             else:
                 files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
-
     elif emailName == "Return Booking":
         emailVarList = {
             "TOADDRESSCONTACT": TOADDRESSCONTACT,
@@ -125,6 +124,11 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BODYREPEAT": "",
         }
 
+        if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
     elif emailName == "POD":
         emailVarList = {
             "BOOKEDDATE": BOOKEDDATE,
@@ -162,7 +166,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
                 files.append("./static/imgs/" + booking.z_pod_url)
             else:
                 files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
-
     elif emailName == "Futile Pickup":
         emailVarList = {
             "TOADDRESSCONTACT": TOADDRESSCONTACT,
@@ -192,24 +195,24 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BODYREPEAT": "",
         }
 
+        if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+
     html = ""
     for template in templates:
         emailBody = template.emailBody
 
         for idx, booking_line in enumerate(booking_lines):
-            REF = (
-                str(booking_lines_data[idx].clientRefNumber)
-                if booking_lines_data[idx].clientRefNumber
-                else ""
-            )
-
-            # for lines_data in booking_lines_data:
-            #     if booking_line.pk_booking_lines_id == lines_data.fk_booking_lines_id:
-            #         REF = (
-            #             str(lines_data.clientRefNumber)
-            #             if lines_data.clientRefNumber
-            #             else ""
-            #         )
+            for lines_data in booking_lines_data:
+                if booking_line.pk_booking_lines_id == lines_data.fk_booking_lines_id:
+                    REF = (
+                        str(lines_data.clientRefNumber)
+                        if lines_data.clientRefNumber
+                        else ""
+                    )
 
             PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
             RA = ", ".join(gaps)
