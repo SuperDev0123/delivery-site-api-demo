@@ -27,7 +27,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
     BOOKEDDATE = booking.b_dateBookedDate
     DELIVERYDATE = booking.s_21_Actual_Delivery_TimeStamp
-    TOADDRESSCONTACT = booking.de_to_Contact_F_LName
+    TOADDRESSCONTACT = booking.pu_Contact_F_L_Name
     FUTILEREASON = booking.vx_futile_Booking_Notes
     BOOKING_NUMBER = booking.b_bookingID_Visual
     FREIGHT_PROVIDER = booking.vx_freight_provider
