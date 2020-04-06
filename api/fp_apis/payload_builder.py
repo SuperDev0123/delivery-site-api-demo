@@ -441,13 +441,13 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             if booking.pu_PickUp_Avail_Time_Hours < 10:
                 payload[
                     "collectionDateTime"
-                ] += f"T0{booking.pu_PickUp_Avail_Time_Hours}:00"
+                ] += f"T0{booking.pu_PickUp_Avail_Time_Hours}:00:00"
             else:
                 payload[
                     "collectionDateTime"
-                ] += f"T{booking.pu_PickUp_Avail_Time_Hours}:00"
+                ] += f"T{booking.pu_PickUp_Avail_Time_Hours}:00:00"
         else:
-            payload["collectionDateTime"] += "T00:00"
+            payload["collectionDateTime"] += "T00:00:00"
 
         payload["collectionCloseTime"] = "1500"
         payload["serviceCode"] = "76"
