@@ -602,6 +602,7 @@ def get_getlabel_payload(booking, fp_name):
     }
 
     booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines_data = Booking_lines_data.objects.filter(fk_booking_id=booking.pk_booking_id).first()
 
     items = []
     for line in booking_lines:
@@ -622,8 +623,10 @@ def get_getlabel_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": line.e_item,
+                "description": booking_lines_data.itemDescription,
+                "gapRa": booking_lines_data.gap_ra,
             }
+
             items.append(item)
 
             if fp_name.lower() == "startrack":
