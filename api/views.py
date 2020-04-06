@@ -1445,7 +1445,7 @@ class BookingsViewSet(viewsets.ViewSet):
         clientname = get_client_name(self.request)
 
         if clientname in ["BioPak", "dme"]:
-            sydney_now = get_sydney_now_time("datetime").date()
+            sydney_now = get_sydney_now_time("datetime")
             last_date = sydney_now.date()
             first_date = (sydney_now - timedelta(days=10)).date()
             st_bookings_has_manifest = (
