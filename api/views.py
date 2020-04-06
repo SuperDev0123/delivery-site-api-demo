@@ -2407,6 +2407,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                     "e_qty_shortages": booking_line.e_qty_shortages,
                     "e_qty_scanned_fp": booking_line.e_qty_scanned_fp,
                     "is_scanned": booking_line.get_is_scanned(),
+                    "pk_booking_lines_id": booking.pk_booking_lines_id,
                 }
             )
 
