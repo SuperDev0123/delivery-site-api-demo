@@ -3699,23 +3699,29 @@ class Client_Process_Mgr(models.Model):
     )
 
     process_name = models.CharField(
-        verbose_name=_("Process Name"), max_length=40, blank=False
+        verbose_name=_("Process Name"), max_length=40, blank=False, null=True
     )
 
     z_createdTimeStamp = models.DateTimeField(
-        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
+        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True, null=True
     )
 
     origin_puCompany = models.CharField(
-        verbose_name=_("Origin PU Company"), max_length=128, blank=False
+        verbose_name=_("Origin PU Company"), max_length=128, blank=False, null=True
     )
 
     origin_pu_Address_Street_1 = models.CharField(
-        verbose_name=_("Origin PU Address Street1"), max_length=40, blank=False
+        verbose_name=_("Origin PU Address Street1"),
+        max_length=40,
+        blank=False,
+        null=True,
     )
 
     origin_pu_Address_Street_2 = models.CharField(
-        verbose_name=_("Origin PU Address Street2"), max_length=40, blank=False
+        verbose_name=_("Origin PU Address Street2"),
+        max_length=40,
+        blank=False,
+        null=True,
     )
 
     origin_pu_pickup_instructions_address = models.TextField(
