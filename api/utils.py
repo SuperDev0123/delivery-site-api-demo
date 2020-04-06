@@ -53,7 +53,7 @@ from reportlab.lib import colors
 import re
 
 from django.conf import settings
-from .models import *
+from api.models import *
 from dateutil.rrule import *
 
 if settings.ENV == "local":

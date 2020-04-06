@@ -441,25 +441,13 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             if booking.pu_PickUp_Avail_Time_Hours < 10:
                 payload[
                     "collectionDateTime"
-                ] += f"T0{booking.pu_PickUp_Avail_Time_Hours}"
+                ] += f"T0{booking.pu_PickUp_Avail_Time_Hours}:00:00"
             else:
                 payload[
                     "collectionDateTime"
-                ] += f"T{booking.pu_PickUp_Avail_Time_Hours}"
+                ] += f"T{booking.pu_PickUp_Avail_Time_Hours}:00:00"
         else:
-            payload["collectionDateTime"] += "T00"
-
-        if booking.pu_PickUp_Avail_Time_Minutes:
-            if booking.pu_PickUp_Avail_Time_Minutes < 10:
-                payload[
-                    "collectionDateTime"
-                ] += f"0{booking.pu_PickUp_Avail_Time_Minutes}"
-            else:
-                payload[
-                    "collectionDateTime"
-                ] += f"{booking.pu_PickUp_Avail_Time_Minutes}"
-        else:
-            payload["collectionDateTime"] += ":00:00"
+            payload["collectionDateTime"] += "T00:00:00"
 
         payload["collectionCloseTime"] = "1500"
         payload["serviceCode"] = "76"
@@ -617,6 +605,19 @@ def get_getlabel_payload(booking, fp_name):
 
     items = []
     for line in booking_lines:
+        booking_lines_data = Booking_lines_data.objects.filter(
+            fk_booking_lines_id=line.pk_booking_lines_id
+        )
+
+        descriptions = []
+        gaps = []
+        for line_data in booking_lines_data:
+            if line_data.itemDescription:
+                descriptions.append(line_data.itemDescription)
+
+            if line_data.gap_ra:
+                gaps.append(line_data.gap_ra)
+
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
@@ -634,8 +635,10 @@ def get_getlabel_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": line.e_item,
+                "description": ", ".join(descriptions)[:20],
+                "gapRa": ", ".join(gaps)[:15],
             }
+
             items.append(item)
 
             if fp_name.lower() == "startrack":

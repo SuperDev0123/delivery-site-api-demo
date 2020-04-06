@@ -13,7 +13,6 @@ from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
-from .utils import next_business_day
 from api.common import trace_error
 
 logger = logging.getLogger("dme_api")
@@ -1592,75 +1591,61 @@ class Bookings(models.Model):
 
     def get_eta_pu_by(self):
         try:
-            if self.b_dateBookedDate:
-                return None
+            if self.get_pu_by() is None:
+                sydney_tz = pytz.timezone("Australia/Sydney")
+                etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
+                weekno = etd_pu_by.weekday()
+
+                if weekno > 4:
+                    etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
+
+                etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
+
+                return etd_pu_by
             else:
-                if self.get_pu_by() is None:
-                    sydney_tz = pytz.timezone("Australia/Sydney")
-                    etd_pu_by = (
-                        datetime.now().replace(microsecond=0).astimezone(sydney_tz)
-                    )
-                    weekno = etd_pu_by.weekday()
-
-                    if weekno > 4:
-                        etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
-
-                    etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
-
-                    return etd_pu_by
-                else:
-                    return self.get_pu_by()
+                return self.get_pu_by()
         except Exception as e:
             trace_error.print()
             logger.error(f"Error #1001: {e}")
             return None
 
     def get_eta_de_by(self):
+        from .utils import next_business_day
+
         try:
-            if self.b_dateBookedDate:
-                return str(self.s_06_Latest_Delivery_Date_TimeSet)
-            else:
-                etd_de_by = self.get_eta_pu_by()
-                quote = API_booking_quotes.objects.filter(
-                    fk_booking_id=self.pk_booking_id,
-                    fk_freight_provider_id=self.vx_freight_provider,
-                    service_name=self.vx_serviceName,
+            etd_de_by = self.get_eta_pu_by()
+            quote = self.api_booking_quote
+            freight_provider = Fp_freight_providers.objects.get(
+                fp_company_name=self.vx_freight_provider
+            )
+
+            if freight_provider and quote:
+                service_etd = FP_Service_ETDs.objects.filter(
+                    freight_provider_id=freight_provider.id,
+                    fp_delivery_time_description=quote.etd,
                 ).first()
 
-                freight_provider = Fp_freight_providers.objects.filter(
-                    fp_company_name=self.vx_freight_provider
-                ).first()
+                if service_etd is not None:
+                    if service_etd.fp_service_time_uom.lower() == "days":
+                        etd_de_by = next_business_day(
+                            etd_de_by, round(service_etd.fp_03_delivery_hours / 24), [],
+                        )
 
-                if freight_provider is not None and quote is not None:
-                    service_etd = FP_Service_ETDs.objects.filter(
-                        freight_provider_id=freight_provider.id,
-                        fp_delivery_time_description=quote.etd,
-                    ).first()
-
-                    if service_etd is not None:
-                        if service_etd.fp_service_time_uom.lower() == "days":
-                            etd_de_by = next_business_day(
-                                etd_de_by,
-                                round(service_etd.fp_03_delivery_hours / 24),
-                                [],
-                            )
-
-                        if service_etd.fp_service_time_uom.lower() == "hours":
-                            etd_de_by = etd_de_by + timedelta(
-                                hours=service_etd.fp_03_delivery_hours
-                            )
-                            weekno = etd_de_by.weekday()
-                            if weekno > 4:
-                                etd_de_by = etd_de_by + timedelta(days=7 - weekno)
-                    else:
-                        if quote.fk_freight_provider_id == "TNT":
-                            days = round(float(quote.etd))
-                            etd_de_by = next_business_day(etd_de_by, days, [])
-
-                    return etd_de_by
-
+                    if service_etd.fp_service_time_uom.lower() == "hours":
+                        etd_de_by = etd_de_by + timedelta(
+                            hours=service_etd.fp_03_delivery_hours
+                        )
+                        weekno = etd_de_by.weekday()
+                        if weekno > 4:
+                            etd_de_by = etd_de_by + timedelta(days=7 - weekno)
                 else:
-                    return None
+                    if quote.fk_freight_provider_id == "TNT":
+                        days = round(float(quote.etd))
+                        etd_de_by = next_business_day(etd_de_by, days, [])
+
+                return etd_de_by
+            else:
+                return None
         except Exception as e:
             trace_error.print()
             logger.error(f"Error #1002: {e}")
@@ -3714,23 +3699,29 @@ class Client_Process_Mgr(models.Model):
     )
 
     process_name = models.CharField(
-        verbose_name=_("Process Name"), max_length=40, blank=False
+        verbose_name=_("Process Name"), max_length=40, blank=False, null=True
     )
 
     z_createdTimeStamp = models.DateTimeField(
-        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
+        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True, null=True
     )
 
     origin_puCompany = models.CharField(
-        verbose_name=_("Origin PU Company"), max_length=128, blank=False
+        verbose_name=_("Origin PU Company"), max_length=128, blank=False, null=True
     )
 
     origin_pu_Address_Street_1 = models.CharField(
-        verbose_name=_("Origin PU Address Street1"), max_length=40, blank=False
+        verbose_name=_("Origin PU Address Street1"),
+        max_length=40,
+        blank=False,
+        null=True,
     )
 
     origin_pu_Address_Street_2 = models.CharField(
-        verbose_name=_("Origin PU Address Street2"), max_length=40, blank=False
+        verbose_name=_("Origin PU Address Street2"),
+        max_length=40,
+        blank=False,
+        null=True,
     )
 
     origin_pu_pickup_instructions_address = models.TextField(

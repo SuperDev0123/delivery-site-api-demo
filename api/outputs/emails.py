@@ -12,10 +12,19 @@ from api.utils import send_email
 def send_booking_email_using_template(bookingId, emailName, sender):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).order_by("-z_createdTimeStamp")
     booking_lines_data = Booking_lines_data.objects.filter(
         fk_booking_id=booking.pk_booking_id
-    )
+    ).order_by("-z_createdTimeStamp")
+
+    gaps = []
+    refs = []
+    for lines_data in booking_lines_data:
+        if lines_data.gap_ra:
+            gaps.append(lines_data.gap_ra)
+            refs.append(lines_data.clientRefNumber)
 
     totalQty = 0
     totalWeight = 0
@@ -27,7 +36,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
     BOOKEDDATE = booking.b_dateBookedDate
     DELIVERYDATE = booking.s_21_Actual_Delivery_TimeStamp
-    TOADDRESSCONTACT = booking.de_to_Contact_F_LName
+    TOADDRESSCONTACT = f" {booking.pu_Contact_F_L_Name}"
     FUTILEREASON = booking.vx_futile_Booking_Notes
     BOOKING_NUMBER = booking.b_bookingID_Visual
     FREIGHT_PROVIDER = booking.vx_freight_provider
@@ -59,7 +68,112 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BOOKING_NUMBER": BOOKING_NUMBER,
             "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
             "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
+            "TOT_PACKAGES": TOT_PACKAGES,
+            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
+            "SERVICE_TYPE": SERVICE_TYPE,
+            "SERVICE": SERVICE,
+            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
+            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
+            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
+            "DELIVERY_ETA": DELIVERY_ETA,
+            "INSTRUCTIONS": INSTRUCTIONS,
+            "PICKUP_CONTACT": PICKUP_CONTACT,
+            "PICKUP_SUBURB": PICKUP_SUBURB,
+            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
+            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
+            "DELIVERY_CONTACT": DELIVERY_CONTACT,
+            "DELIVERY_SUBURB": DELIVERY_SUBURB,
+            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
+            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
+            "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
+        }
+
+        if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+    elif emailName == "Return Booking":
+        emailVarList = {
+            "TOADDRESSCONTACT": TOADDRESSCONTACT,
+            "FUTILEREASON": FUTILEREASON,
+            "BOOKING_NUMBER": BOOKING_NUMBER,
+            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
+            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
+            "TOT_PACKAGES": TOT_PACKAGES,
+            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
+            "SERVICE_TYPE": SERVICE_TYPE,
+            "SERVICE": SERVICE,
+            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
+            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
+            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
+            "DELIVERY_ETA": DELIVERY_ETA,
+            "INSTRUCTIONS": INSTRUCTIONS,
+            "PICKUP_CONTACT": PICKUP_CONTACT,
+            "PICKUP_SUBURB": PICKUP_SUBURB,
+            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
+            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
+            "DELIVERY_CONTACT": DELIVERY_CONTACT,
+            "DELIVERY_SUBURB": DELIVERY_SUBURB,
+            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
+            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
+            "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
+        }
+
+        if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+    elif emailName == "POD":
+        emailVarList = {
+            "BOOKEDDATE": BOOKEDDATE,
+            "DELIVERYDATE": DELIVERYDATE,
+            "DMEBOOKINGNUMBER": DMEBOOKINGNUMBER,
+            "TOADDRESSCONTACT": TOADDRESSCONTACT,
+            "FUTILEREASON": FUTILEREASON,
+            "BOOKING_NUMBER": BOOKING_NUMBER,
+            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
+            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
+            "TOT_PACKAGES": TOT_PACKAGES,
+            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
+            "SERVICE_TYPE": SERVICE_TYPE,
+            "SERVICE": SERVICE,
+            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
+            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
+            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
+            "DELIVERY_ETA": DELIVERY_ETA,
+            "INSTRUCTIONS": INSTRUCTIONS,
+            "PICKUP_CONTACT": PICKUP_CONTACT,
+            "PICKUP_SUBURB": PICKUP_SUBURB,
+            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
+            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
+            "DELIVERY_CONTACT": DELIVERY_CONTACT,
+            "DELIVERY_SUBURB": DELIVERY_SUBURB,
+            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
+            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
+            "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
+        }
+
+        if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
+            if settings.ENV == "local":
+                files.append("./static/imgs/" + booking.z_pod_url)
+            else:
+                files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
+    elif emailName == "Futile Pickup":
+        emailVarList = {
+            "TOADDRESSCONTACT": TOADDRESSCONTACT,
+            "FUTILEREASON": FUTILEREASON,
+            "BOOKING_NUMBER": BOOKING_NUMBER,
+            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
+            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
             "TOT_PACKAGES": TOT_PACKAGES,
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
@@ -87,121 +201,34 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             else:
                 files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
 
-    elif emailName == "Return Booking":
-        emailVarList = {
-            "TOADDRESSCONTACT": TOADDRESSCONTACT,
-            "FUTILEREASON": FUTILEREASON,
-            "BOOKING_NUMBER": BOOKING_NUMBER,
-            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
-            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
-            "TOT_PACKAGES": TOT_PACKAGES,
-            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
-            "SERVICE_TYPE": SERVICE_TYPE,
-            "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
-            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
-            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
-            "DELIVERY_ETA": DELIVERY_ETA,
-            "INSTRUCTIONS": INSTRUCTIONS,
-            "PICKUP_CONTACT": PICKUP_CONTACT,
-            "PICKUP_SUBURB": PICKUP_SUBURB,
-            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
-            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
-            "DELIVERY_CONTACT": DELIVERY_CONTACT,
-            "DELIVERY_SUBURB": DELIVERY_SUBURB,
-            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
-            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
-            "ATTENTION_NOTES": ATTENTION_NOTES,
-            "BODYREPEAT": "",
-        }
-
-    elif emailName == "POD":
-        emailVarList = {
-            "BOOKEDDATE": BOOKEDDATE,
-            "DELIVERYDATE": DELIVERYDATE,
-            "DMEBOOKINGNUMBER": DMEBOOKINGNUMBER,
-            "TOADDRESSCONTACT": TOADDRESSCONTACT,
-            "FUTILEREASON": FUTILEREASON,
-            "BOOKING_NUMBER": BOOKING_NUMBER,
-            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
-            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
-            "TOT_PACKAGES": TOT_PACKAGES,
-            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
-            "SERVICE_TYPE": SERVICE_TYPE,
-            "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
-            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
-            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
-            "DELIVERY_ETA": DELIVERY_ETA,
-            "INSTRUCTIONS": INSTRUCTIONS,
-            "PICKUP_CONTACT": PICKUP_CONTACT,
-            "PICKUP_SUBURB": PICKUP_SUBURB,
-            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
-            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
-            "DELIVERY_CONTACT": DELIVERY_CONTACT,
-            "DELIVERY_SUBURB": DELIVERY_SUBURB,
-            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
-            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
-            "ATTENTION_NOTES": ATTENTION_NOTES,
-            "BODYREPEAT": "",
-        }
-
-        if booking.z_pod_url is not None and len(booking.z_pod_url) is not 0:
-            if settings.ENV == "local":
-                files.append("./static/imgs/" + booking.z_pod_url)
-            else:
-                files.append("/opt/s3_public/imgs/" + booking.z_pod_url)
-
-    elif emailName == "Futile Pickup":
-        emailVarList = {
-            "TOADDRESSCONTACT": TOADDRESSCONTACT,
-            "FUTILEREASON": FUTILEREASON,
-            "BOOKING_NUMBER": BOOKING_NUMBER,
-            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
-            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
-            "TOT_PACKAGES": TOT_PACKAGES,
-            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
-            "SERVICE_TYPE": SERVICE_TYPE,
-            "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
-            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
-            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
-            "DELIVERY_ETA": DELIVERY_ETA,
-            "INSTRUCTIONS": INSTRUCTIONS,
-            "PICKUP_CONTACT": PICKUP_CONTACT,
-            "PICKUP_SUBURB": PICKUP_SUBURB,
-            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
-            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
-            "DELIVERY_CONTACT": DELIVERY_CONTACT,
-            "DELIVERY_SUBURB": DELIVERY_SUBURB,
-            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
-            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
-            "ATTENTION_NOTES": ATTENTION_NOTES,
-            "BODYREPEAT": "",
-        }
-
     html = ""
     for template in templates:
         emailBody = template.emailBody
 
-        gaps = []
-        for lines_data in booking_lines_data:
-            if lines_data.gap_ra:
-                gaps.append(lines_data.gap_ra)
-
         for idx, booking_line in enumerate(booking_lines):
-            PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
+            for line in booking_lines:
+                booking_lines_data = Booking_lines_data.objects.filter(
+                    fk_booking_lines_id=line.pk_booking_lines_id
+                )
+
+                descriptions = []
+                gaps = []
+                refs
+                for line_data in booking_lines_data:
+                    if line_data.itemDescription:
+                        descriptions.append(line_data.itemDescription)
+
+                    if line_data.gap_ra:
+                        gaps.append(line_data.gap_ra)
+
+                    if line_data.clientRefNumber:
+                        refs.append(line_data.clientRefNumber)
+
+            REF = ", ".join(refs)
             RA = ", ".join(gaps)
-            DESCRIPTION = str(booking_line.e_item) if booking_line.e_item else ""
+            DESCRIPTION = ", ".join(descriptions)
+            PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
             QTY = str(booking_line.e_qty) if booking_line.e_qty else ""
-            REF = (
-                str(booking_line.client_item_reference)
-                if booking_line.client_item_reference
-                else ""
-            )
             TYPE = (
                 str(booking_line.e_type_of_packaging)
                 if booking_line.e_type_of_packaging
@@ -311,7 +338,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     else:
         subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
-    # send_email(to_emails, cc_emails, subject, html, files, mime_type)
+    send_email(to_emails, cc_emails, subject, html, files, mime_type)
 
     EmailLogs.objects.create(
         booking_id=bookingId,

@@ -1031,7 +1031,6 @@ def pricing(request):
     # Startrack
     fp_names = [
         "Sendle",
-        "Hunter",
         "TNT",
         "Capital",
         "Century",
@@ -1254,7 +1253,9 @@ def rebook(request, fp_name):
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "PU Rebooked"
-                    booking.b_error_Capture = ""
+                    booking.s_05_Latest_Pick_Up_Date_TimeSet = booking.get_eta_pu_by()
+                    booking.s_06_Latest_Delivery_Date_TimeSet = booking.get_eta_de_by()
+                    booking.b_error_Capture = None
                     booking.save()
 
                     status_history.create(

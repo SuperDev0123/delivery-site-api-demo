@@ -970,6 +970,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     "fp_store_event_desc": booking.fp_store_event_desc,
                     "fp_received_date_time": booking.fp_received_date_time,
                     "b_given_to_transport_date_time": booking.b_given_to_transport_date_time,
+                    "s_05_Latest_Pick_Up_Date_TimeSet": booking.s_05_Latest_Pick_Up_Date_TimeSet,
+                    "s_06_Latest_Delivery_Date_TimeSet": booking.s_06_Latest_Delivery_Date_TimeSet,
                 }
             )
 
@@ -1166,7 +1168,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def calc_collected(self, request, format=None):
-        booking_ids = request.data["bookignIds"]
+        booking_ids = request.data["bookingIds"]
         type = request.data["type"]
 
         try:
@@ -1472,9 +1474,15 @@ class BookingsViewSet(viewsets.ViewSet):
         clientname = get_client_name(self.request)
 
         if clientname in ["BioPak", "dme"]:
+            sydney_now = get_sydney_now_time("datetime")
+            last_date = sydney_now.date()
+            first_date = (sydney_now - timedelta(days=10)).date()
             st_bookings_has_manifest = (
                 Bookings.objects.exclude(manifest_timestamp__isnull=True)
-                .filter(vx_freight_provider__iexact="startrack")
+                .filter(
+                    vx_freight_provider__iexact="startrack",
+                    z_CreatedTimestamp__range=(first_date, last_date),
+                )
                 .order_by("-manifest_timestamp")
             )
             manifest_dates = st_bookings_has_manifest.values_list(
@@ -1782,6 +1790,8 @@ class BookingViewSet(viewsets.ViewSet):
                         if booking.api_booking_quote
                         else None,
                         "vx_futile_Booking_Notes": booking.vx_futile_Booking_Notes,
+                        "s_05_Latest_Pick_Up_Date_TimeSet": booking.s_05_Latest_Pick_Up_Date_TimeSet,
+                        "s_06_Latest_Delivery_Date_TimeSet": booking.s_06_Latest_Delivery_Date_TimeSet,
                     }
                     return JsonResponse(
                         {
@@ -2242,10 +2252,10 @@ class BookingViewSet(viewsets.ViewSet):
 
                 if weekno > 4:
                     booking.puPickUpAvailFrom_Date = (
-                        sydney_now + timedelta(days=7 - weekno)
+                        sydney_now + timedelta(days=6 - weekno)
                     ).date()
                     booking.pu_PickUp_By_Date = (
-                        sydney_now + timedelta(days=7 - weekno)
+                        sydney_now + timedelta(days=6 - weekno)
                     ).date()
                 else:
                     booking.puPickUpAvailFrom_Date = (
@@ -2266,7 +2276,6 @@ class BookingViewSet(viewsets.ViewSet):
                 booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
                     "%M"
                 )
-
             elif booking.x_ReadyStatus == "Available Now":
                 booking.puPickUpAvailFrom_Date = sydney_now.date()
                 booking.pu_PickUp_By_Date = sydney_now.date()
@@ -2427,6 +2436,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                     "e_qty_shortages": booking_line.e_qty_shortages,
                     "e_qty_scanned_fp": booking_line.e_qty_scanned_fp,
                     "is_scanned": booking_line.get_is_scanned(),
+                    "pk_booking_lines_id": booking_line.pk_booking_lines_id,
                 }
             )
 
@@ -3493,9 +3503,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Implemented for only [TNT ReBook]
+    # Code for only [TNT REBOOK]
     @action(detail=False, methods=["post"])
-    def update_last_with_pu_dates(self, request, pk=None):
+    def create_with_pu_dates(self, request, pk=None):
         booking_id = request.data["bookingId"]
         booking = Bookings.objects.get(id=int(booking_id))
 
@@ -3517,7 +3527,18 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             )
             dme_status_history.save()
 
-        return JsonResponse({"success": True})
+            status_histories = Dme_status_history.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "result": StatusHistorySerializer(dme_status_history).data,
+                }
+            )
+
+        return JsonResponse({"success": False})
 
 
 class FPViewSet(viewsets.ViewSet):
