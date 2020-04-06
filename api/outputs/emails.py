@@ -12,10 +12,19 @@ from api.utils import send_email
 def send_booking_email_using_template(bookingId, emailName, sender):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).order_by("-z_createdTimeStamp")
     booking_lines_data = Booking_lines_data.objects.filter(
         fk_booking_id=booking.pk_booking_id
-    )
+    ).order_by("-z_createdTimeStamp")
+
+    gaps = []
+    refs = []
+    for lines_data in booking_lines_data:
+        if lines_data.gap_ra:
+            gaps.append(lines_data.gap_ra)
+            refs.append(lines_data.clientRefNumber)
 
     totalQty = 0
     totalWeight = 0
@@ -59,7 +68,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BOOKING_NUMBER": BOOKING_NUMBER,
             "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
             "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
             "TOT_PACKAGES": TOT_PACKAGES,
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
@@ -94,7 +103,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BOOKING_NUMBER": BOOKING_NUMBER,
             "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
             "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
             "TOT_PACKAGES": TOT_PACKAGES,
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
@@ -126,7 +135,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BOOKING_NUMBER": BOOKING_NUMBER,
             "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
             "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
             "TOT_PACKAGES": TOT_PACKAGES,
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
@@ -161,7 +170,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "BOOKING_NUMBER": BOOKING_NUMBER,
             "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
             "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
-            "REFERENCE_NUMBER": REFERENCE_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
             "TOT_PACKAGES": TOT_PACKAGES,
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
@@ -187,21 +196,20 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     for template in templates:
         emailBody = template.emailBody
 
-        gaps = []
-        for lines_data in booking_lines_data:
-            if lines_data.gap_ra:
-                gaps.append(lines_data.gap_ra)
-
         for idx, booking_line in enumerate(booking_lines):
-            REF = ""
+            REF = (
+                str(booking_lines_data[idx].clientRefNumber)
+                if booking_lines_data[idx].clientRefNumber
+                else ""
+            )
 
-            for lines_data in booking_lines_data:
-                if booking_line.pk_booking_lines_id == lines_data.fk_booking_lines_id:
-                    REF = (
-                        str(lines_data.clientRefNumber)
-                        if lines_data.clientRefNumber
-                        else ""
-                    )
+            # for lines_data in booking_lines_data:
+            #     if booking_line.pk_booking_lines_id == lines_data.fk_booking_lines_id:
+            #         REF = (
+            #             str(lines_data.clientRefNumber)
+            #             if lines_data.clientRefNumber
+            #             else ""
+            #         )
 
             PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
             RA = ", ".join(gaps)
