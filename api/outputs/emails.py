@@ -210,20 +210,19 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             gaps = []
             refs = []
 
-            for line in booking_lines:
-                booking_lines_data = Booking_lines_data.objects.filter(
-                    fk_booking_lines_id=line.pk_booking_lines_id
-                )
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_lines_id=line.pk_booking_lines_id
+            )
 
-                for line_data in booking_lines_data:
-                    if line_data.itemDescription:
-                        descriptions.append(line_data.itemDescription)
+            for line_data in booking_lines_data:
+                if line_data.itemDescription:
+                    descriptions.append(line_data.itemDescription)
 
-                    if line_data.gap_ra:
-                        gaps.append(line_data.gap_ra)
+                if line_data.gap_ra:
+                    gaps.append(line_data.gap_ra)
 
-                    if line_data.clientRefNumber:
-                        refs.append(line_data.clientRefNumber)
+                if line_data.clientRefNumber:
+                    refs.append(line_data.clientRefNumber)
 
             REF = ", ".join(refs)
             RA = ", ".join(gaps)
