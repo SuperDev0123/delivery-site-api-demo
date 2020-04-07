@@ -332,6 +332,8 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
     if booking.de_Email_Group_Emails:
         cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
+    if boking.booking_created_for_email:
+        cc_emails.append(booking.booking_created_for_email)
 
     if emailName == "General Booking":
         subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
