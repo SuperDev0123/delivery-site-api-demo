@@ -206,14 +206,15 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         emailBody = template.emailBody
 
         for idx, booking_line in enumerate(booking_lines):
+            descriptions = []
+            gaps = []
+            refs = []
+
             for line in booking_lines:
                 booking_lines_data = Booking_lines_data.objects.filter(
                     fk_booking_lines_id=line.pk_booking_lines_id
                 )
 
-                descriptions = []
-                gaps = []
-                refs
                 for line_data in booking_lines_data:
                     if line_data.itemDescription:
                         descriptions.append(line_data.itemDescription)
