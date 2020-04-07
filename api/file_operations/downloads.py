@@ -1,5 +1,6 @@
 import io
 import os
+import requests
 import zipfile
 from django.http import HttpResponse
 
@@ -21,6 +22,11 @@ def download_from_disk(zip_subdir_name, file_paths):
     response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
     return response
 
+def download_from_url(url, file_path):
+    r = requests.get(url)
+
+    with open(file_path,'wb') as f:
+        f.write(r.content) 
 
 """
 # TODO: implement properly 

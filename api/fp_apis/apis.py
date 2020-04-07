@@ -23,6 +23,7 @@ from api.serializers import ApiBookingQuotesSerializer
 from api.common import status_history, download_external, trace_error
 from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
+from api.file_operations.downloads import download_from_url
 
 from .payload_builder import *
 from .self_pricing import get_pricing
@@ -657,7 +658,6 @@ def get_label(request, fp_name):
                         label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
                     elif fp_name.lower() == "sendle":
-                        label_data = str(json_data["pdfData"]).encode()
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
                     z_label_url = f"{fp_name.lower()}_au/{file_name}"
@@ -668,9 +668,15 @@ def get_label(request, fp_name):
                         label_url = f"./static/pdfs/{z_label_url}"
 
                     create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
-                    with open(label_url, "wb") as f:
-                        f.write(label_data)
-                        f.close()
+
+                    if fp_name.lower() == "tnt":
+                        with open(label_url, "wb") as f:
+                            f.write(label_data)
+                            f.close()
+                    else:
+                        pdf_url = json_data["pdfURL"]
+                        download_from_url(pdf_url, label_url)
+
                 except KeyError as e:
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
