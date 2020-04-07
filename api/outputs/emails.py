@@ -211,7 +211,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             refs = []
 
             booking_lines_data = Booking_lines_data.objects.filter(
-                fk_booking_lines_id=line.pk_booking_lines_id
+                fk_booking_lines_id=booking_line.pk_booking_lines_id
             )
 
             for line_data in booking_lines_data:
