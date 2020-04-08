@@ -3515,26 +3515,11 @@ class FPViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
-        return_data = []
+        resultObjects = Fp_freight_providers.objects.all().order_by("fp_company_name")
 
-        try:
-            resultObjects = []
-            resultObjects = Fp_freight_providers.objects.all().order_by(
-                "fp_company_name"
-            )
-            for resultObject in resultObjects:
-                if not resultObject.fp_inactive_date:
-                    return_data.append(
-                        {
-                            "id": resultObject.id,
-                            "fp_company_name": resultObject.fp_company_name,
-                            "fp_address_country": resultObject.fp_address_country,
-                        }
-                    )
-            return JsonResponse({"results": return_data})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+        return JsonResponse(
+            {"success": True, "results": FpSerializer(resultObjects, many=True).data}
+        )
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):

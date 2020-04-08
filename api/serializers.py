@@ -155,7 +155,14 @@ class FpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Fp_freight_providers
-        fields = "__all__"
+        fields = (
+            "id",
+            "fp_company_name",
+            "fp_address_country",
+            "service_cutoff_time",
+            "rule_type",
+            "rule_type_code",
+        )
 
 
 class CarrierSerializer(serializers.ModelSerializer):
