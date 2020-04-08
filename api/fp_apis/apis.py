@@ -280,8 +280,7 @@ def book(request, fp_name):
                         else:
                             file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
-                        # with open(file_url, "wb") as f:
-                        with open("LABEL.PDF", "wb") as f:
+                        with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
