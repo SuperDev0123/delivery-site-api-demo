@@ -267,10 +267,11 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         else booking.pu_Phone_Main,
     }
 
+    payload["pickupAddress"]["instruction"] = " "
     if booking.pu_pickup_instructions_address:
         payload["pickupAddress"][
             "instruction"
-        ] += f"{booking.pu_pickup_instructions_address}"
+        ] = f"{booking.pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
@@ -312,10 +313,11 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         else booking.de_to_Phone_Main,
     }
 
+    payload["dropAddress"]["instruction"] = " "
     if booking.de_to_PickUp_Instructions_Address:
         payload["dropAddress"][
             "instruction"
-        ] += f"{booking.de_to_PickUp_Instructions_Address}"
+        ] = f"{booking.de_to_PickUp_Instructions_Address}"
     if booking.de_to_Pick_Up_Instructions_Contact:
         payload["dropAddress"][
             "instruction"
@@ -451,8 +453,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
 
         payload["collectionCloseTime"] = "1500"
         payload["serviceCode"] = "76"
-        payload["collectionInstructions"] = ""
 
+        payload["collectionInstructions"] = " "
         if payload["pickupAddress"]["instruction"]:
             payload[
                 "collectionInstructions"
@@ -523,10 +525,11 @@ def get_getlabel_payload(booking, fp_name):
         else booking.pu_Phone_Main,
     }
 
+    payload["pickupAddress"]["instruction"] = " "
     if booking.pu_pickup_instructions_address:
         payload["pickupAddress"][
             "instruction"
-        ] += f"{booking.pu_pickup_instructions_address}"
+        ] = f"{booking.pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
@@ -568,14 +571,15 @@ def get_getlabel_payload(booking, fp_name):
         else booking.de_to_Phone_Main,
     }
 
+    payload["dropAddress"]["instruction"] = " "
     if booking.de_to_PickUp_Instructions_Address:
         payload["dropAddress"][
             "instruction"
-        ] += f"{booking.de_to_PickUp_Instructions_Address}"
+        ] = f"{booking.de_to_PickUp_Instructions_Address}"
     if booking.de_to_Pick_Up_Instructions_Contact:
         payload["dropAddress"][
             "instruction"
-        ] += f"{booking.de_to_Pick_Up_Instructions_Contact}"
+        ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
