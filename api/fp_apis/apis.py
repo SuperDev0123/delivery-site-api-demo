@@ -19,14 +19,18 @@ from django.conf import settings
 
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
-
 from api.common import status_history, download_external, trace_error
 from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
+from api.utils import get_eta_pu_by, get_eta_de_by
 
 from .payload_builder import *
 from .self_pricing import get_pricing
-from .utils import get_dme_status_from_fp_status, get_account_code_key, auto_select
+from .utils import (
+    get_dme_status_from_fp_status,
+    get_account_code_key,
+    auto_select,
+)
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
@@ -248,8 +252,10 @@ def book(request, fp_name):
                         booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
 
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-                    booking.s_05_Latest_Pick_Up_Date_TimeSet = booking.get_eta_pu_by()
-                    booking.s_06_Latest_Delivery_Date_TimeSet = booking.get_eta_de_by()
+                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+                        booking, booking.api_booking_quote
+                    )
                     booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
@@ -1029,14 +1035,12 @@ def pricing(request):
         return JsonResponse({"message": error_msg}, status=400)
 
     # Startrack
-    fp_names = [
-        "Sendle",
-        "TNT",
-        "Capital",
-        "Century",
-        "Camerons",
-        "Toll",
-    ]
+    # Hunter
+    # "Capital",
+    #     "Century",
+    #     "Camerons",
+    #     "Toll",
+    fp_names = ["Sendle", "TNT", "Hunter"]
 
     try:
         for fp_name in fp_names:
@@ -1253,8 +1257,10 @@ def rebook(request, fp_name):
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "PU Rebooked"
-                    booking.s_05_Latest_Pick_Up_Date_TimeSet = booking.get_eta_pu_by()
-                    booking.s_06_Latest_Delivery_Date_TimeSet = booking.get_eta_de_by()
+                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+                        booking, booking.api_booking_quote
+                    )
                     booking.b_error_Capture = None
                     booking.save()
 

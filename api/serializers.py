@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import (
+
+from api.models import (
     Bookings,
     Client_warehouses,
     DME_employees,
@@ -26,6 +27,7 @@ from .models import (
     EmailLogs,
     BookingSets,
 )
+from api import utils
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -46,32 +48,143 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    client_item_references = serializers.SerializerMethodField()
     eta_pu_by = serializers.SerializerMethodField()
     eta_de_by = serializers.SerializerMethodField()
-    pu_by_datetime = serializers.SerializerMethodField()
-
-    def get_client_item_references(self, obj):
-        return Bookings.get_client_item_references(obj)
 
     def get_eta_pu_by(self, obj):
-        if obj.api_booking_quote:
-            return Bookings.get_eta_pu_by(obj)
-
-        return None
+        return utils.get_eta_pu_by(obj)
 
     def get_eta_de_by(self, obj):
         if obj.api_booking_quote:
-            return Bookings.get_eta_de_by(obj)
+            return utils.get_eta_de_by(obj, obj.api_booking_quote)
 
         return None
 
-    def pu_by_datetime(self, obj):
-        return Bookings.get_pu_by(obj)
-
     class Meta:
         model = Bookings
-        fields = "__all__"
+        fields = (
+            "id",
+            "puCompany",
+            "pu_Address_Street_1",
+            "pu_Address_street_2",
+            "pu_Address_PostalCode",
+            "pu_Address_Suburb",
+            "pu_Address_Country",
+            "pu_Contact_F_L_Name",
+            "pu_Phone_Main",
+            "pu_Email",
+            "pu_email_Group_Name",
+            "pu_email_Group",
+            "de_To_Address_Street_1",
+            "de_To_Address_Street_2",
+            "de_To_Address_PostalCode",
+            "de_To_Address_Suburb",
+            "de_To_Address_Country",
+            "de_to_Contact_F_LName",
+            "de_to_Phone_Main",
+            "de_Email",
+            "de_Email_Group_Name",
+            "de_Email_Group_Emails",
+            "deToCompanyName",
+            "b_bookingID_Visual",
+            "v_FPBookingNumber",
+            "pk_booking_id",
+            "vx_freight_provider",
+            "z_label_url",
+            "z_pod_url",
+            "z_pod_signed_url",
+            "pu_Address_State",
+            "de_To_Address_State",
+            "b_status",
+            "b_dateBookedDate",
+            "s_20_Actual_Pickup_TimeStamp",
+            "s_21_Actual_Delivery_TimeStamp",
+            "b_client_name",
+            "b_client_warehouse_code",
+            "b_clientPU_Warehouse",
+            "booking_Created_For",
+            "booking_Created_For_Email",
+            "b_booking_Category",
+            "b_booking_Priority",
+            "vx_fp_pu_eta_time",
+            "vx_fp_del_eta_time",
+            "b_clientReference_RA_Numbers",
+            "de_to_Pick_Up_Instructions_Contact",
+            "de_to_PickUp_Instructions_Address",
+            "pu_pickup_instructions_address",
+            "pu_PickUp_Instructions_Contact",
+            "consignment_label_link",
+            "s_02_Booking_Cutoff_Time",
+            "z_CreatedTimestamp",
+            "b_dateBookedDate",
+            "total_lines_qty_override",
+            "total_1_KG_weight_override",
+            "total_Cubic_Meter_override",
+            "b_status_API",
+            "z_lock_status",
+            "tally_delivered",
+            "dme_status_history_notes",
+            "dme_status_detail",
+            "dme_status_action",
+            "dme_status_linked_reference_from_fp",
+            "puPickUpAvailFrom_Date",
+            "pu_PickUp_Avail_Time_Hours",
+            "pu_PickUp_Avail_Time_Minutes",
+            "pu_PickUp_By_Date",
+            "pu_PickUp_By_Time_Hours",
+            "pu_PickUp_By_Time_Minutes",
+            "de_Deliver_From_Date",
+            "de_Deliver_From_Hours",
+            "de_Deliver_From_Minutes",
+            "de_Deliver_By_Date",
+            "de_Deliver_By_Hours",
+            "de_Deliver_By_Minutes",
+            "client_item_references",
+            "eta_pu_by",
+            "eta_de_by",
+            "v_service_Type",
+            "vx_serviceName",
+            "vx_account_code",
+            "fk_fp_pickup_id",
+            "v_vehicle_Type",
+            "inv_billing_status",
+            "inv_billing_status_note",
+            "b_client_sales_inv_num",
+            "b_client_order_num",
+            "b_client_name_sub",
+            "inv_dme_invoice_no",
+            "fp_invoice_no",
+            "inv_cost_quoted",
+            "inv_cost_actual",
+            "inv_sell_quoted",
+            "inv_sell_actual",
+            "x_manual_booked_flag",
+            "b_fp_qty_delivered",
+            "manifest_timestamp",
+            "b_booking_project",
+            "b_project_opened",
+            "b_project_inventory_due",
+            "b_project_wh_unpack",
+            "b_project_dd_receive_date",
+            "z_calculated_ETA",
+            "b_project_due_date",
+            "delivery_booking",
+            "fp_store_event_date",
+            "fp_store_event_time",
+            "fp_store_event_desc",
+            "fp_received_date_time",
+            "b_given_to_transport_date_time",
+            "x_ReadyStatus",
+            "api_booking_quote",
+            "vx_futile_Booking_Notes",
+            "s_05_Latest_Pick_Up_Date_TimeSet",
+            "s_06_Latest_Delivery_Date_TimeSet",
+            "has_comms",  # property
+            "business_group",  # property
+            "dme_delivery_status_category",  # property
+            "client_item_references",  # property
+            "clientRefNumbers",  # property
+        )
 
 
 class BookingLineSerializer(serializers.ModelSerializer):
@@ -122,6 +235,9 @@ class FPStoreBookingLogSerializer(serializers.ModelSerializer):
 
 
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
+    eta_pu_by = serializers.SerializerMethodField()
+    eta_de_by = serializers.SerializerMethodField()
+
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
         fields_to_exclude = kwargs.pop("fields_to_exclude", None)
@@ -133,6 +249,14 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
             disallowed = set(fields_to_exclude)
             for field_name in disallowed:
                 self.fields.pop(field_name)
+
+    def get_eta_pu_by(self, obj):
+        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+        return utils.get_eta_pu_by(booking)
+
+    def get_eta_de_by(self, obj):
+        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+        return utils.get_eta_de_by(booking, obj)
 
     class Meta:
         model = API_booking_quotes

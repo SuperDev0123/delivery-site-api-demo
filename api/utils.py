@@ -15,6 +15,7 @@ import xlsxwriter as xlsxwriter
 import smtplib
 import pytz
 import logging
+from dateutil.rrule import *
 from pytz import timezone
 from datetime import timedelta
 from os.path import basename
@@ -54,7 +55,7 @@ import re
 
 from django.conf import settings
 from api.models import *
-from dateutil.rrule import *
+from api.common import trace_error
 
 if settings.ENV == "local":
     production = False  # Local
@@ -6710,3 +6711,79 @@ def next_business_day(start_day, business_days, HOLIDAYS):
             next_day += ONE_DAY
         temp_day = next_day
     return temp_day
+
+
+def get_pu_by(booking):
+    if booking.pu_PickUp_By_Date:
+        pu_by = datetime.combine(
+            booking.pu_PickUp_By_Date,
+            time(
+                int(booking.pu_PickUp_By_Time_Hours),
+                int(booking.pu_PickUp_By_Time_Minutes),
+                0,
+            ),
+        )
+        return pu_by
+    else:
+        return None
+
+
+def get_eta_pu_by(booking):
+    try:
+        if get_pu_by(booking) is None:
+            sydney_tz = pytz.timezone("Australia/Sydney")
+            etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
+            weekno = etd_pu_by.weekday()
+
+            if weekno > 4:
+                etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
+
+            etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
+
+            return etd_pu_by
+        else:
+            return get_pu_by(booking)
+    except Exception as e:
+        trace_error.print()
+        logger.error(f"Error #1001: {e}")
+        return None
+
+
+def get_eta_de_by(booking, quote):
+    try:
+        etd_de_by = get_eta_pu_by(booking)
+        freight_provider = Fp_freight_providers.objects.get(
+            fp_company_name=booking.vx_freight_provider
+        )
+
+        if freight_provider and quote:
+            service_etd = FP_Service_ETDs.objects.filter(
+                freight_provider_id=freight_provider.id,
+                fp_delivery_time_description=quote.etd,
+            ).first()
+
+            if service_etd is not None:
+                if service_etd.fp_service_time_uom.lower() == "days":
+                    etd_de_by = next_business_day(
+                        etd_de_by, round(service_etd.fp_03_delivery_hours / 24), [],
+                    )
+
+                if service_etd.fp_service_time_uom.lower() == "hours":
+                    etd_de_by = etd_de_by + timedelta(
+                        hours=service_etd.fp_03_delivery_hours
+                    )
+                    weekno = etd_de_by.weekday()
+                    if weekno > 4:
+                        etd_de_by = etd_de_by + timedelta(days=7 - weekno)
+            else:
+                if quote.fk_freight_provider_id == "TNT":
+                    days = round(float(quote.etd))
+                    etd_de_by = next_business_day(etd_de_by, days, [])
+
+            return etd_de_by
+        else:
+            return None
+    except Exception as e:
+        trace_error.print()
+        logger.error(f"Error #1002: {e}")
+        return None

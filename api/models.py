@@ -1510,6 +1510,7 @@ class Bookings(models.Model):
         ]
         return int(max)
 
+    @property
     def has_comms(self):
         comms_count = Dme_comm_and_task.objects.filter(
             fk_booking_id=self.pk_booking_id
@@ -1520,7 +1521,8 @@ class Bookings(models.Model):
         else:
             return True
 
-    def get_group_name(self):
+    @property
+    def business_group(self):
         customer_group_name = ""
         customer_groups = Dme_utl_client_customer_group.objects.all()
 
@@ -1533,7 +1535,8 @@ class Bookings(models.Model):
 
         return customer_group_name
 
-    def get_dme_delivery_status_category(self):
+    @property
+    def dme_delivery_status_category(self):
         try:
             utl_dme_status = Utl_dme_status.objects.get(
                 dme_delivery_status=self.b_status
@@ -1543,7 +1546,8 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
-    def get_client_item_references(self):
+    @property
+    def client_item_references(self):
         try:
             client_item_references = []
             booking_lines = Booking_lines.objects.filter(
@@ -1559,7 +1563,8 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
-    def get_clientRefNumbers(self):
+    @property
+    def clientRefNumbers(self):
         try:
             clientRefNumbers = []
             booking_lines_data = Booking_lines_data.objects.filter(
@@ -1574,82 +1579,6 @@ class Bookings(models.Model):
         except Exception as e:
             # print('Exception: ', e)
             return ""
-
-    def get_pu_by(self):
-        if self.pu_PickUp_By_Date:
-            pu_by = datetime.combine(
-                self.pu_PickUp_By_Date,
-                time(
-                    int(self.pu_PickUp_By_Time_Hours),
-                    int(self.pu_PickUp_By_Time_Minutes),
-                    0,
-                ),
-            )
-            return pu_by
-        else:
-            return None
-
-    def get_eta_pu_by(self):
-        try:
-            if self.get_pu_by() is None:
-                sydney_tz = pytz.timezone("Australia/Sydney")
-                etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
-                weekno = etd_pu_by.weekday()
-
-                if weekno > 4:
-                    etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
-
-                etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
-
-                return etd_pu_by
-            else:
-                return self.get_pu_by()
-        except Exception as e:
-            trace_error.print()
-            logger.error(f"Error #1001: {e}")
-            return None
-
-    def get_eta_de_by(self):
-        from .utils import next_business_day
-
-        try:
-            etd_de_by = self.get_eta_pu_by()
-            quote = self.api_booking_quote
-            freight_provider = Fp_freight_providers.objects.get(
-                fp_company_name=self.vx_freight_provider
-            )
-
-            if freight_provider and quote:
-                service_etd = FP_Service_ETDs.objects.filter(
-                    freight_provider_id=freight_provider.id,
-                    fp_delivery_time_description=quote.etd,
-                ).first()
-
-                if service_etd is not None:
-                    if service_etd.fp_service_time_uom.lower() == "days":
-                        etd_de_by = next_business_day(
-                            etd_de_by, round(service_etd.fp_03_delivery_hours / 24), [],
-                        )
-
-                    if service_etd.fp_service_time_uom.lower() == "hours":
-                        etd_de_by = etd_de_by + timedelta(
-                            hours=service_etd.fp_03_delivery_hours
-                        )
-                        weekno = etd_de_by.weekday()
-                        if weekno > 4:
-                            etd_de_by = etd_de_by + timedelta(days=7 - weekno)
-                else:
-                    if quote.fk_freight_provider_id == "TNT":
-                        days = round(float(quote.etd))
-                        etd_de_by = next_business_day(etd_de_by, days, [])
-
-                return etd_de_by
-            else:
-                return None
-        except Exception as e:
-            trace_error.print()
-            logger.error(f"Error #1002: {e}")
-            return None
 
 
 class Booking_lines(models.Model):
