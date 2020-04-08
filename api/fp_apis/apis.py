@@ -1008,6 +1008,7 @@ def pricing(request):
     booking_id = body["booking_id"]
     is_pricing_only = False
     booking_lines = []
+    booking = None
 
     # Only quote
     if not booking_id and "booking" in body:
@@ -1034,13 +1035,14 @@ def pricing(request):
 
         return JsonResponse({"message": error_msg}, status=400)
 
-    # Startrack
-    # Hunter
-    # "Capital",
+    if booking:  # Delete all pricing info if exist for this booking
+        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
+
+    #     Startrack
     #     "Century",
     #     "Camerons",
     #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter"]
+    fp_names = ["Sendle", "TNT", "Hunter", "Capital"]
 
     try:
         for fp_name in fp_names:

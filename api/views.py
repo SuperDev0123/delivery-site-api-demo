@@ -4654,14 +4654,6 @@ class BookingSetsViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         bookingset = BookingSets.objects.get(pk=pk)
-        booking_ids = bookingset.booking_ids.split(", ")
-
-        for bookingId in request.data["bookingIds"]:
-            if not str(bookingId) in booking_ids:
-                booking_ids.append(str(bookingId))
-
-        request.data["booking_ids"] = ", ".join(booking_ids)
-        request.data["status"] = "Updated"
         serializer = BookingSetsSerializer(bookingset, data=request.data)
 
         if serializer.is_valid():

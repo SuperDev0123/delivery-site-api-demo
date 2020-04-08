@@ -102,43 +102,54 @@ def auto_select(booking, pricings):
         if not pricing.service_name or (
             pricing.service_name and pricing.service_name != "Air Freight"
         ):
-            etd_min, etd_max = _get_etd(pricing)
+            # ######################## #
+            #        Lowest ($$$)      #
+            # ######################## #
+            if not filtered_pricing:
+                filtered_pricing["pricing"] = pricing
+            elif filtered_pricing and filtered_pricing["pricing"].fee > pricing.fee:
+                filtered_pricing["pricing"] = pricing
 
-            if not etd_max:
-                return False
+            # ######################## #
+            #      Lowest & Fastest    #
+            # ######################## #
+            # etd_min, etd_max = _get_etd(pricing)
 
-            if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
-                timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
-                delta_min = 0
+            # if not etd_max:
+            #     return False
 
-                if booking.pu_PickUp_Avail_Time_Hours:
-                    delta_min = booking.pu_PickUp_Avail_Time_Hours * 60
-                if booking.pu_PickUp_Avail_Time_Minutes:
-                    delta_min += pu_PickUp_Avail_Time_Minutes
-                if booking.de_Deliver_By_Hours:
-                    delta_min -= booking.de_Deliver_By_Hours * 60
-                if booking.de_Deliver_By_Minutes:
-                    delta_min -= booking.de_Deliver_By_Minutes
+            # if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
+            #     timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
+            #     delta_min = 0
 
-                delta_min = timeDelta.total_seconds() / 60 + delta_min
+            #     if booking.pu_PickUp_Avail_Time_Hours:
+            #         delta_min = booking.pu_PickUp_Avail_Time_Hours * 60
+            #     if booking.pu_PickUp_Avail_Time_Minutes:
+            #         delta_min += pu_PickUp_Avail_Time_Minutes
+            #     if booking.de_Deliver_By_Hours:
+            #         delta_min -= booking.de_Deliver_By_Hours * 60
+            #     if booking.de_Deliver_By_Minutes:
+            #         delta_min -= booking.de_Deliver_By_Minutes
 
-                if delta_min > etd_max and not filtered_pricing:
-                    filtered_pricing["pricing"] = pricing
-                    filtered_pricing["etd_max"] = etd_max
-                elif (
-                    delta_min > etd_max
-                    and filtered_pricing
-                    and filtered_pricing["pricing"].fee > pricing.fee
-                ):
-                    filtered_pricing["pricing"] = pricing
-                    filtered_pricing["etd_max"] = etd_max
-            else:
-                if not filtered_pricing:
-                    filtered_pricing["pricing"] = pricing
-                    filtered_pricing["etd_max"] = etd_max
-                elif filtered_pricing and filtered_pricing["pricing"].fee > pricing.fee:
-                    filtered_pricing["pricing"] = pricing
-                    filtered_pricing["etd_max"] = etd_max
+            #     delta_min = timeDelta.total_seconds() / 60 + delta_min
+
+            #     if delta_min > etd_max and not filtered_pricing:
+            #         filtered_pricing["pricing"] = pricing
+            #         filtered_pricing["etd_max"] = etd_max
+            #     elif (
+            #         delta_min > etd_max
+            #         and filtered_pricing
+            #         and filtered_pricing["pricing"].fee > pricing.fee
+            #     ):
+            #         filtered_pricing["pricing"] = pricing
+            #         filtered_pricing["etd_max"] = etd_max
+            # else:
+            #     if not filtered_pricing:
+            #         filtered_pricing["pricing"] = pricing
+            #         filtered_pricing["etd_max"] = etd_max
+            #     elif filtered_pricing and filtered_pricing["pricing"].fee > pricing.fee:
+            #         filtered_pricing["pricing"] = pricing
+            #         filtered_pricing["etd_max"] = etd_max
 
     if filtered_pricing:
         logger.error(f"#854 Filtered Pricing - {filtered_pricing}")
@@ -147,14 +158,14 @@ def auto_select(booking, pricings):
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
         booking.api_booking_quote = filtered_pricing["pricing"]
 
-        fp_freight_provider = Fp_freight_providers.objects.filter(fp_company_name=booking.vx_freight_provider).first()
+        fp_freight_provider = Fp_freight_providers.objects.get(
+            fp_company_name=booking.vx_freight_provider
+        )
 
-        if ( fp_freight_provider is not None 
-            and 
-            fp_freight_provider.service_cutoff_time is not None):
+        if fp_freight_provider and fp_freight_provider.service_cutoff_time:
             booking.s_02_Booking_Cutoff_Time = fp_freight_provider.service_cutoff_time
         else:
-            booking.s_02_Booking_Cutoff_Time = datetime.strptime('12:00:00', '%H:%M:%S').time()
+            booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
         booking.save()
         return True

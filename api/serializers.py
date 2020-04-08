@@ -48,8 +48,8 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    eta_pu_by = serializers.SerializerMethodField()
-    eta_de_by = serializers.SerializerMethodField()
+    eta_pu_by = serializers.SerializerMethodField(read_only=True)
+    eta_de_by = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -218,7 +218,7 @@ class StatusHistorySerializer(serializers.ModelSerializer):
 
 
 class DmeReportsSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = DME_reports
@@ -235,8 +235,8 @@ class FPStoreBookingLogSerializer(serializers.ModelSerializer):
 
 
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
-    eta_pu_by = serializers.SerializerMethodField()
-    eta_de_by = serializers.SerializerMethodField()
+    eta_pu_by = serializers.SerializerMethodField(read_only=True)
+    eta_de_by = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -344,6 +344,11 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 
 
 class BookingSetsSerializer(serializers.ModelSerializer):
+    bookings_cnt = serializers.SerializerMethodField(read_only=True)
+
+    def get_bookings_cnt(self, obj):
+        return len(obj.booking_ids.split(", "))
+
     class Meta:
         model = BookingSets
         fields = "__all__"
