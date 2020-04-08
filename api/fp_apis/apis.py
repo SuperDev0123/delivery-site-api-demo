@@ -21,7 +21,8 @@ from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
 from api.common import status_history, download_external, trace_error
 from api.common.build_object import Struct
-from api.file_operations.directory import create_dir_if_not_exist, download_from_url
+from api.file_operations.directory import create_dir_if_not_exist
+from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
 
 from .payload_builder import *
