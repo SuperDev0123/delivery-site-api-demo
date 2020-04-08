@@ -206,23 +206,23 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         emailBody = template.emailBody
 
         for idx, booking_line in enumerate(booking_lines):
-            for line in booking_lines:
-                booking_lines_data = Booking_lines_data.objects.filter(
-                    fk_booking_lines_id=line.pk_booking_lines_id
-                )
+            descriptions = []
+            gaps = []
+            refs = []
 
-                descriptions = []
-                gaps = []
-                refs
-                for line_data in booking_lines_data:
-                    if line_data.itemDescription:
-                        descriptions.append(line_data.itemDescription)
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_lines_id=booking_line.pk_booking_lines_id
+            )
 
-                    if line_data.gap_ra:
-                        gaps.append(line_data.gap_ra)
+            for line_data in booking_lines_data:
+                if line_data.itemDescription:
+                    descriptions.append(line_data.itemDescription)
 
-                    if line_data.clientRefNumber:
-                        refs.append(line_data.clientRefNumber)
+                if line_data.gap_ra:
+                    gaps.append(line_data.gap_ra)
+
+                if line_data.clientRefNumber:
+                    refs.append(line_data.clientRefNumber)
 
             REF = ", ".join(refs)
             RA = ", ".join(gaps)
@@ -330,8 +330,8 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         cc_emails = cc_emails + booking.pu_email_Group.split(",")
     if booking.de_Email_Group_Emails:
         cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
-    if booking.de_Email_Group_Emails:
-        cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
+    if booking.booking_Created_For_Email:
+        cc_emails.append(booking.booking_Created_For_Email)
 
     if emailName == "General Booking":
         subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
