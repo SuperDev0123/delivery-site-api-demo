@@ -577,10 +577,10 @@ def get_label(request, fp_name):
         booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
 
-        # error_msg = pre_check_label(booking)
+        error_msg = pre_check_label(booking)
 
-        # if error_msg:
-        #     return JsonResponse({"message": error_msg}, status=400)
+        if error_msg:
+            return JsonResponse({"message": error_msg}, status=400)
 
         payload = {}
         if fp_name.lower() in ["startrack"]:
