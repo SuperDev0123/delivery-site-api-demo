@@ -370,7 +370,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": ""
+                "description": line.e_item,
             }
 
             if fp_name.lower() == "startrack":
