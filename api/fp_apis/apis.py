@@ -251,7 +251,7 @@ def book(request, fp_name):
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.s_05_Latest_Pick_Up_Date_TimeSet = booking.get_eta_pu_by()
                     booking.s_06_Latest_Delivery_Date_TimeSet = booking.get_eta_de_by()
-                    booking.b_dateBookedDate = str(datetime.now())
+                    # booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
@@ -280,7 +280,8 @@ def book(request, fp_name):
                         else:
                             file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
 
-                        with open(file_url, "wb") as f:
+                        # with open(file_url, "wb") as f:
+                        with open("LABEL.PDF", "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
