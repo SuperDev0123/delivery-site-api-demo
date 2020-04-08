@@ -376,7 +376,10 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             if fp_name.lower() == "startrack":
                 item["packagingType"] = "CTN"
             elif fp_name.lower() == "hunter":
-                item["packagingType"] = "PAL"
+                if line.e_type_of_packaging == "PALLET":
+                    item["packagingType"] = "PLT"
+                else:
+                    item["packagingType"] = "CTN"
             elif fp_name.lower() == "tnt":
                 item["packagingType"] = "D"
             elif fp_name.lower() == "dhl":
@@ -414,7 +417,15 @@ def get_book_payload(booking, fp_name, account_code_key=None):
 
     # Detail for each FP
     if fp_name.lower() == "hunter":
-        payload["serviceType"] = "RF"
+        if booking.vx_serviceName == "Road Freight":
+            payload["serviceType"] = "RF"
+        elif booking.vx_serviceName == "Air Freight":
+            payload["serviceType"] = "AF"
+        elif booking.vx_serviceName == "Re-Delivery":
+            payload["serviceType"] = "RDL"
+        elif booking.vx_serviceName == "Same Day Air Freight":
+            payload["serviceType"] = "SDX"
+        
         payload["reference1"] = (
             ""
             if booking.b_client_sales_inv_num is None
@@ -422,8 +433,19 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         )
         payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
 
-        if payload["reference1"] == "":
-            payload["reference1"] = "ADMIN"
+
+        booking_lines_data = Booking_lines_data.objects.filter(
+            fk_booking_lines_id=line.pk_booking_lines_id
+        )
+
+        clientRefNumbers = []
+
+        for line_data in booking_lines_data:
+            if line_data.clientRefNumber:
+                clientRefNumbers.append(line_data.clientRefNumber)
+        
+        payload["reference1"] = ", ".join(clientRefNumbers)        
+            
 
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
