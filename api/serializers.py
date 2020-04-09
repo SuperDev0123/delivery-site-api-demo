@@ -50,6 +50,9 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 class BookingSerializer(serializers.ModelSerializer):
     eta_pu_by = serializers.SerializerMethodField(read_only=True)
     eta_de_by = serializers.SerializerMethodField(read_only=True)
+    pricing_cost = serializers.SerializerMethodField(read_only=True)
+    pricing_service_name = serializers.SerializerMethodField(read_only=True)
+    pricing_account_code = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -57,6 +60,24 @@ class BookingSerializer(serializers.ModelSerializer):
     def get_eta_de_by(self, obj):
         if obj.api_booking_quote:
             return utils.get_eta_de_by(obj, obj.api_booking_quote)
+
+        return None
+
+    def get_pricing_cost(self, obj):
+        if obj.api_booking_quote:
+            return obj.api_booking_quote.client_mu_1_minimum_values
+
+        return None
+
+    def get_pricing_service_name(self, obj):
+        if obj.api_booking_quote:
+            return obj.api_booking_quote.service_name
+
+        return None
+
+    def get_pricing_account_code(self, obj):
+        if obj.api_booking_quote:
+            return obj.api_booking_quote.account_code
 
         return None
 
@@ -140,8 +161,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Deliver_By_Hours",
             "de_Deliver_By_Minutes",
             "client_item_references",
-            "eta_pu_by",
-            "eta_de_by",
             "v_service_Type",
             "vx_serviceName",
             "vx_account_code",
@@ -179,6 +198,11 @@ class BookingSerializer(serializers.ModelSerializer):
             "vx_futile_Booking_Notes",
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
+            "eta_pu_by",  # serializer method
+            "eta_de_by",  # serializer method
+            "pricing_cost",  # serializer method
+            "pricing_account_code",  # serializer method
+            "pricing_service_name",  # serializer method
             "has_comms",  # property
             "business_group",  # property
             "dme_delivery_status_category",  # property
