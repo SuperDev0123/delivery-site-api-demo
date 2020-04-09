@@ -4647,6 +4647,7 @@ class BookingSetsViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk=None):
-        bookingset = BookingSets.objects.get(pk=pk).delete()
+        bookingset = BookingSets.objects.get(pk=pk)
         serializer = BookingSetsSerializer(bookingset)
+        bookingset.delete()
         return Response(serializer.data)
