@@ -1527,6 +1527,7 @@ class Bookings(models.Model):
         for customer_group in customer_groups:
             if (
                 customer_group
+                and self.deToCompanyName
                 and customer_group.name_lookup.lower() in self.deToCompanyName.lower()
             ):
                 customer_group_name = customer_group.group_name
