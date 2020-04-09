@@ -354,7 +354,7 @@ class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)
 
     def get_bookings_cnt(self, obj):
-        if "booking_ids" in obj:
+        if obj.booking_ids:
             return len(obj.booking_ids.split(", "))
 
         return 0
