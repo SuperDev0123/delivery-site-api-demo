@@ -352,7 +352,17 @@ def get_book_payload(booking, fp_name, account_code_key=None):
     maxHeight = 0
     maxWidth = 0
     maxLength = 0
+
+    clientRefNumbers = []
     for line in booking_lines:
+        booking_lines_data = Booking_lines_data.objects.filter(
+            fk_booking_lines_id=line.pk_booking_lines_id
+        )
+
+        for line_data in booking_lines_data:
+            if line_data.clientRefNumber:
+                clientRefNumbers.append(line_data.clientRefNumber)
+
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
         length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
@@ -432,21 +442,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             else booking.b_client_sales_inv_num
         )
         payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
-
-
-        booking_lines_data = Booking_lines_data.objects.filter(
-            fk_booking_lines_id=line.pk_booking_lines_id
-        )
-
-        clientRefNumbers = []
-
-        for line_data in booking_lines_data:
-            if line_data.clientRefNumber:
-                clientRefNumbers.append(line_data.clientRefNumber)
-        
-        payload["reference1"] = ", ".join(clientRefNumbers)        
+        payload["reference1"] = ", ".join( list(dict.fromkeys(clientRefNumbers)))        
             
-
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
@@ -657,8 +654,8 @@ def get_getlabel_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": ", ".join(descriptions)[:20],
-                "gapRa": ", ".join(gaps)[:15],
+                "description": ", ".join(list(dict.fromkeys(descriptions)))[:20],
+                "gapRa": ", ".join(list(dict.fromkeys(gaps)))[:15],
             }
 
             items.append(item)
