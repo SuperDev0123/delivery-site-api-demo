@@ -81,9 +81,8 @@ urlpatterns += [
     url(r"^fp-api/(?P<fp_name>[^/]+)/get-label/", fp_apis.get_label),
     url(r"^fp-api/(?P<fp_name>[^/]+)/edit-book/", fp_apis.edit_book),
     url(r"^fp-api/(?P<fp_name>[^/]+)/cancel-book/", fp_apis.cancel_book),
-    # url(r"^fp-api/(?P<fp_name>[^/]+)/create-order/", fp_apis.create_order),
-    # url(r"^fp-api/(?P<fp_name>[^/]+)/get-order-summary/", fp_apis.get_order_summary),
-    url(r"^fp-api/(?P<fp_name>[^/]+)/create-order/", fp_apis.get_order_summary),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/create-order/", fp_apis.create_order),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/get-order-summary/", fp_apis.get_order_summary),
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
