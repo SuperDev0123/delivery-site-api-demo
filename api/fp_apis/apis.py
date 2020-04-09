@@ -1042,6 +1042,9 @@ def pricing(request):
         return JsonResponse({"message": error_msg}, status=400)
 
     if booking:  # Delete all pricing info if exist for this booking
+        # Reset pricing relation
+        booking.api_booking_quote = None
+        booking.save()
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     #     "Startrack"
