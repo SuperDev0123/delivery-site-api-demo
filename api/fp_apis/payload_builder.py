@@ -427,14 +427,13 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             payload["serviceType"] = "RDL"
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
-        
+
         payload["reference1"] = (
             ""
             if booking.b_client_sales_inv_num is None
             else booking.b_client_sales_inv_num
         )
         payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
-
 
         booking_lines_data = Booking_lines_data.objects.filter(
             fk_booking_lines_id=line.pk_booking_lines_id
@@ -445,9 +444,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         for line_data in booking_lines_data:
             if line_data.clientRefNumber:
                 clientRefNumbers.append(line_data.clientRefNumber)
-        
-        payload["reference1"] = ", ".join(clientRefNumbers)        
-            
+
+        payload["reference1"] = ", ".join(clientRefNumbers)
 
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
@@ -823,13 +821,13 @@ def get_reprint_payload(booking, fp_name):
 def get_pricing_payload(booking, fp_name, account_code_key, booking_lines=None):
     payload = {}
 
-    # if hasattr(booking, "client_warehouse_code"):
-    #     client_warehouse_code = booking.client_warehouse_code
-    # else:
-    #     client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
+    if hasattr(booking, "client_warehouse_code"):
+        client_warehouse_code = booking.client_warehouse_code
+    else:
+        client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
 
     payload["spAccountDetails"] = _get_account_details(
-        fp_name, account_code_key, booking.fk_client_warehouse.client_warehouse_code
+        fp_name, account_code_key, client_warehouse_code
     )
     payload["serviceProvider"] = get_service_provider(fp_name)
 

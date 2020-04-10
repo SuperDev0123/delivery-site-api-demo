@@ -275,12 +275,18 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
                 self.fields.pop(field_name)
 
     def get_eta_pu_by(self, obj):
-        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
-        return utils.get_eta_pu_by(booking)
+        try:
+            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            return utils.get_eta_pu_by(booking)
+        except Exception as e:
+            return None
 
     def get_eta_de_by(self, obj):
-        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
-        return utils.get_eta_de_by(booking, obj)
+        try:
+            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            return utils.get_eta_de_by(booking, obj)
+        except Exception as e:
+            return None
 
     class Meta:
         model = API_booking_quotes

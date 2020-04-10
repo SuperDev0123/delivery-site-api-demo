@@ -1029,6 +1029,13 @@ def pricing(request):
         try:
             booking = Bookings.objects.get(id=booking_id)
             client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
+
+            if booking:  # Delete all pricing info if exist for this booking
+                booking.api_booking_quote = None  # Reset pricing relation
+                booking.save()
+                API_booking_quotes.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                ).delete()
         except Exception as e:
             trace_error.print()
             return JsonResponse({"message": f"Booking is not exist"}, status=400)
@@ -1040,12 +1047,6 @@ def pricing(request):
             _set_error(booking, error_msg)
 
         return JsonResponse({"message": error_msg}, status=400)
-
-    if booking:  # Delete all pricing info if exist for this booking
-        # Reset pricing relation
-        booking.api_booking_quote = None
-        booking.save()
-        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     #     "Startrack"
     #     "Century",
