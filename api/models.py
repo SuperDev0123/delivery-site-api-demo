@@ -1687,8 +1687,12 @@ class Booking_lines(models.Model):
         verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
     )
 
-    class Meta:
-        db_table = "dme_booking_lines"
+    def booking(self):
+        try:
+            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+        except Exception as e:
+            logger.info(f"#516 Error: {str(e)}")
+            return None
 
     def get_is_scanned(self):
         try:
@@ -1701,6 +1705,9 @@ class Booking_lines(models.Model):
         except Exception as e:
             # print('Exception: ', e)
             return False
+
+    class Meta:
+        db_table = "dme_booking_lines"
 
 
 class Booking_lines_data(models.Model):
@@ -1750,6 +1757,22 @@ class Booking_lines_data(models.Model):
     z_modifiedTimeStamp = models.DateTimeField(
         verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
     )
+
+    def booking(self):
+        try:
+            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+        except Exception as e:
+            logger.info(f"#516 Error: {str(e)}")
+            return None
+
+    def booking_line(self):
+        try:
+            return Booking_lines.objects.get(
+                pk_booking_lines_id=self.fk_booking_lines_id
+            )
+        except Exception as e:
+            logger.info(f"#516 Error: {str(e)}")
+            return None
 
     class Meta:
         db_table = "dme_booking_lines_data"

@@ -212,15 +212,55 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
 class BookingLineSerializer(serializers.ModelSerializer):
+    is_scanned = serializers.SerializerMethodField(read_only=True)
+
+    def get_is_scanned(self, obj):
+        return obj.get_is_scanned()
+
     class Meta:
         model = Booking_lines
-        fields = "__all__"
+        fields = (
+            "pk_lines_id",
+            "pk_booking_lines_id",
+            "e_type_of_packaging",
+            "e_item",
+            "e_qty",
+            "e_weightUOM",
+            "e_weightPerEach",
+            "e_dimUOM",
+            "e_dimLength",
+            "e_dimWidth",
+            "e_dimHeight",
+            "e_Total_KG_weight",
+            "e_1_Total_dimCubicMeter",
+            "total_2_cubic_mass_factor_calc",
+            "e_qty_awaiting_inventory",
+            "e_qty_collected",
+            "e_qty_scanned_depot",
+            "e_qty_delivered",
+            "e_qty_adjusted_delivered",
+            "e_qty_damaged",
+            "e_qty_returned",
+            "e_qty_shortages",
+            "e_qty_scanned_fp",
+            "is_scanned",
+        )
 
 
 class BookingLineDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking_lines_data
-        fields = "__all__"
+        fields = (
+            "pk_id_lines_data",
+            "fk_booking_lines_id",
+            "modelNumber",
+            "itemDescription",
+            "quantity",
+            "itemFaultDescription",
+            "insuranceValueEach",
+            "gap_ra",
+            "clientRefNumber",
+        )
 
 
 class CommSerializer(serializers.ModelSerializer):

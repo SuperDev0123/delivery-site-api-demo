@@ -749,7 +749,28 @@ class BookingsViewSet(viewsets.ViewSet):
                         ]
                     )
                     filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
-                    queryset = queryset.filter(**filter_kwargs).order_by(preserved)
+
+                    if not multi_find_field in ["gap_ra", "clientRefNumber"]:
+                        queryset = queryset.filter(**filter_kwargs).order_by(preserved)
+                    else:
+                        line_datas = Booking_lines_data.objects.filter(
+                            **filter_kwargs
+                        ).order_by(preserved)
+
+                        booking_ids = []
+                        for line_data in line_datas:
+                            if line_data.booking():
+                                booking_ids.append(line_data.booking().id)
+
+                        preserved = Case(
+                            *[
+                                When(pk=pk, then=pos)
+                                for pos, pk in enumerate(booking_ids)
+                            ]
+                        )
+                        queryset = queryset.filter(pk__in=booking_ids).order_by(
+                            preserved
+                        )
                 elif simple_search_keyword and len(simple_search_keyword) > 0:
                     if (
                         not "&" in simple_search_keyword
@@ -2142,44 +2163,14 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_booking_lines(self, request, format=None):
         pk_booking_id = request.GET["pk_booking_id"]
-        return_data = []
+        booking_lines = Booking_lines.objects.all()
 
-        if pk_booking_id == "undefined":
-            booking_lines = Booking_lines.objects.all()
-        else:
-            booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+        if pk_booking_id != "undefined":
+            booking_lines = booking_lines.filter(fk_booking_id=pk_booking_id)
 
-        for booking_line in booking_lines:
-            return_data.append(
-                {
-                    "pk_lines_id": booking_line.pk_lines_id,
-                    "e_type_of_packaging": booking_line.e_type_of_packaging,
-                    "e_item": booking_line.e_item,
-                    "e_qty": booking_line.e_qty,
-                    "e_weightUOM": booking_line.e_weightUOM,
-                    "e_weightPerEach": booking_line.e_weightPerEach,
-                    "e_dimUOM": booking_line.e_dimUOM,
-                    "e_dimLength": booking_line.e_dimLength,
-                    "e_dimWidth": booking_line.e_dimWidth,
-                    "e_dimHeight": booking_line.e_dimHeight,
-                    "e_Total_KG_weight": booking_line.e_Total_KG_weight,
-                    "e_1_Total_dimCubicMeter": booking_line.e_1_Total_dimCubicMeter,
-                    "total_2_cubic_mass_factor_calc": booking_line.total_2_cubic_mass_factor_calc,
-                    "e_qty_awaiting_inventory": booking_line.e_qty_awaiting_inventory,
-                    "e_qty_collected": booking_line.e_qty_collected,
-                    "e_qty_scanned_depot": booking_line.e_qty_scanned_depot,
-                    "e_qty_delivered": booking_line.e_qty_delivered,
-                    "e_qty_adjusted_delivered": booking_line.e_qty_adjusted_delivered,
-                    "e_qty_damaged": booking_line.e_qty_damaged,
-                    "e_qty_returned": booking_line.e_qty_returned,
-                    "e_qty_shortages": booking_line.e_qty_shortages,
-                    "e_qty_scanned_fp": booking_line.e_qty_scanned_fp,
-                    "is_scanned": booking_line.get_is_scanned(),
-                    "pk_booking_lines_id": booking_line.pk_booking_lines_id,
-                }
-            )
-
-        return JsonResponse({"booking_lines": return_data})
+        return JsonResponse(
+            {"booking_lines": BookingLineSerializer(booking_lines, many=True).data}
+        )
 
     @action(detail=False, methods=["get"])
     def get_count(self, request, format=None):
@@ -2292,31 +2283,20 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_booking_line_details(self, request, format=None):
         pk_booking_id = request.GET["pk_booking_id"]
-        return_data = []
+        booking_line_details = Booking_lines_data.objects.all()
 
-        if pk_booking_id == "undefined":
-            booking_line_details = Booking_lines_data.objects.all()
-        else:
+        if pk_booking_id != "undefined":
             booking_line_details = Booking_lines_data.objects.filter(
                 fk_booking_id=pk_booking_id
             )
 
-        for booking_line_detail in booking_line_details:
-            return_data.append(
-                {
-                    "pk_id_lines_data": booking_line_detail.pk_id_lines_data,
-                    "modelNumber": booking_line_detail.modelNumber,
-                    "itemDescription": booking_line_detail.itemDescription,
-                    "quantity": booking_line_detail.quantity,
-                    "itemFaultDescription": booking_line_detail.itemFaultDescription,
-                    "insuranceValueEach": booking_line_detail.insuranceValueEach,
-                    "gap_ra": booking_line_detail.gap_ra,
-                    "clientRefNumber": booking_line_detail.clientRefNumber,
-                    "fk_booking_lines_id": booking_line_detail.fk_booking_lines_id,
-                }
-            )
-
-        return JsonResponse({"booking_line_details": return_data})
+        return JsonResponse(
+            {
+                "booking_line_details": BookingLineDetailSerializer(
+                    booking_line_details, many=True
+                ).data
+            }
+        )
 
     @action(detail=False, methods=["post"])
     def create_booking_line_detail(self, request, format=None):
