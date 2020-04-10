@@ -88,13 +88,6 @@ def pre_check_label(booking):
             _set_error(booking, error_msg)
             return error_msg
 
-        if not booking.de_To_Address_Street_2 or (
-            booking.de_To_Address_Street_2 and len(booking.de_To_Address_Street_2) > 30
-        ):
-            error_msg = "Address.Street2 must be between 0 and 30 characters."
-            _set_error(booking, error_msg)
-            return error_msg
-
         if not booking.puCompany or (booking.puCompany and len(booking.puCompany) > 30):
             error_msg = "Address.CompanyName must be between 0 and 30 characters."
             _set_error(booking, error_msg)
@@ -112,14 +105,6 @@ def pre_check_label(booking):
             and len(booking.pu_pickup_instructions_address) > 80
         ):
             error_msg = "Address.Instruction must be between 0 and 80 characters."
-            _set_error(booking, error_msg)
-            return error_msg
-
-        if not booking.de_to_PickUp_Instructions_Address or (
-            booking.de_to_PickUp_Instructions_Address
-            and len(booking.de_to_PickUp_Instructions_Address) > 80
-        ):
-            error_msg = "Address.Instrunction must be between 0 and 80 characters."
             _set_error(booking, error_msg)
             return error_msg
 
