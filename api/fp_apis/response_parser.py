@@ -21,7 +21,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         if fp_name == "hunter" and json_data["price"]:  # Hunter
             for price in json_data["price"]:
                 # Exclude Air Freight service on PROD
-                if settings.ENV != "prod" and price["serviceName"] == "Air Freight":
+                if settings.ENV == "prod" and price["serviceName"] == "Air Freight":
                     continue
 
                 result = {}
