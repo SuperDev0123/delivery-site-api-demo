@@ -1,10 +1,12 @@
 import json
 import logging
 
-logger = logging.getLogger("dme_api")
+from django.conf import settings
 
 from .payload_builder import get_service_provider
 from api.common import convert_price
+
+logger = logging.getLogger("dme_api")
 
 
 def parse_pricing_response(response, fp_name, booking, is_from_self=False):
@@ -18,6 +20,10 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         results = []
         if fp_name == "hunter" and json_data["price"]:  # Hunter
             for price in json_data["price"]:
+                # Exclude Air Freight service on PROD
+                if settings.ENV != "prod" and price["serviceName"] == "Air Freight":
+                    continue
+
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
