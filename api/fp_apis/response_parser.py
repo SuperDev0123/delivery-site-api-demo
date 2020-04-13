@@ -20,7 +20,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         results = []
         if fp_name == "hunter" and json_data["price"]:  # Hunter
             for price in json_data["price"]:
-                # Exclude Air Freight service on PROD
+                # Exclude "Air Freight" service on PROD
                 if settings.ENV == "prod" and price["serviceName"] == "Air Freight":
                     continue
 
@@ -51,6 +51,14 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 results.append(result)
         elif fp_name == "sendle" and json_data["price"]:  # Sendle
             for price in json_data["price"]:
+                # Exclude "Premium" and "Easy" service on PROD
+                if (
+                    settings.ENV == "prod"
+                    and price["serviceName"] == "Premium"
+                    and price["serviceName"] == "Easy"
+                ):
+                    continue
+
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
