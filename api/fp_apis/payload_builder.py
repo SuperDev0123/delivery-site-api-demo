@@ -927,6 +927,10 @@ def get_pricing_payload(booking, fp_name, account_code_key, booking_lines=None):
             line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
         )
 
+        # Sendle size limitation: 120cm
+        if fp_name == "sendle" and (width > 120 or height > 120 or length > 120):
+            return None
+
         for i in range(line.e_qty):
             item = {
                 "dangerous": 0,
