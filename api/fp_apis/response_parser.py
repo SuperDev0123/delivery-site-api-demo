@@ -18,7 +18,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             json_data = json.loads(res_content)
 
         results = []
-        if fp_name == "hunter" and json_data["price"]:  # Hunter
+        if fp_name == "hunter" and "price" in json_data:  # Hunter
             for price in json_data["price"]:
                 # Exclude "Air Freight" service on PROD
                 if settings.ENV == "prod" and price["serviceName"] == "Air Freight":
@@ -38,7 +38,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["tax_id_1"] = price["totalTaxes"]["id"]
                 result["tax_value_1"] = price["totalTaxes"]["value"]
                 results.append(result)
-        elif fp_name == "tnt" and json_data["price"]:  # TNT
+        elif fp_name == "tnt" and "price" in json_data:  # TNT
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
@@ -49,7 +49,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
                 results.append(result)
-        elif fp_name == "sendle" and json_data["price"]:  # Sendle
+        elif fp_name == "sendle" and "price" in json_data:  # Sendle
             for price in json_data["price"]:
                 # Exclude "Premium" and "Easy" service on PROD
                 if (
@@ -69,7 +69,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["service_name"] = price["plan_name"]
                 result["etd"] = ", ".join(str(x) for x in price["eta"]["days_range"])
                 results.append(result)
-        elif fp_name == "capital" and json_data["price"]:  # Capital
+        elif fp_name == "capital" and "price" in json_data:  # Capital
             price = json_data["price"]
             result = {}
             result["api_results_id"] = json_data["requestId"]
@@ -82,7 +82,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 price["serviceName"] if "serviceName" in price else None
             )
             results.append(result)
-        elif fp_name == "startrack" and json_data["price"]:  # Startrack
+        elif fp_name == "startrack" and "price" in json_data:  # Startrack
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
@@ -96,7 +96,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 )
                 results.append(result)
         # Built-in: Century, Camerons, Toll
-        elif fp_name in ["century", "camerons", "toll"] and json_data["price"]:
+        elif fp_name in ["century", "camerons", "toll"] and "price" in json_data:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
