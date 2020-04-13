@@ -54,8 +54,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 # Exclude "Premium" and "Easy" service on PROD
                 if (
                     settings.ENV == "prod"
-                    and price["serviceName"] == "Premium"
-                    and price["serviceName"] == "Easy"
+                    and price["plan_name"] == "Premium"
+                    and price["plan_name"] == "Easy"
                 ):
                     continue
 
