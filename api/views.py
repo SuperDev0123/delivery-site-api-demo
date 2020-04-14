@@ -1814,7 +1814,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.e_qty_adjusted_delivered = 0
                 new_pk_booking_lines_id = str(uuid.uuid1())
                 booking_line_details = Booking_lines_data.objects.filter(
-                    pk_booking_lines_id=booking_line.fk_booking_lines_id
+                    fk_booking_lines_id=booking_line.pk_booking_lines_id
                 )
 
                 for booking_line_detail in booking_line_details:
