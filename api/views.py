@@ -1951,7 +1951,7 @@ class BookingViewSet(viewsets.ViewSet):
                         + custRefNumVerbage
                     )
 
-                if "TIC" in booking.deToCompanyName:
+                if booking.deToCompanyName == "TIC":
                     booking.deToCompanyName = (
                         deToCompanyName + " (Open 7am-3pm, 1pm Fri)"
                     )
@@ -1977,7 +1977,7 @@ class BookingViewSet(viewsets.ViewSet):
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
             else:
-                if "Tempo Pty Ltd" == booking.b_client_name:
+                if "Tempo Pty Ltd" != booking.b_client_name:
                     return JsonResponse(
                         {"message": "Client is not Tempo", "type": "Failure"},
                         status=status.HTTP_400_BAD_REQUEST,
