@@ -44,7 +44,13 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     REFERENCE_NUMBER = booking.b_clientReference_RA_Numbers
     TOT_PACKAGES = totalQty
     TOT_CUBIC_WEIGHT = totalWeight
-    SERVICE_TYPE = booking.get_etd_in_days() if booking.get_etd_in_days() else ""
+    MAX_TRANSIT_DURATION = ""
+    SERVICE_TYPE == ""
+
+    etd, uom = booking.get_etd()
+    if etd:
+        SERVICE_TYPE = f"{etd} {uom}"
+
     SERVICE = booking.vx_serviceName
     LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
     LATEST_DELIVERY_TIME = booking.s_06_Latest_Delivery_Date_TimeSet
