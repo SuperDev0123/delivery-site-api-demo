@@ -44,19 +44,24 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     REFERENCE_NUMBER = booking.b_clientReference_RA_Numbers
     TOT_PACKAGES = totalQty
     TOT_CUBIC_WEIGHT = totalWeight
-    SERVICE_TYPE = booking.vx_freight_provider_carrier
+    SERVICE_TYPE = booking.v_service_Type
     SERVICE = booking.vx_serviceName
-    MAX_TRANSIT_DURATION = booking.vx_Transit_Duration
-    LATEST_PICKUP_TIME = booking.vx_fp_pu_eta_time
-    LATEST_DELIVERY_TIME = booking.vx_fp_del_eta_time
+    LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
+    LATEST_DELIVERY_TIME = booking.s_06_Latest_Delivery_Date_TimeSet
     DELIVERY_ETA = booking.z_calculated_ETA
-    INSTRUCTIONS = booking.b_handling_Instructions
-    PICKUP_CONTACT = booking.pu_Contact_F_L_Name
-    PICKUP_SUBURB = booking.pu_Address_Suburb
+
+    INSTRUCTIONS = ""
+    if booking.pu_pickup_instructions_address:
+        INSTRUCTIONS = f"{booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        INSTRUCTIONS += f" {booking.pu_PickUp_Instructions_Contact}"
+
+    PICKUP_CONTACT = f"{booking.pu_Contact_F_L_Name} - {booking.pu_Phone_Main}"
+    PICKUP_SUBURB = f"{booking.puCompany}, {booking.pu_Address_Suburb}"
     PICKUP_INSTRUCTIONS = booking.de_to_PickUp_Instructions_Address
     PICKUP_OPERATING_HOURS = booking.pu_Operting_Hours
-    DELIVERY_CONTACT = booking.de_to_Contact_F_LName
-    DELIVERY_SUBURB = booking.de_To_Address_Suburb
+    DELIVERY_CONTACT = f"{booking.de_to_Contact_F_LName} - {booking.de_to_Phone_Main}"
+    DELIVERY_SUBURB = f"{booking.deToCompanyName}, {booking.de_To_Address_Suburb}"
     DELIVERY_INSTRUCTIONS = booking.de_to_PickUp_Instructions_Address
     DELIVERY_OPERATING_HOURS = booking.de_Operating_Hours
     ATTENTION_NOTES = booking.DME_Notes
@@ -73,7 +78,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
             "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
             "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
             "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
             "DELIVERY_ETA": DELIVERY_ETA,
@@ -107,7 +111,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
             "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
             "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
             "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
             "DELIVERY_ETA": DELIVERY_ETA,
@@ -144,7 +147,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
             "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
             "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
             "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
             "DELIVERY_ETA": DELIVERY_ETA,
@@ -178,7 +180,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
             "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
             "SERVICE_TYPE": SERVICE_TYPE,
             "SERVICE": SERVICE,
-            "MAX_TRANSIT_DURATION": MAX_TRANSIT_DURATION,
             "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
             "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
             "DELIVERY_ETA": DELIVERY_ETA,
@@ -207,6 +208,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
 
         for idx, booking_line in enumerate(booking_lines):
             descriptions = []
+            modelNumbers = []
             gaps = []
             refs = []
 
@@ -224,10 +226,13 @@ def send_booking_email_using_template(bookingId, emailName, sender):
                 if line_data.clientRefNumber:
                     refs.append(line_data.clientRefNumber)
 
+                if line_data.modelNumber:
+                    modelNumbers.append(line_data.modelNumber)
+
             REF = ", ".join(refs)
             RA = ", ".join(gaps)
             DESCRIPTION = ", ".join(descriptions)
-            PRODUCT = str(booking_line.e_item) if booking_line.e_item else ""
+            PRODUCT = ", ".join(modelNumbers)
             QTY = str(booking_line.e_qty) if booking_line.e_qty else ""
             TYPE = (
                 str(booking_line.e_type_of_packaging)
