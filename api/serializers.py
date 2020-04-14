@@ -194,6 +194,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "fp_received_date_time",
             "b_given_to_transport_date_time",
             "x_ReadyStatus",
+            "z_downloaded_shipping_label_timestamp",
             "api_booking_quote",
             "vx_futile_Booking_Notes",
             "s_05_Latest_Pick_Up_Date_TimeSet",
