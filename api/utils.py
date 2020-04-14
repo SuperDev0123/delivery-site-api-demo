@@ -199,10 +199,15 @@ def send_email(
     msg.attach(MIMEText(text, mime_type))
 
     for f in files or []:
-        with open(f, "rb") as fil:
-            part = MIMEApplication(fil.read(), Name=basename(f))
-        part["Content-Disposition"] = 'attachment; filename="%s"' % basename(f)
-        msg.attach(part)
+        file_content = open(f, "rb").read()
+
+        if f.name.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif")):
+            image = MIMEImage(file_content, name=os.path.basename(f))
+            msg.attach(image)
+        else:
+            pdf = MIMEApplication(file_content, Name=basename(f))
+            pdf["Content-Disposition"] = 'attachment; filename="%s"' % basename(f)
+            msg.attach(pdf)
 
     smtp = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
 
