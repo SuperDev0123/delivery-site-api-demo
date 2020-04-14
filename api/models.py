@@ -2253,9 +2253,6 @@ class BOK_2_lines(models.Model):
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True, null=True
     )
-    pk_booking_lines_id = models.CharField(
-        verbose_name=_("PK Booking Line"), max_length=64, blank=True, null=True
-    )
     l_501_client_UOM = models.CharField(
         verbose_name=_("Client UOM"), max_length=10, blank=True, null=True
     )
