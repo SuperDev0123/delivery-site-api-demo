@@ -45,7 +45,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     TOT_PACKAGES = totalQty
     TOT_CUBIC_WEIGHT = totalWeight
     MAX_TRANSIT_DURATION = ""
-    SERVICE_TYPE == ""
+    SERVICE_TYPE = ""
 
     etd, uom = booking.get_etd()
     if etd:
