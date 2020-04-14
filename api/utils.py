@@ -201,7 +201,7 @@ def send_email(
     for f in files or []:
         file_content = open(f, "rb").read()
 
-        if f.name.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif")):
+        if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif")):
             image = MIMEImage(file_content, name=os.path.basename(f))
             msg.attach(image)
         else:
