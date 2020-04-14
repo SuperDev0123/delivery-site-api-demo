@@ -81,9 +81,7 @@ def pre_check_label(booking):
             _set_error(booking, error_msg)
             return error_msg
 
-        if not booking.pu_Address_street_2 or (
-            booking.pu_Address_street_2 and len(booking.pu_Address_street_2) > 30
-        ):
+        if booking.pu_Address_street_2 and len(booking.pu_Address_street_2) > 30:
             error_msg = "Address.Street2 must be between 0 and 30 characters."
             _set_error(booking, error_msg)
             return error_msg
