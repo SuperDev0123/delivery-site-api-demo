@@ -2208,6 +2208,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
         booking_line = Booking_lines.objects.get(pk=request.data["pk_lines_id"])
         newbooking_line = {
             "fk_booking_id": booking_line.fk_booking_id,
+            "pk_booking_lines_id": str(uuid.uuid1()),
             "e_type_of_packaging": booking_line.e_type_of_packaging,
             "e_item": booking_line.e_item,
             "e_qty": booking_line.e_qty,
