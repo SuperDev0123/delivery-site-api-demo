@@ -428,25 +428,13 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
 
-        payload["reference1"] = (
-            ""
-            if booking.b_client_sales_inv_num is None
-            else booking.b_client_sales_inv_num
-        )
+        # payload["reference1"] = (
+        #     ""
+        #     if booking.b_client_sales_inv_num is None
+        #     else booking.b_client_sales_inv_num
+        # )
+        payload["reference1"] = booking.clientRefNumbers
         payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
-
-        booking_lines_data = Booking_lines_data.objects.filter(
-            fk_booking_lines_id=line.pk_booking_lines_id
-        )
-
-        clientRefNumbers = []
-
-        for line_data in booking_lines_data:
-            if line_data.clientRefNumber:
-                clientRefNumbers.append(line_data.clientRefNumber)
-
-        payload["reference1"] = ", ".join(clientRefNumbers)
-
     elif fp_name.lower() == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
@@ -508,6 +496,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
                 raise Exception(error_msg)
         else:
             payload["clientType"] = "***"
+
     return payload
 
 
