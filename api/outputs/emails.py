@@ -44,12 +44,12 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     REFERENCE_NUMBER = booking.b_clientReference_RA_Numbers
     TOT_PACKAGES = totalQty
     TOT_CUBIC_WEIGHT = totalWeight
-    SERVICE_TYPE = booking.v_service_Type
+    SERVICE_TYPE = booking.get_etd_in_days() if booking.get_etd_in_days() else ""
     SERVICE = booking.vx_serviceName
     LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
     LATEST_DELIVERY_TIME = booking.s_06_Latest_Delivery_Date_TimeSet
     DELIVERY_ETA = booking.z_calculated_ETA
-    INSTRUCTIONS = ""
+    INSTRUCTIONS = booking.b_handling_Instructions
 
     PICKUP_CONTACT = f"{booking.pu_Contact_F_L_Name} - {booking.pu_Phone_Main}"
     PICKUP_SUBURB = f"{booking.puCompany}, {booking.pu_Address_Suburb}"

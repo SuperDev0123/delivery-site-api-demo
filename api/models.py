@@ -1581,6 +1581,23 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
+    def get_etd_in_days(self):
+        if self.vx_freight_provider.lower() == "tnt":
+            return round(float(self.api_booking_quote.etd))
+        elif self.api_booking_quote:
+            freight_provider = Fp_freight_providers.objects.get(
+                fp_company_name=self.vx_freight_provider
+            )
+            service_etd = FP_Service_ETDs.objects.filter(
+                freight_provider_id=freight_provider.id,
+                fp_delivery_time_description=self.api_booking_quote.etd,
+            ).first()
+
+            if service_etd is not None:
+                return service_etd.fp_03_delivery_hours / 24
+
+        return None
+
 
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
