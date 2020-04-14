@@ -281,7 +281,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         "address1": ""
         if booking.pu_Address_Street_1 is None
         else booking.pu_Address_Street_1,
-        "address2": " "
+        "address2": "_"
         if booking.pu_Address_street_2 is None
         else booking.pu_Address_street_2,
         "country": ""
@@ -327,8 +327,8 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         "address1": ""
         if booking.de_To_Address_Street_1 is None
         else booking.de_To_Address_Street_1,
-        "address2": " "
-        if booking.de_To_Address_Street_2 is None
+        "address2": "_"
+        if not booking.de_To_Address_Street_2
         else booking.de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
