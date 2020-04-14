@@ -222,6 +222,7 @@ class BookingLineSerializer(serializers.ModelSerializer):
         model = Booking_lines
         fields = (
             "pk_lines_id",
+            "fk_booking_id",
             "pk_booking_lines_id",
             "e_type_of_packaging",
             "e_item",
@@ -253,6 +254,7 @@ class BookingLineDetailSerializer(serializers.ModelSerializer):
         model = Booking_lines_data
         fields = (
             "pk_id_lines_data",
+            "fk_booking_id",
             "fk_booking_lines_id",
             "modelNumber",
             "itemDescription",
