@@ -49,20 +49,27 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
     LATEST_DELIVERY_TIME = booking.s_06_Latest_Delivery_Date_TimeSet
     DELIVERY_ETA = booking.z_calculated_ETA
-
     INSTRUCTIONS = ""
-    if booking.pu_pickup_instructions_address:
-        INSTRUCTIONS = f"{booking.pu_pickup_instructions_address}"
-    if booking.pu_PickUp_Instructions_Contact:
-        INSTRUCTIONS += f" {booking.pu_PickUp_Instructions_Contact}"
 
     PICKUP_CONTACT = f"{booking.pu_Contact_F_L_Name} - {booking.pu_Phone_Main}"
     PICKUP_SUBURB = f"{booking.puCompany}, {booking.pu_Address_Suburb}"
-    PICKUP_INSTRUCTIONS = booking.de_to_PickUp_Instructions_Address
+
+    PICKUP_INSTRUCTIONS = ""
+    if booking.pu_pickup_instructions_address:
+        PICKUP_INSTRUCTIONS = f"{booking.pu_pickup_instructions_address}"
+    if booking.pu_PickUp_Instructions_Contact:
+        PICKUP_INSTRUCTIONS += f" {booking.pu_PickUp_Instructions_Contact}"
+
     PICKUP_OPERATING_HOURS = booking.pu_Operting_Hours
     DELIVERY_CONTACT = f"{booking.de_to_Contact_F_LName} - {booking.de_to_Phone_Main}"
     DELIVERY_SUBURB = f"{booking.deToCompanyName}, {booking.de_To_Address_Suburb}"
-    DELIVERY_INSTRUCTIONS = booking.de_to_PickUp_Instructions_Address
+
+    DELIVERY_INSTRUCTIONS = ""
+    if booking.de_to_PickUp_Instructions_Address:
+        DELIVERY_INSTRUCTIONS = f"{booking.de_to_PickUp_Instructions_Address}"
+    if booking.de_to_Pick_Up_Instructions_Contact:
+        DELIVERY_INSTRUCTIONS += f" {booking.de_to_Pick_Up_Instructions_Contact}"
+
     DELIVERY_OPERATING_HOURS = booking.de_Operating_Hours
     ATTENTION_NOTES = booking.DME_Notes
 
