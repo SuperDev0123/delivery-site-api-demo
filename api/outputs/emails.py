@@ -44,7 +44,6 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     REFERENCE_NUMBER = booking.b_clientReference_RA_Numbers
     TOT_PACKAGES = totalQty
     TOT_CUBIC_WEIGHT = totalWeight
-    MAX_TRANSIT_DURATION = ""
     SERVICE_TYPE = ""
 
     etd, uom = booking.get_etd()

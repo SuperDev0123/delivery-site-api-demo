@@ -199,6 +199,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "vx_futile_Booking_Notes",
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
+            "b_handling_Instructions",
             "eta_pu_by",  # serializer method
             "eta_de_by",  # serializer method
             "pricing_cost",  # serializer method
