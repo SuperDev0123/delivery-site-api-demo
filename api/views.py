@@ -1375,7 +1375,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 Bookings.objects.exclude(manifest_timestamp__isnull=True)
                 .filter(
                     vx_freight_provider__iexact="startrack",
-                    z_CreatedTimestamp__range=(first_date, last_date),
+                    puPickUpAvailFrom_Date__range=(first_date, last_date),
                 )
                 .order_by("-manifest_timestamp")
             )
