@@ -1047,6 +1047,7 @@ class BookingsViewSet(viewsets.ViewSet):
             "pk_booking_id",
             "b_dateBookedDate",
             "pu_Address_State",
+            "puCompany",
             "deToCompanyName",
             "de_To_Address_Suburb",
             "de_To_Address_State",
@@ -1064,9 +1065,18 @@ class BookingsViewSet(viewsets.ViewSet):
             "delivery_kpi_days",
             "de_Deliver_By_Date",
             "vx_freight_provider",
-            "puCompany",
             "pu_Address_Suburb",
             "b_bookingID_Visual",
+            "b_client_name",
+            "b_client_name_sub",
+            "fp_invoice_no",
+            "inv_cost_quoted",
+            "inv_cost_actual",
+            "inv_sell_quoted",
+            "inv_sell_actual",
+            "dme_status_linked_reference_from_fp",
+            "inv_billing_status",
+            "inv_billing_status_note",
         )
 
         if use_selected:
