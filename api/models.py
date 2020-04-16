@@ -1594,9 +1594,9 @@ class Bookings(models.Model):
             ).first()
 
             if service_etd is not None:
-                if fp_service_time_uom.lower() == "days":
+                if service_etd.fp_service_time_uom.lower() == "days":
                     return service_etd.fp_03_delivery_hours / 24, "days"
-                elif fp_service_time_uom.lower() == "hours":
+                elif service_etd.fp_service_time_uom.lower() == "hours":
                     return service_etd.fp_03_delivery_hours, "hours"
 
         return None, None
