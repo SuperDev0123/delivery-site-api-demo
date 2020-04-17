@@ -20,7 +20,6 @@ from api.models import (
     DME_Options,
     DME_Files,
     FP_vehicles,
-    FP_timings,
     FP_availabilities,
     FP_costs,
     FP_pricing_rules,
@@ -391,12 +390,6 @@ class FilesSerializer(serializers.ModelSerializer):
 class VehiclesSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_vehicles
-        fields = "__all__"
-
-
-class TimingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FP_timings
         fields = "__all__"
 
 

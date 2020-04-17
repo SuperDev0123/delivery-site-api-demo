@@ -4501,32 +4501,6 @@ class VehiclesViewSet(viewsets.ViewSet):
             return JsonResponse({"result": None}, status=400)
 
 
-class TimingsViewSet(viewsets.ViewSet):
-    serializer_class = TimingsSerializer
-
-    def list(self, request, pk=None):
-        queryset = FP_timings.objects.all()
-        serializer = TimingsSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            request.data.pop("id", None)
-            resultObject = FP_timings.objects.get_or_create(**request.data)
-
-            return JsonResponse(
-                {
-                    "result": TimingsSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            # print("@Exception", e)
-            return JsonResponse({"result": None}, status=400)
-
-
 class AvailabilitiesViewSet(viewsets.ViewSet):
     serializer_class = AvailabilitiesSerializer
 
@@ -4601,7 +4575,7 @@ class PricingRulesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
+            print("@Exception", e)
             return JsonResponse({"result": None}, status=400)
 
 

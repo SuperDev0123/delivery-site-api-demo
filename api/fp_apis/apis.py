@@ -1193,7 +1193,8 @@ def pricing(request):
     #     "Century",
     #     "Camerons",
     #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter", "Capital"]
+    # fp_names = ["Sendle", "TNT", "Hunter", "Capital"]
+    fp_names = ["Century"]
 
     try:
         for fp_name in fp_names:

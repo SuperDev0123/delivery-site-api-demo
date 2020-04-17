@@ -143,7 +143,7 @@ def find_vehicle_ids(booking_lines, fp):
                 ):
                     vehicle_ids.append(vehicle.id)
 
-            return vehicle_ids
+        return vehicle_ids
     except Exception as e:
         logger.info(f"@833 Century - error while find vehicle")
         return
@@ -374,11 +374,7 @@ def get_pricing(fp_name, booking):
             net_price = price0 if price0 > cost.min_charge else cost.min_charge
 
         rule = rules.get(cost_id=cost.id)
-        etd = (
-            f"{rule.timing.min}, {rule.timing.max}"
-            if rule.timing.max
-            else f"{rule.timing.min}"
-        )
+        etd = f"{rule.etd.fp_03_delivery_hours} {rule.etd.fp_service_time_uom}"
         price = {
             "netPrice": net_price,
             "totalTaxes": 0,
