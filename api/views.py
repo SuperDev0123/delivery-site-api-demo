@@ -1114,6 +1114,7 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date,
             last_date,
             show_field_name,
+            get_clientname(request),
         )
         return JsonResponse({"status": "started generate xml"})
 
