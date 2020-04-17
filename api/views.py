@@ -1967,7 +1967,7 @@ class BookingViewSet(viewsets.ViewSet):
                 dme_client = DME_clients.objects.filter(dme_account_num=booking.kf_client_id).first()
 
                 client_auto_augment = Client_Auto_Augment.objects.filter(
-                    fk_id_dme_client = dme_client.pk_id_dme_client, 
+                    fk_id_dme_client_id = dme_client.pk_id_dme_client, 
                     de_to_companyName__iexact = booking.deToCompanyName.strip()).first()
 
                 if client_auto_augment is not None:
@@ -1990,12 +1990,7 @@ class BookingViewSet(viewsets.ViewSet):
                         )
 
                     if client_auto_augment.company_hours_info is not None:
-                        booking.deToCompanyName = (
-                            deToCompanyName 
-                            + "(" 
-                            + client_auto_augment.company_hours_info 
-                            + ")"
-                        )
+                        booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
                 client_process.save()
                 booking.save()
