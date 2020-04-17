@@ -1933,12 +1933,8 @@ class BookingViewSet(viewsets.ViewSet):
             client_process.origin_de_To_Address_Street_2 = (
                 booking.de_To_Address_Street_2
             )
-            client_auto_augment = Client_Auto_Augment.objects.first()
-
-            if (
-                "Tempo Pty Ltd" in booking.b_client_name
-                and booking.b_booking_Category == "Salvage Expense"
-            ):
+            
+            if booking.b_booking_Category == "Salvage Expense":
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
                 puCompany = booking.puCompany
                 deToCompanyName = booking.deToCompanyName
@@ -1968,38 +1964,45 @@ class BookingViewSet(viewsets.ViewSet):
                         + custRefNumVerbage
                     )
 
-                if booking.deToCompanyName == "TIC":
-                    booking.deToCompanyName = (
-                        deToCompanyName + " (Open 7am-3pm, 1pm Fri)"
-                    )
-                    booking.de_Email = client_auto_augment.tic_de_Email
-                    booking.de_Email_Group_Emails = (
-                        client_auto_augment.tic_de_Email_Group_Emails
-                    )
-                    booking.de_To_Address_Street_1 = (
-                        client_auto_augment.tic_de_To_Address_Street_1
-                    )
-                    booking.de_To_Address_Street_2 = (
-                        client_auto_augment.tic_de_To_Address_Street_2
-                    )
+                dme_client = DME_clients.objects.filter(dme_account_num=booking.kf_client_id).first()
 
-                if "Sales Club" in booking.deToCompanyName:
-                    booking.de_Email = client_auto_augment.sales_club_de_Email
-                    booking.de_Email_Group_Emails = (
-                        client_auto_augment.sales_club_de_Email_Group_Emails
-                    )
+                client_auto_augment = Client_Auto_Augment.objects.filter(
+                    fk_id_dme_client = dme_client.pk_id_dme_client, 
+                    de_to_companyName__iexact = booking.deToCompanyName.strip()).first()
+
+                if client_auto_augment is not None:
+                    if client_auto_augment.de_Email is not None:
+                        booking.de_Email = client_auto_augment.de_Email
+
+                    if client_auto_augment.de_Email_Group_Emails is not None:
+                        booking.de_Email_Group_Emails = (
+                            client_auto_augment.de_Email_Group_Emails
+                        )
+
+                    if client_auto_augment.de_To_Address_Street_1 is not None:
+                        booking.de_To_Address_Street_1 = (
+                            client_auto_augment.de_To_Address_Street_1
+                        )
+
+                    if client_auto_augment.de_To_Address_Street_1 is not None:
+                        booking.de_To_Address_Street_2 = (
+                            client_auto_augment.de_To_Address_Street_2
+                        )
+
+                    if client_auto_augment.company_hours_info is not None:
+                        booking.deToCompanyName = (
+                            deToCompanyName 
+                            + "(" 
+                            + client_auto_augment.company_hours_info 
+                            + ")"
+                        )
 
                 client_process.save()
                 booking.save()
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
             else:
-                if "Tempo Pty Ltd" != booking.b_client_name:
-                    return JsonResponse(
-                        {"message": "Client is not Tempo", "type": "Failure"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                elif booking.b_booking_Category != "Salvage Expense":
+                if booking.b_booking_Category != "Salvage Expense":
                     return JsonResponse(
                         {
                             "message": "Booking Category is not  Salvage Expense",
@@ -2007,6 +2010,11 @@ class BookingViewSet(viewsets.ViewSet):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+                # else if client_auto_augment is None:
+                #     return JsonResponse(
+                #         {"message": "This client is not set up for auto augment", "type": "Failure"},
+                #         status=status.HTTP_400_BAD_REQUEST,
+                #     )
 
         except Exception as e:
             return JsonResponse(
