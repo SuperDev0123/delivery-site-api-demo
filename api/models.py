@@ -335,6 +335,7 @@ class FP_Service_ETDs(models.Model):
         max_length=16, blank=True, null=True, default=None
     )
     fp_03_delivery_hours = models.FloatField(blank=True, null=True, default=None)
+    service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, default=None
     )
