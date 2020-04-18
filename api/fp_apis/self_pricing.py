@@ -59,10 +59,10 @@ def address_filter(booking, booking_lines, rules, fp):
         if rule.de_postal_code and rule.de_postal_code.lower() != de_postal_code:
             continue
 
-        if rule.pu_state and rule.pu_state.lower() != pu_postal_code:
+        if rule.pu_state and rule.pu_state.lower() != pu_state:
             continue
 
-        if rule.de_state and rule.de_state.lower() != de_postal_code:
+        if rule.de_state and rule.de_state.lower() != de_state:
             continue
 
         if rule.pu_zone:
@@ -74,6 +74,40 @@ def address_filter(booking, booking_lines, rules, fp):
                 continue
 
         filtered_rule_ids.append(rule.id)
+
+    for rule in rules:
+        if rule.both_way:
+            if rule.pu_suburb and rule.pu_suburb.lower() != de_suburb:
+                continue
+
+            if rule.de_suburb and rule.de_suburb.lower() != pu_suburb:
+                continue
+
+            if rule.pu_postal_code and rule.pu_postal_code.lower() != de_postal_code:
+                continue
+
+            if rule.de_postal_code and rule.de_postal_code.lower() != pu_postal_code:
+                continue
+
+            if rule.pu_state and rule.pu_state.lower() != de_state:
+                continue
+
+            if rule.de_state and rule.de_state.lower() != pu_state:
+                continue
+
+            if rule.pu_zone:
+                if not is_in_zone(
+                    fp, rule.pu_zone, de_suburb, de_postal_code, de_state
+                ):
+                    continue
+
+            if rule.de_zone:
+                if not is_in_zone(
+                    fp, rule.de_zone, pu_suburb, pu_postal_code, pu_state
+                ):
+                    continue
+
+            filtered_rule_ids.append(rule.id)
 
     return rules.filter(pk__in=filtered_rule_ids)
 
