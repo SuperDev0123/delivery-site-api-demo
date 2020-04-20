@@ -91,7 +91,7 @@ def get_account_code_key(booking, fp_name):
         return "live_0"
 
 
-def auto_select(booking, pricings):
+def auto_select_pricing(booking, pricings):
     if len(pricings) == 0:
         booking.b_errorCapture = "No Freight Provider is available"
         booking.save()
@@ -153,10 +153,12 @@ def auto_select(booking, pricings):
 
     if filtered_pricing:
         logger.error(f"#854 Filtered Pricing - {filtered_pricing}")
+        booking.api_booking_quote = filtered_pricing["pricing"]
         booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
         booking.vx_account_code = filtered_pricing["pricing"].account_code
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.api_booking_quote = filtered_pricing["pricing"]
+        booking.inv_cost_actual = filtered_pricing["fee"]
+        booking.inv_cost_quoted = filtered_pricing["client_mu_1_minimum_values"]
 
         fp_freight_provider = Fp_freight_providers.objects.get(
             fp_company_name=booking.vx_freight_provider
@@ -175,28 +177,4 @@ def auto_select(booking, pricings):
 
 
 def _get_etd(pricing):
-    min = None
-    max = None
-
-    if not pricing.etd:
-        return None, None
-
-    if pricing.etd.lower() == "overnight":
-        min = 1
-        max = 1
-    else:
-        if pricing.fk_freight_provider_id.lower() == "hunter":
-            temp = pricing.etd.lower().split("days")[0]
-            min = float(temp.split("-")[0])
-            max = float(temp.split("-")[1])
-        elif pricing.fk_freight_provider_id.lower() in ["sendle", "century"]:
-            min = float(pricing.etd.split(",")[0])
-            max = float(pricing.etd.split(",")[1])
-        elif pricing.fk_freight_provider_id.lower() in ["tnt", "toll", "camerons"]:
-            min = 0
-            max = float(pricing.etd.lower().split("days")[0])
-
-    if max:
-        return min * 24 * 60, max * 24 * 60
-    else:
-        return ""
+    return None

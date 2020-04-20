@@ -30,7 +30,7 @@ from .self_pricing import get_pricing
 from .utils import (
     get_dme_status_from_fp_status,
     get_account_code_key,
-    auto_select,
+    auto_select_pricing,
 )
 from .response_parser import *
 from .pre_check import *
@@ -1192,7 +1192,7 @@ def pricing(request):
     #     "Startrack"
     #     "Camerons",
     #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century"]
+    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century", "Demo"]
 
     try:
         for fp_name in fp_names:
@@ -1340,7 +1340,7 @@ def pricing(request):
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
-            auto_select(booking, results)
+            auto_select_pricing(booking, results)
             results = ApiBookingQuotesSerializer(results, many=True).data
 
         return JsonResponse(

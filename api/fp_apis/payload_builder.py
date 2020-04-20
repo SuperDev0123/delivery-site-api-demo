@@ -14,6 +14,7 @@ BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
+    "demo": {"service_types": ["standard", "vip", "premium"]},
 }
 
 ACCOUNT_CODES = {

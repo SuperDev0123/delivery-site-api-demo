@@ -93,8 +93,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                     price["serviceName"] if "serviceName" in price else None
                 )
                 results.append(result)
-        # Built-in: Century, Camerons, Toll
-        elif fp_name in ["century", "camerons", "toll"] and "price" in json_data:
+        # Built-in
+        elif is_from_self and "price" in json_data:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
