@@ -5372,7 +5372,7 @@ def get_b_bookingID_Visual(dme_file):
     ):
         booking = Bookings.objects.filter(pk_booking_id = dme_file.note).first()
 
-        if booking is not None:
+        if booking:
             b_bookingID_Visual = booking.b_bookingID_Visual
         
     return b_bookingID_Visual
