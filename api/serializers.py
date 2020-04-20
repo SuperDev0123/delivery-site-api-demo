@@ -382,6 +382,11 @@ class OptionsSerializer(serializers.ModelSerializer):
 
 
 class FilesSerializer(serializers.ModelSerializer):
+    b_bookingID_Visual = serializers.SerializerMethodField(read_only=True)
+
+    def get_b_bookingID_Visual(self, obj):
+        return utils.get_b_bookingID_Visual(obj)
+
     class Meta:
         model = DME_Files
         fields = "__all__"

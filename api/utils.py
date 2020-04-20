@@ -5364,3 +5364,15 @@ def get_eta_de_by(booking, quote):
         trace_error.print()
         logger.error(f"Error #1002: {e}")
         return None
+
+def get_b_bookingID_Visual(dme_file):
+    b_bookingID_Visual = ''
+    if dme_file.file_type == 'xls import' and (
+        dme_file.note and len(dme_file.note) == 36
+    ):
+        booking = Bookings.objects.filter(pk_booking_id = dme_file.note).first()
+
+        if booking is not None:
+            b_bookingID_Visual = booking.b_bookingID_Visual
+        
+    return b_bookingID_Visual
