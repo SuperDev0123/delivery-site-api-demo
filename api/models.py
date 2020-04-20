@@ -3663,17 +3663,31 @@ class DME_Files(models.Model):
     class Meta:
         db_table = "dme_files"
 
+
 class Client_Auto_Augment(models.Model):
-    de_Email = models.CharField(max_length=64,blank=True,null=True, default = None)
-    de_Email_Group_Emails = models.TextField(max_length=512, blank=True, null=True, default = None)
-    de_To_Address_Street_1 = models.CharField(max_length=40, blank=True, null=True, default = None)
-    de_To_Address_Street_2 = models.CharField( max_length=40, blank=True, null=True, default=None)
-    fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    de_to_companyName = models.CharField( max_length=40, blank=True, null=True, default=None)
-    company_hours_info = models.CharField( max_length=40, blank=True, null=True, default=None)
-    
+    de_Email = models.CharField(max_length=64, blank=True, null=True, default=None)
+    de_Email_Group_Emails = models.TextField(
+        max_length=512, blank=True, null=True, default=None
+    )
+    de_To_Address_Street_1 = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+    de_To_Address_Street_2 = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, default=3
+    )
+    de_to_companyName = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+    company_hours_info = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+
     class Meta:
         db_table = "client_auto_augment"
+
 
 class Client_Process_Mgr(models.Model):
     fk_booking_id = models.CharField(
