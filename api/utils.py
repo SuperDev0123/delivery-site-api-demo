@@ -5376,3 +5376,15 @@ def get_b_bookingID_Visual(dme_file):
             b_bookingID_Visual = booking.b_bookingID_Visual
         
     return b_bookingID_Visual
+
+def get_booking_id(dme_file): 
+    booking_id = ''
+    if dme_file.file_type == 'xls import' and (
+        dme_file.note and len(dme_file.note) == 36
+    ):
+        booking = Bookings.objects.filter(pk_booking_id = dme_file.note).first()
+
+        if booking:
+            booking_id = booking.id
+        
+    return booking_id
