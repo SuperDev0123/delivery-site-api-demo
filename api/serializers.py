@@ -27,6 +27,7 @@ from api.models import (
     BookingSets,
 )
 from api import utils
+from api.fp_apis.utils import _is_deliverable_price
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -304,6 +305,7 @@ class FPStoreBookingLogSerializer(serializers.ModelSerializer):
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     eta_pu_by = serializers.SerializerMethodField(read_only=True)
     eta_de_by = serializers.SerializerMethodField(read_only=True)
+    is_deliverable = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -328,6 +330,13 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         try:
             booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
             return utils.get_eta_de_by(booking, obj)
+        except Exception as e:
+            return None
+
+    def get_is_deliverable(self, obj):
+        try:
+            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            return _is_deliverable_price(obj, booking)
         except Exception as e:
             return None
 

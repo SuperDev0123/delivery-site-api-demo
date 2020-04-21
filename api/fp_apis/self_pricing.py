@@ -408,12 +408,11 @@ def get_pricing(fp_name, booking):
             net_price = price0 if price0 > cost.min_charge else cost.min_charge
 
         rule = rules.get(cost_id=cost.id)
-        etd = f"{rule.etd.fp_03_delivery_hours} {rule.etd.fp_service_time_uom}"
         price = {
             "netPrice": net_price,
             "totalTaxes": 0,
             "serviceName": f"{rule.service_timing_code}",
-            "etd": etd,
+            "etd": rule.etd.fp_delivery_time_description,
         }
         pricies.append(price)
 

@@ -1,23 +1,13 @@
 import logging
+from datetime import datetime
 
 from django.conf import settings
 
 from api.models import *
 from api.common import ratio
-from datetime import datetime
+from .constants import FP_UOM
 
 logger = logging.getLogger("dme_api")
-
-FP_UOM = {
-    "startrack": {"dim": "cm", "weight": "kg"},
-    "hunter": {"dim": "cm", "weight": "kg"},
-    "tnt": {"dim": "cm", "weight": "kg"},
-    "capital": {"dim": "cm", "weight": "kg"},
-    "sendle": {"dim": "cm", "weight": "kg"},
-    "fastway": {"dim": "cm", "weight": "kg"},
-    "allied": {"dim": "cm", "weight": "kg"},
-    "dhl": {"dim": "cm", "weight": "kg"},
-}
 
 
 def _convert_UOM(value, uom, type, fp_name):
@@ -91,65 +81,91 @@ def get_account_code_key(booking, fp_name):
         return "live_0"
 
 
+def _get_etd(pricing):
+    fp = Fp_freight_providers.objects.get(
+        fp_company_name__iexact=pricing.fk_freight_provider_id
+    )
+
+    if fp.fp_company_name.lower() == "tnt":
+        return pricing.etd * 24
+
+    try:
+        etd = FP_Service_ETDs.objects.get(
+            freight_provider_id=fp.id,
+            fp_delivery_time_description=pricing.etd,
+            fp_delivery_service_code=pricing.service_name,
+        )
+        return etd.fp_03_delivery_hours
+    except Exception as e:
+        logger.error(
+            f"#810 Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+        )
+        return None
+
+
+def _is_deliverable_price(pricing, booking):
+    if booking.pu_PickUp_By_Date and booking.de_Deliver_By_Date:
+        timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
+        delta_min = 0
+
+        if booking.de_Deliver_By_Hours:
+            delta_min += booking.de_Deliver_By_Hours * 60
+        if booking.de_Deliver_By_Minutes:
+            delta_min += booking.de_Deliver_By_Minutes
+        if booking.pu_PickUp_By_Time_Hours:
+            delta_min -= booking.pu_PickUp_By_Time_Hours * 60
+        if booking.pu_PickUp_By_Time_Minutes:
+            delta_min -= pu_PickUp_By_Time_Minutes
+
+        delta_min = timeDelta.total_seconds() / 60 + delta_min
+        eta = _get_etd(pricing)
+
+        if not eta:
+            return False
+        elif delta_min > eta * 60:
+            return True
+    else:
+        return False
+
+
+# ######################## #
+#        Lowest ($$$)      #
+# ######################## #
+def _get_lowest_price(pricings):
+    lowest_pricing = {}
+    for pricing in pricings:
+        if not lowest_pricing:
+            lowest_pricing["pricing"] = pricing
+        elif lowest_pricing and lowest_pricing["pricing"].fee > pricing.fee:
+            lowest_pricing["pricing"] = pricing
+
+    return lowest_pricing
+
+
 def auto_select_pricing(booking, pricings):
     if len(pricings) == 0:
         booking.b_errorCapture = "No Freight Provider is available"
         booking.save()
         return None
 
-    filtered_pricing = {}
+    non_air_freight_pricings = []
     for pricing in pricings:
         if not pricing.service_name or (
             pricing.service_name and pricing.service_name != "Air Freight"
         ):
-            # ######################## #
-            #        Lowest ($$$)      #
-            # ######################## #
-            if not filtered_pricing:
-                filtered_pricing["pricing"] = pricing
-            elif filtered_pricing and filtered_pricing["pricing"].fee > pricing.fee:
-                filtered_pricing["pricing"] = pricing
+            non_air_freight_pricings.append(pricing)
 
-            # ######################## #
-            #      Lowest & Fastest    #
-            # ######################## #
-            # etd_min, etd_max = _get_etd(pricing)
+    # Check booking.pu_PickUp_By_Date and booking.de_Deliver_By_Date and Pricings etd
+    deliverable_pricings = []
+    for pricing in non_air_freight_pricings:
+        if _is_deliverable_price(pricing, booking):
+            deliverable_pricings.append(pricing)
 
-            # if not etd_max:
-            #     return False
-
-            # if booking.puPickUpAvailFrom_Date and booking.de_Deliver_By_Date:
-            #     timeDelta = booking.de_Deliver_By_Date - booking.puPickUpAvailFrom_Date
-            #     delta_min = 0
-
-            #     if booking.pu_PickUp_Avail_Time_Hours:
-            #         delta_min = booking.pu_PickUp_Avail_Time_Hours * 60
-            #     if booking.pu_PickUp_Avail_Time_Minutes:
-            #         delta_min += pu_PickUp_Avail_Time_Minutes
-            #     if booking.de_Deliver_By_Hours:
-            #         delta_min -= booking.de_Deliver_By_Hours * 60
-            #     if booking.de_Deliver_By_Minutes:
-            #         delta_min -= booking.de_Deliver_By_Minutes
-
-            #     delta_min = timeDelta.total_seconds() / 60 + delta_min
-
-            #     if delta_min > etd_max and not filtered_pricing:
-            #         filtered_pricing["pricing"] = pricing
-            #         filtered_pricing["etd_max"] = etd_max
-            #     elif (
-            #         delta_min > etd_max
-            #         and filtered_pricing
-            #         and filtered_pricing["pricing"].fee > pricing.fee
-            #     ):
-            #         filtered_pricing["pricing"] = pricing
-            #         filtered_pricing["etd_max"] = etd_max
-            # else:
-            #     if not filtered_pricing:
-            #         filtered_pricing["pricing"] = pricing
-            #         filtered_pricing["etd_max"] = etd_max
-            #     elif filtered_pricing and filtered_pricing["pricing"].fee > pricing.fee:
-            #         filtered_pricing["pricing"] = pricing
-            #         filtered_pricing["etd_max"] = etd_max
+    filtered_pricing = {}
+    if deliverable_pricings:
+        filtered_pricing = _get_lowest_price(deliverable_pricings)
+    elif non_air_freight_pricings:
+        filtered_pricing = _get_lowest_price(non_air_freight_pricings)
 
     if filtered_pricing:
         logger.error(f"#854 Filtered Pricing - {filtered_pricing}")
@@ -160,12 +176,12 @@ def auto_select_pricing(booking, pricings):
         booking.inv_cost_actual = filtered_pricing["pricing"].fee
         booking.inv_cost_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
 
-        fp_freight_provider = Fp_freight_providers.objects.get(
-            fp_company_name=booking.vx_freight_provider
+        fp = Fp_freight_providers.objects.get(
+            fp_company_name__iexact=filtered_pricing["pricing"].fk_freight_provider_id
         )
 
-        if fp_freight_provider and fp_freight_provider.service_cutoff_time:
-            booking.s_02_Booking_Cutoff_Time = fp_freight_provider.service_cutoff_time
+        if fp and fp.service_cutoff_time:
+            booking.s_02_Booking_Cutoff_Time = fp.service_cutoff_time
         else:
             booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
@@ -174,7 +190,3 @@ def auto_select_pricing(booking, pricings):
     else:
         logger.error("#855 - Could not find proper pricing")
         return False
-
-
-def _get_etd(pricing):
-    return None
