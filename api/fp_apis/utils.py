@@ -136,7 +136,11 @@ def _get_lowest_price(pricings):
     for pricing in pricings:
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
-        elif lowest_pricing and lowest_pricing["pricing"].fee > pricing.fee:
+        elif (
+            lowest_pricing
+            and pricing.fee
+            and float(lowest_pricing["pricing"].fee) > float(pricing.fee)
+        ):
             lowest_pricing["pricing"] = pricing
 
     return lowest_pricing
