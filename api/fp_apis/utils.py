@@ -87,7 +87,7 @@ def _get_etd(pricing):
     )
 
     if fp.fp_company_name.lower() == "tnt":
-        return pricing.etd * 24
+        return float(pricing.etd) * 24
 
     try:
         etd = FP_Service_ETDs.objects.get(
@@ -122,7 +122,7 @@ def _is_deliverable_price(pricing, booking):
 
         if not eta:
             return False
-        elif float(delta_min) > float(eta) * 60:
+        elif delta_min > eta * 60:
             return True
     else:
         return False
