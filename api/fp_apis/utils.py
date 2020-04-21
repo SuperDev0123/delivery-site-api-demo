@@ -11,8 +11,16 @@ logger = logging.getLogger("dme_api")
 
 
 def _convert_UOM(value, uom, type, fp_name):
-    converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
-    return round(converted_value, 2)
+    try:
+        converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+        return round(converted_value, 2)
+    except Exception as e:
+        raise Exception(
+            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
+        )
+        logger.error(
+            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
+        )
 
 
 def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
