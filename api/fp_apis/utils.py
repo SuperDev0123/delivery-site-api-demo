@@ -122,7 +122,7 @@ def _is_deliverable_price(pricing, booking):
 
         if not eta:
             return False
-        elif delta_min > eta * 60:
+        elif float(delta_min) > float(eta) * 60:
             return True
     else:
         return False
