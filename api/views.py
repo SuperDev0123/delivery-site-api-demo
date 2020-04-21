@@ -3840,7 +3840,7 @@ def download(request):
     download_option = body["downloadOption"]
     file_paths = []
 
-    if download_option in ["pricing-only", "pricing-rule"]:
+    if download_option in ["pricing-only", "pricing-rule", "xls import"]:
         file_name = body["fileName"]
     elif download_option == "manifest":
         z_manifest_url = body["z_manifest_url"]
@@ -3861,6 +3861,14 @@ def download(request):
     elif download_option == "pricing-rule":
         src_file_path = f"./static/uploaded/pricing_rule/achieve/{file_name}"
         file_paths.append(src_file_path)
+    elif download_option == "xls import":
+        file_name_without_ext = file_name.split(".")[0]
+        result_file_record = DME_Files.objects.filter(
+            file_name__icontains=file_name_without_ext, file_type="xls import"
+        )
+
+        if result_file_record:
+            file_paths.append(result_file_record.first().file_path)
     elif download_option == "manifest":
         file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
     elif download_option == "label":
