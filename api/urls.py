@@ -43,6 +43,7 @@ router.register(r"bok_2_lines", BOK_2_ViewSet, basename="bok2")
 router.register(r"bok_3_lines_data", BOK_3_ViewSet, basename="bok3")
 router.register(r"files", FilesViewSet, basename="files")
 router.register(r"bookingsets", BookingSetsViewSet, basename="bookingsets")
+router.register(r"clientemployee", ClientEmployeesViewSet, basename="clientemployee")
 
 urlpatterns = router.urls
 

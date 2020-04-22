@@ -200,6 +200,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
             "b_handling_Instructions",
+            "fk_manifest_id",
             "eta_pu_by",  # serializer method
             "eta_de_by",  # serializer method
             "pricing_cost",  # serializer method
@@ -393,7 +394,7 @@ class OptionsSerializer(serializers.ModelSerializer):
 class FilesSerializer(serializers.ModelSerializer):
     b_bookingID_Visual = serializers.SerializerMethodField(read_only=True)
     booking_id = serializers.SerializerMethodField(read_only=True)
-    
+
     def get_b_bookingID_Visual(self, obj):
         return utils.get_b_bookingID_Visual(obj)
 
@@ -432,6 +433,12 @@ class PricingRulesSerializer(serializers.ModelSerializer):
 class EmailLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailLogs
+        fields = "__all__"
+
+
+class ClientEmployeesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_employees
         fields = "__all__"
 
 
