@@ -200,6 +200,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
             "b_handling_Instructions",
+            "b_error_Capture",
             "eta_pu_by",  # serializer method
             "eta_de_by",  # serializer method
             "pricing_cost",  # serializer method
