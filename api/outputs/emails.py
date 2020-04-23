@@ -228,6 +228,9 @@ def send_booking_email_using_template(bookingId, emailName, sender):
                 fk_booking_lines_id=booking_line.pk_booking_lines_id
             )
 
+            refs = []
+            gaps = []
+            descriptions = []
             for line_data in booking_lines_data:
                 if line_data.itemDescription:
                     descriptions.append(line_data.itemDescription)
