@@ -25,7 +25,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         if lines_data.gap_ra:
             gaps.append(lines_data.gap_ra)
 
-        if lines_data.lines_data.clientRefNumber:
+        if lines_data.clientRefNumber:
             refs.append(lines_data.clientRefNumber)
 
     totalQty = 0
