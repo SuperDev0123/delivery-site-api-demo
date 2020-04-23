@@ -1692,22 +1692,23 @@ class Bookings(models.Model):
             return ""
 
     def get_etd(self):
-        if self.vx_freight_provider.lower() == "tnt":
-            return round(float(self.api_booking_quote.etd)), "days"
-        elif self.api_booking_quote:
-            freight_provider = Fp_freight_providers.objects.get(
-                fp_company_name=self.vx_freight_provider
-            )
-            service_etd = FP_Service_ETDs.objects.filter(
-                freight_provider_id=freight_provider.id,
-                fp_delivery_time_description=self.api_booking_quote.etd,
-            ).first()
+        if self.api_booking_quote:
+            if self.vx_freight_provider.lower() == "tnt":
+                return round(float(self.api_booking_quote.etd)), "days"
+            elif self.api_booking_quote:
+                freight_provider = Fp_freight_providers.objects.get(
+                    fp_company_name=self.vx_freight_provider
+                )
+                service_etd = FP_Service_ETDs.objects.filter(
+                    freight_provider_id=freight_provider.id,
+                    fp_delivery_time_description=self.api_booking_quote.etd,
+                ).first()
 
-            if service_etd is not None:
-                if service_etd.fp_service_time_uom.lower() == "days":
-                    return service_etd.fp_03_delivery_hours / 24, "days"
-                elif service_etd.fp_service_time_uom.lower() == "hours":
-                    return service_etd.fp_03_delivery_hours, "hours"
+                if service_etd is not None:
+                    if service_etd.fp_service_time_uom.lower() == "days":
+                        return service_etd.fp_03_delivery_hours / 24, "days"
+                    elif service_etd.fp_service_time_uom.lower() == "hours":
+                        return service_etd.fp_03_delivery_hours, "hours"
 
         return None, None
 
