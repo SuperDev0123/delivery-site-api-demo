@@ -1153,6 +1153,7 @@ def reprint(request, fp_name):
 def pricing(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
+    auto_select_type = body.get("auto_select_type", 1)
     is_pricing_only = False
     booking_lines = []
     booking = None
@@ -1344,7 +1345,7 @@ def pricing(request):
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
-            auto_select_pricing(booking, results)
+            auto_select_pricing(booking, results, auto_select_type)
             results = ApiBookingQuotesSerializer(results, many=True).data
 
         return JsonResponse(

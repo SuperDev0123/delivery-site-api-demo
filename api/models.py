@@ -3825,6 +3825,9 @@ class BookingSets(models.Model):
     booking_ids = models.TextField(blank=True, null=True, default=None)
     note = models.TextField(max_length=512, blank=True, null=True, default=None)
     status = models.CharField(max_length=255, blank=True, null=True, default=None)
+    auto_select_type = models.BooleanField(
+        max_length=255, blank=True, null=True, default=True
+    )  # True: lowest | False: Fastest
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, default=None
     )
