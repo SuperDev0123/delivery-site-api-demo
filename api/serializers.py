@@ -83,7 +83,22 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bookings
-        fields = (
+        read_only_fields = (
+            "b_status_API",
+            "b_booking_Notes",
+            "b_error_Capture",
+            "eta_pu_by",  # serializer method
+            "eta_de_by",  # serializer method
+            "pricing_cost",  # serializer method
+            "pricing_account_code",  # serializer method
+            "pricing_service_name",  # serializer method
+            "has_comms",  # property
+            "business_group",  # property
+            "dme_delivery_status_category",  # property
+            "client_item_references",  # property
+            "clientRefNumbers",  # property
+        )
+        fields = read_only_fields + (
             "id",
             "puCompany",
             "pu_Address_Street_1",
@@ -141,7 +156,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "total_lines_qty_override",
             "total_1_KG_weight_override",
             "total_Cubic_Meter_override",
-            "b_status_API",
             "z_lock_status",
             "tally_delivered",
             "dme_status_history_notes",
@@ -200,17 +214,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
             "b_handling_Instructions",
-            "b_error_Capture",
-            "eta_pu_by",  # serializer method
-            "eta_de_by",  # serializer method
-            "pricing_cost",  # serializer method
-            "pricing_account_code",  # serializer method
-            "pricing_service_name",  # serializer method
-            "has_comms",  # property
-            "business_group",  # property
-            "dme_delivery_status_category",  # property
-            "client_item_references",  # property
-            "clientRefNumbers",  # property
         )
 
 
