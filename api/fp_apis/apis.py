@@ -123,6 +123,7 @@ def tracking(request, fp_name):
                     len(consignmentStatuses) - 1
                 ]
                 booking.b_status_API = last_consignmentStatus["status"]
+                booking.b_booking_Notes = last_consignmentStatus["statusDescription"]
                 event_time = last_consignmentStatus["statusUpdate"]
                 event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ"))
             else:
