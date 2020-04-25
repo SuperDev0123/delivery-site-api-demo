@@ -94,22 +94,32 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 )
                 results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
-            price =  json_data["price"]
+            price = json_data["price"]
             result = {}
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = booking.b_client_name
             result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
             result["etd"] = price["delivery_timeframe_days"]
-            
+
             min_fee = 0
             min_tax_value_1 = 0
-            min_serviceName = ''
+            min_serviceName = ""
 
             for service in price["services"]:
-                fee = min(float(service["totalprice_normal"]), float(service["totalprice_frequent"]), float(service["totalprice_normal_exgst"]), float(service["totalprice_frequent_exgst"]))
-                tax_value_1 = min(float(service["excess_label_price_normal"]), float(service["excess_label_price_frequent"]), float(service["excess_label_price_normal_exgst"]), float(service["excess_label_price_frequent_exgst"]))
-                
+                fee = min(
+                    float(service["totalprice_normal"]),
+                    float(service["totalprice_frequent"]),
+                    float(service["totalprice_normal_exgst"]),
+                    float(service["totalprice_frequent_exgst"]),
+                )
+                tax_value_1 = min(
+                    float(service["excess_label_price_normal"]),
+                    float(service["excess_label_price_frequent"]),
+                    float(service["excess_label_price_normal_exgst"]),
+                    float(service["excess_label_price_frequent_exgst"]),
+                )
+
                 if min_fee == 0:
                     min_fee = fee
                     min_serviceName = service["name"]
@@ -137,7 +147,6 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["fk_client_id"] = booking.b_client_name
                 result["fk_freight_provider_id"] = get_service_provider(fp_name.lower())
                 result["fee"] = price["netPrice"]
-              
                 result["etd"] = price["etd"]
                 result["tax_value_1"] = price["totalTaxes"]
                 result["service_name"] = (
@@ -154,6 +163,5 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         return results
     except Exception as e:
         error_msg = f"Error while parse Pricing response: {e}"
-        print(error_msg)
         logger.error(error_msg)
         return None
