@@ -2001,7 +2001,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     date_format,
                 )
 
-            worksheet.write(row, col + 3, booking.b_booking_Category)
+            worksheet.write(row, col + 2, booking.b_booking_Category)
             worksheet.write(
                 row, col + 3, f"{booking.clientRefNumbers} {booking.gap_ras}"
             )
@@ -2083,7 +2083,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         logger.error(f"#351 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if not booking.had_status("futile"):
+            if not booking.had_status("delivered"):
                 continue
 
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
