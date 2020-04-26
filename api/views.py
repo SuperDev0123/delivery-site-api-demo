@@ -1087,7 +1087,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(
                     b_dateBookedDate__range=(first_date, last_date),
                     puCompany__icontains="Tempo Aus Whs",
-                    pu_Address_Suburb__iexact="Frenches Forest",
+                    pu_Address_Suburb__iexact="FRENCHS FOREST",
                 )
             elif report_type == "futile":
                 queryset = queryset.filter(
