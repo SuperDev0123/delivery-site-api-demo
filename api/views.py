@@ -1162,6 +1162,7 @@ class BookingsViewSet(viewsets.ViewSet):
             "b_booking_Category",
             "clientRefNumbers",
             "gap_ras",
+            "s_05_LatestPickUpDateTimeFinal",
         )
 
         build_xls_and_send(

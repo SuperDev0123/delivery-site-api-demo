@@ -1724,10 +1724,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         if show_field_name:
             worksheet.write("A1", "b_bookingID_Visual", bold)
             worksheet.write("B1", "b_dateBookedDate", bold)
-            worksheet.write("C1", "???", bold)
+            worksheet.write("C1", "s_05_LatestPickUpDateTimeFinal" bold)
             worksheet.write("D1", "b_status", bold)
             worksheet.write("E1", "b_booking_Category", bold)
-            worksheet.write("F1", "line_data/clientRefNumber", bold)
+            worksheet.write("F1", "line_data/gap_ra", bold)
             worksheet.write("G1", "puCompany", bold)
             worksheet.write("H1", "deToCompanyName ", bold)
             worksheet.write("I1", "", bold)
@@ -1738,7 +1738,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("C2", "Latest Pickup Date 4 Service", bold)
             worksheet.write("D2", "Booking Status", bold)
             worksheet.write("E2", "Booking Category", bold)
-            worksheet.write("F2", "Client Reference No's", bold)
+            worksheet.write("F2", "GAP/RA numbers", bold)
             worksheet.write("G2", "Pickup Entity", bold)
             worksheet.write("H2", "Deliver to Entity", bold)
             worksheet.write("I2", "Return email with consignment sent", bold)
@@ -1751,7 +1751,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("C1", "Latest Pickup Date 4 Service", bold)
             worksheet.write("D1", "Booking Status", bold)
             worksheet.write("E1", "Booking Category", bold)
-            worksheet.write("F1", "Client Reference No's", bold)
+            worksheet.write("F1", "GAP/RA numbers", bold)
             worksheet.write("G1", "Pickup Entity", bold)
             worksheet.write("H1", "Deliver to Entity", bold)
             worksheet.write("I1", "Return email with consignment sent", bold)
@@ -1768,10 +1768,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row, col + 1, booking.b_dateBookedDate.date(), date_format
                 )
 
-            worksheet.write(row, col + 2, "")
+            if booking.s_05_LatestPickUpDateTimeFinal:
+                worksheet.write_datetime(
+                    row, col + 2, booking.s_05_LatestPickUpDateTimeFinal.date(), date_format
+                )
+
             worksheet.write(row, col + 3, booking.b_status)
             worksheet.write(row, col + 4, booking.b_booking_Category)
-            worksheet.write(row, col + 5, booking.clientRefNumbers)
+            worksheet.write(row, col + 5, booking.gap_ras)
             worksheet.write(row, col + 6, booking.puCompany)
             worksheet.write(row, col + 7, booking.deToCompanyName)
 
