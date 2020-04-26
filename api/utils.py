@@ -5188,6 +5188,66 @@ def build_xls_and_send(
             "Here is the excel report(Whse) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )
+    elif report_type == "booked_bookings":
+        filepath = build_xls(
+            bookings, "booked_bookings", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Booked Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "picked_up_bookings":
+        filepath = build_xls(
+            bookings,
+            "picked_up_bookings",
+            username,
+            start_date,
+            end_date,
+            show_field_name,
+        )
+        send_email(
+            [email_addr],
+            [],
+            "PickedUp Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "box":
+        filepath = build_xls(
+            bookings, "box", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Box XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "futile":
+        filepath = build_xls(
+            bookings, "futile", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Futile XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "goods_delivered":
+        filepath = build_xls(
+            bookings, "goods_delivered", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Goods Delivered Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
     elif report_type == "all":
         filepath_booking = build_xls(
             bookings, "Bookings", username, start_date, end_date, show_field_name

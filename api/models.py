@@ -1631,6 +1631,27 @@ class Bookings(models.Model):
         else:
             return True
 
+    def had_status(self, status):
+        results = Dme_status_history.objects.filter(
+            fk_booking_id=self.pk_booking_id, status_last__iexact=status
+        )
+
+        return True if results else False
+
+    def get_status_histories(self, status=None):
+        status_histories = []
+
+        if status:
+            status_histories = Dme_status_history.objects.filter(
+                fk_booking_id=self.pk_booking_id, status_last__iexact=status
+            )
+        else:
+            status_histories = Dme_status_history.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+        return status_histories
+
     @property
     def business_group(self):
         customer_group_name = ""
@@ -1687,6 +1708,23 @@ class Bookings(models.Model):
                     clientRefNumbers.append(booking_line_data.clientRefNumber)
 
             return ", ".join(clientRefNumbers)
+        except Exception as e:
+            # print('Exception: ', e)
+            return ""
+
+    @property
+    def gap_ras(self):
+        try:
+            gap_ras = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.gap_ra is not None:
+                    gap_ras.append(booking_line_data.gap_ra)
+
+            return ", ".join(gap_ras)
         except Exception as e:
             # print('Exception: ', e)
             return ""

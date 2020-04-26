@@ -1072,8 +1072,60 @@ class BookingsViewSet(viewsets.ViewSet):
                     fk_client_warehouse_id=employee_warehouse_id,
                 )
 
-        # Optimize to speed up building XLS
+        if use_selected:
+            queryset = queryset.filter(pk__in=booking_ids)
+        else:
+            if report_type == "booked_bookings":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date)
+                )
+            elif report_type == "picked_up_bookings":
+                queryset = queryset.filter(
+                    s_20_Actual_Pickup_TimeStamp__range=(first_date, last_date)
+                )
+            elif report_type == "box":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date),
+                    puCompany__icontains="Tempo Aus Whs",
+                    pu_Address_Suburb__iexact="Frenches Forest",
+                )
+            elif report_type == "futile":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date)
+                )
+            elif report_type == "goods_delivered":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date),
+                    b_status__iexact="delivered",
+                )
+            else:
+                # Date filter
+                if user_type == "DME":
+                    queryset = queryset.filter(
+                        z_CreatedTimestamp__range=(first_date, last_date)
+                    )
+                else:
+                    if client.company_name == "BioPak":
+                        queryset = queryset.filter(
+                            puPickUpAvailFrom_Date__range=(first_date, last_date)
+                        )
+                    else:
+                        queryset = queryset.filter(
+                            z_CreatedTimestamp__range=(first_date, last_date)
+                        )
+
+        # Freight Provider filter
+        if vx_freight_provider != "All":
+            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+
+        # Client filter
+        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
+            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+
+        # Optimized to speed up building XLS
         queryset.only(
+            "id",
             "pk_booking_id",
             "b_dateBookedDate",
             "pu_Address_State",
@@ -1107,34 +1159,10 @@ class BookingsViewSet(viewsets.ViewSet):
             "dme_status_linked_reference_from_fp",
             "inv_billing_status",
             "inv_billing_status_note",
+            "b_booking_Category",
+            "clientRefNumbers",
+            "gap_ras",
         )
-
-        if use_selected:
-            queryset = queryset.filter(pk__in=booking_ids)
-        else:
-            # Date filter
-            if user_type == "DME":
-                queryset = queryset.filter(
-                    z_CreatedTimestamp__range=(first_date, last_date)
-                )
-            else:
-                if client.company_name == "BioPak":
-                    queryset = queryset.filter(
-                        puPickUpAvailFrom_Date__range=(first_date, last_date)
-                    )
-                else:
-                    queryset = queryset.filter(
-                        z_CreatedTimestamp__range=(first_date, last_date)
-                    )
-
-        # Freight Provider filter
-        if vx_freight_provider != "All":
-            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
-
-        # Client filter
-        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
-            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
-            queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         build_xls_and_send(
             queryset,
