@@ -2025,7 +2025,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("A1", "b_bookingID_Visual", bold)
             worksheet.write("B1", "line_data/gap_ra", bold)
             worksheet.write("C1", "b_status", bold)
-            worksheet.write("D1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("D1", "delivery_booking", bold)
             worksheet.write("E1", "b_booking_Category", bold)
             worksheet.write("F1", "puCompany", bold)
             worksheet.write("G1", "pu_Address_Suburb", bold)
@@ -2083,9 +2083,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 1, booking.gap_ras)
             worksheet.write(row, col + 2, booking.b_status)
 
-            if booking.s_21_ActualDeliveryTimeStamp:
+            if booking.delivery_booking:
                 worksheet.write_datetime(
-                    row, col + 3, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row, col + 3, booking.delivery_booking, date_format
                 )
 
             worksheet.write(row, col + 4, booking.b_booking_Category)
