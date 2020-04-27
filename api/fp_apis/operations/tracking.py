@@ -4,6 +4,10 @@ from datetime import datetime
 from django.conf import settings
 
 from api.models import *
+from api.fp_api.utils import (
+    get_dme_status_from_fp_status,
+    get_status_category_from_status,
+)
 
 logger = logging.getLogger("dme_api")
 
