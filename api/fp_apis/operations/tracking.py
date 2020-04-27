@@ -72,7 +72,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
             booking.s_21_Actual_Delivery_TimeStamp = result
 
     # Update booking's latest status
-    if fp_name.lower() == "tnt":
+    if fp_name.lower() == "startrack":
         last_consignmentStatus = consignmentStatuses[0]
     else:
         last_consignmentStatus = consignmentStatuses[len(consignmentStatuses) - 1]
