@@ -36,6 +36,7 @@ from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from .build_label.dhl import build_dhl_label
+from .operations.tracking import update_booking_with_tracking_result
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -100,41 +101,10 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
+            update_booking_with_tracking_result(
+                request, booking, fp_name, consignmentStatuses
+            )
 
-            if fp_name.lower() == "startrack":
-                booking.b_status_API = consignmentStatuses[0]["status"]
-                event_time = None
-            elif fp_name.lower() in ["tnt"]:
-                last_consignmentStatus = consignmentStatuses[
-                    len(consignmentStatuses) - 1
-                ]
-                booking.b_status_API = last_consignmentStatus["status"][0]
-                event_time = last_consignmentStatus["statusDate"][0]
-                event_time = str(datetime.strptime(event_time, "%d/%m/%Y"))
-            elif fp_name.lower() in ["hunter"]:
-                last_consignmentStatus = consignmentStatuses[
-                    len(consignmentStatuses) - 1
-                ]
-                booking.b_status_API = last_consignmentStatus["status"]
-                event_time = last_consignmentStatus["statusUpdate"]
-                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
-            elif fp_name.lower() == "sendle":
-                last_consignmentStatus = consignmentStatuses[
-                    len(consignmentStatuses) - 1
-                ]
-                booking.b_status_API = last_consignmentStatus["status"]
-                booking.b_booking_Notes = last_consignmentStatus["statusDescription"]
-                event_time = last_consignmentStatus["statusUpdate"]
-                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ"))
-            else:
-                event_time = None
-
-            if booking.b_status_API:
-                booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
-                booking.save()
-                status_history.create(
-                    booking, booking.b_status, request.user.username, event_time
-                )
             return JsonResponse(
                 {
                     "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",

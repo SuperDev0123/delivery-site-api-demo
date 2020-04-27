@@ -1728,10 +1728,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("D1", "b_status", bold)
             worksheet.write("E1", "b_booking_Category", bold)
             worksheet.write("F1", "line_data/gap_ra", bold)
-            worksheet.write("G1", "puCompany", bold)
-            worksheet.write("H1", "deToCompanyName ", bold)
-            worksheet.write("I1", "", bold)
+            worksheet.write("G1", "line/e_qty", bold)
+            worksheet.write("H1", "puCompany", bold)
+            worksheet.write("I1", "deToCompanyName ", bold)
             worksheet.write("J1", "", bold)
+            worksheet.write("K1", "", bold)
 
             worksheet.write("A2", "DeliverME Booking Ref", bold)
             worksheet.write("B2", "Date Time Booked", bold)
@@ -1739,10 +1740,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("D2", "Booking Status", bold)
             worksheet.write("E2", "Booking Category", bold)
             worksheet.write("F2", "GAP/RA numbers", bold)
-            worksheet.write("G2", "Pickup Entity", bold)
-            worksheet.write("H2", "Deliver to Entity", bold)
-            worksheet.write("I2", "Return email with consignment sent", bold)
-            worksheet.write("J2", "Booking email with consignment sent", bold)
+            worksheet.write("G2", "Quantity", bold)
+            worksheet.write("H2", "Pickup Entity", bold)
+            worksheet.write("I2", "Deliver to Entity", bold)
+            worksheet.write("J2", "Return email with consignment sent", bold)
+            worksheet.write("K2", "Booking email with consignment sent", bold)
 
             row = 2
         else:
@@ -1752,10 +1754,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("D1", "Booking Status", bold)
             worksheet.write("E1", "Booking Category", bold)
             worksheet.write("F1", "GAP/RA numbers", bold)
-            worksheet.write("G1", "Pickup Entity", bold)
-            worksheet.write("H1", "Deliver to Entity", bold)
-            worksheet.write("I1", "Return email with consignment sent", bold)
-            worksheet.write("J1", "Booking email with consignment sent", bold)
+            worksheet.write("G1", "Quantity", bold)
+            worksheet.write("H1", "Pickup Entity", bold)
+            worksheet.write("I1", "Deliver to Entity", bold)
+            worksheet.write("J1", "Return email with consignment sent", bold)
+            worksheet.write("K1", "Booking email with consignment sent", bold)
 
             row = 1
 
@@ -1779,8 +1782,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 3, booking.b_status)
             worksheet.write(row, col + 4, booking.b_booking_Category)
             worksheet.write(row, col + 5, booking.gap_ras)
-            worksheet.write(row, col + 6, booking.puCompany)
-            worksheet.write(row, col + 7, booking.deToCompanyName)
+            worksheet.write(row, col + 6, booking.get_total_lines_qty())
+            worksheet.write(row, col + 7, booking.puCompany)
+            worksheet.write(row, col + 8, booking.deToCompanyName)
 
             general_emails = EmailLogs.objects.filter(
                 emailName="General Booking", booking_id=booking.id
@@ -1788,8 +1792,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             return_emails = EmailLogs.objects.filter(
                 emailName="Return Booking", booking_id=booking.id
             )
-            worksheet.write(row, col + 8, "Yes" if general_emails else "No")
-            worksheet.write(row, col + 9, "Yes" if return_emails else "No")
+            worksheet.write(row, col + 9, "Yes" if general_emails else "No")
+            worksheet.write(row, col + 10, "Yes" if return_emails else "No")
 
             row += 1
 
@@ -1805,15 +1809,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("B1", "s_20_Actual_Pickup_TimeStamp", bold)
             worksheet.write("C1", "b_booking_Category", bold)
             worksheet.write("D1", "line_data/clientRefNumber", bold)
-            worksheet.write("E1", "puCompany", bold)
-            worksheet.write("F1", "deToCompanyName ", bold)
+            worksheet.write("E1", "line/e_qty", bold)
+            worksheet.write("F1", "puCompany", bold)
+            worksheet.write("G1", "deToCompanyName ", bold)
 
             worksheet.write("A2", "DeliverME Booking Ref", bold)
             worksheet.write("B2", "Actual Pickup Date", bold)
             worksheet.write("C2", "Booking Category", bold)
             worksheet.write("D2", "Client Reference No's", bold)
-            worksheet.write("E2", "Pickup Entity", bold)
-            worksheet.write("F2", "Deliver to Entity", bold)
+            worksheet.write("E2", "Quantity", bold)
+            worksheet.write("F2", "Pickup Entity", bold)
+            worksheet.write("G2", "Deliver to Entity", bold)
 
             row = 2
         else:
@@ -1821,8 +1827,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("B1", "Actual Pickup Date", bold)
             worksheet.write("C1", "Booking Category", bold)
             worksheet.write("D1", "Client Reference No's", bold)
-            worksheet.write("E1", "Pickup Entity", bold)
-            worksheet.write("F1", "Deliver to Entity", bold)
+            worksheet.write("E1", "Quantity", bold)
+            worksheet.write("F1", "Pickup Entity", bold)
+            worksheet.write("G1", "Deliver to Entity", bold)
 
             row = 1
 
@@ -1840,8 +1847,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write(row, col + 2, booking.b_booking_Category)
             worksheet.write(row, col + 3, booking.clientRefNumbers)
-            worksheet.write(row, col + 4, booking.puCompany)
-            worksheet.write(row, col + 5, booking.deToCompanyName)
+            worksheet.write(row, col + 4, booking.get_total_lines_qty())
+            worksheet.write(row, col + 5, booking.puCompany)
+            worksheet.write(row, col + 6, booking.deToCompanyName)
 
             row += 1
 
@@ -2029,55 +2037,61 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         worksheet.set_column(0, 15, width=25)
 
         if show_field_name:
-            worksheet.write("A1", "b_bookingID_Visual", bold)
-            worksheet.write("B1", "line_data/gap_ra", bold)
-            worksheet.write("C1", "b_status", bold)
-            worksheet.write("D1", "delivery_booking", bold)
-            worksheet.write("E1", "b_booking_Category", bold)
-            worksheet.write("F1", "puCompany", bold)
-            worksheet.write("G1", "pu_Address_Suburb", bold)
-            worksheet.write("H1", "pu_Address_State", bold)
-            worksheet.write("I1", "pu_Address_PostalCode", bold)
-            worksheet.write("J1", "deToCompanyName", bold)
-            worksheet.write("K1", "de_To_Address_Suburb", bold)
-            worksheet.write("L1", "de_To_Address_State ", bold)
-            worksheet.write("M1", "de_To_Address_PostalCode", bold)
-            worksheet.write("N1", "b_booking_Notes", bold)
-            worksheet.write("O1", "line_data/gap_ra", bold)
+            worksheet.write("A1", "line_data/gap_ra", bold)
+            worksheet.write("B1", "b_status", bold)
+            worksheet.write("C1", "delivery_booking", bold)
+            worksheet.write("D1", "b_booking_Category", bold)
+            worksheet.write("E1", "puCompany", bold)
+            worksheet.write("F1", "pu_Address_Suburb", bold)
+            worksheet.write("G1", "pu_Address_State", bold)
+            worksheet.write("H1", "pu_Address_PostalCode", bold)
+            worksheet.write("I1", "deToCompanyName", bold)
+            worksheet.write("J1", "de_To_Address_Suburb", bold)
+            worksheet.write("K1", "de_To_Address_State ", bold)
+            worksheet.write("L1", "de_To_Address_PostalCode", bold)
+            worksheet.write("M1", "b_booking_Notes", bold)
+            worksheet.write("N1", "line_data/clientRefNumbers", bold)
+            worksheet.write("O1", "line/e_qty", bold)
+            worksheet.write("P1", "line_data/modelNumbers", bold)
+            worksheet.write("Q1", "line_data/itemDescriptions", bold)
 
-            worksheet.write("A2", "DeliverME Booking Ref", bold)
-            worksheet.write("B2", "Gap/ra - from line_data", bold)
-            worksheet.write("C2", "Booking Status", bold)
-            worksheet.write("D2", "Actual Delivery Date", bold)
-            worksheet.write("E2", "Booking Category", bold)
-            worksheet.write("F2", "Pickup Entity", bold)
-            worksheet.write("G2", "Pickup Address Suburb", bold)
-            worksheet.write("H2", "Pickup Address State", bold)
-            worksheet.write("I2", "Pickup Address Postal Code", bold)
-            worksheet.write("J2", "Deliver to Entity", bold)
-            worksheet.write("K2", "Delivery Address Suburb", bold)
-            worksheet.write("L2", "Delivery Address State", bold)
-            worksheet.write("M2", "Delivery Address Postal Code", bold)
-            worksheet.write("N2", "Booking Notes", bold)
-            worksheet.write("O2", "Client Reference No's", bold)
+            worksheet.write("A2", "Gap/ra - from line_data", bold)
+            worksheet.write("B2", "Booking Status", bold)
+            worksheet.write("C2", "Actual Delivery Date", bold)
+            worksheet.write("D2", "Booking Category", bold)
+            worksheet.write("E2", "Pickup Entity", bold)
+            worksheet.write("F2", "Pickup Address Suburb", bold)
+            worksheet.write("G2", "Pickup Address State", bold)
+            worksheet.write("H2", "Pickup Address Postal Code", bold)
+            worksheet.write("I2", "Deliver to Entity", bold)
+            worksheet.write("J2", "Delivery Address Suburb", bold)
+            worksheet.write("K2", "Delivery Address State", bold)
+            worksheet.write("L2", "Delivery Address Postal Code", bold)
+            worksheet.write("M2", "Booking Notes", bold)
+            worksheet.write("N2", "Client Reference No's", bold)
+            worksheet.write("O2", "Quantity", bold)
+            worksheet.write("P2", "ModelNumbers", bold)
+            worksheet.write("Q2", "ItemDescriptions", bold)
 
             row = 2
         else:
-            worksheet.write("A1", "DeliverME Booking Ref", bold)
-            worksheet.write("B1", "Gap/ra - from line_data", bold)
-            worksheet.write("C1", "Booking Status", bold)
-            worksheet.write("D1", "Actual Delivery Date", bold)
-            worksheet.write("E1", "Booking Category", bold)
-            worksheet.write("F1", "Pickup Entity", bold)
-            worksheet.write("G1", "Pickup Address Suburb", bold)
-            worksheet.write("H1", "Pickup Address State", bold)
-            worksheet.write("I1", "Pickup Address Postal Code", bold)
-            worksheet.write("J1", "Deliver to Entity", bold)
-            worksheet.write("K1", "Delivery Address Suburb", bold)
-            worksheet.write("L1", "Delivery Address State", bold)
-            worksheet.write("M1", "Delivery Address Postal Code", bold)
-            worksheet.write("N1", "Booking Notes", bold)
-            worksheet.write("O1", "Client Reference No's", bold)
+            worksheet.write("A1", "Gap/ra - from line_data", bold)
+            worksheet.write("B1", "Booking Status", bold)
+            worksheet.write("C1", "Actual Delivery Date", bold)
+            worksheet.write("D1", "Booking Category", bold)
+            worksheet.write("E1", "Pickup Entity", bold)
+            worksheet.write("F1", "Pickup Address Suburb", bold)
+            worksheet.write("G1", "Pickup Address State", bold)
+            worksheet.write("H1", "Pickup Address Postal Code", bold)
+            worksheet.write("I1", "Deliver to Entity", bold)
+            worksheet.write("J1", "Delivery Address Suburb", bold)
+            worksheet.write("K1", "Delivery Address State", bold)
+            worksheet.write("L1", "Delivery Address Postal Code", bold)
+            worksheet.write("M1", "Booking Notes", bold)
+            worksheet.write("N1", "Client Reference No's", bold)
+            worksheet.write("O1", "Quantity", bold)
+            worksheet.write("P1", "ModelNumbers", bold)
+            worksheet.write("Q1", "ItemDescriptions", bold)
 
             row = 1
 
@@ -2086,26 +2100,42 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if not booking.had_status("delivered"):
                 continue
 
-            worksheet.write(row, col + 0, booking.b_bookingID_Visual)
-            worksheet.write(row, col + 1, booking.gap_ras)
-            worksheet.write(row, col + 2, booking.b_status)
+            worksheet.write(row, col + 0, booking.gap_ras)
+            worksheet.write(row, col + 1, booking.b_status)
 
             if booking.delivery_booking:
                 worksheet.write_datetime(
-                    row, col + 3, booking.delivery_booking, date_format
+                    row, col + 2, booking.delivery_booking, date_format
                 )
 
-            worksheet.write(row, col + 4, booking.b_booking_Category)
-            worksheet.write(row, col + 5, booking.puCompany)
-            worksheet.write(row, col + 6, booking.pu_Address_Suburb)
-            worksheet.write(row, col + 7, booking.pu_Address_State)
-            worksheet.write(row, col + 8, booking.pu_Address_PostalCode)
-            worksheet.write(row, col + 9, booking.deToCompanyName)
-            worksheet.write(row, col + 10, booking.de_To_Address_Suburb)
-            worksheet.write(row, col + 11, booking.de_To_Address_State)
-            worksheet.write(row, col + 12, booking.de_To_Address_PostalCode)
-            worksheet.write(row, col + 13, booking.b_booking_Notes)
-            worksheet.write(row, col + 14, booking.clientRefNumbers)
+            worksheet.write(row, col + 3, booking.b_booking_Category)
+            worksheet.write(row, col + 4, booking.puCompany)
+            worksheet.write(row, col + 5, booking.pu_Address_Suburb)
+            worksheet.write(row, col + 6, booking.pu_Address_State)
+            worksheet.write(row, col + 7, booking.pu_Address_PostalCode)
+            worksheet.write(row, col + 8, booking.deToCompanyName)
+            worksheet.write(row, col + 9, booking.de_To_Address_Suburb)
+            worksheet.write(row, col + 10, booking.de_To_Address_State)
+            worksheet.write(row, col + 11, booking.de_To_Address_PostalCode)
+            worksheet.write(row, col + 12, booking.b_booking_Notes)
+            worksheet.write(row, col + 13, booking.clientRefNumbers)
+            worksheet.write(row, col + 14, booking.get_total_lines_qty())
+
+            modelNumbers = []
+            itemDescriptions = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.modelNumbers:
+                    modelNumbers.append(booking_line_data.modelNumber)
+
+                if booking_line_data.itemDescriptions:
+                    itemDescriptions.append(booking_line_data.itemDescription)
+
+            worksheet.write(row, col + 15, ", ".join(modelNumbers))
+            worksheet.write(row, col + 16, ", ".join(itemDescriptions))
 
             row += 1
 

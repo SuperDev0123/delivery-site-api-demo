@@ -39,16 +39,28 @@ def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
     return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
 
 
-def get_dme_status_from_fp_status(fp_name, booking):
+def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
     try:
         status_info = Dme_utl_fp_statuses.objects.get(
-            fp_name__iexact=fp_name, fp_lookup_status=booking.b_status_API
+            fp_name__iexact=fp_name, fp_lookup_status=b_status_API
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
-        booking.save()
+        logger.error(f"#818 New FP status: {b_status_API}")
+
+        if booking:
+            booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
+            booking.save()
         return None
+
+
+def get_status_category_from_status(status):
+    try:
+        utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=b_status)
+        return utl_dme_status.dme_delivery_status_category
+    except Exception as e:
+        # print('Exception: ', e)
+        return ""
 
 
 def get_account_code_key(booking, fp_name):

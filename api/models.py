@@ -1678,6 +1678,23 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
+    def get_total_lines_qty(self):
+        try:
+            qty = 0
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+            for booking_line in booking_lines:
+                if booking_line.e_qty:
+                    qty += int(booking_line.e_qty)
+
+            return qty
+        except Exception as e:
+            # print('Exception: ', e)
+            logger.error("#591 Error - ", str(e))
+            return 0
+
     @property
     def client_item_references(self):
         try:
