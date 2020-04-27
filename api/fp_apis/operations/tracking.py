@@ -37,7 +37,7 @@ def _extract(fp_name, consignmentStatus):
     else:
         event_time = None
 
-    return b_status_API, event_time, status_desc
+    return b_status_API, status_desc, event_time
 
 
 def _get_actual_timestamp(fp_name, consignmentStatuses, type):
