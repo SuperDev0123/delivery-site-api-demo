@@ -110,7 +110,6 @@ def tracking(request, fp_name):
                     "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
                     "b_status_API": booking.b_status_API,
                     "b_status": booking.b_status,
-                    "event_time": event_time,
                 },
                 status=200,
             )
