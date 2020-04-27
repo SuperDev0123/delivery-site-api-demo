@@ -56,7 +56,7 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
 
 def get_status_category_from_status(status):
     try:
-        utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=b_status)
+        utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
         logger.error(f"#819 Status Category not found!: {status}")
