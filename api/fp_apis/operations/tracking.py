@@ -4,6 +4,7 @@ from datetime import datetime
 from django.conf import settings
 
 from api.models import *
+from api.common import status_history
 from api.fp_apis.utils import (
     get_dme_status_from_fp_status,
     get_status_category_from_status,
