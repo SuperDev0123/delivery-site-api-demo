@@ -38,9 +38,7 @@ def _extract(fp_name, consignmentStatus):
 def _get_actual_timestamp(fp_name, consignmentStatuses, type):
     if fp_name in ["tnt", "hunter", "sendle"]:
         for consignmentStatus in consignmentStatuses:
-            b_status_API, status_desc, event_time = _extract(
-                fp_name, last_consignmentStatus
-            )
+            b_status_API, status_desc, event_time = _extract(fp_name, consignmentStatus)
 
             b_status = get_dme_status_from_fp_status(fp_name, b_status_API)
             status_category = get_status_category_from_status(b_status)
