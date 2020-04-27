@@ -59,6 +59,7 @@ def get_status_category_from_status(status):
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=b_status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
+        logger.error(f"#819 Status Category not found!: {status}")
         # print('Exception: ', e)
         return ""
 
