@@ -1037,7 +1037,7 @@ def pod(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
         else:
-            if json_data["errorMessage"]:
+            if "errorMessage" in json_data:
                 error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
