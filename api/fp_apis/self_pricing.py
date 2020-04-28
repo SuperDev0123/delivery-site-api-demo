@@ -221,7 +221,7 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
                 item.e_type_of_packaging
                 and not item.e_type_of_packaging.lower() in PALLETS
             ):
-                logger.error(f"@833 {fp.fp_company_name} - only support `Pallet`")
+                logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
                 return
             else:
                 width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
@@ -254,7 +254,7 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
                 cost.UOM_charge.lower() in PALLETS
                 and not booking_line.e_type_of_packaging.lower() in PALLETS
             ):
-                logger.error(f"@833 {fp.fp_company_name} - only support `Pallet`")
+                logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
                 return
             else:
                 total_weight = (

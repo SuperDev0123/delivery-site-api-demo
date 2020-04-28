@@ -1910,7 +1910,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
-                    logger.error(f"@300 TAS XML - {e}")
+                    logger.info(f"@300 TAS XML - {e}")
                     return e
         elif one_manifest_file == 1:
             try:
@@ -2227,7 +2227,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:
-                logger.error(f"@301 TAS XML - {e}")
+                logger.info(f"@301 TAS XML - {e}")
                 return e
     elif vx_freight_provider.lower() == "act":
         # start check if xmls folder exists
@@ -2471,7 +2471,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
         except Exception as e:
-            logger.error(f"@302 ST ACT XML - {e}")
+            logger.info(f"@302 ST ACT XML - {e}")
             return e
     elif vx_freight_provider.lower() == "jet":
         # start check if xmls folder exists
@@ -2715,7 +2715,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
         except Exception as e:
-            logger.error(f"@301 JET XML - {e}")
+            logger.info(f"@301 JET XML - {e}")
             return e
     mysqlcon.close()
 
@@ -3419,7 +3419,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    logger.error(f"ERROR @303 - {str(e)}")
+                    logger.info(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -4104,7 +4104,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    logger.error(f"ERROR @303 - {str(e)}")
+                    logger.info(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -4726,7 +4726,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error(f"#505 Error: - {e}")
+            logger.info(f"#505 Error: - {e}")
     elif vx_freight_provider.upper() == "DHL":
         try:
             bookings = get_available_bookings(mysqlcon, booking_ids)
@@ -5108,7 +5108,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error(f"#506 Error: - {e}")
+            logger.info(f"#506 Error: - {e}")
     mysqlcon.close()
     return i - 1
 
@@ -5390,7 +5390,7 @@ def get_eta_pu_by(booking):
             return get_pu_by(booking)
     except Exception as e:
         trace_error.print()
-        logger.error(f"Error #1001: {e}")
+        logger.info(f"Error #1001: {e}")
         return None
 
 
@@ -5430,7 +5430,7 @@ def get_eta_de_by(booking, quote):
             return None
     except Exception as e:
         trace_error.print()
-        logger.error(f"Error #1002: {e}")
+        logger.info(f"Error #1002: {e}")
         return None
 
 

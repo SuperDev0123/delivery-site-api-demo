@@ -18,7 +18,7 @@ def _convert_UOM(value, uom, type, fp_name):
         raise Exception(
             f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
         )
-        logger.error(
+        logger.info(
             f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
         )
 
@@ -46,7 +46,7 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        logger.error(f"#818 New FP status: {b_status_API}")
+        logger.info(f"#818 New FP status: {b_status_API}")
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
@@ -59,7 +59,7 @@ def get_status_category_from_status(status):
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
-        logger.error(f"#819 Status Category not found!: {status}")
+        logger.info(f"#819 Status Category not found!: {status}")
         # print('Exception: ', e)
         return ""
 
@@ -119,7 +119,7 @@ def _get_etd(pricing):
         )
         return etd.fp_03_delivery_hours
     except Exception as e:
-        logger.error(
+        logger.info(
             f"#810 Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
         )
         return None
@@ -220,7 +220,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
             filtered_pricing = _get_fastest_price(non_air_freight_pricings)
 
     if filtered_pricing:
-        logger.error(f"#854 Filtered Pricing - {filtered_pricing}")
+        logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
         booking.api_booking_quote = filtered_pricing["pricing"]
         booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
         booking.vx_account_code = filtered_pricing["pricing"].account_code
@@ -240,5 +240,5 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.save()
         return True
     else:
-        logger.error("#855 - Could not find proper pricing")
+        logger.info("#855 - Could not find proper pricing")
         return False

@@ -163,5 +163,5 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         return results
     except Exception as e:
         error_msg = f"Error while parse Pricing response: {e}"
-        logger.error(error_msg)
+        logger.info(error_msg)
         return None

@@ -1692,7 +1692,7 @@ class Bookings(models.Model):
             return qty
         except Exception as e:
             # print('Exception: ', e)
-            logger.error("#591 Error - ", str(e))
+            logger.info("#591 Error - ", str(e))
             return 0
 
     @property

@@ -59,7 +59,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"@841 BOK_1 POST - {serializer.errors}")
+            logger.info(f"@841 BOK_1 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -80,7 +80,7 @@ class BOK_2_ViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"@842 BOK_2 POST - {serializer.errors}")
+            logger.info(f"@842 BOK_2 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -108,7 +108,7 @@ def boks(request):
                 client_warehouse_code=bok_1["b_client_warehouse_code"]
             )
         except Client_warehouses.DoesNotExist:
-            logger.error(
+            logger.info(
                 f"@881 BOKS API Error - : Warehouse code is not valid({bok_1['b_client_warehouse_code']}"
             )
             return JsonResponse(
@@ -116,7 +116,7 @@ def boks(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception as e:
-            logger.error(f"@882 BOKS API Error - {e}")
+            logger.info(f"@882 BOKS API Error - {e}")
             return JsonResponse(
                 {"success": False, "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -129,7 +129,7 @@ def boks(request):
             bok_1["b_001_b_freight_provider"] = "DHL"
 
         if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).count() > 0:
-            logger.error(f"@883 BOKS API Error - Same object is already exist.")
+            logger.info(f"@883 BOKS API Error - Same object is already exist.")
             return JsonResponse(
                 {"success": False, "message": "Same object is already exist."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -153,7 +153,7 @@ def boks(request):
                 if bok_2_serializer.is_valid():
                     bok_2_serializer.save()
                 else:
-                    logger.error(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                    logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
                     return Response(
                         bok_2_serializer.errors, status=status.HTTP_400_BAD_REQUEST
                     )
@@ -171,18 +171,16 @@ def boks(request):
                     if bok_3_serializer.is_valid():
                         bok_3_serializer.save()
                     else:
-                        logger.error(
-                            f"@8823 BOKS API Error - {bok_3_serializer.errors}"
-                        )
+                        logger.info(f"@8823 BOKS API Error - {bok_3_serializer.errors}")
                         return Response(
                             bok_3_serializer.errors, status=status.HTTP_400_BAD_REQUEST
                         )
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
         else:
-            logger.error(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
+            logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
             return Response(bok_1_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.error(f"@883 BOKS API Error - {e}")
+        logger.info(f"@883 BOKS API Error - {e}")
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )

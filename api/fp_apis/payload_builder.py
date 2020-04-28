@@ -57,7 +57,7 @@ def get_service_provider(fp_name, upper=True):
             else:
                 return fp.fp_company_name
     except Fp_freight_providers.DoesNotExist:
-        logger.error("#810 - Not supported FP!")
+        logger.info("#810 - Not supported FP!")
         return None
 
 

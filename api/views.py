@@ -95,7 +95,7 @@ def password_reset_token_created(
     try:
         filepath = settings.EMAIL_ROOT + "/user_reset_password.html"
     except MultiValueDictKeyError:
-        logger.error("Error #101: Either the file is missing or not readable")
+        logger.info("Error #101: Either the file is missing or not readable")
 
     email_html_message = render_to_string(
         settings.EMAIL_ROOT + "/user_reset_password.html", context
@@ -107,7 +107,7 @@ def password_reset_token_created(
     try:
         send_email([context["email"]], [], subject, email_html_message, None, mime_type)
     except Exception as e:
-        logger.error(f"Error #102: {e}")
+        logger.info(f"Error #102: {e}")
 
 
 class UserViewSet(viewsets.ViewSet):

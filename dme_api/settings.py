@@ -200,7 +200,7 @@ if ENV == "prod":
                 "backupCount": 10,  # keep at most 10 log files
                 "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
             },
-            "bugsnag": {"level": "INFO", "class": "bugsnag.handlers.BugsnagHandler",},
+            "bugsnag": {"level": "ERROR", "class": "bugsnag.handlers.BugsnagHandler",},
         },
         "loggers": {
             "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}

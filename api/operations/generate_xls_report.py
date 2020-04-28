@@ -76,7 +76,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
     col = 0
 
     if xls_type == "Bookings":
-        logger.error("#390 Get started to build `Bookings` XLS")
+        logger.info("#390 Get started to build `Bookings` XLS")
         worksheet.set_column(15, 16, width=40)
         worksheet.set_column(17, 17, width=53)
         worksheet.set_column(0, 14, width=25)
@@ -209,10 +209,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#391 Total cnt: {len(bookings)}")
+        logger.info(f"#391 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#392 Current index: {booking_ind}")
+                logger.info(f"#392 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -431,9 +431,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#395 Finished - `Bookings` XLS")
+        logger.info("#395 Finished - `Bookings` XLS")
     elif xls_type == "BookingLines":
-        logger.error(f"#380 Get started to build `BookingLines` XLS")
+        logger.info(f"#380 Get started to build `BookingLines` XLS")
         worksheet.set_column(0, 40, width=25)
         if show_field_name:
             worksheet.write("A1", "dme_bookings:v_FPBookingNumber", bold)
@@ -566,10 +566,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         e_qty_total = 0
         e_qty_scanned_fp_total = 0
 
-        logger.error(f"#381 Total cnt: {len(bookings)}")
+        logger.info(f"#381 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#382 Current index: {booking_ind}")
+                logger.info(f"#382 Current index: {booking_ind}")
 
             try:
                 booking_lines = Booking_lines.objects.only(
@@ -722,9 +722,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#385 Finished - `Booking Lines` XLS")
+        logger.info("#385 Finished - `Booking Lines` XLS")
     elif xls_type == "BookingsWithGaps":
-        logger.error(f"#370 Get started to build `BookingsWithGaps` XLS")
+        logger.info(f"#370 Get started to build `BookingsWithGaps` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "b_dateBookedDate(Date)", bold)
@@ -835,10 +835,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#371 Total cnt: {len(bookings)}")
+        logger.info(f"#371 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#372 Current index: {booking_ind}")
+                logger.info(f"#372 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id", "client_item_reference"
@@ -1011,9 +1011,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#375 Finished - `BookingsWithGaps` XLS")
+        logger.info("#375 Finished - `BookingsWithGaps` XLS")
     elif xls_type == "DMEBookingsWithGaps":
-        logger.error(f"#370 Get started to build `BookingsWithGaps` XLS")
+        logger.info(f"#370 Get started to build `BookingsWithGaps` XLS")
         worksheet.set_column(0, 27, width=25)
         if show_field_name:
             worksheet.write("A1", "b_bookingID_Visual", bold)
@@ -1157,10 +1157,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#371 Total cnt: {len(bookings)}")
+        logger.info(f"#371 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#372 Current index: {booking_ind}")
+                logger.info(f"#372 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id", "client_item_reference"
@@ -1347,9 +1347,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#375 Finished - `BookingsWithGaps` XLS")
+        logger.info("#375 Finished - `BookingsWithGaps` XLS")
     elif xls_type == "Whse":
-        logger.error("#360 Get started to build `Whse` XLS")
+        logger.info("#360 Get started to build `Whse` XLS")
         worksheet.set_column(7, 8, width=40)
         worksheet.set_column(9, 9, width=53)
         worksheet.set_column(10, 10, width=70)
@@ -1485,10 +1485,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         from api.utils import get_sydney_now_time
 
         sydney_now = get_sydney_now_time("datetime")
-        logger.error(f"#361 Total cnt: {len(bookings)}")
+        logger.info(f"#361 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if booking_ind % 500 == 0:
-                logger.error(f"#362 Current index: {booking_ind}")
+                logger.info(f"#362 Current index: {booking_ind}")
 
             booking_lines = Booking_lines.objects.only(
                 "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -1716,9 +1716,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#365 Finished - `Whse` XLS")
+        logger.info("#365 Finished - `Whse` XLS")
     elif xls_type == "booked_bookings":
-        logger.error("#310 Get started to build `Booked Bookings` XLS")
+        logger.info("#310 Get started to build `Booked Bookings` XLS")
         worksheet.set_column(0, 10, width=25)
 
         if show_field_name:
@@ -1762,7 +1762,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#311 Total cnt: {len(bookings)}")
+        logger.info(f"#311 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
 
@@ -1799,9 +1799,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#319 Finished - `Booked Bookings` XLS")
+        logger.info("#319 Finished - `Booked Bookings` XLS")
     elif xls_type == "picked_up_bookings":
-        logger.error("#320 Get started to build `Picked Up Bookings` XLS")
+        logger.info("#320 Get started to build `Picked Up Bookings` XLS")
         worksheet.set_column(0, 10, width=25)
 
         if show_field_name:
@@ -1833,7 +1833,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#321 Total cnt: {len(bookings)}")
+        logger.info(f"#321 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
 
@@ -1855,9 +1855,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#329 Finished - `Picked Up Bookings` XLS")
+        logger.info("#329 Finished - `Picked Up Bookings` XLS")
     elif xls_type == "box":
-        logger.error("#330 Get started to build `Box Bookings` XLS")
+        logger.info("#330 Get started to build `Box Bookings` XLS")
         worksheet.set_column(0, 15, width=25)
 
         if show_field_name:
@@ -1904,7 +1904,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#331 Total cnt: {len(bookings)}")
+        logger.info(f"#331 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
 
@@ -1935,9 +1935,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#339 Finished - `Box Bookings` XLS")
+        logger.info("#339 Finished - `Box Bookings` XLS")
     elif xls_type == "futile":
-        logger.error("#340 Get started to build `Futile Bookings` XLS")
+        logger.info("#340 Get started to build `Futile Bookings` XLS")
         worksheet.set_column(0, 15, width=25)
 
         if show_field_name:
@@ -1993,7 +1993,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#341 Total cnt: {len(bookings)}")
+        logger.info(f"#341 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if not booking.had_status("futile"):
                 continue
@@ -2031,9 +2031,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#349 Finished - `Futile Bookings` XLS")
+        logger.info("#349 Finished - `Futile Bookings` XLS")
     elif xls_type == "goods_delivered":
-        logger.error("#350 Get started to build `Goods Delivered Bookings` XLS")
+        logger.info("#350 Get started to build `Goods Delivered Bookings` XLS")
         worksheet.set_column(0, 15, width=25)
 
         if show_field_name:
@@ -2095,7 +2095,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.error(f"#351 Total cnt: {len(bookings)}")
+        logger.info(f"#351 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if not booking.had_status("delivered"):
                 continue
@@ -2141,6 +2141,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.error("#359 Finished - `Goods Delivered Bookings` XLS")
+        logger.info("#359 Finished - `Goods Delivered Bookings` XLS")
 
     return local_filepath + filename
