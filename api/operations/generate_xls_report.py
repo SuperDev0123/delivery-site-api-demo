@@ -2129,7 +2129,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking_line_data.modelNumber:
                     modelNumbers.append(booking_line_data.modelNumber)
 
-                if booking_line_data.itemDescriptions:
+                if booking_line_data.itemDescription:
                     itemDescriptions.append(booking_line_data.itemDescription)
 
             worksheet.write(row, col + 15, ", ".join(modelNumbers))
