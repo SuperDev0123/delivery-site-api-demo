@@ -111,8 +111,10 @@ KEY_CHAINS = {
     },
     "sendle": {
         "test_bed_1": {
-            "accountKey": "greatroyalone_outloo",
-            "accountPassword": "KJJrS7xDZZfvfQccyrdStKhh",
+            # "accountKey": "greatroyalone_outloo",
+            # "accountPassword": "KJJrS7xDZZfvfQccyrdStKhh",
+            "accountKey": "bookings_tempo_deliv",
+            "accountPassword": "3KZRdXVpfTkFTPknqzjqDXw6",
         },
         "live_0": {
             "accountKey": "bookings_tempo_deliv",

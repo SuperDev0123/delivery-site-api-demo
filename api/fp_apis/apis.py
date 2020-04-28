@@ -170,7 +170,6 @@ def book(request, fp_name):
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'t" , " not").replace("'", '"')
-            print(res_content)
             json_data = json.loads(res_content)
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
