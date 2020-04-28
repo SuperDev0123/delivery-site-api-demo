@@ -114,7 +114,7 @@ def tracking(request, fp_name):
                 status=200,
             )
         except KeyError:
-            if json_data["errorMessage"]:
+            if "errorMessage" in json_data:
                 error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
@@ -1119,7 +1119,7 @@ def reprint(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": s0}, status=400)
         except KeyError as e:
-            if json_data["errorMessage"]:
+            if "errorMessage" in json_data:
                 error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
