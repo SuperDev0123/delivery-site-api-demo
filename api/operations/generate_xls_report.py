@@ -1944,7 +1944,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("A1", "b_bookingID_Visual", bold)
             worksheet.write("B1", "dme_status_history/event_time_stamp", bold)
             worksheet.write("C1", "b_booking_Category", bold)
-            worksheet.write("D1", "line_data/gap_ra & clientRefNumber", bold)
+            worksheet.write("D1", "line_data/gap_ra", bold)
             worksheet.write("E1", "puCompany", bold)
             worksheet.write("F1", "pu_Address_Suburb", bold)
             worksheet.write("G1", "pu_Address_State", bold)
@@ -1960,7 +1960,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("A2", "DeliverME Booking Ref", bold)
             worksheet.write("B2", "Futile Event Date", bold)
             worksheet.write("C2", "Booking Category", bold)
-            worksheet.write("D2", "Client Reference No's", bold)
+            worksheet.write("D2", "Gap/RA", bold)
             worksheet.write("E2", "Pickup Entity", bold)
             worksheet.write("F2", "Pickup Address Suburb", bold)
             worksheet.write("G2", "Pickup Address State", bold)
@@ -1978,7 +1978,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("A1", "DeliverME Booking Ref", bold)
             worksheet.write("B1", "Futile Event Date", bold)
             worksheet.write("C1", "Booking Category", bold)
-            worksheet.write("D1", "Client Reference No's", bold)
+            worksheet.write("D1", "GAP/RA", bold)
             worksheet.write("E1", "Pickup Entity", bold)
             worksheet.write("F1", "Pickup Address Suburb", bold)
             worksheet.write("G1", "Pickup Address State", bold)
@@ -2010,9 +2010,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
 
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(
-                row, col + 3, f"{booking.clientRefNumbers} {booking.gap_ras}"
-            )
+            worksheet.write(row, col + 3, f"{booking.gap_ras}")
             worksheet.write(row, col + 4, booking.puCompany)
             worksheet.write(row, col + 5, booking.pu_Address_Suburb)
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -2128,7 +2126,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.modelNumbers:
+                if booking_line_data.modelNumber:
                     modelNumbers.append(booking_line_data.modelNumber)
 
                 if booking_line_data.itemDescriptions:
