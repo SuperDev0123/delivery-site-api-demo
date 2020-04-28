@@ -114,6 +114,10 @@ def tracking(request, fp_name):
                 status=200,
             )
         except KeyError:
+            if json_data["errorMessage"]:
+                error_msg = json_data["errorMessage"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
             trace_error.print()
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Bookings.DoesNotExist:
@@ -831,6 +835,10 @@ def get_label(request, fp_name):
             ).save()
 
             error_msg = s0
+
+            if fp_name.lower() in ["tnt"]:
+                error_msg = json_data["errorMessage"]
+
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except IndexError as e:
@@ -1029,8 +1037,8 @@ def pod(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
         else:
-            if json_data["errors"]:
-                error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+            if json_data["errorMessage"]:
+                error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
             elif "podData" not in json_data["pod"]:
@@ -1109,8 +1117,12 @@ def reprint(request, fp_name):
                 trace_error.print()
                 error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": s0})
+                return JsonResponse({"message": s0}, status=400)
         except KeyError as e:
+            if json_data["errorMessage"]:
+                error_msg = json_data["errorMessage"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
             trace_error.print()
             return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
