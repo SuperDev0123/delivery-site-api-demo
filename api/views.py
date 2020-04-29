@@ -1057,7 +1057,8 @@ class BookingsViewSet(viewsets.ViewSet):
             start_date = request.data["startDate"]
             end_date = request.data["endDate"]
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
-            last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            last_date = datetime.strptime(end_date, "%Y-%m-%d")
+            last_date = last_date.replace(hour=23, minute=59, second=59)
 
         # DME & Client filter
         if user_type == "DME":

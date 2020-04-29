@@ -305,7 +305,20 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         else:
             payload["collectionDateTime"] += "T00:00:00"
 
-        payload["collectionCloseTime"] = "1500"
+        if booking.pu_PickUp_By_Time_Hours:
+            payload["collectionCloseTime"] = str(booking.pu_PickUp_By_Time_Hours).zfill(
+                2
+            )
+
+            if booking.pu_PickUp_By_Time_Minutes:
+                payload["collectionCloseTime"] += str(
+                    booking.pu_PickUp_By_Time_Minutes
+                ).zfill(2)
+            else:
+                payload["collectionCloseTime"] += "00"
+        else:
+            payload["collectionCloseTime"] = "1500"
+
         payload["serviceCode"] = "76"
 
         payload["collectionInstructions"] = " "
@@ -321,7 +334,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         payload[
             "consignmentNoteNumber"
         ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
-        payload["customerReference"] = "CS00301476"
+        payload["customerReference"] = booking.clientRefNumbers
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
