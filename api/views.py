@@ -70,6 +70,7 @@ from .utils import (
 )
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
+from api.common.auth import get_role, get_client_info
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -189,30 +190,17 @@ class UserViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def username(self, request, format=None):
-        user_id = self.request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
+        client_info = get_client_info(request)
+        role = get_role(request)
+
+        return JsonResponse(
+            {
+                "username": client_info["username"],
+                "clientname": client_info["username"],
+                "clientId": client_info["client_id"],
+                "roleCode": role.role_code,
+            }
         )
-        if dme_employee is not None:
-            return JsonResponse(
-                {"username": request.user.username, "clientname": "dme"}
-            )
-        else:
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
-            client = DME_clients.objects.get(
-                pk_id_dme_client=client_employee.fk_id_dme_client_id
-            )
-            return JsonResponse(
-                {
-                    "username": request.user.username,
-                    "clientname": client.company_name,
-                    "clientId": client.dme_account_num,
-                }
-            )
 
     @action(detail=False, methods=["get"])
     def get_clients(self, request, format=None):
