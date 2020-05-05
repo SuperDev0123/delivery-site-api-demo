@@ -332,7 +332,9 @@ class UserViewSet(viewsets.ViewSet):
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id)
 
         if dme_employee:
-            client_employees = Client_employees.objects.filter(email__isnull=False)
+            client_employees = Client_employees.objects.filter(
+                email__isnull=False
+            ).order_by("name_first")
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -342,7 +344,7 @@ class UserViewSet(viewsets.ViewSet):
             ).first()
             client_employees = Client_employees.objects.filter(
                 fk_id_dme_client_id=client.pk_id_dme_client, email__isnull=False
-            )
+            ).order_by("name_first")
 
         results = []
         for client_employee in client_employees:
