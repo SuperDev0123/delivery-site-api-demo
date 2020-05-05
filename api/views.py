@@ -68,6 +68,7 @@ from .utils import (
     get_eta_pu_by,
     get_eta_de_by,
 )
+from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
 from api.stats.pricing import analyse_booking_quotes_table
@@ -3271,21 +3272,40 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     pk_booking_id=request.data["fk_booking_id"]
                 )
 
-                if request.data["status_last"] == "In Transit":
-                    calc_collect_after_status_change(
-                        request.data["fk_booking_id"], request.data["status_last"]
-                    )
-                elif request.data["status_last"] == "Delivered":
-                    booking.z_api_issue_update_flag_500 = 0
-                    booking.delivery_booking = datetime.now()
-                    booking.save()
+                # ######################################## #
+                #    Disabled because it was for `Cope`    #
+                # ######################################## #
+                # if request.data["status_last"] == "In Transit":
+                #     calc_collect_after_status_change(
+                #         request.data["fk_booking_id"], request.data["status_last"]
+                #     )
+                # elif request.data["status_last"] == "Delivered":
+                #     booking.z_api_issue_update_flag_500 = 0
+                #     booking.delivery_booking = datetime.now()
+                #     booking.save()
 
+                status_category = get_status_category_from_status(
+                    request.data["status_last"]
+                )
+
+                if status_category == "In Transit":
+                    booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                elif status_category == "Delivered":
+                    booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                    booking.delivery_booking = request.data["event_time_stamp"][:10]
+                    booking.z_api_issue_update_flag_500 = 0
+
+                booking.save()
                 tempo.push_via_api(booking)
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
