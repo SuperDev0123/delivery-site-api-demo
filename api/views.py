@@ -1528,6 +1528,7 @@ class BookingViewSet(viewsets.ViewSet):
         user_id = request.user.id
 
         try:
+            queryset = None
             dme_employee = (
                 DME_employees.objects.select_related()
                 .filter(fk_id_user=user_id)
@@ -1576,7 +1577,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == "id":
                 booking = queryset.get(id=idBookingNumber)
-            elif filterName == "null":
+            elif queryset and filterName == "null":
                 booking = queryset.last()
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
