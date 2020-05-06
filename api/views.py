@@ -1887,17 +1887,21 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.e_qty_delivered = 0
                 booking_line.e_qty_adjusted_delivered = 0
                 new_pk_booking_lines_id = str(uuid.uuid1())
-                booking_line_details = Booking_lines_data.objects.filter(
-                    fk_booking_lines_id=booking_line.pk_booking_lines_id
-                )
 
-                for booking_line_detail in booking_line_details:
-                    booking_line_detail.pk_id_lines_data = None
-                    booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
-                    booking_line_detail.fk_booking_lines_id = new_pk_booking_lines_id
-                    booking_line_detail.z_createdTimeStamp = datetime.now()
-                    booking_line_detail.z_modifiedTimeStamp = datetime.now()
-                    booking_line_detail.save()
+                if booking_line.pk_booking_lines_id:
+                    booking_line_details = Booking_lines_data.objects.filter(
+                        fk_booking_lines_id=booking_line.pk_booking_lines_id
+                    )
+
+                    for booking_line_detail in booking_line_details:
+                        booking_line_detail.pk_id_lines_data = None
+                        booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
+                        booking_line_detail.fk_booking_lines_id = (
+                            new_pk_booking_lines_id
+                        )
+                        booking_line_detail.z_createdTimeStamp = datetime.now()
+                        booking_line_detail.z_modifiedTimeStamp = datetime.now()
+                        booking_line_detail.save()
 
                 booking_line.pk_booking_lines_id = new_pk_booking_lines_id
                 booking_line.save()
