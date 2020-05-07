@@ -242,7 +242,7 @@ def get_all_zoho_tickets(request):
         ).save()
         headers_for_tickets = {
             "content-type": "application/json",
-            "orgId": ORG_ID,
+            "orgId": settings.ORG_ID,
             "Authorization": "Zoho-oauthtoken " + response["access_token"],
         }
         get_tickets = requests.get(
@@ -288,7 +288,7 @@ def get_all_zoho_tickets(request):
             updatedata.save()
             headers_for_tickets = {
                 "content-type": "application/json",
-                "orgId": ORG_ID,
+                "orgId": settings.ORG_ID,
                 "Authorization": "Zoho-oauthtoken " + response["access_token"],
             }
             get_tickets = requests.get(
@@ -301,7 +301,7 @@ def get_all_zoho_tickets(request):
     for ticket in get_tickets.json()["data"]:
         headers_for_single_ticket = {
             "content-type": "application/json",
-            "orgId": ORG_ID,
+            "orgId": settings.ORG_ID,
             "Authorization": "Zoho-oauthtoken " + data[0].value,
         }
         ticket_data = requests.get(
