@@ -133,7 +133,7 @@ class UserViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -657,7 +657,7 @@ class BookingsViewSet(viewsets.ViewSet):
         else:
             if client_employee_role == "company":
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
-            elif client_employee_role == "warehouse":
+            elif client_employee_role in ["warehouse", "retailer"]:
                 employee_warehouse_id = client_employee.warehouse_id
                 queryset = Bookings.objects.filter(
                     kf_client_id=client.dme_account_num,
