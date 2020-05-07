@@ -87,4 +87,7 @@ urlpatterns += [
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
+    url(r"^get_all_zoho_tickets/", get_all_zoho_tickets),
+    url(r"^get_auth_zoho_tickets/", get_auth_zoho_tickets),
+    
 ]
