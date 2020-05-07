@@ -3902,3 +3902,13 @@ class BookingSets(models.Model):
 
     class Meta:
         db_table = "dme_booking_sets"
+
+class Tokens(models.Model):
+    id = models.AutoField(primary_key=True)
+    value = models.CharField(max_length=255, default=None)
+    type = models.CharField(max_length=255, default=None)
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now())
+    z_expiryTimeStamp = models.DateTimeField(default=None)
+
+    class Meta:
+        db_table = "tokens"

@@ -68,6 +68,7 @@ from .utils import (
     get_eta_pu_by,
     get_eta_de_by,
 )
+from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
 from api.common.auth import get_role, get_client_info
@@ -319,7 +320,9 @@ class UserViewSet(viewsets.ViewSet):
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id)
 
         if dme_employee:
-            client_employees = Client_employees.objects.filter(email__isnull=False)
+            client_employees = Client_employees.objects.filter(
+                email__isnull=False
+            ).order_by("name_first")
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -329,7 +332,7 @@ class UserViewSet(viewsets.ViewSet):
             ).first()
             client_employees = Client_employees.objects.filter(
                 fk_id_dme_client_id=client.pk_id_dme_client, email__isnull=False
-            )
+            ).order_by("name_first")
 
         results = []
         for client_employee in client_employees:
@@ -1873,17 +1876,21 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.e_qty_delivered = 0
                 booking_line.e_qty_adjusted_delivered = 0
                 new_pk_booking_lines_id = str(uuid.uuid1())
-                booking_line_details = Booking_lines_data.objects.filter(
-                    fk_booking_lines_id=booking_line.pk_booking_lines_id
-                )
 
-                for booking_line_detail in booking_line_details:
-                    booking_line_detail.pk_id_lines_data = None
-                    booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
-                    booking_line_detail.fk_booking_lines_id = new_pk_booking_lines_id
-                    booking_line_detail.z_createdTimeStamp = datetime.now()
-                    booking_line_detail.z_modifiedTimeStamp = datetime.now()
-                    booking_line_detail.save()
+                if booking_line.pk_booking_lines_id:
+                    booking_line_details = Booking_lines_data.objects.filter(
+                        fk_booking_lines_id=booking_line.pk_booking_lines_id
+                    )
+
+                    for booking_line_detail in booking_line_details:
+                        booking_line_detail.pk_id_lines_data = None
+                        booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
+                        booking_line_detail.fk_booking_lines_id = (
+                            new_pk_booking_lines_id
+                        )
+                        booking_line_detail.z_createdTimeStamp = datetime.now()
+                        booking_line_detail.z_modifiedTimeStamp = datetime.now()
+                        booking_line_detail.save()
 
                 booking_line.pk_booking_lines_id = new_pk_booking_lines_id
                 booking_line.save()
@@ -3260,21 +3267,40 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     pk_booking_id=request.data["fk_booking_id"]
                 )
 
-                if request.data["status_last"] == "In Transit":
-                    calc_collect_after_status_change(
-                        request.data["fk_booking_id"], request.data["status_last"]
-                    )
-                elif request.data["status_last"] == "Delivered":
-                    booking.z_api_issue_update_flag_500 = 0
-                    booking.delivery_booking = datetime.now()
-                    booking.save()
+                # ######################################## #
+                #    Disabled because it was for `Cope`    #
+                # ######################################## #
+                # if request.data["status_last"] == "In Transit":
+                #     calc_collect_after_status_change(
+                #         request.data["fk_booking_id"], request.data["status_last"]
+                #     )
+                # elif request.data["status_last"] == "Delivered":
+                #     booking.z_api_issue_update_flag_500 = 0
+                #     booking.delivery_booking = datetime.now()
+                #     booking.save()
 
+                status_category = get_status_category_from_status(
+                    request.data["status_last"]
+                )
+
+                if status_category == "In Transit":
+                    booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                elif status_category == "Delivered":
+                    booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                    booking.delivery_booking = request.data["event_time_stamp"][:10]
+                    booking.z_api_issue_update_flag_500 = 0
+
+                booking.save()
                 tempo.push_via_api(booking)
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
