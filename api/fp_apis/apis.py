@@ -119,6 +119,7 @@ def tracking(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
             trace_error.print()
+
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Bookings.DoesNotExist:
         trace_error.print()
@@ -168,7 +169,7 @@ def book(request, fp_name):
             logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
-            res_content = response.content.decode("utf8").replace("'", '"')
+            res_content = response.content.decode("utf8").replace("'t" , " not").replace("'", '"')
             json_data = json.loads(res_content)
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
@@ -338,9 +339,9 @@ def book(request, fp_name):
 
                 if "errors" in json_data:
                     error_msg = json_data["errors"]
-                elif "errorMessage" in json_data:  # TNT Error
+                elif "errorMessage" in json_data:  # Sendle, TNT Error
                     error_msg = json_data["errorMessage"]
-                elif "errorMessage" in json_data[0]:  # Hunter Error
+                elif "errorMessage" in json_data[0]: 
                     error_msg = json_data[0]["errorMessage"]
                 else:
                     error_msg = s0
@@ -658,6 +659,11 @@ def cancel_book(request, fp_name):
                             {"message": "Successfully cancelled book"}, status=200
                         )
                     else:
+                        if "errorMessage" in json_data:
+                            error_msg = json_data["errorMessage"]
+                            _set_error(booking, error_msg)
+                            return JsonResponse({"message": error_msg}, status=400)
+                
                         error_msg = json_data
                         _set_error(booking, error_msg)
                         return JsonResponse(
@@ -800,6 +806,11 @@ def get_label(request, fp_name):
                         download_from_url(pdf_url, label_url)
 
                 except KeyError as e:
+                    if "errorMessage" in json_data:
+                        error_msg = json_data["errorMessage"]
+                        _set_error(booking, error_msg)
+                        return JsonResponse({"message": error_msg}, status=400)
+
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
