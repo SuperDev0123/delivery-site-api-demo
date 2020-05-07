@@ -1585,14 +1585,14 @@ class BookingViewSet(viewsets.ViewSet):
                         fk_client_warehouse_id=employee_warehouse_id,
                     )
 
-            if filterName == "dme":
+            if filterName == "null":
+                booking = queryset.last()
+            elif filterName == "dme":
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
             elif filterName == "id" and isinstance(idBookingNumber, int):
                 booking = queryset.get(id=idBookingNumber)
-            elif filterName == "null":
-                booking = queryset.last()
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
