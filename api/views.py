@@ -1589,7 +1589,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
-            elif filterName == "id":
+            elif filterName == "id" and isinstance(idBookingNumber, int):
                 booking = queryset.get(id=idBookingNumber)
             elif filterName == "null":
                 booking = queryset.last()
