@@ -3186,7 +3186,7 @@ class NotesViewSet(viewsets.ViewSet):
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_packagetypes(self, request, pk=None):
-        packageTypes = Dme_package_types.objects.all()
+        packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
 
         return_datas = []
         if len(packageTypes) == 0:
