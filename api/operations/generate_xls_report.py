@@ -2105,9 +2105,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 1, booking.gap_ras)
             worksheet.write(row, col + 2, booking.b_status)
 
-            if booking.delivery_booking:
+            if booking.s_20_Actual_Pickup_TimeStamp:
                 worksheet.write_datetime(
-                    row, col + 3, booking.delivery_booking, date_format
+                    row, col + 3, booking.s_20_Actual_Pickup_TimeStamp, date_format
                 )
 
             worksheet.write(row, col + 4, booking.b_booking_Category)
