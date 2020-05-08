@@ -1574,7 +1574,9 @@ class BookingViewSet(viewsets.ViewSet):
                         fk_client_warehouse_id=employee_warehouse_id,
                     )
 
-            if filterName == "dme":
+            if filterName == "null":
+                booking = queryset.last()
+            elif filterName == "dme":
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
@@ -3175,7 +3177,7 @@ class NotesViewSet(viewsets.ViewSet):
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_packagetypes(self, request, pk=None):
-        packageTypes = Dme_package_types.objects.all()
+        packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
 
         return_datas = []
         if len(packageTypes) == 0:
