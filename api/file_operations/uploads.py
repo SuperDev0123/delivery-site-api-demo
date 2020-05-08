@@ -10,6 +10,7 @@ from api.models import (
     Client_employees,
     Fp_freight_providers,
     DME_Files,
+    Dme_attachments,
 )
 from api.utils import (
     clearFileCheckHistory,
