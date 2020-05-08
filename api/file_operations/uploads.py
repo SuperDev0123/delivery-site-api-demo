@@ -89,7 +89,7 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
             fp_dir_name = (
                 f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}"
             )
-            file_path = f"{settings.STATIC_PUBLIC}/attachment/{fp_dir_name}/"
+            file_path = f"{settings.STATIC_PUBLIC}/attachments/{fp_dir_name}/"
 
             if not os.path.isdir(file_path):
                 os.makedirs(file_path)
