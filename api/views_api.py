@@ -216,7 +216,7 @@ def get_all_zoho_tickets(request):
         dat = request.GET.get("code")
 
         if not dat:
-            data = ""
+            dat = ""
 
         response = requests.post(
             "https://accounts.zoho.com.au/oauth/v2/token?code="
