@@ -194,6 +194,7 @@ def boks(request):
 @permission_classes((AllowAny,))
 def get_auth_zoho_tickets(request):
     if Tokens.objects.filter(type="access_token").count() == 0:
+        print("@1 -", settings.CLIENT_ID_ZOHO, settings.REDIRECT_URI_ZOHO)
         response = redirect(
             "https://accounts.zoho.com.au/oauth/v2/auth?response_type=code&client_id="
             + settings.CLIENT_ID_ZOHO
