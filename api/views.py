@@ -1591,7 +1591,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
-            elif filterName == "id":
+            elif filterName == "id" and idBookingNumber:
                 booking = queryset.get(id=idBookingNumber)
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
