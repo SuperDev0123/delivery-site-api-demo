@@ -1099,7 +1099,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
             elif report_type == "goods_delivered":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date),
+                    s_21_Actual_Delivery_TimeStamp__range=(first_date, last_date),
                     b_status__iexact="delivered",
                 )
             else:
