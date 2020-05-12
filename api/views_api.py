@@ -264,7 +264,7 @@ def get_all_zoho_tickets(request):
         if data[0].z_expiryTimeStamp > present_time:
             headers_for_tickets = {
                 "content-type": "application/json",
-                "orgId": ORG_ID,
+                "orgId": settings.ORG_ID,
                 "Authorization": "Zoho-oauthtoken " + data[0].value,
             }
             get_tickets = requests.get(
