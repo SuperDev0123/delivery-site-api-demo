@@ -1580,7 +1580,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
-            elif filterName == "id":
+            elif filterName == "id" and idBookingNumber:
                 booking = queryset.get(id=idBookingNumber)
             elif queryset and filterName == "null":
                 booking = queryset.last()
@@ -3285,11 +3285,11 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     request.data["status_last"]
                 )
 
-                if status_category == "In Transit":
+                if status_category == "Transit":
                     booking.s_20_Actual_Pickup_TimeStamp = request.data[
                         "event_time_stamp"
                     ]
-                elif status_category == "Delivered":
+                elif status_category == "Complete":
                     booking.s_21_Actual_Delivery_TimeStamp = request.data[
                         "event_time_stamp"
                     ]
