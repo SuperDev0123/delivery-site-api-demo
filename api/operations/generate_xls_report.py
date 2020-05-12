@@ -2098,9 +2098,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         logger.info(f"#351 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if not booking.had_status("delivered"):
-                continue
-
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
             worksheet.write(row, col + 1, booking.gap_ras)
             worksheet.write(row, col + 2, booking.b_status)
