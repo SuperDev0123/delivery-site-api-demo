@@ -225,8 +225,8 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
         booking.vx_account_code = filtered_pricing["pricing"].account_code
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.inv_sell_quoted = filtered_pricing["pricing"].fee
-        booking.inv_cost_actual = filtered_pricing["pricing"].client_mu_1_minimum_values
+        booking.inv_cost_actual = filtered_pricing["pricing"].fee
+        booking.inv_cost_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
             fp_company_name__iexact=filtered_pricing["pricing"].fk_freight_provider_id
