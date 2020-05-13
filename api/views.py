@@ -670,7 +670,10 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company" and client_employee.id == 1:
+            if (
+                client_employee_role == "company"
+                and client_employee.pk_id_client_emp == 1
+            ):
                 # Temporarily implemented for Seaway, after implement subClient we need to eliminate it
                 # If client is seaway, can access other seaway bookings
                 queryset = Bookings.objects.filter(
@@ -1078,7 +1081,10 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company" and client_employee.id == 1:
+            if (
+                client_employee_role == "company"
+                and client_employee.pk_id_client_emp == 1
+            ):
                 # Temporarily implemented for Seaway, after implement subClient we need to eliminate it
                 # If client is seaway, can access other seaway bookings
                 queryset = Bookings.objects.filter(
@@ -1268,7 +1274,10 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company" and client_employee.id == 1:
+            if (
+                client_employee_role == "company"
+                and client_employee.pk_id_client_emp == 1
+            ):
                 # Temporarily implemented for Seaway, after implement subClient we need to eliminate it
                 # If client is seaway, can access other seaway bookings
                 queryset = Bookings.objects.filter(
@@ -1412,7 +1421,10 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company" and client_employee.id == 1:
+            if (
+                client_employee_role == "company"
+                and client_employee.pk_id_client_emp == 1
+            ):
                 # Temporarily implemented for Seaway, after implement subClient we need to eliminate it
                 # If client is seaway, can access other seaway bookings
                 queryset = Bookings.objects.filter(
@@ -1541,7 +1553,10 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company" and client_employee.id == 1:
+            if (
+                client_employee_role == "company"
+                and client_employee.pk_id_client_emp == 1
+            ):
                 # Temporarily implemented for Seaway, after implement subClient we need to eliminate it
                 # If client is seaway, can access other seaway bookings
                 queryset = Bookings.objects.filter(
@@ -1629,7 +1644,10 @@ class BookingViewSet(viewsets.ViewSet):
                 if client is None:
                     return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
-                if client_employee_role == "company" and client_employee.id == 1:
+                if (
+                    client_employee_role == "company"
+                    and client_employee.pk_id_client_emp == 1
+                ):
                     # Temporarily implemented for Seaway, after implement subClient we need to eliminate it
                     # If client is seaway, can access other seaway bookings
                     queryset = Bookings.objects.filter(
