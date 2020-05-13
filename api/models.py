@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Max
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
@@ -85,6 +85,9 @@ class DME_employees(models.Model):
     role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=False, null=True
+    ) 
+    status_time = models.DateTimeField(
+        verbose_name=_("Status Time"), default=datetime.now, blank=True
     )
 
     class Meta:
@@ -212,7 +215,9 @@ class Client_employees(models.Model):
     z_modifiedTimeStamp = models.DateTimeField(
         verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
     )
-
+    status_time = models.DateTimeField(
+        verbose_name=_("Status Time"), default=datetime.now, blank=True
+    )
     class Meta:
         db_table = "dme_client_employees"
 
@@ -3912,3 +3917,7 @@ class Tokens(models.Model):
 
     class Meta:
         db_table = "tokens"
+
+# class User(AbstractUser):
+#    gender = models.BooleanField(default=True) # True for male and False for female
+#    z_createdTimeStamp = models.DateTimeField(default=datetime.now())

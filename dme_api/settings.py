@@ -241,3 +241,4 @@ CLIENT_ID_ZOHO = os.environ["CLIENT_ID_ZOHO"]
 CLIENT_SECRET_ZOHO = os.environ["CLIENT_SECRET_ZOHO"]
 ORG_ID = os.environ["ORG_ID"]
 REDIRECT_URI_ZOHO = os.environ["REDIRECT_URI_ZOHO"]
+# AUTH_USER_MODEL = 'dme_api.User' 
