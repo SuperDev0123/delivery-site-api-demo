@@ -670,7 +670,18 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company":
+            if client_employee_role == "company" and client.company_name == "Seaway":
+                # Temporarily implemented for Seway, after implement subClient we need to eliminate it
+                # If client is seaway, can access other seaway bookings
+                queryset = Bookings.objects.filter(
+                    kf_client_id__in=[
+                        "461162D2-90C7-BF4E-A905-092A1A5F73F3",
+                        "461162D2-90C7-BF4E-A905-000000000001",
+                        "461162D2-90C7-BF4E-A905-000000000002",
+                        "461162D2-90C7-BF4E-A905-000000000003",
+                    ]
+                )
+            elif client_employee_role == "company":
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
             elif client_employee_role == "warehouse":
                 employee_warehouse_id = client_employee.warehouse_id
@@ -1067,7 +1078,18 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company":
+            if client_employee_role == "company" and client.company_name == "Seaway":
+                # Temporarily implemented for Seway, after implement subClient we need to eliminate it
+                # If client is seaway, can access other seaway bookings
+                queryset = Bookings.objects.filter(
+                    kf_client_id__in=[
+                        "461162D2-90C7-BF4E-A905-092A1A5F73F3",
+                        "461162D2-90C7-BF4E-A905-000000000001",
+                        "461162D2-90C7-BF4E-A905-000000000002",
+                        "461162D2-90C7-BF4E-A905-000000000003",
+                    ]
+                )
+            elif client_employee_role == "company":
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
             elif client_employee_role == "warehouse":
                 employee_warehouse_id = client_employee.warehouse_id
@@ -1246,7 +1268,18 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company":
+            if client_employee_role == "company" and client.company_name == "Seaway":
+                # Temporarily implemented for Seway, after implement subClient we need to eliminate it
+                # If client is seaway, can access other seaway bookings
+                queryset = Bookings.objects.filter(
+                    kf_client_id__in=[
+                        "461162D2-90C7-BF4E-A905-092A1A5F73F3",
+                        "461162D2-90C7-BF4E-A905-000000000001",
+                        "461162D2-90C7-BF4E-A905-000000000002",
+                        "461162D2-90C7-BF4E-A905-000000000003",
+                    ]
+                )
+            elif client_employee_role == "company":
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
             elif client_employee_role == "warehouse":
                 employee_warehouse_id = client_employee.warehouse_id
@@ -1379,7 +1412,18 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company":
+            if client_employee_role == "company" and client.company_name == "Seaway":
+                # Temporarily implemented for Seway, after implement subClient we need to eliminate it
+                # If client is seaway, can access other seaway bookings
+                queryset = Bookings.objects.filter(
+                    kf_client_id__in=[
+                        "461162D2-90C7-BF4E-A905-092A1A5F73F3",
+                        "461162D2-90C7-BF4E-A905-000000000001",
+                        "461162D2-90C7-BF4E-A905-000000000002",
+                        "461162D2-90C7-BF4E-A905-000000000003",
+                    ]
+                )
+            elif client_employee_role == "company":
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
             elif client_employee_role == "warehouse":
                 employee_warehouse_id = client_employee.warehouse_id
@@ -1497,7 +1541,18 @@ class BookingsViewSet(viewsets.ViewSet):
         if user_type == "DME":
             queryset = Bookings.objects.all()
         else:
-            if client_employee_role == "company":
+            if client_employee_role == "company" and client.company_name == "Seaway":
+                # Temporarily implemented for Seway, after implement subClient we need to eliminate it
+                # If client is seaway, can access other seaway bookings
+                queryset = Bookings.objects.filter(
+                    kf_client_id__in=[
+                        "461162D2-90C7-BF4E-A905-092A1A5F73F3",
+                        "461162D2-90C7-BF4E-A905-000000000001",
+                        "461162D2-90C7-BF4E-A905-000000000002",
+                        "461162D2-90C7-BF4E-A905-000000000003",
+                    ]
+                )
+            elif client_employee_role == "company":
                 queryset = Bookings.objects.filter(kf_client_id=client.dme_account_num)
             elif client_employee_role == "warehouse":
                 employee_warehouse_id = client_employee.warehouse_id
@@ -1574,7 +1629,21 @@ class BookingViewSet(viewsets.ViewSet):
                 if client is None:
                     return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
-                if client_employee_role == "company":
+                if (
+                    client_employee_role == "company"
+                    and client.company_name == "Seaway"
+                ):
+                    # Temporarily implemented for Seway, after implement subClient we need to eliminate it
+                    # If client is seaway, can access other seaway bookings
+                    queryset = Bookings.objects.filter(
+                        kf_client_id__in=[
+                            "461162D2-90C7-BF4E-A905-092A1A5F73F3",
+                            "461162D2-90C7-BF4E-A905-000000000001",
+                            "461162D2-90C7-BF4E-A905-000000000002",
+                            "461162D2-90C7-BF4E-A905-000000000003",
+                        ]
+                    )
+                elif client_employee_role == "company":
                     queryset = Bookings.objects.filter(
                         kf_client_id=client.dme_account_num
                     )
@@ -2452,9 +2521,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
@@ -2468,21 +2535,24 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             queryset = clientWarehouseObject_list
             return queryset
         else:
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
 
-            if client_employee_role == "company":
-                clientWarehouseObject_list = (
-                    Client_warehouses.objects.select_related()
-                    .filter(
-                        fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
-                    )
-                    .order_by("client_warehouse_code")
-                )
+            if (
+                client_employee_role == "company"
+                and client_employee.pk_id_client_emp == 1
+            ):
+                clientWarehouseObject_list = Client_warehouses.objects.filter(
+                    fk_id_dme_client_id__in=[1, 4, 5, 6]
+                ).order_by("client_warehouse_code")
+                queryset = clientWarehouseObject_list
+                return queryset
+            elif client_employee_role == "company":
+                clientWarehouseObject_list = Client_warehouses.objects.filter(
+                    fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
+                ).order_by("client_warehouse_code")
                 queryset = clientWarehouseObject_list
                 return queryset
             elif client_employee_role == "warehouse":
