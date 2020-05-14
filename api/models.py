@@ -95,61 +95,29 @@ class Client_warehouses(models.Model):
     pk_id_client_warehouses = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
     warehousename = models.CharField(
-        verbose_name=_("warehoursename"),
-        max_length=230,
-        blank=False,
-        null=True,
-        default="",
+        max_length=230, blank=False, null=True, default=None,
     )
     warehouse_address1 = models.CharField(
-        verbose_name=_("warehouse address1"),
-        max_length=255,
-        blank=False,
-        null=True,
-        default="",
+        max_length=255, blank=False, null=True, default=None,
     )
     warehouse_address2 = models.CharField(
-        verbose_name=_("warehouse address2"),
-        max_length=255,
-        blank=False,
-        null=True,
-        default="",
+        max_length=255, blank=False, null=True, default=None,
     )
     warehouse_state = models.CharField(
-        verbose_name=_("warehouse state"),
-        max_length=64,
-        blank=False,
-        null=True,
-        default="",
+        max_length=64, blank=False, null=True, default=None,
     )
     warehouse_suburb = models.CharField(
-        verbose_name=_("warehouse suburb"),
-        max_length=255,
-        blank=False,
-        null=True,
-        default="",
+        max_length=255, blank=False, null=True, default=None,
     )
     warehouse_phone_main = models.CharField(
-        verbose_name=_("warehouse phone number"),
-        max_length=16,
-        blank=False,
-        null=True,
-        default="",
+        max_length=16, blank=False, null=True, default=None,
     )
     warehouse_postal_code = models.CharField(
-        verbose_name=_("warehouse postal code"),
-        max_length=64,
-        blank=False,
-        null=True,
-        default="",
+        max_length=64, blank=False, null=True, default=None,
     )
-    warehouse_hours = models.IntegerField(verbose_name=_("warehouse hours"))
-    type = models.CharField(
-        verbose_name=_("warehouse type"), max_length=30, blank=True, null=True
-    )
-    client_warehouse_code = models.CharField(
-        verbose_name=_("warehouse code"), max_length=100, blank=True, null=True
-    )
+    warehouse_hours = models.IntegerField(default=None, blank=True, null=True)
+    type = models.CharField(max_length=30, blank=True, null=True)
+    client_warehouse_code = models.CharField(max_length=100, blank=True, null=True)
     success_type = models.IntegerField(default=0)
 
     class Meta:
@@ -165,6 +133,9 @@ class Client_employees(models.Model):
         DME_clients, on_delete=models.CASCADE, blank=True, null=True
     )
     role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, blank=True, null=True)
+    warehouse = models.ForeignKey(
+        Client_warehouses, on_delete=models.CASCADE, blank=True, null=True, default=None
+    )
     name_last = models.CharField(
         verbose_name=_("last name"), max_length=30, blank=True, null=True
     )
@@ -175,9 +146,6 @@ class Client_employees(models.Model):
         verbose_name=_("email address"), max_length=64, unique=True, null=True
     )
     phone = models.IntegerField(verbose_name=_("phone number"), blank=True, null=True)
-    warehouse_id = models.IntegerField(
-        verbose_name=_("Warehouse ID"), default=1, blank=True, null=True
-    )
     clientEmployeeSalutation = models.CharField(max_length=20, blank=True, null=True)
     client_emp_name_frst = models.CharField(max_length=50, blank=True, null=True)
     client_emp_name_surname = models.CharField(max_length=50, blank=True, null=True)
@@ -3903,12 +3871,33 @@ class BookingSets(models.Model):
     class Meta:
         db_table = "dme_booking_sets"
 
+
 class Tokens(models.Model):
     id = models.AutoField(primary_key=True)
     value = models.CharField(max_length=255, default=None)
     type = models.CharField(max_length=255, default=None)
-    z_createdTimeStamp = models.DateTimeField(default=datetime.now())
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now)
     z_expiryTimeStamp = models.DateTimeField(default=None)
 
     class Meta:
         db_table = "tokens"
+
+
+class RetailerProducts(models.Model):
+    id = models.AutoField(primary_key=True)
+    warehouse = models.ManyToManyField(
+        Client_warehouses, related_name="retailer_products"
+    )
+    item_number = models.CharField(max_length=64, blank=True, null=True, default=None)
+    item_description = models.CharField(
+        max_length=255, blank=True, null=True, default=None
+    )
+    dim_uom = models.CharField(max_length=32)
+    length = models.FloatField(default=None, null=True, blank=True)
+    width = models.FloatField(default=None, null=True, blank=True)
+    height = models.FloatField(default=None, null=True, blank=True)
+    weight_uom = models.CharField(max_length=32)
+    weight = models.FloatField(default=None, null=True, blank=True)
+
+    class Meta:
+        db_table = "retailer_products"
