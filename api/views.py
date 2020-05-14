@@ -4406,10 +4406,8 @@ class SqlQueriesViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
-        print('pk', pk)
         return_data = []
         try:
-            print('get sql query')
             resultObject = Utl_sql_queries.objects.get(id=pk)
            
             return_data.append(
@@ -4426,10 +4424,9 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                 }
             )
 
-            print('resultObject', return_data)
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
