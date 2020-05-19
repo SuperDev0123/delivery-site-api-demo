@@ -4429,9 +4429,8 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     def get(self, request, pk, format=None):
         return_data = []
         try:
-            resultObjects = []
-            resultObject = Utl_sql_queries.objects.get(pk=pk)
-
+            resultObject = Utl_sql_queries.objects.get(id=pk)
+           
             return_data.append(
                 {
                     "id": resultObject.id,
@@ -4445,9 +4444,10 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
                 }
             )
+
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -4517,6 +4517,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                         for (index, column) in enumerate(value):
                             tmp[columns[index][0]] = column
                         result.append(tmp)
+
                     return JsonResponse({"results": result, "tables": row1})
                 except Exception as e:
                     # print('@Exception', e)
