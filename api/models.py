@@ -3917,7 +3917,3 @@ class Tokens(models.Model):
 
     class Meta:
         db_table = "tokens"
-
-# class User(AbstractUser):
-#    gender = models.BooleanField(default=True) # True for male and False for female
-#    z_createdTimeStamp = models.DateTimeField(default=datetime.now())
