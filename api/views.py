@@ -344,7 +344,7 @@ class UserViewSet(viewsets.ViewSet):
                 )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print('@Exception', e)
+            # print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["get"])
