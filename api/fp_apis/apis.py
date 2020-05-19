@@ -169,7 +169,9 @@ def book(request, fp_name):
             logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
-            res_content = response.content.decode("utf8").replace("'t" , " not").replace("'", '"')
+            res_content = (
+                response.content.decode("utf8").replace("'t", " not").replace("'", '"')
+            )
             json_data = json.loads(res_content)
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
@@ -233,7 +235,7 @@ def book(request, fp_name):
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
                     )
-                    booking.b_dateBookedDate = str(datetime.now())
+                    booking.b_dateBookedDate = datetime.now()
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
@@ -341,7 +343,7 @@ def book(request, fp_name):
                     error_msg = json_data["errors"]
                 elif "errorMessage" in json_data:  # Sendle, TNT Error
                     error_msg = json_data["errorMessage"]
-                elif "errorMessage" in json_data[0]: 
+                elif "errorMessage" in json_data[0]:
                     error_msg = json_data[0]["errorMessage"]
                 else:
                     error_msg = s0
@@ -566,7 +568,7 @@ def edit_book(request, fp_name):
                     "consignment_id"
                 ]
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-                booking.b_dateBookedDate = str(datetime.now())
+                booking.b_dateBookedDate = datetime.now()
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
                 booking.save()
@@ -663,7 +665,7 @@ def cancel_book(request, fp_name):
                             error_msg = json_data["errorMessage"]
                             _set_error(booking, error_msg)
                             return JsonResponse({"message": error_msg}, status=400)
-                
+
                         error_msg = json_data
                         _set_error(booking, error_msg)
                         return JsonResponse(
