@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Max
-from django.contrib.auth.models import User, AbstractUser
+from django.contrib.auth.models import User
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
