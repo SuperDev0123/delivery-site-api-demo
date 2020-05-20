@@ -1985,7 +1985,7 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
             booking.b_status = "Booked"
-            booking.b_dateBookedDate = datetime.now()
+            booking.b_dateBookedDate = str(datetime.now())
             booking.x_booking_Created_With = "Manual"
             booking.save()
             serializer = BookingSerializer(booking)
