@@ -164,7 +164,9 @@ class UserViewSet(viewsets.ViewSet):
         try:
             User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
             dme_employee = DME_employees.objects.filter(fk_id_user=user.id).first()
-            client_employee = Client_employees.objects.filter(fk_id_user=user.id).first()
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user.id
+            ).first()
 
             if dme_employee is not None:
                 dme_employee.status_time = datetime.now()
@@ -173,7 +175,7 @@ class UserViewSet(viewsets.ViewSet):
             if client_employee is not None:
                 client_employee.status_time = datetime.now()
                 client_employee.save()
-            
+
             return JsonResponse({"results": request.data})
             # if serializer.is_valid():
             # try:
@@ -320,12 +322,16 @@ class UserViewSet(viewsets.ViewSet):
                     "username"
                 )
             for resultObject in resultObjects:
-                dme_employee = DME_employees.objects.filter(fk_id_user=resultObject.id).first()
-                client_employee = Client_employees.objects.filter(fk_id_user=resultObject.id).first()
-                
+                dme_employee = DME_employees.objects.filter(
+                    fk_id_user=resultObject.id
+                ).first()
+                client_employee = Client_employees.objects.filter(
+                    fk_id_user=resultObject.id
+                ).first()
+
                 if dme_employee is not None:
                     status_time = dme_employee.status_time
-                 
+
                 if client_employee is not None:
                     status_time = client_employee.status_time
 
@@ -339,12 +345,13 @@ class UserViewSet(viewsets.ViewSet):
                         "last_login": resultObject.last_login,
                         "is_staff": resultObject.is_staff,
                         "is_active": resultObject.is_active,
-                        "status_time": status_time
+                        "status_time": status_time,
                     }
                 )
             return JsonResponse({"results": return_data})
         except Exception as e:
             # print('@Exception', e)
+            logger.info(f"Error #502: {e}")
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["get"])
@@ -4430,7 +4437,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
         return_data = []
         try:
             resultObject = Utl_sql_queries.objects.get(id=pk)
-           
+
             return_data.append(
                 {
                     "id": resultObject.id,
