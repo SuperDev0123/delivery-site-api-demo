@@ -235,7 +235,7 @@ def book(request, fp_name):
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
                     )
-                    booking.b_dateBookedDate = datetime.now()
+                    booking.b_dateBookedDate = str(datetime.now())
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
@@ -568,7 +568,7 @@ def edit_book(request, fp_name):
                     "consignment_id"
                 ]
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-                booking.b_dateBookedDate = datetime.now()
+                booking.b_dateBookedDate = str(datetime.now())
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
                 booking.save()
@@ -968,7 +968,7 @@ def get_order_summary(request, fp_name):
 
                 bookings = Bookings.objects.filter(pk__in=booking_ids)
 
-                manifest_timestamp = datetime.now()
+                manifest_timestamp = str(datetime.now())
                 for booking in bookings:
                     booking.z_manifest_url = f"{fp_name.lower()}_au/{file_name}"
                     booking.manifest_timestamp = manifest_timestamp

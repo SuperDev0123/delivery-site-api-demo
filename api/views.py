@@ -169,11 +169,11 @@ class UserViewSet(viewsets.ViewSet):
             ).first()
 
             if dme_employee is not None:
-                dme_employee.status_time = datetime.now()
+                dme_employee.status_time = str(datetime.now())
                 dme_employee.save()
 
             if client_employee is not None:
-                client_employee.status_time = datetime.now()
+                client_employee.status_time = str(datetime.now())
                 client_employee.save()
 
             return JsonResponse({"results": request.data})
@@ -1927,8 +1927,8 @@ class BookingViewSet(viewsets.ViewSet):
                         booking_line_detail.fk_booking_lines_id = (
                             new_pk_booking_lines_id
                         )
-                        booking_line_detail.z_createdTimeStamp = datetime.now()
-                        booking_line_detail.z_modifiedTimeStamp = datetime.now()
+                        booking_line_detail.z_createdTimeStamp = str(datetime.now())
+                        booking_line_detail.z_modifiedTimeStamp = str(datetime.now())
                         booking_line_detail.save()
 
                 booking_line.pk_booking_lines_id = new_pk_booking_lines_id
@@ -3051,7 +3051,7 @@ class CommsViewSet(viewsets.ViewSet):
             dme_comm_and_task.closed != request.data["closed"]
             and request.data["closed"]
         ):
-            request.data["status_log_closed_time"] = datetime.now()
+            request.data["status_log_closed_time"] = str(datetime.now())
         elif (
             dme_comm_and_task.closed != request.data["closed"]
             and not request.data["closed"]
@@ -3072,7 +3072,7 @@ class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def create_comm(self, request, pk=None):
         if request.data["closed"]:
-            request.data["status_log_closed_time"] = datetime.now()
+            request.data["status_log_closed_time"] = str(datetime.now())
         serializer = CommSerializer(data=request.data)
 
         try:
@@ -3315,7 +3315,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 #     )
                 # elif request.data["status_last"] == "Delivered":
                 #     booking.z_api_issue_update_flag_500 = 0
-                #     booking.delivery_booking = datetime.now()
+                #     booking.delivery_booking = str(datetime.now())
                 #     booking.save()
 
                 status_category = get_status_category_from_status(
@@ -3994,7 +3994,7 @@ def download(request):
                 file_paths.append(
                     f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )
-                booking.z_downloaded_shipping_label_timestamp = datetime.now()
+                booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
     elif download_option == "pod":
         for booking in bookings:
@@ -4729,7 +4729,7 @@ class BookingSetsViewSet(viewsets.ViewSet):
         request.data["booking_ids"] = ", ".join(bookingIds)
         request.data["status"] = "Created"
         request.data["z_createdByAccount"] = get_clientname(request)
-        request.data["z_createdTimeStamp"] = datetime.now()
+        request.data["z_createdTimeStamp"] = str(datetime.now())
         serializer = BookingSetsSerializer(data=request.data)
 
         if serializer.is_valid():
