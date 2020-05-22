@@ -94,6 +94,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "dme_delivery_status_category",  # property
             "client_item_references",  # property
             "clientRefNumbers",  # property
+            "gap_ras",  # property
         )
         fields = read_only_fields + (
             "id",
