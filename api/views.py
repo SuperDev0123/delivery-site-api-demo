@@ -68,6 +68,7 @@ from .utils import (
     get_eta_pu_by,
     get_eta_de_by,
 )
+from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
 from api.stats.pricing import analyse_booking_quotes_table
@@ -95,7 +96,7 @@ def password_reset_token_created(
     try:
         filepath = settings.EMAIL_ROOT + "/user_reset_password.html"
     except MultiValueDictKeyError:
-        logger.error("Error #101: Either the file is missing or not readable")
+        logger.info("Error #101: Either the file is missing or not readable")
 
     email_html_message = render_to_string(
         settings.EMAIL_ROOT + "/user_reset_password.html", context
@@ -107,10 +108,99 @@ def password_reset_token_created(
     try:
         send_email([context["email"]], [], subject, email_html_message, None, mime_type)
     except Exception as e:
-        logger.error(f"Error #102: {e}")
+        logger.info(f"Error #102: {e}")
 
 
 class UserViewSet(viewsets.ViewSet):
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        return_data = []
+        try:
+            resultObjects = []
+            resultObject = User.objects.get(pk=pk)
+
+            return_data.append(
+                {
+                    "id": resultObject.id,
+                    "first_name": resultObject.first_name,
+                    "last_name": resultObject.last_name,
+                    "username": resultObject.username,
+                    "email": resultObject.email,
+                    "last_login": resultObject.last_login,
+                    "is_staff": resultObject.is_staff,
+                    "is_active": resultObject.is_active,
+                }
+            )
+            return JsonResponse({"results": return_data})
+        except Exception as e:
+            # print("@Exception", e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        return_data = []
+
+        try:
+            resultObjects = []
+            resultObjects = User.objects.create(
+                fk_idEmailParent=request.data["fk_idEmailParent"],
+                emailName=request.data["emailName"],
+                emailBody=request.data["emailBody"],
+                sectionName=request.data["sectionName"],
+                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
+                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
+                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
+            )
+
+            return JsonResponse({"results": resultObjects})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
+            dme_employee = DME_employees.objects.filter(fk_id_user=user.id).first()
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user.id
+            ).first()
+
+            if dme_employee is not None:
+                dme_employee.status_time = str(datetime.now())
+                dme_employee.save()
+
+            if client_employee is not None:
+                client_employee.status_time = str(datetime.now())
+                client_employee.save()
+
+            return JsonResponse({"results": request.data})
+            # if serializer.is_valid():
+            # try:
+            # serializer.save()
+            # return Response(serializer.data)
+            # except Exception as e:
+            # print('%s (%s)' % (e.message, type(e)))
+            # return Response({"results": e.message})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print('Exception: ', e)
+            return JsonResponse({"results": str(e)})
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        user = User.objects.get(pk=pk)
+
+        try:
+            # user.delete()
+            return JsonResponse({"results": fp_freight_providers})
+        except Exception as e:
+            # print('@Exception', e)
+            return JsonResponse({"results": ""})
+
     @action(detail=False, methods=["post"])
     def username(self, request, format=None):
         user_id = self.request.user.id
@@ -232,6 +322,19 @@ class UserViewSet(viewsets.ViewSet):
                     "username"
                 )
             for resultObject in resultObjects:
+                dme_employee = DME_employees.objects.filter(
+                    fk_id_user=resultObject.id
+                ).first()
+                client_employee = Client_employees.objects.filter(
+                    fk_id_user=resultObject.id
+                ).first()
+
+                if dme_employee is not None:
+                    status_time = dme_employee.status_time
+
+                if client_employee is not None:
+                    status_time = client_employee.status_time
+
                 return_data.append(
                     {
                         "id": resultObject.id,
@@ -242,88 +345,46 @@ class UserViewSet(viewsets.ViewSet):
                         "last_login": resultObject.last_login,
                         "is_staff": resultObject.is_staff,
                         "is_active": resultObject.is_active,
+                        "status_time": status_time,
                     }
                 )
             return JsonResponse({"results": return_data})
         except Exception as e:
             # print('@Exception', e)
+            logger.info(f"Error #502: {e}")
             return JsonResponse({"results": ""})
 
-    @action(detail=True, methods=["get"])
-    def get(self, request, pk, format=None):
-        return_data = []
-        try:
-            resultObjects = []
-            resultObject = User.objects.get(pk=pk)
+    @action(detail=False, methods=["get"])
+    def get_created_for_infos(self, request, pk=None):
+        user_id = int(self.request.user.id)
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id)
 
-            return_data.append(
-                {
-                    "id": resultObject.id,
-                    "first_name": resultObject.first_name,
-                    "last_name": resultObject.last_name,
-                    "username": resultObject.username,
-                    "email": resultObject.email,
-                    "last_login": resultObject.last_login,
-                    "is_staff": resultObject.is_staff,
-                    "is_active": resultObject.is_active,
-                }
-            )
-            return JsonResponse({"results": return_data})
-        except Exception as e:
-            print("@Exception", e)
-            return JsonResponse({"results": ""})
+        if dme_employee:
+            client_employees = Client_employees.objects.filter(
+                email__isnull=False
+            ).order_by("name_first")
+        else:
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
+            client_employees = Client_employees.objects.filter(
+                fk_id_dme_client_id=client.pk_id_dme_client, email__isnull=False
+            ).order_by("name_first")
 
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        return_data = []
+        results = []
+        for client_employee in client_employees:
+            result = {
+                "id": client_employee.pk_id_client_emp,
+                "name_first": client_employee.name_first,
+                "name_last": client_employee.name_last,
+                "email": client_employee.email,
+            }
+            results.append(result)
 
-        try:
-            resultObjects = []
-            resultObjects = User.objects.create(
-                fk_idEmailParent=request.data["fk_idEmailParent"],
-                emailName=request.data["emailName"],
-                emailBody=request.data["emailBody"],
-                sectionName=request.data["sectionName"],
-                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
-                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
-                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
-            )
-
-            return JsonResponse({"results": resultObjects})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
-
-    @action(detail=True, methods=["put"])
-    def edit(self, request, pk, format=None):
-        user = User.objects.get(pk=pk)
-
-        try:
-            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
-            return JsonResponse({"results": request.data})
-            # if serializer.is_valid():
-            # try:
-            # serializer.save()
-            # return Response(serializer.data)
-            # except Exception as e:
-            # print('%s (%s)' % (e.message, type(e)))
-            # return Response({"results": e.message})
-            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print('Exception: ', e)
-            return JsonResponse({"results": str(e)})
-            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        user = User.objects.get(pk=pk)
-
-        try:
-            # user.delete()
-            return JsonResponse({"results": fp_freight_providers})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+        return JsonResponse({"success": True, "results": results})
 
 
 class BookingsViewSet(viewsets.ViewSet):
@@ -1027,7 +1088,8 @@ class BookingsViewSet(viewsets.ViewSet):
             start_date = request.data["startDate"]
             end_date = request.data["endDate"]
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
-            last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            last_date = datetime.strptime(end_date, "%Y-%m-%d")
+            last_date = last_date.replace(hour=23, minute=59, second=59)
 
         # DME & Client filter
         if user_type == "DME":
@@ -1042,8 +1104,60 @@ class BookingsViewSet(viewsets.ViewSet):
                     fk_client_warehouse_id=employee_warehouse_id,
                 )
 
-        # Optimize to speed up building XLS
+        if use_selected:
+            queryset = queryset.filter(pk__in=booking_ids)
+        else:
+            if report_type == "booked_bookings":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date)
+                )
+            elif report_type == "picked_up_bookings":
+                queryset = queryset.filter(
+                    s_20_Actual_Pickup_TimeStamp__range=(first_date, last_date)
+                )
+            elif report_type == "box":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date),
+                    puCompany__icontains="Tempo Aus Whs",
+                    pu_Address_Suburb__iexact="FRENCHS FOREST",
+                )
+            elif report_type == "futile":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(first_date, last_date)
+                )
+            elif report_type == "goods_delivered":
+                queryset = queryset.filter(
+                    s_21_Actual_Delivery_TimeStamp__range=(first_date, last_date),
+                    b_status__iexact="delivered",
+                )
+            else:
+                # Date filter
+                if user_type == "DME":
+                    queryset = queryset.filter(
+                        z_CreatedTimestamp__range=(first_date, last_date)
+                    )
+                else:
+                    if client.company_name == "BioPak":
+                        queryset = queryset.filter(
+                            puPickUpAvailFrom_Date__range=(first_date, last_date)
+                        )
+                    else:
+                        queryset = queryset.filter(
+                            z_CreatedTimestamp__range=(first_date, last_date)
+                        )
+
+        # Freight Provider filter
+        if vx_freight_provider != "All":
+            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+
+        # Client filter
+        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
+            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
+            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+
+        # Optimized to speed up building XLS
         queryset.only(
+            "id",
             "pk_booking_id",
             "b_dateBookedDate",
             "pu_Address_State",
@@ -1077,34 +1191,11 @@ class BookingsViewSet(viewsets.ViewSet):
             "dme_status_linked_reference_from_fp",
             "inv_billing_status",
             "inv_billing_status_note",
+            "b_booking_Category",
+            "clientRefNumbers",
+            "gap_ras",
+            "s_05_LatestPickUpDateTimeFinal",
         )
-
-        if use_selected:
-            queryset = queryset.filter(pk__in=booking_ids)
-        else:
-            # Date filter
-            if user_type == "DME":
-                queryset = queryset.filter(
-                    z_CreatedTimestamp__range=(first_date, last_date)
-                )
-            else:
-                if client.company_name == "BioPak":
-                    queryset = queryset.filter(
-                        puPickUpAvailFrom_Date__range=(first_date, last_date)
-                    )
-                else:
-                    queryset = queryset.filter(
-                        z_CreatedTimestamp__range=(first_date, last_date)
-                    )
-
-        # Freight Provider filter
-        if vx_freight_provider != "All":
-            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
-
-        # Client filter
-        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
-            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
-            queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         build_xls_and_send(
             queryset,
@@ -1522,14 +1613,14 @@ class BookingViewSet(viewsets.ViewSet):
                         fk_client_warehouse_id=employee_warehouse_id,
                     )
 
-            if filterName == "dme":
+            if filterName == "null":
+                booking = queryset.last()
+            elif filterName == "dme":
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
-            elif filterName == "id":
+            elif filterName == "id" and idBookingNumber and idBookingNumber != "null":
                 booking = queryset.get(id=idBookingNumber)
-            elif filterName == "null":
-                booking = queryset.last()
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
@@ -1824,17 +1915,21 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.e_qty_delivered = 0
                 booking_line.e_qty_adjusted_delivered = 0
                 new_pk_booking_lines_id = str(uuid.uuid1())
-                booking_line_details = Booking_lines_data.objects.filter(
-                    fk_booking_lines_id=booking_line.pk_booking_lines_id
-                )
 
-                for booking_line_detail in booking_line_details:
-                    booking_line_detail.pk_id_lines_data = None
-                    booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
-                    booking_line_detail.fk_booking_lines_id = new_pk_booking_lines_id
-                    booking_line_detail.z_createdTimeStamp = datetime.now()
-                    booking_line_detail.z_modifiedTimeStamp = datetime.now()
-                    booking_line_detail.save()
+                if booking_line.pk_booking_lines_id:
+                    booking_line_details = Booking_lines_data.objects.filter(
+                        fk_booking_lines_id=booking_line.pk_booking_lines_id
+                    )
+
+                    for booking_line_detail in booking_line_details:
+                        booking_line_detail.pk_id_lines_data = None
+                        booking_line_detail.fk_booking_id = newBooking["pk_booking_id"]
+                        booking_line_detail.fk_booking_lines_id = (
+                            new_pk_booking_lines_id
+                        )
+                        booking_line_detail.z_createdTimeStamp = str(datetime.now())
+                        booking_line_detail.z_modifiedTimeStamp = str(datetime.now())
+                        booking_line_detail.save()
 
                 booking_line.pk_booking_lines_id = new_pk_booking_lines_id
                 booking_line.save()
@@ -1890,7 +1985,7 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
             booking.b_status = "Booked"
-            booking.b_dateBookedDate = datetime.now()
+            booking.b_dateBookedDate = str(datetime.now())
             booking.x_booking_Created_With = "Manual"
             booking.save()
             serializer = BookingSerializer(booking)
@@ -1933,18 +2028,18 @@ class BookingViewSet(viewsets.ViewSet):
             client_process.origin_de_To_Address_Street_2 = (
                 booking.de_To_Address_Street_2
             )
-            
+
             if booking.b_booking_Category == "Salvage Expense":
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
                 puCompany = booking.puCompany
                 deToCompanyName = booking.deToCompanyName
-                booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
+                # booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
 
                 if (
                     booking.pu_Address_street_2 == ""
                     or booking.pu_Address_street_2 == None
                 ):
-                    booking.pu_Address_street_2 = booking.pu_Address_Street_1
+                    # booking.pu_Address_street_2 = booking.pu_Address_Street_1
                     custRefNumVerbage = (
                         "Ref: "
                         + str(booking.clientRefNumbers or "")
@@ -1953,7 +2048,7 @@ class BookingViewSet(viewsets.ViewSet):
                         + ". Fragile"
                     )
 
-                    booking.pu_Address_Street_1 = custRefNumVerbage
+                    # booking.pu_Address_Street_1 = custRefNumVerbage
                     booking.de_Email = str(booking.de_Email or "").replace(";", ",")
                     booking.de_Email_Group_Emails = str(
                         booking.de_Email_Group_Emails or ""
@@ -1964,11 +2059,14 @@ class BookingViewSet(viewsets.ViewSet):
                         + custRefNumVerbage
                     )
 
-                dme_client = DME_clients.objects.filter(dme_account_num=booking.kf_client_id).first()
+                dme_client = DME_clients.objects.filter(
+                    dme_account_num=booking.kf_client_id
+                ).first()
 
                 client_auto_augment = Client_Auto_Augment.objects.filter(
-                    fk_id_dme_client_id = dme_client.pk_id_dme_client, 
-                    de_to_companyName__iexact = booking.deToCompanyName.strip()).first()
+                    fk_id_dme_client_id=dme_client.pk_id_dme_client,
+                    de_to_companyName__iexact=booking.deToCompanyName.strip().lower(),
+                ).first()
 
                 if client_auto_augment is not None:
                     if client_auto_augment.de_Email is not None:
@@ -1979,18 +2077,18 @@ class BookingViewSet(viewsets.ViewSet):
                             client_auto_augment.de_Email_Group_Emails
                         )
 
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        booking.de_To_Address_Street_1 = (
-                            client_auto_augment.de_To_Address_Street_1
-                        )
+                    # if client_auto_augment.de_To_Address_Street_1 is not None:
+                    #     booking.de_To_Address_Street_1 = (
+                    #         client_auto_augment.de_To_Address_Street_1
+                    #     )
 
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        booking.de_To_Address_Street_2 = (
-                            client_auto_augment.de_To_Address_Street_2
-                        )
+                    # if client_auto_augment.de_To_Address_Street_1 is not None:
+                    #     booking.de_To_Address_Street_2 = (
+                    #         client_auto_augment.de_To_Address_Street_2
+                    #     )
 
-                    if client_auto_augment.company_hours_info is not None:
-                        booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
+                    # if client_auto_augment.company_hours_info is not None:
+                    #     booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
                 client_process.save()
                 booking.save()
@@ -2953,7 +3051,7 @@ class CommsViewSet(viewsets.ViewSet):
             dme_comm_and_task.closed != request.data["closed"]
             and request.data["closed"]
         ):
-            request.data["status_log_closed_time"] = datetime.now()
+            request.data["status_log_closed_time"] = str(datetime.now())
         elif (
             dme_comm_and_task.closed != request.data["closed"]
             and not request.data["closed"]
@@ -2974,7 +3072,7 @@ class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def create_comm(self, request, pk=None):
         if request.data["closed"]:
-            request.data["status_log_closed_time"] = datetime.now()
+            request.data["status_log_closed_time"] = str(datetime.now())
         serializer = CommSerializer(data=request.data)
 
         try:
@@ -3116,7 +3214,7 @@ class NotesViewSet(viewsets.ViewSet):
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_packagetypes(self, request, pk=None):
-        packageTypes = Dme_package_types.objects.all()
+        packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
 
         return_datas = []
         if len(packageTypes) == 0:
@@ -3208,21 +3306,40 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     pk_booking_id=request.data["fk_booking_id"]
                 )
 
-                if request.data["status_last"] == "In Transit":
-                    calc_collect_after_status_change(
-                        request.data["fk_booking_id"], request.data["status_last"]
-                    )
-                elif request.data["status_last"] == "Delivered":
-                    booking.z_api_issue_update_flag_500 = 0
-                    booking.delivery_booking = datetime.now()
-                    booking.save()
+                # ######################################## #
+                #    Disabled because it was for `Cope`    #
+                # ######################################## #
+                # if request.data["status_last"] == "In Transit":
+                #     calc_collect_after_status_change(
+                #         request.data["fk_booking_id"], request.data["status_last"]
+                #     )
+                # elif request.data["status_last"] == "Delivered":
+                #     booking.z_api_issue_update_flag_500 = 0
+                #     booking.delivery_booking = str(datetime.now())
+                #     booking.save()
 
+                status_category = get_status_category_from_status(
+                    request.data["status_last"]
+                )
+
+                if status_category == "Transit":
+                    booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                elif status_category == "Complete":
+                    booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                    booking.delivery_booking = request.data["event_time_stamp"][:10]
+                    booking.z_api_issue_update_flag_500 = 0
+
+                booking.save()
                 tempo.push_via_api(booking)
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
@@ -3840,7 +3957,7 @@ def download(request):
     download_option = body["downloadOption"]
     file_paths = []
 
-    if download_option in ["pricing-only", "pricing-rule"]:
+    if download_option in ["pricing-only", "pricing-rule", "xls import"]:
         file_name = body["fileName"]
     elif download_option == "manifest":
         z_manifest_url = body["z_manifest_url"]
@@ -3861,6 +3978,14 @@ def download(request):
     elif download_option == "pricing-rule":
         src_file_path = f"./static/uploaded/pricing_rule/achieve/{file_name}"
         file_paths.append(src_file_path)
+    elif download_option == "xls import":
+        file_name_without_ext = file_name.split(".")[0]
+        result_file_record = DME_Files.objects.filter(
+            file_name__icontains=file_name_without_ext, file_type="xls import"
+        )
+
+        if result_file_record:
+            file_paths.append(result_file_record.first().file_path)
     elif download_option == "manifest":
         file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{z_manifest_url}")
     elif download_option == "label":
@@ -3869,7 +3994,7 @@ def download(request):
                 file_paths.append(
                     f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )
-                booking.z_downloaded_shipping_label_timestamp = datetime.now()
+                booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
     elif download_option == "pod":
         for booking in bookings:
@@ -4311,8 +4436,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     def get(self, request, pk, format=None):
         return_data = []
         try:
-            resultObjects = []
-            resultObject = Utl_sql_queries.objects.get(pk=pk)
+            resultObject = Utl_sql_queries.objects.get(id=pk)
 
             return_data.append(
                 {
@@ -4327,9 +4451,10 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
                 }
             )
+
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -4399,6 +4524,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                         for (index, column) in enumerate(value):
                             tmp[columns[index][0]] = column
                         result.append(tmp)
+
                     return JsonResponse({"results": result, "tables": row1})
                 except Exception as e:
                     # print('@Exception', e)
@@ -4603,7 +4729,7 @@ class BookingSetsViewSet(viewsets.ViewSet):
         request.data["booking_ids"] = ", ".join(bookingIds)
         request.data["status"] = "Created"
         request.data["z_createdByAccount"] = get_clientname(request)
-        request.data["z_createdTimeStamp"] = datetime.now()
+        request.data["z_createdTimeStamp"] = str(datetime.now())
         serializer = BookingSetsSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -4626,3 +4752,16 @@ class BookingSetsViewSet(viewsets.ViewSet):
         serializer = BookingSetsSerializer(bookingset)
         bookingset.delete()
         return Response(serializer.data)
+
+
+class ClientEmployeesViewSet(viewsets.ViewSet):
+    serializer_class = ClientEmployeesSerializer
+
+    def update(self, request, pk=None):
+        clientEmployee = Client_employees.objects.get(pk=pk)
+        serializer = ClientEmployeesSerializer(clientEmployee, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
