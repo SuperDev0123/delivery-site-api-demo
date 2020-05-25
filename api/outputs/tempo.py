@@ -45,7 +45,7 @@ def push_via_api(booking):
             json_booking["status"] = booking.b_status
             json_booking["bookingID"] = booking.b_bookingID_Visual
 
-            logger.error(f"@591 - {json_booking}")
+            logger.info(f"@591 - {json_booking}")
             json_payload = {"data": [json_booking]}
             headers = {"content-type": "application/json"}
 
@@ -55,4 +55,4 @@ def push_via_api(booking):
                 json=json_payload,
                 headers=headers,
             )
-            logger.error(f"@592 - {res.status_code}, {res.content}")
+            logger.info(f"@592 - {res.status_code}, {res.content}")

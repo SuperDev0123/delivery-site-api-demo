@@ -1910,7 +1910,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
                 except Exception as e:
-                    logger.error(f"@300 TAS XML - {e}")
+                    logger.info(f"@300 TAS XML - {e}")
                     return e
         elif one_manifest_file == 1:
             try:
@@ -2227,7 +2227,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     mycursor.execute(sql2, adr2)
                     mysqlcon.commit()
             except Exception as e:
-                logger.error(f"@301 TAS XML - {e}")
+                logger.info(f"@301 TAS XML - {e}")
                 return e
     elif vx_freight_provider.lower() == "act":
         # start check if xmls folder exists
@@ -2471,7 +2471,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
         except Exception as e:
-            logger.error(f"@302 ST ACT XML - {e}")
+            logger.info(f"@302 ST ACT XML - {e}")
             return e
     elif vx_freight_provider.lower() == "jet":
         # start check if xmls folder exists
@@ -2715,7 +2715,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
         except Exception as e:
-            logger.error(f"@301 JET XML - {e}")
+            logger.info(f"@301 JET XML - {e}")
             return e
     mysqlcon.close()
 
@@ -3419,7 +3419,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    logger.error(f"ERROR @303 - {str(e)}")
+                    logger.info(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -4104,7 +4104,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 except Exception as e:
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    logger.error(f"ERROR @303 - {str(e)}")
+                    logger.info(f"ERROR @303 - {str(e)}")
 
             k += 1
         doc.build(Story)
@@ -4726,7 +4726,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error(f"#505 Error: - {e}")
+            logger.info(f"#505 Error: - {e}")
     elif vx_freight_provider.upper() == "DHL":
         try:
             bookings = get_available_bookings(mysqlcon, booking_ids)
@@ -5108,7 +5108,7 @@ def build_pdf(booking_ids, vx_freight_provider):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error(f"#506 Error: - {e}")
+            logger.info(f"#506 Error: - {e}")
     mysqlcon.close()
     return i - 1
 
@@ -5186,6 +5186,66 @@ def build_xls_and_send(
             [],
             "Whse XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Whse) you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "booked_bookings":
+        filepath = build_xls(
+            bookings, "booked_bookings", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Booked Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "picked_up_bookings":
+        filepath = build_xls(
+            bookings,
+            "picked_up_bookings",
+            username,
+            start_date,
+            end_date,
+            show_field_name,
+        )
+        send_email(
+            [email_addr],
+            [],
+            "PickedUp Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "box":
+        filepath = build_xls(
+            bookings, "box", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Box XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "futile":
+        filepath = build_xls(
+            bookings, "futile", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Futile XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "goods_delivered":
+        filepath = build_xls(
+            bookings, "goods_delivered", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Goods Delivered Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )
     elif report_type == "all":
@@ -5295,8 +5355,16 @@ def get_pu_by(booking):
         pu_by = datetime.combine(
             booking.pu_PickUp_By_Date,
             time(
-                int(booking.pu_PickUp_By_Time_Hours),
-                int(booking.pu_PickUp_By_Time_Minutes),
+                int(
+                    booking.pu_PickUp_By_Time_Hours
+                    if booking.pu_PickUp_By_Time_Hours
+                    else 0
+                ),
+                int(
+                    booking.pu_PickUp_By_Time_Minutes
+                    if booking.pu_PickUp_By_Time_Minutes
+                    else 0
+                ),
                 0,
             ),
         )
@@ -5322,7 +5390,7 @@ def get_eta_pu_by(booking):
             return get_pu_by(booking)
     except Exception as e:
         trace_error.print()
-        logger.error(f"Error #1001: {e}")
+        logger.info(f"Error #1001: {e}")
         return None
 
 
@@ -5362,5 +5430,31 @@ def get_eta_de_by(booking, quote):
             return None
     except Exception as e:
         trace_error.print()
-        logger.error(f"Error #1002: {e}")
+        logger.info(f"Error #1002: {e}")
         return None
+
+
+def get_b_bookingID_Visual(dme_file):
+    b_bookingID_Visual = ""
+    if dme_file.file_type == "xls import" and (
+        dme_file.note and len(dme_file.note) == 36
+    ):
+        booking = Bookings.objects.filter(pk_booking_id=dme_file.note).first()
+
+        if booking:
+            b_bookingID_Visual = booking.b_bookingID_Visual
+
+    return b_bookingID_Visual
+
+
+def get_booking_id(dme_file):
+    booking_id = ""
+    if dme_file.file_type == "xls import" and (
+        dme_file.note and len(dme_file.note) == 36
+    ):
+        booking = Bookings.objects.filter(pk_booking_id=dme_file.note).first()
+
+        if booking:
+            booking_id = booking.id
+
+    return booking_id

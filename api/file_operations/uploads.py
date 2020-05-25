@@ -10,6 +10,7 @@ from api.models import (
     Client_employees,
     Fp_freight_providers,
     DME_Files,
+    Dme_attachments,
 )
 from api.utils import (
     clearFileCheckHistory,
@@ -128,7 +129,7 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        if upload_option == "attachments":
+        if upload_option == "attachment":
             dme_attachment = Dme_attachments(
                 fk_id_dme_client=client,
                 fk_id_dme_booking=booking.pk_booking_id,

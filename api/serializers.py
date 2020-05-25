@@ -27,6 +27,7 @@ from api.models import (
     BookingSets,
 )
 from api import utils
+from api.fp_apis.utils import _is_deliverable_price
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -82,7 +83,20 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bookings
-        fields = (
+        read_only_fields = (
+            "eta_pu_by",  # serializer method
+            "eta_de_by",  # serializer method
+            "pricing_cost",  # serializer method
+            "pricing_account_code",  # serializer method
+            "pricing_service_name",  # serializer method
+            "has_comms",  # property
+            "business_group",  # property
+            "dme_delivery_status_category",  # property
+            "client_item_references",  # property
+            "clientRefNumbers",  # property
+            "gap_ras",  # property
+        )
+        fields = read_only_fields + (
             "id",
             "puCompany",
             "pu_Address_Street_1",
@@ -140,7 +154,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "total_lines_qty_override",
             "total_1_KG_weight_override",
             "total_Cubic_Meter_override",
-            "b_status_API",
             "z_lock_status",
             "tally_delivered",
             "dme_status_history_notes",
@@ -199,16 +212,10 @@ class BookingSerializer(serializers.ModelSerializer):
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
             "b_handling_Instructions",
-            "eta_pu_by",  # serializer method
-            "eta_de_by",  # serializer method
-            "pricing_cost",  # serializer method
-            "pricing_account_code",  # serializer method
-            "pricing_service_name",  # serializer method
-            "has_comms",  # property
-            "business_group",  # property
-            "dme_delivery_status_category",  # property
-            "client_item_references",  # property
-            "clientRefNumbers",  # property
+            "b_status_API",
+            "b_booking_Notes",
+            "b_error_Capture",
+            "kf_client_id",
         )
 
 
@@ -304,6 +311,7 @@ class FPStoreBookingLogSerializer(serializers.ModelSerializer):
 class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     eta_pu_by = serializers.SerializerMethodField(read_only=True)
     eta_de_by = serializers.SerializerMethodField(read_only=True)
+    is_deliverable = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -328,6 +336,13 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         try:
             booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
             return utils.get_eta_de_by(booking, obj)
+        except Exception as e:
+            return None
+
+    def get_is_deliverable(self, obj):
+        try:
+            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            return _is_deliverable_price(obj, booking)
         except Exception as e:
             return None
 
@@ -382,6 +397,15 @@ class OptionsSerializer(serializers.ModelSerializer):
 
 
 class FilesSerializer(serializers.ModelSerializer):
+    b_bookingID_Visual = serializers.SerializerMethodField(read_only=True)
+    booking_id = serializers.SerializerMethodField(read_only=True)
+
+    def get_b_bookingID_Visual(self, obj):
+        return utils.get_b_bookingID_Visual(obj)
+
+    def get_booking_id(self, obj):
+        return utils.get_booking_id(obj)
+
     class Meta:
         model = DME_Files
         fields = "__all__"
@@ -414,6 +438,12 @@ class PricingRulesSerializer(serializers.ModelSerializer):
 class EmailLogsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailLogs
+        fields = "__all__"
+
+
+class ClientEmployeesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_employees
         fields = "__all__"
 
 

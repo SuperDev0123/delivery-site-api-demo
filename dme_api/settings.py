@@ -123,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Australia/Sydney"
 
 USE_I18N = True
 
@@ -200,7 +200,7 @@ if ENV == "prod":
                 "backupCount": 10,  # keep at most 10 log files
                 "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
             },
-            "bugsnag": {"level": "INFO", "class": "bugsnag.handlers.BugsnagHandler",},
+            "bugsnag": {"level": "ERROR", "class": "bugsnag.handlers.BugsnagHandler",},
         },
         "loggers": {
             "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}
@@ -231,6 +231,13 @@ else:
 
 # S3 url
 S3_URL = os.environ["S3_URL"]
+
 WEB_SITE_IP = os.environ["WEB_SITE_IP"]
 STATIC_PUBLIC = os.environ["STATIC_PUBLIC"]
 STATIC_PRIVATE = os.environ["STATIC_PRIVATE"]
+
+# Zoho
+CLIENT_ID_ZOHO = os.environ["CLIENT_ID_ZOHO"]
+CLIENT_SECRET_ZOHO = os.environ["CLIENT_SECRET_ZOHO"]
+ORG_ID = os.environ["ORG_ID"]
+REDIRECT_URI_ZOHO = os.environ["REDIRECT_URI_ZOHO"]

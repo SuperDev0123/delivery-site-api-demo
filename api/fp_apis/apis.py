@@ -30,12 +30,13 @@ from .self_pricing import get_pricing
 from .utils import (
     get_dme_status_from_fp_status,
     get_account_code_key,
-    auto_select,
+    auto_select_pricing,
 )
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from .build_label.dhl import build_dhl_label
+from .operations.tracking import update_booking_with_tracking_result
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -76,7 +77,7 @@ def tracking(request, fp_name):
         else:
             payload = get_tracking_payload(booking, fp_name)
 
-        logger.error(f"### Payload ({fp_name} tracking): {payload}")
+        logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
 
@@ -87,7 +88,7 @@ def tracking(request, fp_name):
 
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-        logger.error(f"### Response ({fp_name} tracking): {s0}")
+        logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
@@ -100,58 +101,33 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
+            update_booking_with_tracking_result(
+                request, booking, fp_name, consignmentStatuses
+            )
 
-            if fp_name.lower() == "startrack":
-                booking.b_status_API = consignmentStatuses[0]["status"]
-                event_time = None
-            elif fp_name.lower() in ["tnt"]:
-                last_consignmentStatus = consignmentStatuses[
-                    len(consignmentStatuses) - 1
-                ]
-                booking.b_status_API = last_consignmentStatus["status"][0]
-                event_time = last_consignmentStatus["statusDate"][0]
-                event_time = str(datetime.strptime(event_time, "%d/%m/%Y"))
-            elif fp_name.lower() in ["hunter"]:
-                last_consignmentStatus = consignmentStatuses[
-                    len(consignmentStatuses) - 1
-                ]
-                booking.b_status_API = last_consignmentStatus["status"]
-                event_time = last_consignmentStatus["statusUpdate"]
-                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
-            elif fp_name.lower() == "sendle":
-                last_consignmentStatus = consignmentStatuses[
-                    len(consignmentStatuses) - 1
-                ]
-                booking.b_status_API = last_consignmentStatus["status"]
-                event_time = last_consignmentStatus["statusUpdate"]
-                event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ"))
-            else:
-                event_time = None
-
-            if booking.b_status_API:
-                booking.b_status = get_dme_status_from_fp_status(fp_name, booking)
-                booking.s_21_Actual_Delivery_TimeStamp = event_time
-                booking.save()
-                status_history.create(booking, booking.b_status, request.user.username)
             return JsonResponse(
                 {
                     "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
                     "b_status_API": booking.b_status_API,
                     "b_status": booking.b_status,
-                    "event_time": event_time,
                 },
                 status=200,
             )
         except KeyError:
+            if "errorMessage" in json_data:
+                error_msg = json_data["errorMessage"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
             trace_error.print()
+
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Bookings.DoesNotExist:
         trace_error.print()
-        logger.error(f"ERROR: {e}")
+        logger.info(f"ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
     except Exception as e:
         trace_error.print()
-        logger.error(f"ERROR: {e}")
+        logger.info(f"ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
 
@@ -185,20 +161,22 @@ def book(request, fp_name):
                     payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 trace_error.print()
-                logger.error(f"#401 - Error while build payload: {e}")
+                logger.info(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
                     {"message": f"Error while build payload {str(e)}"}, status=400
                 )
 
-            logger.error(f"### Payload ({fp_name} book): {payload}")
+            logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
-            res_content = response.content.decode("utf8").replace("'", '"')
+            res_content = (
+                response.content.decode("utf8").replace("'t", " not").replace("'", '"')
+            )
             json_data = json.loads(res_content)
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            logger.error(f"### Response ({fp_name} book): {s0}")
+            logger.info(f"### Response ({fp_name} book): {s0}")
 
             if (
                 response.status_code == 500
@@ -207,7 +185,7 @@ def book(request, fp_name):
             ):
                 for i in range(4):
                     t.sleep(180)
-                    logger.error(f"### Payload ({fp_name} book): {payload}")
+                    logger.info(f"### Payload ({fp_name} book): {payload}")
                     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
                     response = requests.post(url, params={}, json=payload)
                     res_content = response.content.decode("utf8").replace("'", '"')
@@ -215,7 +193,7 @@ def book(request, fp_name):
                     s0 = json.dumps(
                         json_data, indent=2, sort_keys=True, default=str
                     )  # Just for visual
-                    logger.error(f"### Response ({fp_name} book): {s0}")
+                    logger.info(f"### Response ({fp_name} book): {s0}")
 
                     if response.status_code == 200:
                         break
@@ -363,9 +341,9 @@ def book(request, fp_name):
 
                 if "errors" in json_data:
                     error_msg = json_data["errors"]
-                elif "errorMessage" in json_data:  # TNT Error
+                elif "errorMessage" in json_data:  # Sendle, TNT Error
                     error_msg = json_data["errorMessage"]
-                elif "errorMessage" in json_data[0]:  # Hunter Error
+                elif "errorMessage" in json_data[0]:
                     error_msg = json_data[0]["errorMessage"]
                 else:
                     error_msg = s0
@@ -413,12 +391,12 @@ def rebook(request, fp_name):
                 payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 trace_error.print()
-                logger.error(f"#401 - Error while build payload: {e}")
+                logger.info(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
                     {"message": f"Error while build payload {str(e)}"}, status=400
                 )
 
-            logger.error(f"### Payload ({fp_name} rebook): {payload}")
+            logger.info(f"### Payload ({fp_name} rebook): {payload}")
             url = DME_LEVEL_API_URL + "/booking/rebookconsignment"
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
@@ -426,7 +404,7 @@ def rebook(request, fp_name):
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            logger.error(f"### Response ({fp_name} rebook): {s0}")
+            logger.info(f"### Response ({fp_name} rebook): {s0}")
 
             if response.status_code == 200:
                 try:
@@ -560,7 +538,7 @@ def edit_book(request, fp_name):
 
             payload = get_book_payload(booking, fp_name)
 
-            logger.error(f"### Payload ({fp_name} edit book): {payload}")
+            logger.info(f"### Payload ({fp_name} edit book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
@@ -568,7 +546,7 @@ def edit_book(request, fp_name):
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            logger.error(f"### Response ({fp_name} edit book): {s0}")
+            logger.info(f"### Response ({fp_name} edit book): {s0}")
 
             try:
                 request_payload = {
@@ -649,7 +627,7 @@ def cancel_book(request, fp_name):
             if booking.b_dateBookedDate is not None:
                 payload = get_cancel_book_payload(booking, fp_name)
 
-                logger.error(f"### Payload ({fp_name} cancel book): {payload}")
+                logger.info(f"### Payload ({fp_name} cancel book): {payload}")
                 url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
                 response = requests.delete(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
@@ -657,7 +635,7 @@ def cancel_book(request, fp_name):
                 s0 = json.dumps(
                     json_data, indent=2, sort_keys=True, default=str
                 )  # Just for visual
-                logger.error(f"### Response ({fp_name} cancel book): {s0}")
+                logger.info(f"### Response ({fp_name} cancel book): {s0}")
 
                 try:
                     if response.status_code == 200:
@@ -683,6 +661,11 @@ def cancel_book(request, fp_name):
                             {"message": "Successfully cancelled book"}, status=200
                         )
                     else:
+                        if "errorMessage" in json_data:
+                            error_msg = json_data["errorMessage"]
+                            _set_error(booking, error_msg)
+                            return JsonResponse({"message": error_msg}, status=400)
+
                         error_msg = json_data
                         _set_error(booking, error_msg)
                         return JsonResponse(
@@ -734,7 +717,7 @@ def get_label(request, fp_name):
             try:
                 payload = get_create_label_payload(booking, fp_name)
 
-                logger.error(
+                logger.info(
                     f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
@@ -744,7 +727,7 @@ def get_label(request, fp_name):
                 s0 = json.dumps(
                     json_data, indent=2, sort_keys=True, default=str
                 )  # Just for visual
-                logger.error(f"### Response ({fp_name} create_label): {s0}")
+                logger.info(f"### Response ({fp_name} create_label): {s0}")
 
                 payload["consignmentNumber"] = json_data[0]["request_id"]
             except Exception as e:
@@ -765,7 +748,7 @@ def get_label(request, fp_name):
         elif fp_name.lower() in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
         try:
-            logger.error(f"### Payload ({fp_name} get_label): {payload}")
+            logger.info(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
 
@@ -793,7 +776,7 @@ def get_label(request, fp_name):
                 s0 = json.dumps(
                     json_data, indent=2, sort_keys=True, default=str
                 )  # Just for visual
-                logger.error(f"### Response ({fp_name} get_label): {s0}")
+                logger.info(f"### Response ({fp_name} get_label): {s0}")
 
             if fp_name.lower() in ["startrack"]:
                 z_label_url = download_external.pdf(
@@ -825,6 +808,11 @@ def get_label(request, fp_name):
                         download_from_url(pdf_url, label_url)
 
                 except KeyError as e:
+                    if "errorMessage" in json_data:
+                        error_msg = json_data["errorMessage"]
+                        _set_error(booking, error_msg)
+                        return JsonResponse({"message": error_msg}, status=400)
+
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
@@ -860,6 +848,10 @@ def get_label(request, fp_name):
             ).save()
 
             error_msg = s0
+
+            if fp_name.lower() in ["tnt"]:
+                error_msg = json_data["errorMessage"]
+
             _set_error(booking, error_msg)
             return JsonResponse({"message": error_msg}, status=400)
     except IndexError as e:
@@ -882,7 +874,7 @@ def create_order(request, fp_name):
 
         payload = get_create_order_payload(bookings, fp_name)
 
-        logger.error(f"Payload(Create Order for ST): {payload}")
+        logger.info(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
         response = requests.post(url, params={}, json=payload)
 
@@ -896,7 +888,7 @@ def create_order(request, fp_name):
         s0 = json.dumps(
             json_data, indent=2, sort_keys=True, default=str
         )  # Just for visual
-        logger.error(f"Response(Create Order for ST): {s0}")
+        logger.info(f"Response(Create Order for ST): {s0}")
 
         try:
             Log(
@@ -951,7 +943,7 @@ def get_order_summary(request, fp_name):
             payload = get_get_order_summary_payload(booking, fp_name)
             headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
 
-            logger.error(f"### Payload ({fp_name} Get Order Summary): {payload}")
+            logger.info(f"### Payload ({fp_name} Get Order Summary): {payload}")
             url = DME_LEVEL_API_URL + "/order/summary"
             response = requests.post(url, json=payload, headers=headers)
             res_content = response.content
@@ -959,7 +951,7 @@ def get_order_summary(request, fp_name):
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            # logger.error(f"### Response ({fp_name} Get Order Summary): {bytes(json_data["pdfData"]["data"])}")
+            # logger.info(f"### Response ({fp_name} Get Order Summary): {bytes(json_data["pdfData"]["data"])}")
 
             try:
                 file_name = f"biopak_manifest_{str(booking.vx_fp_order_id)}_{str(datetime.now())}.pdf"
@@ -976,7 +968,7 @@ def get_order_summary(request, fp_name):
 
                 bookings = Bookings.objects.filter(pk__in=booking_ids)
 
-                manifest_timestamp = datetime.now()
+                manifest_timestamp = str(datetime.now())
                 for booking in bookings:
                     booking.z_manifest_url = f"{fp_name.lower()}_au/{file_name}"
                     booking.manifest_timestamp = manifest_timestamp
@@ -1042,13 +1034,13 @@ def pod(request, fp_name):
         else:
             payload = get_pod_payload(booking, fp_name)
 
-        logger.error(f"### Payload ({fp_name} POD): {payload}")
+        logger.info(f"### Payload ({fp_name} POD): {payload}")
         url = DME_LEVEL_API_URL + "/pod/fetchpod"
         response = requests.post(url, params={}, json=payload)
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-        logger.error(f"### Response ({fp_name} POD): {s0}")
+        logger.info(f"### Response ({fp_name} POD): {s0}")
 
         if fp_name.lower() in ["hunter"]:
             try:
@@ -1058,8 +1050,8 @@ def pod(request, fp_name):
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
         else:
-            if json_data["errors"]:
-                error_msg = json.dumps(json_data["errors"], indent=2, sort_keys=True)
+            if "errorMessage" in json_data:
+                error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg})
             elif "podData" not in json_data["pod"]:
@@ -1105,7 +1097,7 @@ def reprint(request, fp_name):
             booking = Bookings.objects.get(id=booking_id)
             payload = get_reprint_payload(booking, fp_name)
 
-            logger.error(f"### Payload ({fp_name} POD): {payload}")
+            logger.info(f"### Payload ({fp_name} POD): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/reprint"
             response = requests.post(url, params={}, json=payload)
 
@@ -1113,7 +1105,7 @@ def reprint(request, fp_name):
             json_data = json.loads(res_content)
 
             # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-            # logger.error(f"### Response ({fp_name} POD): {s0}")
+            # logger.info(f"### Response ({fp_name} POD): {s0}")
 
             podData = json_data["ReprintActionResult"]["LabelPDF"]
 
@@ -1138,8 +1130,12 @@ def reprint(request, fp_name):
                 trace_error.print()
                 error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": s0})
+                return JsonResponse({"message": s0}, status=400)
         except KeyError as e:
+            if "errorMessage" in json_data:
+                error_msg = json_data["errorMessage"]
+                _set_error(booking, error_msg)
+                return JsonResponse({"message": error_msg}, status=400)
             trace_error.print()
             return JsonResponse({"Error": "Too many request"}, status=400)
     except SyntaxError:
@@ -1153,6 +1149,7 @@ def reprint(request, fp_name):
 def pricing(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
+    auto_select_type = body.get("auto_select_type", 1)
     is_pricing_only = False
     booking_lines = []
     booking = None
@@ -1192,7 +1189,7 @@ def pricing(request):
     #     "Startrack"
     #     "Camerons",
     #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century"]
+    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
 
     try:
         for fp_name in fp_names:
@@ -1203,6 +1200,10 @@ def pricing(request):
                 return JsonResponse({"message": f"Not supported FP"}, status=400)
             elif fp_name.lower() in ACCOUNT_CODES:
                 for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
+                    logger.info(
+                        f"#905 INFO Pricing - {fp_name.lower()}, {account_code_key}"
+                    )
+
                     # Allow live pricing credentials only on PROD
                     if settings.ENV == "prod" and "test" in account_code_key:
                         continue
@@ -1225,7 +1226,7 @@ def pricing(request):
                     if not payload:
                         continue
 
-                    logger.error(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                    logger.info(f"### Payload ({fp_name.upper()} PRICING): {payload}")
                     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
                     response = requests.post(url, params={}, json=payload)
                     res_content = response.content.decode("utf8").replace("'", '"')
@@ -1233,7 +1234,7 @@ def pricing(request):
                     s0 = json.dumps(
                         json_data, indent=2, sort_keys=True
                     )  # Just for visual
-                    logger.error(f"### Response ({fp_name.upper()} PRICING): {s0}")
+                    logger.info(f"### Response ({fp_name.upper()} PRICING): {s0}")
 
                     if not is_pricing_only:
                         Log.objects.create(
@@ -1274,7 +1275,7 @@ def pricing(request):
                                         serializer.save()
                                 except Exception as e:
                                     trace_error.print()
-                                    logger.error("Exception: ", e)
+                                    logger.info("Exception: ", e)
 
                                 api_booking_quote.save()
                             except API_booking_quotes.DoesNotExist as e:
@@ -1287,12 +1288,12 @@ def pricing(request):
                                     if serializer.is_valid():
                                         serializer.save()
                                     else:
-                                        logger.error(
+                                        logger.info(
                                             f"@401 Serializer error: {serializer.errors}"
                                         )
                                 except Exception as e:
                                     trace_error.print()
-                                    logger.error(f"@402 Exception: {e}")
+                                    logger.info(f"@402 Exception: {e}")
             elif fp_name.lower() in BUILT_IN_PRICINGS:
                 results = get_pricing(fp_name.lower(), booking)
                 parse_results = parse_pricing_response(
@@ -1315,7 +1316,7 @@ def pricing(request):
                         if serializer.is_valid():
                             serializer.save()
                         else:
-                            logger.error(f"@403 Serializer error: {serializer.errors}")
+                            logger.info(f"@403 Serializer error: {serializer.errors}")
 
                         api_booking_quote.save()
                     except API_booking_quotes.DoesNotExist as e:
@@ -1326,12 +1327,12 @@ def pricing(request):
                             if serializer.is_valid():
                                 serializer.save()
                             else:
-                                logger.error(
+                                logger.info(
                                     f"@404 Serializer error: {serializer.errors}"
                                 )
                         except Exception as e:
                             trace_error.print()
-                            logger.error(f"@405 Exception: {e}")
+                            logger.info(f"@405 Exception: {e}")
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
 
         if is_pricing_only:
@@ -1340,7 +1341,7 @@ def pricing(request):
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
-            auto_select(booking, results)
+            auto_select_pricing(booking, results, auto_select_type)
             results = ApiBookingQuotesSerializer(results, many=True).data
 
         return JsonResponse(

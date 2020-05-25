@@ -43,6 +43,7 @@ router.register(r"bok_2_lines", BOK_2_ViewSet, basename="bok2")
 router.register(r"bok_3_lines_data", BOK_3_ViewSet, basename="bok3")
 router.register(r"files", FilesViewSet, basename="files")
 router.register(r"bookingsets", BookingSetsViewSet, basename="bookingsets")
+router.register(r"clientemployee", ClientEmployeesViewSet, basename="clientemployee")
 
 urlpatterns = router.urls
 
@@ -86,4 +87,7 @@ urlpatterns += [
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
+    url(r"^get_all_zoho_tickets/", get_all_zoho_tickets),
+    url(r"^get_auth_zoho_tickets/", get_auth_zoho_tickets),
+    
 ]

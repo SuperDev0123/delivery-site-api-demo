@@ -85,6 +85,9 @@ class DME_employees(models.Model):
     role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=False, null=True
+    ) 
+    status_time = models.DateTimeField(
+        verbose_name=_("Status Time"), default=datetime.now, blank=True
     )
 
     class Meta:
@@ -212,7 +215,9 @@ class Client_employees(models.Model):
     z_modifiedTimeStamp = models.DateTimeField(
         verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
     )
-
+    status_time = models.DateTimeField(
+        verbose_name=_("Status Time"), default=datetime.now, blank=True
+    )
     class Meta:
         db_table = "dme_client_employees"
 
@@ -1631,6 +1636,27 @@ class Bookings(models.Model):
         else:
             return True
 
+    def had_status(self, status):
+        results = Dme_status_history.objects.filter(
+            fk_booking_id=self.pk_booking_id, status_last__iexact=status
+        )
+
+        return True if results else False
+
+    def get_status_histories(self, status=None):
+        status_histories = []
+
+        if status:
+            status_histories = Dme_status_history.objects.filter(
+                fk_booking_id=self.pk_booking_id, status_last__iexact=status
+            )
+        else:
+            status_histories = Dme_status_history.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+        return status_histories
+
     @property
     def business_group(self):
         customer_group_name = ""
@@ -1656,6 +1682,23 @@ class Bookings(models.Model):
         except Exception as e:
             # print('Exception: ', e)
             return ""
+
+    def get_total_lines_qty(self):
+        try:
+            qty = 0
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+            for booking_line in booking_lines:
+                if booking_line.e_qty:
+                    qty += int(booking_line.e_qty)
+
+            return qty
+        except Exception as e:
+            # print('Exception: ', e)
+            logger.info("#591 Error - ", str(e))
+            return 0
 
     @property
     def client_item_references(self):
@@ -1691,23 +1734,41 @@ class Bookings(models.Model):
             # print('Exception: ', e)
             return ""
 
-    def get_etd(self):
-        if self.vx_freight_provider.lower() == "tnt":
-            return round(float(self.api_booking_quote.etd)), "days"
-        elif self.api_booking_quote:
-            freight_provider = Fp_freight_providers.objects.get(
-                fp_company_name=self.vx_freight_provider
+    @property
+    def gap_ras(self):
+        try:
+            gap_ras = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_id=self.pk_booking_id
             )
-            service_etd = FP_Service_ETDs.objects.filter(
-                freight_provider_id=freight_provider.id,
-                fp_delivery_time_description=self.api_booking_quote.etd,
-            ).first()
 
-            if service_etd is not None:
-                if service_etd.fp_service_time_uom.lower() == "days":
-                    return service_etd.fp_03_delivery_hours / 24, "days"
-                elif service_etd.fp_service_time_uom.lower() == "hours":
-                    return service_etd.fp_03_delivery_hours, "hours"
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.gap_ra is not None:
+                    gap_ras.append(booking_line_data.gap_ra)
+
+            return ", ".join(gap_ras)
+        except Exception as e:
+            # print('Exception: ', e)
+            return ""
+
+    def get_etd(self):
+        if self.api_booking_quote:
+            if self.vx_freight_provider.lower() == "tnt":
+                return round(float(self.api_booking_quote.etd)), "days"
+            elif self.api_booking_quote:
+                freight_provider = Fp_freight_providers.objects.get(
+                    fp_company_name=self.vx_freight_provider
+                )
+                service_etd = FP_Service_ETDs.objects.filter(
+                    freight_provider_id=freight_provider.id,
+                    fp_delivery_time_description=self.api_booking_quote.etd,
+                ).first()
+
+                if service_etd is not None:
+                    if service_etd.fp_service_time_uom.lower() == "days":
+                        return service_etd.fp_03_delivery_hours / 24, "days"
+                    elif service_etd.fp_service_time_uom.lower() == "hours":
+                        return service_etd.fp_03_delivery_hours, "hours"
 
         return None, None
 
@@ -3663,17 +3724,31 @@ class DME_Files(models.Model):
     class Meta:
         db_table = "dme_files"
 
+
 class Client_Auto_Augment(models.Model):
-    de_Email = models.CharField(max_length=64,blank=True,null=True, default = None)
-    de_Email_Group_Emails = models.TextField(max_length=512, blank=True, null=True, default = None)
-    de_To_Address_Street_1 = models.CharField(max_length=40, blank=True, null=True, default = None)
-    de_To_Address_Street_2 = models.CharField( max_length=40, blank=True, null=True, default=None)
-    fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    de_to_companyName = models.CharField( max_length=40, blank=True, null=True, default=None)
-    company_hours_info = models.CharField( max_length=40, blank=True, null=True, default=None)
-    
+    de_Email = models.CharField(max_length=64, blank=True, null=True, default=None)
+    de_Email_Group_Emails = models.TextField(
+        max_length=512, blank=True, null=True, default=None
+    )
+    de_To_Address_Street_1 = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+    de_To_Address_Street_2 = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, default=3
+    )
+    de_to_companyName = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+    company_hours_info = models.CharField(
+        max_length=40, blank=True, null=True, default=None
+    )
+
     class Meta:
         db_table = "client_auto_augment"
+
 
 class Client_Process_Mgr(models.Model):
     fk_booking_id = models.CharField(
@@ -3810,6 +3885,9 @@ class BookingSets(models.Model):
     booking_ids = models.TextField(blank=True, null=True, default=None)
     note = models.TextField(max_length=512, blank=True, null=True, default=None)
     status = models.CharField(max_length=255, blank=True, null=True, default=None)
+    auto_select_type = models.BooleanField(
+        max_length=255, blank=True, null=True, default=True
+    )  # True: lowest | False: Fastest
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, default=None
     )
@@ -3829,3 +3907,13 @@ class BookingSets(models.Model):
 
     class Meta:
         db_table = "dme_booking_sets"
+
+class Tokens(models.Model):
+    id = models.AutoField(primary_key=True)
+    value = models.CharField(max_length=255, default=None)
+    type = models.CharField(max_length=255, default=None)
+    z_createdTimeStamp = models.DateTimeField(default=datetime.now())
+    z_expiryTimeStamp = models.DateTimeField(default=None)
+
+    class Meta:
+        db_table = "tokens"

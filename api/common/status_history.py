@@ -4,7 +4,7 @@ from api.models import Dme_status_history
 from api.outputs import tempo
 
 # Create new status_history
-def create(booking, status, username):
+def create(booking, status, username, event_timestamp=None):
     if not booking.z_lock_status:
         last_status_history = None
 
@@ -24,16 +24,22 @@ def create(booking, status, username):
             dme_status_history.status_old = booking.b_status
             dme_status_history.notes = f"{str(booking.b_status)}--->{str(status)}"
             dme_status_history.status_last = status
-            dme_status_history.event_time_stamp = datetime.now()
+            dme_status_history.event_time_stamp = (
+                event_timestamp if event_timestamp else datetime.now()
+            )
             dme_status_history.recipient_name = ""
             dme_status_history.status_update_via = "Django"
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
 
-            if status == "Delivered":
+            if status.lower() == "delivered":
                 booking.z_api_issue_update_flag_500 = 0
                 booking.z_lock_status = 1
-                booking.delivery_booking = datetime.now()
+
+                if event_timestamp:
+                    booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
+                    booking.delivery_booking = event_timestamp
+
                 booking.save()
 
         tempo.push_via_api(booking)
