@@ -1090,6 +1090,8 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d")
             last_date = last_date.replace(hour=23, minute=59, second=59)
+            first_date = first_date.replace(tzinfo=pytz.UTC)
+            last_date = last_date.replace(tzinfo=pytz.UTC)
 
         # DME & Client filter
         if user_type == "DME":
@@ -4430,7 +4432,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
             return JsonResponse({"results": return_data})
         except Exception as e:
             # print('@Exception', e)
-            return JsonResponse({"results": str(e)})
+            return JsonResponse({"message": str(e)}, status=400)
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
@@ -4455,40 +4457,46 @@ class SqlQueriesViewSet(viewsets.ViewSet):
             return JsonResponse({"results": return_data})
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"message": ""}, status=400)
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         return_data = []
 
-        try:
-            resultObjects = []
-            resultObjects = Utl_sql_queries.objects.create(
-                sql_title=request.data["sql_title"],
-                sql_query=request.data["sql_query"],
-                sql_description=request.data["sql_description"],
-                sql_notes=request.data["sql_notes"],
-            )
+        if self.validate(request.data["sql_query"]):
+            try:
+                resultObjects = []
+                resultObjects = Utl_sql_queries.objects.create(
+                    sql_title=request.data["sql_title"],
+                    sql_query=request.data["sql_query"],
+                    sql_description=request.data["sql_description"],
+                    sql_notes=request.data["sql_notes"],
+                )
 
-            return JsonResponse({"results": request.data})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": str(e)})
+                return JsonResponse({"results": request.data})
+            except Exception as e:
+                return JsonResponse({"message": str(e)}, status=400)
+        else:
+            return JsonResponse({"message": "Sorry only SELECT statement allowed"})
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         data = Utl_sql_queries.objects.get(pk=pk)
 
-        try:
-            Utl_sql_queries.objects.filter(pk=pk).update(
-                sql_query=request.data["sql_query"],
-                sql_description=request.data["sql_description"],
-                sql_notes=request.data["sql_notes"],
+        if self.validate(request.data["sql_query"]):
+            try:
+                Utl_sql_queries.objects.filter(pk=pk).update(
+                    sql_query=request.data["sql_query"],
+                    sql_description=request.data["sql_description"],
+                    sql_notes=request.data["sql_notes"],
+                )
+                return JsonResponse({"results": request.data})
+            except Exception as e:
+                return JsonResponse({"message": str(e)}, status=400)
+        else:
+            return JsonResponse(
+                {"message": "Sorry only SELECT statement allowed"}, status=400
             )
-            return JsonResponse({"results": request.data})
-        except Exception as e:
-            # print('Exception: ', e)
-            return JsonResponse({"results": str(e)})
 
     @action(detail=True, methods=["delete"])
     def delete(self, request, pk, format=None):
@@ -4498,15 +4506,20 @@ class SqlQueriesViewSet(viewsets.ViewSet):
             data.delete()
             return JsonResponse({"results": fp_freight_providers})
         except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"message": str(e)}, status=400)
+
+    def validate(self, query):
+        if re.search("select", query, flags=re.IGNORECASE):
+            return True
+        else:
+            return False
 
     @action(detail=False, methods=["post"])
-    def validate(self, request, pk=None):
+    def execute(self, request, pk=None):
         return_data = []
         query_tables = tables_in_query(request.data["sql_query"])
-        # return JsonResponse({"results": str(query_tables)})
-        if re.search("select", request.data["sql_query"], flags=re.IGNORECASE):
+
+        if self.validate(request.data["sql_query"]):
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(request.data["sql_query"])
@@ -4528,9 +4541,11 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     return JsonResponse({"results": result, "tables": row1})
                 except Exception as e:
                     # print('@Exception', e)
-                    return JsonResponse({"error": str(e)})
+                    return JsonResponse({"message": str(e)}, status=400)
         else:
-            return JsonResponse({"error": "Sorry only SELECT statement allowed"})
+            return JsonResponse(
+                {"message": "Sorry only SELECT statement allowed"}, status=400
+            )
 
     @action(detail=False, methods=["post"])
     def update_query(self, request, pk=None):
