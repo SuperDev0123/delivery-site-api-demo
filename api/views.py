@@ -1090,6 +1090,8 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d")
             last_date = last_date.replace(hour=23, minute=59, second=59)
+            first_date = first_date.replace(tzinfo=pytz.UTC)
+            last_date = last_date.replace(tzinfo=pytz.UTC)
 
         # DME & Client filter
         if user_type == "DME":
