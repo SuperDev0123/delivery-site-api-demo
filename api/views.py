@@ -1090,6 +1090,8 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d")
             last_date = last_date.replace(hour=23, minute=59, second=59)
+            first_date = first_date.replace(tzinfo=pytz.UTC)
+            last_date = last_date.replace(tzinfo=pytz.UTC)
 
         # DME & Client filter
         if user_type == "DME":
@@ -4479,7 +4481,6 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         data = Utl_sql_queries.objects.get(pk=pk)
-       
         if self.validate(request.data["sql_query"]):
             try:
                 Utl_sql_queries.objects.filter(pk=pk).update(
@@ -4491,7 +4492,9 @@ class SqlQueriesViewSet(viewsets.ViewSet):
             except Exception as e:
                 return JsonResponse({"message": str(e)}, status=400)
         else:
-            return JsonResponse({"message": "Sorry only SELECT statement allowed"}, status=400)
+            return JsonResponse(
+                {"message": "Sorry only SELECT statement allowed"}, status=400
+            )
 
     @action(detail=True, methods=["delete"])
     def delete(self, request, pk, format=None):
@@ -4538,7 +4541,9 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     # print('@Exception', e)
                     return JsonResponse({"message": str(e)}, status=400)
         else:
-            return JsonResponse({"message": "Sorry only SELECT statement allowed"}, status=400)
+            return JsonResponse(
+                {"message": "Sorry only SELECT statement allowed"}, status=400
+            )
 
     @action(detail=False, methods=["post"])
     def update_query(self, request, pk=None):
