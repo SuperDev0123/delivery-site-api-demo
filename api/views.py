@@ -1986,6 +1986,7 @@ class BookingViewSet(viewsets.ViewSet):
         if not booking.x_manual_booked_flag:
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
+            status_history.create(booking, "Booked", request.user.username)
             booking.b_status = "Booked"
             booking.b_dateBookedDate = str(datetime.now())
             booking.x_booking_Created_With = "Manual"
