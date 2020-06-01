@@ -7,6 +7,7 @@ from datetime import datetime
 from django.conf import settings
 
 from api.models import *
+from api.common.common_times import convert_to_UTC_tz
 
 logger = logging.getLogger("dme_api")
 
@@ -231,19 +232,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 0,
+                    convert_to_UTC_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 1,
+                    convert_to_UTC_tz(booking.b_dateBookedDate),
+                    time_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.fp_received_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_UTC_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_UTC_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -284,7 +297,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 21, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 21,
+                    convert_to_UTC_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -362,27 +378,43 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 28, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 28,
+                    convert_to_UTC_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 29, booking.fp_store_event_date, date_format
+                    row,
+                    col + 29,
+                    convert_to_UTC_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 30, booking.fp_store_event_time, time_format
+                    row,
+                    col + 30,
+                    convert_to_UTC_tz(booking.fp_store_event_time),
+                    time_format,
                 )
 
             worksheet.write(row, col + 31, booking.fp_store_event_desc)
             worksheet.write(row, col + 32, booking.inv_billing_status)
             worksheet.write(row, col + 33, booking.inv_billing_status_note)
             worksheet.write(row, col + 34, booking.b_booking_project)
-            worksheet.write(row, col + 35, booking.b_project_due_date, date_format)
+            worksheet.write(
+                row,
+                col + 35,
+                convert_to_UTC_tz(booking.b_project_due_date),
+                date_format,
+            )
 
             # Store Scheduled Date
-            worksheet.write(row, col + 36, booking.delivery_booking, date_format)
+            worksheet.write(
+                row, col + 36, convert_to_UTC_tz(booking.delivery_booking), date_format
+            )
 
             # # Store Booking Date Due By
             # if booking.b_status == "In Transit" and booking.delivery_kpi_days:
@@ -595,18 +627,24 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if booking.b_dateBookedDate and booking.b_dateBookedDate:
                         worksheet.write_datetime(
-                            row, col + 1, booking.b_dateBookedDate.date(), date_format
+                            row,
+                            col + 1,
+                            convert_to_UTC_tz(booking.b_dateBookedDate.date()),
+                            date_format,
                         )
 
                     if booking.fp_received_date_time:
                         worksheet.write_datetime(
-                            row, col + 2, booking.fp_received_date_time, date_format
+                            row,
+                            col + 2,
+                            convert_to_UTC_tz(booking.fp_received_date_time),
+                            date_format,
                         )
                     elif booking.b_given_to_transport_date_time:
                         worksheet.write_datetime(
                             row,
                             col + 2,
-                            booking.b_given_to_transport_date_time,
+                            convert_to_UTC_tz(booking.b_given_to_transport_date_time),
                             date_format,
                         )
 
@@ -639,20 +677,32 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
-                            row, col + 18, api_bcl.fp_event_date, date_format
+                            row,
+                            col + 18,
+                            convert_to_UTC_tz(api_bcl.fp_event_date),
+                            date_format,
                         )
                         worksheet.write_datetime(
-                            row, col + 19, api_bcl.fp_event_time, time_format
+                            row,
+                            col + 19,
+                            convert_to_UTC_tz(api_bcl.fp_event_time),
+                            time_format,
                         )
 
                     if booking.z_calculated_ETA:
                         worksheet.write_datetime(
-                            row, col + 20, booking.z_calculated_ETA, date_format
+                            row,
+                            col + 20,
+                            convert_to_UTC_tz(booking.z_calculated_ETA),
+                            date_format,
                         )
 
                     if booking.de_Deliver_By_Date:
                         worksheet.write_datetime(
-                            row, col + 21, booking.de_Deliver_By_Date, date_format
+                            row,
+                            col + 21,
+                            convert_to_UTC_tz(booking.de_Deliver_By_Date),
+                            date_format,
                         )
 
                     if booking.de_Deliver_By_Date:
@@ -701,7 +751,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     )
                     worksheet.write(row, col + 36, booking.b_booking_project)
                     worksheet.write(
-                        row, col + 37, booking.b_project_due_date, date_format
+                        row,
+                        col + 37,
+                        convert_to_UTC_tz(booking.b_project_due_date),
+                        date_format,
                     )
 
                     if booking_line.e_qty is not None:
@@ -864,19 +917,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 0,
+                    convert_to_UTC_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 1,
+                    convert_to_UTC_tz(booking.b_dateBookedDate),
+                    time_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.fp_received_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_UTC_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_UTC_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -913,7 +978,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 21, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 21,
+                    convert_to_UTC_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -991,17 +1059,26 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 28, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 28,
+                    convert_to_UTC_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 29, booking.fp_store_event_date, date_format
+                    row,
+                    col + 29,
+                    convert_to_UTC_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 30, booking.fp_store_event_time, time_format
+                    row,
+                    col + 30,
+                    convert_to_UTC_tz(booking.fp_store_event_time),
+                    time_format,
                 )
 
             worksheet.write(row, col + 31, booking.fp_store_event_desc)
@@ -1190,19 +1267,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 3, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 3,
+                    convert_to_UTC_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
                 worksheet.write_datetime(
-                    row, col + 4, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 4,
+                    convert_to_UTC_tz(booking.b_dateBookedDate),
+                    time_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 5, booking.fp_received_date_time, date_format
+                    row,
+                    col + 5,
+                    convert_to_UTC_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 5, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 5,
+                    convert_to_UTC_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -1249,7 +1338,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 32, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 32,
+                    convert_to_UTC_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -1327,17 +1419,26 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 39, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 39,
+                    convert_to_UTC_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 40, booking.fp_store_event_date, date_format
+                    row,
+                    col + 40,
+                    convert_to_UTC_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 41, booking.fp_store_event_time, time_format
+                    row,
+                    col + 41,
+                    convert_to_UTC_tz(booking.fp_store_event_time),
+                    time_format,
                 )
 
             worksheet.write(row, col + 42, booking.fp_store_event_desc)
@@ -1508,16 +1609,25 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 0,
+                    convert_to_UTC_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 1, booking.fp_received_date_time, date_format
+                    row,
+                    col + 1,
+                    convert_to_UTC_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 1,
+                    convert_to_UTC_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             if (
@@ -1624,7 +1734,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 24, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 24,
+                    convert_to_UTC_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -1702,12 +1815,18 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 31, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 31,
+                    convert_to_UTC_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 32, booking.fp_store_event_date, date_format
+                    row,
+                    col + 32,
+                    convert_to_UTC_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             worksheet.write(row, col + 33, booking.fp_store_event_desc)
@@ -1768,14 +1887,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 1,
+                    convert_to_UTC_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
 
             if booking.s_05_LatestPickUpDateTimeFinal:
                 worksheet.write_datetime(
                     row,
                     col + 2,
-                    booking.s_05_LatestPickUpDateTimeFinal.date(),
+                    convert_to_UTC_tz(booking.s_05_LatestPickUpDateTimeFinal).date(),
                     date_format,
                 )
 
@@ -1841,7 +1963,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_datetime(
                     row,
                     col + 1,
-                    booking.s_20_Actual_Pickup_TimeStamp.date(),
+                    convert_to_UTC_tz(booking.s_20_Actual_Pickup_TimeStamp).date(),
                     date_format,
                 )
 
@@ -1910,14 +2032,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate.date(), date_format,
+                    row,
+                    col + 1,
+                    convert_to_UTC_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
 
             if booking.s_20_Actual_Pickup_TimeStamp:
                 worksheet.write_datetime(
                     row,
                     col + 2,
-                    booking.s_20_Actual_Pickup_TimeStamp.date(),
+                    convert_to_UTC_tz(booking.s_20_Actual_Pickup_TimeStamp).date(),
                     date_format,
                 )
 
@@ -2005,7 +2130,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_datetime(
                     row,
                     col + 1,
-                    status_histories[0].event_time_stamp.date(),
+                    convert_to_UTC_tz(status_histories[0].event_time_stamp).date(),
                     date_format,
                 )
 
@@ -2104,7 +2229,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.s_21_Actual_Delivery_TimeStamp:
                 worksheet.write_datetime(
-                    row, col + 3, booking.s_21_Actual_Delivery_TimeStamp, date_format
+                    row,
+                    col + 3,
+                    convert_to_UTC_tz(booking.s_21_Actual_Delivery_TimeStamp),
+                    date_format,
                 )
 
             worksheet.write(row, col + 4, booking.b_booking_Category)

@@ -71,6 +71,7 @@ from .utils import (
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
+from api.common.common_times import convert_to_UTC_tz
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -782,7 +783,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     # Date filter
                     if user_type == "DME":
                         queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
+                            z_CreatedTimestamp__range=(
+                                convert_to_UTC_tz(first_date),
+                                convert_to_UTC_tz(last_date),
+                            )
                         )
                     else:
                         if client.company_name == "BioPak":
@@ -791,7 +795,10 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                         else:
                             queryset = queryset.filter(
-                                z_CreatedTimestamp__range=(first_date, last_date)
+                                z_CreatedTimestamp__range=(
+                                    convert_to_UTC_tz(first_date),
+                                    convert_to_UTC_tz(last_date),
+                                )
                             )
 
                 # Warehouse filter
@@ -1110,32 +1117,50 @@ class BookingsViewSet(viewsets.ViewSet):
         else:
             if report_type == "booked_bookings":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date)
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
             elif report_type == "picked_up_bookings":
                 queryset = queryset.filter(
-                    s_20_Actual_Pickup_TimeStamp__range=(first_date, last_date)
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
             elif report_type == "box":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date),
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
                     puCompany__icontains="Tempo Aus Whs",
                     pu_Address_Suburb__iexact="FRENCHS FOREST",
                 )
             elif report_type == "futile":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date)
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
             elif report_type == "goods_delivered":
                 queryset = queryset.filter(
-                    s_21_Actual_Delivery_TimeStamp__range=(first_date, last_date),
+                    s_21_Actual_Delivery_TimeStamp__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
                     b_status__iexact="delivered",
                 )
             else:
                 # Date filter
                 if user_type == "DME":
                     queryset = queryset.filter(
-                        z_CreatedTimestamp__range=(first_date, last_date)
+                        z_CreatedTimestamp__range=(
+                            convert_to_UTC_tz(first_date),
+                            convert_to_UTC_tz(last_date),
+                        )
                     )
                 else:
                     if client.company_name == "BioPak":
@@ -1144,7 +1169,10 @@ class BookingsViewSet(viewsets.ViewSet):
                         )
                     else:
                         queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
+                            z_CreatedTimestamp__range=(
+                                convert_to_UTC_tz(first_date),
+                                convert_to_UTC_tz(last_date),
+                            )
                         )
 
         # Freight Provider filter
@@ -1425,7 +1453,10 @@ class BookingsViewSet(viewsets.ViewSet):
         # Date filter
         if user_type == "DME":
             queryset = queryset.filter(
-                z_CreatedTimestamp__range=(first_date, last_date)
+                z_CreatedTimestamp__range=(
+                    convert_to_UTC_tz(first_date),
+                    convert_to_UTC_tz(last_date),
+                )
             )
         else:
             if client.company_name == "BioPak":
@@ -1434,7 +1465,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
             else:
                 queryset = queryset.filter(
-                    z_CreatedTimestamp__range=(first_date, last_date)
+                    z_CreatedTimestamp__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
 
         # Get all statuses
