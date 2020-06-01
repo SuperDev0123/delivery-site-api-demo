@@ -262,6 +262,12 @@ class UserViewSet(viewsets.ViewSet):
                         "company_name": "dme",
                         "dme_account_num": "dme_account_num",
                         "current_freight_provider": "*",
+                        "client_filter_date_field": "0",
+                        "client_mark_up_percent": "0",
+                        "client_min_markup_startingcostvalue": "0",
+                        "client_min_markup_value": "0",
+                        "augment_pu_by_time": "0",
+                        "augment_pu_available_time": "0"
                     }
                 ]
 
@@ -272,6 +278,12 @@ class UserViewSet(viewsets.ViewSet):
                         "company_name": client.company_name,
                         "dme_account_num": client.dme_account_num,
                         "current_freight_provider": client.current_freight_provider,
+                        "client_filter_date_field": client.client_filter_date_field,
+                        "client_mark_up_percent": client.client_mark_up_percent,
+                        "client_min_markup_startingcostvalue": client.client_min_markup_startingcostvalue,
+                        "client_min_markup_value": client.client_min_markup_value,
+                        "augment_pu_by_time": client.augment_pu_by_time,
+                        "augment_pu_available_time": client.augment_pu_available_time
                     }
                 )
 
