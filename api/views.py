@@ -638,7 +638,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         if search_type == "FILTER":
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
-            last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            last_date = datetime.strptime(end_date, "%Y-%m-%d")
+            last_date = last_date.replace(hour=23, minute=59, second=59)
 
         warehouse_id = self.request.query_params.get("warehouseId", None)
         sort_field = self.request.query_params.get("sortField", None)
@@ -1090,8 +1091,6 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d")
             last_date = last_date.replace(hour=23, minute=59, second=59)
-            first_date = first_date.replace(tzinfo=pytz.UTC)
-            last_date = last_date.replace(tzinfo=pytz.UTC)
 
         # DME & Client filter
         if user_type == "DME":
@@ -1988,7 +1987,7 @@ class BookingViewSet(viewsets.ViewSet):
         else:
             status_history.create(booking, "Booked", request.user.username)
             booking.b_status = "Booked"
-            booking.b_dateBookedDate = str(datetime.now())
+            booking.b_dateBookedDate = datetime.now()
             booking.x_booking_Created_With = "Manual"
             booking.save()
             serializer = BookingSerializer(booking)

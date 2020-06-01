@@ -216,6 +216,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "b_booking_Notes",
             "b_error_Capture",
             "kf_client_id",
+            "z_locked_status_time",
         )
 
 
