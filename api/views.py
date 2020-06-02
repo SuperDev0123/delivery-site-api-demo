@@ -3301,14 +3301,12 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
+        booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
+        request.data["status_old"] = booking.b_status
         serializer = StatusHistorySerializer(data=request.data)
 
         try:
             if serializer.is_valid():
-                booking = Bookings.objects.get(
-                    pk_booking_id=request.data["fk_booking_id"]
-                )
-
                 # ######################################## #
                 #    Disabled because it was for `Cope`    #
                 # ######################################## #
