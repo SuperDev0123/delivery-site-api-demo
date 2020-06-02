@@ -22,7 +22,7 @@ def create(booking, status, username, event_timestamp=None):
         ):
             dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
             dme_status_history.status_old = booking.b_status
-            dme_status_history.notes = f"{str(booking.b_status)}--->{str(status)}"
+            dme_status_history.notes = f"{str(booking.b_status)} ---> {str(status)}"
             dme_status_history.status_last = status
             dme_status_history.event_time_stamp = (
                 event_timestamp if event_timestamp else datetime.now()
