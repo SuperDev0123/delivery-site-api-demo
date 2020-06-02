@@ -262,16 +262,31 @@ class UserViewSet(viewsets.ViewSet):
                         "company_name": "dme",
                         "dme_account_num": "dme_account_num",
                         "current_freight_provider": "*",
+                        "client_filter_date_field": "0",
+                        "client_mark_up_percent": "0",
+                        "client_min_markup_startingcostvalue": "0",
+                        "client_min_markup_value": "0",
+                        "augment_pu_by_time": "0",
+                        "augment_pu_available_time": "0",
+                        "num_client_products": 0
                     }
                 ]
 
             for client in dme_clients:
+                num_client_products = len(Client_Products.objects.filter(fk_id_dme_client=client.pk_id_dme_client))
                 return_data.append(
                     {
                         "pk_id_dme_client": client.pk_id_dme_client,
                         "company_name": client.company_name,
                         "dme_account_num": client.dme_account_num,
                         "current_freight_provider": client.current_freight_provider,
+                        "client_filter_date_field": client.client_filter_date_field,
+                        "client_mark_up_percent": client.client_mark_up_percent,
+                        "client_min_markup_startingcostvalue": client.client_min_markup_startingcostvalue,
+                        "client_min_markup_value": client.client_min_markup_value,
+                        "augment_pu_by_time": client.augment_pu_by_time,
+                        "augment_pu_available_time": client.augment_pu_available_time,
+                        "num_client_products": num_client_products
                     }
                 )
 
@@ -2036,13 +2051,13 @@ class BookingViewSet(viewsets.ViewSet):
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
                 puCompany = booking.puCompany
                 deToCompanyName = booking.deToCompanyName
-                booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
+                # booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
 
                 if (
                     booking.pu_Address_street_2 == ""
                     or booking.pu_Address_street_2 == None
                 ):
-                    booking.pu_Address_street_2 = booking.pu_Address_Street_1
+                    # booking.pu_Address_street_2 = booking.pu_Address_Street_1
                     custRefNumVerbage = (
                         "Ref: "
                         + str(booking.clientRefNumbers or "")
@@ -2051,7 +2066,7 @@ class BookingViewSet(viewsets.ViewSet):
                         + ". Fragile"
                     )
 
-                    booking.pu_Address_Street_1 = custRefNumVerbage
+                    # booking.pu_Address_Street_1 = custRefNumVerbage
                     booking.de_Email = str(booking.de_Email or "").replace(";", ",")
                     booking.de_Email_Group_Emails = str(
                         booking.de_Email_Group_Emails or ""
@@ -2068,7 +2083,7 @@ class BookingViewSet(viewsets.ViewSet):
 
                 client_auto_augment = Client_Auto_Augment.objects.filter(
                     fk_id_dme_client_id=dme_client.pk_id_dme_client,
-                    de_to_companyName__iexact=booking.deToCompanyName.strip(),
+                    de_to_companyName__iexact=booking.deToCompanyName.strip().lower(),
                 ).first()
 
                 if client_auto_augment is not None:
@@ -2080,18 +2095,18 @@ class BookingViewSet(viewsets.ViewSet):
                             client_auto_augment.de_Email_Group_Emails
                         )
 
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        booking.de_To_Address_Street_1 = (
-                            client_auto_augment.de_To_Address_Street_1
-                        )
+                    # if client_auto_augment.de_To_Address_Street_1 is not None:
+                    #     booking.de_To_Address_Street_1 = (
+                    #         client_auto_augment.de_To_Address_Street_1
+                    #     )
 
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        booking.de_To_Address_Street_2 = (
-                            client_auto_augment.de_To_Address_Street_2
-                        )
+                    # if client_auto_augment.de_To_Address_Street_1 is not None:
+                    #     booking.de_To_Address_Street_2 = (
+                    #         client_auto_augment.de_To_Address_Street_2
+                    #     )
 
-                    if client_auto_augment.company_hours_info is not None:
-                        booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
+                    # if client_auto_augment.company_hours_info is not None:
+                    #     booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
                 client_process.save()
                 booking.save()
@@ -3784,6 +3799,7 @@ class OptionsViewSet(viewsets.ViewSet):
                         "z_createdTimeStamp": resultObject.z_createdTimeStamp,
                         "z_downloadedByAccount": resultObject.z_downloadedByAccount,
                         "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                        "show_in_admin": resultObject.show_in_admin,
                     }
                 )
             return JsonResponse({"results": return_data})
@@ -4477,11 +4493,9 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                 return JsonResponse({"message": str(e)}, status=400)
         else:
             return JsonResponse({"message": "Sorry only SELECT statement allowed"})
-
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         data = Utl_sql_queries.objects.get(pk=pk)
-
         if self.validate(request.data["sql_query"]):
             try:
                 Utl_sql_queries.objects.filter(pk=pk).update(
