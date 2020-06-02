@@ -267,11 +267,13 @@ class UserViewSet(viewsets.ViewSet):
                         "client_min_markup_startingcostvalue": "0",
                         "client_min_markup_value": "0",
                         "augment_pu_by_time": "0",
-                        "augment_pu_available_time": "0"
+                        "augment_pu_available_time": "0",
+                        "num_client_products": 0
                     }
                 ]
 
             for client in dme_clients:
+                num_client_products = len(Client_Products.objects.filter(fk_id_dme_client=client.pk_id_dme_client))
                 return_data.append(
                     {
                         "pk_id_dme_client": client.pk_id_dme_client,
@@ -283,7 +285,8 @@ class UserViewSet(viewsets.ViewSet):
                         "client_min_markup_startingcostvalue": client.client_min_markup_startingcostvalue,
                         "client_min_markup_value": client.client_min_markup_value,
                         "augment_pu_by_time": client.augment_pu_by_time,
-                        "augment_pu_available_time": client.augment_pu_available_time
+                        "augment_pu_available_time": client.augment_pu_available_time,
+                        "num_client_products": num_client_products
                     }
                 )
 
@@ -3798,6 +3801,7 @@ class OptionsViewSet(viewsets.ViewSet):
                         "z_createdTimeStamp": resultObject.z_createdTimeStamp,
                         "z_downloadedByAccount": resultObject.z_downloadedByAccount,
                         "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
+                        "show_in_admin": resultObject.show_in_admin,
                     }
                 )
             return JsonResponse({"results": return_data})
