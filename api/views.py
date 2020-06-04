@@ -401,7 +401,6 @@ class UserViewSet(viewsets.ViewSet):
 
         return JsonResponse({"success": True, "results": results})
 
-
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
@@ -4795,3 +4794,53 @@ class ClientEmployeesViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ClientProductsViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=["get"])
+    def get(self, request, format=None):
+        results = []
+        try:
+            pk_id_dme_client = self.request.query_params.get("client_id", None)
+            resultObjects = Client_Products.objects.filter(fk_id_dme_client=pk_id_dme_client)
+            for resultObject in resultObjects:
+                result = {
+                    "id": resultObject.id,
+                    "modelNumber": resultObject.modelNumber,
+                    "e_dimUOM": resultObject.e_dimUOM,
+                    "e_weightUOM": resultObject.e_weightUOM,
+                    "e_dimLength": resultObject.e_dimLength,
+                    "e_dimWidth": resultObject.e_dimWidth,
+                    "e_dimHeight": resultObject.e_dimHeight,
+                    "e_weightPerEach": resultObject.e_weightPerEach
+                }
+                results.append(result)
+            return JsonResponse({"results": results})
+        except Exception as e:
+            print('@Exception', e)
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = Client_Products.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": ClientProductsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            print("@Exception", e)
+            return JsonResponse({"result": None}, status=400)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        print('delete')
+        clientproducts = Client_Products.objects.get(pk=pk)
+        serializer = ClientProductsSerializer(clientproducts)
+        clientproducts.delete()
+        return Response(serializer.data)
