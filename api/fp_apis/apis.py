@@ -236,12 +236,10 @@ def book(request, fp_name):
                         booking, booking.api_booking_quote
                     )
                     booking.b_dateBookedDate = str(datetime.now())
+                    status_history.create(booking, "Booked", request.user.username)
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
-                    status_history.create(
-                        booking, booking.b_status, request.user.username
-                    )
 
                     Log(
                         request_payload=request_payload,
@@ -431,14 +429,6 @@ def rebook(request, fp_name):
                     old_fk_fp_pickup_id = booking.fk_fp_pickup_id
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                     booking.b_dateBookedDate = str(datetime.now())
-                    booking.b_status = "PU Rebooked"
-                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-                        booking, booking.api_booking_quote
-                    )
-                    booking.b_error_Capture = None
-                    booking.save()
-
                     status_history.create(
                         booking,
                         "PU Rebooked(Last pickup Id was "
@@ -446,6 +436,13 @@ def rebook(request, fp_name):
                         + ")",
                         request.user.username,
                     )
+                    booking.b_status = "PU Rebooked"
+                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+                        booking, booking.api_booking_quote
+                    )
+                    booking.b_error_Capture = None
+                    booking.save()
 
                     Log(
                         request_payload=request_payload,
@@ -639,15 +636,13 @@ def cancel_book(request, fp_name):
 
                 try:
                     if response.status_code == 200:
+                        status_history.create(booking, "Closed", request.user.username)
                         booking.b_status = "Closed"
                         booking.b_dateBookedDate = None
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
                         booking.save()
-                        status_history.create(
-                            booking, booking.b_status, request.user.username
-                        )
 
                         Log(
                             request_payload=payload,
