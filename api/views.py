@@ -225,6 +225,7 @@ class UserViewSet(viewsets.ViewSet):
                     "username": request.user.username,
                     "clientname": client.company_name,
                     "clientId": client.dme_account_num,
+                    "hasSubClient": client.has_sub_client(),
                 }
             )
 
@@ -235,62 +236,20 @@ class UserViewSet(viewsets.ViewSet):
             DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
         )
 
-        if dme_employee is not None:
-            user_type = "DME"
-            dme_clients = DME_clients.objects.all()
-        else:
-            user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+        if dme_employee is not None:  # DME
+            queryset = DME_clients.objects.filter(parent__isnull=True)
+        else:  # CLIENT
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            dme_clients = DME_clients.objects.select_related().filter(
-                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            queryset = DME_clients.objects.filter(
+                pk=int(client_employee.fk_id_dme_client_id), parent__isnull=True
             )
 
-        if len(dme_clients) is 0:
-            return JsonResponse({"dme_clients": []})
-        else:
-            return_data = []
-            if user_type == "DME":
-
-                return_data = [
-                    {
-                        "pk_id_dme_client": 0,
-                        "company_name": "dme",
-                        "dme_account_num": "dme_account_num",
-                        "current_freight_provider": "*",
-                        "client_filter_date_field": "0",
-                        "client_mark_up_percent": "0",
-                        "client_min_markup_startingcostvalue": "0",
-                        "client_min_markup_value": "0",
-                        "augment_pu_by_time": "0",
-                        "augment_pu_available_time": "0",
-                        "num_client_products": 0
-                    }
-                ]
-
-            for client in dme_clients:
-                num_client_products = len(Client_Products.objects.filter(fk_id_dme_client=client.pk_id_dme_client))
-                return_data.append(
-                    {
-                        "pk_id_dme_client": client.pk_id_dme_client,
-                        "company_name": client.company_name,
-                        "dme_account_num": client.dme_account_num,
-                        "current_freight_provider": client.current_freight_provider,
-                        "client_filter_date_field": client.client_filter_date_field,
-                        "client_mark_up_percent": client.client_mark_up_percent,
-                        "client_min_markup_startingcostvalue": client.client_min_markup_startingcostvalue,
-                        "client_min_markup_value": client.client_min_markup_value,
-                        "augment_pu_by_time": client.augment_pu_by_time,
-                        "augment_pu_available_time": client.augment_pu_available_time,
-                        "num_client_products": num_client_products
-                    }
-                )
-
-            return JsonResponse({"dme_clients": return_data})
+        return JsonResponse(
+            {"results": DME_clientsSerializer(queryset, many=True).data}
+        )
 
     @action(detail=False, methods=["get"])
     def get_user_date_filter_field(self, request, pk=None):
@@ -4493,6 +4452,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                 return JsonResponse({"message": str(e)}, status=400)
         else:
             return JsonResponse({"message": "Sorry only SELECT statement allowed"})
+
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         data = Utl_sql_queries.objects.get(pk=pk)

@@ -12,11 +12,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="client_employees",
-            name="status_time",
-            field=models.DateTimeField(
-                blank=True, default=datetime.datetime.now, verbose_name="Status Time"
-            ),
-        ),
+        # migrations.AddField(
+        #     model_name="client_employees",
+        #     name="status_time",
+        #     field=models.DateTimeField(
+        #         blank=True, default=datetime.datetime.now, verbose_name="Status Time"
+        #     ),
+        # ),
     ]

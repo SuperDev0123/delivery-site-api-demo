@@ -47,10 +47,11 @@ class DME_clients(models.Model):
     company_name = models.CharField(
         verbose_name=_("Company Name"), max_length=128, blank=False, null=False
     )
+    parent = models.ForeignKey("DME_clients", null=True, on_delete=models.CASCADE)
     dme_account_num = models.CharField(
         verbose_name=_("dme account num"), max_length=64, default="", null=False
     )
-    phone = models.IntegerField(verbose_name=_("phone number"))
+    phone = models.CharField(max_length=32, null=True)
     client_filter_date_field = models.CharField(
         verbose_name=_("Client Filter Date Field"),
         max_length=64,
@@ -72,6 +73,13 @@ class DME_clients(models.Model):
     class Meta:
         db_table = "dme_clients"
 
+    def is_sub_client(self):
+        return True if self.parent else False
+
+    def has_sub_client(self):
+        sub_clients = self.dme_clients_set.all()
+        return True if sub_clients else False
+
 
 class DME_employees(models.Model):
     pk_id_dme_emp = models.AutoField(primary_key=True)
@@ -85,7 +93,7 @@ class DME_employees(models.Model):
     role = models.ForeignKey(DME_Roles, on_delete=models.CASCADE, default=1)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=False, null=True
-    ) 
+    )
     status_time = models.DateTimeField(
         verbose_name=_("Status Time"), default=datetime.now, blank=True
     )
@@ -218,6 +226,7 @@ class Client_employees(models.Model):
     status_time = models.DateTimeField(
         verbose_name=_("Status Time"), default=datetime.now, blank=True
     )
+
     class Meta:
         db_table = "dme_client_employees"
 
@@ -3529,7 +3538,7 @@ class DME_Options(models.Model):
         verbose_name=_("Modified Timestamp"), default=None, blank=True, null=True
     )
     show_in_admin = models.BooleanField(blank=True, null=True, default=False)
-    
+
     class Meta:
         db_table = "dme_options"
 
@@ -3909,6 +3918,7 @@ class BookingSets(models.Model):
     class Meta:
         db_table = "dme_booking_sets"
 
+
 class Tokens(models.Model):
     id = models.AutoField(primary_key=True)
     value = models.CharField(max_length=255, default=None)
@@ -3940,5 +3950,6 @@ class Client_Products(models.Model):
     fk_id_dme_client = models.ForeignKey(
         DME_clients, on_delete=models.CASCADE, blank=True, null=True
     )
+
     class Meta:
         db_table = "client_products"

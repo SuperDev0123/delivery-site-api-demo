@@ -25,6 +25,8 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
+    DME_clients,
+    Client_Products,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -459,3 +461,21 @@ class BookingSetsSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingSets
         fields = "__all__"
+
+
+class DME_clientsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_clients
+        fields = (
+            "pk_id_dme_client",
+            "company_name",
+            "dme_account_num",
+            "client_filter_date_field",
+            "phone",
+            "client_products_cnt",
+        )
+
+    client_products_cnt = serializers.SerializerMethodField(read_only=True)
+
+    def get_client_products_cnt(self, obj):
+        return len(Client_Products.objects.filter(fk_id_dme_client=obj.pk))
