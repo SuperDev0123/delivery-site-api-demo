@@ -4823,7 +4823,6 @@ class ClientProductsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
         try:
-            request.data.pop("id", None)
             resultObject = Client_Products.objects.get_or_create(**request.data)
 
             return JsonResponse(
