@@ -1211,10 +1211,11 @@ def pricing(request):
 
         return JsonResponse({"message": error_msg}, status=400)
 
-    #     "Startrack"
-    #     "Camerons",
-    #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    #       "Startrack"
+    #       "Camerons",
+    #       "Toll",
+    #       "Sendle"
+    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
 
     try:
         for fp_name in fp_names:
