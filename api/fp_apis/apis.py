@@ -823,13 +823,14 @@ def get_label(request, fp_name):
                 z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
-            email_module.send_booking_email_using_template(
-                booking.pk, "General Booking", request.user.username
-            )
             booking.save()
 
-            if not fp_name.lower() in ["sendle"]:
+            if not fp_name.lower() in ["startrack"]:
+                email_module.send_booking_email_using_template(
+                    booking.pk, "General Booking", request.user.username
+                )
 
+            if not fp_name.lower() in ["sendle"]:
                 Log(
                     request_payload=payload,
                     request_status="SUCCESS",
@@ -837,7 +838,6 @@ def get_label(request, fp_name):
                     response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
-
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
                 status=200,
