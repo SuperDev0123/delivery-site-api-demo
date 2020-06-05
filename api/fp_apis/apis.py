@@ -267,10 +267,17 @@ def book(request, fp_name):
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
-                            email_module.send_booking_email_using_template(
-                                booking.pk, "General Booking", request.user.username
-                            )
                             booking.save()
+
+                            # Send email when GET_LABEL
+                            email_template_name = "General Booking"
+
+                            if booking.b_booking_Category == "Salvage Expense":
+                                email_template_name = "Return Booking"
+
+                            email_module.send_booking_email_using_template(
+                                booking.pk, email_template_name, request.user.username
+                            )
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -287,10 +294,17 @@ def book(request, fp_name):
                             f.write(base64.b64decode(json_label_data["Label"]))
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
-                            email_module.send_booking_email_using_template(
-                                booking.pk, "General Booking", request.user.username
-                            )
                             booking.save()
+
+                            # Send email when GET_LABEL
+                            email_template_name = "General Booking"
+
+                            if booking.b_booking_Category == "Salvage Expense":
+                                email_template_name = "Return Booking"
+
+                            email_module.send_booking_email_using_template(
+                                booking.pk, email_template_name, request.user.username
+                            )
                     # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
                         Api_booking_confirmation_lines.objects.filter(
@@ -826,8 +840,14 @@ def get_label(request, fp_name):
             booking.save()
 
             if not fp_name.lower() in ["startrack"]:
+                # Send email when GET_LABEL
+                email_template_name = "General Booking"
+
+                if booking.b_booking_Category == "Salvage Expense":
+                    email_template_name = "Return Booking"
+
                 email_module.send_booking_email_using_template(
-                    booking.pk, "General Booking", request.user.username
+                    booking.pk, email_template_name, request.user.username
                 )
 
             if not fp_name.lower() in ["sendle"]:
