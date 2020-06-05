@@ -2158,9 +2158,12 @@ class BookingViewSet(viewsets.ViewSet):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                else if client_auto_augment is None:
+                elif client_auto_augment is None:
                     return JsonResponse(
-                        {"message": "This client is not set up for auto augment", "type": "Failure"},
+                        {
+                            "message": "This client is not set up for auto augment",
+                            "type": "Failure",
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
