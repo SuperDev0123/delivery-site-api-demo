@@ -431,6 +431,12 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["b_booking_Category"]
+            queryset = queryset.filter(b_booking_Category__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["b_dateBookedDate"]
             queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
         except KeyError:
