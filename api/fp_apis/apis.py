@@ -24,6 +24,7 @@ from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
+from api.outputs import emails as email_module
 
 from .payload_builder import *
 from .self_pricing import get_pricing
@@ -266,6 +267,9 @@ def book(request, fp_name):
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
+                            email_module.send_booking_email_using_template(
+                                booking.pk, "General Booking", request.user.username
+                            )
                             booking.save()
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
@@ -283,6 +287,9 @@ def book(request, fp_name):
                             f.write(base64.b64decode(json_label_data["Label"]))
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
+                            email_module.send_booking_email_using_template(
+                                booking.pk, "General Booking", request.user.username
+                            )
                             booking.save()
                     # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
@@ -816,6 +823,9 @@ def get_label(request, fp_name):
                 z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
+            email_module.send_booking_email_using_template(
+                booking.pk, "General Booking", request.user.username
+            )
             booking.save()
 
             if not fp_name.lower() in ["sendle"]:
@@ -1092,7 +1102,7 @@ def reprint(request, fp_name):
             booking = Bookings.objects.get(id=booking_id)
             payload = get_reprint_payload(booking, fp_name)
 
-            logger.info(f"### Payload ({fp_name} POD): {payload}")
+            logger.info(f"### Payload ({fp_name} REPRINT): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/reprint"
             response = requests.post(url, params={}, json=payload)
 
