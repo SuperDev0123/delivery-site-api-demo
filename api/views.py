@@ -71,6 +71,7 @@ from .utils import (
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
+from api.common.common_times import convert_to_UTC_tz
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -385,6 +386,12 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["b_booking_Category"]
+            queryset = queryset.filter(b_booking_Category__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["b_dateBookedDate"]
             queryset = queryset.filter(b_dateBookedDate__icontains=column_filter)
         except KeyError:
@@ -612,7 +619,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         if search_type == "FILTER":
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
-            last_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            last_date = datetime.strptime(end_date, "%Y-%m-%d")
+            last_date = last_date.replace(hour=23, minute=59, second=59)
 
         warehouse_id = self.request.query_params.get("warehouseId", None)
         sort_field = self.request.query_params.get("sortField", None)
@@ -755,7 +763,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     # Date filter
                     if user_type == "DME":
                         queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
+                            z_CreatedTimestamp__range=(
+                                convert_to_UTC_tz(first_date),
+                                convert_to_UTC_tz(last_date),
+                            )
                         )
                     else:
                         if client.company_name == "BioPak":
@@ -764,7 +775,10 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                         else:
                             queryset = queryset.filter(
-                                z_CreatedTimestamp__range=(first_date, last_date)
+                                z_CreatedTimestamp__range=(
+                                    convert_to_UTC_tz(first_date),
+                                    convert_to_UTC_tz(last_date),
+                                )
                             )
 
                 # Warehouse filter
@@ -1064,8 +1078,6 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date = datetime.strptime(start_date, "%Y-%m-%d")
             last_date = datetime.strptime(end_date, "%Y-%m-%d")
             last_date = last_date.replace(hour=23, minute=59, second=59)
-            first_date = first_date.replace(tzinfo=pytz.UTC)
-            last_date = last_date.replace(tzinfo=pytz.UTC)
 
         # DME & Client filter
         if user_type == "DME":
@@ -1085,32 +1097,50 @@ class BookingsViewSet(viewsets.ViewSet):
         else:
             if report_type == "booked_bookings":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date)
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
             elif report_type == "picked_up_bookings":
                 queryset = queryset.filter(
-                    s_20_Actual_Pickup_TimeStamp__range=(first_date, last_date)
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
             elif report_type == "box":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date),
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
                     puCompany__icontains="Tempo Aus Whs",
                     pu_Address_Suburb__iexact="FRENCHS FOREST",
                 )
             elif report_type == "futile":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date)
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
             elif report_type == "goods_delivered":
                 queryset = queryset.filter(
-                    s_21_Actual_Delivery_TimeStamp__range=(first_date, last_date),
+                    s_21_Actual_Delivery_TimeStamp__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
                     b_status__iexact="delivered",
                 )
             else:
                 # Date filter
                 if user_type == "DME":
                     queryset = queryset.filter(
-                        z_CreatedTimestamp__range=(first_date, last_date)
+                        z_CreatedTimestamp__range=(
+                            convert_to_UTC_tz(first_date),
+                            convert_to_UTC_tz(last_date),
+                        )
                     )
                 else:
                     if client.company_name == "BioPak":
@@ -1119,7 +1149,10 @@ class BookingsViewSet(viewsets.ViewSet):
                         )
                     else:
                         queryset = queryset.filter(
-                            z_CreatedTimestamp__range=(first_date, last_date)
+                            z_CreatedTimestamp__range=(
+                                convert_to_UTC_tz(first_date),
+                                convert_to_UTC_tz(last_date),
+                            )
                         )
 
         # Freight Provider filter
@@ -1400,7 +1433,10 @@ class BookingsViewSet(viewsets.ViewSet):
         # Date filter
         if user_type == "DME":
             queryset = queryset.filter(
-                z_CreatedTimestamp__range=(first_date, last_date)
+                z_CreatedTimestamp__range=(
+                    convert_to_UTC_tz(first_date),
+                    convert_to_UTC_tz(last_date),
+                )
             )
         else:
             if client.company_name == "BioPak":
@@ -1409,7 +1445,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
             else:
                 queryset = queryset.filter(
-                    z_CreatedTimestamp__range=(first_date, last_date)
+                    z_CreatedTimestamp__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    )
                 )
 
         # Get all statuses
@@ -1962,7 +2001,7 @@ class BookingViewSet(viewsets.ViewSet):
         else:
             status_history.create(booking, "Booked", request.user.username)
             booking.b_status = "Booked"
-            booking.b_dateBookedDate = str(datetime.now())
+            booking.b_dateBookedDate = datetime.now()
             booking.x_booking_Created_With = "Manual"
             booking.save()
             serializer = BookingSerializer(booking)
@@ -2010,13 +2049,13 @@ class BookingViewSet(viewsets.ViewSet):
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
                 puCompany = booking.puCompany
                 deToCompanyName = booking.deToCompanyName
-                # booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
+                booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
 
                 if (
                     booking.pu_Address_street_2 == ""
                     or booking.pu_Address_street_2 == None
                 ):
-                    # booking.pu_Address_street_2 = booking.pu_Address_Street_1
+                    booking.pu_Address_street_2 = booking.pu_Address_Street_1
                     custRefNumVerbage = (
                         "Ref: "
                         + str(booking.clientRefNumbers or "")
@@ -2025,7 +2064,7 @@ class BookingViewSet(viewsets.ViewSet):
                         + ". Fragile"
                     )
 
-                    # booking.pu_Address_Street_1 = custRefNumVerbage
+                    booking.pu_Address_Street_1 = custRefNumVerbage
                     booking.de_Email = str(booking.de_Email or "").replace(";", ",")
                     booking.de_Email_Group_Emails = str(
                         booking.de_Email_Group_Emails or ""
@@ -2054,18 +2093,18 @@ class BookingViewSet(viewsets.ViewSet):
                             client_auto_augment.de_Email_Group_Emails
                         )
 
-                    # if client_auto_augment.de_To_Address_Street_1 is not None:
-                    #     booking.de_To_Address_Street_1 = (
-                    #         client_auto_augment.de_To_Address_Street_1
-                    #     )
+                    if client_auto_augment.de_To_Address_Street_1 is not None:
+                        booking.de_To_Address_Street_1 = (
+                            client_auto_augment.de_To_Address_Street_1
+                        )
 
-                    # if client_auto_augment.de_To_Address_Street_1 is not None:
-                    #     booking.de_To_Address_Street_2 = (
-                    #         client_auto_augment.de_To_Address_Street_2
-                    #     )
+                    if client_auto_augment.de_To_Address_Street_1 is not None:
+                        booking.de_To_Address_Street_2 = (
+                            client_auto_augment.de_To_Address_Street_2
+                        )
 
-                    # if client_auto_augment.company_hours_info is not None:
-                    #     booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
+                    if client_auto_augment.company_hours_info is not None:
+                        booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
                 client_process.save()
                 booking.save()
@@ -2080,11 +2119,14 @@ class BookingViewSet(viewsets.ViewSet):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                # else if client_auto_augment is None:
-                #     return JsonResponse(
-                #         {"message": "This client is not set up for auto augment", "type": "Failure"},
-                #         status=status.HTTP_400_BAD_REQUEST,
-                #     )
+                elif client_auto_augment is None:
+                    return JsonResponse(
+                        {
+                            "message": "This client is not set up for auto augment",
+                            "type": "Failure",
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
         except Exception as e:
             return JsonResponse(

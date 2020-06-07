@@ -24,6 +24,7 @@ from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
+from api.outputs import emails as email_module
 
 from .payload_builder import *
 from .self_pricing import get_pricing
@@ -267,6 +268,16 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
+
+                            # Send email when GET_LABEL
+                            email_template_name = "General Booking"
+
+                            if booking.b_booking_Category == "Salvage Expense":
+                                email_template_name = "Return Booking"
+
+                            email_module.send_booking_email_using_template(
+                                booking.pk, email_template_name, request.user.username
+                            )
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -284,6 +295,16 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
                             booking.save()
+
+                            # Send email when GET_LABEL
+                            email_template_name = "General Booking"
+
+                            if booking.b_booking_Category == "Salvage Expense":
+                                email_template_name = "Return Booking"
+
+                            email_module.send_booking_email_using_template(
+                                booking.pk, email_template_name, request.user.username
+                            )
                     # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
                         Api_booking_confirmation_lines.objects.filter(
@@ -818,8 +839,18 @@ def get_label(request, fp_name):
             booking.z_label_url = z_label_url
             booking.save()
 
-            if not fp_name.lower() in ["sendle"]:
+            if not fp_name.lower() in ["startrack"]:
+                # Send email when GET_LABEL
+                email_template_name = "General Booking"
 
+                if booking.b_booking_Category == "Salvage Expense":
+                    email_template_name = "Return Booking"
+
+                email_module.send_booking_email_using_template(
+                    booking.pk, email_template_name, request.user.username
+                )
+
+            if not fp_name.lower() in ["sendle"]:
                 Log(
                     request_payload=payload,
                     request_status="SUCCESS",
@@ -827,7 +858,6 @@ def get_label(request, fp_name):
                     response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
-
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
                 status=200,
@@ -1092,7 +1122,7 @@ def reprint(request, fp_name):
             booking = Bookings.objects.get(id=booking_id)
             payload = get_reprint_payload(booking, fp_name)
 
-            logger.info(f"### Payload ({fp_name} POD): {payload}")
+            logger.info(f"### Payload ({fp_name} REPRINT): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/reprint"
             response = requests.post(url, params={}, json=payload)
 
@@ -1181,10 +1211,11 @@ def pricing(request):
 
         return JsonResponse({"message": error_msg}, status=400)
 
-    #     "Startrack"
-    #     "Camerons",
-    #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    #       "Startrack"
+    #       "Camerons",
+    #       "Toll",
+    #       "Sendle"
+    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
 
     try:
         for fp_name in fp_names:
