@@ -20,8 +20,9 @@ def convert_to_AU_SYDNEY_tz(time):
 
     try:
         sydney_time = sydney_tz.localize(time)
-    except:
         sydney_time = sydney_time + timedelta(hours=10)
+    except:
+        sydney_time = time + timedelta(hours=10)
 
     return sydney_time
 
@@ -31,8 +32,8 @@ def convert_to_UTC_tz(time):
 
     try:
         sydney_time = sydney_tz.localize(time)
+        sydney_time = sydney_time - timedelta(hours=10)
     except:
-        print("@1 - ", time)
         sydney_time = time - timedelta(hours=10)
 
     return sydney_time
