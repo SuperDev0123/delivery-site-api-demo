@@ -55,6 +55,7 @@ class BookingSerializer(serializers.ModelSerializer):
     pricing_cost = serializers.SerializerMethodField(read_only=True)
     pricing_service_name = serializers.SerializerMethodField(read_only=True)
     pricing_account_code = serializers.SerializerMethodField(read_only=True)
+    b_client_name_sub = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -82,6 +83,12 @@ class BookingSerializer(serializers.ModelSerializer):
             return obj.api_booking_quote.account_code
 
         return None
+
+    def get_b_client_name_sub(self, obj):
+        if obj.sub_client:
+            return obj.sub_client.company_name
+        else:
+            return None
 
     class Meta:
         model = Bookings
@@ -136,6 +143,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "s_20_Actual_Pickup_TimeStamp",
             "s_21_Actual_Delivery_TimeStamp",
             "b_client_name",
+            "b_client_name_sub",
             "b_client_warehouse_code",
             "b_clientPU_Warehouse",
             "booking_Created_For",
@@ -184,7 +192,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "inv_billing_status_note",
             "b_client_sales_inv_num",
             "b_client_order_num",
-            "b_client_name_sub",
             "inv_dme_invoice_no",
             "fp_invoice_no",
             "inv_cost_quoted",
@@ -218,6 +225,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "b_booking_Notes",
             "b_error_Capture",
             "kf_client_id",
+            "sub_client",
             "z_locked_status_time",
         )
 
@@ -474,6 +482,7 @@ class DME_clientsSerializer(serializers.ModelSerializer):
             "client_filter_date_field",
             "phone",
             "client_products_cnt",
+            "parent",
         )
 
     client_products_cnt = serializers.SerializerMethodField(read_only=True)

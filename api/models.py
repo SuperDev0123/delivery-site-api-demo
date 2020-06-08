@@ -80,6 +80,15 @@ class DME_clients(models.Model):
         sub_clients = self.dme_clients_set.all()
         return True if sub_clients else False
 
+    def get_sub_clients(self):
+        return self.dme_clients_set.all()
+
+    def get_parent(self):
+        if is_sub_client(self):
+            return self.parent
+        else:
+            return self
+
 
 class DME_employees(models.Model):
     pk_id_dme_emp = models.AutoField(primary_key=True)
@@ -100,6 +109,10 @@ class DME_employees(models.Model):
 
     class Meta:
         db_table = "dme_employees"
+
+    def get_role(self):
+        role = DME_Roles.objects.get(id=self.role_id)
+        return role.role_code
 
 
 class Client_warehouses(models.Model):
@@ -619,6 +632,7 @@ class Bookings(models.Model):
     b_client_name = models.CharField(
         verbose_name=_("Client Name"), max_length=36, blank=True, null=True, default=""
     )
+    sub_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE, null=True)
     pk_booking_id = models.CharField(
         verbose_name=_("Booking ID"), max_length=64, blank=True, null=True, default=""
     )
@@ -1582,9 +1596,6 @@ class Bookings(models.Model):
         default=False, blank=True, null=True
     )
     z_calculated_ETA = models.DateField(blank=True, null=True)
-    b_client_name_sub = models.CharField(
-        max_length=64, blank=True, null=True, default=None
-    )
     fp_invoice_no = models.CharField(max_length=16, blank=True, null=True, default=None)
     inv_cost_quoted = models.FloatField(blank=True, default=0, null=True)
     inv_cost_actual = models.FloatField(blank=True, default=0, null=True)

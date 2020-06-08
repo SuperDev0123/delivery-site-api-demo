@@ -72,6 +72,7 @@ from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
 from api.common import status_history
 from api.common.common_times import convert_to_UTC_tz
+from api.common.auth import get_user_role, get_client
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -204,29 +205,24 @@ class UserViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def username(self, request, format=None):
-        user_id = self.request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-        if dme_employee is not None:
+        client = get_client(request.user)
+
+        if not client:
             return JsonResponse(
-                {"username": request.user.username, "clientname": "dme"}
+                {
+                    "username": request.user.username,
+                    "clientname": "dme",
+                    "role": get_user_role(request.user),
+                }
             )
         else:
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
-            client = DME_clients.objects.get(
-                pk_id_dme_client=client_employee.fk_id_dme_client_id
-            )
             return JsonResponse(
                 {
                     "username": request.user.username,
                     "clientname": client.company_name,
                     "clientId": client.dme_account_num,
                     "hasSubClient": client.has_sub_client(),
+                    "role": get_user_role(request.user),
                 }
             )
 
@@ -250,6 +246,19 @@ class UserViewSet(viewsets.ViewSet):
 
         return JsonResponse(
             {"results": DME_clientsSerializer(queryset, many=True).data}
+        )
+
+    @action(detail=False, methods=["get"])
+    def get_sub_clients(self, request, format=None):
+        client = get_client(request.user)
+
+        if not client:
+            sub_clients = DME_clients.objects.filter(parent__isnull=False)
+        else:
+            sub_clients = client.get_sub_clients()
+
+        return JsonResponse(
+            {"results": DME_clientsSerializer(sub_clients, many=True).data}
         )
 
     @action(detail=False, methods=["get"])
@@ -992,7 +1001,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print("Exception: ", e)
+            print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"])

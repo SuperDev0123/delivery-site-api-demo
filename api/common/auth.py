@@ -1,27 +1,29 @@
 from api.models import *
 
 
-def get_client_info(request):
-    user_id = request.user.id
-    dme_employee = (
-        DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-    )
+def get_username(user):
+    return user.username
 
-    if dme_employee is not None:
-        return {
-            "username": request.user.username,
-            "clientname": "dme",
-            "clientId": None,
-        }
-    else:
-        client_employee = (
-            Client_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+
+def get_client(user):
+    client_employees = Client_employees.objects.filter(fk_id_user=user)
+
+    if client_employees:
         client = DME_clients.objects.get(
-            pk_id_dme_client=client_employee.fk_id_dme_client_id
+            pk_id_dme_client=client_employees.first().fk_id_dme_client_id
         )
-        return {
-            "username": request.user.username,
-            "clientname": client.company_name,
-            "clientId": client.dme_account_num,
-        }
+        return client
+    else:
+        return None
+
+
+def get_user_role(user):
+    dme_employees = DME_employees.objects.filter(fk_id_user=user)
+
+    if dme_employees:
+        return dme_employees.first().get_role()
+    else:
+        client_employees = Client_employees.objects.filter(fk_id_user=user)
+
+        if client_employees:
+            return client_employees.first().get_role()
