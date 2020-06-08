@@ -43,31 +43,33 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
             + ".xlsx"
         )
-    else:
-        filename = (
-            username
-            + "__"
-            + xls_type
-            + "__"
-            + str(len(bookings))
-            + "__"
-            + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
-            + ".xlsx"
-        )
 
-    date_range = (
-        f"{str(start_date.strftime('%d-%m-%Y'))}__{str(end_date.strftime('%d-%m-%Y'))}"
-    )
-    if xls_type == "booked_bookings":
-        filename = f"Shipments Booked ({date_range}).xlsx"
-    elif xls_type == "picked_up_bookings":
-        filename = f"Shipments PickedUp ({date_range}).xlsx"
-    elif xls_type == "box":
-        filename = f"Bookings to Send Boxes ({date_range}).xlsx"
-    elif xls_type == "futile":
-        filename = f"Futile Bookings ({date_range}).xlsx"
-    elif xls_type == "goods_delivered":
-        filename = f"Bookings Delivered ({date_range}).xlsx"
+        date_range = f"{str(start_date.strftime('%d-%m-%Y'))}__{str(end_date.strftime('%d-%m-%Y'))}"
+
+        if xls_type == "booked_bookings":
+            filename = f"Shipments Booked ({date_range}).xlsx"
+        elif xls_type == "picked_up_bookings":
+            filename = f"Shipments PickedUp ({date_range}).xlsx"
+        elif xls_type == "box":
+            filename = f"Bookings to Send Boxes ({date_range}).xlsx"
+        elif xls_type == "futile":
+            filename = f"Futile Bookings ({date_range}).xlsx"
+        elif xls_type == "goods_delivered":
+            filename = f"Bookings Delivered ({date_range}).xlsx"
+    else:
+        _tail = f'__{str(len(bookings))}__{str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))}.xlsx'
+        filename = f"{username}__{xls_type}__{_tail}"
+
+        if xls_type == "booked_bookings":
+            filename = f"Shipments Booked {_tail}"
+        elif xls_type == "picked_up_bookings":
+            filename = f"Shipments PickedUp {_tail}"
+        elif xls_type == "box":
+            filename = f"Bookings to Send Boxes {_tail}"
+        elif xls_type == "futile":
+            filename = f"Futile Bookings {_tail}"
+        elif xls_type == "goods_delivered":
+            filename = f"Bookings Delivered {_tail}"
 
     workbook = xlsxwriter.Workbook(filename, {"remove_timezone": True})
     worksheet = workbook.add_worksheet()
