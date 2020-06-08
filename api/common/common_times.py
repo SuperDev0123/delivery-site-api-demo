@@ -17,15 +17,21 @@ def get_sydney_now_time(return_type="char"):
 
 def convert_to_AU_SYDNEY_tz(time):
     sydney_tz = pytz.timezone("Australia/Sydney")
-    sydney_time = sydney_tz.localize(time)
-    sydney_time = sydney_time + timedelta(hours=10)
+
+    try:
+        sydney_time = sydney_tz.localize(time)
+    except:
+        sydney_time = sydney_time + timedelta(hours=10)
 
     return sydney_time
 
 
 def convert_to_UTC_tz(time):
     sydney_tz = pytz.timezone("UTC")
-    sydney_time = sydney_tz.localize(time)
-    sydney_time = sydney_time - timedelta(hours=10)
+
+    try:
+        sydney_time = sydney_tz.localize(time)
+    except:
+        sydney_time = time - timedelta(hours=10)
 
     return sydney_time
