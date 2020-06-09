@@ -1,6 +1,9 @@
 import pytz
 from datetime import timedelta, datetime
 
+SYDNEY_TZ = pytz.timezone("Australia/Sydney")
+UTC_TZ = pytz.timezone("UTC")
+
 
 def get_sydney_now_time(return_type="char"):
     sydney_tz = pytz.timezone("Australia/Sydney")
@@ -16,10 +19,11 @@ def get_sydney_now_time(return_type="char"):
 
 
 def convert_to_AU_SYDNEY_tz(time):
-    sydney_tz = pytz.timezone("Australia/Sydney")
+    if not time:
+        return None
 
     try:
-        sydney_time = sydney_tz.localize(time)
+        sydney_time = SYDNEY_TZ.localize(time)
         sydney_time = sydney_time + timedelta(hours=10)
     except:
         sydney_time = time + timedelta(hours=10)
@@ -28,10 +32,11 @@ def convert_to_AU_SYDNEY_tz(time):
 
 
 def convert_to_UTC_tz(time):
-    sydney_tz = pytz.timezone("UTC")
+    if not time:
+        return None
 
     try:
-        sydney_time = sydney_tz.localize(time)
+        sydney_time = UTC_TZ.localize(time)
         sydney_time = sydney_time - timedelta(hours=10)
     except:
         sydney_time = time - timedelta(hours=10)
