@@ -4809,7 +4809,6 @@ class ClientProductsViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         except Exception as e:
-            print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -4825,7 +4824,6 @@ class ClientProductsViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            print("@Exception", e)
             return JsonResponse({"result": None}, status=400)
 
     @action(detail=True, methods=["delete"])
