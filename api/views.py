@@ -1149,7 +1149,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
             elif report_type == "picked_up_bookings":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(
+                    s_20_Actual_Pickup_TimeStamp__range=(
                         convert_to_UTC_tz(first_date),
                         convert_to_UTC_tz(last_date),
                     )
