@@ -1101,10 +1101,12 @@ def pod(request, fp_name):
 
         booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
         booking.save()
-        email_template_name = "POD"
-        email_module.send_booking_email_using_template(
-            booking.pk, email_template_name, request.user.username
-        )
+
+        # POD Email
+        # email_template_name = "POD"
+        # email_module.send_booking_email_using_template(
+        #     booking.pk, email_template_name, request.user.username
+        # )
 
         return JsonResponse({"message": "POD is fetched successfully."})
     except Exception as e:
