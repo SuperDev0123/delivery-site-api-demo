@@ -1200,14 +1200,14 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                         )
 
-        # Freight Provider filter
-        if vx_freight_provider != "All":
-            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+            # Freight Provider filter
+            if vx_freight_provider != "All":
+                queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
 
-        # Client filter
-        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
-            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
-            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+            # Client filter
+            if pk_id_dme_client != "All" and pk_id_dme_client != 0:
+                client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
+                queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         # Optimized to speed up building XLS
         queryset.only(
