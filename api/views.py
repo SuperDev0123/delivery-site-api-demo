@@ -406,7 +406,6 @@ class UserViewSet(viewsets.ViewSet):
 
         return JsonResponse({"success": True, "results": results})
 
-
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
@@ -4840,3 +4839,41 @@ class ClientEmployeesViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ClientProductsViewSet(viewsets.ViewSet):
+    serializer_class = ClientProductsSerializer
+    queryset = Client_Products.objects.all()
+
+    @action(detail=False, methods=["get"])
+    def get(self, request, format=None):
+        results = []
+        try:
+            pk_id_dme_client = self.request.query_params.get("client_id", None)
+            queryset = Client_Products.objects.filter(fk_id_dme_client=pk_id_dme_client)
+            serializer = ClientProductsSerializer(queryset, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            resultObject = Client_Products.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": ClientProductsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({"result": None}, status=400)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        clientproducts = Client_Products.objects.get(pk=pk)
+        serializer = ClientProductsSerializer(clientproducts)
+        clientproducts.delete()
+        return Response(serializer.data)
