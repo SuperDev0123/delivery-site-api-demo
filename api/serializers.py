@@ -84,7 +84,8 @@ class BookingSerializer(serializers.ModelSerializer):
         return None
 
     def update(self, instance, validated_data):
-        instance.z_ModifiedTimestamp = datetime.now()
+        validated_data["z_ModifiedTimestamp"] = datetime.now()
+        super().update(instance, validated_data)
         instance.save()
         return instance
 
@@ -234,7 +235,8 @@ class BookingLineSerializer(serializers.ModelSerializer):
         return obj.get_is_scanned()
 
     def update(self, instance, validated_data):
-        instance.z_modifiedTimeStamp = datetime.now()
+        validated_data["z_modifiedTimeStamp"] = datetime.now()
+        super().update(instance, validated_data)
         instance.save()
         return instance
 
@@ -271,7 +273,8 @@ class BookingLineSerializer(serializers.ModelSerializer):
 
 class BookingLineDetailSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
-        instance.z_modifiedTimeStamp = datetime.now()
+        validated_data["z_modifiedTimeStamp"] = datetime.now()
+        super().update(instance, validated_data)
         instance.save()
         return instance
 
