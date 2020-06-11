@@ -406,6 +406,7 @@ class UserViewSet(viewsets.ViewSet):
 
         return JsonResponse({"success": True, "results": results})
 
+
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
@@ -3331,33 +3332,13 @@ class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         pk_booking_id = self.request.GET.get("pk_booking_id")
-        return_data = []
+        queryset = Dme_status_history.objects.filter(
+            fk_booking_id=pk_booking_id
+        ).order_by("-id")
 
-        try:
-            resultObjects = []
-            resultObjects = (
-                Dme_status_history.objects.select_related()
-                .filter(fk_booking_id=pk_booking_id)
-                .order_by("-id")
-            )
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "notes": resultObject.notes,
-                        "status_last": resultObject.status_last,
-                        "event_time_stamp": resultObject.event_time_stamp,
-                        "dme_notes": resultObject.dme_notes,
-                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "dme_status_detail": resultObject.dme_status_detail,
-                        "dme_status_action": resultObject.dme_status_action,
-                        "dme_status_linked_reference_from_fp": resultObject.dme_status_linked_reference_from_fp,
-                    }
-                )
-            return JsonResponse({"history": return_data})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"history": ""})
+        return JsonResponse(
+            {"results": StatusHistorySerializer(queryset, many=True).data}
+        )
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
@@ -3387,6 +3368,22 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     booking.s_20_Actual_Pickup_TimeStamp = request.data[
                         "event_time_stamp"
                     ]
+
+                    if booking.s_20_Actual_Pickup_TimeStamp:
+                        z_calculated_ETA = datetime.strptime(
+                            booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                        ) + timedelta(days=booking.delivery_kpi_days)
+                    else:
+                        z_calculated_ETA = datetime.now() + timedelta(
+                            days=booking.delivery_kpi_days
+                        )
+
+                    if not booking.b_given_to_transport_date_time:
+                        booking.b_given_to_transport_date_time = datetime.now()
+
+                    booking.z_calculated_ETA = datetime.strftime(
+                        z_calculated_ETA, "%Y-%m-%d"
+                    )
                 elif status_category == "Complete":
                     booking.s_21_Actual_Delivery_TimeStamp = request.data[
                         "event_time_stamp"
@@ -3394,6 +3391,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     booking.delivery_booking = request.data["event_time_stamp"][:10]
                     booking.z_api_issue_update_flag_500 = 0
 
+                booking.b_status = request.data["status_last"]
                 booking.save()
                 tempo.push_via_api(booking)
                 serializer.save()
@@ -3406,14 +3404,46 @@ class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_status_history(self, request, pk, format=None):
         status_history = Dme_status_history.objects.get(pk=pk)
+        booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
         serializer = StatusHistorySerializer(status_history, data=request.data)
 
         try:
             if serializer.is_valid():
-                if request.data["status_last"] == "In Transit":
+                status_category = get_status_category_from_status(
+                    request.data["status_last"]
+                )
+
+                if status_category == "Transit":
                     calc_collect_after_status_change(
                         request.data["fk_booking_id"], request.data["status_last"]
                     )
+
+                    booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+
+                    if booking.s_20_Actual_Pickup_TimeStamp:
+                        z_calculated_ETA = datetime.strptime(
+                            booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                        ) + timedelta(days=booking.delivery_kpi_days)
+                    else:
+                        z_calculated_ETA = datetime.now() + timedelta(
+                            days=booking.delivery_kpi_days
+                        )
+
+                    if not booking.b_given_to_transport_date_time:
+                        booking.b_given_to_transport_date_time = datetime.now()
+
+                    booking.z_calculated_ETA = datetime.strftime(
+                        z_calculated_ETA, "%Y-%m-%d"
+                    )
+                elif status_category == "Complete":
+                    booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                    booking.delivery_booking = request.data["event_time_stamp"][:10]
+
+                booking.save()
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -4839,6 +4869,7 @@ class ClientEmployeesViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ClientProductsViewSet(viewsets.ViewSet):
     serializer_class = ClientProductsSerializer
