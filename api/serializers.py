@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import serializers
 
 from api.models import (
@@ -25,7 +26,7 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
-    Client_Products
+    Client_Products,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -82,6 +83,11 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return None
 
+    def update(self, instance, validated_data):
+        instance.z_ModifiedTimestamp = datetime.now()
+        instance.save()
+        return instance
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -99,6 +105,8 @@ class BookingSerializer(serializers.ModelSerializer):
         )
         fields = read_only_fields + (
             "id",
+            "pk_booking_id",
+            "b_bookingID_Visual",
             "puCompany",
             "pu_Address_Street_1",
             "pu_Address_street_2",
@@ -121,9 +129,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Email_Group_Name",
             "de_Email_Group_Emails",
             "deToCompanyName",
-            "b_bookingID_Visual",
             "v_FPBookingNumber",
-            "pk_booking_id",
             "vx_freight_provider",
             "z_label_url",
             "z_pod_url",
@@ -227,6 +233,11 @@ class BookingLineSerializer(serializers.ModelSerializer):
     def get_is_scanned(self, obj):
         return obj.get_is_scanned()
 
+    def update(self, instance, validated_data):
+        instance.z_modifiedTimeStamp = datetime.now()
+        instance.save()
+        return instance
+
     class Meta:
         model = Booking_lines
         fields = (
@@ -259,6 +270,11 @@ class BookingLineSerializer(serializers.ModelSerializer):
 
 
 class BookingLineDetailSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        instance.z_modifiedTimeStamp = datetime.now()
+        instance.save()
+        return instance
+
     class Meta:
         model = Booking_lines_data
         fields = (
@@ -448,10 +464,12 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
         model = Client_employees
         fields = "__all__"
 
+
 class ClientProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Products
         fields = "__all__"
+
 
 class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)
