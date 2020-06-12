@@ -86,6 +86,9 @@ class DME_employees(models.Model):
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=False, null=True
     )
+    status_time = models.DateTimeField(
+        verbose_name=_("Status Time"), default=datetime.now, blank=True
+    )
 
     class Meta:
         db_table = "dme_employees"
@@ -211,6 +214,9 @@ class Client_employees(models.Model):
     )
     z_modifiedTimeStamp = models.DateTimeField(
         verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
+    )
+    status_time = models.DateTimeField(
+        verbose_name=_("Status Time"), default=datetime.now, blank=True
     )
 
     class Meta:
@@ -1300,9 +1306,7 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    z_ModifiedTimestamp = models.DateTimeField(
-        verbose_name=_("Modified By Account"), auto_now_add=True, blank=True
-    )
+    z_ModifiedTimestamp = models.DateTimeField(default=None, null=True, blank=True)
     pu_PickUp_TimeSlot_TimeEnd = models.TimeField(
         verbose_name=_("PU TimeSlot TimeEnd"), blank=True, null=True
     )
@@ -1870,7 +1874,7 @@ class Booking_lines(models.Model):
         verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
+        verbose_name=_("Modified Timestamp"), default=None, null=True, blank=True
     )
 
     def booking(self):
@@ -1940,9 +1944,7 @@ class Booking_lines_data(models.Model):
     z_modifiedByAccount = models.CharField(
         verbose_name=_("Modified By Account"), max_length=25, blank=True, null=True
     )
-    z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
-    )
+    z_modifiedTimeStamp = models.DateTimeField(default=None, null=True, blank=True)
 
     def booking(self):
         try:
@@ -3523,6 +3525,7 @@ class DME_Options(models.Model):
     z_downloadedTimeStamp = models.DateTimeField(
         verbose_name=_("Modified Timestamp"), default=None, blank=True, null=True
     )
+    show_in_admin = models.BooleanField(blank=True, null=True, default=False)
 
     class Meta:
         db_table = "dme_options"
@@ -3903,6 +3906,7 @@ class BookingSets(models.Model):
     class Meta:
         db_table = "dme_booking_sets"
 
+
 class Tokens(models.Model):
     id = models.AutoField(primary_key=True)
     value = models.CharField(max_length=255, default=None)
@@ -3912,3 +3916,28 @@ class Tokens(models.Model):
 
     class Meta:
         db_table = "tokens"
+
+
+class Client_Products(models.Model):
+    id = models.AutoField(primary_key=True)
+    modelNumber = models.CharField(
+        verbose_name=_("Model Number"), max_length=50, blank=True, null=True
+    )
+    e_dimUOM = models.CharField(
+        verbose_name=_("Dim UOM"), max_length=10, blank=True, null=True
+    )
+    e_weightUOM = models.CharField(
+        verbose_name=_("Weight UOM"), max_length=56, blank=True, null=True
+    )
+    e_dimLength = models.FloatField(verbose_name=_("Dim Length"), blank=True, null=True)
+    e_dimWidth = models.FloatField(verbose_name=_("Dim Width"), blank=True, null=True)
+    e_dimHeight = models.FloatField(verbose_name=_("Dim Height"), blank=True, null=True)
+    e_weightPerEach = models.FloatField(
+        verbose_name=_("Weight Per Each"), blank=True, null=True
+    )
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, blank=True, null=True
+    )
+
+    class Meta:
+        db_table = "client_products"

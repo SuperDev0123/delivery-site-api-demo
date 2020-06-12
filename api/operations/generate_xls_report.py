@@ -7,6 +7,7 @@ from datetime import datetime
 from django.conf import settings
 
 from api.models import *
+from api.common.common_times import convert_to_AU_SYDNEY_tz
 
 logger = logging.getLogger("dme_api")
 
@@ -42,31 +43,33 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
             + ".xlsx"
         )
-    else:
-        filename = (
-            username
-            + "__"
-            + xls_type
-            + "__"
-            + str(len(bookings))
-            + "__"
-            + str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))
-            + ".xlsx"
-        )
 
-    date_range = (
-        f"{str(start_date.strftime('%d-%m-%Y'))}__{str(end_date.strftime('%d-%m-%Y'))}"
-    )
-    if xls_type == "booked_bookings":
-        filename = f"Shipments Booked ({date_range}).xlsx"
-    elif xls_type == "picked_up_bookings":
-        filename = f"Shipments PickedUp ({date_range}).xlsx"
-    elif xls_type == "box":
-        filename = f"Bookings to Send Boxes ({date_range}).xlsx"
-    elif xls_type == "futile":
-        filename = f"Futile Bookings ({date_range}).xlsx"
-    elif xls_type == "goods_delivered":
-        filename = f"Bookings Delivered ({date_range}).xlsx"
+        date_range = f"{str(start_date.strftime('%d-%m-%Y'))}__{str(end_date.strftime('%d-%m-%Y'))}"
+
+        if xls_type == "booked_bookings":
+            filename = f"Shipments Booked ({date_range}).xlsx"
+        elif xls_type == "picked_up_bookings":
+            filename = f"Shipments PickedUp ({date_range}).xlsx"
+        elif xls_type == "box":
+            filename = f"Bookings to Send Boxes ({date_range}).xlsx"
+        elif xls_type == "futile":
+            filename = f"Futile Bookings ({date_range}).xlsx"
+        elif xls_type == "goods_delivered":
+            filename = f"Bookings Delivered ({date_range}).xlsx"
+    else:
+        _tail = f'__{str(len(bookings))}__{str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))}.xlsx'
+        filename = f"{username}__{xls_type}__{_tail}"
+
+        if xls_type == "booked_bookings":
+            filename = f"Shipments Booked {_tail}"
+        elif xls_type == "picked_up_bookings":
+            filename = f"Shipments PickedUp {_tail}"
+        elif xls_type == "box":
+            filename = f"Bookings to Send Boxes {_tail}"
+        elif xls_type == "futile":
+            filename = f"Futile Bookings {_tail}"
+        elif xls_type == "goods_delivered":
+            filename = f"Bookings Delivered {_tail}"
 
     workbook = xlsxwriter.Workbook(filename, {"remove_timezone": True})
     worksheet = workbook.add_worksheet()
@@ -122,6 +125,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AI1", "b_booking_project", bold)
             worksheet.write("AJ1", "b_project_due_date", bold)
             worksheet.write("AK1", "delivery_booking", bold)
+            worksheet.write("AL1", "b_bookingID_Visual", bold)
             # worksheet.write("AI1", '=IF(N1="In Transit",IF(Z1=7,C1+5,C1+12),"")', bold)
             # worksheet.write("AJ1", '=IF(AD1="";AK1-TODAY;"Store Booked")', bold)
 
@@ -162,6 +166,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AI2", "Project Name", bold)
             worksheet.write("AJ2", "Project Due Date", bold)
             worksheet.write("AK2", "Delivery Booking Date", bold)
+            worksheet.write("AL2", "Booking ID", bold)
             # worksheet.write("AI2", "Delivery Booking Target Date", bold)
             # worksheet.write("AJ2", "Delivery Booking - Days To Target", bold)
 
@@ -204,6 +209,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AI1", "Project Name", bold)
             worksheet.write("AJ1", "Project Due Date", bold)
             worksheet.write("AK1", "Delivery Booking Date", bold)
+            worksheet.write("AL1", "Booking ID", bold)
             # worksheet.write("AI1", "Delivery Booking Target Date", bold)
             # worksheet.write("AJ1", "Delivery Booking - Days To Target", bold)
 
@@ -231,19 +237,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 0,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
+                    time_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.fp_received_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_AU_SYDNEY_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_AU_SYDNEY_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -284,7 +302,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 21, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 21,
+                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -362,27 +383,48 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 28, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 28,
+                    convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 29, booking.fp_store_event_date, date_format
+                    row,
+                    col + 29,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 30, booking.fp_store_event_time, time_format
+                    row,
+                    col + 30,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_time, "time"),
+                    time_format,
                 )
 
             worksheet.write(row, col + 31, booking.fp_store_event_desc)
             worksheet.write(row, col + 32, booking.inv_billing_status)
             worksheet.write(row, col + 33, booking.inv_billing_status_note)
             worksheet.write(row, col + 34, booking.b_booking_project)
-            worksheet.write(row, col + 35, booking.b_project_due_date, date_format)
+            worksheet.write(
+                row,
+                col + 35,
+                convert_to_AU_SYDNEY_tz(booking.b_project_due_date),
+                date_format,
+            )
 
             # Store Scheduled Date
-            worksheet.write(row, col + 36, booking.delivery_booking, date_format)
+            worksheet.write(
+                row,
+                col + 36,
+                convert_to_AU_SYDNEY_tz(booking.delivery_booking),
+                date_format,
+            )
+
+            worksheet.write(row, col + 37, booking.b_bookingID_Visual)
 
             # # Store Booking Date Due By
             # if booking.b_status == "In Transit" and booking.delivery_kpi_days:
@@ -480,6 +522,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AJ1", "e_qty_adjusted_delivered", bold)
             worksheet.write("AK1", "b_booking_project", bold)
             worksheet.write("AL1", "b_project_due_date", bold)
+            worksheet.write("AM1", "b_bookingID_Visual", bold)
 
             worksheet.write("A2", "Consignment No", bold)
             worksheet.write("B2", "Booked Date", bold)
@@ -519,6 +562,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AJ2", "Adjusted Delivered Qty", bold)
             worksheet.write("AK2", "Project Name", bold)
             worksheet.write("AL2", "Project Due Date", bold)
+            worksheet.write("AM2", "Booking ID", bold)
 
             row = 2
         else:
@@ -560,6 +604,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AJ1", "Adjusted Delivered Qty", bold)
             worksheet.write("AK1", "Project Name", bold)
             worksheet.write("AL1", "Project Due Date", bold)
+            worksheet.write("AM1", "Booking ID", bold)
 
             row = 1
 
@@ -595,18 +640,26 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if booking.b_dateBookedDate and booking.b_dateBookedDate:
                         worksheet.write_datetime(
-                            row, col + 1, booking.b_dateBookedDate.date(), date_format
+                            row,
+                            col + 1,
+                            convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate.date()),
+                            date_format,
                         )
 
                     if booking.fp_received_date_time:
                         worksheet.write_datetime(
-                            row, col + 2, booking.fp_received_date_time, date_format
+                            row,
+                            col + 2,
+                            convert_to_AU_SYDNEY_tz(booking.fp_received_date_time),
+                            date_format,
                         )
                     elif booking.b_given_to_transport_date_time:
                         worksheet.write_datetime(
                             row,
                             col + 2,
-                            booking.b_given_to_transport_date_time,
+                            convert_to_AU_SYDNEY_tz(
+                                booking.b_given_to_transport_date_time
+                            ),
                             date_format,
                         )
 
@@ -639,20 +692,32 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
-                            row, col + 18, api_bcl.fp_event_date, date_format
+                            row,
+                            col + 18,
+                            convert_to_AU_SYDNEY_tz(api_bcl.fp_event_date),
+                            date_format,
                         )
                         worksheet.write_datetime(
-                            row, col + 19, api_bcl.fp_event_time, time_format
+                            row,
+                            col + 19,
+                            convert_to_AU_SYDNEY_tz(api_bcl.fp_event_time, "time"),
+                            time_format,
                         )
 
                     if booking.z_calculated_ETA:
                         worksheet.write_datetime(
-                            row, col + 20, booking.z_calculated_ETA, date_format
+                            row,
+                            col + 20,
+                            convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA),
+                            date_format,
                         )
 
                     if booking.de_Deliver_By_Date:
                         worksheet.write_datetime(
-                            row, col + 21, booking.de_Deliver_By_Date, date_format
+                            row,
+                            col + 21,
+                            convert_to_AU_SYDNEY_tz(booking.de_Deliver_By_Date),
+                            date_format,
                         )
 
                     if booking.de_Deliver_By_Date:
@@ -701,7 +766,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     )
                     worksheet.write(row, col + 36, booking.b_booking_project)
                     worksheet.write(
-                        row, col + 37, booking.b_project_due_date, date_format
+                        row,
+                        col + 37,
+                        convert_to_AU_SYDNEY_tz(booking.b_project_due_date),
+                        date_format,
                     )
 
                     if booking_line.e_qty is not None:
@@ -711,6 +779,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         e_qty_scanned_fp_total = (
                             e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
                         )
+
+                    worksheet.write(row, col + 38, booking.b_bookingID_Visual)
 
                     row += 1
 
@@ -762,6 +832,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AE1", "fp_store_event_time", bold)
             worksheet.write("AE1", "fp_store_event_desc", bold)
             worksheet.write("AF1", "client_item_reference", bold)
+            worksheet.write("AG1", "Gaps", bold)
+            worksheet.write("AH1", "b_bookingID_Visual", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Booked Time", bold)
@@ -796,6 +868,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AE2", "1st Contact For Delivery Booking Time", bold)
             worksheet.write("AF2", "FP Store Activity Description", bold)
             worksheet.write("AG2", "Gaps", bold)
+            worksheet.write("AH2", "Booking ID", bold)
 
             row = 2
         else:
@@ -832,6 +905,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AE1", "1st Contact For Delivery Booking Time", bold)
             worksheet.write("AF1", "FP Store Activity Description", bold)
             worksheet.write("AG1", "Gaps", bold)
+            worksheet.write("AH1", "Booking ID", bold)
 
             row = 1
 
@@ -864,19 +938,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 0,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
+                    time_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.fp_received_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_AU_SYDNEY_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 2, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 2,
+                    convert_to_AU_SYDNEY_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             worksheet.write(row, col + 3, booking.pu_Address_State)
@@ -913,7 +999,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 21, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 21,
+                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -991,21 +1080,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 28, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 28,
+                    convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 29, booking.fp_store_event_date, date_format
+                    row,
+                    col + 29,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 30, booking.fp_store_event_time, time_format
+                    row,
+                    col + 30,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_time, "time"),
+                    time_format,
                 )
 
             worksheet.write(row, col + 31, booking.fp_store_event_desc)
             worksheet.write(row, col + 32, gaps)
+            worksheet.write(row, col + 33, booking.b_bookingID_Visual)
 
             row += 1
 
@@ -1190,19 +1289,31 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 3, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 3,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
                 worksheet.write_datetime(
-                    row, col + 4, booking.b_dateBookedDate, time_format
+                    row,
+                    col + 4,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
+                    time_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 5, booking.fp_received_date_time, date_format
+                    row,
+                    col + 5,
+                    convert_to_AU_SYDNEY_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 5, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 5,
+                    convert_to_AU_SYDNEY_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -1249,7 +1360,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 32, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 32,
+                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -1327,17 +1441,26 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 39, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 39,
+                    convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 40, booking.fp_store_event_date, date_format
+                    row,
+                    col + 40,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             if booking.fp_store_event_time:
                 worksheet.write_datetime(
-                    row, col + 41, booking.fp_store_event_time, time_format
+                    row,
+                    col + 41,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_time, "time"),
+                    time_format,
                 )
 
             worksheet.write(row, col + 42, booking.fp_store_event_desc)
@@ -1396,6 +1519,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AF1", "z_calculated_ETA", bold)
             worksheet.write("AG1", "fp_store_event_date", bold)
             worksheet.write("AH1", "fp_store_event_desc", bold)
+            worksheet.write("AI1", "b_bookingID_Visual", bold)
 
             worksheet.write("A2", "Booked Date", bold)
             worksheet.write("B2", "Given to / Received by Transport", bold)
@@ -1435,6 +1559,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AF2", "Calculated ETA", bold)
             worksheet.write("AG2", "1st Contact For Delivery Booking Date", bold)
             worksheet.write("AH2", "FP Store Activity Description", bold)
+            worksheet.write("AI2", "Booking ID", bold)
 
             row = 2
         else:
@@ -1479,6 +1604,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AF1", "Calculated ETA", bold)
             worksheet.write("AG1", "1st Contact For Delivery Booking Date", bold)
             worksheet.write("AH1", "FP Store Activity Description", bold)
+            worksheet.write("AI1", "Booking ID", bold)
 
             row = 1
 
@@ -1508,16 +1634,25 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate and booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 0, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 0,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
 
             if booking.fp_received_date_time:
                 worksheet.write_datetime(
-                    row, col + 1, booking.fp_received_date_time, date_format
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(booking.fp_received_date_time),
+                    date_format,
                 )
             elif booking.b_given_to_transport_date_time:
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_given_to_transport_date_time, date_format
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(booking.b_given_to_transport_date_time),
+                    date_format,
                 )
 
             if (
@@ -1624,7 +1759,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_ActualDeliveryTimeStamp
             ):
                 worksheet.write_datetime(
-                    row, col + 24, booking.s_21_ActualDeliveryTimeStamp, date_format
+                    row,
+                    col + 24,
+                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    date_format,
                 )
 
             if (booking.z_pod_url is not None and len(booking.z_pod_url) > 0) or (
@@ -1702,15 +1840,22 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
-                    row, col + 31, booking.z_calculated_ETA, date_format
+                    row,
+                    col + 31,
+                    convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA),
+                    date_format,
                 )
 
             if booking.fp_store_event_date:
                 worksheet.write_datetime(
-                    row, col + 32, booking.fp_store_event_date, date_format
+                    row,
+                    col + 32,
+                    convert_to_AU_SYDNEY_tz(booking.fp_store_event_date),
+                    date_format,
                 )
 
             worksheet.write(row, col + 33, booking.fp_store_event_desc)
+            worksheet.write(row, col + 34, booking.b_bookingID_Visual)
 
             row += 1
 
@@ -1768,14 +1913,19 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate.date(), date_format
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
 
             if booking.s_05_LatestPickUpDateTimeFinal:
                 worksheet.write_datetime(
                     row,
                     col + 2,
-                    booking.s_05_LatestPickUpDateTimeFinal.date(),
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_05_LatestPickUpDateTimeFinal
+                    ).date(),
                     date_format,
                 )
 
@@ -1841,7 +1991,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_datetime(
                     row,
                     col + 1,
-                    booking.s_20_Actual_Pickup_TimeStamp.date(),
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_20_Actual_Pickup_TimeStamp
+                    ).date(),
                     date_format,
                 )
 
@@ -1910,14 +2062,19 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.b_dateBookedDate:
                 worksheet.write_datetime(
-                    row, col + 1, booking.b_dateBookedDate.date(), date_format,
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date(),
+                    date_format,
                 )
 
             if booking.s_20_Actual_Pickup_TimeStamp:
                 worksheet.write_datetime(
                     row,
                     col + 2,
-                    booking.s_20_Actual_Pickup_TimeStamp.date(),
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_20_Actual_Pickup_TimeStamp
+                    ).date(),
                     date_format,
                 )
 
@@ -2005,7 +2162,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 worksheet.write_datetime(
                     row,
                     col + 1,
-                    status_histories[0].event_time_stamp.date(),
+                    convert_to_AU_SYDNEY_tz(
+                        status_histories[0].event_time_stamp
+                    ).date(),
                     date_format,
                 )
 
@@ -2104,7 +2263,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             if booking.s_21_Actual_Delivery_TimeStamp:
                 worksheet.write_datetime(
-                    row, col + 3, booking.s_21_Actual_Delivery_TimeStamp, date_format
+                    row,
+                    col + 3,
+                    convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp),
+                    date_format,
                 )
 
             worksheet.write(row, col + 4, booking.b_booking_Category)

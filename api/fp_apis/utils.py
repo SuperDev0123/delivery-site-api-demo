@@ -50,6 +50,7 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
         return None
 
@@ -78,11 +79,13 @@ def get_account_code_key(booking, fp_name):
             return "live_bunnings_1"
         else:
             booking.b_errorCapture = f"Not supported State"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             return None
 
     if fp_name.lower() not in ACCOUNT_CODES:
         booking.b_errorCapture = f"Not supported FP"
+        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         return None
     elif booking.api_booking_quote:
@@ -96,6 +99,7 @@ def get_account_code_key(booking, fp_name):
 
         if not account_code_key:
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             return None
     elif not booking.api_booking_quote:
@@ -191,6 +195,7 @@ def _get_lowest_price(pricings):
 def auto_select_pricing(booking, pricings, auto_select_type):
     if len(pricings) == 0:
         booking.b_errorCapture = "No Freight Provider is available"
+        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         return None
 
@@ -225,8 +230,8 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
         booking.vx_account_code = filtered_pricing["pricing"].account_code
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.inv_sell_quoted = filtered_pricing["pricing"].fee
-        booking.inv_cost_actual = filtered_pricing["pricing"].client_mu_1_minimum_values
+        booking.inv_cost_quoted = filtered_pricing["pricing"].fee
+        booking.inv_sell_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
             fp_company_name__iexact=filtered_pricing["pricing"].fk_freight_provider_id
@@ -237,6 +242,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         else:
             booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
+        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         return True
     else:

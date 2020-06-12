@@ -18,11 +18,11 @@ def create(booking, status, username, event_timestamp=None):
             last_status_history = None
 
         if not last_status_history or (
-            last_status_history and last_status_history.status_last != booking.b_status
+            last_status_history and last_status_history.status_last != status
         ):
             dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
             dme_status_history.status_old = booking.b_status
-            dme_status_history.notes = f"{str(booking.b_status)}--->{str(status)}"
+            dme_status_history.notes = f"{str(booking.b_status)} ---> {str(status)}"
             dme_status_history.status_last = status
             dme_status_history.event_time_stamp = (
                 event_timestamp if event_timestamp else datetime.now()
@@ -40,6 +40,7 @@ def create(booking, status, username, event_timestamp=None):
                     booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
                     booking.delivery_booking = event_timestamp
 
+                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
         tempo.push_via_api(booking)
