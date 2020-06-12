@@ -45,6 +45,8 @@ router.register(r"files", FilesViewSet, basename="files")
 router.register(r"bookingsets", BookingSetsViewSet, basename="bookingsets")
 router.register(r"clientemployee", ClientEmployeesViewSet, basename="clientemployee")
 router.register(r"clientproducts", ClientProductsViewSet, basename="client_products")
+router.register(r"clientras", ClientRasViewSet, basename="client_ras")
+
 urlpatterns = router.urls
 
 urlpatterns += [

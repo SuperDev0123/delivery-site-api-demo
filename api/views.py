@@ -4877,3 +4877,51 @@ class ClientProductsViewSet(viewsets.ViewSet):
         serializer = ClientProductsSerializer(clientproducts)
         clientproducts.delete()
         return Response(serializer.data)
+
+
+class ClientRasViewSet(viewsets.ViewSet):
+    serializer_class = ClientRasSerializer
+    queryset = Client_Ras.objects.all()
+
+    def list(self, request, pk=None):
+        queryset = Client_Ras.objects.all()
+        print(queryset)
+        serializer = ClientRasSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        try:
+            queryset = Client_Ras.objects.filter(pk=pk)
+            serializer = ClientRasSerializer(queryset, many=True)
+            return JsonResponse(
+                    {
+                        "result": serializer
+                    },
+                    status=200,
+                )
+
+        except Exception as e:
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            resultObject = Client_Ras.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": ClientRasSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({"result": None}, status=400)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        clientras = Client_Ras.objects.get(pk=pk)
+        serializer = ClientRasSerializer(clientras)
+        clientras.delete()
+        return Response(serializer.data)

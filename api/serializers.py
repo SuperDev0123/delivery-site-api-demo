@@ -25,7 +25,8 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
-    Client_Products
+    Client_Products,
+    Client_Ras
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -451,6 +452,11 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
 class ClientProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Products
+        fields = "__all__"
+
+class ClientRasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Ras
         fields = "__all__"
 
 class BookingSetsSerializer(serializers.ModelSerializer):
