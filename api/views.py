@@ -4378,31 +4378,19 @@ def getSuburbs(request):
 
 
 class SqlQueriesViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    serializer_class = SqlQueriesSerializer
+    queryset = Utl_sql_queries.objects.all()
 
-        try:
-            resultObjects = []
-            resultObjects = Utl_sql_queries.objects.all()
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "sql_title": resultObject.sql_title,
-                        "sql_query": resultObject.sql_query,
-                        "sql_description": resultObject.sql_description,
-                        "sql_notes": resultObject.sql_notes,
-                        "z_createdByAccount": resultObject.z_createdByAccount,
-                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "z_modifiedByAccount": resultObject.z_modifiedByAccount,
-                        "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
-                    }
-                )
-            return JsonResponse({"results": return_data})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": str(e)})
+    def list(self, request, pk=None):
+        queryset = Utl_sql_queries.objects.all()
+        serializer = SqlQueriesSerializer(queryset, many=True)
+
+        return JsonResponse(
+            {
+                "result": serializer.data,
+            },
+            status=200,
+        )
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
@@ -4462,16 +4450,13 @@ class SqlQueriesViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return JsonResponse({"results": str(e)})
 
+            
     @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        data = Utl_sql_queries.objects.get(pk=pk)
-
-        try:
-            data.delete()
-            return JsonResponse({"results": fp_freight_providers})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+    def delete(self, request, pk=None):
+        sqlquery = Utl_sql_queries.objects.get(pk=pk)
+        serializer = SqlQueriesSerializer(sqlquery)
+        sqlquery.delete()
+        return Response(serializer.data)
 
     @action(detail=False, methods=["post"])
     def validate(self, request, pk=None):
