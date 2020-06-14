@@ -3030,6 +3030,17 @@ class Dme_status_history(models.Model):
     class Meta:
         db_table = "dme_status_history"
 
+    def is_last_status_of_booking(self, booking):
+        status_histories = Dme_status_history.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).order_by("id")
+
+        if status_histories.exists():
+            if self.pk == status_histories.last().pk:
+                return True
+
+        return False
+
 
 class Dme_urls(models.Model):
     id = models.AutoField(primary_key=True)

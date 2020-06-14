@@ -3458,14 +3458,20 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     ]
                     booking.delivery_booking = request.data["event_time_stamp"][:10]
 
-                booking.b_status = request.data["status_last"]
-                booking.z_ModifiedTimestamp = datetime.now()
+                # When update last statusHistory of a booking
+                if (
+                    status_history.is_last_status_of_booking(booking)
+                    and status_history.status_last != request.data["status_last"]
+                ):
+                    booking.b_status = request.data["status_last"]
+                    booking.z_ModifiedTimestamp = datetime.now()
+
                 booking.save()
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Code for only [TNT REBOOK]
