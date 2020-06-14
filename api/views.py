@@ -3458,6 +3458,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     ]
                     booking.delivery_booking = request.data["event_time_stamp"][:10]
 
+                booking.b_status = request.data["status_last"]
                 booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
                 serializer.save()
