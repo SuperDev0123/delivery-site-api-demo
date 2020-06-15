@@ -1,5 +1,6 @@
 from datetime import datetime
 from rest_framework import serializers
+import re
 
 from api.models import (
     Bookings,
@@ -474,16 +475,13 @@ class SqlQueriesSerializer(serializers.ModelSerializer):
 
     def validate_sql_query(self, value):
         """
-        Only SELECT query is alloed to added
+        Only SELECT query is allowed to added
         """
-        if (
-            "update" in value.lower()
-            or "insert" in value.lower()
-            or "alter" in value.lower()
-        ):
+        if re.search("select", value, flags=re.IGNORECASE):
+            return value
+        else:
             raise serializers.ValidationError("Only SELECT query is allowed!")
-        return value
-
+       
     class Meta:
         model = Utl_sql_queries
         fields = "__all__"
