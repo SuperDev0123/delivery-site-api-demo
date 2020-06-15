@@ -4539,92 +4539,58 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     def list(self, request, pk=None):
         queryset = Utl_sql_queries.objects.all()
         serializer = SqlQueriesSerializer(queryset, many=True)
-
-        return JsonResponse(
-            {
-                "result": serializer.data,
-            },
-            status=200,
-        )
+        return JsonResponse({"results": serializer.data,}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
         return_data = []
         try:
             resultObject = Utl_sql_queries.objects.get(id=pk)
-
-            return_data.append(
-                {
-                    "id": resultObject.id,
-                    "sql_title": resultObject.sql_title,
-                    "sql_query": resultObject.sql_query,
-                    "sql_description": resultObject.sql_description,
-                    "sql_notes": resultObject.sql_notes,
-                    "z_createdByAccount": resultObject.z_createdByAccount,
-                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                    "z_modifiedByAccount": resultObject.z_modifiedByAccount,
-                    "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
-                }
-            )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse({"result": SqlQueriesSerializer(resultObject).data})
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"message": ""}, status=400)
+            return JsonResponse({"message": e}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
-        return_data = []
+        serializer = SqlQueriesSerializer(data=request.data)
 
-        if self.validate(request.data["sql_query"]):
-            try:
-                resultObjects = []
-                resultObjects = Utl_sql_queries.objects.create(
-                    sql_title=request.data["sql_title"],
-                    sql_query=request.data["sql_query"],
-                    sql_description=request.data["sql_description"],
-                    sql_notes=request.data["sql_notes"],
-                )
-
-                return JsonResponse({"results": request.data})
-            except Exception as e:
-                return JsonResponse({"message": str(e)}, status=400)
-        else:
-            return JsonResponse({"message": "Sorry only SELECT statement allowed"})
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         data = Utl_sql_queries.objects.get(pk=pk)
-        if self.validate(request.data["sql_query"]):
-            try:
-                Utl_sql_queries.objects.filter(pk=pk).update(
-                    sql_query=request.data["sql_query"],
-                    sql_description=request.data["sql_description"],
-                    sql_notes=request.data["sql_notes"],
-                )
-                return JsonResponse({"results": request.data})
-            except Exception as e:
-                return JsonResponse({"message": str(e)}, status=400)
-        else:
-            return JsonResponse(
-                {"message": "Sorry only SELECT statement allowed"}, status=400
-            )
+        serializer = SqlQueriesSerializer(data, data=request.data)
 
-            
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=True, methods=["delete"])
-
     def delete(self, request, pk=None):
-        sqlquery = Utl_sql_queries.objects.get(pk=pk)
-        serializer = SqlQueriesSerializer(sqlquery)
-        sqlquery.delete()
-        return Response(serializer.data)
+        result = Utl_sql_queries.objects.get(pk=pk)
+        result.delete()
+        return Response(SqlQueriesSerializer(result).data)
 
     @action(detail=False, methods=["post"])
     def execute(self, request, pk=None):
         return_data = []
         query_tables = tables_in_query(request.data["sql_query"])
+        serializer = SqlQueriesSerializer(data=request.data)
 
-        if self.validate(request.data["sql_query"]):
+        if serializer.is_valid():
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(request.data["sql_query"])
@@ -4637,8 +4603,10 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     )
                     row1 = cursor.fetchone()
                     result = []
+
                     for value in row:
                         tmp = {}
+
                         for (index, column) in enumerate(value):
                             tmp[columns[index][0]] = column
                         result.append(tmp)
@@ -4648,9 +4616,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     # print('@Exception', e)
                     return JsonResponse({"message": str(e)}, status=400)
         else:
-            return JsonResponse(
-                {"message": "Sorry only SELECT statement allowed"}, status=400
-            )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def update_query(self, request, pk=None):

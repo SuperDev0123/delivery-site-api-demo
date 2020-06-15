@@ -468,7 +468,22 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
         model = Client_employees
         fields = "__all__"
 
+
 class SqlQueriesSerializer(serializers.ModelSerializer):
+    sql_query = serializers.CharField()
+
+    def validate_sql_query(self, value):
+        """
+        Only SELECT query is alloed to added
+        """
+        if (
+            "update" in value.lower()
+            or "insert" in value.lower()
+            or "alter" in value.lower()
+        ):
+            raise serializers.ValidationError("Only SELECT query is allowed!")
+        return value
+
     class Meta:
         model = Utl_sql_queries
         fields = "__all__"
