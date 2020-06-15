@@ -4575,7 +4575,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
@@ -4613,7 +4613,7 @@ class SqlQueriesViewSet(viewsets.ViewSet):
 
                     return JsonResponse({"results": result, "tables": row1})
                 except Exception as e:
-                    print('@Exception', e)
+                    # print("@Exception", e)
                     return JsonResponse({"message": str(e)}, status=400)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
