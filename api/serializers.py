@@ -26,6 +26,7 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
+    Utl_sql_queries,
     Client_Products,
 )
 from api import utils
@@ -465,6 +466,11 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 class ClientEmployeesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_employees
+        fields = "__all__"
+
+class SqlQueriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utl_sql_queries
         fields = "__all__"
 
 
