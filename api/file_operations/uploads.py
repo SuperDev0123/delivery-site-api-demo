@@ -123,6 +123,7 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
                 booking.z_pod_signed_url = f"{fp.fp_company_name.lower()}_{fp.fp_address_country.lower()}/{file_name}"
 
             full_path = f"{file_path}/{file_name}"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
 
         with open(full_path, "wb+") as destination:

@@ -50,6 +50,7 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
         return None
 
@@ -78,11 +79,13 @@ def get_account_code_key(booking, fp_name):
             return "live_bunnings_1"
         else:
             booking.b_errorCapture = f"Not supported State"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             return None
 
     if fp_name.lower() not in ACCOUNT_CODES:
         booking.b_errorCapture = f"Not supported FP"
+        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         return None
     elif booking.api_booking_quote:
@@ -96,6 +99,7 @@ def get_account_code_key(booking, fp_name):
 
         if not account_code_key:
             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             return None
     elif not booking.api_booking_quote:
@@ -191,6 +195,7 @@ def _get_lowest_price(pricings):
 def auto_select_pricing(booking, pricings, auto_select_type):
     if len(pricings) == 0:
         booking.b_errorCapture = "No Freight Provider is available"
+        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         return None
 
@@ -237,6 +242,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         else:
             booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
+        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         return True
     else:

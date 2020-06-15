@@ -1,4 +1,6 @@
+from datetime import datetime
 from rest_framework import serializers
+import re
 
 from api.models import (
     Bookings,
@@ -25,6 +27,8 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
+    Utl_sql_queries,
+    Client_Products,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -81,6 +85,12 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return None
 
+    def update(self, instance, validated_data):
+        validated_data["z_ModifiedTimestamp"] = datetime.now()
+        super().update(instance, validated_data)
+        instance.save()
+        return instance
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -98,6 +108,8 @@ class BookingSerializer(serializers.ModelSerializer):
         )
         fields = read_only_fields + (
             "id",
+            "pk_booking_id",
+            "b_bookingID_Visual",
             "puCompany",
             "pu_Address_Street_1",
             "pu_Address_street_2",
@@ -120,9 +132,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Email_Group_Name",
             "de_Email_Group_Emails",
             "deToCompanyName",
-            "b_bookingID_Visual",
             "v_FPBookingNumber",
-            "pk_booking_id",
             "vx_freight_provider",
             "z_label_url",
             "z_pod_url",
@@ -226,6 +236,12 @@ class BookingLineSerializer(serializers.ModelSerializer):
     def get_is_scanned(self, obj):
         return obj.get_is_scanned()
 
+    def update(self, instance, validated_data):
+        validated_data["z_modifiedTimeStamp"] = datetime.now()
+        super().update(instance, validated_data)
+        instance.save()
+        return instance
+
     class Meta:
         model = Booking_lines
         fields = (
@@ -258,6 +274,12 @@ class BookingLineSerializer(serializers.ModelSerializer):
 
 
 class BookingLineDetailSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        validated_data["z_modifiedTimeStamp"] = datetime.now()
+        super().update(instance, validated_data)
+        instance.save()
+        return instance
+
     class Meta:
         model = Booking_lines_data
         fields = (
@@ -445,6 +467,29 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 class ClientEmployeesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_employees
+        fields = "__all__"
+
+
+class SqlQueriesSerializer(serializers.ModelSerializer):
+    sql_query = serializers.CharField()
+
+    def validate_sql_query(self, value):
+        """
+        Only SELECT query is allowed to added
+        """
+        if re.search("select", value, flags=re.IGNORECASE):
+            return value
+        else:
+            raise serializers.ValidationError("Only SELECT query is allowed!")
+       
+    class Meta:
+        model = Utl_sql_queries
+        fields = "__all__"
+
+
+class ClientProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Products
         fields = "__all__"
 
 

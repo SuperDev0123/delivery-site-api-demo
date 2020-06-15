@@ -63,6 +63,7 @@ def get_service_provider(fp_name, upper=True):
 
 def _set_error(booking, error_msg):
     booking.b_error_Capture = str(error_msg)[:999]
+    booking.z_ModifiedTimestamp = datetime.now()
     booking.save()
 
 
@@ -346,6 +347,7 @@ def get_book_payload(booking, fp_name, account_code_key=None):
             payload["consignmentNoteNumber"] = f"DME{booking.b_bookingID_Visual}"
             payload["orderNumber"] = booking.pk_booking_id
             booking.b_client_sales_inv_num = booking.pk_booking_id
+            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             utl_state = Utl_states.objects.get(state_code=booking.pu_Address_State)
 

@@ -40,6 +40,7 @@ def create(booking, status, username, event_timestamp=None):
                     booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
                     booking.delivery_booking = event_timestamp
 
+                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
         tempo.push_via_api(booking)
