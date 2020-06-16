@@ -33,13 +33,12 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.save()
 
             if status.lower() == "delivered":
-                booking.z_api_issue_update_flag_500 = 0
-                booking.z_lock_status = 1
-
                 if event_timestamp:
                     booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
                     booking.delivery_booking = event_timestamp
 
+                booking.z_api_issue_update_flag_500 = 0
+                booking.z_lock_status = 1
                 booking.save()
 
         tempo.push_via_api(booking)

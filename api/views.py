@@ -406,6 +406,7 @@ class UserViewSet(viewsets.ViewSet):
 
         return JsonResponse({"success": True, "results": results})
 
+
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
@@ -1199,14 +1200,14 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                         )
 
-        # Freight Provider filter
-        if vx_freight_provider != "All":
-            queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
+            # Freight Provider filter
+            if vx_freight_provider != "All":
+                queryset = queryset.filter(vx_freight_provider=vx_freight_provider)
 
-        # Client filter
-        if pk_id_dme_client != "All" and pk_id_dme_client != 0:
-            client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
-            queryset = queryset.filter(kf_client_id=client.dme_account_num)
+            # Client filter
+            if pk_id_dme_client != "All" and pk_id_dme_client != 0:
+                client = DME_clients.objects.get(pk_id_dme_client=pk_id_dme_client)
+                queryset = queryset.filter(kf_client_id=client.dme_account_num)
 
         # Optimized to speed up building XLS
         queryset.only(
@@ -1892,11 +1893,6 @@ class BookingViewSet(viewsets.ViewSet):
 
         if switch_info == "true":
             newBooking = {
-                "b_bookingID_Visual": Bookings.get_max_b_bookingID_Visual() + 1,
-                "fk_client_warehouse": booking.fk_client_warehouse_id,
-                "b_client_warehouse_code": booking.b_client_warehouse_code,
-                "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
-                "b_client_name": booking.b_client_name,
                 "puCompany": booking.deToCompanyName,
                 "pu_Address_Street_1": booking.de_To_Address_Street_1,
                 "pu_Address_street_2": booking.de_To_Address_Street_2,
@@ -1917,22 +1913,9 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.pu_Phone_Main,
                 "de_Email": booking.pu_Email,
                 "de_To_Address_State": booking.pu_Address_State,
-                "pk_booking_id": str(uuid.uuid1()),
-                "z_lock_status": booking.z_lock_status,
-                "b_status": "Ready for booking",
-                "vx_freight_provider": booking.vx_freight_provider,
-                "kf_client_id": booking.kf_client_id,
-                "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
-                "vx_serviceName": booking.vx_serviceName,
-                "z_CreatedTimestamp": datetime.now(),
             }
         else:
             newBooking = {
-                "b_bookingID_Visual": Bookings.get_max_b_bookingID_Visual() + 1,
-                "fk_client_warehouse": booking.fk_client_warehouse_id,
-                "b_client_warehouse_code": booking.b_client_warehouse_code,
-                "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
-                "b_client_name": booking.b_client_name,
                 "puCompany": booking.puCompany,
                 "pu_Address_Street_1": booking.pu_Address_Street_1,
                 "pu_Address_street_2": booking.pu_Address_street_2,
@@ -1953,15 +1936,26 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.de_to_Phone_Main,
                 "de_Email": booking.de_Email,
                 "de_To_Address_State": booking.de_To_Address_State,
-                "pk_booking_id": str(uuid.uuid1()),
-                "z_lock_status": booking.z_lock_status,
-                "b_status": "Ready for booking",
-                "vx_freight_provider": booking.vx_freight_provider,
-                "kf_client_id": booking.kf_client_id,
-                "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
-                "vx_serviceName": booking.vx_serviceName,
-                "z_CreatedTimestamp": datetime.now(),
             }
+
+        newBooking["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
+        newBooking["fk_client_warehouse"] = booking.fk_client_warehouse_id
+        newBooking["b_client_warehouse_code"] = booking.b_client_warehouse_code
+        newBooking["b_clientPU_Warehouse"] = booking.b_clientPU_Warehouse
+        newBooking["b_client_name"] = booking.b_client_name
+        newBooking["pk_booking_id"] = str(uuid.uuid1())
+        newBooking["z_lock_status"] = booking.z_lock_status
+        newBooking["b_status"] = "Ready for booking"
+        newBooking["vx_freight_provider"] = booking.vx_freight_provider
+        newBooking["kf_client_id"] = booking.kf_client_id
+        newBooking[
+            "b_clientReference_RA_Numbers"
+        ] = booking.b_clientReference_RA_Numbers
+        newBooking["vx_serviceName"] = booking.vx_serviceName
+        newBooking["z_CreatedByAccount"] = request.user.username
+        newBooking[
+            "x_booking_Created_With"
+        ] = f"Duped from #{booking.b_bookingID_Visual}"
 
         if dup_line_and_linedetail == "true":
             booking_lines = Booking_lines.objects.filter(
@@ -1973,6 +1967,8 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.fk_booking_id = newBooking["pk_booking_id"]
                 booking_line.e_qty_delivered = 0
                 booking_line.e_qty_adjusted_delivered = 0
+                booking_line.z_createdTimeStamp = datetime.now()
+                booking_line.z_modifiedTimeStamp = None
                 new_pk_booking_lines_id = str(uuid.uuid1())
 
                 if booking_line.pk_booking_lines_id:
@@ -1986,8 +1982,8 @@ class BookingViewSet(viewsets.ViewSet):
                         booking_line_detail.fk_booking_lines_id = (
                             new_pk_booking_lines_id
                         )
-                        booking_line_detail.z_createdTimeStamp = str(datetime.now())
-                        booking_line_detail.z_modifiedTimeStamp = str(datetime.now())
+                        booking_line_detail.z_createdTimeStamp = datetime.now()
+                        booking_line_detail.z_modifiedTimeStamp = None
                         booking_line_detail.save()
 
                 booking_line.pk_booking_lines_id = new_pk_booking_lines_id
@@ -2396,6 +2392,8 @@ class BookingLinesViewSet(viewsets.ViewSet):
             "e_Total_KG_weight": booking_line.e_Total_KG_weight,
             "e_1_Total_dimCubicMeter": booking_line.e_1_Total_dimCubicMeter,
             "total_2_cubic_mass_factor_calc": booking_line.total_2_cubic_mass_factor_calc,
+            "z_createdTimeStamp": datetime.now(),
+            "z_modifiedTimeStamp": None,
         }
         serializer = BookingLineSerializer(data=newbooking_line)
 
@@ -2415,7 +2413,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
@@ -2504,6 +2502,8 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             "gap_ra": booking_line_detail.gap_ra,
             "clientRefNumber": booking_line_detail.clientRefNumber,
             "fk_booking_lines_id": booking_line_detail.fk_booking_lines_id,
+            "z_createdTimeStamp": datetime.now(),
+            "z_modifiedTimeStamp": None,
         }
         serializer = BookingLineDetailSerializer(data=newbooking_line_detail)
 
@@ -3331,33 +3331,13 @@ class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         pk_booking_id = self.request.GET.get("pk_booking_id")
-        return_data = []
+        queryset = Dme_status_history.objects.filter(
+            fk_booking_id=pk_booking_id
+        ).order_by("-id")
 
-        try:
-            resultObjects = []
-            resultObjects = (
-                Dme_status_history.objects.select_related()
-                .filter(fk_booking_id=pk_booking_id)
-                .order_by("-id")
-            )
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "notes": resultObject.notes,
-                        "status_last": resultObject.status_last,
-                        "event_time_stamp": resultObject.event_time_stamp,
-                        "dme_notes": resultObject.dme_notes,
-                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "dme_status_detail": resultObject.dme_status_detail,
-                        "dme_status_action": resultObject.dme_status_action,
-                        "dme_status_linked_reference_from_fp": resultObject.dme_status_linked_reference_from_fp,
-                    }
-                )
-            return JsonResponse({"history": return_data})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"history": ""})
+        return JsonResponse(
+            {"results": StatusHistorySerializer(queryset, many=True).data}
+        )
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
@@ -3387,6 +3367,22 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     booking.s_20_Actual_Pickup_TimeStamp = request.data[
                         "event_time_stamp"
                     ]
+
+                    if booking.s_20_Actual_Pickup_TimeStamp:
+                        z_calculated_ETA = datetime.strptime(
+                            booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                        ) + timedelta(days=booking.delivery_kpi_days)
+                    else:
+                        z_calculated_ETA = datetime.now() + timedelta(
+                            days=booking.delivery_kpi_days
+                        )
+
+                    if not booking.b_given_to_transport_date_time:
+                        booking.b_given_to_transport_date_time = datetime.now()
+
+                    booking.z_calculated_ETA = datetime.strftime(
+                        z_calculated_ETA, "%Y-%m-%d"
+                    )
                 elif status_category == "Complete":
                     booking.s_21_Actual_Delivery_TimeStamp = request.data[
                         "event_time_stamp"
@@ -3394,6 +3390,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     booking.delivery_booking = request.data["event_time_stamp"][:10]
                     booking.z_api_issue_update_flag_500 = 0
 
+                booking.b_status = request.data["status_last"]
                 booking.save()
                 tempo.push_via_api(booking)
                 serializer.save()
@@ -3406,19 +3403,58 @@ class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_status_history(self, request, pk, format=None):
         status_history = Dme_status_history.objects.get(pk=pk)
+        booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
         serializer = StatusHistorySerializer(status_history, data=request.data)
 
         try:
             if serializer.is_valid():
-                if request.data["status_last"] == "In Transit":
+                status_category = get_status_category_from_status(
+                    request.data["status_last"]
+                )
+
+                if status_category == "Transit":
                     calc_collect_after_status_change(
                         request.data["fk_booking_id"], request.data["status_last"]
                     )
+
+                    booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+
+                    if booking.s_20_Actual_Pickup_TimeStamp:
+                        z_calculated_ETA = datetime.strptime(
+                            booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                        ) + timedelta(days=booking.delivery_kpi_days)
+                    else:
+                        z_calculated_ETA = datetime.now() + timedelta(
+                            days=booking.delivery_kpi_days
+                        )
+
+                    if not booking.b_given_to_transport_date_time:
+                        booking.b_given_to_transport_date_time = datetime.now()
+
+                    booking.z_calculated_ETA = datetime.strftime(
+                        z_calculated_ETA, "%Y-%m-%d"
+                    )
+                elif status_category == "Complete":
+                    booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                        "event_time_stamp"
+                    ]
+                    booking.delivery_booking = request.data["event_time_stamp"][:10]
+
+                # When update last statusHistory of a booking
+                if (
+                    status_history.is_last_status_of_booking(booking)
+                    and status_history.status_last != request.data["status_last"]
+                ):
+                    booking.b_status = request.data["status_last"]
+
+                booking.save()
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Code for only [TNT REBOOK]
@@ -4468,117 +4504,64 @@ def getSuburbs(request):
 
 
 class SqlQueriesViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    serializer_class = SqlQueriesSerializer
+    queryset = Utl_sql_queries.objects.all()
 
-        try:
-            resultObjects = []
-            resultObjects = Utl_sql_queries.objects.all()
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "sql_title": resultObject.sql_title,
-                        "sql_query": resultObject.sql_query,
-                        "sql_description": resultObject.sql_description,
-                        "sql_notes": resultObject.sql_notes,
-                        "z_createdByAccount": resultObject.z_createdByAccount,
-                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "z_modifiedByAccount": resultObject.z_modifiedByAccount,
-                        "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
-                    }
-                )
-            return JsonResponse({"results": return_data})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"message": str(e)}, status=400)
+    def list(self, request, pk=None):
+        queryset = Utl_sql_queries.objects.all()
+        serializer = SqlQueriesSerializer(queryset, many=True)
+        return JsonResponse({"results": serializer.data,}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
         return_data = []
         try:
             resultObject = Utl_sql_queries.objects.get(id=pk)
-
-            return_data.append(
-                {
-                    "id": resultObject.id,
-                    "sql_title": resultObject.sql_title,
-                    "sql_query": resultObject.sql_query,
-                    "sql_description": resultObject.sql_description,
-                    "sql_notes": resultObject.sql_notes,
-                    "z_createdByAccount": resultObject.z_createdByAccount,
-                    "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                    "z_modifiedByAccount": resultObject.z_modifiedByAccount,
-                    "z_modifiedTimeStamp": resultObject.z_modifiedTimeStamp,
-                }
-            )
-
-            return JsonResponse({"results": return_data})
+            return JsonResponse({"result": SqlQueriesSerializer(resultObject).data})
         except Exception as e:
             # print("@Exception", e)
-            return JsonResponse({"message": ""}, status=400)
+            return JsonResponse({"message": e}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
-        return_data = []
+        serializer = SqlQueriesSerializer(data=request.data)
 
-        if self.validate(request.data["sql_query"]):
-            try:
-                resultObjects = []
-                resultObjects = Utl_sql_queries.objects.create(
-                    sql_title=request.data["sql_title"],
-                    sql_query=request.data["sql_query"],
-                    sql_description=request.data["sql_description"],
-                    sql_notes=request.data["sql_notes"],
-                )
-
-                return JsonResponse({"results": request.data})
-            except Exception as e:
-                return JsonResponse({"message": str(e)}, status=400)
-        else:
-            return JsonResponse({"message": "Sorry only SELECT statement allowed"})
+        try:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         data = Utl_sql_queries.objects.get(pk=pk)
-        if self.validate(request.data["sql_query"]):
-            try:
-                Utl_sql_queries.objects.filter(pk=pk).update(
-                    sql_query=request.data["sql_query"],
-                    sql_description=request.data["sql_description"],
-                    sql_notes=request.data["sql_notes"],
-                )
-                return JsonResponse({"results": request.data})
-            except Exception as e:
-                return JsonResponse({"message": str(e)}, status=400)
-        else:
-            return JsonResponse(
-                {"message": "Sorry only SELECT statement allowed"}, status=400
-            )
-
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        data = Utl_sql_queries.objects.get(pk=pk)
+        serializer = SqlQueriesSerializer(data, data=request.data)
 
         try:
-            data.delete()
-            return JsonResponse({"results": fp_freight_providers})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return JsonResponse({"message": str(e)}, status=400)
+            # print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def validate(self, query):
-        if re.search("select", query, flags=re.IGNORECASE):
-            return True
-        else:
-            return False
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk=None):
+        result = Utl_sql_queries.objects.get(pk=pk)
+        result.delete()
+        return Response(SqlQueriesSerializer(result).data)
 
     @action(detail=False, methods=["post"])
     def execute(self, request, pk=None):
         return_data = []
         query_tables = tables_in_query(request.data["sql_query"])
+        serializer = SqlQueriesSerializer(data=request.data)
 
-        if self.validate(request.data["sql_query"]):
+        if serializer.is_valid():
             with connection.cursor() as cursor:
                 try:
                     cursor.execute(request.data["sql_query"])
@@ -4591,20 +4574,20 @@ class SqlQueriesViewSet(viewsets.ViewSet):
                     )
                     row1 = cursor.fetchone()
                     result = []
+
                     for value in row:
                         tmp = {}
+
                         for (index, column) in enumerate(value):
                             tmp[columns[index][0]] = column
                         result.append(tmp)
 
                     return JsonResponse({"results": result, "tables": row1})
                 except Exception as e:
-                    # print('@Exception', e)
+                    # print("@Exception", e)
                     return JsonResponse({"message": str(e)}, status=400)
         else:
-            return JsonResponse(
-                {"message": "Sorry only SELECT statement allowed"}, status=400
-            )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def update_query(self, request, pk=None):
@@ -4840,6 +4823,7 @@ class ClientEmployeesViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ClientProductsViewSet(viewsets.ViewSet):
     serializer_class = ClientProductsSerializer
     queryset = Client_Products.objects.all()
@@ -4877,6 +4861,7 @@ class ClientProductsViewSet(viewsets.ViewSet):
         serializer = ClientProductsSerializer(clientproducts)
         clientproducts.delete()
         return Response(serializer.data)
+
 
 
 class ClientRasViewSet(viewsets.ViewSet):
@@ -4925,3 +4910,5 @@ class ClientRasViewSet(viewsets.ViewSet):
         serializer = ClientRasSerializer(clientras)
         clientras.delete()
         return Response(serializer.data)
+=======
+>>>>>>> develop

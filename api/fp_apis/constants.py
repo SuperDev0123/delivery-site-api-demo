@@ -21,7 +21,7 @@ ACCOUNT_CODES = {
         "test_bed_1": "DUMMY",
         "live_0": "DELIME",
         "live_1": "DEMELP",
-        "live_2": "DMEMEL",
+        # "live_2": "DMEMEL",
         "live_3": "DMEBNE",
         "live_4": "DMEPAL",
         "live_5": "DEMELK",
