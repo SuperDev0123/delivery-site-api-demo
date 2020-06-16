@@ -3760,8 +3760,6 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
                         "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
                         "z_createdByAccount": resultObject.z_createdByAccount,
                         "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
-                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
                     }
                 )
             return JsonResponse({"results": return_data})
@@ -3788,8 +3786,6 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
                     "whenAttachmentUnavailable": resultObject.whenAttachmentUnavailable,
                     "z_createdByAccount": resultObject.z_createdByAccount,
                     "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                    "z_downloadedByAccount": resultObject.z_downloadedByAccount,
-                    "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
                 }
             )
             return JsonResponse({"results": return_data})
@@ -3878,8 +3874,6 @@ class OptionsViewSet(viewsets.ViewSet):
                         "is_running": resultObject.is_running,
                         "z_createdByAccount": resultObject.z_createdByAccount,
                         "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "z_downloadedByAccount": resultObject.z_downloadedByAccount,
-                        "z_downloadedTimeStamp": resultObject.z_downloadedTimeStamp,
                         "show_in_admin": resultObject.show_in_admin,
                     }
                 )
