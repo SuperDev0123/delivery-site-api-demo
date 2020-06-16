@@ -85,12 +85,6 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return None
 
-    def update(self, instance, validated_data):
-        validated_data["z_ModifiedTimestamp"] = datetime.now()
-        super().update(instance, validated_data)
-        instance.save()
-        return instance
-
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -238,12 +232,6 @@ class BookingLineSerializer(serializers.ModelSerializer):
     def get_is_scanned(self, obj):
         return obj.get_is_scanned()
 
-    def update(self, instance, validated_data):
-        validated_data["z_modifiedTimeStamp"] = datetime.now()
-        super().update(instance, validated_data)
-        instance.save()
-        return instance
-
     class Meta:
         model = Booking_lines
         fields = (
@@ -276,12 +264,6 @@ class BookingLineSerializer(serializers.ModelSerializer):
 
 
 class BookingLineDetailSerializer(serializers.ModelSerializer):
-    def update(self, instance, validated_data):
-        validated_data["z_modifiedTimeStamp"] = datetime.now()
-        super().update(instance, validated_data)
-        instance.save()
-        return instance
-
     class Meta:
         model = Booking_lines_data
         fields = (
