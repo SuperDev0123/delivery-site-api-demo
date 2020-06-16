@@ -4879,9 +4879,10 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
+            print('serializer', serializer)
             return JsonResponse(
                     {
-                        "result": serializer
+                        "result": serializer.data[0]
                     },
                     status=200,
                 )
@@ -4910,5 +4911,17 @@ class ClientRasViewSet(viewsets.ViewSet):
         serializer = ClientRasSerializer(clientras)
         clientras.delete()
         return Response(serializer.data)
-=======
->>>>>>> develop
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        data = Client_Ras.objects.get(pk=pk)
+        serializer = ClientRasSerializer(data, data=request.data)
+        try:
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

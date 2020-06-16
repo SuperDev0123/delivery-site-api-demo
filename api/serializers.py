@@ -28,7 +28,7 @@ from api.models import (
     EmailLogs,
     BookingSets,
     Client_Products,
-    Client_Ras
+    Client_Ras,
     Utl_sql_queries,
     Client_Products,
 )
@@ -496,13 +496,10 @@ class ClientProductsSerializer(serializers.ModelSerializer):
         model = Client_Products
         fields = "__all__"
 
-<<<<<<< HEAD
 class ClientRasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Ras
         fields = "__all__"
-=======
->>>>>>> develop
 
 class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)

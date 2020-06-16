@@ -4004,13 +4004,13 @@ class Client_Ras(models.Model):
         verbose_name=_("Created By Account"), max_length=25, blank=True, null=True
     )
     z_createdTimeStamp = models.DateTimeField(
-        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True
+        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True, null=True
     )
     z_modifiedByAccount = models.CharField(
         verbose_name=_("Modified By Account"), max_length=25, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True
+        verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True, null=True
     )
     fk_id_dme_client = models.ForeignKey(
         DME_clients, on_delete=models.CASCADE, blank=True, null=True
