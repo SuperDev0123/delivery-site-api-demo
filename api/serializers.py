@@ -227,6 +227,8 @@ class BookingSerializer(serializers.ModelSerializer):
             "b_error_Capture",
             "kf_client_id",
             "z_locked_status_time",
+            "x_booking_Created_With",
+            "z_CreatedByAccount",
         )
 
 
@@ -481,7 +483,7 @@ class SqlQueriesSerializer(serializers.ModelSerializer):
             return value
         else:
             raise serializers.ValidationError("Only SELECT query is allowed!")
-       
+
     class Meta:
         model = Utl_sql_queries
         fields = "__all__"

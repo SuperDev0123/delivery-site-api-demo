@@ -90,5 +90,4 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     status_history.create(booking, status_from_fp, request.user.username, event_time)
     booking.b_status = status_from_fp
     booking.b_booking_Notes = status_desc
-    booking.z_ModifiedTimestamp = datetime.now()
     booking.save()

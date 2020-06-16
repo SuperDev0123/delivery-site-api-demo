@@ -1053,7 +1053,6 @@ class BookingsViewSet(viewsets.ViewSet):
                     booking.b_is_flagged_add_on_services = (
                         1 if status == "flag_add_on_services" else 0
                     )
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
                 return JsonResponse({"status": "success"})
             else:
@@ -1077,7 +1076,6 @@ class BookingsViewSet(viewsets.ViewSet):
                     status_history.create(booking, status, request.user.username)
                     booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
@@ -1420,7 +1418,6 @@ class BookingsViewSet(viewsets.ViewSet):
                         field_content, "%Y-%m-%d %H:%M:%S"
                     ) + timedelta(days=delivery_kpi_days)
 
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
             return JsonResponse(
                 {"message": "Bookings are updated successfully"}, status=200
@@ -1896,11 +1893,6 @@ class BookingViewSet(viewsets.ViewSet):
 
         if switch_info == "true":
             newBooking = {
-                "b_bookingID_Visual": Bookings.get_max_b_bookingID_Visual() + 1,
-                "fk_client_warehouse": booking.fk_client_warehouse_id,
-                "b_client_warehouse_code": booking.b_client_warehouse_code,
-                "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
-                "b_client_name": booking.b_client_name,
                 "puCompany": booking.deToCompanyName,
                 "pu_Address_Street_1": booking.de_To_Address_Street_1,
                 "pu_Address_street_2": booking.de_To_Address_Street_2,
@@ -1921,22 +1913,9 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.pu_Phone_Main,
                 "de_Email": booking.pu_Email,
                 "de_To_Address_State": booking.pu_Address_State,
-                "pk_booking_id": str(uuid.uuid1()),
-                "z_lock_status": booking.z_lock_status,
-                "b_status": "Ready for booking",
-                "vx_freight_provider": booking.vx_freight_provider,
-                "kf_client_id": booking.kf_client_id,
-                "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
-                "vx_serviceName": booking.vx_serviceName,
-                "z_CreatedTimestamp": datetime.now(),
             }
         else:
             newBooking = {
-                "b_bookingID_Visual": Bookings.get_max_b_bookingID_Visual() + 1,
-                "fk_client_warehouse": booking.fk_client_warehouse_id,
-                "b_client_warehouse_code": booking.b_client_warehouse_code,
-                "b_clientPU_Warehouse": booking.b_clientPU_Warehouse,
-                "b_client_name": booking.b_client_name,
                 "puCompany": booking.puCompany,
                 "pu_Address_Street_1": booking.pu_Address_Street_1,
                 "pu_Address_street_2": booking.pu_Address_street_2,
@@ -1957,15 +1936,26 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.de_to_Phone_Main,
                 "de_Email": booking.de_Email,
                 "de_To_Address_State": booking.de_To_Address_State,
-                "pk_booking_id": str(uuid.uuid1()),
-                "z_lock_status": booking.z_lock_status,
-                "b_status": "Ready for booking",
-                "vx_freight_provider": booking.vx_freight_provider,
-                "kf_client_id": booking.kf_client_id,
-                "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
-                "vx_serviceName": booking.vx_serviceName,
-                "z_CreatedTimestamp": datetime.now(),
             }
+
+        newBooking["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
+        newBooking["fk_client_warehouse"] = booking.fk_client_warehouse_id
+        newBooking["b_client_warehouse_code"] = booking.b_client_warehouse_code
+        newBooking["b_clientPU_Warehouse"] = booking.b_clientPU_Warehouse
+        newBooking["b_client_name"] = booking.b_client_name
+        newBooking["pk_booking_id"] = str(uuid.uuid1())
+        newBooking["z_lock_status"] = booking.z_lock_status
+        newBooking["b_status"] = "Ready for booking"
+        newBooking["vx_freight_provider"] = booking.vx_freight_provider
+        newBooking["kf_client_id"] = booking.kf_client_id
+        newBooking[
+            "b_clientReference_RA_Numbers"
+        ] = booking.b_clientReference_RA_Numbers
+        newBooking["vx_serviceName"] = booking.vx_serviceName
+        newBooking["z_CreatedByAccount"] = request.user.username
+        newBooking[
+            "x_booking_Created_With"
+        ] = f"Duped from #{booking.b_bookingID_Visual}"
 
         if dup_line_and_linedetail == "true":
             booking_lines = Booking_lines.objects.filter(
@@ -2025,7 +2015,6 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
         else:
             booking.x_manual_booked_flag = not booking.x_manual_booked_flag
-            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             serializer = BookingSerializer(booking)
 
@@ -2054,7 +2043,6 @@ class BookingViewSet(viewsets.ViewSet):
             booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
             booking.x_booking_Created_With = "Manual"
-            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             serializer = BookingSerializer(booking)
 
@@ -2159,7 +2147,6 @@ class BookingViewSet(viewsets.ViewSet):
                         booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
                 client_process.save()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
@@ -2255,7 +2242,6 @@ class BookingViewSet(viewsets.ViewSet):
                     "%M"
                 )
 
-            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             serializer = BookingSerializer(booking)
             return Response(serializer.data)
@@ -2299,7 +2285,6 @@ class BookingViewSet(viewsets.ViewSet):
                 )
 
                 client_process.delete()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
@@ -3406,7 +3391,6 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     booking.z_api_issue_update_flag_500 = 0
 
                 booking.b_status = request.data["status_last"]
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
                 tempo.push_via_api(booking)
                 serializer.save()
@@ -3464,7 +3448,6 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     and status_history.status_last != request.data["status_last"]
                 ):
                     booking.b_status = request.data["status_last"]
-                    booking.z_ModifiedTimestamp = datetime.now()
 
                 booking.save()
                 serializer.save()
@@ -4110,14 +4093,12 @@ def download(request):
                     f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
     elif download_option == "pod":
         for booking in bookings:
             if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
                 file_paths.append(f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}")
                 booking.z_downloaded_pod_timestamp = timezone.now()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
     elif download_option == "pod_sog":
         for booking in bookings:
@@ -4126,7 +4107,6 @@ def download(request):
                     f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                 )
                 booking.z_downloaded_pod_sog_timestamp = timezone.now()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
     elif download_option == "new_pod":
         for booking in bookings:
@@ -4136,7 +4116,6 @@ def download(request):
                         f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_url}"
                     )
                     booking.z_downloaded_pod_timestamp = timezone.now()
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
     elif download_option == "new_pod_sog":
         for booking in bookings:
@@ -4146,7 +4125,6 @@ def download(request):
                         f"{settings.STATIC_PUBLIC}/imgs/{booking.z_pod_signed_url}"
                     )
                     booking.z_downloaded_pod_sog_timestamp = timezone.now()
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
     elif download_option == "connote":
         for booking in bookings:
@@ -4155,7 +4133,6 @@ def download(request):
                     f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
                 )
                 booking.z_downloaded_connote_timestamp = timezone.now()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
     elif download_option == "new_connote":
         for booking in bookings:
@@ -4165,7 +4142,6 @@ def download(request):
                         f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
                     )
                     booking.z_downloaded_connote_timestamp = timezone.now()
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
     elif download_option == "label_and_connote":
         for booking in bookings:
@@ -4174,14 +4150,12 @@ def download(request):
                     f"{settings.STATIC_PRIVATE}/connotes/" + booking.z_connote_url
                 )
                 booking.z_downloaded_connote_timestamp = timezone.now()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
             if booking.z_label_url and len(booking.z_label_url) > 0:
                 file_paths.append(
                     f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 )
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
     response = download_libs.download_from_disk(download_option, file_paths)
@@ -4214,7 +4188,6 @@ def delete_file(request):
             booking.z_pod_url = None
             booking.z_downloaded_pod_timestamp = None
 
-        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
         delete_lib.delete(file_path)
     elif file_option == "pricing-only":
@@ -4284,7 +4257,6 @@ def generate_csv(request):
                 status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
                 booking_lines = Booking_lines.objects.filter(
@@ -4312,7 +4284,6 @@ def generate_csv(request):
                 booking.b_dateBookedDate = get_sydney_now_time()
                 status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
         return JsonResponse({"status": "Created CSV successfully"}, status=200)

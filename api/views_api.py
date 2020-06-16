@@ -127,6 +127,7 @@ def boks(request):
             )
 
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1["x_booking_Created_With"] = "DME API"
         bok_1["success"] = 2
 
         if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002":
