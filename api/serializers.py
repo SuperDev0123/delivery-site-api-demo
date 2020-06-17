@@ -1,4 +1,6 @@
+from datetime import datetime
 from rest_framework import serializers
+import re
 
 from api.models import (
     Bookings,
@@ -25,6 +27,8 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
+    Utl_sql_queries,
+    Client_Products,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -94,9 +98,12 @@ class BookingSerializer(serializers.ModelSerializer):
             "dme_delivery_status_category",  # property
             "client_item_references",  # property
             "clientRefNumbers",  # property
+            "gap_ras",  # property
         )
         fields = read_only_fields + (
             "id",
+            "pk_booking_id",
+            "b_bookingID_Visual",
             "puCompany",
             "pu_Address_Street_1",
             "pu_Address_street_2",
@@ -119,9 +126,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Email_Group_Name",
             "de_Email_Group_Emails",
             "deToCompanyName",
-            "b_bookingID_Visual",
             "v_FPBookingNumber",
-            "pk_booking_id",
             "vx_freight_provider",
             "z_label_url",
             "z_pod_url",
@@ -215,6 +220,9 @@ class BookingSerializer(serializers.ModelSerializer):
             "b_booking_Notes",
             "b_error_Capture",
             "kf_client_id",
+            "z_locked_status_time",
+            "x_booking_Created_With",
+            "z_CreatedByAccount",
         )
 
 
@@ -443,6 +451,29 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 class ClientEmployeesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_employees
+        fields = "__all__"
+
+
+class SqlQueriesSerializer(serializers.ModelSerializer):
+    sql_query = serializers.CharField()
+
+    def validate_sql_query(self, value):
+        """
+        Only SELECT query is allowed to added
+        """
+        if re.search("select", value, flags=re.IGNORECASE):
+            return value
+        else:
+            raise serializers.ValidationError("Only SELECT query is allowed!")
+
+    class Meta:
+        model = Utl_sql_queries
+        fields = "__all__"
+
+
+class ClientProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Products
         fields = "__all__"
 
 

@@ -5,6 +5,7 @@ from django.conf import settings
 
 from api.models import *
 from api.common import status_history
+from api.common.common_times import convert_to_UTC_tz
 from api.fp_apis.utils import (
     get_dme_status_from_fp_status,
     get_status_category_from_status,
@@ -22,18 +23,21 @@ def _extract(fp_name, consignmentStatus):
         b_status_API = consignmentStatus["status"][0]
         status_desc = consignmentStatus["statusDescription"][0]
         event_time = consignmentStatus["statusDate"][0]
-        event_time = str(datetime.strptime(event_time, "%d/%m/%Y"))
+        event_time = datetime.strptime(event_time, "%d/%m/%Y")
+        event_time = str(convert_to_UTC_tz(event_time))
     elif fp_name.lower() in ["hunter"]:
         b_status_API = consignmentStatus["status"]
         status_desc = consignmentStatus["description"]
         event_time = consignmentStatus["statusUpdate"]
-        event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S"))
+        event_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
+        event_time = str(convert_to_UTC_tz(event_time))
     elif fp_name.lower() == "sendle":
 
         b_status_API = consignmentStatus["status"]
         status_desc = consignmentStatus["statusDescription"]
         event_time = consignmentStatus["statusUpdate"]
-        event_time = str(datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ"))
+        event_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ")
+        event_time = str(convert_to_UTC_tz(event_time))
     else:
         event_time = None
 
@@ -82,7 +86,8 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         fp_name.lower(), last_consignmentStatus
     )
     booking.b_status_API = b_status_API
-    booking.b_status = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
+    status_from_fp = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
+    status_history.create(booking, status_from_fp, request.user.username, event_time)
+    booking.b_status = status_from_fp
     booking.b_booking_Notes = status_desc
     booking.save()
-    status_history.create(booking, booking.b_status, request.user.username, event_time)

@@ -24,6 +24,7 @@ from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
+from api.outputs import emails as email_module
 
 from .payload_builder import *
 from .self_pricing import get_pricing
@@ -169,7 +170,9 @@ def book(request, fp_name):
             logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
-            res_content = response.content.decode("utf8").replace("'t" , " not").replace("'", '"')
+            res_content = (
+                response.content.decode("utf8").replace("'t", " not").replace("'", '"')
+            )
             json_data = json.loads(res_content)
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
@@ -233,13 +236,11 @@ def book(request, fp_name):
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
                     )
-                    booking.b_dateBookedDate = str(datetime.now())
+                    booking.b_dateBookedDate = datetime.now()
+                    status_history.create(booking, "Booked", request.user.username)
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
-                    status_history.create(
-                        booking, booking.b_status, request.user.username
-                    )
 
                     Log(
                         request_payload=request_payload,
@@ -267,6 +268,16 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
+
+                            # Send email when GET_LABEL
+                            email_template_name = "General Booking"
+
+                            if booking.b_booking_Category == "Salvage Expense":
+                                email_template_name = "Return Booking"
+
+                            email_module.send_booking_email_using_template(
+                                booking.pk, email_template_name, request.user.username
+                            )
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -284,6 +295,16 @@ def book(request, fp_name):
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
                             booking.save()
+
+                            # Send email when GET_LABEL
+                            email_template_name = "General Booking"
+
+                            if booking.b_booking_Category == "Salvage Expense":
+                                email_template_name = "Return Booking"
+
+                            email_module.send_booking_email_using_template(
+                                booking.pk, email_template_name, request.user.username
+                            )
                     # Save Label for Startrack
                     elif booking.vx_freight_provider.lower() == "startrack":
                         Api_booking_confirmation_lines.objects.filter(
@@ -341,7 +362,7 @@ def book(request, fp_name):
                     error_msg = json_data["errors"]
                 elif "errorMessage" in json_data:  # Sendle, TNT Error
                     error_msg = json_data["errorMessage"]
-                elif "errorMessage" in json_data[0]: 
+                elif "errorMessage" in json_data[0]:
                     error_msg = json_data[0]["errorMessage"]
                 else:
                     error_msg = s0
@@ -428,15 +449,7 @@ def rebook(request, fp_name):
 
                     old_fk_fp_pickup_id = booking.fk_fp_pickup_id
                     booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-                    booking.b_dateBookedDate = str(datetime.now())
-                    booking.b_status = "PU Rebooked"
-                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-                        booking, booking.api_booking_quote
-                    )
-                    booking.b_error_Capture = None
-                    booking.save()
-
+                    booking.b_dateBookedDate = datetime.now()
                     status_history.create(
                         booking,
                         "PU Rebooked(Last pickup Id was "
@@ -444,6 +457,13 @@ def rebook(request, fp_name):
                         + ")",
                         request.user.username,
                     )
+                    booking.b_status = "PU Rebooked"
+                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+                        booking, booking.api_booking_quote
+                    )
+                    booking.b_error_Capture = None
+                    booking.save()
 
                     Log(
                         request_payload=request_payload,
@@ -566,7 +586,7 @@ def edit_book(request, fp_name):
                     "consignment_id"
                 ]
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-                booking.b_dateBookedDate = str(datetime.now())
+                booking.b_dateBookedDate = datetime.now()
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
                 booking.save()
@@ -637,15 +657,13 @@ def cancel_book(request, fp_name):
 
                 try:
                     if response.status_code == 200:
+                        status_history.create(booking, "Closed", request.user.username)
                         booking.b_status = "Closed"
                         booking.b_dateBookedDate = None
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
                         booking.save()
-                        status_history.create(
-                            booking, booking.b_status, request.user.username
-                        )
 
                         Log(
                             request_payload=payload,
@@ -663,7 +681,7 @@ def cancel_book(request, fp_name):
                             error_msg = json_data["errorMessage"]
                             _set_error(booking, error_msg)
                             return JsonResponse({"message": error_msg}, status=400)
-                
+
                         error_msg = json_data
                         _set_error(booking, error_msg)
                         return JsonResponse(
@@ -821,8 +839,18 @@ def get_label(request, fp_name):
             booking.z_label_url = z_label_url
             booking.save()
 
-            if not fp_name.lower() in ["sendle"]:
+            if not fp_name.lower() in ["startrack"]:
+                # Send email when GET_LABEL
+                email_template_name = "General Booking"
 
+                if booking.b_booking_Category == "Salvage Expense":
+                    email_template_name = "Return Booking"
+
+                email_module.send_booking_email_using_template(
+                    booking.pk, email_template_name, request.user.username
+                )
+
+            if not fp_name.lower() in ["sendle"]:
                 Log(
                     request_payload=payload,
                     request_status="SUCCESS",
@@ -830,7 +858,6 @@ def get_label(request, fp_name):
                     response=res_content,
                     fk_booking_id=booking.id,
                 ).save()
-
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
                 status=200,
@@ -1075,6 +1102,12 @@ def pod(request, fp_name):
         booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
         booking.save()
 
+        # POD Email
+        # email_template_name = "POD"
+        # email_module.send_booking_email_using_template(
+        #     booking.pk, email_template_name, request.user.username
+        # )
+
         return JsonResponse({"message": "POD is fetched successfully."})
     except Exception as e:
         trace_error.print()
@@ -1095,7 +1128,7 @@ def reprint(request, fp_name):
             booking = Bookings.objects.get(id=booking_id)
             payload = get_reprint_payload(booking, fp_name)
 
-            logger.info(f"### Payload ({fp_name} POD): {payload}")
+            logger.info(f"### Payload ({fp_name} REPRINT): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/reprint"
             response = requests.post(url, params={}, json=payload)
 
@@ -1184,10 +1217,11 @@ def pricing(request):
 
         return JsonResponse({"message": error_msg}, status=400)
 
-    #     "Startrack"
-    #     "Camerons",
-    #     "Toll",
-    fp_names = ["Sendle", "TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    #       "Startrack"
+    #       "Camerons",
+    #       "Toll",
+    #       "Sendle"
+    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
 
     try:
         for fp_name in fp_names:
