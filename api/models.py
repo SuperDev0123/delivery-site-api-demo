@@ -3980,3 +3980,40 @@ class Client_Products(models.Model):
 
     class Meta:
         db_table = "client_products"
+
+
+class Client_Ras(models.Model):
+    id = models.AutoField(primary_key=True)
+    ra_number  = models.CharField(max_length=30, blank=True, null=True)
+    dme_number = models.CharField(max_length=50, blank=True, null=True)
+    name_first = models.CharField(max_length=50, blank=True, null=True)
+    name_surname = models.CharField(max_length=50, blank=True, null=True)
+    phone_mobile = models.CharField(max_length=30, blank=True, null=True)
+    address1 = models.CharField(max_length=80, blank=True, null=True)
+    address2 = models.CharField(max_length=80, blank=True, null=True)
+    suburb = models.CharField(max_length=50, blank=True, null=True)
+    postal_code  = models.CharField(max_length=30, blank=True, null=True)
+    state = models.CharField(max_length=25, blank=True, null=True)
+    country = models.CharField(max_length=50, blank=True, null=True)
+    item_model_num = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=150, blank=True, null=True)
+    serial_number  = models.CharField(max_length=50, blank=True, null=True)    
+    product_in_box = models.BooleanField(blank=True, null=True, default=False)
+
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created By Account"), max_length=25, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), default=datetime.now, blank=True, null=True
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified By Account"), max_length=25, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), default=datetime.now, blank=True, null=True
+    )
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, blank=True, null=True
+    )
+    class Meta:
+        db_table = "client_ras"
