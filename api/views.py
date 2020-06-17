@@ -1099,7 +1099,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
             elif report_type == "goods_delivered":
                 queryset = queryset.filter(
-                    b_dateBookedDate__range=(first_date, last_date),
+                    s_21_Actual_Delivery_TimeStamp__range=(first_date, last_date),
                     b_status__iexact="delivered",
                 )
             else:
@@ -1591,7 +1591,7 @@ class BookingViewSet(viewsets.ViewSet):
                 booking = queryset.get(b_bookingID_Visual=idBookingNumber)
             elif filterName == "con":
                 booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
-            elif filterName == "id":
+            elif filterName == "id" and idBookingNumber:
                 booking = queryset.get(id=idBookingNumber)
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
@@ -3294,11 +3294,11 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                     request.data["status_last"]
                 )
 
-                if status_category == "In Transit":
+                if status_category == "Transit":
                     booking.s_20_Actual_Pickup_TimeStamp = request.data[
                         "event_time_stamp"
                     ]
-                elif status_category == "Delivered":
+                elif status_category == "Complete":
                     booking.s_21_Actual_Delivery_TimeStamp = request.data[
                         "event_time_stamp"
                     ]
