@@ -225,6 +225,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "z_locked_status_time",
             "x_booking_Created_With",
             "z_CreatedByAccount",
+            "b_send_POD_eMail",
         )
 
 
@@ -478,10 +479,12 @@ class ClientProductsSerializer(serializers.ModelSerializer):
         model = Client_Products
         fields = "__all__"
 
+
 class ClientRasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Ras
         fields = "__all__"
+
 
 class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)
