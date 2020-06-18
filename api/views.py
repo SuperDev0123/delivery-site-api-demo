@@ -2042,7 +2042,6 @@ class BookingViewSet(viewsets.ViewSet):
             status_history.create(booking, "Booked", request.user.username)
             booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
-            booking.x_booking_Created_With = "Manual"
             booking.save()
             serializer = BookingSerializer(booking)
 
