@@ -2366,6 +2366,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def create_booking_line(self, request, format=None):
+        request.data["pk_booking_lines_id"] = str(uuid.uuid1())
         serializer = BookingLineSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -4856,7 +4857,6 @@ class ClientProductsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-
 class ClientRasViewSet(viewsets.ViewSet):
     serializer_class = ClientRasSerializer
     queryset = Client_Ras.objects.all()
@@ -4872,13 +4872,8 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
-            print('serializer', serializer)
-            return JsonResponse(
-                    {
-                        "result": serializer.data[0]
-                    },
-                    status=200,
-                )
+            print("serializer", serializer)
+            return JsonResponse({"result": serializer.data[0]}, status=200,)
 
         except Exception as e:
             return JsonResponse({"results": ""})
