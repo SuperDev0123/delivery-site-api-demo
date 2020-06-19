@@ -213,9 +213,9 @@ def get_auth_zoho_tickets(request):
 @permission_classes((AllowAny,))
 def get_all_zoho_tickets(request):
     dmeid = 0
+
     if Tokens.objects.filter(type="access_token").count() == 0:
         dat = request.GET.get("code")
-
         if not dat:
             dat = ""
 
@@ -233,6 +233,8 @@ def get_all_zoho_tickets(request):
 
         refresh_token = response["refresh_token"]
         access_token = response["access_token"]
+
+        Tokens.objects.all().delete()
         Tokens(
             value=access_token,
             type="access_token",
@@ -302,29 +304,45 @@ def get_all_zoho_tickets(request):
                 headers=headers_for_tickets,
             )
     get_ticket = []
-    data = Tokens.objects.filter(type="access_token")
-    for ticket in get_tickets.json()["data"]:
-        headers_for_single_ticket = {
-            "content-type": "application/json",
-            "orgId": settings.ORG_ID,
-            "Authorization": "Zoho-oauthtoken " + data[0].value,
-        }
-        ticket_data = requests.get(
-            "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
-            data={},
-            headers=headers_for_single_ticket,
-        ).json()
 
-        if ticket_data["customFields"]["DME Id/Consignment No."] == dmeid:
-            get_ticket.append(ticket_data)
-    if not get_ticket:
+    if get_tickets.status_code == 200:
+        data = Tokens.objects.filter(type="access_token")
+        for ticket in get_tickets.json()["data"]:
+            headers_for_single_ticket = {
+                "content-type": "application/json",
+                "orgId": settings.ORG_ID,
+                "Authorization": "Zoho-oauthtoken " + data[0].value,
+            }
+            ticket_data = requests.get(
+                "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
+                data={},
+                headers=headers_for_single_ticket,
+            ).json()
+
+            if ticket_data["customFields"]["DME Id/Consignment No."] == dmeid:
+                get_ticket.append(ticket_data)
+        if not get_ticket:
+            return JsonResponse(
+                {
+                    "status": "No ticket with this DME Id is available.",
+                    "tickets": get_ticket,
+                }
+            )
+        else:
+            final_ticket = {"status": "success", "tickets": get_ticket}
+            return JsonResponse(final_ticket)
+
+    elif get_tickets.status_code == 204:
         return JsonResponse(
             {
-                "status": "No ticket with this DME Id is available.",
+                "status": "There are no tickets on zoho",
                 "tickets": get_ticket,
             }
         )
     else:
-        final_ticket = {"status": "success", "tickets": get_ticket}
-        return JsonResponse(final_ticket)
-    # return JsonResponse({"message": "This feature is deactivated!"})
+        return JsonResponse(
+            {
+                "status": "Error occured while fetching tickets",
+                "tickets": get_ticket,
+            }
+        )
