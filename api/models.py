@@ -1418,9 +1418,7 @@ class Bookings(models.Model):
         default=0,
         null=True,
     )
-    b_send_POD_eMail = models.IntegerField(
-        verbose_name=_("Send POD Email"), blank=True, default=0, null=True
-    )
+    b_send_POD_eMail = models.BooleanField(default=False, null=True, blank=True)
     b_booking_status_manual = models.CharField(
         verbose_name=_("Booking Status Manual"),
         max_length=30,
@@ -3980,3 +3978,41 @@ class Client_Products(models.Model):
 
     class Meta:
         db_table = "client_products"
+
+
+class Client_Ras(models.Model):
+    id = models.AutoField(primary_key=True)
+    ra_number = models.CharField(max_length=30, blank=True, null=True)
+    dme_number = models.CharField(max_length=50, blank=True, null=True)
+    name_first = models.CharField(max_length=50, blank=True, null=True)
+    name_surname = models.CharField(max_length=50, blank=True, null=True)
+    phone_mobile = models.CharField(max_length=30, blank=True, null=True)
+    address1 = models.CharField(max_length=80, blank=True, null=True)
+    address2 = models.CharField(max_length=80, blank=True, null=True)
+    suburb = models.CharField(max_length=50, blank=True, null=True)
+    postal_code = models.CharField(max_length=30, blank=True, null=True)
+    state = models.CharField(max_length=25, blank=True, null=True)
+    country = models.CharField(max_length=50, blank=True, null=True)
+    item_model_num = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=150, blank=True, null=True)
+    serial_number = models.CharField(max_length=50, blank=True, null=True)
+    product_in_box = models.BooleanField(blank=True, null=True, default=False)
+    fk_id_dme_client = models.ForeignKey(
+        DME_clients, on_delete=models.CASCADE, blank=True, null=True
+    )
+
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), null=True, blank=True, auto_now_add=True
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"), null=True, blank=True, auto_now=True
+    )
+
+    class Meta:
+        db_table = "client_ras"

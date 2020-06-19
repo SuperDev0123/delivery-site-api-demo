@@ -27,6 +27,8 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
+    Client_Products,
+    Client_Ras,
     Utl_sql_queries,
     Client_Products,
 )
@@ -223,6 +225,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "z_locked_status_time",
             "x_booking_Created_With",
             "z_CreatedByAccount",
+            "b_send_POD_eMail",
         )
 
 
@@ -474,6 +477,12 @@ class SqlQueriesSerializer(serializers.ModelSerializer):
 class ClientProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Products
+        fields = "__all__"
+
+
+class ClientRasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Ras
         fields = "__all__"
 
 
