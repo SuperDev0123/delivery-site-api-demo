@@ -27,6 +27,8 @@ from api.models import (
     FP_pricing_rules,
     EmailLogs,
     BookingSets,
+    Client_Products,
+    Client_Ras,
     Utl_sql_queries,
     Client_Products,
 )
@@ -84,12 +86,6 @@ class BookingSerializer(serializers.ModelSerializer):
             return obj.api_booking_quote.account_code
 
         return None
-
-    def update(self, instance, validated_data):
-        validated_data["z_ModifiedTimestamp"] = datetime.now()
-        super().update(instance, validated_data)
-        instance.save()
-        return instance
 
     class Meta:
         model = Bookings
@@ -227,6 +223,9 @@ class BookingSerializer(serializers.ModelSerializer):
             "b_error_Capture",
             "kf_client_id",
             "z_locked_status_time",
+            "x_booking_Created_With",
+            "z_CreatedByAccount",
+            "b_send_POD_eMail",
         )
 
 
@@ -235,12 +234,6 @@ class BookingLineSerializer(serializers.ModelSerializer):
 
     def get_is_scanned(self, obj):
         return obj.get_is_scanned()
-
-    def update(self, instance, validated_data):
-        validated_data["z_modifiedTimeStamp"] = datetime.now()
-        super().update(instance, validated_data)
-        instance.save()
-        return instance
 
     class Meta:
         model = Booking_lines
@@ -274,12 +267,6 @@ class BookingLineSerializer(serializers.ModelSerializer):
 
 
 class BookingLineDetailSerializer(serializers.ModelSerializer):
-    def update(self, instance, validated_data):
-        validated_data["z_modifiedTimeStamp"] = datetime.now()
-        super().update(instance, validated_data)
-        instance.save()
-        return instance
-
     class Meta:
         model = Booking_lines_data
         fields = (
@@ -481,7 +468,7 @@ class SqlQueriesSerializer(serializers.ModelSerializer):
             return value
         else:
             raise serializers.ValidationError("Only SELECT query is allowed!")
-       
+
     class Meta:
         model = Utl_sql_queries
         fields = "__all__"
@@ -490,6 +477,12 @@ class SqlQueriesSerializer(serializers.ModelSerializer):
 class ClientProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Products
+        fields = "__all__"
+
+
+class ClientRasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Ras
         fields = "__all__"
 
 

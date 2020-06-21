@@ -56,7 +56,6 @@ logger = logging.getLogger("dme_api")
 
 def _set_error(booking, error_msg):
     booking.b_error_Capture = str(error_msg)[:999]
-    booking.z_ModifiedTimestamp = datetime.now()
     booking.save()
 
 
@@ -241,7 +240,6 @@ def book(request, fp_name):
                     status_history.create(booking, "Booked", request.user.username)
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
 
                     Log(
@@ -269,7 +267,6 @@ def book(request, fp_name):
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
                             booking.z_label_url = f"hunter_au/{file_name}"
-                            booking.z_ModifiedTimestamp = datetime.now()
                             booking.save()
 
                             # Send email when GET_LABEL
@@ -297,7 +294,6 @@ def book(request, fp_name):
                             f.write(base64.b64decode(json_label_data["Label"]))
                             f.close()
                             booking.z_label_url = f"capital_au/{file_name}"
-                            booking.z_ModifiedTimestamp = datetime.now()
                             booking.save()
 
                             # Send email when GET_LABEL
@@ -329,10 +325,8 @@ def book(request, fp_name):
                             booking.v_FPBookingNumber = (
                                 f"DME{booking.b_bookingID_Visual}"
                             )
-                            booking.z_ModifiedTimestamp = datetime.now()
                             booking.save()
                         else:
-                            booking.z_ModifiedTimestamp = datetime.now()
                             booking.v_FPBookingNumber = str(json_data["orderNumber"])
                             booking.save()
 
@@ -469,7 +463,6 @@ def rebook(request, fp_name):
                         booking, booking.api_booking_quote
                     )
                     booking.b_error_Capture = None
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
 
                     Log(
@@ -596,7 +589,6 @@ def edit_book(request, fp_name):
                 booking.b_dateBookedDate = datetime.now()
                 booking.b_status = "Booked"
                 booking.b_error_Capture = ""
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
                 Log(
@@ -671,7 +663,6 @@ def cancel_book(request, fp_name):
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
-                        booking.z_ModifiedTimestamp = datetime.now()
                         booking.save()
 
                         Log(
@@ -846,7 +837,6 @@ def get_label(request, fp_name):
                 z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
-            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
 
             if not fp_name.lower() in ["startrack"]:
@@ -940,7 +930,6 @@ def create_order(request, fp_name):
                     if not had_504_res
                     else json_data[0]["context"]["order_id"]
                 )
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
             return JsonResponse(
@@ -949,7 +938,6 @@ def create_order(request, fp_name):
         except KeyError as e:
             trace_error.print()
             booking.b_error_Capture = json_data["errorMsg"]
-            booking.z_ModifiedTimestamp = datetime.now()
             booking.save()
             Log(
                 request_payload=payload,
@@ -1009,7 +997,6 @@ def get_order_summary(request, fp_name):
                 for booking in bookings:
                     booking.z_manifest_url = f"{fp_name.lower()}_au/{file_name}"
                     booking.manifest_timestamp = manifest_timestamp
-                    booking.z_ModifiedTimestamp = datetime.now()
                     booking.save()
 
                 Log(
@@ -1113,14 +1100,14 @@ def pod(request, fp_name):
         f.close()
 
         booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
-        booking.z_ModifiedTimestamp = datetime.now()
         booking.save()
 
         # POD Email
-        # email_template_name = "POD"
-        # email_module.send_booking_email_using_template(
-        #     booking.pk, email_template_name, request.user.username
-        # )
+        if booking.b_send_POD_eMail:
+            email_template_name = "POD"
+            email_module.send_booking_email_using_template(
+                booking.pk, email_template_name, request.user.username
+            )
 
         return JsonResponse({"message": "POD is fetched successfully."})
     except Exception as e:
@@ -1168,7 +1155,6 @@ def reprint(request, fp_name):
                     f.close()
 
                 booking.z_label_url = file_url
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
 
                 return JsonResponse({"message": "Label is reprinted successfully."})
@@ -1216,7 +1202,6 @@ def pricing(request):
 
             if booking:  # Delete all pricing info if exist for this booking
                 booking.api_booking_quote = None  # Reset pricing relation
-                booking.z_ModifiedTimestamp = datetime.now()
                 booking.save()
                 API_booking_quotes.objects.filter(
                     fk_booking_id=booking.pk_booking_id
