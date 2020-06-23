@@ -1862,6 +1862,69 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
         logger.info("#365 Finished - `Whse` XLS")
+    elif xls_type == "pending_bookings":
+        logger.info("#305 Get started to build `Pending Bookings` XLS")
+        worksheet.set_column(0, 10, width=25)
+
+        if show_field_name:
+            worksheet.write("A1", "b_bookingID_Visual", bold)
+            worksheet.write("B1", "b_status", bold)
+            worksheet.write("C1", "b_booking_Category", bold)
+            worksheet.write("D1", "line_data/gap_ra", bold)
+            worksheet.write("E1", "line/e_qty", bold)
+            worksheet.write("F1", "puCompany", bold)
+            worksheet.write("G1", "deToCompanyName ", bold)
+            worksheet.write("H1", "", bold)
+            worksheet.write("I1", "", bold)
+
+            worksheet.write("A2", "DeliverME Booking Ref", bold)
+            worksheet.write("B2", "Booking Status", bold)
+            worksheet.write("C2", "Booking Category", bold)
+            worksheet.write("D2", "GAP/RA numbers", bold)
+            worksheet.write("E2", "Quantity", bold)
+            worksheet.write("F2", "Pickup Entity", bold)
+            worksheet.write("G2", "Deliver to Entity", bold)
+            worksheet.write("H2", "Return email with consignment sent", bold)
+            worksheet.write("I2", "Booking email with consignment sent", bold)
+
+            row = 2
+        else:
+            worksheet.write("A1", "DeliverME Booking Ref", bold)
+            worksheet.write("B1", "Booking Status", bold)
+            worksheet.write("C1", "Booking Category", bold)
+            worksheet.write("D1", "GAP/RA numbers", bold)
+            worksheet.write("E1", "Quantity", bold)
+            worksheet.write("F1", "Pickup Entity", bold)
+            worksheet.write("G1", "Deliver to Entity", bold)
+            worksheet.write("H1", "Return email with consignment sent", bold)
+            worksheet.write("I1", "Booking email with consignment sent", bold)
+
+            row = 1
+
+        logger.info(f"#306 Total cnt: {len(bookings)}")
+        for booking_ind, booking in enumerate(bookings):
+            worksheet.write(row, col + 0, booking.b_bookingID_Visual)
+            worksheet.write(row, col + 1, booking.b_status)
+            worksheet.write(row, col + 2, booking.b_booking_Category)
+            worksheet.write(row, col + 3, booking.gap_ras)
+            worksheet.write(row, col + 4, booking.get_total_lines_qty())
+            worksheet.write(row, col + 5, booking.puCompany)
+            worksheet.write(row, col + 6, booking.deToCompanyName)
+
+            general_emails = EmailLogs.objects.filter(
+                emailName="General Booking", booking_id=booking.id
+            )
+            return_emails = EmailLogs.objects.filter(
+                emailName="Return Booking", booking_id=booking.id
+            )
+            worksheet.write(row, col + 7, "Yes" if general_emails else "No")
+            worksheet.write(row, col + 8, "Yes" if return_emails else "No")
+
+            row += 1
+
+        workbook.close()
+        shutil.move(filename, local_filepath + filename)
+        logger.info("#308 Finished - `Pending Bookings` XLS")
     elif xls_type == "booked_bookings":
         logger.info("#310 Get started to build `Booked Bookings` XLS")
         worksheet.set_column(0, 10, width=25)
