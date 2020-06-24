@@ -5188,6 +5188,22 @@ def build_xls_and_send(
             "Here is the excel report(Whse) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )
+    elif report_type == "pending_bookings":
+        filepath = build_xls(
+            bookings,
+            "pending_bookings",
+            username,
+            start_date,
+            end_date,
+            show_field_name,
+        )
+        send_email(
+            [email_addr],
+            [],
+            "Pending Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
     elif report_type == "booked_bookings":
         filepath = build_xls(
             bookings, "booked_bookings", username, start_date, end_date, show_field_name
