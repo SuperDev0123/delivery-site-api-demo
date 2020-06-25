@@ -1140,7 +1140,15 @@ class BookingsViewSet(viewsets.ViewSet):
         if use_selected:
             queryset = queryset.filter(pk__in=booking_ids)
         else:
-            if report_type == "booked_bookings":
+            if report_type == "pending_bookings":
+                queryset = queryset.filter(
+                    z_CreatedTimestamp__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
+                    b_status__iexact="ready for booking",
+                )
+            elif report_type == "booked_bookings":
                 queryset = queryset.filter(
                     b_dateBookedDate__range=(
                         convert_to_UTC_tz(first_date),
