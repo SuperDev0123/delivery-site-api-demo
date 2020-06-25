@@ -22,10 +22,10 @@ from rest_framework.decorators import (
 from .serializers_api import *
 from .models import *
 from django.shortcuts import render, redirect
-from django.db.models import Count
+from django.db.models import Count, Q, F
+import math
 
 logger = logging.getLogger("dme_api")
-
 
 class BOK_0_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -336,71 +336,99 @@ class ChartsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def get_num_bookings_per_fp(self, request):
-
         try:
-            counts = Bookings.objects.all().values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
-            return JsonResponse({"message": str(counts)})
+            startDate = request.GET.get("startDate")
+            endDate = request.GET.get("endDate")
+
+            result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked")) & Q(b_dateBookedDate__range=[startDate,endDate])).extra(
+                select={
+                    'freight_provider': 'vx_freight_provider'
+                }
+            ).values('freight_provider').annotate(deliveries=Count('vx_freight_provider')).order_by('deliveries')
+            
+            late_result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked"))  & Q(b_dateBookedDate__range=[startDate,endDate]) & Q(s_21_Actual_Delivery_TimeStamp__gte=F('vx_fp_del_eta_time'))).extra(
+                select={
+                    'freight_provider': 'vx_freight_provider'
+                }
+            ).values('freight_provider').annotate(late_deliveries=Count('vx_freight_provider')).order_by('late_deliveries')
+
+            ontime_result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked"))  & Q(b_dateBookedDate__range=[startDate,endDate]) & Q(vx_fp_pu_eta_time__gte=F('s_20_Actual_Pickup_TimeStamp'))).extra(
+                select={
+                    'freight_provider': 'vx_freight_provider'
+                }
+            ).values('freight_provider').annotate(ontime_deliveries=Count('vx_freight_provider')).order_by('ontime_deliveries')
+
+            num_reports = list(result)
+            num_late_reports = list(late_result)
+            num_ontime_reports = list(ontime_result)
+
+            print('ontime_result', ontime_result)
+
+            for report in num_reports:
+                for late_report in num_late_reports:
+                    if report['freight_provider'] == late_report['freight_provider']:
+                        report['late_deliveries'] = late_report['late_deliveries']
+
+                for ontime_report in num_ontime_reports:
+                    if report['freight_provider'] == ontime_report['freight_provider']:
+                        report['ontime_deliveries_percentage'] =  math.ceil(ontime_report['ontime_deliveries'] / report['deliveries'] * 100)
+
+            return JsonResponse({"results": num_reports})
         except Exception as e:
             print(f"Error #102: {e}")
         
     @action(detail=False, methods=["get"])
     def get_num_ready_bookings_per_fp(self, request):
-
         try:
-            counts = Bookings.objects.filter(b_status="Ready for booking").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
-            return JsonResponse({"message": str(counts)})
+            result = Bookings.objects.filter(b_status="Ready for booking").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
+            return JsonResponse({"results": list(result)})
         except Exception as e:
             print(f"Error #102: {e}")
 
     @action(detail=False, methods=["get"])
     def get_num_booked_bookings_per_fp(self, request):
-
         try:
-            counts = Bookings.objects.filter(b_status="Booked").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
-            return JsonResponse({"message": str(counts)})
+            result = Bookings.objects.filter(b_status="Booked").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
+            return JsonResponse({"results": list(result)})
         except Exception as e:
             print(f"Error #102: {e}")
 
     @action(detail=False, methods=["get"])
     def get_num_rebooked_bookings_per_fp(self, request):
-
         try:
-            counts = Bookings.objects.filter(b_status="Pu Rebooked").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
-            return JsonResponse({"message": str(counts)})
+            result = Bookings.objects.filter(b_status="Pu Rebooked").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
+            return JsonResponse({"results": list(result)})
         except Exception as e:
             print(f"Error #102: {e}")
 
     @action(detail=False, methods=["get"])
-    def get_num_rebooked_bookings_per_fp(self, request):
-
+    def get_num_closed_bookings_per_fp(self, request):
         try:
-            counts = Bookings.objects.filter(b_status="Pu Rebooked").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
-            return JsonResponse({"message": str(counts)})
+            result = Bookings.objects.filter(b_status="Closed").values("vx_freight_provider").annotate(vx_freight_provider_count=Count('vx_freight_provider')).order_by('vx_freight_provider_count')
+            return JsonResponse({"results": list(result)})
         except Exception as e:
             print(f"Error #102: {e}")
 
     @action(detail=False, methods=["get"])
     def get_num_month_bookings(self, request):
-
         try:
-            counts = Bookings.objects.all().\
+            result = Bookings.objects.filter(Q(b_status="Booked")|Q(b_status="Pu Rebooked")).\
                 extra(select={'month': "EXTRACT(month FROM b_dateBookedDate)"}).\
                 values('month').\
                 annotate(count_items=Count('b_dateBookedDate'))
 
-            return JsonResponse({"message": str(counts)})
+            return JsonResponse({"results": list(result)})
         except Exception as e:
             print(f"Error #102: {e}")
 
     @action(detail=False, methods=["get"])
     def get_num_year_bookings(self, request):
-
         try:
-            counts = Bookings.objects.all().\
+            result = Bookings.objects.filter(Q(b_status="Booked")|Q(b_status="Pu Rebooked")).\
                 extra(select={'year': "EXTRACT(year FROM b_dateBookedDate)"}).\
                 values('year').\
                 annotate(count_items=Count('b_dateBookedDate'))
 
-            return JsonResponse({"message": str(counts)})
+            return JsonResponse({"results": list(result)})
         except Exception as e:
             print(f"Error #102: {e}")
