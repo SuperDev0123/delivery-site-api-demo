@@ -362,15 +362,15 @@ class ChartsViewSet(viewsets.ViewSet):
             num_late_reports = list(late_result)
             num_ontime_reports = list(ontime_result)
 
-            print('ontime_result', ontime_result)
-
             for report in num_reports:
                 for late_report in num_late_reports:
                     if report['freight_provider'] == late_report['freight_provider']:
                         report['late_deliveries'] = late_report['late_deliveries']
+                        report['late_deliveries_percentage'] =  math.ceil(late_report['late_deliveries'] / report['deliveries'] * 100)
 
                 for ontime_report in num_ontime_reports:
                     if report['freight_provider'] == ontime_report['freight_provider']:
+                        report['ontime_deliveries'] =  ontime_report['ontime_deliveries']
                         report['ontime_deliveries_percentage'] =  math.ceil(ontime_report['ontime_deliveries'] / report['deliveries'] * 100)
 
             return JsonResponse({"results": num_reports})
