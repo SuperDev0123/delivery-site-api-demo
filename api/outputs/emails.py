@@ -48,9 +48,16 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     TOT_CUBIC_WEIGHT = totalWeight
     SERVICE_TYPE = ""
 
-    etd, uom = booking.get_etd()
-    if etd:
-        SERVICE_TYPE = f"{etd} {uom}"
+    etd = None
+    uom = None
+
+    try:
+        etd, uom = booking.get_etd()
+
+        if etd:
+            SERVICE_TYPE = f"{etd} {uom}"
+    except:
+        pass
 
     SERVICE = booking.vx_serviceName
     LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
