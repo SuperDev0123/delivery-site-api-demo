@@ -78,7 +78,7 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
         try:
             client = DME_clients.objects.get(pk_id_dme_client=user_id)
         except DME_clients.DoesNotExist as e:
-            client = "dme"
+            client = DME_clients.objects.get(company_name="Pricing-Only")
 
         booking = Bookings.objects.get(id=booking_id)
         fp = Fp_freight_providers.objects.get(
