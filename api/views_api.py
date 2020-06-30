@@ -22,7 +22,7 @@ from rest_framework.decorators import (
 from .serializers_api import *
 from .models import *
 from django.shortcuts import render, redirect
-from django.db.models import Count, Q, F
+from django.db.models import Count, Q, F, Sum
 import math
 
 logger = logging.getLogger("dme_api")
@@ -391,7 +391,37 @@ class ChartsViewSet(viewsets.ViewSet):
             return JsonResponse({"results": num_reports})
         except Exception as e:
             print(f"Error #102: {e}")
-        
+    
+    @action(detail=False, methods=["get"])
+    def get_num_bookings_per_client(self, request):
+        try:
+            startDate = request.GET.get("startDate")
+            endDate = request.GET.get("endDate")
+
+            result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked")) & Q(b_dateBookedDate__range=[startDate,endDate])).extra(
+                select={
+                    'client_name': 'b_client_name'
+                }
+            ).values('client_name').annotate(deliveries=Count('b_client_name')).order_by('deliveries')
+            
+            cost_result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked")) & Q(b_dateBookedDate__range=[startDate,endDate])).extra(
+                select={
+                    'client_name': 'b_client_name'
+                }
+            ).values('client_name').annotate(total_cost=Sum('inv_cost_actual')).order_by('total_cost')
+
+            deliveries_reports = list(result)
+            cost_reports = list(cost_result)
+
+            for report in deliveries_reports:
+                for cost_report in cost_reports:
+                    if report['client_name'] == cost_report['client_name']:
+                        report['total_cost'] = round(float(cost_report['total_cost']), 2)
+
+            return JsonResponse({"results": deliveries_reports})
+        except Exception as e:
+            print(f"Error #102: {e}")
+
     @action(detail=False, methods=["get"])
     def get_num_ready_bookings_per_fp(self, request):
         try:
