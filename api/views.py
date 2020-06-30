@@ -4771,11 +4771,14 @@ class BookingSetsViewSet(viewsets.ViewSet):
     serializer_class = BookingSetsSerializer
 
     def list(self, request, pk=None):
+        # TODO: should implement pagination here as well
+        MAX_SETS_COUNT = 25
         queryset = BookingSets.objects.all()
 
         if get_clientname(request) != "dme":
             queryset = queryset.filter(z_createdByAccount=get_clientname(request))
 
+        queryset = queryset.order_by("id")[:MAX_SETS_COUNT]
         serializer = BookingSetsSerializer(queryset, many=True)
         return Response(serializer.data)
 
