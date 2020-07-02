@@ -1889,16 +1889,16 @@ class Booking_lines(models.Model):
     @property
     def gap_ras(self):
         try:
-            gap_ras = []
+            _gap_ras = []
             booking_lines_data = Booking_lines_data.objects.filter(
                 fk_booking_line_id=self.pk_booking_lines_id
             )
 
             for booking_line_data in booking_lines_data:
                 if booking_line_data.gap_ra is not None:
-                    gap_ras.append(booking_line_data.gap_ra)
+                    _gap_ras.append(booking_line_data.gap_ra)
 
-            return ", ".join(gap_ras)
+            return ", ".join(_gap_ras)
         except Exception as e:
             # print('Exception: ', e)
             return ""
