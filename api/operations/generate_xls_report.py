@@ -503,13 +503,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("O1", "e_item", bold)
             worksheet.write("P1", "e_item_qty", bold)
             worksheet.write("Q1", "client_item_reference", bold)
-            worksheet.write("R1", "Booking Ref ?? GAP", bold)
+            worksheet.write("R1", "gap_ra", bold)
             worksheet.write("S1", "DD Received Date(Date)", bold)
             worksheet.write("T1", "DD Received Date(Time)", bold)
             worksheet.write("U1", "z_calculated_ETA", bold)
             worksheet.write("V1", "Dispatch Date", bold)
             worksheet.write("W1", "ETA Into Store", bold)
-            worksheet.write("X1", "b_status", bold)
+            worksheet.write("X1", "dme_bookings:b_status", bold)
             worksheet.write("Y1", "dme_bookings: dme_status_detail", bold)
             worksheet.write("Z1", "dme_bookings: dme_status_action", bold)
             worksheet.write("AA1", "POD Available", bold)
@@ -522,9 +522,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AH1", "e_qty_returned", bold)
             worksheet.write("AI1", "e_qty_shortages", bold)
             worksheet.write("AJ1", "e_qty_adjusted_delivered", bold)
-            worksheet.write("AK1", "b_booking_project", bold)
-            worksheet.write("AL1", "b_project_due_date", bold)
-            worksheet.write("AM1", "b_bookingID_Visual", bold)
+            worksheet.write("AK1", "dme_bookings:b_booking_project", bold)
+            worksheet.write("AL1", "dme_bookings:b_project_due_date", bold)
+            worksheet.write("AM1", "dme_bookings:b_bookingID_Visual", bold)
 
             worksheet.write("A2", "Consignment No", bold)
             worksheet.write("B2", "Booked Date", bold)
@@ -543,7 +543,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("O2", "Product Description", bold)
             worksheet.write("P2", "Booked Qty", bold)
             worksheet.write("Q2", "Client Item Reference", bold)
-            worksheet.write("R2", "Booking Ref", bold)
+            worksheet.write("R2", "Gap/Ra", bold)
             worksheet.write("S2", "DD Received Date", bold)
             worksheet.write("T2", "DD Received Time", bold)
             worksheet.write("U2", "Calculated ETA", bold)
@@ -564,7 +564,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AJ2", "Adjusted Delivered Qty", bold)
             worksheet.write("AK2", "Project Name", bold)
             worksheet.write("AL2", "Project Due Date", bold)
-            worksheet.write("AM2", "Booking ID", bold)
+            worksheet.write("AM2", "DME Booking ID", bold)
 
             row = 2
         else:
@@ -585,7 +585,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("O1", "Product Description", bold)
             worksheet.write("P1", "Booked Qty", bold)
             worksheet.write("Q1", "Client Item Reference", bold)
-            worksheet.write("R1", "Booking Ref", bold)
+            worksheet.write("R1", "Gap/Ra", bold)
             worksheet.write("S1", "DD Received Date", bold)
             worksheet.write("T1", "DD Received Time", bold)
             worksheet.write("U1", "Calculated ETA", bold)
@@ -606,7 +606,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AJ1", "Adjusted Delivered Qty", bold)
             worksheet.write("AK1", "Project Name", bold)
             worksheet.write("AL1", "Project Due Date", bold)
-            worksheet.write("AM1", "Booking ID", bold)
+            worksheet.write("AM1", "DME Booking ID", bold)
 
             row = 1
 
@@ -690,7 +690,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 14, booking_line.e_item)
                     worksheet.write(row, col + 15, booking_line.e_qty)
                     worksheet.write(row, col + 16, booking_line.client_item_reference)
-                    worksheet.write(row, col + 17, booking.b_bookingID_Visual)
+                    worksheet.write(row, col + 17, booking_line.gap_ra)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
