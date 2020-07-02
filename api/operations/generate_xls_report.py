@@ -621,6 +621,23 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             try:
                 booking_lines = Booking_lines.objects.filter(
                     fk_booking_id=booking.pk_booking_id
+                ).only(
+                    "e_qty",
+                    "e_qty_scanned_fp",
+                    "pk_lines_id",
+                    "e_item",
+                    "e_pallet_type",
+                    "client_item_reference",
+                    "e_qty_awaiting_inventory",
+                    "e_qty_collected",
+                    "e_qty_scanned_fp",
+                    "e_qty_scanned_depot",
+                    "e_qty_delivered",
+                    "e_qty_damaged",
+                    "e_qty_returned",
+                    "e_qty_shortages",
+                    "e_qty_adjusted_delivered",
+                    "gap_ras",
                 )
 
                 for booking_line in booking_lines:

@@ -1897,10 +1897,10 @@ class Booking_lines(models.Model):
             for booking_line_data in booking_lines_data:
                 if booking_line_data.gap_ra is not None:
                     _gap_ras.append(booking_line_data.gap_ra)
-
+            print("@1 - ", _gap_ras)
             return ", ".join(_gap_ras)
         except Exception as e:
-            # print("Exception: ", e)
+            print("Exception: ", e)
             return ""
 
     class Meta:
