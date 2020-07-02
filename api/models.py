@@ -1886,6 +1886,23 @@ class Booking_lines(models.Model):
             # print('Exception: ', e)
             return False
 
+    @property
+    def gap_ras(self):
+        try:
+            gap_ras = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_line_id=self.pk_booking_lines_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.gap_ra is not None:
+                    gap_ras.append(booking_line_data.gap_ra)
+
+            return ", ".join(gap_ras)
+        except Exception as e:
+            # print('Exception: ', e)
+            return ""
+
     class Meta:
         db_table = "dme_booking_lines"
 
@@ -3541,6 +3558,7 @@ class DME_Options(models.Model):
     elapsed_seconds = models.IntegerField(blank=True, null=True, default=0)
     is_running = models.BooleanField(blank=True, null=True, default=False)
     show_in_admin = models.BooleanField(blank=True, null=True, default=False)
+    arg1 = models.IntegerField(blank=True, null=True, default=0)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
