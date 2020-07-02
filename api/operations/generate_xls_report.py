@@ -619,7 +619,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 logger.info(f"#382 Current index: {booking_ind}")
 
             try:
-                booking_lines = Booking_lines.objects.only(
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                ).only(
                     "e_qty",
                     "e_qty_scanned_fp",
                     "pk_lines_id",
@@ -636,7 +638,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     "e_qty_shortages",
                     "e_qty_adjusted_delivered",
                     "gap_ras",
-                ).filter(fk_booking_id=booking.pk_booking_id)
+                )
 
                 for booking_line in booking_lines:
                     worksheet.write(row, col + 0, booking.v_FPBookingNumber)
