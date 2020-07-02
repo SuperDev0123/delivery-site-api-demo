@@ -692,7 +692,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     worksheet.write(row, col + 14, booking_line.e_item)
                     worksheet.write(row, col + 15, booking_line.e_qty)
                     worksheet.write(row, col + 16, booking_line.client_item_reference)
-                    worksheet.write(row, col + 17, booking_line.gap_ras())
+                    worksheet.write(row, col + 17, booking_line.gap_ras)
 
                     if api_bcl and api_bcl.fp_event_date and api_bcl.fp_event_time:
                         worksheet.write_datetime(
