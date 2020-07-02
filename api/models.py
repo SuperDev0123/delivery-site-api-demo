@@ -1886,7 +1886,6 @@ class Booking_lines(models.Model):
             # print('Exception: ', e)
             return False
 
-    @property
     def gap_ras(self):
         try:
             _gap_ras = []
