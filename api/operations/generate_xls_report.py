@@ -270,7 +270,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             customer_groups = Dme_utl_client_customer_group.objects.all()
             for customer_group in customer_groups:
                 if (
-                    customer_group.name_lookup.lower()
+                    booking.deToCompanyName
+                    and customer_group.name_lookup
+                    and customer_group.name_lookup.lower()
                     in booking.deToCompanyName.lower()
                 ):
                     customer_group_name = customer_group.group_name
@@ -971,7 +973,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             customer_groups = Dme_utl_client_customer_group.objects.all()
             for customer_group in customer_groups:
                 if (
-                    customer_group.name_lookup.lower()
+                    booking.deToCompanyName
+                    and customer_group.name_lookup
+                    and customer_group.name_lookup.lower()
                     in booking.deToCompanyName.lower()
                 ):
                     customer_group_name = customer_group.group_name
@@ -1322,7 +1326,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             customer_groups = Dme_utl_client_customer_group.objects.all()
             for customer_group in customer_groups:
                 if (
-                    customer_group.name_lookup.lower()
+                    booking.deToCompanyName
+                    and customer_group.name_lookup
+                    and customer_group.name_lookup.lower()
                     in booking.deToCompanyName.lower()
                 ):
                     customer_group_name = customer_group.group_name
@@ -1742,7 +1748,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             customer_groups = Dme_utl_client_customer_group.objects.all()
             for customer_group in customer_groups:
                 if (
-                    customer_group.name_lookup.lower()
+                    booking.deToCompanyName
+                    and customer_group.name_lookup
+                    and customer_group.name_lookup.lower()
                     in booking.deToCompanyName.lower()
                 ):
                     customer_group_name = customer_group.group_name
