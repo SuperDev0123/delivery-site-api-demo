@@ -1891,16 +1891,16 @@ class Booking_lines(models.Model):
         try:
             _gap_ras = []
             booking_lines_data = Booking_lines_data.objects.filter(
-                fk_booking_line_id=self.pk_booking_lines_id
+                fk_booking_lines_id=self.pk_booking_lines_id
             )
 
             for booking_line_data in booking_lines_data:
                 if booking_line_data.gap_ra is not None:
                     _gap_ras.append(booking_line_data.gap_ra)
-            print("@1- ", _gap_ras)
+
             return ", ".join(_gap_ras)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return ""
 
     class Meta:
