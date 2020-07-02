@@ -635,6 +635,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     "e_qty_returned",
                     "e_qty_shortages",
                     "e_qty_adjusted_delivered",
+                    "gap_ras",
                 ).filter(fk_booking_id=booking.pk_booking_id)
 
                 for booking_line in booking_lines:
