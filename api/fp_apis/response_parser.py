@@ -165,3 +165,45 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         error_msg = f"Error while parse Pricing response: {e}"
         logger.info(error_msg)
         return None
+
+
+def capture_errors(response, fp_name,is_from_self=False):
+    try:
+        if is_from_self:
+            json_data = response
+        else:
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
+
+        results = []
+
+        print('json_data', json_data)
+
+        if fp_name == "hunter" and "errorMessage" in json_data:  # Hunter
+            results.append(json_data["errorCode"] + "-" + json_data["errorMessage"])
+            
+        elif fp_name == "tnt" and "errors" in json_data:  # TNT
+            errors = json_data["errors"]
+            for error in errors:
+                results.append(error["errorCode"] + "-" + error["errorMsg"])
+
+        # elif fp_name == "sendle" and "price" in json_data:  # Sendle
+            
+        elif fp_name == "capital" and "status" in json_data:  # Capital
+            if json_data["status"] == 3:
+             
+                results.append(json_data["statusDescription"])
+        # elif fp_name == "startrack" and "price" in json_data:  # Startrack
+       
+        if fp_name == "fastway" and "error" in json_data:  # fastway
+            print('fast way error', json_data["error"])
+            results.append(json_data["error"])
+            
+        # Built-in
+        # elif is_from_self and "price" in json_data:
+        return results
+    except Exception as e:
+        error_msg = f"Error while parse Pricing response: {e}"
+        print(error_msg)
+        logger.info(error_msg)
+        return None

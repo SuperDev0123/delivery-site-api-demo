@@ -1222,8 +1222,8 @@ def pricing(request):
     #       "Camerons",
     #       "Toll",
     #       "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
-
+    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway",  "Startrack"]
+    error_fps = {}
     try:
         for fp_name in fp_names:
             if (
@@ -1251,11 +1251,11 @@ def pricing(request):
                         and "bunnings" in account_code_key
                     ):
                         continue
-
+                    print('get_pricing_payload')
                     payload = get_pricing_payload(
                         booking, fp_name.lower(), account_code_key, booking_lines
                     )
-
+                    print('payload', payload)
                     if not payload:
                         continue
 
@@ -1277,7 +1277,10 @@ def pricing(request):
                             response=res_content,
                             fk_booking_id=booking.id,
                         )
-
+                    errors = capture_errors( response, fp_name.lower())
+                    error_fps[fp_name.lower()] = errors
+                    print('error_fps', error_fps)
+                    booking.b_error_Capture = str(error_fps)
                     parse_results = parse_pricing_response(
                         response, fp_name.lower(), booking
                     )
@@ -1329,6 +1332,7 @@ def pricing(request):
                                     logger.info(f"@402 Exception: {e}")
             elif fp_name.lower() in BUILT_IN_PRICINGS:
                 results = get_pricing(fp_name.lower(), booking)
+                print('results', results)
                 parse_results = parse_pricing_response(
                     results, fp_name.lower(), booking, True
                 )
