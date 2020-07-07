@@ -140,6 +140,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "s_20_Actual_Pickup_TimeStamp",
             "s_21_Actual_Delivery_TimeStamp",
             "b_client_name",
+            "fk_client_warehouse",
             "b_client_warehouse_code",
             "b_clientPU_Warehouse",
             "booking_Created_For",
