@@ -2421,7 +2421,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
@@ -2429,10 +2429,18 @@ class BookingLinesViewSet(viewsets.ViewSet):
         booking_line = Booking_lines.objects.get(pk=pk)
 
         try:
+            # Delete related line_data
+            line_datas = Booking_lines_data.objects.filter(
+                fk_booking_lines_id=booking_line.pk_booking_lines_id
+            )
+
+            if line_datas.exists():
+                line_datas.delete()
+
             booking_line.delete()
-            return JsonResponse({"Deleted BookingLine": booking_line})
+            return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return JsonResponse({"error": "Can not delete BookingLine"})
 
     @action(detail=False, methods=["post"])
