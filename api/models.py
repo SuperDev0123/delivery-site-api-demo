@@ -4036,8 +4036,14 @@ class Client_Ras(models.Model):
 
 class DME_Error(models.Model):
     id = models.AutoField(primary_key=True)
-    # freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
 
+    accountCode = models.CharField(max_length=32, blank=True, null=True)
+
+    fk_booking_id = models.CharField(
+        verbose_name=_("Booking ID"), max_length=64, blank=True, null=True
+    )
+    
     error_code = models.CharField(max_length=32, blank=True, null=True)
     error_description = models.TextField(
         max_length=500, blank=True, null=True
@@ -4057,4 +4063,4 @@ class DME_Error(models.Model):
     )
 
     class Meta:
-        db_table = "dme_error"
+        db_table = "dme_errors"

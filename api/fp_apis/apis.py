@@ -1222,8 +1222,11 @@ def pricing(request):
     #       "Camerons",
     #       "Toll",
     #       "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway",  "Startrack"]
-    error_fps = {}
+    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    DME_Error.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).delete()
+
     try:
         for fp_name in fp_names:
             if (
@@ -1251,15 +1254,16 @@ def pricing(request):
                         and "bunnings" in account_code_key
                     ):
                         continue
-                    print('get_pricing_payload')
+
                     payload = get_pricing_payload(
                         booking, fp_name.lower(), account_code_key, booking_lines
                     )
-                    print('payload', payload)
+
                     if not payload:
                         continue
 
                     logger.info(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                    print("spAccountDetails", payload['spAccountDetails']['accountCode'])
                     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
                     response = requests.post(url, params={}, json=payload)
                     res_content = response.content.decode("utf8").replace("'", '"')
@@ -1277,10 +1281,9 @@ def pricing(request):
                             response=res_content,
                             fk_booking_id=booking.id,
                         )
-                    errors = capture_errors( response, fp_name.lower())
-                    error_fps[fp_name.lower()] = errors
-                    print('error_fps', error_fps)
-                    booking.b_error_Capture = str(error_fps)
+
+                    error = capture_errors(response, booking, fp_name.lower(), payload['spAccountDetails']['accountCode'])
+
                     parse_results = parse_pricing_response(
                         response, fp_name.lower(), booking
                     )
