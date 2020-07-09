@@ -1227,6 +1227,161 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
 
                             fileHandler.write(eachLineText + newLine)
 
+    elif vx_freight_provider.lower() == "state transport":
+        # Write Header
+        fileHandler.write(
+            "account, reference, ownno, sender_name, sender_address1, sender_address2, sender_suburb, sender_postcode, \
+            receiver_name, receiver_addres1, receiver_addres2, receiver_suburb, receiver_postcode, \
+            items, weight, service, labels, ready_time \n"
+        )
+
+        # Write Each Line
+        comma = ","
+        newLine = "\n"
+        fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
+        fp_carriers = FP_carriers.objects.filter(fk_fp=fp_info.id)
+        fp_carriers_old_vals = []
+
+        for fp_carrier in fp_carriers:
+            fp_carriers_old_vals.append(fp_carrier.current_value)
+
+        if len(bookings) > 0:
+            for booking in bookings:
+                booking_lines = get_available_booking_lines(mysqlcon, booking)
+
+                h00 = "FMS account"
+
+                if booking["b_clientReference_RA_Numbers"] is None:
+                    h02 = ""
+                else:
+                    h02 = str(booking.get("b_clientReference_RA_Numbers"))
+
+                if booking["b_client_sales_inv_num"] is None:
+                    h03 = ""
+                else:
+                    h03 = str(booking.get("b_client_sales_inv_num"))
+
+                if booking["puCompany"] is None:
+                    h04 = ""
+                else:
+                    h04 = str(booking.get("puCompany"))
+
+                if booking["pu_Address_Street_1"] is None:
+                    h05 = ""
+                else:
+                    h05 = str(booking.get("pu_Address_Street_1"))
+
+                if booking["pu_Address_street_2"] is None:
+                    h06 = ""
+                else:
+                    h06 = str(booking.get("pu_Address_street_2"))
+
+                if booking["pu_Address_Suburb"] is None:
+                    h07 = ""
+                else:
+                    h07 = str(booking.get("pu_Address_Suburb"))
+
+                if booking["pu_Address_PostalCode"] is None:
+                    h08 = ""
+                else:
+                    h08 = str(booking.get("pu_Address_PostalCode"))
+
+                if booking["deToCompanyName"] is None:
+                    h09 = ""
+                else:
+                    h09 = str(booking.get("deToCompanyName"))
+
+                if booking["de_To_Address_Street_1"] is None:
+                    h10 = ""
+                else:
+                    h10 = str(booking.get("de_To_Address_Street_1"))
+
+                if booking["de_To_Address_Street_2"] is None:
+                    h11 = ""
+                else:
+                    h11 = str(booking.get("de_To_Address_Street_2"))
+
+                if booking["de_To_Address_Suburb"] is None:
+                    h12 = ""
+                else:
+                    h12 = str(booking.get("de_To_Address_Suburb"))
+
+                if booking["de_To_Address_PostalCode"] is None:
+                    h13 = ""
+                else:
+                    h13 = str(booking.get("de_To_Address_PostalCode"))
+
+                h14 = str(len(booking_lines))
+                h15 = 0
+
+                if len(booking_lines) > 0:
+                    for booking_line in booking_lines:
+                        if (
+                            booking_line["e_weightUOM"] is not None
+                            and booking_line["e_weightPerEach"] is not None
+                        ):
+                            if (
+                                booking_line["e_weightUOM"].upper() == "GRAM"
+                                or booking_line["e_weightUOM"].upper() == "GRAMS"
+                            ):
+                                h15 += booking_line["e_qty"]* booking_line["e_weightPerEach"] / 1000
+                                
+                            elif (
+                                booking_line["e_weightUOM"].upper() == "TON"
+                                or booking_line["e_weightUOM"].upper() == "TONS"
+                            ):
+                                h15 += booking_line["e_qty"] * booking_line["e_weightPerEach"] * 1000
+                            else:
+                                h15 += booking_line["e_qty"]* booking_line["e_weightPerEach"]
+
+                h15 = str(h15)
+                h16 = "vip"
+                h17 = ""
+                h18 = str(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+                
+                eachLineText = (
+                    h00
+                    + comma
+                    + h02
+                    + comma
+                    + h03
+                    + comma
+                    + h04
+                    + comma
+                    + h05
+                    + comma
+                    + h06
+                    + comma
+                    + h07
+                    + comma
+                    + h08
+                    + comma
+                    + h09
+                )
+                eachLineText += (
+                    comma
+                    + h10
+                    + comma
+                    + h11
+                    + comma
+                    + h12
+                    + comma
+                    + h13
+                    + comma
+                    + h14
+                    + comma
+                    + h15
+                    + comma
+                    + h16
+                    + comma
+                    + h17
+                    + comma
+                    + h18
+                )
+            
+                fileHandler.write(eachLineText + newLine)
+
     if has_error:
         for booking in bookings:
             # Clear booking updates
@@ -1275,6 +1430,14 @@ def _generate_csv(booking_ids, vx_freight_provider):
     elif vx_freight_provider == "dhl":
         csv_name = (
             "Seaway-Tempo-Aldi__"
+            + str(len(booking_ids))
+            + "__"
+            + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
+            + ".csv_"
+        )
+    elif vx_freight_provider.lower() == "state transport":
+        csv_name = (
+            "State-transport__"
             + str(len(booking_ids))
             + "__"
             + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
