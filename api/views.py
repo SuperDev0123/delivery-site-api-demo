@@ -2421,7 +2421,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
@@ -2429,10 +2429,18 @@ class BookingLinesViewSet(viewsets.ViewSet):
         booking_line = Booking_lines.objects.get(pk=pk)
 
         try:
+            # Delete related line_data
+            line_datas = Booking_lines_data.objects.filter(
+                fk_booking_lines_id=booking_line.pk_booking_lines_id
+            )
+
+            if line_datas.exists():
+                line_datas.delete()
+
             booking_line.delete()
-            return JsonResponse({"Deleted BookingLine": booking_line})
+            return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            # print('Exception: ', e)
+            # print("Exception: ", e)
             return JsonResponse({"error": "Can not delete BookingLine"})
 
     @action(detail=False, methods=["post"])
@@ -3859,39 +3867,17 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
 
 
 class OptionsViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["get"])
-    def get_all(self, request, pk=None):
-        return_data = []
+    serializer_class = OptionsSerializer
 
+    def list(self, request, pk=None):
         try:
-            resultObjects = []
-            resultObjects = DME_Options.objects.all()
-            for resultObject in resultObjects:
-                return_data.append(
-                    {
-                        "id": resultObject.id,
-                        "option_name": resultObject.option_name,
-                        "option_value": resultObject.option_value,
-                        "option_description": resultObject.option_description,
-                        "option_schedule": resultObject.option_schedule,
-                        "start_time": resultObject.start_time,
-                        "end_time": resultObject.end_time,
-                        "start_count": resultObject.start_count,
-                        "end_count": resultObject.end_count,
-                        "elapsed_seconds": resultObject.elapsed_seconds,
-                        "is_running": resultObject.is_running,
-                        "z_createdByAccount": resultObject.z_createdByAccount,
-                        "z_createdTimeStamp": resultObject.z_createdTimeStamp,
-                        "show_in_admin": resultObject.show_in_admin,
-                    }
-                )
-            return JsonResponse({"results": return_data})
+            queryset = DME_Options.objects.filter(show_in_admin=True)
+            serializer = OptionsSerializer(queryset, many=True)
+            return JsonResponse({"results": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
-            # print('@Exception', e)
             return JsonResponse({"error": str(e)})
 
-    @action(detail=True, methods=["put"])
-    def edit(self, request, pk, format=None):
+    def partial_update(self, request, pk, format=None):
         dme_options = DME_Options.objects.get(pk=pk)
         serializer = OptionsSerializer(dme_options, data=request.data)
 
@@ -3901,7 +3887,6 @@ class OptionsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

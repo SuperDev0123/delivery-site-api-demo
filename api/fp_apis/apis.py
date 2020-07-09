@@ -124,11 +124,11 @@ def tracking(request, fp_name):
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Bookings.DoesNotExist:
         trace_error.print()
-        logger.info(f"ERROR: {e}")
+        logger.info(f"#511 ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
     except Exception as e:
         trace_error.print()
-        logger.info(f"ERROR: {e}")
+        logger.info(f"#512 ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
 

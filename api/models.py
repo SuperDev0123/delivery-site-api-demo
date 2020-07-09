@@ -3557,6 +3557,7 @@ class DME_Options(models.Model):
     is_running = models.BooleanField(blank=True, null=True, default=False)
     show_in_admin = models.BooleanField(blank=True, null=True, default=False)
     arg1 = models.IntegerField(blank=True, null=True, default=0)
+    arg2 = models.DateTimeField(blank=True, null=True, default=None)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
