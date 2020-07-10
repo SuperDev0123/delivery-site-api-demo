@@ -1238,12 +1238,6 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
         # Write Each Line
         comma = ","
         newLine = "\n"
-        fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
-        fp_carriers = FP_carriers.objects.filter(fk_fp=fp_info.id)
-        fp_carriers_old_vals = []
-
-        for fp_carrier in fp_carriers:
-            fp_carriers_old_vals.append(fp_carrier.current_value)
 
         if len(bookings) > 0:
             for booking in bookings:
