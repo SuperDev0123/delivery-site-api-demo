@@ -1223,9 +1223,7 @@ def pricing(request):
     #       "Toll",
     #       "Sendle"
     fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
-    DME_Error.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        ).delete()
+    DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:
         for fp_name in fp_names:
@@ -1263,7 +1261,6 @@ def pricing(request):
                         continue
 
                     logger.info(f"### Payload ({fp_name.upper()} PRICING): {payload}")
-                    print("spAccountDetails", payload['spAccountDetails']['accountCode'])
                     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
                     response = requests.post(url, params={}, json=payload)
                     res_content = response.content.decode("utf8").replace("'", '"')
@@ -1282,7 +1279,12 @@ def pricing(request):
                             fk_booking_id=booking.id,
                         )
 
-                    error = capture_errors(response, booking, fp_name.lower(), payload['spAccountDetails']['accountCode'])
+                    error = capture_errors(
+                        response,
+                        booking,
+                        fp_name.lower(),
+                        payload["spAccountDetails"]["accountCode"],
+                    )
 
                     parse_results = parse_pricing_response(
                         response, fp_name.lower(), booking
@@ -1335,7 +1337,6 @@ def pricing(request):
                                     logger.info(f"@402 Exception: {e}")
             elif fp_name.lower() in BUILT_IN_PRICINGS:
                 results = get_pricing(fp_name.lower(), booking)
-                print('results', results)
                 parse_results = parse_pricing_response(
                     results, fp_name.lower(), booking, True
                 )

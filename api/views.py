@@ -4859,7 +4859,6 @@ class ClientRasViewSet(viewsets.ViewSet):
 
     def list(self, request, pk=None):
         queryset = Client_Ras.objects.all()
-        print(queryset)
         serializer = ClientRasSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -4868,9 +4867,7 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
-            print("serializer", serializer)
             return JsonResponse({"result": serializer.data[0]}, status=200,)
-
         except Exception as e:
             return JsonResponse({"results": ""})
 
@@ -4907,8 +4904,9 @@ class ClientRasViewSet(viewsets.ViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ClientRasViewSet(viewsets.ViewSet):
     serializer_class = ClientRasSerializer
@@ -4916,7 +4914,6 @@ class ClientRasViewSet(viewsets.ViewSet):
 
     def list(self, request, pk=None):
         queryset = Client_Ras.objects.all()
-        print(queryset)
         serializer = ClientRasSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -4925,7 +4922,6 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
-            print("serializer", serializer)
             return JsonResponse({"result": serializer.data[0]}, status=200,)
 
         except Exception as e:
@@ -4964,8 +4960,9 @@ class ClientRasViewSet(viewsets.ViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ErrorViewSet(viewsets.ViewSet):
     serializer_class = ErrorSerializer
