@@ -31,6 +31,7 @@ from api.models import (
     Client_Ras,
     Utl_sql_queries,
     Client_Products,
+    DME_Error
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -498,4 +499,9 @@ class BookingSetsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BookingSets
+        fields = "__all__"
+
+class ErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Error
         fields = "__all__"
