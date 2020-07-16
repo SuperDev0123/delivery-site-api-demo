@@ -404,6 +404,18 @@ class ChartsViewSet(viewsets.ViewSet):
                 }
             ).values('client_name').annotate(deliveries=Count('b_client_name')).order_by('deliveries')
             
+            late_result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked"))  & Q(b_dateBookedDate__range=[startDate,endDate]) & Q(s_21_Actual_Delivery_TimeStamp__gte=F('vx_fp_del_eta_time'))).extra(
+                select={
+                    'client_name': 'b_client_name'
+                }
+            ).values('client_name').annotate(late_deliveries=Count('b_client_name')).order_by('late_deliveries')
+
+            ontime_result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked"))  & Q(b_dateBookedDate__range=[startDate,endDate]) & Q(vx_fp_pu_eta_time__gte=F('s_20_Actual_Pickup_TimeStamp'))).extra(
+                select={
+                    'client_name': 'b_client_name'
+                }
+            ).values('client_name').annotate(ontime_deliveries=Count('b_client_name')).order_by('ontime_deliveries')
+
             cost_result = Bookings.objects.filter((Q(b_status="Booked")|Q(b_status="Pu Rebooked")) & Q(b_dateBookedDate__range=[startDate,endDate])).extra(
                 select={
                     'client_name': 'b_client_name'
@@ -412,8 +424,18 @@ class ChartsViewSet(viewsets.ViewSet):
 
             deliveries_reports = list(result)
             cost_reports = list(cost_result)
+            late_reports = list(late_result)
+            ontime_reports = list(ontime_result)
 
             for report in deliveries_reports:
+                for late_report in late_reports:
+                    if report['client_name'] == late_report['client_name']:
+                        report['late_deliveries'] = late_report['late_deliveries']
+
+                for ontime_report in ontime_reports:
+                    if report['client_name'] == ontime_report['client_name']:
+                        report['ontime_deliveries'] =  ontime_report['ontime_deliveries']
+
                 for cost_report in cost_reports:
                     if report['client_name'] == cost_report['client_name']:
                         report['total_cost'] = round(float(cost_report['total_cost']), 2)

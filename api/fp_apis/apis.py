@@ -124,11 +124,11 @@ def tracking(request, fp_name):
             return JsonResponse({"error": "Failed to get Tracking"}, status=400)
     except Bookings.DoesNotExist:
         trace_error.print()
-        logger.info(f"ERROR: {e}")
+        logger.info(f"#511 ERROR: {e}")
         return JsonResponse({"message": "Booking not found"}, status=400)
     except Exception as e:
         trace_error.print()
-        logger.info(f"ERROR: {e}")
+        logger.info(f"#512 ERROR: {e}")
         return JsonResponse({"message": "Tracking failed"}, status=400)
 
 
@@ -1223,6 +1223,7 @@ def pricing(request):
     #       "Toll",
     #       "Sendle"
     fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:
         for fp_name in fp_names:
@@ -1277,6 +1278,13 @@ def pricing(request):
                             response=res_content,
                             fk_booking_id=booking.id,
                         )
+
+                    error = capture_errors(
+                        response,
+                        booking,
+                        fp_name.lower(),
+                        payload["spAccountDetails"]["accountCode"],
+                    )
 
                     parse_results = parse_pricing_response(
                         response, fp_name.lower(), booking
