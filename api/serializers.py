@@ -31,6 +31,7 @@ from api.models import (
     Client_Ras,
     Utl_sql_queries,
     Client_Products,
+    DME_Error,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -499,3 +500,19 @@ class BookingSetsSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingSets
         fields = "__all__"
+
+
+class ErrorSerializer(serializers.ModelSerializer):
+    fp_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_fp_name(self, obj):
+        return obj.freight_provider.fp_company_name
+
+    class Meta:
+        model = DME_Error
+        fields = (
+            "accountCode",
+            "error_code",
+            "error_description",
+            "fp_name",
+        )

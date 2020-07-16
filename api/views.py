@@ -4859,7 +4859,6 @@ class ClientRasViewSet(viewsets.ViewSet):
 
     def list(self, request, pk=None):
         queryset = Client_Ras.objects.all()
-        print(queryset)
         serializer = ClientRasSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -4868,7 +4867,61 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
-            print("serializer", serializer)
+            return JsonResponse({"result": serializer.data[0]}, status=200,)
+        except Exception as e:
+            return JsonResponse({"results": ""})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            resultObject = Client_Ras.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": ClientRasSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({"result": None}, status=400)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        clientras = Client_Ras.objects.get(pk=pk)
+        serializer = ClientRasSerializer(clientras)
+        clientras.delete()
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        data = Client_Ras.objects.get(pk=pk)
+        serializer = ClientRasSerializer(data, data=request.data)
+        try:
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClientRasViewSet(viewsets.ViewSet):
+    serializer_class = ClientRasSerializer
+    queryset = Client_Ras.objects.all()
+
+    def list(self, request, pk=None):
+        queryset = Client_Ras.objects.all()
+        serializer = ClientRasSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        try:
+            queryset = Client_Ras.objects.filter(pk=pk)
+            serializer = ClientRasSerializer(queryset, many=True)
             return JsonResponse({"result": serializer.data[0]}, status=200,)
 
         except Exception as e:
@@ -4907,5 +4960,15 @@ class ClientRasViewSet(viewsets.ViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("Exception: ", e)
+            # print("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ErrorViewSet(viewsets.ViewSet):
+    serializer_class = ErrorSerializer
+    queryset = DME_Error.objects.all()
+
+    def list(self, request, pk=None):
+        queryset = DME_Error.objects.all()
+        serializer = ErrorSerializer(queryset, many=True)
+        return Response(serializer.data)
