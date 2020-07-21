@@ -69,6 +69,7 @@ urlpatterns += [
     url(r"^delete-file/", delete_file),
     # Generates
     url(r"^generate-csv/", generate_csv),
+    url(r"^generate_xml_test/", generate_xml_test),
     url(r"^generate-xml/", generate_xml),
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
