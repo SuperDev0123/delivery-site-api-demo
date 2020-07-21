@@ -3130,7 +3130,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
 
 
         except Exception as e:
-            print('generate_xml error: ', e)
             logger.info(f"@302 State transport XML - {e}")
             return e
     mysqlcon.close()
