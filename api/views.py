@@ -4301,26 +4301,6 @@ def generate_xml(request):
         # print('generate_xml error: ', e)
         return JsonResponse({"error": "error"})
 
-@api_view(["GET"])
-@permission_classes((AllowAny,))
-def generate_xml_test(request):
-    vx_freight_provider = "state transport"
-    booking_ids=[202719, 202718]
-    
-    if len(booking_ids) == 0:
-        return JsonResponse(
-            {"success": "success", "status": "No bookings to build XML"}
-        )
-
-    try:
-        booked_list = build_xml(booking_ids, vx_freight_provider, 1)
-
-        return JsonResponse({"success": "success"})
-    except Exception as e:
-        print('generate_xml error: ', e)
-        return JsonResponse({"error": "error"})
-
-
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def generate_manifest(request):
