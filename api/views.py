@@ -4970,5 +4970,13 @@ class ErrorViewSet(viewsets.ViewSet):
 
     def list(self, request, pk=None):
         queryset = DME_Error.objects.all()
+        print('queryset', queryset)
+        serializer = ErrorSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def get_booking(self, request, format=None):
+        pk_booking_id = request.GET["pk_booking_id"]
+        queryset = DME_Error.objects.filter(fk_booking_id=pk_booking_id)
         serializer = ErrorSerializer(queryset, many=True)
         return Response(serializer.data)
