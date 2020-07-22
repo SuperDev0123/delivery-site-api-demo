@@ -13,19 +13,21 @@ def fp_price_2_dme_price(api_booking_quote):
     except:
         client = DME_clients.objects.get(company_name="Pricing-Only")
 
-    fp_mu_val = float(api_booking_quote["fee"]) * (1 + fp.fp_markupfuel_levy_percent)
-    client_mu_val = fp_mu_val * (1 + client.client_mark_up_percent)
-    client_mu_min_val = fp_mu_val + client.client_min_markup_value
+    fp_markupfuel_levy_percent = fp.fp_markupfuel_levy_percent
+    client_markup_percent = client.client_markup_percent
+    client_min_markup_startingcostvalue = client.client_min_markup_startingcostvalue
+    client_min_markup_value = client.client_min_markup_value
 
-    if float(api_booking_quote["fee"]) > client.client_min_markup_startingcostvalue:
-        return (
-            float(api_booking_quote["fee"]) * (1 + client.client_mark_up_percent),
-            fp.fp_markupfuel_levy_percent,
-        )
+    cost_fl = float(booking["inv_cost_quoted"]) * (1 + fp_markupfuel_levy_percent)
 
-    greater = client_mu_val if client_mu_val > client_mu_min_val else client_mu_min_val
-
-    if fp_mu_val < client.client_min_markup_startingcostvalue:
-        return client_mu_val, fp.fp_markupfuel_levy_percent
+    if cost_fl < float(client_min_markup_startingcostvalue):
+        quoted_dollar = cost_fl * (1 + client_markup_percent)
     else:
-        return greater, fp.fp_markupfuel_levy_percent
+        cost_mu = cost_fl * client_markup_percent
+
+        if cost_mu > client_min_markup_value:
+            quoted_dollar = cost_fl + cost_mu
+        else:
+            quoted_dollar = cost_fl + client_min_markup_value
+
+    return quoted_dollar, fp.fp_markupfuel_levy_percent
