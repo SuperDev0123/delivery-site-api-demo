@@ -18,7 +18,7 @@ def fp_price_2_dme_price(api_booking_quote):
     client_min_markup_startingcostvalue = client.client_min_markup_startingcostvalue
     client_min_markup_value = client.client_min_markup_value
 
-    cost_fl = float(booking["inv_cost_quoted"]) * (1 + fp_markupfuel_levy_percent)
+    cost_fl = float(api_booking_quote["fee"]) * (1 + fp_markupfuel_levy_percent)
 
     if cost_fl < float(client_min_markup_startingcostvalue):
         quoted_dollar = cost_fl * (1 + client_mark_up_percent)
