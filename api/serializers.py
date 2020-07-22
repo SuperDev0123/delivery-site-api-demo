@@ -196,6 +196,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "inv_cost_quoted",
             "inv_cost_actual",
             "inv_sell_quoted",
+            "inv_sell_quoted_override",
             "inv_sell_actual",
             "x_manual_booked_flag",
             "b_fp_qty_delivered",
