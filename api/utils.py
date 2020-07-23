@@ -1457,6 +1457,12 @@ def _generate_csv(booking_ids, vx_freight_provider):
             f = open(
                 "/home/cope_au/dme_sftp/cope_au/pickup_ext/dhl_au/" + csv_name, "w"
             )
+        elif vx_freight_provider == "state transport":
+            f = open(
+                "/home/cope_au/dme_sftp/cope_au/pickup_ext/state_transport_au/"
+                + csv_name,
+                "w",
+            )
     else:
         f = open("/Users/admin/Documents/" + csv_name, "w")
 
@@ -2892,7 +2898,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
         if production:
             local_filepath = "/opt/s3_private/xmls/statetransport_au/"
             local_filepath_dup = (
-                "/opt/s3_private/xmls/act_au/archive/"
+                "/opt/s3_private/xmls/statetransport_au/archive/"
                 + str(datetime.now().strftime("%Y_%m_%d"))
                 + "/"
             )
