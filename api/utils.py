@@ -1531,7 +1531,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     bookings = get_available_bookings(mysqlcon, booking_ids)
     booked_list = get_booked_list(bookings)
 
-    if len(booked_list) > 0:
+    if booked_list and len(booked_list) > 0:
         return booked_list
 
     if vx_freight_provider.lower() == "allied":
