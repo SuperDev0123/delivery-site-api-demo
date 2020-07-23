@@ -53,8 +53,6 @@ from django_rest_passwordreset.signals import (
 from .serializers import *
 from .models import *
 from .utils import (
-    # _generate_csv,
-    # build_xml,
     build_pdf,
     build_xls_and_send,
     make_3digit,
@@ -79,8 +77,8 @@ from api.file_operations import (
     downloads as download_libs,
 )
 
-from api.file_operations.xml_builder import build_xml
-from api.file_operations.csv_builder import _generate_csv
+from api.operations.xml_builder import build_xml
+from api.operations.csv_builder import _generate_csv
 
 logger = logging.getLogger("dme_api")
 
