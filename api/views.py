@@ -53,8 +53,8 @@ from django_rest_passwordreset.signals import (
 from .serializers import *
 from .models import *
 from .utils import (
-    _generate_csv,
-    build_xml,
+    # _generate_csv,
+    # build_xml,
     build_pdf,
     build_xls_and_send,
     make_3digit,
@@ -78,6 +78,9 @@ from api.file_operations import (
     delete as delete_lib,
     downloads as download_libs,
 )
+
+from api.file_operations.xml_builder import build_xml
+from api.file_operations.csv_builder import _generate_csv
 
 logger = logging.getLogger("dme_api")
 
@@ -4340,6 +4343,24 @@ def generate_manifest(request):
         # print("generate_mainifest error: ", e)
         return JsonResponse({"error": "error"})
 
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def generate_xml_test(request):
+    vx_freight_provider = "state transport"
+    booking_ids=[202719, 202718]
+    
+    if len(booking_ids) == 0:
+        return JsonResponse(
+            {"success": "success", "status": "No bookings to build XML"}
+        )
+
+    try:
+        booked_list = build_xml(booking_ids, vx_freight_provider, 1)
+        _generate_csv(booking_ids, vx_freight_provider.lower())
+        return JsonResponse({"success": "success"})
+    except Exception as e:
+        print('generate_xml error: ', e)
+        return JsonResponse({"error": "error"})
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
