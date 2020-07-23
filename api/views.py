@@ -4298,6 +4298,7 @@ def generate_xml(request):
                 {"error": "Found set has booked bookings", "booked_list": booked_list}
             )
     except Exception as e:
+        trace_error.print()
         # print('generate_xml error: ', e)
         return JsonResponse({"error": "error"})
 
