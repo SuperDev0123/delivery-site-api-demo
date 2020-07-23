@@ -4291,7 +4291,7 @@ def generate_xml(request):
     try:
         booked_list = build_xml(booking_ids, vx_freight_provider, 1)
 
-        if len(booked_list) == 0:
+        if booked_list is not None and len(booked_list) == 0:
             return JsonResponse({"success": "success"})
         else:
             return JsonResponse(

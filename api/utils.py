@@ -1464,7 +1464,10 @@ def _generate_csv(booking_ids, vx_freight_provider):
                 "w",
             )
     else:
-        f = open("/Users/admin/Documents/" + csv_name, "w")
+        if not os.path.exists("./static/csvs/statetransport_au/"):
+            os.makedirs("./static/csvs/statetransport_au/")
+
+        f = open("./static/csvs/statetransport_au/" + csv_name, "w")
 
     has_error = csv_write(f, bookings, vx_freight_provider, mysqlcon)
     f.close()
@@ -1531,7 +1534,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     bookings = get_available_bookings(mysqlcon, booking_ids)
     booked_list = get_booked_list(bookings)
 
-    if booked_list and len(booked_list) > 0:
+    if booked_list is not None and len(booked_list) > 0:
         return booked_list
 
     if vx_freight_provider.lower() == "allied":
@@ -2891,7 +2894,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
         except Exception as e:
             logger.info(f"@301 JET XML - {e}")
             return e
-
     elif vx_freight_provider.lower() == "state transport":
         # start check if xmls folder exists
 
