@@ -1318,22 +1318,32 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                 booking_line["e_weightUOM"].upper() == "GRAM"
                                 or booking_line["e_weightUOM"].upper() == "GRAMS"
                             ):
-                                h15 += booking_line["e_qty"]* booking_line["e_weightPerEach"] / 1000
-                                
+                                h15 += (
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                    / 1000
+                                )
+
                             elif (
                                 booking_line["e_weightUOM"].upper() == "TON"
                                 or booking_line["e_weightUOM"].upper() == "TONS"
                             ):
-                                h15 += booking_line["e_qty"] * booking_line["e_weightPerEach"] * 1000
+                                h15 += (
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                    * 1000
+                                )
                             else:
-                                h15 += booking_line["e_qty"]* booking_line["e_weightPerEach"]
+                                h15 += (
+                                    booking_line["e_qty"]
+                                    * booking_line["e_weightPerEach"]
+                                )
 
                 h15 = str(h15)
                 h16 = "vip"
                 h17 = ""
                 h18 = str(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
-                
                 eachLineText = (
                     h00
                     + comma
@@ -1373,7 +1383,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                     + comma
                     + h18
                 )
-            
+
                 fileHandler.write(eachLineText + newLine)
 
     if has_error:
@@ -1427,7 +1437,7 @@ def _generate_csv(booking_ids, vx_freight_provider):
             + str(len(booking_ids))
             + "__"
             + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
-            + ".csv_"
+            + ".csv"
         )
     elif vx_freight_provider.lower() == "state transport":
         csv_name = (
@@ -1435,7 +1445,7 @@ def _generate_csv(booking_ids, vx_freight_provider):
             + str(len(booking_ids))
             + "__"
             + str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
-            + ".csv_"
+            + ".csv"
         )
 
     if production:
@@ -2894,11 +2904,10 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 + "/"
             )
 
-
         if not os.path.exists(local_filepath):
             os.makedirs(local_filepath)
         # end check if xmls folder exists
-            
+
         i = 0
 
         try:
@@ -2912,7 +2921,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 )
 
                 filename = "Statetransport_" + date + "_" + str(i) + ".xml"
-                
+
                 i += 1
                 # end xml file name using naming convention
 
@@ -2950,10 +2959,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 PickupTime = xml.SubElement(Consignment, "PICKUPTIME")
                 # PickupTime.text = booking["puPickUpAvailFrom_Date"]
 
-              
-
                 PuAddress = xml.Element("ADDRESS", **{"type": "pickup"})
-                
+
                 PuName = xml.SubElement(PuAddress, "NAME")
                 PuAddress1 = xml.SubElement(PuAddress, "ADDRESS1")
                 PuAddress1.text = booking["pu_Address_Street_1"]
@@ -3016,8 +3023,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
 
                 Receiver = xml.SubElement(File, "RECEIVER")
                 Receiver.text = DeToCompanyName
-
-              
 
                 sql1 = "SELECT pk_lines_id, e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
                                     FROM dme_booking_lines \
@@ -3127,7 +3132,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 tree = xml.ElementTree(root)
                 with open(local_filepath + filename, "wb") as fh:
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
-
 
         except Exception as e:
             logger.info(f"@302 State transport XML - {e}")

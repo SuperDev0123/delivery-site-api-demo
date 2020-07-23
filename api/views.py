@@ -4301,6 +4301,7 @@ def generate_xml(request):
         # print('generate_xml error: ', e)
         return JsonResponse({"error": "error"})
 
+
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def generate_manifest(request):
