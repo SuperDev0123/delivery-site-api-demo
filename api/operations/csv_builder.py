@@ -17,7 +17,7 @@ def _generate_csv(booking_ids, vx_freight_provider):
         # print('Mysql DB connection error!')
         exit(1)
 
-    bookings = get_available_bookings(mysqlcon, booking_ids)
+    bookings = get_available_bookings(booking_ids)
 
     if vx_freight_provider == "cope":
         csv_name = (
@@ -96,7 +96,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
         newLine = "\n"
         if len(bookings) > 0:
             for booking in bookings:
-                booking_lines = get_available_booking_lines(mysqlcon, booking)
+                booking_lines = get_available_booking_lines(booking)
                 eachLineText = "DVM0001"
 
                 if booking["b_bookingID_Visual"] is None:
@@ -715,7 +715,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
 
         if len(bookings) > 0:
             for booking in bookings:
-                booking_lines = get_available_booking_lines(mysqlcon, booking)
+                booking_lines = get_available_booking_lines(booking)
 
                 if booking["b_client_order_num"] is None:
                     h00 = ""
@@ -1018,7 +1018,7 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
 
         if len(bookings) > 0:
             for booking in bookings:
-                booking_lines = get_available_booking_lines(mysqlcon, booking)
+                booking_lines = get_available_booking_lines(booking)
 
                 h00 = "FMS account"
 

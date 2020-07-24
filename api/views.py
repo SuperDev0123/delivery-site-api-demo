@@ -53,10 +53,8 @@ from django_rest_passwordreset.signals import (
 from .serializers import *
 from .models import *
 from .utils import (
-    build_pdf,
     build_xls_and_send,
     make_3digit,
-    build_manifest,
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
@@ -79,6 +77,8 @@ from api.file_operations import (
 
 from api.operations.xml_builder import build_xml
 from api.operations.csv_builder import _generate_csv
+from api.operations.pdf_builder import build_pdf
+from api.operations.manifest_builder import build_manifest
 
 logger = logging.getLogger("dme_api")
 
@@ -4354,6 +4354,8 @@ def generate_xml_test(request):
 
     try:
         booked_list = build_xml(booking_ids, vx_freight_provider, 1)
+        build_pdf(booking_ids, vx_freight_provider)
+        build_manifest(booking_ids, vx_freight_provider, '1')
         _generate_csv(booking_ids, vx_freight_provider.lower())
         return JsonResponse({"success": "success"})
     except Exception as e:

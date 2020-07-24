@@ -16,11 +16,11 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
         exit(1)
     mycursor = mysqlcon.cursor()
 
-    bookings = get_available_bookings(mysqlcon, booking_ids)
+    bookings = get_available_bookings(booking_ids)
     booked_list = get_booked_list(bookings)
 
-    if booked_list is not None and len(booked_list) > 0:
-        return booked_list
+    # if booked_list is not None and len(booked_list) > 0:
+    #     return booked_list
 
     if vx_freight_provider.lower() == "allied":
         # start check if xmls folder exists
@@ -269,7 +269,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     fp_info = Fp_freight_providers.objects.get(fp_company_name="Tas")
                     initial_connot_index = int(fp_info.new_connot_index) - len(bookings)
                     # start db query for fetching data from dme_booking_lines table
-                    booking_lines = get_available_booking_lines(mysqlcon, booking)
+                    booking_lines = get_available_booking_lines(booking)
                     # end db query for fetching data from dme_booking_lines table
 
                     # start calculate total item quantity and total item weight
@@ -610,7 +610,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
 
                 for booking in bookings:
                     # start db query for fetching data from dme_booking_lines table
-                    booking_lines = get_available_booking_lines(mysqlcon, booking)
+                    booking_lines = get_available_booking_lines(booking)
                     # end db query for fetching data from dme_booking_lines table
 
                     # start calculate total item quantity and total item weight
