@@ -5391,19 +5391,20 @@ def get_pu_by(booking):
 
 def get_eta_pu_by(booking):
     try:
-        if get_pu_by(booking) is None:
-            sydney_tz = pytz.timezone("Australia/Sydney")
-            etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
-            weekno = etd_pu_by.weekday()
+        return get_pu_by(booking)
+        # if get_pu_by(booking) is None:
+        #     sydney_tz = pytz.timezone("Australia/Sydney")
+        #     etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
+        #     weekno = etd_pu_by.weekday()
 
-            if weekno > 4:
-                etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
+        #     if weekno > 4:
+        #         etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
 
-            etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
+        #     etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
 
-            return etd_pu_by
-        else:
-            return get_pu_by(booking)
+        #     return etd_pu_by
+        # else:
+        #     return get_pu_by(booking)
     except Exception as e:
         trace_error.print()
         logger.info(f"Error #1001: {e}")

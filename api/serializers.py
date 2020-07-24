@@ -38,19 +38,18 @@ from api.fp_apis.utils import _is_deliverable_price
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
+    client_company_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_client_company_name(self, obj):
+        return obj.fk_id_dme_client.company_name
+
     class Meta:
         model = Client_warehouses
         fields = (
             "pk_id_client_warehouses",
             "warehousename",
-            "warehouse_address1",
-            "warehouse_address2",
-            "warehouse_state",
-            "warehouse_suburb",
-            "warehouse_phone_main",
-            "warehouse_hours",
-            "type",
             "client_warehouse_code",
+            "client_company_name",
         )
 
 

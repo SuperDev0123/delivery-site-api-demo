@@ -390,9 +390,13 @@ class UserViewSet(viewsets.ViewSet):
             client = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             ).first()
-            client_employees = Client_employees.objects.filter(
-                fk_id_dme_client_id=client.pk_id_dme_client, email__isnull=False
-            ).order_by("name_first")
+            client_employees = (
+                Client_employees.objects.filter(
+                    fk_id_dme_client_id=client.pk_id_dme_client, email__isnull=False
+                )
+                .prefetch_related("fk_id_dme_client")
+                .order_by("name_first")
+            )
 
         results = []
         for client_employee in client_employees:
@@ -401,6 +405,7 @@ class UserViewSet(viewsets.ViewSet):
                 "name_first": client_employee.name_first,
                 "name_last": client_employee.name_last,
                 "email": client_employee.email,
+                "company_name": client_employee.fk_id_dme_client.company_name,
             }
             results.append(result)
 
