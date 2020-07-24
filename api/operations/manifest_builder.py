@@ -1,27 +1,13 @@
 from api.utils import *
 
 def build_manifest(booking_ids, vx_freight_provider, user_name):
-    try:
-        mysqlcon = pymysql.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASS,
-            db=DB_NAME,
-            charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor,
-        )
-    except:
-        exit(1)
-    mycursor = mysqlcon.cursor()
-
     bookings = get_available_bookings(booking_ids)
     # manifested_list = get_manifested_list(bookings)
 
     # if len(manifested_list) > 0:
     #     return manifested_list
     filenames = []
-    
+
     if vx_freight_provider.upper() == "TAS":
         fp_info = Fp_freight_providers.objects.get(fp_company_name="Tas")
         new_manifest_index = fp_info.fp_manifest_cnt
@@ -102,10 +88,9 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 ent_vol = ent_vol + totalVol
                 ent_rows = ent_rows + len(booking_lines)
 
-                sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
-                adr2 = (str(datetime.utcnow()), booking["pk_booking_id"])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                dme_booking.manifest_timestamp = str(datetime.utcnow())
+                dme_booking.save()
 
             for booking_ind, booking in enumerate(bookings):
                 try:
@@ -677,24 +662,17 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                             row_cnt = 0
                             page_cnt += 1
 
-                    sql = "INSERT INTO `dme_manifest_log` \
-                    (`fk_booking_id`, `manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, \
-                    `z_createdByAccount`, `z_createdTimeStamp`, `z_modifiedTimeStamp`) \
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                    mycursor.execute(
-                        sql,
-                        (
-                            booking["pk_booking_id"],
-                            filename,
-                            manifest,
-                            "1",
-                            "1",
-                            user_name,
-                            str(datetime.utcnow()),
-                            str(datetime.utcnow()),
-                        ),
-                    )
-                    mysqlcon.commit()
+                    Dme_manifest_log(
+                        fk_booking_id=booking["pk_booking_id"],
+                        manifest_url=filename, 
+                        manifest_number=manifest, 
+                        bookings_cnt=len(bookings), 
+                        is_one_booking="1",
+                        z_createdTimeStamp=str(datetime.utcnow()),
+                        z_modifiedTimeStamp=str(datetime.utcnow()),
+                        z_createdByAccount=user_name
+                    ).save()
+                    
                     i += 1
 
                 except Exception as e:
@@ -706,28 +684,21 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
         doc.build(Story)
         file.close()
 
-        sql = "INSERT INTO `dme_manifest_log` \
-            (`manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdTimeStamp`, \
-            `z_modifiedTimeStamp`, `z_createdByAccount`) \
-            VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        mycursor.execute(
-            sql,
-            (
-                filename,
-                manifest,
-                str(len(bookings)),
-                "1",
-                str(datetime.utcnow()),
-                str(datetime.utcnow()),
-                user_name,
-            ),
-        )
-        mysqlcon.commit()
+        Dme_manifest_log(
+            manifest_url=filename, 
+            manifest_number=manifest, 
+            bookings_cnt=len(bookings), 
+            is_one_booking="1",
+            z_createdTimeStamp=str(datetime.utcnow()),
+            z_modifiedTimeStamp=str(datetime.utcnow()),
+            z_createdByAccount=user_name
+        ).save()
 
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
-    elif vx_freight_provider.upper() == "DHL":
+    # elif vx_freight_provider.upper() == "DHL":
+    elif vx_freight_provider.upper() == "STATE TRANSPORT":
         fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
         new_manifest_index = fp_info.fp_manifest_cnt
         new_connot_index = fp_info.new_connot_index
@@ -807,10 +778,9 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
                 ent_vol = ent_vol + totalVol
                 ent_rows = ent_rows + len(booking_lines)
 
-                sql2 = "UPDATE dme_bookings set manifest_timestamp=%s WHERE pk_booking_id = %s"
-                adr2 = (str(datetime.utcnow()), booking["pk_booking_id"])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                dme_booking.manifest_timestamp = str(datetime.utcnow())
+                dme_booking.save()
 
             for booking_ind, booking in enumerate(bookings):
                 try:
@@ -1391,43 +1361,26 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
         doc.build(Story)
         file.close()
 
-        # Add Manifest Log
-        sql = "INSERT INTO `dme_manifest_log` \
-            (`manifest_url`, `manifest_number`, `bookings_cnt`, `is_one_booking`, `z_createdTimeStamp`, \
-            `z_modifiedTimeStamp`, `z_createdByAccount`) \
-            VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        mycursor.execute(
-            sql,
-            (
-                filename,
-                manifest,
-                str(len(bookings)),
-                "1",
-                str(datetime.utcnow()),
-                str(datetime.utcnow()),
-                user_name,
-            ),
-        )
-        mysqlcon.commit()
 
-        # Update Booking's manifest id
-        sql = "SELECT * FROM `dme_manifest_log` \
-            WHERE manifest_url=%s"
-        mycursor.execute(sql, (filename))
-        manifest_log = mycursor.fetchone()
+        Dme_manifest_log(
+            manifest_url=filename, 
+            manifest_number=manifest, 
+            bookings_cnt=len(bookings), 
+            is_one_booking="1",
+            z_createdTimeStamp=str(datetime.utcnow()),
+            z_modifiedTimeStamp=str(datetime.utcnow()),
+            z_createdByAccount=user_name
+        ).save()
 
-        for booking in bookings:
-            sql = "UPDATE `dme_bookings` \
-            set `fk_manifest_id`=%s, `z_ModifiedTimestamp`=%s \
-            WHERE id=%s"
-            mycursor.execute(
-                sql, (manifest_log["id"], str(datetime.utcnow()), booking["id"])
-            )
-            mysqlcon.commit()
+        manifest_log = Dme_manifest_log.objects.filter(manifest_url=filename).first()
+
+        dme_booking = Bookings.objects.filter(id=booking["id"]).first()
+        dme_booking.fk_manifest_id = manifest_log.id
+        dme_booking.z_ModifiedTimestamp = str(datetime.utcnow())
+        dme_booking.save()
 
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
 
-    mysqlcon.close()
     return filenames

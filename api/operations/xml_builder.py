@@ -1,21 +1,6 @@
 from api.utils import *
 
-
 def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
-    try:
-        mysqlcon = pymysql.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASS,
-            db=DB_NAME,
-            charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor,
-        )
-    except:
-        exit(1)
-    mycursor = mysqlcon.cursor()
-
     bookings = get_available_bookings(booking_ids)
     booked_list = get_booked_list(bookings)
 
@@ -47,12 +32,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
         for booking in bookings:
             try:
                 # start db query for fetching data from dme_booking_lines table
-                sql1 = "SELECT pk_lines_id, e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
-                        FROM dme_booking_lines \
-                        WHERE fk_booking_id = %s"
-                adr1 = (booking["pk_booking_id"],)
-                mycursor.execute(sql1, adr1)
-                booking_lines = mycursor.fetchall()
+                booking_lines = Booking_lines.objects.filter(fk_booking_id=booking["pk_booking_id"]).values()
 
                 # start calculate total item quantity and total item weight
                 totalQty = 0
@@ -151,11 +131,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         or booking_line["e_dimWidth"] == 0
                     ):
                         Width.text = str("1")
-
-                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimWidth = 1
+                        booking_line.save()
                     else:
                         Width.text = str(booking_line["e_dimWidth"])
 
@@ -166,11 +144,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         or booking_line["e_dimLength"] == 0
                     ):
                         Length.text = str("1")
-
-                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimLength = 1
+                        booking_line.save()
                     else:
                         Length.text = str(booking_line["e_dimLength"])
 
@@ -181,11 +157,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         or booking_line["e_dimHeight"] == 0
                     ):
                         Height.text = str("1")
-
-                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimHeight = 1
+                        booking_line.save()
                     else:
                         Height.text = str(booking_line["e_dimHeight"])
 
@@ -229,10 +203,11 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
 
                 # start update booking status in dme_booking table
 
-                sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                adr2 = ("Booked", get_sydney_now_time(), booking["pk_booking_id"])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                dme_booking.b_status = "Booked"
+                dme_booking.b_dateBookedDate = get_sydney_now_time()
+                dme_booking.save()
+
             except Exception as e:
                 # print('@300 Allied XML - ', e)
                 return e
@@ -503,30 +478,27 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                             or booking_line["e_dimWidth"] == ""
                             or booking_line["e_dimWidth"] == 0
                         ):
-                            sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                            adr2 = (1, booking_line["pk_lines_id"])
-                            mycursor.execute(sql2, adr2)
-                            mysqlcon.commit()
+                            booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                            booking_line.e_dimWidth = 1
+                            booking_line.save()
 
                         if (
                             booking_line["e_dimLength"] == None
                             or booking_line["e_dimLength"] == ""
                             or booking_line["e_dimLength"] == 0
                         ):
-                            sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                            adr2 = (1, booking_line["pk_lines_id"])
-                            mycursor.execute(sql2, adr2)
-                            mysqlcon.commit()
+                            booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                            booking_line.e_dimLength = 1
+                            booking_line.save()
 
                         if (
                             booking_line["e_dimHeight"] == None
                             or booking_line["e_dimHeight"] == ""
                             or booking_line["e_dimHeight"] == 0
                         ):
-                            sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                            adr2 = (1, booking_line["pk_lines_id"])
-                            mycursor.execute(sql2, adr2)
-                            mysqlcon.commit()
+                            booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                            booking_line.e_dimHeight = 1
+                            booking_line.save()
 
                         ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
                         ItemWeight.text = (
@@ -562,15 +534,11 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
                     # start update booking status in dme_booking table
-                    sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                    adr2 = (
-                        "Booked",
-                        get_sydney_now_time(),
-                        connote_number,
-                        booking["pk_booking_id"],
-                    )
-                    mycursor.execute(sql2, adr2)
-                    mysqlcon.commit()
+                    dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                    dme_booking.b_status = "Booked"
+                    dme_booking.b_dateBookedDate = get_sydney_now_time()
+                    dme_booking.save()
+
                 except Exception as e:
                     logger.info(f"@300 TAS XML - {e}")
                     return e
@@ -817,30 +785,25 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                             or booking_line["e_dimWidth"] == ""
                             or booking_line["e_dimWidth"] == 0
                         ):
-                            sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                            adr2 = (1, booking_line["pk_lines_id"])
-                            mycursor.execute(sql2, adr2)
-                            mysqlcon.commit()
-
+                            booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                            booking_line.e_dimWidth = 1
+                            booking_line.save()
                         if (
                             booking_line["e_dimLength"] == None
                             or booking_line["e_dimLength"] == ""
                             or booking_line["e_dimLength"] == 0
                         ):
-                            sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                            adr2 = (1, booking_line["pk_lines_id"])
-                            mycursor.execute(sql2, adr2)
-                            mysqlcon.commit()
-
+                            booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                            booking_line.e_dimLength = 1
+                            booking_line.save()
                         if (
                             booking_line["e_dimHeight"] == None
                             or booking_line["e_dimHeight"] == ""
                             or booking_line["e_dimHeight"] == 0
                         ):
-                            sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                            adr2 = (1, booking_line["pk_lines_id"])
-                            mycursor.execute(sql2, adr2)
-                            mysqlcon.commit()
+                            booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                            booking_line.e_dimHeight = 1
+                            booking_line.save()
 
                         ItemWeight = xml.SubElement(FreightDetails, "fd:ItemWeight")
                         ItemWeight.text = (
@@ -878,16 +841,11 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     with open(local_filepath + filename, "wb") as fh:
                         tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
-                    # start update booking status in dme_booking table
-                    sql2 = "UPDATE dme_bookings set b_status=%s, b_dateBookedDate=%s, v_FPBookingNumber=%s WHERE pk_booking_id = %s"
-                    adr2 = (
-                        "Booked",
-                        get_sydney_now_time(),
-                        connote_number,
-                        booking["pk_booking_id"],
-                    )
-                    mycursor.execute(sql2, adr2)
-                    mysqlcon.commit()
+                    dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                    dme_booking.b_status = "Booked"
+                    dme_booking.v_FPBookingNumber = connote_number
+                    dme_booking.b_dateBookedDate = get_sydney_now_time()
+                    dme_booking.save()
             except Exception as e:
                 logger.info(f"@301 TAS XML - {e}")
                 return e
@@ -1023,13 +981,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Receiver = xml.SubElement(File, "RECEIVER")
                 Receiver.text = DeToCompanyName
 
-                sql1 = "SELECT pk_lines_id, e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
-                                    FROM dme_booking_lines \
-                                    WHERE fk_booking_id = %s"
-                adr1 = (booking["pk_booking_id"],)
-                mycursor.execute(sql1, adr1)
-                booking_lines = mycursor.fetchall()
-
+                booking_lines = Booking_lines.objects.filter(fk_booking_id=booking["pk_booking_id"]).values()
                 # start calculate total item quantity and total item weight
 
                 totalWght = 0
@@ -1077,10 +1029,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ):
                         X.text = str("1")
 
-                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimWidth = 1
+                        booking_line.save()
                     else:
                         X.text = str(booking_line["e_dimWidth"])
 
@@ -1092,10 +1043,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ):
                         Z.text = str("1")
 
-                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimLength = 1
+                        booking_line.save()
                     else:
                         Z.text = str(booking_line["e_dimLength"])
 
@@ -1107,10 +1057,10 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ):
                         Y.text = str("1")
 
-                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimHeight = 1
+                        booking_line.save()
+
                     else:
                         Y.text = str(booking_line["e_dimHeight"])
 
@@ -1267,13 +1217,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Receiver = xml.SubElement(File, "RECEIVER")
                 Receiver.text = DeToCompanyName
 
-                sql1 = "SELECT pk_lines_id, e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
-                                    FROM dme_booking_lines \
-                                    WHERE fk_booking_id = %s"
-                adr1 = (booking["pk_booking_id"],)
-                mycursor.execute(sql1, adr1)
-                booking_lines = mycursor.fetchall()
-
+                booking_lines = Booking_lines.objects.filter(fk_booking_id=booking["pk_booking_id"]).values()
                 # start calculate total item quantity and total item weight
 
                 totalWght = 0
@@ -1320,11 +1264,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         or booking_line["e_dimWidth"] == 0
                     ):
                         X.text = str("1")
-
-                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimWidth = 1
+                        booking_line.save()
                     else:
                         X.text = str(booking_line["e_dimWidth"])
 
@@ -1336,10 +1278,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ):
                         Z.text = str("1")
 
-                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimLength = 1
+                        booking_line.save()
                     else:
                         Z.text = str(booking_line["e_dimLength"])
 
@@ -1350,11 +1291,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         or booking_line["e_dimHeight"] == 0
                     ):
                         Y.text = str("1")
-
-                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimHeight = 1
+                        booking_line.save()
                     else:
                         Y.text = str(booking_line["e_dimHeight"])
 
@@ -1517,14 +1456,8 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Receiver = xml.SubElement(File, "RECEIVER")
                 Receiver.text = DeToCompanyName
 
-                sql1 = "SELECT pk_lines_id, e_qty, e_item_type, e_item, e_dimWidth, e_dimLength, e_dimHeight, e_Total_KG_weight \
-                                    FROM dme_booking_lines \
-                                    WHERE fk_booking_id = %s"
-                adr1 = (booking["pk_booking_id"],)
-                mycursor.execute(sql1, adr1)
-                booking_lines = mycursor.fetchall()
 
-                # start calculate total item quantity and total item weight
+                booking_lines = Booking_lines.objects.filter(fk_booking_id=booking["pk_booking_id"]).values()
 
                 totalWght = 0
                 for booking_line in booking_lines:
@@ -1571,10 +1504,10 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ):
                         X.text = str("1")
 
-                        sql2 = "UPDATE dme_booking_lines set e_dimWidth = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimWidth = 1
+                        booking_line.save()
+
                     else:
                         X.text = str(booking_line["e_dimWidth"])
 
@@ -1586,10 +1519,10 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     ):
                         Z.text = str("1")
 
-                        sql2 = "UPDATE dme_booking_lines set e_dimLength = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimLength = 1
+                        booking_line.save()
+
                     else:
                         Z.text = str(booking_line["e_dimLength"])
 
@@ -1600,11 +1533,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                         or booking_line["e_dimHeight"] == 0
                     ):
                         Y.text = str("1")
-
-                        sql2 = "UPDATE dme_booking_lines set e_dimHeight = %s WHERE pk_lines_id = %s"
-                        adr2 = (1, booking_line["pk_lines_id"])
-                        mycursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                        booking_line = Booking_lines.objects.filter(pk_lines_id=booking_line["pk_lines_id"]).first()
+                        booking_line.e_dimHeight = 1
+                        booking_line.save()
                     else:
                         Y.text = str(booking_line["e_dimHeight"])
 
@@ -1629,4 +1560,3 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
         except Exception as e:
             logger.info(f"@302 State transport XML - {e}")
             return e
-    mysqlcon.close()

@@ -2,21 +2,6 @@ from api.utils import *
 
 def _generate_csv(booking_ids, vx_freight_provider):
     # print('#900 - Running %s' % datetime.datetime.now())
-
-    try:
-        mysqlcon = pymysql.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASS,
-            db=DB_NAME,
-            charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor,
-        )
-    except:
-        # print('Mysql DB connection error!')
-        exit(1)
-
     bookings = get_available_bookings(booking_ids)
 
     if vx_freight_provider == "cope":
@@ -65,18 +50,17 @@ def _generate_csv(booking_ids, vx_freight_provider):
 
         f = open("./static/csvs/statetransport_au/" + csv_name, "w")
 
-    has_error = csv_write(f, bookings, vx_freight_provider, mysqlcon)
+    has_error = csv_write(f, bookings, vx_freight_provider)
     f.close()
 
     if has_error:
         os.remove(f.name)
 
     # print('#901 - Finished %s' % datetime.datetime.now())
-    mysqlcon.close()
     return has_error
     
 
-def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
+def csv_write(fileHandler, bookings, vx_freight_provider):
     has_error = False
 
     if vx_freight_provider == "cope":
@@ -804,17 +788,10 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                 if fp_zone is None:
                     has_error = True
 
-                    # Update booking with FP bug
-                    with mysqlcon.cursor() as cursor:
-                        sql2 = "UPDATE dme_bookings \
-                                SET b_error_Capture = %s \
-                                WHERE id = %s"
-                        adr2 = (
-                            "DE address and FP_zones are not matching.",
-                            booking["id"],
-                        )
-                        cursor.execute(sql2, adr2)
-                        mysqlcon.commit()
+                    dme_booking = Bookings.objects.filter(id=booking["id"]).first()
+                    dme_booking.b_error_Capture = "DE address and FP_zones are not matching."
+                    dme_booking.save()
+
                 else:
                     h23 = "DMS" if fp_zone.carrier == "DHLSFS" else "DMB"
 
@@ -908,32 +885,21 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
                                     )
                                 )
 
-                                # Update booking while build CSV for DHL
-                                with mysqlcon.cursor() as cursor:
-                                    sql2 = "UPDATE dme_bookings \
-                                            SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s, b_error_Capture = %s \
-                                            WHERE id = %s"
-                                    adr2 = (h24, fp_zone.carrier, None, booking["id"])
-                                    cursor.execute(sql2, adr2)
-                                    mysqlcon.commit()
+                                dme_booking = Bookings.objects.filter(id=booking["id"]).first()
+                                dme_booking.v_FPBookingNumber = h24
+                                dme_booking.vx_freight_provider_carrier = fp_zone.carrier
+                                dme_booking.b_error_Capture = None
+                                dme_booking.save()
 
                                 if not has_error:
                                     fp_carrier.current_value += 1
                                     fp_carrier.save()
                             except FP_carriers.DoesNotExist:
                                 has_error = True
-
-                                # Update booking with FP bug
-                                with mysqlcon.cursor() as cursor:
-                                    sql2 = "UPDATE dme_bookings \
-                                            SET b_error_Capture = %s \
-                                            WHERE id = %s"
-                                    adr2 = (
-                                        "FP_carrier is not matching. Please check FP_zones.",
-                                        booking["id"],
-                                    )
-                                    cursor.execute(sql2, adr2)
-                                    mysqlcon.commit()
+                                
+                                dme_booking = Bookings.objects.filter(id=booking["id"]).first()
+                                dme_booking.b_error_Capture = "FP_carrier is not matching. Please check FP_zones."
+                                dme_booking.save()
 
                             h31 = h24 + h30 + booking["de_To_Address_PostalCode"]
 
@@ -1166,13 +1132,10 @@ def csv_write(fileHandler, bookings, vx_freight_provider, mysqlcon):
     if has_error:
         for booking in bookings:
             # Clear booking updates
-            with mysqlcon.cursor() as cursor:
-                sql2 = "UPDATE dme_bookings \
-                        SET v_FPBookingNumber = %s, vx_freight_provider_carrier = %s \
-                        WHERE id = %s"
-                adr2 = (None, None, booking["id"])
-                cursor.execute(sql2, adr2)
-                mysqlcon.commit()
+            dme_booking = Bookings.objects.filter(id=booking["id"]).first()
+            dme_booking.v_FPBookingNumber = None
+            dme_booking.vx_freight_provider_carrier = fp_zone.carrier
+            dme_booking.save()
 
         for index, fp_carrier in enumerate(fp_carriers):
             fp_carrier.current_value = fp_carriers_old_vals[index]

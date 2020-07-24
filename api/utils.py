@@ -66,23 +66,6 @@ if settings.ENV == "local":
 else:
     production = True  # Dev
 
-if production:
-    DB_HOST = "deliverme-db.cgc7xojhvzjl.ap-southeast-2.rds.amazonaws.com"
-    DB_USER = "fmadmin"
-    DB_PASS = "oU8pPQxh"
-    DB_PORT = 3306
-
-    if settings.ENV == "dev":
-        DB_NAME = "dme_db_dev"  # Dev
-    elif settings.ENV == "prod":
-        DB_NAME = "dme_db_prod"  # Prod
-else:
-    DB_HOST = "localhost"
-    DB_USER = "root"
-    DB_PASS = "root"
-    DB_PORT = 3306
-    DB_NAME = "deliver_me"
-
 logger = logging.getLogger("dme_api")
 
 redis_host = "localhost"
@@ -396,7 +379,6 @@ class RotatedImage(Image):
     def draw(self):
         self.canv.rotate(90)
         Image.draw(self)
-
 
 def build_xls_and_send(
     bookings,

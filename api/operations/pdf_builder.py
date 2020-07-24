@@ -1,19 +1,6 @@
 from api.utils import *
 
 def build_pdf(booking_ids, vx_freight_provider):
-    try:
-        mysqlcon = pymysql.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASS,
-            db=DB_NAME,
-            charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor,
-        )
-    except:
-        exit(1)
-    mycursor = mysqlcon.cursor()
     i = 1
     if vx_freight_provider == "TASFR":
         try:
@@ -493,13 +480,11 @@ def build_pdf(booking_ids, vx_freight_provider):
                 i = i + 1
                 doc.build(Story)
                 # end writting data into pdf file
-                
-                sql2 = "UPDATE dme_bookings \
-                    SET z_label_url = %s \
-                    WHERE pk_booking_id = %s"
-                adr2 = ("tas_au/" + filename, booking["pk_booking_id"])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+
+                dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                dme_booking.z_label_url = "tas_au/" + filename
+                dme_booking.save()
+               
                 file.close()
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -875,17 +860,13 @@ def build_pdf(booking_ids, vx_freight_provider):
                 i += 1
                 doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
 
-                sql2 = "UPDATE dme_bookings \
-                    SET z_label_url = %s \
-                    WHERE pk_booking_id = %s"
-                adr2 = ("dhl_au/" + filename, booking["pk_booking_id"])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                dme_booking = Bookings.objects.filter(pk_booking_id=booking["pk_booking_id"]).first()
+                dme_booking.z_label_url = "dhl_au/" + filename
+                dme_booking.save()
 
                 file.close()
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logger.info(f"#506 Error: - {e}")
-    mysqlcon.close()
     return i - 1
