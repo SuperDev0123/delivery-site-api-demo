@@ -1,4 +1,46 @@
-from api.utils import *
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Image,
+    PageBreak,
+    Table,
+)
+from api.utils import (
+    get_available_bookings,
+    get_available_booking_lines,
+    get_booked_list
+)
+from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable
+from reportlab.graphics.barcode import (
+    code39,
+    code128,
+    code93,
+    createBarcodeDrawing,
+    eanbc,
+    qr,
+    usps,
+)
+from reportlab.lib import colors
+from api.models import *
+
+if settings.ENV == "local":
+    production = False  # Local
+else:
+    production = True  # Dev
+
+styles = getSampleStyleSheet()
+style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
+style_left = ParagraphStyle(name="left", parent=styles["Normal"], alignment=TA_LEFT)
+style_center = ParagraphStyle(
+    name="center", parent=styles["Normal"], alignment=TA_CENTER
+)
+style_cell = ParagraphStyle(name="smallcell", fontSize=6, leading=6)
+styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
+ROWS_PER_PAGE = 20
+#####################
 
 def build_pdf(booking_ids, vx_freight_provider):
     i = 1

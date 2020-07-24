@@ -1,4 +1,52 @@
-from api.utils import *
+import os, sys, datetime
+from reportlab.lib.units import inch, mm
+from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Image,
+    PageBreak,
+    Table,
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from api.utils import (
+    get_available_bookings,
+    get_available_booking_lines,
+    get_booked_list
+)
+from reportlab.graphics.barcode import (
+    code39,
+    code128,
+    code93,
+    createBarcodeDrawing,
+    eanbc,
+    qr,
+    usps,
+)
+from reportlab.lib import colors
+from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable
+from api.models import *
+
+if settings.ENV == "local":
+    production = False  # Local
+else:
+    production = True  # Dev
+
+styles = getSampleStyleSheet()
+style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
+style_left = ParagraphStyle(name="left", parent=styles["Normal"], alignment=TA_LEFT)
+style_center = ParagraphStyle(
+    name="center", parent=styles["Normal"], alignment=TA_CENTER
+)
+style_cell = ParagraphStyle(name="smallcell", fontSize=6, leading=6)
+styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
+ROWS_PER_PAGE = 20
+#####################
+
+### TAS constants ###
+# ACCOUNT_CODE = "AATEST"
+ACCOUNT_CODE = "SEAWAPO"
 
 def build_manifest(booking_ids, vx_freight_provider, user_name):
     bookings = get_available_bookings(booking_ids)
@@ -697,8 +745,7 @@ def build_manifest(booking_ids, vx_freight_provider, user_name):
         fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
         fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
         fp_info.save()
-    # elif vx_freight_provider.upper() == "DHL":
-    elif vx_freight_provider.upper() == "STATE TRANSPORT":
+    elif vx_freight_provider.upper() == "DHL":
         fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
         new_manifest_index = fp_info.fp_manifest_cnt
         new_connot_index = fp_info.new_connot_index

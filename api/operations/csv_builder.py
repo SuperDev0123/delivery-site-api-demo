@@ -1,4 +1,17 @@
-from api.utils import *
+import os, sys, datetime
+import xml.etree.ElementTree as xml
+from api.utils import (
+    get_available_bookings,
+    get_available_booking_lines,
+    get_booked_list,
+    wrap_in_quote
+)
+from api.models import *
+
+if settings.ENV == "local":
+    production = False  # Local
+else:
+    production = True  # Dev
 
 def _generate_csv(booking_ids, vx_freight_provider):
     # print('#900 - Running %s' % datetime.datetime.now())

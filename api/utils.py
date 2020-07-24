@@ -25,8 +25,6 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.utils import COMMASPACE, formatdate
 
-from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import letter, landscape, A6
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -36,21 +34,12 @@ from reportlab.platypus import (
     Table,
 )
 from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
 from reportlab.lib.units import inch, mm
-from reportlab.graphics.barcode import (
-    code39,
-    code128,
-    code93,
-    createBarcodeDrawing,
-    eanbc,
-    qr,
-    usps,
-)
+from reportlab.graphics.barcode import createBarcodeDrawing
+
 from reportlab.graphics.shapes import Drawing
 from reportlab.pdfgen import canvas
-from reportlab.graphics import renderPDF
-from reportlab.lib import colors
 import re
 
 from django.conf import settings
@@ -71,21 +60,6 @@ logger = logging.getLogger("dme_api")
 redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
-
-### TAS constants ###
-# ACCOUNT_CODE = "AATEST"
-ACCOUNT_CODE = "SEAWAPO"
-styles = getSampleStyleSheet()
-style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
-style_left = ParagraphStyle(name="left", parent=styles["Normal"], alignment=TA_LEFT)
-style_center = ParagraphStyle(
-    name="center", parent=styles["Normal"], alignment=TA_CENTER
-)
-style_cell = ParagraphStyle(name="smallcell", fontSize=6, leading=6)
-styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
-ROWS_PER_PAGE = 20
-#####################
-
 
 def redis_con():
     try:

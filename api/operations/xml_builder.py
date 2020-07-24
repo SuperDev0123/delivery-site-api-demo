@@ -1,4 +1,20 @@
-from api.utils import *
+import os, sys, datetime
+import xml.etree.ElementTree as xml
+from api.utils import (
+    get_available_bookings,
+    get_available_booking_lines,
+    get_booked_list
+)
+from api.models import *
+
+if settings.ENV == "local":
+    production = False  # Local
+else:
+    production = True  # Dev
+
+### TAS constants ###
+# ACCOUNT_CODE = "AATEST"
+ACCOUNT_CODE = "SEAWAPO"
 
 def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     bookings = get_available_bookings(booking_ids)
@@ -1558,5 +1574,6 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                     tree.write(fh, encoding="UTF-8", xml_declaration=True)
 
         except Exception as e:
+            print(f"@302 State transport XML - {e}")
             logger.info(f"@302 State transport XML - {e}")
             return e
