@@ -1926,6 +1926,10 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.pu_Phone_Main,
                 "de_Email": booking.pu_Email,
                 "de_To_Address_State": booking.pu_Address_State,
+                "pu_email_Group_Name": booking.de_Email_Group_Name,
+                "pu_email_Group": booking.de_Email_Group_Emails,
+                "de_Email_Group_Name": booking.pu_email_Group_Name,
+                "de_Email_Group_Emails": booking.pu_email_Group,
             }
         else:
             newBooking = {
@@ -1949,6 +1953,10 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_to_Phone_Main": booking.de_to_Phone_Main,
                 "de_Email": booking.de_Email,
                 "de_To_Address_State": booking.de_To_Address_State,
+                "pu_email_Group_Name": booking.pu_email_Group_Name,
+                "pu_email_Group": booking.pu_email_Group,
+                "de_Email_Group_Name": booking.de_Email_Group_Name,
+                "de_Email_Group_Emails": booking.de_Email_Group_Emails,
             }
 
         newBooking["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
