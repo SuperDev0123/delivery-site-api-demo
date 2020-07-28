@@ -1381,11 +1381,11 @@ class Bookings(models.Model):
     b_booking_tail_lift_deliver = models.BooleanField(
         verbose_name=_("Booking Tail Lift DE"), default=False, blank=True, null=True
     )
-    b_booking_no_operator_pickup = models.BooleanField(
-        verbose_name=_("Booking No Operator PU"), blank=True, default=False, null=True
+    b_booking_no_operator_pickup = models.PositiveIntegerField(
+        verbose_name=_("Booking No Operator PU"), blank=True, default=None, null=True
     )
-    b_bookingNoOperatorDeliver = models.BooleanField(
-        verbose_name=_("Booking No Operator DE"), blank=True, default=False, null=True
+    b_bookingNoOperatorDeliver = models.PositiveIntegerField(
+        verbose_name=_("Booking No Operator DE"), blank=True, default=None, null=True
     )
     b_ImportedFromFile = models.CharField(
         verbose_name=_("Imported File Filed"),
