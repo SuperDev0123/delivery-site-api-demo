@@ -222,7 +222,39 @@ def send_booking_email_using_template(bookingId, emailName, sender):
                 files.append("./static/pdfs/" + booking.z_label_url)
             else:
                 files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
+    elif emailName == "Unpacked Return Booking":
+        emailVarList = {
+            "TOADDRESSCONTACT": TOADDRESSCONTACT,
+            "FUTILEREASON": FUTILEREASON,
+            "BOOKING_NUMBER": BOOKING_NUMBER,
+            "FREIGHT_PROVIDER": FREIGHT_PROVIDER,
+            "FREIGHT_PROVIDER_BOOKING_NUMBER": FREIGHT_PROVIDER_BOOKING_NUMBER,
+            "REFERENCE_NUMBER": ", ".join(refs),
+            "TOT_PACKAGES": TOT_PACKAGES,
+            "TOT_CUBIC_WEIGHT": TOT_CUBIC_WEIGHT,
+            "SERVICE_TYPE": SERVICE_TYPE,
+            "SERVICE": SERVICE,
+            "LATEST_PICKUP_TIME": LATEST_PICKUP_TIME,
+            "LATEST_DELIVERY_TIME": LATEST_DELIVERY_TIME,
+            "DELIVERY_ETA": DELIVERY_ETA,
+            "INSTRUCTIONS": INSTRUCTIONS,
+            "PICKUP_CONTACT": PICKUP_CONTACT,
+            "PICKUP_SUBURB": PICKUP_SUBURB,
+            "PICKUP_INSTRUCTIONS": PICKUP_INSTRUCTIONS,
+            "PICKUP_OPERATING_HOURS": PICKUP_OPERATING_HOURS,
+            "DELIVERY_CONTACT": DELIVERY_CONTACT,
+            "DELIVERY_SUBURB": DELIVERY_SUBURB,
+            "DELIVERY_INSTRUCTIONS": DELIVERY_INSTRUCTIONS,
+            "DELIVERY_OPERATING_HOURS": DELIVERY_OPERATING_HOURS,
+            "ATTENTION_NOTES": ATTENTION_NOTES,
+            "BODYREPEAT": "",
+        }
 
+        if booking.z_label_url is not None and len(booking.z_label_url) is not 0:
+            if settings.ENV == "local":
+                files.append("./static/pdfs/" + booking.z_label_url)
+            else:
+                files.append("/opt/s3_public/pdfs/" + booking.z_label_url)
     html = ""
     for template in templates:
         emailBody = template.emailBody
@@ -342,7 +374,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     # fp1.write(html)
 
     if settings.ENV in ["local", "dev"]:
-        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au", "greatroyalone@outlook.com"]
     else:
         to_emails = ["bookings@deliver-me.com.au"]
 
@@ -364,6 +396,7 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     else:
         subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
+
     send_email(to_emails, cc_emails, subject, html, files, mime_type)
 
     EmailLogs.objects.create(
