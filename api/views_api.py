@@ -412,7 +412,8 @@ class ChartsViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": num_reports})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_bookings_per_client(self, request):
@@ -488,7 +489,8 @@ class ChartsViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": deliveries_reports})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_ready_bookings_per_fp(self, request):
@@ -501,7 +503,8 @@ class ChartsViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": list(result)})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_booked_bookings_per_fp(self, request):
@@ -514,7 +517,8 @@ class ChartsViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": list(result)})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_rebooked_bookings_per_fp(self, request):
@@ -527,7 +531,8 @@ class ChartsViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": list(result)})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_closed_bookings_per_fp(self, request):
@@ -540,7 +545,8 @@ class ChartsViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": list(result)})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_month_bookings(self, request):
@@ -554,7 +560,8 @@ class ChartsViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": list(result)})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
     def get_num_year_bookings(self, request):
@@ -568,4 +575,5 @@ class ChartsViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": list(result)})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
