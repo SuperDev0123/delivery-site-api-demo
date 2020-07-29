@@ -483,8 +483,10 @@ class ChartsViewSet(viewsets.ViewSet):
 
                 for cost_report in cost_reports:
                     if report["client_name"] == cost_report["client_name"]:
-                        report["total_cost"] = round(
-                            float(cost_report["total_cost"]), 2
+                        report["total_cost"] = (
+                            0
+                            if not cost_report["total_cost"]
+                            else round(float(cost_report["total_cost"]), 2)
                         )
 
             return JsonResponse({"results": deliveries_reports})
