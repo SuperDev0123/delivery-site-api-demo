@@ -226,7 +226,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.vx_account_code = filtered_pricing["pricing"].account_code
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
         booking.inv_cost_quoted = filtered_pricing["pricing"].fee * (
-            1 + filtered_pricing["mu_percentage_fuel_levy"]
+            1 + filtered_pricing["pricing"].mu_percentage_fuel_levy
         )
         booking.inv_sell_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
 
