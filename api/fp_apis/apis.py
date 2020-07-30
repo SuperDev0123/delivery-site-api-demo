@@ -1265,7 +1265,7 @@ def pricing(request):
 
                     try:
                         response = requests.post(url, params={}, json=payload)
-                
+
                         res_content = response.content.decode("utf8").replace("'", '"')
                         json_data = json.loads(res_content)
                         s0 = json.dumps(
@@ -1295,9 +1295,9 @@ def pricing(request):
 
                         if parse_results and not "error" in parse_results:
                             for parse_result in parse_results:
-                                parse_result["account_code"] = payload["spAccountDetails"][
-                                    "accountCode"
-                                ]
+                                parse_result["account_code"] = payload[
+                                    "spAccountDetails"
+                                ]["accountCode"]
 
                                 try:
                                     api_booking_quote = API_booking_quotes.objects.get(

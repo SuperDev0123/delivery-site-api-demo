@@ -208,12 +208,12 @@ def auto_select_pricing(booking, pricings, auto_select_type):
             deliverable_pricings.append(pricing)
 
     filtered_pricing = {}
-    if int(auto_select_type) == 1:
+    if int(auto_select_type) == 1:  # Lowest
         if deliverable_pricings:
             filtered_pricing = _get_lowest_price(deliverable_pricings)
         elif non_air_freight_pricings:
             filtered_pricing = _get_lowest_price(non_air_freight_pricings)
-    else:
+    else:  # Fastest
         if deliverable_pricings:
             filtered_pricing = _get_fastest_price(deliverable_pricings)
         elif non_air_freight_pricings:
@@ -225,7 +225,9 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
         booking.vx_account_code = filtered_pricing["pricing"].account_code
         booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.inv_cost_quoted = filtered_pricing["pricing"].fee
+        booking.inv_cost_quoted = filtered_pricing["pricing"].fee * (
+            1 + filtered_pricing["mu_percentage_fuel_levy"]
+        )
         booking.inv_sell_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
