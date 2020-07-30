@@ -3484,6 +3484,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # print("Exception: ", e)
+            logger.info(f"Exception: {e}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Code for only [TNT REBOOK]
