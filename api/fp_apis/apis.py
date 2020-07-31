@@ -72,6 +72,7 @@ def tracking(request, fp_name):
             account_code_key = get_account_code_key(booking, fp_name)
 
             if not account_code_key:
+                logger.info(f"#501 ERROR: {booking.b_error_Capture}")
                 return JsonResponse({"message": booking.b_error_Capture}, status=400)
 
             payload = get_tracking_payload(booking, fp_name, account_code_key)
@@ -118,10 +119,11 @@ def tracking(request, fp_name):
             if "errorMessage" in json_data:
                 error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
+                logger.info(f"#510 ERROR: {error_msg}")
                 return JsonResponse({"message": error_msg}, status=400)
             trace_error.print()
 
-            return JsonResponse({"error": "Failed to get Tracking"}, status=400)
+            return JsonResponse({"error": "Failed Tracking"}, status=400)
     except Bookings.DoesNotExist:
         trace_error.print()
         logger.info(f"#511 ERROR: {e}")
