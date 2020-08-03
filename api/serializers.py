@@ -163,7 +163,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "total_Cubic_Meter_override",
             "z_lock_status",
             "tally_delivered",
-            "dme_status_history_notes",
             "dme_status_detail",
             "dme_status_action",
             "dme_status_linked_reference_from_fp",

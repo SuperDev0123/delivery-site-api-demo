@@ -108,7 +108,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("R1", "b_fp_qty_delivered", bold)
             worksheet.write("S1", "dme_status_detail", bold)
             worksheet.write("T1", "dme_status_action", bold)
-            worksheet.write("U1", "dme_status_history_notes", bold)
+            worksheet.write("U1", "b_booking_Notes", bold)
             worksheet.write("V1", "s_21_ActualDeliveryTimeStamp", bold)
             worksheet.write("W1", "zc_pod_or_no_pod", bold)
             worksheet.write("X1", "z_pod_url", bold)
@@ -295,9 +295,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             cell_format = workbook.add_format({"text_wrap": True})
             worksheet.write(row, col + 18, booking.dme_status_detail, cell_format)
             worksheet.write(row, col + 19, booking.dme_status_action, cell_format)
-            worksheet.write(
-                row, col + 20, booking.dme_status_history_notes, cell_format
-            )
+            worksheet.write(row, col + 20, booking.b_booking_Notes, cell_format)
 
             if (
                 booking.s_21_ActualDeliveryTimeStamp
@@ -823,7 +821,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("R1", "b_fp_qty_delivered", bold)
             worksheet.write("S1", "dme_status_detail", bold)
             worksheet.write("T1", "dme_status_action", bold)
-            worksheet.write("U1", "dme_status_history_notes", bold)
+            worksheet.write("U1", "b_booking_Notes", bold)
             worksheet.write("V1", "s_21_ActualDeliveryTimeStamp", bold)
             worksheet.write("W1", "zc_pod_or_no_pod", bold)
             worksheet.write("X1", "z_pod_url", bold)
@@ -998,7 +996,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 17, booking.b_fp_qty_delivered)
             worksheet.write(row, col + 18, booking.dme_status_detail)
             worksheet.write(row, col + 19, booking.dme_status_action)
-            worksheet.write(row, col + 20, booking.dme_status_history_notes)
+            worksheet.write(row, col + 20, booking.b_booking_Notes)
 
             if (
                 booking.s_21_ActualDeliveryTimeStamp
@@ -1154,7 +1152,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AC1", "b_fp_qty_delivered", bold)
             worksheet.write("AD1", "dme_status_detail", bold)
             worksheet.write("AE1", "dme_status_action", bold)
-            worksheet.write("AF1", "dme_status_history_notes", bold)
+            worksheet.write("AF1", "b_booking_Notes", bold)
             worksheet.write("AG1", "s_21_ActualDeliveryTimeStamp", bold)
             worksheet.write("AH1", "zc_pod_or_no_pod", bold)
             worksheet.write("AI1", "z_pod_url", bold)
@@ -1361,7 +1359,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 28, booking.b_fp_qty_delivered)
             worksheet.write(row, col + 29, booking.dme_status_detail)
             worksheet.write(row, col + 30, booking.dme_status_action)
-            worksheet.write(row, col + 31, booking.dme_status_history_notes)
+            worksheet.write(row, col + 31, booking.b_booking_Notes)
 
             if (
                 booking.s_21_ActualDeliveryTimeStamp
@@ -1504,7 +1502,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("I1", "b_status", bold)
             worksheet.write("J1", "dme_status_detail", bold)
             worksheet.write("K1", "dme_status_action", bold)
-            worksheet.write("L1", "dme_status_history_notes", bold)
+            worksheet.write("L1", "b_booking_Notes", bold)
             worksheet.write("M1", "", cell_format)
             worksheet.write("N1", "e_qty", bold)
             worksheet.write("O1", "e_qty_scanned_fp_total", bold)
@@ -1736,9 +1734,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             cell_format = workbook.add_format({"text_wrap": True})
             worksheet.write(row, col + 9, booking.dme_status_detail, cell_format)
             worksheet.write(row, col + 10, booking.dme_status_action, cell_format)
-            worksheet.write(
-                row, col + 11, booking.dme_status_history_notes, cell_format
-            )
+            worksheet.write(row, col + 11, booking.b_booking_Notes, cell_format)
             worksheet.write(row, col + 12, "", cell_format)
             worksheet.write(row, col + 13, e_qty_total)
             worksheet.write(row, col + 14, e_qty_scanned_fp_total)

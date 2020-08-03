@@ -34,7 +34,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
-from django.db.models import Q, Case, When, Prefetch
+from django.db.models import Q, Case, When
 from django.db import connection
 from django.utils import timezone
 from django.conf import settings
@@ -1239,7 +1239,6 @@ class BookingsViewSet(viewsets.ViewSet):
             "b_status",
             "dme_status_detail",
             "dme_status_action",
-            "dme_status_history_notes",
             "s_21_ActualDeliveryTimeStamp",
             "z_pod_url",
             "z_pod_signed_url",
@@ -1262,6 +1261,7 @@ class BookingsViewSet(viewsets.ViewSet):
             "clientRefNumbers",
             "gap_ras",
             "s_05_LatestPickUpDateTimeFinal",
+            "b_booking_Notes",
         )
 
         build_xls_and_send(

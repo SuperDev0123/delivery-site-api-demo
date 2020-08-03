@@ -1520,9 +1520,6 @@ class Bookings(models.Model):
         max_length=255, blank=True, null=True, default=None
     )
     e_qty_scanned_fp_total = models.IntegerField(blank=True, null=True, default=0)
-    dme_status_history_notes = models.CharField(
-        max_length=500, blank=True, null=True, default=""
-    )
     dme_status_detail = models.CharField(
         max_length=100, blank=True, null=True, default=""
     )
