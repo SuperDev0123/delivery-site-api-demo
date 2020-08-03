@@ -334,26 +334,27 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 
         if fields_to_exclude is not None:
             disallowed = set(fields_to_exclude)
+
             for field_name in disallowed:
                 self.fields.pop(field_name)
 
     def get_eta_pu_by(self, obj):
         try:
-            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            booking = self.context.get("booking")
             return utils.get_eta_pu_by(booking)
         except Exception as e:
             return None
 
     def get_eta_de_by(self, obj):
         try:
-            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            booking = self.context.get("booking")
             return utils.get_eta_de_by(booking, obj)
         except Exception as e:
             return None
 
     def get_is_deliverable(self, obj):
         try:
-            booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+            booking = self.context.get("booking")
             return _is_deliverable_price(obj, booking)
         except Exception as e:
             return None

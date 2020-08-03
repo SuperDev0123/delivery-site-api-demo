@@ -34,7 +34,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
-from django.db.models import Q, Case, When
+from django.db.models import Q, Case, When, Prefetch
 from django.db import connection
 from django.utils import timezone
 from django.conf import settings
@@ -4038,13 +4038,17 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
 
         fk_booking_id = request.GET["fk_booking_id"]
+        booking = Bookings.objects.get(pk_booking_id=fk_booking_id)
         queryset = (
             API_booking_quotes.objects.filter(fk_booking_id=fk_booking_id)
             .exclude(service_name="Air Freight")
             .order_by("client_mu_1_minimum_values")
         )
         serializer = ApiBookingQuotesSerializer(
-            queryset, many=True, fields_to_exclude=fields_to_exclude
+            queryset,
+            many=True,
+            fields_to_exclude=fields_to_exclude,
+            context={"booking": booking},
         )
         return Response(serializer.data)
 
