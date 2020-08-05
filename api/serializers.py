@@ -405,7 +405,14 @@ class ZoneSerializer(serializers.ModelSerializer):
 class OptionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Options
-        fields = "__all__"
+        fields = (
+            "option_name",
+            "option_description",
+            "elapsed_seconds",
+            "is_running",
+            "arg1",
+            "arg2",
+        )
 
 
 class FilesSerializer(serializers.ModelSerializer):
