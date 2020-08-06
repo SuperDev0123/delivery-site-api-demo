@@ -406,6 +406,7 @@ class OptionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Options
         fields = (
+            "id",
             "option_name",
             "option_description",
             "elapsed_seconds",
