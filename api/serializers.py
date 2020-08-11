@@ -363,6 +363,34 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class SimpleQuoteSerializer(serializers.ModelSerializer):
+    cost_id = serializers.SerializerMethodField(read_only=True)
+    eta = serializers.SerializerMethodField(read_only=True)
+    cost = serializers.SerializerMethodField(read_only=True)
+    tax = serializers.SerializerMethodField(read_only=True)
+
+    def get_cost_id(self, obj):
+        return obj.pk
+
+    def get_cost(self, obj):
+        return obj.client_mu_1_minimum_values
+
+    def get_eta(self, obj):
+        return obj.etd
+
+    def get_tax(self, obj):
+        return obj.tax_value_1
+
+    class Meta:
+        model = API_booking_quotes
+        fields = (
+            "cost_id",
+            "cost",
+            "tax",
+            "eta",
+        )
+
+
 class EmailTemplatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Email_Templates

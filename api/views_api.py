@@ -1,3 +1,4 @@
+import math
 import uuid
 import json
 import logging
@@ -5,6 +6,9 @@ import requests
 
 from django.conf import settings
 from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.db.models import Count, Q, F, Sum
+from django.db import transaction
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, viewsets
@@ -19,11 +23,11 @@ from rest_framework.decorators import (
     action,
 )
 
+
 from .serializers_api import *
+from .serializers import SimpleQuoteSerializer
 from .models import *
-from django.shortcuts import render, redirect
-from django.db.models import Count, Q, F, Sum
-import math
+from api.common import trace_error
 
 logger = logging.getLogger("dme_api")
 
@@ -69,6 +73,37 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             logger.info(f"@841 BOK_1 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["get"])
+    def get_boks_with_pricings(self, request):
+        identifier = request.GET["identifier"]
+
+        if not identifier:
+            return Response(
+                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            try:
+                bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+                bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+                pricings = API_booking_quotes.objects.filter(
+                    fk_booking_id=bok_1.pk_header_id
+                )
+
+                result = BOK_1_Serializer(bok_1).data
+                result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
+                result["pricings"] = SimpleQuoteSerializer(pricings, many=True).data
+            except Exception as e:
+                logger.info(f"#490 Error: {e}")
+                return Response(
+                    {"message": "Couldn't find matching Booking."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            return Response(
+                {"message": "Succesfully get bok and pricings.", "data": result},
+                status=status.HTTP_200_OK,
+            )
+
 
 class BOK_2_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -102,6 +137,7 @@ class BOK_3_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+@transaction.atomic
 @api_view(["POST"])
 def boks(request):
     boks_json = request.data
@@ -124,6 +160,7 @@ def boks(request):
             )
         except Exception as e:
             logger.info(f"@882 BOKS API Error - {e}")
+            trace_error.print()
             return JsonResponse(
                 {"success": False, "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -131,31 +168,45 @@ def boks(request):
 
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["x_booking_Created_With"] = "DME API"
-        bok_1["success"] = 2
 
+        # Seaway-Tempo-Aldi
         if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002":
             bok_1["b_001_b_freight_provider"] = "DHL"
 
-        if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).count() > 0:
-            logger.info(f"@883 BOKS API Error - Same object is already exist.")
+        # Plum
+        if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
+            bok_1["success"] = 3
+        else:
+            bok_1["success"] = 2
+
+        if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).exists():
+            logger.info(
+                f"@883 BOKS API Error - Object(pk_header_id={bok_1['pk_header_id']}) does exist."
+            )
             return JsonResponse(
-                {"success": False, "message": "Same object is already exist."},
+                {
+                    "success": False,
+                    "message": f"Object(pk_header_id={bok_1['pk_header_id']}) does exist.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
-            bok_1_serializer.save()
-
             # Save bok_2
             for bok_2 in bok_2s:
                 bok_3s = bok_2["booking_lines_data"]
-                bok_2["booking_line"]["success"] = 2
                 bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
                 bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
                     "pk_header_id"
                 ]
                 bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
+
+                # Plum
+                if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
+                    bok_2["booking_line"]["success"] = 3
+                else:
+                    bok_2["booking_line"]["success"] = 2
 
                 bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
                 if bok_2_serializer.is_valid():
@@ -168,12 +219,17 @@ def boks(request):
 
                 # Save bok_3
                 for bok_3 in bok_3s:
-                    bok_3["success"] = 2
                     bok_3["fk_header_id"] = bok_1["pk_header_id"]
                     bok_3["fk_booking_lines_id"] = bok_2["booking_line"][
                         "pk_booking_lines_id"
                     ]
                     bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+
+                    # Plum
+                    if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
+                        bok_3["success"] = 3
+                    else:
+                        bok_3["success"] = 2
 
                     bok_3_serializer = BOK_3_Serializer(data=bok_3)
                     if bok_3_serializer.is_valid():
@@ -183,12 +239,15 @@ def boks(request):
                         return Response(
                             bok_3_serializer.errors, status=status.HTTP_400_BAD_REQUEST
                         )
+
+            bok_1_serializer.save()
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
         else:
             logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
             return Response(bok_1_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.info(f"@883 BOKS API Error - {e}")
+        logger.info(f"@889 BOKS API Error - {e}")
+        trace_error.print()
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
