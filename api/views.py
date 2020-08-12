@@ -4652,9 +4652,8 @@ class FilesViewSet(viewsets.ViewSet):
 
     def list(self, request):
         file_type = request.GET["fileType"]
-        dme_files = DME_Files.objects.filter(file_type=file_type).order_by(
-            "-z_createdTimeStamp"
-        )[:50]
+        dme_files = DME_Files.objects.filter(file_type=file_type)
+        dme_files = dme_files.order_by("-z_createdTimeStamp")[:50]
         serializer = FilesSerializer(dme_files, many=True)
         return Response(serializer.data)
 
