@@ -388,6 +388,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "cost",
             "tax",
             "eta",
+            "service_name",
         )
 
 
