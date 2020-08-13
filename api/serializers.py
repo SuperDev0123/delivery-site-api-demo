@@ -9,8 +9,6 @@ from api.models import (
     Client_employees,
     Booking_lines,
     Booking_lines_data,
-    Dme_comm_and_task,
-    Dme_comm_notes,
     Dme_status_history,
     DME_reports,
     API_booking_quotes,
@@ -95,7 +93,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "pricing_cost",  # serializer method
             "pricing_account_code",  # serializer method
             "pricing_service_name",  # serializer method
-            "has_comms",  # property
             "business_group",  # property
             "dme_delivery_status_category",  # property
             "client_item_references",  # property
@@ -282,18 +279,6 @@ class BookingLineDetailSerializer(serializers.ModelSerializer):
             "gap_ra",
             "clientRefNumber",
         )
-
-
-class CommSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dme_comm_and_task
-        fields = "__all__"
-
-
-class NoteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dme_comm_notes
-        fields = "__all__"
 
 
 class StatusHistorySerializer(serializers.ModelSerializer):
