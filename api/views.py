@@ -251,7 +251,7 @@ class UserViewSet(viewsets.ViewSet):
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             )
 
-        if len(dme_clients) is 0:
+        if not dme_clients.exists():
             return JsonResponse({"dme_clients": []})
         else:
             return_data = []
@@ -643,7 +643,7 @@ class BookingsViewSet(viewsets.ViewSet):
         to_process = 0
         closed = 0
 
-        if len(dme_employee) > 0:
+        if dme_employee.exists():
             user_type = "DME"
         else:
             user_type = "CLIENT"
@@ -836,7 +836,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
                 # Mulitple search | Simple search | Project Name Search
-                if project_name and len(project_name) > 0:
+                if project_name and project_name.exists():
                     queryset = queryset.filter(b_booking_project=project_name)
                 elif multi_find_values and len(multi_find_values) > 0:
                     preserved = Case(
@@ -1017,7 +1017,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
         return JsonResponse(
             {
-                "bookings": BookingSerializer(queryset, many=True).data,
+                "bookings": SimpleBookingSerializer(queryset, many=True).data,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,
@@ -2617,7 +2617,7 @@ class PackageTypesViewSet(viewsets.ViewSet):
         packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
 
         return_datas = []
-        if len(packageTypes) == 0:
+        if not packageTypes.exists():
             return JsonResponse({"packageTypes": []})
         else:
             for packageType in packageTypes:
@@ -2652,7 +2652,7 @@ class BookingStatusViewSet(viewsets.ViewSet):
             ).order_by("sort_order")
 
         return_datas = []
-        if len(all_booking_status) == 0:
+        if not all_booking_status.exists():
             return JsonResponse({"all_booking_status": []})
         else:
             for booking_status in all_booking_status:
