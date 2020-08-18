@@ -2018,44 +2018,39 @@ class BookingViewSet(viewsets.ViewSet):
         body = literal_eval(request.body.decode("utf8"))
         id = body["id"]
         user_id = request.user.id
+        dme_employees = DME_employees.objects.filter(fk_id_user=user_id)
 
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-
-        if dme_employee is None:
+        if not dme_employees.exists():
             user_type = "CLIENT"
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         booking = Bookings.objects.get(id=id)
 
         if booking.b_dateBookedDate:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             booking.x_manual_booked_flag = not booking.x_manual_booked_flag
+            booking.api_booking_quote_id = None  # clear relation with Quote
             booking.save()
             serializer = BookingSerializer(booking)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def manual_book(self, request, format=None):
         body = literal_eval(request.body.decode("utf8"))
         id = body["id"]
         user_id = request.user.id
+        dme_employees = DME_employees.objects.filter(fk_id_user=user_id)
 
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-
-        if dme_employee is None:
+        if not dme_employees.exists():
             user_type = "CLIENT"
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         booking = Bookings.objects.get(id=id)
 
         if not booking.x_manual_booked_flag:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             status_history.create(booking, "Booked", request.user.username)
             booking.b_status = "Booked"
@@ -2063,7 +2058,7 @@ class BookingViewSet(viewsets.ViewSet):
             booking.save()
             serializer = BookingSerializer(booking)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def auto_augment(self, request, format=None):

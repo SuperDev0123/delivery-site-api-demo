@@ -1387,17 +1387,14 @@ def pricing(request):
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
 
         if is_pricing_only:
-            results = ApiBookingQuotesSerializer(results, many=True).data
-            API_booking_quotes.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            ).delete()
-        else:
+            pk_booking_id = booking.pk_booking_id
+            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).delete()
+        elif not is_pricing_only and not booking.x_manual_booked_flag:
             auto_select_pricing(booking, results, auto_select_type)
-            results = ApiBookingQuotesSerializer(results, many=True).data
 
-        return JsonResponse(
-            {"message": f"Retrieved all Pricing info", "results": results,}, status=200,
-        )
+        results = ApiBookingQuotesSerializer(results, many=True).data
+        response_json = {"message": "Retrieved all Pricing info", "results": results}
+        return JsonResponse(response_json, status=200)
     except Exception as e:
         trace_error.print()
         return JsonResponse({"message": f"Error: {e}"}, status=400)
