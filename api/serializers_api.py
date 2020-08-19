@@ -73,6 +73,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_065_b_del_phone_mobile",
             "b_000_3_consignment_number",
             "success",
+            "x_booking_Created_With",
         )
 
 
@@ -90,6 +91,9 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "l_008_weight_UOM",
             "l_009_weight_per_each",
             "success",
+            "fk_header_id",
+            "v_client_pk_consigment_num",
+            "pk_booking_lines_id",
         )
 
 
