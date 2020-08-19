@@ -72,6 +72,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_066_b_del_communicate_via",
             "b_065_b_del_phone_mobile",
             "b_000_3_consignment_number",
+            "success",
         )
 
 
@@ -88,6 +89,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "l_007_dim_height",
             "l_008_weight_UOM",
             "l_009_weight_per_each",
+            "success",
         )
 
 

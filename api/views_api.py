@@ -175,9 +175,9 @@ def boks(request):
 
         # Plum
         if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
-            bok_1["success"] = 3
+            bok_1["success"] = "3"
         else:
-            bok_1["success"] = 2
+            bok_1["success"] = "2"
 
         if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).exists():
             logger.info(
@@ -204,9 +204,9 @@ def boks(request):
 
                 # Plum
                 if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
-                    bok_2["booking_line"]["success"] = 3
+                    bok_2["booking_line"]["success"] = "3"
                 else:
-                    bok_2["booking_line"]["success"] = 2
+                    bok_2["booking_line"]["success"] = "2"
 
                 bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
                 if bok_2_serializer.is_valid():
@@ -227,9 +227,9 @@ def boks(request):
 
                     # Plum
                     if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
-                        bok_3["success"] = 3
+                        bok_3["success"] = "3"
                     else:
-                        bok_3["success"] = 2
+                        bok_3["success"] = "2"
 
                     bok_3_serializer = BOK_3_Serializer(data=bok_3)
                     if bok_3_serializer.is_valid():
