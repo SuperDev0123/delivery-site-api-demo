@@ -74,6 +74,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_000_3_consignment_number",
             "success",
             "x_booking_Created_With",
+            "quote_id",
         )
 
 

@@ -104,6 +104,20 @@ class BOK_1_ViewSet(viewsets.ViewSet):
                 status=status.HTTP_200_OK,
             )
 
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    def select_pricing(self, request):
+        try:
+            cost_id = request.data["costId"]
+            identifier = request.data["identifier"]
+
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_1.quote_id = cost_id
+            bok_1.save()
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except:
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
 
 class BOK_2_ViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
