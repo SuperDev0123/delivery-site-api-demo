@@ -9,8 +9,6 @@ from api.models import (
     Client_employees,
     Booking_lines,
     Booking_lines_data,
-    Dme_comm_and_task,
-    Dme_comm_notes,
     Dme_status_history,
     DME_reports,
     API_booking_quotes,
@@ -50,6 +48,74 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
             "warehousename",
             "client_warehouse_code",
             "client_company_name",
+        )
+
+
+class SimpleBookingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bookings
+        fields = (
+            "id",
+            "pk_booking_id",
+            "b_bookingID_Visual",
+            "puCompany",
+            "pu_Address_Street_1",
+            "pu_Address_street_2",
+            "pu_Address_PostalCode",
+            "pu_Address_Suburb",
+            "pu_Address_Country",
+            "de_To_Address_Street_1",
+            "de_To_Address_Street_2",
+            "de_To_Address_PostalCode",
+            "de_To_Address_Suburb",
+            "de_To_Address_Country",
+            "deToCompanyName",
+            "v_FPBookingNumber",
+            "vx_freight_provider",
+            "z_label_url",
+            "z_pod_url",
+            "z_pod_signed_url",
+            "pu_Address_State",
+            "de_To_Address_State",
+            "b_status",
+            "b_dateBookedDate",
+            "s_20_Actual_Pickup_TimeStamp",
+            "s_21_Actual_Delivery_TimeStamp",
+            "b_client_name",
+            "fk_client_warehouse",
+            "b_client_warehouse_code",
+            "b_clientPU_Warehouse",
+            "booking_Created_For",
+            "b_clientReference_RA_Numbers",
+            "de_to_PickUp_Instructions_Address",
+            "b_dateBookedDate",
+            "z_lock_status",
+            "dme_status_detail",
+            "dme_status_action",
+            "puPickUpAvailFrom_Date",
+            "pu_PickUp_By_Date",
+            "de_Deliver_From_Date",
+            "de_Deliver_By_Date",
+            "b_client_sales_inv_num",
+            "b_client_name_sub",
+            "x_manual_booked_flag",
+            "b_fp_qty_delivered",
+            "manifest_timestamp",
+            "b_booking_project",
+            "z_calculated_ETA",
+            "b_project_due_date",
+            "delivery_booking",
+            "fp_store_event_date",
+            "fp_store_event_time",
+            "fp_store_event_desc",
+            "fp_received_date_time",
+            "b_given_to_transport_date_time",
+            "z_downloaded_shipping_label_timestamp",
+            "api_booking_quote",
+            "b_status_API",
+            "b_error_Capture",
+            "kf_client_id",
+            "z_locked_status_time",
         )
 
 
@@ -95,7 +161,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "pricing_cost",  # serializer method
             "pricing_account_code",  # serializer method
             "pricing_service_name",  # serializer method
-            "has_comms",  # property
             "business_group",  # property
             "dme_delivery_status_category",  # property
             "client_item_references",  # property
@@ -284,18 +349,6 @@ class BookingLineDetailSerializer(serializers.ModelSerializer):
         )
 
 
-class CommSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dme_comm_and_task
-        fields = "__all__"
-
-
-class NoteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dme_comm_notes
-        fields = "__all__"
-
-
 class StatusHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Dme_status_history
@@ -435,6 +488,8 @@ class OptionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Options
         fields = (
+            "id",
+            "option_value",
             "option_name",
             "option_description",
             "elapsed_seconds",

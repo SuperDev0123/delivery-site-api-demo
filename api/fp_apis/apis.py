@@ -1283,14 +1283,13 @@ def pricing(request):
         )
     else:
         if is_pricing_only:
-            results = ApiBookingQuotesSerializer(results, many=True).data
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
             auto_select_pricing(booking, results, auto_select_type)
-            results = ApiBookingQuotesSerializer(results, many=True).data
 
+        results = ApiBookingQuotesSerializer(results, many=True).data
         return JsonResponse(
             {"success": True, "message": message}, status=status.HTTP_200_OK
         )

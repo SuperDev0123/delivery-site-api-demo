@@ -251,7 +251,7 @@ class UserViewSet(viewsets.ViewSet):
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             )
 
-        if len(dme_clients) is 0:
+        if not dme_clients.exists():
             return JsonResponse({"dme_clients": []})
         else:
             return_data = []
@@ -643,7 +643,7 @@ class BookingsViewSet(viewsets.ViewSet):
         to_process = 0
         closed = 0
 
-        if len(dme_employee) > 0:
+        if dme_employee.exists():
             user_type = "DME"
         else:
             user_type = "CLIENT"
@@ -836,7 +836,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
                 # Mulitple search | Simple search | Project Name Search
-                if project_name and len(project_name) > 0:
+                if project_name and project_name.exists():
                     queryset = queryset.filter(b_booking_project=project_name)
                 elif multi_find_values and len(multi_find_values) > 0:
                     preserved = Case(
@@ -1017,7 +1017,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
         return JsonResponse(
             {
-                "bookings": BookingSerializer(queryset, many=True).data,
+                "bookings": SimpleBookingSerializer(queryset, many=True).data,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,
@@ -1719,9 +1719,9 @@ class BookingViewSet(viewsets.ViewSet):
                     )
 
                 # Get count for `Communication Log`
-                comms = Dme_comm_and_task.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                )
+                # comms = Dme_comm_and_task.objects.filter(
+                #     fk_booking_id=booking.pk_booking_id
+                # )
 
                 # Get count for 'Attachments'
                 attachments = Dme_attachments.objects.filter(
@@ -1734,7 +1734,6 @@ class BookingViewSet(viewsets.ViewSet):
                         "nextid": nextBookingId,
                         "previd": prevBookingId,
                         "e_qty_total": e_qty_total,
-                        "cnt_comms": len(comms),
                         "cnt_attachments": len(attachments),
                     }
                 )
@@ -1744,7 +1743,6 @@ class BookingViewSet(viewsets.ViewSet):
                     "nextid": 0,
                     "previd": 0,
                     "e_qty_total": 0,
-                    "cnt_comms": 0,
                     "cnt_attachments": 0,
                 }
             )
@@ -1755,7 +1753,6 @@ class BookingViewSet(viewsets.ViewSet):
                     "nextid": 0,
                     "previd": 0,
                     "e_qty_total": 0,
-                    "cnt_comms": 0,
                     "cnt_attachments": 0,
                 }
             )
@@ -2021,44 +2018,39 @@ class BookingViewSet(viewsets.ViewSet):
         body = literal_eval(request.body.decode("utf8"))
         id = body["id"]
         user_id = request.user.id
+        dme_employees = DME_employees.objects.filter(fk_id_user=user_id)
 
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-
-        if dme_employee is None:
+        if not dme_employees.exists():
             user_type = "CLIENT"
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         booking = Bookings.objects.get(id=id)
 
         if booking.b_dateBookedDate:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             booking.x_manual_booked_flag = not booking.x_manual_booked_flag
+            booking.api_booking_quote_id = None  # clear relation with Quote
             booking.save()
             serializer = BookingSerializer(booking)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def manual_book(self, request, format=None):
         body = literal_eval(request.body.decode("utf8"))
         id = body["id"]
         user_id = request.user.id
+        dme_employees = DME_employees.objects.filter(fk_id_user=user_id)
 
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-
-        if dme_employee is None:
+        if not dme_employees.exists():
             user_type = "CLIENT"
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         booking = Bookings.objects.get(id=id)
 
         if not booking.x_manual_booked_flag:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             status_history.create(booking, "Booked", request.user.username)
             booking.b_status = "Booked"
@@ -2066,7 +2058,7 @@ class BookingViewSet(viewsets.ViewSet):
             booking.save()
             serializer = BookingSerializer(booking)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def auto_augment(self, request, format=None):
@@ -2614,702 +2606,13 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                 return queryset
 
 
-class CommsViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["get"])
-    def get_comms(self, request, pk=None):
-        def convert_date(date):
-            if not date:
-                date = datetime(2100, 1, 1).date()
-
-            return date
-
-        def reverse_date(object):
-            if object["due_by_date"] == datetime(2100, 1, 1).date():
-                object["due_by_date"] = None
-
-            return object
-
-        user_id = self.request.user.id
-        booking_id = self.request.GET["bookingId"]
-        sort_field = self.request.query_params.get("sortField", None)
-        sort_type = self.request.query_params.get("sortType", None)
-        column_filters = json.loads(
-            self.request.query_params.get("columnFilters", None)
-        )
-        simple_search_keyword = self.request.query_params.get(
-            "simpleSearchKeyword", None
-        )
-        sort_by_date = self.request.query_params.get("sortByDate", None)
-        active_tab_ind = int(self.request.query_params.get("activeTabInd", None))
-
-        if not sort_field:
-            sort_by_date = "true"
-
-        if booking_id == "":
-            comms = Dme_comm_and_task.objects.all()
-            bookings = Bookings.objects.all()
-            return_datas = []
-            closed_comms_cnt = 0
-            opened_comms_cnt = 0
-            all_cnt = 0
-
-            # Simple search & Column fitler
-            is_booking_filtered = True
-            if len(simple_search_keyword) > 0:
-                filtered_bookings = bookings.filter(
-                    Q(b_bookingID_Visual__icontains=simple_search_keyword)
-                    | Q(b_status__icontains=simple_search_keyword)
-                    | Q(vx_freight_provider__icontains=simple_search_keyword)
-                    | Q(puCompany__icontains=simple_search_keyword)
-                    | Q(deToCompanyName__icontains=simple_search_keyword)
-                    | Q(v_FPBookingNumber__icontains=simple_search_keyword)
-                )
-
-                if len(filtered_bookings) == 0:
-                    is_booking_filtered = False
-                else:
-                    is_booking_filtered = True
-                    bookings = filtered_bookings
-            else:
-                # Column Bookings filter
-                try:
-                    column_filter = column_filters["b_bookingID_Visual"]
-                    bookings = bookings.filter(
-                        b_bookingID_Visual__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["b_status"]
-                    bookings = bookings.filter(b_status__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["vx_freight_provider"]
-                    bookings = bookings.filter(
-                        vx_freight_provider__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["puCompany"]
-                    bookings = bookings.filter(puCompany__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["deToCompanyName"]
-                    bookings = bookings.filter(deToCompanyName__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["v_FPBookingNumber"]
-                    bookings = bookings.filter(
-                        v_FPBookingNumber__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-
-            # Filter on comms
-            if sort_type == "comms":
-                if sort_field is None:
-                    comms = comms.order_by("-id")
-                else:
-                    comms = comms.order_by(sort_field)
-
-            # Simple search & Column fitler
-            if len(simple_search_keyword) > 0:
-                new_comms = comms.filter(
-                    Q(id__icontains=simple_search_keyword)
-                    | Q(priority_of_log__icontains=simple_search_keyword)
-                    | Q(assigned_to__icontains=simple_search_keyword)
-                    | Q(dme_notes_type__icontains=simple_search_keyword)
-                    | Q(query__icontains=simple_search_keyword)
-                    | Q(dme_action__icontains=simple_search_keyword)
-                    | Q(status_log_closed_time__icontains=simple_search_keyword)
-                    | Q(dme_detail__icontains=simple_search_keyword)
-                    | Q(dme_notes_external__icontains=simple_search_keyword)
-                    | Q(due_by_date__icontains=simple_search_keyword)
-                    | Q(due_by_time__icontains=simple_search_keyword)
-                )
-
-                if len(new_comms) == 0 and is_booking_filtered == False:
-                    comms = []
-                elif len(new_comms) > 0:
-                    comms = new_comms
-            else:
-                # Column Comms filter
-                try:
-                    column_filter = column_filters["id"]
-                    comms = comms.filter(id__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["priority_of_log"]
-                    comms = comms.filter(priority_of_log__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["assigned_to"]
-                    comms = comms.filter(assigned_to__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_notes_type"]
-                    comms = comms.filter(dme_notes_type__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["query"]
-                    comms = comms.filter(query__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_action"]
-                    comms = comms.filter(dme_action__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["status_log_closed_time"]
-                    comms = comms.filter(
-                        status_log_closed_time__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_detail"]
-                    comms = comms.filter(dme_detail__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_notes_external"]
-                    comms = comms.filter(dme_notes_external__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["due_by_date"]
-                    comms = comms.filter(due_by_date__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["due_by_time"]
-                    comms = comms.filter(due_by_time__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-            for comm in comms:
-                for booking in bookings:
-                    if comm.fk_booking_id == booking.pk_booking_id:
-                        all_cnt += 1
-
-                        if active_tab_ind == 1:
-                            if comm.closed:
-                                closed_comms_cnt += 1
-                            else:
-                                opened_comms_cnt += 1
-
-                                return_data = {
-                                    "b_bookingID_Visual": booking.b_bookingID_Visual,
-                                    "b_status": booking.b_status,
-                                    "vx_freight_provider": booking.vx_freight_provider,
-                                    "puCompany": booking.puCompany,
-                                    "deToCompanyName": booking.deToCompanyName,
-                                    "v_FPBookingNumber": booking.v_FPBookingNumber,
-                                    "id": comm.id,
-                                    "fk_booking_id": comm.fk_booking_id,
-                                    "priority_of_log": comm.priority_of_log,
-                                    "assigned_to": comm.assigned_to,
-                                    "query": comm.query,
-                                    "dme_com_title": comm.dme_com_title,
-                                    "closed": comm.closed,
-                                    "status_log_closed_time": comm.status_log_closed_time,
-                                    "dme_detail": comm.dme_detail,
-                                    "dme_notes_type": comm.dme_notes_type,
-                                    "dme_notes_external": comm.dme_notes_external,
-                                    "due_by_datetime": str(comm.due_by_date)
-                                    + " "
-                                    + str(comm.due_by_time),
-                                    "due_by_date": convert_date(comm.due_by_date),
-                                    "due_by_time": comm.due_by_time,
-                                    "dme_action": comm.dme_action,
-                                    "z_createdTimeStamp": comm.z_createdTimeStamp,
-                                }
-                                return_datas.append(return_data)
-                        elif active_tab_ind == 2:
-                            if comm.closed:
-                                closed_comms_cnt += 1
-
-                                return_data = {
-                                    "b_bookingID_Visual": booking.b_bookingID_Visual,
-                                    "b_status": booking.b_status,
-                                    "vx_freight_provider": booking.vx_freight_provider,
-                                    "puCompany": booking.puCompany,
-                                    "deToCompanyName": booking.deToCompanyName,
-                                    "v_FPBookingNumber": booking.v_FPBookingNumber,
-                                    "id": comm.id,
-                                    "fk_booking_id": comm.fk_booking_id,
-                                    "priority_of_log": comm.priority_of_log,
-                                    "assigned_to": comm.assigned_to,
-                                    "query": comm.query,
-                                    "dme_com_title": comm.dme_com_title,
-                                    "closed": comm.closed,
-                                    "status_log_closed_time": comm.status_log_closed_time,
-                                    "dme_detail": comm.dme_detail,
-                                    "dme_notes_type": comm.dme_notes_type,
-                                    "dme_notes_external": comm.dme_notes_external,
-                                    "due_by_datetime": str(comm.due_by_date)
-                                    + " "
-                                    + str(comm.due_by_time),
-                                    "due_by_date": convert_date(comm.due_by_date),
-                                    "due_by_time": comm.due_by_time,
-                                    "dme_action": comm.dme_action,
-                                    "z_createdTimeStamp": comm.z_createdTimeStamp,
-                                }
-                                return_datas.append(return_data)
-                            else:
-                                opened_comms_cnt += 1
-                        else:
-                            if comm.closed:
-                                closed_comms_cnt += 1
-                            else:
-                                opened_comms_cnt += 1
-
-                            return_data = {
-                                "b_bookingID_Visual": booking.b_bookingID_Visual,
-                                "b_status": booking.b_status,
-                                "vx_freight_provider": booking.vx_freight_provider,
-                                "puCompany": booking.puCompany,
-                                "deToCompanyName": booking.deToCompanyName,
-                                "v_FPBookingNumber": booking.v_FPBookingNumber,
-                                "id": comm.id,
-                                "fk_booking_id": comm.fk_booking_id,
-                                "priority_of_log": comm.priority_of_log,
-                                "assigned_to": comm.assigned_to,
-                                "query": comm.query,
-                                "dme_com_title": comm.dme_com_title,
-                                "closed": comm.closed,
-                                "status_log_closed_time": comm.status_log_closed_time,
-                                "dme_detail": comm.dme_detail,
-                                "dme_notes_type": comm.dme_notes_type,
-                                "dme_notes_external": comm.dme_notes_external,
-                                "due_by_datetime": str(comm.due_by_date)
-                                + " "
-                                + str(comm.due_by_time),
-                                "due_by_date": convert_date(comm.due_by_date),
-                                "due_by_time": comm.due_by_time,
-                                "dme_action": comm.dme_action,
-                                "z_createdTimeStamp": comm.z_createdTimeStamp,
-                            }
-                            return_datas.append(return_data)
-
-            if sort_by_date == "true":
-                return_datas = _.sort_by(return_datas, "due_by_date", reverse=True)
-
-            return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
-
-            return JsonResponse(
-                {
-                    "comms": return_datas,
-                    "cnts": {
-                        "opened_cnt": opened_comms_cnt,
-                        "closed_cnt": closed_comms_cnt,
-                        "all_cnt": all_cnt,
-                        "selected_cnt": -1,
-                    },
-                }
-            )
-        else:
-            comms = Dme_comm_and_task.objects.all()
-            bookings = Bookings.objects.all()
-            return_datas = []
-            closed_comms_cnt = 0
-            opened_comms_cnt = 0
-            all_cnt = 0
-
-            # Filter on comms
-            if sort_type == "comms":
-                if sort_field is None:
-                    comms = comms.order_by("-id")
-                else:
-                    comms = comms.order_by(sort_field)
-
-            # Simple search & Column fitler
-            if len(simple_search_keyword) > 0:
-                new_comms = comms.filter(
-                    Q(id__icontains=simple_search_keyword)
-                    | Q(priority_of_log__icontains=simple_search_keyword)
-                    | Q(assigned_to__icontains=simple_search_keyword)
-                    | Q(dme_notes_type__icontains=simple_search_keyword)
-                    | Q(query__icontains=simple_search_keyword)
-                    | Q(dme_action__icontains=simple_search_keyword)
-                    | Q(status_log_closed_time__icontains=simple_search_keyword)
-                    | Q(dme_detail__icontains=simple_search_keyword)
-                    | Q(dme_notes_external__icontains=simple_search_keyword)
-                    | Q(due_by_date__icontains=simple_search_keyword)
-                    | Q(due_by_time__icontains=simple_search_keyword)
-                )
-
-                if len(new_comms) == 0 and is_booking_filtered == False:
-                    comms = []
-                elif len(new_comms) > 0:
-                    comms = new_comms
-            else:
-                # Column Comms filter
-                try:
-                    column_filter = column_filters["id"]
-                    comms = comms.filter(id__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["priority_of_log"]
-                    comms = comms.filter(priority_of_log__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["assigned_to"]
-                    comms = comms.filter(assigned_to__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_notes_type"]
-                    comms = comms.filter(dme_notes_type__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["query"]
-                    comms = comms.filter(query__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_action"]
-                    comms = comms.filter(dme_action__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["status_log_closed_time"]
-                    comms = comms.filter(
-                        status_log_closed_time__icontains=column_filter
-                    )
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_detail"]
-                    comms = comms.filter(dme_detail__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["dme_notes_external"]
-                    comms = comms.filter(dme_notes_external__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["due_by_date"]
-                    comms = comms.filter(due_by_date__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-                try:
-                    column_filter = column_filters["due_by_time"]
-                    comms = comms.filter(due_by_time__icontains=column_filter)
-                except KeyError:
-                    column_filter = ""
-
-            for comm in comms:
-                for booking in bookings:
-                    if comm.fk_booking_id == booking.pk_booking_id:
-                        all_cnt += 1
-
-                        if (int)(booking.id) == (int)(booking_id):
-                            if active_tab_ind == 1:
-                                if comm.closed:
-                                    closed_comms_cnt += 1
-                                else:
-                                    opened_comms_cnt += 1
-
-                                    return_data = {
-                                        "b_bookingID_Visual": booking.b_bookingID_Visual,
-                                        "b_status": booking.b_status,
-                                        "vx_freight_provider": booking.vx_freight_provider,
-                                        "puCompany": booking.puCompany,
-                                        "deToCompanyName": booking.deToCompanyName,
-                                        "v_FPBookingNumber": booking.v_FPBookingNumber,
-                                        "id": comm.id,
-                                        "fk_booking_id": comm.fk_booking_id,
-                                        "priority_of_log": comm.priority_of_log,
-                                        "assigned_to": comm.assigned_to,
-                                        "query": comm.query,
-                                        "dme_com_title": comm.dme_com_title,
-                                        "closed": comm.closed,
-                                        "status_log_closed_time": comm.status_log_closed_time,
-                                        "dme_detail": comm.dme_detail,
-                                        "dme_notes_type": comm.dme_notes_type,
-                                        "dme_notes_external": comm.dme_notes_external,
-                                        "due_by_datetime": str(comm.due_by_date)
-                                        + " "
-                                        + str(comm.due_by_time),
-                                        "due_by_date": convert_date(comm.due_by_date),
-                                        "due_by_time": comm.due_by_time,
-                                        "dme_action": comm.dme_action,
-                                        "z_createdTimeStamp": comm.z_createdTimeStamp,
-                                    }
-                                    return_datas.append(return_data)
-                            elif active_tab_ind == 2:
-                                if comm.closed:
-                                    closed_comms_cnt += 1
-
-                                    return_data = {
-                                        "b_bookingID_Visual": booking.b_bookingID_Visual,
-                                        "b_status": booking.b_status,
-                                        "vx_freight_provider": booking.vx_freight_provider,
-                                        "puCompany": booking.puCompany,
-                                        "deToCompanyName": booking.deToCompanyName,
-                                        "v_FPBookingNumber": booking.v_FPBookingNumber,
-                                        "id": comm.id,
-                                        "fk_booking_id": comm.fk_booking_id,
-                                        "priority_of_log": comm.priority_of_log,
-                                        "assigned_to": comm.assigned_to,
-                                        "query": comm.query,
-                                        "dme_com_title": comm.dme_com_title,
-                                        "closed": comm.closed,
-                                        "status_log_closed_time": comm.status_log_closed_time,
-                                        "dme_detail": comm.dme_detail,
-                                        "dme_notes_type": comm.dme_notes_type,
-                                        "dme_notes_external": comm.dme_notes_external,
-                                        "due_by_datetime": str(comm.due_by_date)
-                                        + " "
-                                        + str(comm.due_by_time),
-                                        "due_by_date": convert_date(comm.due_by_date),
-                                        "due_by_time": comm.due_by_time,
-                                        "dme_action": comm.dme_action,
-                                        "z_createdTimeStamp": comm.z_createdTimeStamp,
-                                    }
-                                    return_datas.append(return_data)
-                                else:
-                                    opened_comms_cnt += 1
-                            else:
-                                if comm.closed:
-                                    closed_comms_cnt += 1
-                                else:
-                                    opened_comms_cnt += 1
-
-                                return_data = {
-                                    "b_bookingID_Visual": booking.b_bookingID_Visual,
-                                    "b_status": booking.b_status,
-                                    "vx_freight_provider": booking.vx_freight_provider,
-                                    "puCompany": booking.puCompany,
-                                    "deToCompanyName": booking.deToCompanyName,
-                                    "v_FPBookingNumber": booking.v_FPBookingNumber,
-                                    "id": comm.id,
-                                    "fk_booking_id": comm.fk_booking_id,
-                                    "priority_of_log": comm.priority_of_log,
-                                    "assigned_to": comm.assigned_to,
-                                    "query": comm.query,
-                                    "dme_com_title": comm.dme_com_title,
-                                    "closed": comm.closed,
-                                    "status_log_closed_time": comm.status_log_closed_time,
-                                    "dme_detail": comm.dme_detail,
-                                    "dme_notes_type": comm.dme_notes_type,
-                                    "dme_notes_external": comm.dme_notes_external,
-                                    "due_by_datetime": str(comm.due_by_date)
-                                    + " "
-                                    + str(comm.due_by_time),
-                                    "due_by_date": convert_date(comm.due_by_date),
-                                    "due_by_time": comm.due_by_time,
-                                    "dme_action": comm.dme_action,
-                                    "z_createdTimeStamp": comm.z_createdTimeStamp,
-                                }
-                                return_datas.append(return_data)
-
-            if sort_by_date == "true":
-                return_datas = _.sort_by(return_datas, "due_by_date", reverse=True)
-
-            return_datas = _.chain(return_datas).map(lambda x: reverse_date(x)).value()
-
-            return JsonResponse(
-                {
-                    "comms": return_datas,
-                    "cnts": {
-                        "opened_cnt": opened_comms_cnt,
-                        "closed_cnt": closed_comms_cnt,
-                        "all_cnt": all_cnt,
-                        "selected_cnt": -1,
-                    },
-                }
-            )
-
-    @action(detail=True, methods=["put"])
-    def update_comm(self, request, pk, format=None):
-        dme_comm_and_task = Dme_comm_and_task.objects.get(pk=pk)
-
-        if (
-            dme_comm_and_task.closed != request.data["closed"]
-            and request.data["closed"]
-        ):
-            request.data["status_log_closed_time"] = str(datetime.now())
-        elif (
-            dme_comm_and_task.closed != request.data["closed"]
-            and not request.data["closed"]
-        ):
-            request.data["status_log_closed_time"] = None
-
-        serializer = CommSerializer(dme_comm_and_task, data=request.data)
-
-        try:
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print('Exception: ', e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=["post"])
-    def create_comm(self, request, pk=None):
-        if request.data["closed"]:
-            request.data["status_log_closed_time"] = str(datetime.now())
-        serializer = CommSerializer(data=request.data)
-
-        try:
-            if serializer.is_valid():
-                serializer.save()
-                new_note_data = {
-                    "comm": serializer.data["id"],
-                    "dme_notes": request.data["dme_notes"],
-                    "dme_notes_type": request.data["notes_type"],
-                    "note_date_updated": request.data["due_by_date"],
-                    "note_time_updated": request.data["due_by_time"],
-                    "dme_notes_no": 1,
-                    "username": "Stephen",
-                }
-                note_serializer = NoteSerializer(data=new_note_data)
-
-                try:
-                    if note_serializer.is_valid():
-                        note_serializer.save()
-                    else:
-                        return Response(
-                            note_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-                        )
-                except Exception as e:
-                    # print('Exception 01: ', e)
-                    return Response(
-                        note_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print('Exception 02: ', e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=["get"])
-    def get_available_creators(self, request, pk=None):
-        users = User.objects.all()
-        creators = []
-
-        for user in users:
-            user_permission = UserPermissions.objects.filter(user_id=user.id).first()
-            if user_permission and user_permission.can_create_comm:
-                creators.append(
-                    {
-                        "username": user.username,
-                        "first_name": user.first_name,
-                        "last_name": user.last_name,
-                    }
-                )
-
-        return JsonResponse({"creators": creators})
-
-    @action(detail=True, methods=["delete"])
-    def delete_comm(self, request, pk, format=None):
-        comm = Dme_comm_and_task.objects.get(pk=pk)
-
-        try:
-            notes = Dme_comm_notes.objects.filter(comm=comm)
-
-            for note in notes:
-                note.delete()
-
-            comm.delete()
-            return JsonResponse({"status": "Successfully deleted a comm"})
-        except Exception as e:
-            # print('Exception: ', e)
-            return JsonResponse({"error": "Can not delete Comm"})
-
-
-class NotesViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["get"])
-    def get_notes(self, request, pk=None):
-        user_id = self.request.user.id
-        comm_id = self.request.GET["commId"]
-
-        # print('@20 - comm_id: ', comm_id)
-
-        notes = Dme_comm_notes.objects.filter(comm_id=comm_id).order_by("-id")
-
-        return_datas = []
-        if len(notes) == 0:
-            return JsonResponse({"notes": []})
-        else:
-            for note in notes:
-                return_data = {
-                    "id": note.id,
-                    "username": note.username,
-                    "dme_notes": note.dme_notes,
-                    "dme_notes_type": note.dme_notes_type,
-                    "dme_notes_no": note.dme_notes_no,
-                    "note_date_created": note.note_date_created,
-                    "note_date_updated": note.note_date_updated,
-                    "note_time_created": note.note_time_created,
-                    "note_time_updated": note.note_time_updated,
-                }
-                return_datas.append(return_data)
-            return JsonResponse({"notes": return_datas})
-
-    @action(detail=True, methods=["put"])
-    def update_note(self, request, pk, format=None):
-        dme_comm_note = Dme_comm_notes.objects.get(pk=pk)
-        serializer = NoteSerializer(dme_comm_note, data=request.data)
-
-        try:
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print('Exception: ', e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=["post"])
-    def create_note(self, request, pk=None):
-        serializer = NoteSerializer(data=request.data)
-
-        try:
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print('Exception: ', e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["delete"])
-    def delete_note(self, request, pk, format=None):
-        note = Dme_comm_notes.objects.get(pk=pk)
-
-        try:
-            note.delete()
-            return JsonResponse({"status": "Successfully deleted a note"})
-        except Exception as e:
-            # print('Exception: ', e)
-            return JsonResponse({"error": "Can not delete Note"})
-
-
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_packagetypes(self, request, pk=None):
         packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
 
         return_datas = []
-        if len(packageTypes) == 0:
+        if not packageTypes.exists():
             return JsonResponse({"packageTypes": []})
         else:
             for packageType in packageTypes:
@@ -3344,7 +2647,7 @@ class BookingStatusViewSet(viewsets.ViewSet):
             ).order_by("sort_order")
 
         return_datas = []
-        if len(all_booking_status) == 0:
+        if not all_booking_status.exists():
             return JsonResponse({"all_booking_status": []})
         else:
             for booking_status in all_booking_status:
@@ -4652,9 +3955,8 @@ class FilesViewSet(viewsets.ViewSet):
 
     def list(self, request):
         file_type = request.GET["fileType"]
-        dme_files = DME_Files.objects.filter(file_type=file_type).order_by(
-            "-z_createdTimeStamp"
-        )[:50]
+        dme_files = DME_Files.objects.filter(file_type=file_type)
+        dme_files = dme_files.order_by("-z_createdTimeStamp")[:50]
         serializer = FilesSerializer(dme_files, many=True)
         return Response(serializer.data)
 

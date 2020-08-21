@@ -1606,17 +1606,6 @@ class Bookings(models.Model):
         ]
         return int(max)
 
-    @property
-    def has_comms(self):
-        comms_count = Dme_comm_and_task.objects.filter(
-            fk_booking_id=self.pk_booking_id
-        ).count()
-
-        if comms_count == 0:
-            return False
-        else:
-            return True
-
     def had_status(self, status):
         results = Dme_status_history.objects.filter(
             fk_booking_id=self.pk_booking_id, status_last__iexact=status
