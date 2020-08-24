@@ -158,7 +158,7 @@ def boks(request):
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
 
-    print("@880 - ", boks_json)
+    logger.info(f"@880 request payload - {boks_json}")
 
     try:
         # Save bok_1
