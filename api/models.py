@@ -2,7 +2,7 @@ import pytz
 import logging
 from datetime import datetime, date, timedelta, time
 
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -2421,15 +2421,24 @@ class BOK_1_headers(models.Model):
     zb_144_date_4 = models.DateField(default=date.today, blank=True, null=True)
     zb_145_date_5 = models.DateField(default=date.today, blank=True, null=True)
 
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            from api.signal_handlers.boks import on_create_bok_1_handler
+
+            on_create_bok_1_handler(self)
+
+        return super(BOK_1_headers, self).save(*args, **kwargs)
+
     class Meta:
         db_table = "bok_1_headers"
 
 
-@receiver(post_save, sender=BOK_1_headers)
-def post_save_bok_1(sender, instance, **kwargs):
-    from api.signal_handlers.boks import post_save_bok_1_handler
+# @receiver(post_save, sender=BOK_1_headers)
+# def post_save_bok_1(sender, instance, **kwargs):
+#     from api.signal_handlers.boks import post_save_bok_1_handler
 
-    post_save_bok_1_handler(instance)
+#     post_save_bok_1_handler(instance)
 
 
 class BOK_2_lines(models.Model):

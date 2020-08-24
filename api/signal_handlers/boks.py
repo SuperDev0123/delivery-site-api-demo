@@ -6,7 +6,7 @@ from api.fp_apis.apis import get_pricing
 logger = logging.getLogger("dme_api")
 
 
-def post_save_bok_1_handler(bok_1):
+def on_create_bok_1_handler(bok_1):
     logger.info("#501 - bok_1 post_save handler")
     logger.info(
         f"#502 - bok_1 pk_header_id: {bok_1.pk_header_id}, succss code: {bok_1.success}"
@@ -69,7 +69,10 @@ def post_save_bok_1_handler(bok_1):
 
             body = {"booking": bok_1, "booking_lines": bok_2s}
             success, message, results = get_pricing(
-                body=body, booking_id=None, is_pricing_only=True
+                body=body,
+                booking_id=None,
+                is_pricing_only=True,
+                is_best_options_only=True,
             )
             logger.info(
                 f"#509 - Pricing result: success: {success}, message: {message}, results cnt: {results}"

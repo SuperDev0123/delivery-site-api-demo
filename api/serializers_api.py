@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, BOK_3_lines_data
+from .validators import should_have_value, should_have_positive_value
 
 
 class BOK_0_Serializer(serializers.ModelSerializer):
@@ -9,6 +10,15 @@ class BOK_0_Serializer(serializers.ModelSerializer):
 
 
 class BOK_1_Serializer(serializers.ModelSerializer):
+    client_booking_id = serializers.CharField(max_length=100)
+    fk_client_id = serializers.CharField(validators=[should_have_value])
+    b_client_warehouse_code = serializers.CharField(validators=[should_have_value])
+    b_clientPU_Warehouse = serializers.CharField(validators=[should_have_value])
+    b_059_b_del_address_postalcode = serializers.CharField(
+        validators=[should_have_value]
+    )
+    success = serializers.CharField(validators=[should_have_value])
+
     class Meta:
         model = BOK_1_headers
         fields = (
@@ -79,6 +89,16 @@ class BOK_1_Serializer(serializers.ModelSerializer):
 
 
 class BOK_2_Serializer(serializers.ModelSerializer):
+    l_002_qty = serializers.FloatField(validators=[should_have_positive_value])
+    l_005_dim_length = serializers.FloatField(validators=[should_have_positive_value])
+    l_006_dim_width = serializers.FloatField(validators=[should_have_positive_value])
+    l_007_dim_height = serializers.FloatField(validators=[should_have_positive_value])
+    l_009_weight_per_each = serializers.FloatField(
+        validators=[should_have_positive_value]
+    )
+    fk_header_id = serializers.CharField(validators=[should_have_value])
+    success = serializers.CharField(validators=[should_have_value])
+
     class Meta:
         model = BOK_2_lines
         fields = (
@@ -99,6 +119,8 @@ class BOK_2_Serializer(serializers.ModelSerializer):
 
 
 class BOK_3_Serializer(serializers.ModelSerializer):
+    success = serializers.CharField(validators=[should_have_value])
+
     class Meta:
         model = BOK_3_lines_data
         fields = "__all__"

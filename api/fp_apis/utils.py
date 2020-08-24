@@ -188,6 +188,17 @@ def _get_lowest_price(pricings):
     return lowest_pricing
 
 
+def select_best_options(pricings):
+    logger.info(f"#860 Select best options from {len(pricings)} pricings")
+    lowest_pricing = _get_lowest_price(pricings)
+    fastest_pricing = _get_fastest_price(pricings)
+
+    if lowest_pricing["pricing"].pk == fastest_pricing["pricing"].pk:
+        return [lowest_pricing["pricing"]]
+    else:
+        return [fastest_pricing, lowest_pricing]
+
+
 def auto_select_pricing(booking, pricings, auto_select_type):
     if len(pricings) == 0:
         booking.b_errorCapture = "No Freight Provider is available"

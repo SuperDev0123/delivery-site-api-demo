@@ -158,6 +158,8 @@ def boks(request):
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
 
+    print("@880 - ", boks_json)
+
     try:
         # Save bok_1
         try:
@@ -265,6 +267,12 @@ def boks(request):
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+@transaction.atomic
+@api_view(["POST"])
+def item_pricing(request):
+    user = request.user
 
 
 @api_view(["GET"])
