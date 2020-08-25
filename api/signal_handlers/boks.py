@@ -33,7 +33,7 @@ def on_create_bok_1_handler(bok_1):
                 "pu_Address_street_2": bok_1.b_030_b_pu_address_street_2,
                 "pu_Address_Country": bok_1.b_034_b_pu_address_country,
                 "pu_Address_PostalCode": bok_1.b_033_b_pu_address_postalcode,
-                "pu_Address_State": bok_1.b_033_b_pu_address_postalcode,
+                "pu_Address_State": bok_1.b_031_b_pu_address_state,
                 "pu_Address_Suburb": bok_1.b_032_b_pu_address_suburb,
                 "deToCompanyName": bok_1.b_054_b_del_company,
                 "de_to_Contact_F_LName": bok_1.b_061_b_del_contact_full_name,

@@ -74,7 +74,7 @@ urlpatterns += [
     url(r"^generate-manifest/", generate_manifest),
     # BOK apis(BIOPAK push apis)
     url(r"^boks/", boks),
-    url(r"^price/item/", item_pricing),
+    url(r"^price/partial/", partial_pricing),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),

@@ -23,10 +23,10 @@ from rest_framework.decorators import (
     action,
 )
 
-
-from .serializers_api import *
-from .serializers import SimpleQuoteSerializer
-from .models import *
+from api.fp_apis.apis import get_pricing
+from api.serializers_api import *
+from api.serializers import SimpleQuoteSerializer
+from api.models import *
 from api.common import trace_error
 
 logger = logging.getLogger("dme_api")
@@ -184,6 +184,7 @@ def boks(request):
 
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["x_booking_Created_With"] = "DME API"
+        bok_1["pk_header_id"] = str(uuid.uuid4())
 
         # Seaway-Tempo-Aldi
         if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002":
@@ -195,21 +196,23 @@ def boks(request):
         else:
             bok_1["success"] = "2"
 
-        if BOK_1_headers.objects.filter(pk_header_id=bok_1["pk_header_id"]).exists():
+        if BOK_1_headers.objects.filter(
+            client_booking_id=bok_1["client_booking_id"]
+        ).exists():
             logger.info(
-                f"@883 BOKS API Error - Object(pk_header_id={bok_1['pk_header_id']}) does exist."
+                f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
             )
             return JsonResponse(
                 {
                     "success": False,
-                    "message": f"Object(pk_header_id={bok_1['pk_header_id']}) does exist.",
+                    "message": f"Object(client_booking_id={bok_1['client_booking_id']}) does already exist.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
-            # Save bok_2
+            # Save bok_2s
             for bok_2 in bok_2s:
                 bok_3s = bok_2["booking_lines_data"]
                 bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
@@ -233,7 +236,7 @@ def boks(request):
                         bok_2_serializer.errors, status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Save bok_3
+                # Save bok_3s
                 for bok_3 in bok_3s:
                     bok_3["fk_header_id"] = bok_1["pk_header_id"]
                     bok_3["fk_booking_lines_id"] = bok_2["booking_line"][
@@ -271,8 +274,99 @@ def boks(request):
 
 @transaction.atomic
 @api_view(["POST"])
-def item_pricing(request):
+def partial_pricing(request):
+    logger.info(f"@810 - items pricing payload: {request.data}")
     user = request.user
+    boks_json = request.data
+    bok_1 = boks_json["booking"]
+    bok_1["pk_header_id"] = str(uuid.uuid4())
+    bok_2s = boks_json["booking_lines"]
+
+    # Find `Client`
+    try:
+        client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
+        client = client_employee.fk_id_dme_client
+    except Exception as e:
+        logger.info(f"@811 - client_employee does not exist, {str(e)}")
+        message = "You are not allowed to use this api-endpoint."
+        return Response({"success": False, "message": message})
+
+    # Find `Warehouse`
+    try:
+        warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+    except Exception as e:
+        logger.info(f"@821 Client doesn't have Warehouse(s): {str(e)}")
+        return JsonResponse(
+            {"success": False, "message": "Client doesn't have Warehouse(s)."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Find `Suburb` and `State`
+    de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+    addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
+
+    if not addresses.exists():
+        message = "Delivery PostalCode is not valid"
+        return Response({"success": False, "message": message})
+    else:
+        de_suburb = addresses[0].suburb
+        de_state = addresses[0].state
+
+    booking = {
+        "pk_booking_id": bok_1["pk_header_id"],
+        "puPickUpAvailFrom_Date": str(datetime.now()),
+        "b_clientReference_RA_Numbers": "initial_RA_num",
+        "puCompany": warehouse.warehousename,
+        "pu_Contact_F_L_Name": "initial_PU_contact",
+        "pu_Email": "pu@email.com",
+        "pu_Phone_Main": "419294339",
+        "pu_Address_Street_1": warehouse.warehouse_address1,
+        "pu_Address_street_2": warehouse.warehouse_address2,
+        "pu_Address_Country": "Australia",
+        "pu_Address_PostalCode": warehouse.warehouse_postal_code,
+        "pu_Address_State": warehouse.warehouse_state,
+        "pu_Address_Suburb": warehouse.warehouse_suburb,
+        "deToCompanyName": "initial_DE_company",
+        "de_to_Contact_F_LName": "initial_DE_contact",
+        "de_Email": "de@email.com",
+        "de_to_Phone_Main": "419294339",
+        "de_To_Address_Street_1": "initial_DE_street_1",
+        "de_To_Address_Street_2": "",
+        "de_To_Address_Country": "Australia",
+        "de_To_Address_PostalCode": de_postal_code,
+        "de_To_Address_State": de_state,
+        "de_To_Address_Suburb": de_suburb,
+        "client_warehouse_code": warehouse.client_warehouse_code,
+        "vx_serviceName": "exp",
+        "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
+    }
+
+    booking_lines = []
+    for bok_2 in bok_2s:
+        booking_line = {
+            "fk_booking_id": bok_1["pk_header_id"],
+            "e_qty": bok_2["booking_line"]["l_002_qty"],
+            "e_item": "initial_item",
+            "e_dimUOM": bok_2["booking_line"]["l_004_dim_UOM"],
+            "e_dimLength": bok_2["booking_line"]["l_005_dim_length"],
+            "e_dimWidth": bok_2["booking_line"]["l_006_dim_width"],
+            "e_dimHeight": bok_2["booking_line"]["l_007_dim_height"],
+            "e_weightUOM": bok_2["booking_line"]["l_008_weight_UOM"],
+            "e_weightPerEach": bok_2["booking_line"]["l_009_weight_per_each"],
+        }
+        booking_lines.append(booking_line)
+
+    body = {"booking": booking, "booking_lines": booking_lines}
+    success, message, results = get_pricing(
+        body=body, booking_id=None, is_pricing_only=True, is_best_options_only=True,
+    )
+    logger.info(
+        f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {results}"
+    )
+
+    return Response(
+        {"success": True, "results": SimpleQuoteSerializer(results, many=True).data}
+    )
 
 
 @api_view(["GET"])
