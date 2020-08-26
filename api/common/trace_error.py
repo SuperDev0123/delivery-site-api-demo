@@ -4,5 +4,5 @@ from django.conf import settings
 
 
 def print():
-    if settings.ENV in ["local", "dev"]:
+    if settings.ENV in ["local"]:
         traceback.print_exc()
