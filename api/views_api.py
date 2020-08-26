@@ -157,34 +157,37 @@ def boks(request):
     boks_json = request.data
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
-
     logger.info(f"@880 request payload - {boks_json}")
+
+    # Find `Client`
+    try:
+        client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
+        client = client_employee.fk_id_dme_client
+    except Exception as e:
+        logger.info(f"@811 - client_employee does not exist, {str(e)}")
+        message = "You are not allowed to use this api-endpoint."
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Find `Warehouse`
+    try:
+        warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+    except Exception as e:
+        logger.info(f"@821 Client doesn't have Warehouse(s): {str(e)}")
+        return JsonResponse(
+            {"success": False, "message": "Client doesn't have Warehouse(s)."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     try:
         # Save bok_1
-        try:
-            warehouse = Client_warehouses.objects.get(
-                client_warehouse_code=bok_1["b_client_warehouse_code"]
-            )
-        except Client_warehouses.DoesNotExist:
-            logger.info(
-                f"@881 BOKS API Error - : Warehouse code is not valid({bok_1['b_client_warehouse_code']}"
-            )
-            return JsonResponse(
-                {"success": False, "message": "Warehouse code is not valid."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        except Exception as e:
-            logger.info(f"@882 BOKS API Error - {e}")
-            trace_error.print()
-            return JsonResponse(
-                {"success": False, "message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-        bok_1["x_booking_Created_With"] = "DME API"
+        bok_1["x_booking_Created_With"] = "DME PUSH API"
         bok_1["pk_header_id"] = str(uuid.uuid4())
+        bok_1["fk_client_id"] = client.dme_account_num
+        bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
+        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
         # Seaway-Tempo-Aldi
         if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002":
@@ -260,7 +263,86 @@ def boks(request):
                         )
 
             bok_1_serializer.save()
-            return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
+
+            if bok_1["success"] == "3":
+                booking = {}
+                booking_lines = []
+
+                booking = {
+                    "pk_booking_id": bok_1["pk_header_id"],
+                    "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+                    "b_clientReference_RA_Numbers": bok_1[
+                        "b_000_1_b_clientreference_ra_numbers"
+                    ],
+                    "puCompany": bok_1["b_028_b_pu_company"],
+                    "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
+                    "pu_Email": bok_1["b_037_b_pu_email"],
+                    "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"]
+                    if bok_1["b_038_b_pu_phone_main"]
+                    else "419294339",
+                    "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
+                    "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
+                    "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
+                    "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
+                    "pu_Address_State": bok_1["b_031_b_pu_address_state"],
+                    "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+                    "deToCompanyName": bok_1["b_054_b_del_company"],
+                    "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
+                    "de_Email": bok_1["b_063_b_del_email"],
+                    "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"]
+                    if bok_1["b_064_b_del_phone_main"]
+                    else "419294339",
+                    "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
+                    "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
+                    "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
+                    "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
+                    "de_To_Address_State": bok_1["b_057_b_del_address_state"],
+                    "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+                    "client_warehouse_code": warehouse.client_warehouse_code,
+                    "vx_serviceName": bok_1["b_003_b_service_name"],
+                    "kf_client_id": bok_1["fk_client_id"],
+                }
+
+                for bok_2 in bok_2s:
+                    bok_2_line = {
+                        "fk_booking_id": bok_2["booking_line"]["fk_header_id"],
+                        "packagingType": bok_2["booking_line"][
+                            "l_001_type_of_packaging"
+                        ],
+                        "e_qty": bok_2["booking_line"]["l_002_qty"],
+                        "e_item": bok_2["booking_line"]["l_003_item"],
+                        "e_dimUOM": bok_2["booking_line"]["l_004_dim_UOM"],
+                        "e_dimLength": bok_2["booking_line"]["l_005_dim_length"],
+                        "e_dimWidth": bok_2["booking_line"]["l_006_dim_width"],
+                        "e_dimHeight": bok_2["booking_line"]["l_007_dim_height"],
+                        "e_weightUOM": bok_2["booking_line"]["l_008_weight_UOM"],
+                        "e_weightPerEach": bok_2["booking_line"][
+                            "l_009_weight_per_each"
+                        ],
+                    }
+                    booking_lines.append(bok_2_line)
+
+                body = {"booking": booking, "booking_lines": booking_lines}
+                success, message, results = get_pricing(
+                    body=body,
+                    booking_id=None,
+                    is_pricing_only=True,
+                    is_best_options_only=True,
+                )
+                logger.info(
+                    f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {results}"
+                )
+
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "results": SimpleQuoteSerializer(results, many=True).data,
+                        "pageUrl": f"http://{settings.WEB_SITE_IP}/price/partial/{bok_1['client_booking_id']}/",
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            else:
+                return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
         else:
             logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
             return Response(bok_1_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -289,7 +371,9 @@ def partial_pricing(request):
     except Exception as e:
         logger.info(f"@811 - client_employee does not exist, {str(e)}")
         message = "You are not allowed to use this api-endpoint."
-        return Response({"success": False, "message": message})
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     # Find `Warehouse`
     try:
@@ -307,7 +391,9 @@ def partial_pricing(request):
 
     if not addresses.exists():
         message = "Delivery PostalCode is not valid"
-        return Response({"success": False, "message": message})
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
     else:
         de_suburb = addresses[0].suburb
         de_state = addresses[0].state
