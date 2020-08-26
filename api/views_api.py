@@ -161,13 +161,13 @@ def boks(request):
 
     # Check required fields
     if not "b_client_order_num" in bok_1:
-        message = "'b_client_order_num' is required"
+        message = "'b_client_order_num' is required."
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
     if not "client_booking_id" in bok_1:
-        message = "'client_booking_id' is required"
+        message = "'client_booking_id' is required."
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -185,42 +185,32 @@ def boks(request):
 
     # Find `Warehouse`
     try:
-        warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+        warehouse = Client_warehouses.objects.filter(fk_id_dme_client=client).first()
     except Exception as e:
-        logger.info(f"@821 Client doesn't have Warehouse(s): {str(e)}")
+        message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
+        logger.info(message)
         return JsonResponse(
-            {"success": False, "message": "Client doesn't have Warehouse(s)."},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
     # Check duplicated push
     if BOK_1_headers.objects.filter(
         client_booking_id=bok_1["client_booking_id"]
     ).exists():
-        logger.info(
-            f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
-        )
+        message = f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
+        logger.info(message)
         return JsonResponse(
-            {
-                "success": False,
-                "message": f"Object(client_booking_id={bok_1['client_booking_id']}) does already exist.",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST,
         )
 
     if BOK_1_headers.objects.filter(
         fk_client_id=client.dme_account_num,
         b_client_order_num=bok_1["b_client_order_num"],
     ).exists():
-        logger.info(
-            f"@883 BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-        )
+        message = f"@883 BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+        logger.info(message)
         return JsonResponse(
-            {
-                "success": False,
-                "message": f"Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+            {"success": False, "message": message,}, status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
@@ -232,12 +222,11 @@ def boks(request):
         bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
-        # Seaway-Tempo-Aldi
-        if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002":
+        if (
+            bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002"
+        ):  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
-
-        # Plum
-        if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
+        elif bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
             bok_1["success"] = "3"
         else:
             bok_1["success"] = "2"
