@@ -159,6 +159,19 @@ def boks(request):
     bok_2s = boks_json["booking_lines"]
     logger.info(f"@880 request payload - {boks_json}")
 
+    # Check required fields
+    if not "b_client_order_num" in bok_1:
+        message = "'b_client_order_num' is required"
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not "client_booking_id" in bok_1:
+        message = "'client_booking_id' is required"
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     # Find `Client`
     try:
         client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
@@ -180,6 +193,36 @@ def boks(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Check duplicated push
+    if BOK_1_headers.objects.filter(
+        client_booking_id=bok_1["client_booking_id"]
+    ).exists():
+        logger.info(
+            f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
+        )
+        return JsonResponse(
+            {
+                "success": False,
+                "message": f"Object(client_booking_id={bok_1['client_booking_id']}) does already exist.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if BOK_1_headers.objects.filter(
+        fk_client_id=client.dme_account_num,
+        b_client_order_num=bok_1["b_client_order_num"],
+    ).exists():
+        logger.info(
+            f"@883 BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+        )
+        return JsonResponse(
+            {
+                "success": False,
+                "message": f"Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     try:
         # Save bok_1
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
@@ -198,20 +241,6 @@ def boks(request):
             bok_1["success"] = "3"
         else:
             bok_1["success"] = "2"
-
-        if BOK_1_headers.objects.filter(
-            client_booking_id=bok_1["client_booking_id"]
-        ).exists():
-            logger.info(
-                f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
-            )
-            return JsonResponse(
-                {
-                    "success": False,
-                    "message": f"Object(client_booking_id={bok_1['client_booking_id']}) does already exist.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
