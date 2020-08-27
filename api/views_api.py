@@ -182,7 +182,7 @@ def boks(request):
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    if client_name == "Plum":
+    if "Plum" in client_name:
         if not "client_booking_id" in bok_1:
             message = "'client_booking_id' is required."
             logger.info(message)
@@ -199,7 +199,7 @@ def boks(request):
             )
 
     # Find `Warehouse`
-    if client_name == "Plum":
+    if "Plum" in client_name:
         try:
             warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
         except Exception as e:
@@ -211,7 +211,7 @@ def boks(request):
             )
 
     # Check duplicated push with `client_booking_id`
-    if client_name == "Plum":
+    if "Plum" in client_name:
         if BOK_1_headers.objects.filter(
             client_booking_id=bok_1["client_booking_id"]
         ).exists():
@@ -242,7 +242,7 @@ def boks(request):
         if client_name == "Seaway-Tempo-Aldi":  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
 
-        if client_name == "Plum":  # Plum
+        if "Plum" in client_name:  # Plum
             bok_1["success"] = "3"
             bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
