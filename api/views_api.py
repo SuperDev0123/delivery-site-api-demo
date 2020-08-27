@@ -164,7 +164,7 @@ def boks(request):
     try:
         client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
         client = client_employee.fk_id_dme_client
-        client_name = client.company_name.lower()
+        client_name = client.company_name
     except Exception as e:
         logger.info(f"@811 - client_employee does not exist, {str(e)}")
         message = "You are not allowed to use this api-endpoint."
