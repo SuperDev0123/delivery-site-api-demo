@@ -4,6 +4,7 @@ import uuid
 import json
 import logging
 import requests
+from datetime import datetime
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -211,7 +212,7 @@ def boks(request):
     if "Plum" in client_name:
         bok_1[
             "client_booking_id"
-        ] = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{int(time.time())}"
+        ] = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
 
     try:
         # Save bok_1
