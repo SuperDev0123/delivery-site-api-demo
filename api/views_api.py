@@ -234,18 +234,18 @@ def boks(request):
 
     try:
         # Save bok_1
-        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-        bok_1["x_booking_Created_With"] = "DME PUSH API"
         bok_1["pk_header_id"] = str(uuid.uuid4())
         bok_1["fk_client_id"] = client.dme_account_num
-        bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
-        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+        bok_1["x_booking_Created_With"] = "DME PUSH API"
 
         if client_name == "Seaway-Tempo-Aldi":  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
 
         if client_name == "Plum":  # Plum
             bok_1["success"] = "3"
+            bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+            bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
+            bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
         else:
             bok_1["success"] = "2"
 
