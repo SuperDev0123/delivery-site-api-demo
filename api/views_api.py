@@ -160,17 +160,20 @@ def boks(request):
     client_name = None
     logger.info(f"@880 request payload - {boks_json}")
 
-    # Check required fields
-    if not "fk_client_id" in bok_1:
-        message = "'fk_client_id' is required."
+    # Find `Client`
+    try:
+        client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
+        client = client_employee.fk_id_dme_client
+        client_name = client.company_name.lower()
+    except Exception as e:
+        logger.info(f"@811 - client_employee does not exist, {str(e)}")
+        message = "You are not allowed to use this api-endpoint."
         logger.info(message)
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
-    else:
-        if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
-            client_name = "Plum"
 
+    # Check required fields
     if not "b_client_order_num" in bok_1:
         message = "'b_client_order_num' is required."
         logger.info(message)
@@ -193,19 +196,6 @@ def boks(request):
                 {"success": False, "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-    # Find `Client`
-    try:
-        client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
-        client = client_employee.fk_id_dme_client
-        client_name = client.company_name.lower()
-    except Exception as e:
-        logger.info(f"@811 - client_employee does not exist, {str(e)}")
-        message = "You are not allowed to use this api-endpoint."
-        logger.info(message)
-        return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-        )
 
     # Find `Warehouse`
     if client_name == "Plum":
