@@ -1,3 +1,4 @@
+import time
 import math
 import uuid
 import json
@@ -182,42 +183,12 @@ def boks(request):
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    if "Plum" in client_name:
-        if not "client_booking_id" in bok_1 or (
-            "client_booking_id" in bok_1 and not bok_1["client_booking_id"]
-        ):
-            message = "'client_booking_id' is required."
-            logger.info(message)
-            return Response(
-                {"success": False, "message": message},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        elif "client_booking_id" in bok_1 and len(bok_1["client_booking_id"]) != 64:
-            message = "'client_booking_id' should be 64 length characters."
-            logger.info(message)
-            return Response(
-                {"success": False, "message": message},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
     # Find `Warehouse`
     if "Plum" in client_name:
         try:
             warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
         except Exception as e:
             message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
-            logger.info(message)
-            return JsonResponse(
-                {"success": False, "message": message},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-    # Check duplicated push with `client_booking_id`
-    if "Plum" in client_name:
-        if BOK_1_headers.objects.filter(
-            client_booking_id=bok_1["client_booking_id"]
-        ).exists():
-            message = f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
             logger.info(message)
             return JsonResponse(
                 {"success": False, "message": message},
@@ -235,9 +206,15 @@ def boks(request):
             {"success": False, "message": message,}, status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Generate `client_booking_id`
+    bok_1["pk_header_id"] = str(uuid.uuid4())
+    if "Plum" in client_name:
+        bok_1[
+            "client_booking_id"
+        ] = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{int(time.time())}"
+
     try:
         # Save bok_1
-        bok_1["pk_header_id"] = str(uuid.uuid4())
         bok_1["fk_client_id"] = client.dme_account_num
         bok_1["x_booking_Created_With"] = "DME PUSH API"
 

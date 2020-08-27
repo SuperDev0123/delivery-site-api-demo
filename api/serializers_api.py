@@ -10,7 +10,7 @@ class BOK_0_Serializer(serializers.ModelSerializer):
 
 
 class BOK_1_Serializer(serializers.ModelSerializer):
-    client_booking_id = serializers.CharField(max_length=100)
+    client_booking_id = serializers.CharField(max_length=64)
     fk_client_id = serializers.CharField(validators=[should_have_value])
     b_client_warehouse_code = serializers.CharField(validators=[should_have_value])
     b_clientPU_Warehouse = serializers.CharField(validators=[should_have_value])
