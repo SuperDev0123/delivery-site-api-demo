@@ -183,7 +183,9 @@ def boks(request):
         )
 
     if "Plum" in client_name:
-        if not "client_booking_id" in bok_1:
+        if not "client_booking_id" in bok_1 or (
+            "client_booking_id" in bok_1 and not bok_1["client_booking_id"]
+        ):
             message = "'client_booking_id' is required."
             logger.info(message)
             return Response(
