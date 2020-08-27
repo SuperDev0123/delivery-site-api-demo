@@ -157,52 +157,81 @@ def boks(request):
     boks_json = request.data
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
+    client_name = None
     logger.info(f"@880 request payload - {boks_json}")
 
     # Check required fields
+    if not "fk_client_id" in bok_1:
+        message = "'fk_client_id' is required."
+        logger.info(message)
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+            client_name = "Plum"
+
     if not "b_client_order_num" in bok_1:
         message = "'b_client_order_num' is required."
+        logger.info(message)
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    if not "client_booking_id" in bok_1:
-        message = "'client_booking_id' is required."
-        return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-        )
+    if client_name == "Plum":
+        if not "client_booking_id" in bok_1:
+            message = "'client_booking_id' is required."
+            logger.info(message)
+            return Response(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif "client_booking_id" in bok_1 and len(bok_1["client_booking_id"]) != 64:
+            message = "'client_booking_id' should be 64 length characters."
+            logger.info(message)
+            return Response(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     # Find `Client`
     try:
         client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
         client = client_employee.fk_id_dme_client
+        client_name = client.company_name.lower()
     except Exception as e:
         logger.info(f"@811 - client_employee does not exist, {str(e)}")
         message = "You are not allowed to use this api-endpoint."
+        logger.info(message)
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
     # Find `Warehouse`
-    try:
-        warehouse = Client_warehouses.objects.filter(fk_id_dme_client=client).first()
-    except Exception as e:
-        message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
-        logger.info(message)
-        return JsonResponse(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-        )
+    if client_name == "Plum":
+        try:
+            warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+        except Exception as e:
+            message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
+            logger.info(message)
+            return JsonResponse(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    # Check duplicated push
-    if BOK_1_headers.objects.filter(
-        client_booking_id=bok_1["client_booking_id"]
-    ).exists():
-        message = f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
-        logger.info(message)
-        return JsonResponse(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST,
-        )
+    # Check duplicated push with `client_booking_id`
+    if client_name == "Plum":
+        if BOK_1_headers.objects.filter(
+            client_booking_id=bok_1["client_booking_id"]
+        ).exists():
+            message = f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
+            logger.info(message)
+            return JsonResponse(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
+    # Check duplicated push with `b_client_order_num`
     if BOK_1_headers.objects.filter(
         fk_client_id=client.dme_account_num,
         b_client_order_num=bok_1["b_client_order_num"],
@@ -222,11 +251,10 @@ def boks(request):
         bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
-        if (
-            bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000002"
-        ):  # Seaway-Tempo-Aldi
+        if client_name == "Seaway-Tempo-Aldi":  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
-        elif bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+
+        if client_name == "Plum":  # Plum
             bok_1["success"] = "3"
         else:
             bok_1["success"] = "2"
@@ -241,12 +269,7 @@ def boks(request):
                     "pk_header_id"
                 ]
                 bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
-
-                # Plum
-                if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
-                    bok_2["booking_line"]["success"] = "3"
-                else:
-                    bok_2["booking_line"]["success"] = "2"
+                bok_2["booking_line"]["success"] = bok_1["success"]
 
                 bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
                 if bok_2_serializer.is_valid():
@@ -264,12 +287,7 @@ def boks(request):
                         "pk_booking_lines_id"
                     ]
                     bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-
-                    # Plum
-                    if bok_1["fk_client_id"] == "461162D2-90C7-BF4E-A905-000000000004":
-                        bok_3["success"] = "3"
-                    else:
-                        bok_3["success"] = "2"
+                    bok_3["success"] = bok_1["success"]
 
                     bok_3_serializer = BOK_3_Serializer(data=bok_3)
                     if bok_3_serializer.is_valid():
