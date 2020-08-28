@@ -156,6 +156,8 @@ class BOK_3_ViewSet(viewsets.ViewSet):
 @transaction.atomic
 @api_view(["POST"])
 def boks(request):
+    user = request.user
+    logger.info(f"@879 Pusher: {user.username}")
     boks_json = request.data
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
@@ -164,7 +166,7 @@ def boks(request):
 
     # Find `Client`
     try:
-        client_employee = Client_employees.objects.get(fk_id_user_id=request.user.pk)
+        client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
         client = client_employee.fk_id_dme_client
         client_name = client.company_name
         logger.info(f"@810 - client: , {client_name}")
@@ -177,12 +179,27 @@ def boks(request):
         )
 
     # Check required fields
-    if not "b_client_order_num" in bok_1:
-        message = "'b_client_order_num' is required."
-        logger.info(message)
-        return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-        )
+    if "Plum" in client_name:
+        if "_sapb1" in user.username:
+            if not "b_client_order_num" in bok_1 or (
+                "b_client_order_num" in bok_1 and not bok_1["b_client_order_num"]
+            ):
+                message = "'b_client_order_num' is required."
+                logger.info(message)
+                return Response(
+                    {"success": False, "message": message},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        elif "_magento" in user.username:
+            if not "client_booking_id" in bok_1 or (
+                "client_booking_id" in bok_1 and not bok_1["client_booking_id"]
+            ):
+                message = "'client_booking_id' is required."
+                logger.info(message)
+                return Response(
+                    {"success": False, "message": message},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
     # Find `Warehouse`
     if "Plum" in client_name:
@@ -197,23 +214,39 @@ def boks(request):
             )
 
     # Check duplicated push with `b_client_order_num`
-    if BOK_1_headers.objects.filter(
-        fk_client_id=client.dme_account_num,
-        b_client_order_num=bok_1["b_client_order_num"],
-    ).exists():
-        message = f"@883 BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-        logger.info(message)
-        return JsonResponse(
-            {"success": False, "message": message,}, status=status.HTTP_400_BAD_REQUEST,
-        )
+    if "Plum" in client_name:
+        if "_sapb1" in user.username:
+            bok_1s = BOK_1_headers.objects.filter(
+                fk_client_id=client.dme_account_num,
+                b_client_order_num=bok_1["b_client_order_num"],
+            )
+            if bok_1s.exists():
+                message = f"@883 BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                logger.info(message)
+                return JsonResponse(
+                    {"success": False, "message": message},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        elif "_magento" in user.username:
+            bok_1s = BOK_1_headers.objects.filter(
+                client_booking_id=bok_1["client_booking_id"],
+            )
+            if bok_1s.exists():
+                message = f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
+                logger.info(message)
+                return JsonResponse(
+                    {"success": False, "message": message},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
     # Generate `client_booking_id`
     bok_1["pk_header_id"] = str(uuid.uuid4())
-    if "Plum" in client_name:
+    if "Plum" in client_name and "_sapb1" in user.username:
         bok_1[
             "client_booking_id"
         ] = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
 
+    # Save
     try:
         # Save bok_1
         bok_1["fk_client_id"] = client.dme_account_num
