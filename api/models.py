@@ -2141,7 +2141,7 @@ class BOK_1_headers(models.Model):
     b_019_b_pu_tail_lift = models.BooleanField(
         verbose_name=_("b_019_b_pu_tail_lift"), default=False, blank=True, null=True
     )
-    b_020_b_pu_num_operators = models.BooleanField(
+    b_020_b_pu_num_operators = models.PositiveIntegerField(
         verbose_name=_("b_020_b_pu_num_operators"), blank=True, default=False, null=True
     )
     b_022_b_pu_avail_from_time_hour = models.IntegerField(
@@ -2227,7 +2227,7 @@ class BOK_1_headers(models.Model):
     b_041_b_del_tail_lift = models.BooleanField(
         verbose_name=_("b_041_b_del_tail_lift"), default=False, blank=True, null=True
     )
-    b_042_b_del_num_operators = models.BooleanField(
+    b_042_b_del_num_operators = models.PositiveIntegerField(
         verbose_name=_("b_042_b_del_num_operators"),
         blank=True,
         default=False,
