@@ -30,6 +30,7 @@ from api.serializers_api import *
 from api.serializers import SimpleQuoteSerializer
 from api.models import *
 from api.common import trace_error
+from api.common import constants as dme_constants
 
 logger = logging.getLogger("dme_api")
 
@@ -153,9 +154,98 @@ class BOK_3_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+# @transaction.atomic
+# @api_view(["POST"])
+# def order_boks(request):
+#     user = request.user
+#     logger.info(f"@879 Orderer: {user.username}")
+#     data = request.data
+
+#     # Find `Client`
+#     try:
+#         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
+#         client = client_employee.fk_id_dme_client
+#         client_name = client.company_name
+#         logger.info(f"@810 - client: , {client_name}")
+#     except Exception as e:
+#         logger.info(f"@811 - client_employee does not exist, {str(e)}")
+#         message = "You are not allowed to use this api-endpoint."
+#         logger.info(message)
+#         return Response(
+#             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     # Check required fields
+#     if "Plum" in client_name:
+#         if not "cost_id" in data or ("cost_id" in data and not data["cost_id"]):
+#             message = "'cost_id' is required."
+#             logger.info(message)
+#             return Response(
+#                 {"success": False, "message": message},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         if "_sapb1" in user.username:
+#             if not "b_client_order_num" in data or (
+#                 "b_client_order_num" in data and not data["b_client_order_num"]
+#             ):
+#                 message = "'b_client_order_num' is required."
+#                 logger.info(message)
+#                 return Response(
+#                     {"success": False, "message": message},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+#         elif "_magento" in user.username:
+#             if not "client_booking_id" in data or (
+#                 "client_booking_id" in data and not data["client_booking_id"]
+#             ):
+#                 message = "'client_booking_id' is required."
+#                 logger.info(message)
+#                 return Response(
+#                     {"success": False, "message": message},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#     # Get bok_1, 2, 3
+#     if "Plum" in client_name:
+#         try:
+#             if "_sapb1" in user.username:
+#                 b_client_order_num = data["b_client_order_num"]
+#                 bok_1 = BOK_1_headers.objects.get(b_client_order_num=b_client_order_num)
+#             elif "_magento" in user.username:
+#                 client_booking_id = data["client_booking_id"]
+#                 bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
+#         except:
+#             message = "Data not found."
+#             logger.info(f"#831 {message}")
+#             return Response(
+#                 {"success": False, "message": message},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+#         bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
+
+#     # Update bok_1, 2, 3
+#     if bok_1:
+#         bok_1.quote_id = data["cost_id"]
+#         bok_1.success = dme_constants.BOK_SUCCESS_4
+#         bok_1.save()
+
+#         for bok_2 in bok_2s:
+#             bok_2.success = dme_constants.BOK_SUCCESS_4
+#             bok_2.save()
+
+#         for bok_3 in bok_3s:
+#             bok_3.success = dme_constants.BOK_SUCCESS_4
+#             bok_3.save()
+
+#     return JsonResponse({"success": True}, status=status.HTTP_200_OK,)
+
+
 @transaction.atomic
-@api_view(["POST"])
-def boks(request):
+@api_view(["POST", "PUT"])
+def push_boks(request):
     user = request.user
     logger.info(f"@879 Pusher: {user.username}")
     boks_json = request.data
@@ -179,27 +269,26 @@ def boks(request):
         )
 
     # Check required fields
-    if "Plum" in client_name:
-        if "_sapb1" in user.username:
-            if not "b_client_order_num" in bok_1 or (
-                "b_client_order_num" in bok_1 and not bok_1["b_client_order_num"]
-            ):
-                message = "'b_client_order_num' is required."
-                logger.info(message)
-                return Response(
-                    {"success": False, "message": message},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-        elif "_magento" in user.username:
-            if not "client_booking_id" in bok_1 or (
-                "client_booking_id" in bok_1 and not bok_1["client_booking_id"]
-            ):
-                message = "'client_booking_id' is required."
-                logger.info(message)
-                return Response(
-                    {"success": False, "message": message},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+    if "Plum" in client_name and "_sapb1" in user.username:
+        if not "b_client_order_num" in bok_1 or (
+            "b_client_order_num" in bok_1 and not bok_1["b_client_order_num"]
+        ):
+            message = "'b_client_order_num' is required."
+            logger.info(message)
+            return Response(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    elif "Plum" in client_name and "_magento" in user.username:
+        if not "client_booking_id" in bok_1 or (
+            "client_booking_id" in bok_1 and not bok_1["client_booking_id"]
+        ):
+            message = "'client_booking_id' is required."
+            logger.info(message)
+            return Response(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     # Find `Warehouse`
     if "Plum" in client_name:
@@ -213,31 +302,70 @@ def boks(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    # Check duplicated push with `b_client_order_num`
-    if "Plum" in client_name:
-        if "_sapb1" in user.username:
+    # Delete existing boks if request method is PUT
+    if request.method == "PUT":
+        if "Plum" in client_name and "_sapb1" in user.username:
             bok_1s = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
             )
-            if bok_1s.exists():
-                message = f"@883 BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-                logger.info(message)
+            if not bok_1s.exists():
+                message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
+                logger.info(f"@870 {message}")
                 return JsonResponse(
                     {"success": False, "message": message},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-        elif "_magento" in user.username:
+            else:
+                pk_header_id = bok_1s.first().pk_header_id
+                BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id).delete()
+                BOK_2_lines.objects.filter(fk_header_id=pk_header_id).delete()
+                bok_1s.delete()
+                API_booking_quotes.filter(fk_booking_id=pk_header_id).delete()
+        elif "Plum" in client_name and "_magento" in user.username:
             bok_1s = BOK_1_headers.objects.filter(
                 client_booking_id=bok_1["client_booking_id"],
             )
-            if bok_1s.exists():
-                message = f"@883 BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
-                logger.info(message)
+            if not bok_1s.exists():
+                message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does not exist."
+                logger.info(f"@884 {message}")
                 return JsonResponse(
                     {"success": False, "message": message},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            else:
+                pk_header_id = bok_1s.first().pk_header_id
+                BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id).delete()
+                BOK_2_lines.objects.filter(fk_header_id=pk_header_id).delete()
+                bok_1s.delete()
+                API_booking_quotes.filter(fk_booking_id=pk_header_id).delete()
+
+    # Check duplicated push with `b_client_order_num`
+    if request.method == "POST":
+        if "Plum" in client_name:
+            if "_sapb1" in user.username:
+                bok_1s = BOK_1_headers.objects.filter(
+                    fk_client_id=client.dme_account_num,
+                    b_client_order_num=bok_1["b_client_order_num"],
+                )
+                if bok_1s.exists():
+                    message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                    logger.info(f"@883 {message}")
+                    return JsonResponse(
+                        {"success": False, "message": message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            elif "_magento" in user.username:
+                bok_1s = BOK_1_headers.objects.filter(
+                    client_booking_id=bok_1["client_booking_id"],
+                )
+                if bok_1s.exists():
+                    message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
+                    logger.info(f"@884 {message}")
+                    return JsonResponse(
+                        {"success": False, "message": message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
     # Generate `client_booking_id`
     bok_1["pk_header_id"] = str(uuid.uuid4())
@@ -256,12 +384,16 @@ def boks(request):
             bok_1["b_001_b_freight_provider"] = "DHL"
 
         if "Plum" in client_name:  # Plum
-            bok_1["success"] = "3"
+            bok_1["success"] = dme_constants.BOK_SUCCESS_3
             bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
             bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+
+            if "cost_id" in boks_json and boks_json["cost_id"]:
+                bok_1["quote_id"] = boks_json["cost_id"]
+                bok_1["success"] = dme_constants.BOK_SUCCESS_4
         else:
-            bok_1["success"] = "2"
+            bok_1["success"] = dme_constants.BOK_SUCCESS_2
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
@@ -304,7 +436,7 @@ def boks(request):
 
             bok_1_serializer.save()
 
-            if bok_1["success"] == "3":
+            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
                 booking = {}
                 booking_lines = []
 

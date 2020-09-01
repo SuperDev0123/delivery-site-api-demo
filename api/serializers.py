@@ -420,26 +420,24 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_id = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
     cost = serializers.SerializerMethodField(read_only=True)
-    tax = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
 
     def get_cost(self, obj):
-        return obj.client_mu_1_minimum_values
+        if obj.tax_value_1:
+            return obj.client_mu_1_minimum_values + obj.tax_value_1
+        else:
+            return obj.client_mu_1_minimum_values
 
     def get_eta(self, obj):
         return obj.etd
-
-    def get_tax(self, obj):
-        return obj.tax_value_1
 
     class Meta:
         model = API_booking_quotes
         fields = (
             "cost_id",
             "cost",
-            "tax",
             "eta",
             "service_name",
         )
