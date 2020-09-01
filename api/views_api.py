@@ -321,7 +321,7 @@ def push_boks(request):
                 BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id).delete()
                 BOK_2_lines.objects.filter(fk_header_id=pk_header_id).delete()
                 bok_1s.delete()
-                API_booking_quotes.filter(fk_booking_id=pk_header_id).delete()
+                API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
         elif "Plum" in client_name and "_magento" in user.username:
             bok_1s = BOK_1_headers.objects.filter(
                 client_booking_id=bok_1["client_booking_id"],
@@ -338,7 +338,7 @@ def push_boks(request):
                 BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id).delete()
                 BOK_2_lines.objects.filter(fk_header_id=pk_header_id).delete()
                 bok_1s.delete()
-                API_booking_quotes.filter(fk_booking_id=pk_header_id).delete()
+                API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
 
     # Check duplicated push with `b_client_order_num`
     if request.method == "POST":
