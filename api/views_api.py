@@ -76,7 +76,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             logger.info(f"@841 BOK_1 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=["get"])
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_boks_with_pricings(self, request):
         identifier = request.GET["identifier"]
 
@@ -94,7 +94,27 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
                 result = BOK_1_Serializer(bok_1).data
                 result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
-                result["pricings"] = SimpleQuoteSerializer(pricings, many=True).data
+
+                # Set Express or Standard
+                if pricings:
+                    json_results = SimpleQuoteSerializer(pricings, many=True).data
+
+                    if len(json_results) == 1:
+                        json_results[0]["service_name"] = "Standard"
+                    else:
+                        if float(json_results[0]["cost"]) > float(
+                            json_results[1]["cost"]
+                        ):
+                            json_results[0]["service_name"] = "Express"
+                            json_results[1]["service_name"] = "Standard"
+                        else:
+                            json_results[1]["service_name"] = "Express"
+                            json_results[0]["service_name"] = "Standard"
+
+                    result["pricings"] = json_results
+                else:
+                    result["pricings"] = []
+
             except Exception as e:
                 logger.info(f"#490 Error: {e}")
                 return Response(
@@ -152,95 +172,6 @@ class BOK_3_ViewSet(viewsets.ViewSet):
         )
         serializer = BOK_3_Serializer(bok_3_lines_data, many=True)
         return Response(serializer.data)
-
-
-# @transaction.atomic
-# @api_view(["POST"])
-# def order_boks(request):
-#     user = request.user
-#     logger.info(f"@879 Orderer: {user.username}")
-#     data = request.data
-
-#     # Find `Client`
-#     try:
-#         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
-#         client = client_employee.fk_id_dme_client
-#         client_name = client.company_name
-#         logger.info(f"@810 - client: , {client_name}")
-#     except Exception as e:
-#         logger.info(f"@811 - client_employee does not exist, {str(e)}")
-#         message = "You are not allowed to use this api-endpoint."
-#         logger.info(message)
-#         return Response(
-#             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     # Check required fields
-#     if "Plum" in client_name:
-#         if not "cost_id" in data or ("cost_id" in data and not data["cost_id"]):
-#             message = "'cost_id' is required."
-#             logger.info(message)
-#             return Response(
-#                 {"success": False, "message": message},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
-
-#         if "_sapb1" in user.username:
-#             if not "b_client_order_num" in data or (
-#                 "b_client_order_num" in data and not data["b_client_order_num"]
-#             ):
-#                 message = "'b_client_order_num' is required."
-#                 logger.info(message)
-#                 return Response(
-#                     {"success": False, "message": message},
-#                     status=status.HTTP_400_BAD_REQUEST,
-#                 )
-#         elif "_magento" in user.username:
-#             if not "client_booking_id" in data or (
-#                 "client_booking_id" in data and not data["client_booking_id"]
-#             ):
-#                 message = "'client_booking_id' is required."
-#                 logger.info(message)
-#                 return Response(
-#                     {"success": False, "message": message},
-#                     status=status.HTTP_400_BAD_REQUEST,
-#                 )
-
-#     # Get bok_1, 2, 3
-#     if "Plum" in client_name:
-#         try:
-#             if "_sapb1" in user.username:
-#                 b_client_order_num = data["b_client_order_num"]
-#                 bok_1 = BOK_1_headers.objects.get(b_client_order_num=b_client_order_num)
-#             elif "_magento" in user.username:
-#                 client_booking_id = data["client_booking_id"]
-#                 bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
-#         except:
-#             message = "Data not found."
-#             logger.info(f"#831 {message}")
-#             return Response(
-#                 {"success": False, "message": message},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
-
-#         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
-#         bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
-
-#     # Update bok_1, 2, 3
-#     if bok_1:
-#         bok_1.quote_id = data["cost_id"]
-#         bok_1.success = dme_constants.BOK_SUCCESS_4
-#         bok_1.save()
-
-#         for bok_2 in bok_2s:
-#             bok_2.success = dme_constants.BOK_SUCCESS_4
-#             bok_2.save()
-
-#         for bok_3 in bok_3s:
-#             bok_3.success = dme_constants.BOK_SUCCESS_4
-#             bok_3.save()
-
-#     return JsonResponse({"success": True}, status=status.HTTP_200_OK,)
 
 
 @transaction.atomic
@@ -505,10 +436,28 @@ def push_boks(request):
                     f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {results}"
                 )
 
+                # Set Express or Standard
+                if results:
+                    json_results = SimpleQuoteSerializer(results, many=True).data
+
+                    if len(json_results) == 1:
+                        json_results[0]["service_name"] = "Standard"
+                    else:
+                        if float(json_results[0]["cost"]) > float(
+                            json_results[1]["cost"]
+                        ):
+                            json_results[0]["service_name"] = "Express"
+                            json_results[1]["service_name"] = "Standard"
+                        else:
+                            json_results[1]["service_name"] = "Express"
+                            json_results[0]["service_name"] = "Standard"
+                else:
+                    json_results = []
+
                 return JsonResponse(
                     {
                         "success": True,
-                        "results": SimpleQuoteSerializer(results, many=True).data,
+                        "results": json_results,
                         "pageUrl": f"http://{settings.WEB_SITE_IP}/price/partial/{bok_1['client_booking_id']}/",
                     },
                     status=status.HTTP_201_CREATED,
@@ -622,9 +571,23 @@ def partial_pricing(request):
         f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {results}"
     )
 
-    return Response(
-        {"success": True, "results": SimpleQuoteSerializer(results, many=True).data}
-    )
+    # Set Express or Standard
+    if results:
+        json_results = SimpleQuoteSerializer(results, many=True).data
+
+        if len(json_results) == 1:
+            json_results[0]["service_name"] = "Standard"
+        else:
+            if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+                json_results[0]["service_name"] = "Express"
+                json_results[1]["service_name"] = "Standard"
+            else:
+                json_results[1]["service_name"] = "Express"
+                json_results[0]["service_name"] = "Standard"
+    else:
+        json_results = []
+
+    return Response({"success": True, "results": json_results})
 
 
 @api_view(["GET"])
