@@ -384,7 +384,7 @@ def push_boks(request):
                     "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
                     "b_clientReference_RA_Numbers": bok_1[
                         "b_000_1_b_clientreference_ra_numbers"
-                    ],
+                    ] if "b_000_1_b_clientreference_ra_numbers" in bok_1,
                     "puCompany": bok_1["b_028_b_pu_company"],
                     "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
                     "pu_Email": bok_1["b_037_b_pu_email"],
