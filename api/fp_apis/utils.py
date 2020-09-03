@@ -167,7 +167,7 @@ def _get_fastest_price(pricings):
             ):
                 fastest_pricing["pricing"] = pricing
 
-    return fastest_pricing
+    return fastest_pricing["pricing"]
 
 
 # ######################## #
@@ -185,7 +185,7 @@ def _get_lowest_price(pricings):
         ):
             lowest_pricing["pricing"] = pricing
 
-    return lowest_pricing
+    return lowest_pricing["pricing"]
 
 
 def select_best_options(pricings):
@@ -193,8 +193,8 @@ def select_best_options(pricings):
     lowest_pricing = _get_lowest_price(pricings)
     fastest_pricing = _get_fastest_price(pricings)
 
-    if lowest_pricing["pricing"].pk == fastest_pricing["pricing"].pk:
-        return [lowest_pricing["pricing"]]
+    if lowest_pricing.pk == fastest_pricing.pk:
+        return [lowest_pricing]
     else:
         return [fastest_pricing, lowest_pricing]
 
