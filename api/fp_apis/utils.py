@@ -232,17 +232,17 @@ def auto_select_pricing(booking, pricings, auto_select_type):
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
-        booking.api_booking_quote = filtered_pricing["pricing"]
-        booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
-        booking.vx_account_code = filtered_pricing["pricing"].account_code
-        booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.inv_cost_quoted = filtered_pricing["pricing"].fee * (
-            1 + filtered_pricing["pricing"].mu_percentage_fuel_levy
+        booking.api_booking_quote = filtered_pricing
+        booking.vx_freight_provider = filtered_pricing.fk_freight_provider_id
+        booking.vx_account_code = filtered_pricing.account_code
+        booking.vx_serviceName = filtered_pricing.service_name
+        booking.inv_cost_quoted = filtered_pricing.fee * (
+            1 + filtered_pricing.mu_percentage_fuel_levy
         )
-        booking.inv_sell_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
+        booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing["pricing"].fk_freight_provider_id
+            fp_company_name__iexact=filtered_pricing.fk_freight_provider_id
         )
 
         if fp and fp.service_cutoff_time:
