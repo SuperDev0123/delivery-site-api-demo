@@ -426,7 +426,7 @@ def push_boks(request):
                     booking_lines.append(bok_2_line)
 
                 body = {"booking": booking, "booking_lines": booking_lines}
-                success, message, results = get_pricing(
+                _, success, message, results = get_pricing(
                     body=body,
                     booking_id=None,
                     is_pricing_only=True,
@@ -565,7 +565,7 @@ def partial_pricing(request):
         booking_lines.append(booking_line)
 
     body = {"booking": booking, "booking_lines": booking_lines}
-    success, message, results = get_pricing(
+    _, success, message, results = get_pricing(
         body=body, booking_id=None, is_pricing_only=True, is_best_options_only=True,
     )
     logger.info(

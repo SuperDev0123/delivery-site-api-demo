@@ -1274,7 +1274,7 @@ def pricing(request):
     if not booking_id and "booking" in body:
         is_pricing_only = True
 
-    success, message, results = get_pricing(body, booking_id, is_pricing_only)
+    booking, success, message, results = get_pricing(body, booking_id, is_pricing_only)
 
     if not success:
         return JsonResponse(
@@ -1506,7 +1506,7 @@ def get_pricing(body, booking_id, is_pricing_only, is_best_options_only=False):
         if is_best_options_only and results.exists() and len(results) > 1:
             results = select_best_options(pricings=results)
 
-        return True, "Retrieved all Pricing info", results
+        return booking, True, "Retrieved all Pricing info", results
     except Exception as e:
         trace_error.print()
         return False, f"Error: {e}", None
