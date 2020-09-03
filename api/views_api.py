@@ -320,6 +320,14 @@ def push_boks(request):
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
             bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
+            if not "b_021_b_pu_avail_from_date" in bok_1 or (
+                "b_021_b_pu_avail_from_date" in bok_1
+                and not bok_1["b_021_b_pu_avail_from_date"]
+            ):
+                bok_1["b_021_b_pu_avail_from_date"] = str(
+                    datetime.now() + timedelta(days=7)
+                )[:10]
+
             if "cost_id" in boks_json and boks_json["cost_id"]:
                 bok_1["quote_id"] = boks_json["cost_id"]
                 bok_1["success"] = dme_constants.BOK_SUCCESS_4
