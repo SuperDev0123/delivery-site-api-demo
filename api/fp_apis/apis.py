@@ -1292,7 +1292,8 @@ def pricing(request):
             results, many=True, context={"booking": booking}
         ).data
         return JsonResponse(
-            {"success": True, "message": message}, status=status.HTTP_200_OK
+            {"success": True, "message": message, "results": results},
+            status=status.HTTP_200_OK,
         )
 
 
