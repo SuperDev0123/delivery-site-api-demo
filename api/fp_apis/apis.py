@@ -1274,9 +1274,7 @@ def pricing(request):
     if not booking_id and "booking" in body:
         is_pricing_only = True
 
-    success, message, results = get_pricing(
-        body, booking_id, auto_select_type, is_pricing_only
-    )
+    success, message, results = get_pricing(body, booking_id, is_pricing_only)
 
     if not success:
         return JsonResponse(
@@ -1326,7 +1324,7 @@ def get_pricing(body, booking_id, is_pricing_only, is_best_options_only=False):
                 ).delete()
         except Exception as e:
             trace_error.print()
-            return False, "Booking is not exist", None
+            return False, "Booking does not exist", None
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
