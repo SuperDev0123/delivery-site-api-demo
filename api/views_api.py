@@ -522,7 +522,7 @@ def partial_pricing(request):
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=7)),
+        "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=7))[:10],
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.warehousename,
         "pu_Contact_F_L_Name": "initial_PU_contact",
