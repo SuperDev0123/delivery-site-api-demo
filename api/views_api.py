@@ -387,18 +387,16 @@ def push_boks(request):
                     ]
                     if "b_000_1_b_clientreference_ra_numbers" in bok_1
                     else "",
-                    "puCompany": bok_1["b_028_b_pu_company"],
-                    "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
-                    "pu_Email": bok_1["b_037_b_pu_email"],
-                    "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"]
-                    if bok_1["b_038_b_pu_phone_main"]
-                    else "419294339",
-                    "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
-                    "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
-                    "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
-                    "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
-                    "pu_Address_State": bok_1["b_031_b_pu_address_state"],
-                    "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+                    "puCompany": warehouse.warehousename,
+                    "pu_Contact_F_L_Name": "initial_PU_contact",
+                    "pu_Email": "pu@email.com",
+                    "pu_Phone_Main": "419294339",
+                    "pu_Address_Street_1": warehouse.warehouse_address1,
+                    "pu_Address_street_2": warehouse.warehouse_address2,
+                    "pu_Address_Country": "Australia",
+                    "pu_Address_PostalCode": warehouse.warehouse_postal_code,
+                    "pu_Address_State": warehouse.warehouse_state,
+                    "pu_Address_Suburb": warehouse.warehouse_suburb,
                     "deToCompanyName": bok_1["b_054_b_del_company"],
                     "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
                     "de_Email": bok_1["b_063_b_del_email"],
