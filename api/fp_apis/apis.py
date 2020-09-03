@@ -1512,4 +1512,4 @@ def get_pricing(body, booking_id, is_pricing_only, is_best_options_only=False):
         return booking, True, "Retrieved all Pricing info", results
     except Exception as e:
         trace_error.print()
-        return False, f"Error: {e}", None
+        return booking, False, f"Error: {e}", None
