@@ -596,8 +596,9 @@ def push_boks(request):
                     {
                         "success": True,
                         "results": json_results,
-                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/partial/{bok_1['client_booking_id']}/",
-                        "orderPageUrl": f"http://{settings.WEB_SITE_IP}/order/partial/{bok_1['client_booking_id']}/",
+                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
+                        "orderPageUrl": f"http://{settings.WEB_SITE_IP}/order/{bok_1['client_booking_id']}/",
+                        "statusPageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/",
                     },
                     status=status.HTTP_201_CREATED,
                 )
