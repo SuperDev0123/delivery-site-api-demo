@@ -33,7 +33,6 @@ from .utils import (
     get_dme_status_from_fp_status,
     get_account_code_key,
     auto_select_pricing,
-    select_best_options,
 )
 from .response_parser import *
 from .pre_check import *
@@ -1297,11 +1296,10 @@ def pricing(request):
         )
 
 
-def get_pricing(body, booking_id, is_pricing_only, is_best_options_only=False):
+def get_pricing(body, booking_id, is_pricing_only):
     """
     @params:
         * is_pricing_only: only get pricing info
-        * is_best_options_only: only get best options - lowest and fastest
     """
     booking_lines = []
     booking = None
@@ -1341,7 +1339,8 @@ def get_pricing(body, booking_id, is_pricing_only, is_best_options_only=False):
     #       "Camerons",
     #       "Toll",
     #       "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
+    # fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
+    fp_names = ["Hunter"]
     DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:
@@ -1505,9 +1504,6 @@ def get_pricing(body, booking_id, is_pricing_only, is_best_options_only=False):
                             logger.info(f"@405 Exception: {e}")
 
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-        if is_best_options_only and results.exists() and len(results) > 1:
-            results = select_best_options(pricings=results)
 
         return booking, True, "Retrieved all Pricing info", results
     except Exception as e:

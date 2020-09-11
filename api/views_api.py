@@ -31,6 +31,8 @@ from api.serializers import SimpleQuoteSerializer
 from api.models import *
 from api.common import trace_error
 from api.common import constants as dme_constants
+from api.fp_apis.utils import select_best_options
+from api.operations import push_operations
 
 logger = logging.getLogger("dme_api")
 
@@ -296,7 +298,9 @@ def push_boks(request):
     bok_2s = boks_json["booking_lines"]
     client_name = None
     message = None
-    logger.info(f"@880 request payload - {boks_json}")
+    best_quotes = None
+    json_results = []
+    logger.info(f"@880 Push request payload - {boks_json}")
 
     # Find `Client`
     try:
@@ -346,42 +350,50 @@ def push_boks(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    # Delete existing boks if request method is PUT
+    # "Detect modified data" and "delete existing boks" if request method is PUT
     if request.method == "PUT":
-        if "Plum" in client_name and "_sapb1" in user.username:
-            bok_1s = BOK_1_headers.objects.filter(
-                fk_client_id=client.dme_account_num,
-                b_client_order_num=bok_1["b_client_order_num"],
-            )
-            if not bok_1s.exists():
-                message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
-                logger.info(f"@870 {message}")
-                return JsonResponse(
-                    {"success": False, "message": message},
-                    status=status.HTTP_400_BAD_REQUEST,
+        if "Plum" in client_name:
+            pk_header_id = None
+
+            if "_sapb1" in user.username:
+                old_bok_1s = BOK_1_headers.objects.filter(
+                    fk_client_id=client.dme_account_num,
+                    b_client_order_num=bok_1["b_client_order_num"],
                 )
-            else:
-                pk_header_id = bok_1s.first().pk_header_id
-                BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id).delete()
-                BOK_2_lines.objects.filter(fk_header_id=pk_header_id).delete()
-                bok_1s.delete()
-                API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
-        elif "Plum" in client_name and "_magento" in user.username:
-            bok_1s = BOK_1_headers.objects.filter(
-                client_booking_id=bok_1["client_booking_id"],
-            )
-            if not bok_1s.exists():
-                message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does not exist."
-                logger.info(f"@884 {message}")
-                return JsonResponse(
-                    {"success": False, "message": message},
-                    status=status.HTTP_400_BAD_REQUEST,
+                if not old_bok_1s.exists():
+                    message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
+                    logger.info(f"@870 {message}")
+                    return JsonResponse(
+                        {"success": False, "message": message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    pk_header_id = old_bok_1s.first().pk_header_id
+            if "_magento" in user.username:
+                old_bok_1s = BOK_1_headers.objects.filter(
+                    client_booking_id=bok_1["client_booking_id"],
                 )
-            else:
-                pk_header_id = bok_1s.first().pk_header_id
-                BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id).delete()
-                BOK_2_lines.objects.filter(fk_header_id=pk_header_id).delete()
-                bok_1s.delete()
+                if not old_bok_1s.exists():
+                    message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does not exist."
+                    logger.info(f"@884 {message}")
+                    return JsonResponse(
+                        {"success": False, "message": message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    pk_header_id = old_bok_1s.first().pk_header_id
+
+            if pk_header_id:
+                old_bok_1 = old_bok_1s.first()
+                old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
+                old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
+                push_operations.detect_modified_data(
+                    old_bok_1, old_bok_2s, old_bok_3s, boks_json
+                )
+
+                old_bok_1.delete()
+                old_bok_3s.delete()
+                old_bok_2s.delete()
                 API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
 
     bok_1["pk_header_id"] = str(uuid.uuid4())
@@ -429,6 +441,95 @@ def push_boks(request):
             bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
             bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+
+            if not "b_000_1_b_clientreference_ra_numbers" in bok_1 or (
+                "b_000_1_b_clientreference_ra_numbers" in bok_1
+                and not bok_1["b_000_1_b_clientreference_ra_numbers"]
+            ):
+                bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
+
+            if not "b_003_b_service_name" in bok_1 or (
+                "b_003_b_service_name" in bok_1 and not bok_1["b_003_b_service_name"]
+            ):
+                bok_1["b_003_b_service_name"] = "RF"
+
+            if not "b_028_b_pu_company" in bok_1 or (
+                "b_028_b_pu_company" in bok_1 and not bok_1["b_028_b_pu_company"]
+            ):
+                bok_1["b_028_b_pu_company"] = warehouse.warehousename
+
+            if not "b_035_b_pu_contact_full_name" in bok_1 or (
+                "b_035_b_pu_contact_full_name" in bok_1
+                and not bok_1["b_035_b_pu_contact_full_name"]
+            ):
+                bok_1["b_035_b_pu_contact_full_name"] = "initial_PU_contact"
+
+            if not "b_037_b_pu_email" in bok_1 or (
+                "b_037_b_pu_email" in bok_1 and not bok_1["b_037_b_pu_email"]
+            ):
+                bok_1["b_037_b_pu_email"] = "initial_pu@email.com"
+
+            if not "b_038_b_pu_phone_main" in bok_1 or (
+                "b_038_b_pu_phone_main" in bok_1 and not bok_1["b_038_b_pu_phone_main"]
+            ):
+                bok_1["b_038_b_pu_phone_main"] = "419294339"
+
+            if not "b_029_b_pu_address_street_1" in bok_1 or (
+                "b_029_b_pu_address_street_1" in bok_1
+                and not bok_1["b_029_b_pu_address_street_1"]
+            ):
+                bok_1["b_029_b_pu_address_street_1"] = warehouse.warehouse_address1
+
+            if not "b_030_b_pu_address_street_2" in bok_1 or (
+                "b_030_b_pu_address_street_2" in bok_1
+                and not bok_1["b_030_b_pu_address_street_2"]
+            ):
+                bok_1["b_030_b_pu_address_street_2"] = warehouse.warehouse_address2
+
+            if not "b_034_b_pu_address_country" in bok_1 or (
+                "b_034_b_pu_address_country" in bok_1
+                and not bok_1["b_034_b_pu_address_country"]
+            ):
+                bok_1["b_034_b_pu_address_country"] = "Australia"
+
+            if not "b_033_b_pu_address_postalcode" in bok_1 or (
+                "b_033_b_pu_address_postalcode" in bok_1
+                and not bok_1["b_033_b_pu_address_postalcode"]
+            ):
+                bok_1["b_033_b_pu_address_postalcode"] = warehouse.warehouse_postal_code
+
+            if not "b_031_b_pu_address_state" in bok_1 or (
+                "b_031_b_pu_address_state" in bok_1
+                and not bok_1["b_031_b_pu_address_state"]
+            ):
+                bok_1["b_031_b_pu_address_state"] = warehouse.warehouse_state
+
+            if not "b_032_b_pu_address_suburb" in bok_1 or (
+                "b_032_b_pu_address_suburb" in bok_1
+                and not bok_1["b_032_b_pu_address_suburb"]
+            ):
+                bok_1["b_032_b_pu_address_suburb"] = warehouse.warehouse_suburb
+
+            if not "b_054_b_del_company" in bok_1 or (
+                "b_054_b_del_company" in bok_1 and not bok_1["b_054_b_del_company"]
+            ):
+                bok_1["b_054_b_del_company"] = "initial_DE_company"
+
+            if not "b_061_b_del_contact_full_name" in bok_1 or (
+                "b_061_b_del_contact_full_name" in bok_1
+                and not bok_1["b_061_b_del_contact_full_name"]
+            ):
+                bok_1["b_061_b_del_contact_full_name"] = "initial_DE_contact"
+
+            if not "b_063_b_del_email" in bok_1 or (
+                "b_063_b_del_email" in bok_1 and not bok_1["b_063_b_del_email"]
+            ):
+                bok_1["b_063_b_del_email"] = "initial_de@email.com"
+
+            if not "b_064_b_del_phone_main" in bok_1 or (
+                "b_064_b_del_phone_main" in bok_1 and not bok_1["b_063_b_del_email"]
+            ):
+                bok_1["b_064_b_del_phone_main"] = "419294339"
 
             if not "b_021_b_pu_avail_from_date" in bok_1 or (
                 "b_021_b_pu_avail_from_date" in bok_1
@@ -490,57 +591,29 @@ def push_boks(request):
                     "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
                     "b_clientReference_RA_Numbers": bok_1[
                         "b_000_1_b_clientreference_ra_numbers"
-                    ]
-                    if "b_000_1_b_clientreference_ra_numbers" in bok_1
-                    else "",
-                    "puCompany": bok_1["b_028_b_pu_company"]
-                    if "b_028_b_pu_company" in bok_1
-                    else warehouse.warehousename,
-                    "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"]
-                    if "b_035_b_pu_contact_full_name" in bok_1
-                    else "initial_PU_contact",
-                    "pu_Email": bok_1["b_037_b_pu_email"]
-                    if "b_037_b_pu_email" in bok_1
-                    else "pu@email.com",
-                    "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"]
-                    if "b_038_b_pu_phone_main" in bok_1
-                    else "419294339",
-                    "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"]
-                    if "b_029_b_pu_address_street_1" in bok_1
-                    else warehouse.warehouse_address1,
-                    "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"]
-                    if "b_030_b_pu_address_street_2" in bok_1
-                    else warehouse.warehouse_address2,
-                    "pu_Address_Country": bok_1["b_034_b_pu_address_country"]
-                    if "b_034_b_pu_address_country" in bok_1
-                    else "Australia",
-                    "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"]
-                    if "b_033_b_pu_address_postalcode" in bok_1
-                    else warehouse.warehouse_postal_code,
-                    "pu_Address_State": bok_1["b_031_b_pu_address_state"]
-                    if "b_031_b_pu_address_state" in bok_1
-                    else warehouse.warehouse_state,
-                    "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"]
-                    if "b_032_b_pu_address_suburb" in bok_1
-                    else warehouse.warehouse_suburb,
-                    "deToCompanyName": bok_1["b_054_b_del_company"]
-                    if "b_054_b_del_company" in bok_1
-                    else "DE Company",
+                    ],
+                    "puCompany": bok_1["b_028_b_pu_company"],
+                    "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
+                    "pu_Email": bok_1["b_037_b_pu_email"],
+                    "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"],
+                    "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
+                    "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
+                    "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
+                    "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
+                    "pu_Address_State": bok_1["b_031_b_pu_address_state"],
+                    "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+                    "deToCompanyName": bok_1["b_054_b_del_company"],
                     "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
                     "de_Email": bok_1["b_063_b_del_email"],
-                    "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"]
-                    if bok_1["b_064_b_del_phone_main"]
-                    else "419294339",
+                    "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"],
                     "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
                     "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
                     "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
                     "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
                     "de_To_Address_State": bok_1["b_057_b_del_address_state"],
                     "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
-                    "client_warehouse_code": warehouse.client_warehouse_code,
-                    "vx_serviceName": bok_1["b_003_b_service_name"]
-                    if bok_1["b_064_b_del_phone_main"]
-                    else "RF",
+                    "client_warehouse_code": bok_1["b_client_warehouse_code"],
+                    "vx_serviceName": bok_1["b_003_b_service_name"],
                     "kf_client_id": bok_1["fk_client_id"],
                 }
 
@@ -564,19 +637,21 @@ def push_boks(request):
                     booking_lines.append(bok_2_line)
 
                 body = {"booking": booking, "booking_lines": booking_lines}
-                _, success, message, results = get_pricing(
-                    body=body,
-                    booking_id=None,
-                    is_pricing_only=True,
-                    is_best_options_only=True,
+                _, success, message, quote_set = get_pricing(
+                    body=body, booking_id=None, is_pricing_only=True,
                 )
                 logger.info(
-                    f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {results}"
+                    f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
                 )
 
+                # Select best quotes(fastest, lowest)
+                if quote_set.exists() and quote_set.count() > 1:
+                    best_quotes = select_best_options(pricings=quote_set)
+                    logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+
                 # Set Express or Standard
-                if results:
-                    json_results = SimpleQuoteSerializer(results, many=True).data
+                if best_quotes:
+                    json_results = SimpleQuoteSerializer(best_quotes, many=True).data
 
                     if len(json_results) == 1:
                         json_results[0]["service_name"] = "Standard"
@@ -589,8 +664,6 @@ def push_boks(request):
                         else:
                             json_results[1]["service_name"] = "Express"
                             json_results[0]["service_name"] = "Standard"
-                else:
-                    json_results = []
 
                 return JsonResponse(
                     {
@@ -618,12 +691,13 @@ def push_boks(request):
 @transaction.atomic
 @api_view(["POST"])
 def partial_pricing(request):
-    logger.info(f"@810 - items pricing payload: {request.data}")
+    logger.info(f"@810 - pricing request payload: {request.data}")
     user = request.user
     boks_json = request.data
     bok_1 = boks_json["booking"]
     bok_1["pk_header_id"] = str(uuid.uuid4())
     bok_2s = boks_json["booking_lines"]
+    json_results = []
 
     # Find `Client`
     try:
@@ -704,16 +778,24 @@ def partial_pricing(request):
         booking_lines.append(booking_line)
 
     body = {"booking": booking, "booking_lines": booking_lines}
-    _, success, message, results = get_pricing(
-        body=body, booking_id=None, is_pricing_only=True, is_best_options_only=True,
+    _, success, message, quote_set = get_pricing(
+        body=body, booking_id=None, is_pricing_only=True
     )
     logger.info(
-        f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {results}"
+        f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set}"
     )
 
+    # Select best quotes(fastest, lowest)
+    if quote_set.exists() and quote_set.count() > 1:
+        best_quotes = select_best_options(pricings=quote_set)
+        logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+
     # Set Express or Standard
-    if results:
-        json_results = SimpleQuoteSerializer(results, many=True).data
+    if quote_set:
+        json_results = SimpleQuoteSerializer(best_quotes, many=True).data
+
+        # delete quote quotes
+        quote_set.delete()
 
         if len(json_results) == 1:
             json_results[0]["service_name"] = "Standard"
@@ -724,8 +806,6 @@ def partial_pricing(request):
             else:
                 json_results[1]["service_name"] = "Express"
                 json_results[0]["service_name"] = "Standard"
-    else:
-        json_results = []
 
     return Response({"success": True, "results": json_results})
 
