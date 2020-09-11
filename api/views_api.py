@@ -33,6 +33,7 @@ from api.common import trace_error
 from api.common import constants as dme_constants
 from api.fp_apis.utils import select_best_options
 from api.operations import push_operations
+from api.common import status_history
 
 logger = logging.getLogger("dme_api")
 
@@ -283,6 +284,9 @@ def order_boks(request):
     for bok_3 in bok_3s:
         bok_3.success = dme_constants.BOK_SUCCESS_4
         bok_3.save()
+
+    # create status history
+    status_history.create_4_bok(bok_1.pk_header_id, "Ordered", request.user.username)
 
     logger.info(f"#823 Order success")
     return Response({"success": True}, status=status.HTTP_200_OK,)
@@ -581,6 +585,11 @@ def push_boks(request):
                         )
 
             bok_1_serializer.save()
+
+            # create status history
+            status_history.create_4_bok(
+                bok_1["pk_header_id"], "Pushed", request.user.username
+            )
 
             if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
                 booking = {}
