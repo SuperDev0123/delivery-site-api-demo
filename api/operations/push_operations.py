@@ -1,3 +1,26 @@
+import math
+
+
+def beautify_eta(json_results):
+    _results = []
+
+    for result in json_results:
+        try:
+            delta = float(result["eta"]) - round(float(result["eta"]))
+
+            if delta != 0:
+                result["eta"] = f"{math.ceil(float(result['eta']))} days"
+            else:
+                result["eta"] = f"{math.ceil(float(result['eta']))} days"
+        except Exception as e:
+            print("@1 - ", e)
+            pass
+
+        _results.append(result)
+
+    return _results
+
+
 def _get_bok_1_modifications(old_bok_1, bok_1):
     result = {}
 
