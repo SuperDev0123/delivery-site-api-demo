@@ -1,7 +1,16 @@
 import math
+import logging
+
+logger = logging.getLogger("dme_api")
 
 
 def beautify_eta(json_results):
+    """
+    beautify eta as Days,
+    i.e:
+        3.51 -> 4 Days
+        3.00 -> 3 Days
+    """
     _results = []
 
     for result in json_results:
@@ -475,6 +484,6 @@ def detect_modified_data(old_bok_1, old_bok_2s, old_bok_3s, new_data):
         del _modified_data["booking_lines"]
 
     if not _modified_data:
-        print(f"#350 - Nothing has been modified")
+        logger.info(f"#350 - Nothing has been modified")
     else:
-        print(f"#351 - Modified push data: {_modified_data}")
+        logger.info(f"#351 - Modified push data: {_modified_data}")
