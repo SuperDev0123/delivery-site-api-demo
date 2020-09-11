@@ -13,7 +13,6 @@ def beautify_eta(json_results):
             else:
                 result["eta"] = f"{math.ceil(float(result['eta']))} days"
         except Exception as e:
-            print("@1 - ", e)
             pass
 
         _results.append(result)
