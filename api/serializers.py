@@ -1,6 +1,8 @@
-from datetime import datetime
-from rest_framework import serializers
 import re
+import math
+from datetime import datetime
+
+from rest_framework import serializers
 
 from api.models import (
     Bookings,
@@ -426,9 +428,9 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
 
     def get_cost(self, obj):
         if obj.tax_value_1:
-            return obj.client_mu_1_minimum_values + obj.tax_value_1
+            return math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
         else:
-            return obj.client_mu_1_minimum_values
+            return math.ceil(obj.client_mu_1_minimum_values, 2)
 
     def get_eta(self, obj):
         return obj.etd
