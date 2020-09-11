@@ -1,5 +1,4 @@
 import re
-import math
 from datetime import datetime
 
 from rest_framework import serializers
@@ -35,6 +34,7 @@ from api.models import (
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
+from api.common import math as dme_math
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -428,9 +428,9 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
 
     def get_cost(self, obj):
         if obj.tax_value_1:
-            return math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
+            return dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
         else:
-            return math.ceil(obj.client_mu_1_minimum_values, 2)
+            return dme_math.ceil(obj.client_mu_1_minimum_values, 2)
 
     def get_eta(self, obj):
         return obj.etd
