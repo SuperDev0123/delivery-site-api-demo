@@ -103,7 +103,7 @@ def get_account_code_key(booking, fp_name):
 
 
 # Get ETD of Pricing in `hours` unit
-def _get_etd(pricing):
+def get_etd_in_hour(pricing):
     fp = Fp_freight_providers.objects.get(
         fp_company_name__iexact=pricing.fk_freight_provider_id
     )
@@ -140,7 +140,7 @@ def _is_deliverable_price(pricing, booking):
             delta_min -= pu_PickUp_By_Time_Minutes
 
         delta_min = timeDelta.total_seconds() / 60 + delta_min
-        eta = _get_etd(pricing)
+        eta = get_etd_in_hour(pricing)
 
         if not eta:
             return False
@@ -156,7 +156,7 @@ def _is_deliverable_price(pricing, booking):
 def _get_fastest_price(pricings):
     fastest_pricing = {}
     for pricing in pricings:
-        etd = _get_etd(pricing)
+        etd = get_etd_in_hour(pricing)
 
         if not fastest_pricing:
             fastest_pricing["pricing"] = pricing

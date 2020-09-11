@@ -661,7 +661,9 @@ def push_boks(request):
                 # Set Express or Standard
                 if best_quotes:
                     json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-                    json_results = push_operations.beautify_eta(json_results)
+                    json_results = push_operations.beautify_eta(
+                        json_results, best_quotes
+                    )
 
                     if len(json_results) == 1:
                         json_results[0]["service_name"] = "Standard"
@@ -804,7 +806,7 @@ def partial_pricing(request):
     # Set Express or Standard
     if quote_set:
         json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-        json_results = push_operations.beautify_eta(json_results)
+        json_results = push_operations.beautify_eta(json_results, best_quotes)
 
         # delete quote quotes
         quote_set.delete()
