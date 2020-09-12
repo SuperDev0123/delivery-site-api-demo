@@ -364,16 +364,27 @@ def push_boks(request):
                     fk_client_id=client.dme_account_num,
                     b_client_order_num=bok_1["b_client_order_num"],
                 )
+
                 if not old_bok_1s.exists():
-                    message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
-                    logger.info(f"@870 {message}")
-                    return JsonResponse(
-                        {"success": False, "message": message},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+                    if (
+                        "b_client_sales_inv_num" in bok_1
+                        and bok_1["b_client_sales_inv_num"]
+                    ):
+                        old_bok_1s = BOK_1_headers.objects.filter(
+                            fk_client_id=client.dme_account_num,
+                            b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
+                        )
+
+                        if not old_bok_1s.exists():
+                            message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
+                            logger.info(f"@870 {message}")
+                            return JsonResponse(
+                                {"success": False, "message": message},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
                 else:
                     pk_header_id = old_bok_1s.first().pk_header_id
-            if "_magento" in user.username:
+            elif "_magento" in user.username:
                 old_bok_1s = BOK_1_headers.objects.filter(
                     client_booking_id=bok_1["client_booking_id"],
                 )

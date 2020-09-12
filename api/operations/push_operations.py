@@ -283,7 +283,7 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
                 exist = True
 
         if not exist:
-            result["added"].append(bok_2)
+            result["added"].append(line_data["ld_002_model_number"])
 
     # Get Deleted
     for old_bok_3 in old_bok_3s:
@@ -296,7 +296,9 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
                 exist = False
 
         if exist:
-            result["deleted"].append(bok_2)
+            # for old_bok_2 in old_bok_2s:
+            #     if old_bok_2s.pk_booking_lines_id == old_bok_3.fk_booking_lines_id:
+            result["deleted"].append(old_bok_3.ld_002_model_number)
 
     # Get Modified
     for old_bok_3 in old_bok_3s:
@@ -459,7 +461,9 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
                     del _modified["booking_lines_data"]
 
                 if _modified:
-                    result["modified"].append(_modified)
+                    result["modified"].append(
+                        {old_bok_3.ld_002_model_number: _modified}
+                    )
 
     return result
 
