@@ -369,7 +369,11 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(s_21_Actual_Delivery_TimeStamp__gt=F("z_calculated_ETA"))
+                    & Q(
+                        s_21_Actual_Delivery_TimeStamp__gt=F(
+                            "s_06_Latest_Delivery_Date_TimeSet"
+                        )
+                    )
                 )
                 .extra(select={"freight_provider": "vx_freight_provider"})
                 .values("freight_provider")
@@ -381,7 +385,11 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(z_calculated_ETA__lte=F("s_21_Actual_Delivery_TimeStamp"))
+                    & Q(
+                        s_21_Actual_Delivery_TimeStamp__lte=F(
+                            "s_06_Latest_Delivery_Date_TimeSet"
+                        )
+                    )
                 )
                 .extra(select={"freight_provider": "vx_freight_provider"})
                 .values("freight_provider")
@@ -436,7 +444,11 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(s_21_Actual_Delivery_TimeStamp__gt=F("z_calculated_ETA"))
+                    & Q(
+                        s_21_Actual_Delivery_TimeStamp__gt=F(
+                            "s_06_Latest_Delivery_Date_TimeSet"
+                        )
+                    )
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -448,7 +460,11 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(z_calculated_ETA__lte=F("s_21_Actual_Delivery_TimeStamp"))
+                    & Q(
+                        s_21_Actual_Delivery_TimeStamp__lte=F(
+                            "s_06_Latest_Delivery_Date_TimeSet"
+                        )
+                    )
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
