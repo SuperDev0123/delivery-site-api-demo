@@ -369,7 +369,7 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(s_21_Actual_Delivery_TimeStamp__gte=F("vx_fp_del_eta_time"))
+                    & Q(s_21_Actual_Delivery_TimeStamp__gt=F("z_calculated_ETA"))
                 )
                 .extra(select={"freight_provider": "vx_freight_provider"})
                 .values("freight_provider")
@@ -381,7 +381,7 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(vx_fp_pu_eta_time__gte=F("s_20_Actual_Pickup_TimeStamp"))
+                    & Q(z_calculated_ETA__lte=F("s_21_Actual_Delivery_TimeStamp"))
                 )
                 .extra(select={"freight_provider": "vx_freight_provider"})
                 .values("freight_provider")
@@ -436,7 +436,7 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(s_21_Actual_Delivery_TimeStamp__gte=F("vx_fp_del_eta_time"))
+                    & Q(s_21_Actual_Delivery_TimeStamp__gt=F("z_calculated_ETA"))
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -448,7 +448,7 @@ class ChartsViewSet(viewsets.ViewSet):
                 Bookings.objects.filter(
                     Q(b_status="Delivered")
                     & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(vx_fp_pu_eta_time__gte=F("s_20_Actual_Pickup_TimeStamp"))
+                    & Q(z_calculated_ETA__lte=F("s_21_Actual_Delivery_TimeStamp"))
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
