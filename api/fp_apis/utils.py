@@ -161,9 +161,13 @@ def _get_fastest_price(pricings):
         if not fastest_pricing:
             fastest_pricing["pricing"] = pricing
             fastest_pricing["etd_in_hour"] = etd
-        elif fastest_pricing and etd:
-            if not fastest_pricing["etd_in_hour"] or (
-                fastest_pricing["etd_in_hour"] and fastest_pricing["etd_in_hour"] > etd
+        elif etd and fastest_pricing and fastest_pricing["etd_in_hour"]:
+            if fastest_pricing["etd_in_hour"] > etd:
+                fastest_pricing["pricing"] = pricing
+                fastest_pricing["etd_in_hour"] = etd
+            elif (
+                fastest_pricing["etd_in_hour"] == etd
+                and fastest_pricing["pricing"].fee > pricing.fee
             ):
                 fastest_pricing["pricing"] = pricing
 
@@ -178,18 +182,26 @@ def _get_lowest_price(pricings):
     for pricing in pricings:
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
-        elif (
-            lowest_pricing
-            and pricing.fee
-            and float(lowest_pricing["pricing"].fee) > float(pricing.fee)
-        ):
-            lowest_pricing["pricing"] = pricing
+        elif lowest_pricing and pricing.fee:
+            if float(lowest_pricing["pricing"].fee) > float(pricing.fee):
+                lowest_pricing["pricing"] = pricing
+                lowest_pricing["etd"] = get_etd_in_hour(pricing)
+            elif float(lowest_pricing["pricing"].fee) == float(pricing.fee):
+                etd = get_etd_in_hour(pricing)
+
+                if lowest_pricing["etd"] > etd:
+                    lowest_pricing["pricing"] = pricing
+                    lowest_pricing["etd"] = pricing
 
     return lowest_pricing["pricing"]
 
 
 def select_best_options(pricings):
     logger.info(f"#860 Select best options from {len(pricings)} pricings")
+
+    if not pricings:
+        return []
+
     lowest_pricing = _get_lowest_price(pricings)
     fastest_pricing = _get_fastest_price(pricings)
 
