@@ -91,16 +91,24 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             try:
                 bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
                 bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
-                pricings = API_booking_quotes.objects.filter(
+                quote_set = API_booking_quotes.objects.filter(
                     fk_booking_id=bok_1.pk_header_id
                 )
 
                 result = BOK_1_Serializer(bok_1).data
                 result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
 
+                # Select best quotes(fastest, lowest)
+                if quote_set.exists() and quote_set.count() > 1:
+                    best_quotes = select_best_options(pricings=quote_set)
+                    logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+
                 # Set Express or Standard
-                if pricings:
-                    json_results = SimpleQuoteSerializer(pricings, many=True).data
+                if best_quotes:
+                    json_results = SimpleQuoteSerializer(best_quotes, many=True).data
+                    json_results = push_operations.beautify_eta(
+                        json_results, best_quotes
+                    )
 
                     if len(json_results) == 1:
                         json_results[0]["service_name"] = "Standard"
@@ -110,6 +118,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
                         ):
                             json_results[0]["service_name"] = "Express"
                             json_results[1]["service_name"] = "Standard"
+                            json_results = [json_results[1], json_results[0]]
                         else:
                             json_results[1]["service_name"] = "Express"
                             json_results[0]["service_name"] = "Standard"
@@ -553,6 +562,13 @@ def push_boks(request):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
                     datetime.now() + timedelta(days=7)
                 )[:10]
+
+            bok_1["b_057_b_del_address_state"] = bok_1[
+                "b_057_b_del_address_state"
+            ].upper()
+            bok_1["b_031_b_pu_address_state"] = bok_1[
+                "b_031_b_pu_address_state"
+            ].upper()
         else:
             bok_1["success"] = dme_constants.BOK_SUCCESS_2
 
@@ -778,7 +794,7 @@ def partial_pricing(request):
         "de_To_Address_Street_1": "initial_DE_street_1",
         "de_To_Address_Street_2": "",
         "de_To_Address_Country": "Australia",
-        "de_To_Address_PostalCode": de_postal_code,
+        "de_To_Address_PostalCode": de_postal_code.upper(),
         "de_To_Address_State": de_state,
         "de_To_Address_Suburb": de_suburb,
         "client_warehouse_code": warehouse.client_warehouse_code,
