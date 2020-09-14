@@ -437,10 +437,10 @@ def push_boks(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Generate `client_booking_id`
-        if "Plum" in client_name and "_sapb1" in user.username:
-            client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
-            bok_1["client_booking_id"] = client_booking_id
+    # Generate `client_booking_id` for SAPB1
+    if "Plum" in client_name and "_sapb1" in user.username:
+        client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
+        bok_1["client_booking_id"] = client_booking_id
 
     # Save
     try:
