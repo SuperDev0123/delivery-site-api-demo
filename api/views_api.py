@@ -563,6 +563,27 @@ def push_boks(request):
                     datetime.now() + timedelta(days=7)
                 )[:10]
 
+            # if not "b_059_b_del_address_postalcode" in bok_1 or (
+            #     "b_059_b_del_address_postalcode" in bok_1
+            #     and not bok_1["b_059_b_del_address_postalcode"]
+            # ):
+
+            # # Find `Suburb` and `State`
+
+            # de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+            # addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
+
+            # if not addresses.exists():
+            #     message = "Delivery PostalCode is not valid"
+            #     return Response(
+            #         {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+            #     )
+            # else:
+            #     de_suburb = addresses[0].suburb
+            #     de_state = addresses[0].state
+
+            # if
+
             bok_1["b_057_b_del_address_state"] = bok_1[
                 "b_057_b_del_address_state"
             ].upper()
@@ -583,6 +604,15 @@ def push_boks(request):
                 ]
                 bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
                 bok_2["booking_line"]["success"] = bok_1["success"]
+                bok_2["booking_line"]["l_001_type_of_packaging"] = (
+                    "Carton"
+                    if not "l_001_type_of_packaging" in bok_2["booking_line"]
+                    or (
+                        "l_001_type_of_packaging" in bok_2["booking_line"]
+                        and not bok_2["booking_line"]["l_001_type_of_packaging"]
+                    )
+                    else bok_2["booking_line"]["l_001_type_of_packaging"]
+                )
 
                 bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
                 if bok_2_serializer.is_valid():
@@ -719,10 +749,13 @@ def push_boks(request):
                 return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
         else:
             logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
-            return Response(bok_1_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"success": False, "errors": bok_1_serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
     except Exception as e:
         logger.info(f"@889 BOKS API Error - {e}")
-        trace_error.print()
+        # trace_error.print()
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -804,7 +837,17 @@ def partial_pricing(request):
 
     booking_lines = []
     for bok_2 in bok_2s:
+        e_type_of_packaging = (
+            "Carton"
+            if not "l_001_type_of_packaging" in bok_2["booking_line"]
+            or (
+                "l_001_type_of_packaging" in bok_2["booking_line"]
+                and not bok_2["booking_line"]["l_001_type_of_packaging"]
+            )
+            else bok_2["booking_line"]["l_001_type_of_packaging"]
+        )
         booking_line = {
+            "e_type_of_packaging": e_type_of_packaging,
             "fk_booking_id": bok_1["pk_header_id"],
             "e_qty": bok_2["booking_line"]["l_002_qty"],
             "e_item": "initial_item",
