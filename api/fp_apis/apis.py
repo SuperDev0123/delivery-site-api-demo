@@ -910,7 +910,11 @@ def get_label(request, fp_name):
             booking.z_label_url = z_label_url
             booking.save()
 
-            if not fp_name.lower() in ["startrack"]:
+            # Do not send email when booking is `Rebooked`
+            if (
+                not fp_name.lower() in ["startrack"]
+                and not "Rebooked" in booking.b_status
+            ):
                 # Send email when GET_LABEL
                 email_template_name = "General Booking"
 
