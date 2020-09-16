@@ -30,7 +30,6 @@ from .payload_builder import *
 from .self_pricing import get_pricing
 from .utils import (
     get_dme_status_from_fp_status,
-    get_account_code_key,
     auto_select_pricing,
 )
 from .response_parser import *
@@ -38,6 +37,7 @@ from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from .build_label.dhl import build_dhl_label
 from .operations.tracking import update_booking_with_tracking_result
+from .constants import FP_CREDENTIALS, BUILT_IN_PRICINGS
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -68,16 +68,7 @@ def tracking(request, fp_name):
 
     try:
         booking = Bookings.objects.get(id=booking_id)
-        if fp_name.lower() in ["hunter"]:
-            account_code_key = get_account_code_key(booking, fp_name)
-
-            if not account_code_key:
-                logger.info(f"#501 ERROR: {booking.b_error_Capture}")
-                return JsonResponse({"message": booking.b_error_Capture}, status=400)
-
-            payload = get_tracking_payload(booking, fp_name, account_code_key)
-        else:
-            payload = get_tracking_payload(booking, fp_name)
+        payload = get_tracking_payload(booking, fp_name)
 
         logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
@@ -141,6 +132,7 @@ def book(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
+        _fp_name = fp_name.lower()
 
         try:
             booking = Bookings.objects.get(id=booking_id)
@@ -150,18 +142,7 @@ def book(request, fp_name):
                 return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
 
             try:
-                if fp_name.lower() in ["hunter"]:
-                    account_code_key = get_account_code_key(booking, fp_name)
-
-                    if not account_code_key:
-                        return JsonResponse(
-                            {"message": f"#701 Error: {booking.b_error_Capture}"},
-                            status=400,
-                        )
-
-                    payload = get_book_payload(booking, fp_name, account_code_key)
-                else:
-                    payload = get_book_payload(booking, fp_name)
+                payload = get_book_payload(booking, fp_name)
             except Exception as e:
                 trace_error.print()
                 logger.info(f"#401 - Error while build payload: {e}")
@@ -183,7 +164,7 @@ def book(request, fp_name):
 
             if (
                 response.status_code == 500
-                and fp_name.lower() == "startrack"
+                and _fp_name == "startrack"
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
@@ -253,17 +234,15 @@ def book(request, fp_name):
                     ).save()
 
                     # Save Label for Hunter
-                    create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
+                    create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
                         file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
 
                         if IS_PRODUCTION:
-                            file_url = (
-                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
-                            )
+                            file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
                         else:
-                            file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+                            file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
 
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
@@ -286,11 +265,9 @@ def book(request, fp_name):
                         file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
 
                         if IS_PRODUCTION:
-                            file_url = (
-                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
-                            )
+                            file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
                         else:
-                            file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+                            file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
 
                         with open(file_url, "wb") as f:
                             f.write(base64.b64decode(json_label_data["Label"]))
@@ -724,6 +701,7 @@ def get_label(request, fp_name):
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
+        _fp_name = fp_name.lower()
 
         error_msg = pre_check_label(booking)
 
@@ -731,7 +709,7 @@ def get_label(request, fp_name):
             return JsonResponse({"message": error_msg}, status=400)
 
         payload = {}
-        if fp_name.lower() in ["startrack"]:
+        if _fp_name in ["startrack"]:
             try:
                 payload = get_create_label_payload(booking, fp_name)
 
@@ -763,7 +741,7 @@ def get_label(request, fp_name):
                 error_msg = s0
                 _set_error(booking, error_msg)
                 return JsonResponse({"message": error_msg}, status=400)
-        elif fp_name.lower() in ["tnt", "sendle"]:
+        elif _fp_name in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
         try:
             logger.info(f"### Payload ({fp_name} get_label): {payload}")
@@ -774,12 +752,12 @@ def get_label(request, fp_name):
                 json_data is None
                 or (
                     json_data is not None
-                    and fp_name.lower() == "startrack"
+                    and _fp_name == "startrack"
                     and json_data["labels"][0]["status"] == "PENDING"
                 )
                 or (
                     json_data is not None
-                    and fp_name.lower() == "tnt"
+                    and _fp_name == "tnt"
                     and json_data["anyType"]["Status"] != "SUCCESS"
                 )
             ):
@@ -787,7 +765,7 @@ def get_label(request, fp_name):
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
 
-                if fp_name.lower() in ["sendle"]:
+                if _fp_name in ["sendle"]:
                     res_content = response.content.decode("utf8")
 
                 json_data = json.loads(res_content)
@@ -796,28 +774,28 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.info(f"### Response ({fp_name} get_label): {s0}")
 
-            if fp_name.lower() in ["startrack"]:
+            if _fp_name in ["startrack"]:
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
-            elif fp_name.lower() in ["tnt", "sendle"]:
+            elif _fp_name in ["tnt", "sendle"]:
                 try:
-                    if fp_name.lower() == "tnt":
+                    if _fp_name == "tnt":
                         label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
-                    elif fp_name.lower() == "sendle":
+                    elif _fp_name == "sendle":
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
-                    z_label_url = f"{fp_name.lower()}_au/{file_name}"
+                    z_label_url = f"{_fp_name}_au/{file_name}"
 
                     if settings.ENV == "prod":
                         label_url = f"/opt/s3_public/pdfs/{z_label_url}"
                     else:
                         label_url = f"./static/pdfs/{z_label_url}"
 
-                    create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
+                    create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
 
-                    if fp_name.lower() == "tnt":
+                    if _fp_name == "tnt":
                         with open(label_url, "wb") as f:
                             f.write(label_data)
                             f.close()
@@ -835,17 +813,14 @@ def get_label(request, fp_name):
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
 
-            elif fp_name.lower() in ["dhl"]:
+            elif _fp_name in ["dhl"]:
                 z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
             booking.save()
 
             # Do not send email when booking is `Rebooked`
-            if (
-                not fp_name.lower() in ["startrack"]
-                and not "Rebooked" in booking.b_status
-            ):
+            if not _fp_name in ["startrack"] and not "Rebooked" in booking.b_status:
                 # Send email when GET_LABEL
                 email_template_name = "General Booking"
 
@@ -856,7 +831,7 @@ def get_label(request, fp_name):
                     booking.pk, email_template_name, request.user.username
                 )
 
-            if not fp_name.lower() in ["sendle"]:
+            if not _fp_name in ["sendle"]:
                 Log(
                     request_payload=payload,
                     request_status="SUCCESS",
@@ -880,7 +855,7 @@ def get_label(request, fp_name):
 
             error_msg = s0
 
-            if fp_name.lower() in ["tnt"]:
+            if _fp_name in ["tnt"]:
                 error_msg = json_data["errorMessage"]
 
             _set_error(booking, error_msg)
@@ -968,6 +943,7 @@ def get_order_summary(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_ids = body["bookingIds"]
+        _fp_name = fp_name.lower()
 
         try:
             booking = Bookings.objects.get(id=booking_ids[0])
@@ -988,11 +964,11 @@ def get_order_summary(request, fp_name):
                 file_name = f"biopak_manifest_{str(booking.vx_fp_order_id)}_{str(datetime.now())}.pdf"
 
                 if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
                 else:
-                    file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
 
-                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
+                create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
                 with open(file_url, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
                     f.close()
@@ -1001,7 +977,7 @@ def get_order_summary(request, fp_name):
 
                 manifest_timestamp = datetime.now()
                 for booking in bookings:
-                    booking.z_manifest_url = f"{fp_name.lower()}_au/{file_name}"
+                    booking.z_manifest_url = f"{_fp_name}_au/{file_name}"
                     booking.manifest_timestamp = manifest_timestamp
                     booking.save()
 
@@ -1044,6 +1020,7 @@ def pod(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
+        _fp_name = fp_name.lower()
     except SyntaxError:
         trace_error.print()
         return JsonResponse({"message": "Booking id is required"}, status=400)
@@ -1055,17 +1032,9 @@ def pod(request, fp_name):
         return JsonResponse({"message": str(e)}, status=400)
 
     try:
-        if fp_name.lower() in ["hunter"]:
-            account_code_key = get_account_code_key(booking, fp_name)
-
-            if not account_code_key:
-                return JsonResponse({"message": booking.b_error_Capture}, status=400)
-
-            payload = get_pod_payload(booking, fp_name, account_code_key)
-        else:
-            payload = get_pod_payload(booking, fp_name)
-
+        payload = get_pod_payload(booking, fp_name)
         logger.info(f"### Payload ({fp_name} POD): {payload}")
+
         url = DME_LEVEL_API_URL + "/pod/fetchpod"
         response = requests.post(url, params={}, json=payload)
         res_content = response.content.decode("utf8").replace("'", '"')
@@ -1073,7 +1042,7 @@ def pod(request, fp_name):
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.info(f"### Response ({fp_name} POD): {s0}")
 
-        if fp_name.lower() in ["hunter"]:
+        if _fp_name in ["hunter"]:
             try:
                 podData = json_data[0]["podImage"]
             except KeyError as e:
@@ -1093,19 +1062,19 @@ def pod(request, fp_name):
 
         file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
 
-        file_name += ".jpeg" if fp_name.lower() in ["hunter"] else ".png"
+        file_name += ".jpeg" if _fp_name in ["hunter"] else ".png"
 
         if IS_PRODUCTION:
-            file_url = f"/opt/s3_public/imgs/{fp_name.lower()}_au/{file_name}"
+            file_url = f"/opt/s3_public/imgs/{_fp_name}_au/{file_name}"
         else:
             file_url = f"./static/imgs/{file_name}"
 
-        create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
+        create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
         f = open(file_url, "wb")
         f.write(base64.b64decode(podData))
         f.close()
 
-        booking.z_pod_url = f"{fp_name.lower()}_au/{file_name}"
+        booking.z_pod_url = f"{_fp_name}_au/{file_name}"
         booking.save()
 
         # POD Email
@@ -1128,6 +1097,7 @@ def pod(request, fp_name):
 @permission_classes((AllowAny,))
 def reprint(request, fp_name):
     try:
+        _fp_name = fp_name.lower()
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
 
@@ -1151,11 +1121,11 @@ def reprint(request, fp_name):
                 file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
 
                 if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
                 else:
-                    file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+                    file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
 
-                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
+                create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
                 with open(file_url, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
@@ -1233,127 +1203,130 @@ def pricing(request):
 
     try:
         for fp_name in fp_names:
-            if (
-                fp_name.lower() not in ACCOUNT_CODES
-                and fp_name.lower() not in BUILT_IN_PRICINGS
-            ):
+            _fp_name = fp_name.lower()
+            if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
                 return JsonResponse({"message": f"Not supported FP"}, status=400)
-            elif fp_name.lower() in ACCOUNT_CODES:
-                for account_code_key in ACCOUNT_CODES[fp_name.lower()]:
-                    logger.info(
-                        f"#905 INFO Pricing - {fp_name.lower()}, {account_code_key}"
-                    )
 
-                    # Allow live pricing credentials only on PROD
-                    if settings.ENV == "prod" and "test" in account_code_key:
-                        continue
+            if _fp_name in FP_CREDENTIALS:
+                for client_key in FP_CREDENTIALS[_fp_name].keys():
+                    logger.info(f"#905 INFO Pricing - {_fp_name}, {client_key}")
 
-                    if (
-                        "SWYTEMPBUN" in client_warehouse_code
-                        and not "bunnings" in account_code_key
-                    ):
-                        continue
-                    elif (
-                        not "SWYTEMPBUN" in client_warehouse_code
-                        and "bunnings" in account_code_key
-                    ):
-                        continue
+                    for key in FP_CREDENTIALS[_fp_name][client_key].keys():
+                        # Allow live pricing credentials only on PROD
+                        if settings.ENV == "prod" and "test" in key:
+                            continue
 
-                    payload = get_pricing_payload(
-                        booking, fp_name.lower(), account_code_key, booking_lines
-                    )
+                        if (
+                            "SWYTEMPBUN" in client_warehouse_code
+                            and not "bunnings" in key
+                        ):
+                            continue
+                        elif (
+                            not "SWYTEMPBUN" in client_warehouse_code
+                            and "bunnings" in key
+                        ):
+                            continue
 
-                    if not payload:
-                        continue
+                        account_detail = FP_CREDENTIALS[_fp_name][client_key][key]
+                        payload = get_pricing_payload(
+                            booking, _fp_name, account_detail, booking_lines
+                        )
 
-                    logger.info(f"### Payload ({fp_name.upper()} PRICING): {payload}")
-                    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+                        if not payload:
+                            continue
 
-                    try:
-                        response = requests.post(url, params={}, json=payload)
+                        logger.info(
+                            f"### Payload ({fp_name.upper()} PRICING): {payload}"
+                        )
+                        url = DME_LEVEL_API_URL + "/pricing/calculateprice"
 
-                        res_content = response.content.decode("utf8").replace("'", '"')
-                        json_data = json.loads(res_content)
-                        s0 = json.dumps(
-                            json_data, indent=2, sort_keys=True
-                        )  # Just for visual
-                        logger.info(f"### Response ({fp_name.upper()} PRICING): {s0}")
+                        try:
+                            response = requests.post(url, params={}, json=payload)
 
-                        if not is_pricing_only:
-                            Log.objects.create(
-                                request_payload=payload,
-                                request_status="SUCCESS",
-                                request_type=f"{fp_name.upper()} PRICING",
-                                response=res_content,
-                                fk_booking_id=booking.id,
+                            res_content = response.content.decode("utf8").replace(
+                                "'", '"'
+                            )
+                            json_data = json.loads(res_content)
+                            s0 = json.dumps(
+                                json_data, indent=2, sort_keys=True
+                            )  # Just for visual
+                            logger.info(
+                                f"### Response ({fp_name.upper()} PRICING): {s0}"
                             )
 
-                        error = capture_errors(
-                            response,
-                            booking,
-                            fp_name.lower(),
-                            payload["spAccountDetails"]["accountCode"],
-                        )
+                            if not is_pricing_only:
+                                Log.objects.create(
+                                    request_payload=payload,
+                                    request_status="SUCCESS",
+                                    request_type=f"{fp_name.upper()} PRICING",
+                                    response=res_content,
+                                    fk_booking_id=booking.id,
+                                )
 
-                        parse_results = parse_pricing_response(
-                            response, fp_name.lower(), booking
-                        )
+                            error = capture_errors(
+                                response,
+                                booking,
+                                _fp_name,
+                                payload["spAccountDetails"]["accountCode"],
+                            )
 
-                        if parse_results and not "error" in parse_results:
-                            for parse_result in parse_results:
-                                parse_result["account_code"] = payload[
-                                    "spAccountDetails"
-                                ]["accountCode"]
+                            parse_results = parse_pricing_response(
+                                response, _fp_name, booking
+                            )
 
-                                try:
-                                    api_booking_quote = API_booking_quotes.objects.get(
-                                        fk_booking_id=booking.pk_booking_id,
-                                        fk_freight_provider_id=parse_result[
-                                            "fk_freight_provider_id"
-                                        ].upper(),
-                                        service_name=parse_result["service_name"],
-                                        account_code=payload["spAccountDetails"][
-                                            "accountCode"
-                                        ],
-                                    )
-                                    serializer = ApiBookingQuotesSerializer(
-                                        api_booking_quote, data=parse_result
-                                    )
+                            if parse_results and not "error" in parse_results:
+                                for parse_result in parse_results:
+                                    parse_result["account_code"] = payload[
+                                        "spAccountDetails"
+                                    ]["accountCode"]
 
                                     try:
-                                        if serializer.is_valid():
-                                            serializer.save()
-                                    except Exception as e:
+                                        api_booking_quote = API_booking_quotes.objects.get(
+                                            fk_booking_id=booking.pk_booking_id,
+                                            fk_freight_provider_id=parse_result[
+                                                "fk_freight_provider_id"
+                                            ].upper(),
+                                            service_name=parse_result["service_name"],
+                                            account_code=payload["spAccountDetails"][
+                                                "accountCode"
+                                            ],
+                                        )
+                                        serializer = ApiBookingQuotesSerializer(
+                                            api_booking_quote, data=parse_result
+                                        )
+
+                                        try:
+                                            if serializer.is_valid():
+                                                serializer.save()
+                                        except Exception as e:
+                                            trace_error.print()
+                                            logger.info("Exception: ", e)
+
+                                        api_booking_quote.save()
+                                    except API_booking_quotes.DoesNotExist as e:
                                         trace_error.print()
-                                        logger.info("Exception: ", e)
+                                        serializer = ApiBookingQuotesSerializer(
+                                            data=parse_result
+                                        )
 
-                                    api_booking_quote.save()
-                                except API_booking_quotes.DoesNotExist as e:
-                                    trace_error.print()
-                                    serializer = ApiBookingQuotesSerializer(
-                                        data=parse_result
-                                    )
+                                        try:
+                                            if serializer.is_valid():
+                                                serializer.save()
+                                            else:
+                                                logger.info(
+                                                    f"@401 Serializer error: {serializer.errors}"
+                                                )
+                                        except Exception as e:
+                                            trace_error.print()
+                                            logger.info(f"@402 Exception: {e}")
 
-                                    try:
-                                        if serializer.is_valid():
-                                            serializer.save()
-                                        else:
-                                            logger.info(
-                                                f"@401 Serializer error: {serializer.errors}"
-                                            )
-                                    except Exception as e:
-                                        trace_error.print()
-                                        logger.info(f"@402 Exception: {e}")
+                        except Exception as e:
+                            trace_error.print()
+                            logger.info(f"@402 Exception: {e}")
 
-                    except Exception as e:
-                        trace_error.print()
-                        logger.info(f"@402 Exception: {e}")
-
-            elif fp_name.lower() in BUILT_IN_PRICINGS:
-                results = get_pricing(fp_name.lower(), booking)
-                parse_results = parse_pricing_response(
-                    results, fp_name.lower(), booking, True
-                )
+            elif _fp_name in BUILT_IN_PRICINGS:
+                results = get_pricing(_fp_name, booking)
+                parse_results = parse_pricing_response(results, _fp_name, booking, True)
 
                 for parse_result in parse_results:
                     try:

@@ -5,7 +5,8 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
-from .constants import FP_UOM
+from .constants import FP_CREDENTIALS, FP_UOM
+
 
 logger = logging.getLogger("dme_api")
 
@@ -62,44 +63,6 @@ def get_status_category_from_status(status):
         logger.info(f"#819 Status Category not found!: {status}")
         # print('Exception: ', e)
         return ""
-
-
-def get_account_code_key(booking, fp_name):
-    from .payload_builder import ACCOUNT_CODES
-
-    # Exceptional case for Bunnings
-    if (
-        "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code
-        and fp_name.lower() == "hunter"
-    ):
-        if booking.pu_Address_State == "QLD":
-            return "live_bunnings_0"
-        elif booking.pu_Address_State == "NSW":
-            return "live_bunnings_1"
-        else:
-            booking.b_errorCapture = f"Not supported State"
-            booking.save()
-            return None
-
-    if fp_name.lower() not in ACCOUNT_CODES:
-        booking.b_errorCapture = f"Not supported FP"
-        booking.save()
-        return None
-    elif booking.api_booking_quote:
-        account_code = booking.api_booking_quote.account_code
-        account_code_key = None
-
-        for key in ACCOUNT_CODES[fp_name.lower()]:
-            if ACCOUNT_CODES[fp_name.lower()][key] == account_code:
-                account_code_key = key
-                return account_code_key
-
-        if not account_code_key:
-            booking.b_errorCapture = f"Not supported ACCOUNT CODE"
-            booking.save()
-            return None
-    elif not booking.api_booking_quote:
-        return "live_0"
 
 
 # Get ETD of Pricing in `hours` unit

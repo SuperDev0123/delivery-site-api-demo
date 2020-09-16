@@ -5,7 +5,7 @@ import traceback
 from api.models import *
 from api.common.ratio import _get_dim_amount, _get_weight_amount, _m3_to_kg
 from .response_parser import parse_pricing_response
-from .payload_builder import BUILT_IN_PRICINGS
+from .constants import BUILT_IN_PRICINGS
 
 logger = logging.getLogger("dme_api")
 PALLETS = ["pallet", "plt"]
