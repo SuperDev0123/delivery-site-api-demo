@@ -735,22 +735,32 @@ def push_boks(request):
                             json_results[1]["service_name"] = "Express"
                             json_results[0]["service_name"] = "Standard"
 
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "results": json_results,
-                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
-                        "orderPageUrl": f"http://{settings.WEB_SITE_IP}/order/{bok_1['client_booking_id']}/",
-                        "statusPageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/",
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
+                if json_results:
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "results": json_results,
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
+                            "orderPageUrl": f"http://{settings.WEB_SITE_IP}/order/{bok_1['client_booking_id']}/",
+                            "statusPageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/",
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                else:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "results": json_results,
+                            "message": "Didn't get pricings due to wrong suburb and state",
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
             else:
                 return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
         else:
             logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
             return Response(
-                {"success": False, "errors": bok_1_serializer.errors},
+                {"success": False, "message": bok_1_serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
     except Exception as e:
@@ -892,7 +902,16 @@ def partial_pricing(request):
                 json_results[1]["service_name"] = "Express"
                 json_results[0]["service_name"] = "Standard"
 
-    return Response({"success": True, "results": json_results})
+    if json_results:
+        return Response({"success": True, "results": json_results})
+    else:
+        return Response(
+            {
+                "success": False,
+                "results": json_results,
+                "message": "Didn't get pricings due to wrong suburb and state",
+            }
+        )
 
 
 @api_view(["GET"])
