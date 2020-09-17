@@ -1921,7 +1921,7 @@ class Booking_lines_data(models.Model):
     itemFaultDescription = models.TextField(
         verbose_name=_("Item Description"), max_length=200, blank=True, null=True
     )
-    insuranceValueEach = models.IntegerField(
+    insuranceValueEach = models.FloatField(
         verbose_name=_("Insurance Value Each"), blank=True, null=True
     )
     gap_ra = models.TextField(
@@ -2579,7 +2579,7 @@ class BOK_3_lines_data(models.Model):
     ld_005_item_serial_number = models.CharField(
         verbose_name=_("Item Serial Number"), max_length=40, blank=True, null=True
     )
-    ld_006_insurance_value = models.IntegerField(
+    ld_006_insurance_value = models.FloatField(
         verbose_name=_("Insurance Value"), blank=True, null=True
     )
     ld_007_gap_ra = models.TextField(

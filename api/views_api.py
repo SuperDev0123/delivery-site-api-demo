@@ -14,6 +14,7 @@ from django.db import transaction
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     IsAuthenticated,
     AllowAny,
@@ -315,6 +316,11 @@ def push_boks(request):
     json_results = []
     logger.info(f"@880 Push request payload - {boks_json}")
 
+    # Required fields
+    if not bok_1.get("b_059_b_del_address_postalcode"):
+        message = "'b_059_b_del_address_postalcode' is required."
+        raise ValidationError({"code": "missing_param", "description": message})
+
     # Find `Client`
     try:
         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
@@ -367,6 +373,14 @@ def push_boks(request):
     if request.method == "PUT":
         if "Plum" in client_name:
             pk_header_id = None
+
+            if not bok_1.get("b_058_b_del_address_suburb"):
+                message = "'b_058_b_del_address_suburb' is required."
+                raise ValidationError({"code": "missing_param", "description": message})
+
+            if not bok_1.get("b_057_b_del_address_state"):
+                message = "'b_057_b_del_address_state' is required."
+                raise ValidationError({"code": "missing_param", "description": message})
 
             if "_sapb1" in user.username:
                 old_bok_1s = BOK_1_headers.objects.filter(
@@ -466,123 +480,82 @@ def push_boks(request):
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
             bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
-            if not "b_000_1_b_clientreference_ra_numbers" in bok_1 or (
-                "b_000_1_b_clientreference_ra_numbers" in bok_1
-                and not bok_1["b_000_1_b_clientreference_ra_numbers"]
-            ):
+            if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
                 bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
 
-            if not "b_003_b_service_name" in bok_1 or (
-                "b_003_b_service_name" in bok_1 and not bok_1["b_003_b_service_name"]
-            ):
+            if not bok_1.get("b_003_b_service_name"):
                 bok_1["b_003_b_service_name"] = "RF"
 
-            if not "b_028_b_pu_company" in bok_1 or (
-                "b_028_b_pu_company" in bok_1 and not bok_1["b_028_b_pu_company"]
-            ):
-                bok_1["b_028_b_pu_company"] = warehouse.warehousename
+            if not bok_1.get("b_028_b_pu_company"):
+                bok_1["b_028_b_pu_company"] = "PU_PLUM_company"
 
-            if not "b_035_b_pu_contact_full_name" in bok_1 or (
-                "b_035_b_pu_contact_full_name" in bok_1
-                and not bok_1["b_035_b_pu_contact_full_name"]
-            ):
-                bok_1["b_035_b_pu_contact_full_name"] = "initial_PU_contact"
+            if not bok_1.get("b_035_b_pu_contact_full_name"):
+                bok_1["b_035_b_pu_contact_full_name"] = "PU_PLUM"
 
-            if not "b_037_b_pu_email" in bok_1 or (
-                "b_037_b_pu_email" in bok_1 and not bok_1["b_037_b_pu_email"]
-            ):
-                bok_1["b_037_b_pu_email"] = "initial_pu@email.com"
+            if not bok_1.get("b_037_b_pu_email"):
+                bok_1["b_037_b_pu_email"] = "pu_plum@email.com"
 
-            if not "b_038_b_pu_phone_main" in bok_1 or (
-                "b_038_b_pu_phone_main" in bok_1 and not bok_1["b_038_b_pu_phone_main"]
-            ):
+            if not bok_1.get("b_038_b_pu_phone_main"):
                 bok_1["b_038_b_pu_phone_main"] = "419294339"
 
-            if not "b_029_b_pu_address_street_1" in bok_1 or (
-                "b_029_b_pu_address_street_1" in bok_1
-                and not bok_1["b_029_b_pu_address_street_1"]
-            ):
+            if not bok_1.get("b_029_b_pu_address_street_1"):
                 bok_1["b_029_b_pu_address_street_1"] = warehouse.warehouse_address1
 
-            if not "b_030_b_pu_address_street_2" in bok_1 or (
-                "b_030_b_pu_address_street_2" in bok_1
-                and not bok_1["b_030_b_pu_address_street_2"]
-            ):
+            if not bok_1.get("b_030_b_pu_address_street_2"):
                 bok_1["b_030_b_pu_address_street_2"] = warehouse.warehouse_address2
 
-            if not "b_034_b_pu_address_country" in bok_1 or (
-                "b_034_b_pu_address_country" in bok_1
-                and not bok_1["b_034_b_pu_address_country"]
-            ):
+            if not bok_1.get("b_034_b_pu_address_country"):
                 bok_1["b_034_b_pu_address_country"] = "Australia"
 
-            if not "b_033_b_pu_address_postalcode" in bok_1 or (
-                "b_033_b_pu_address_postalcode" in bok_1
-                and not bok_1["b_033_b_pu_address_postalcode"]
-            ):
+            if not bok_1.get("b_033_b_pu_address_postalcode"):
                 bok_1["b_033_b_pu_address_postalcode"] = warehouse.warehouse_postal_code
 
-            if not "b_031_b_pu_address_state" in bok_1 or (
-                "b_031_b_pu_address_state" in bok_1
-                and not bok_1["b_031_b_pu_address_state"]
-            ):
+            if not bok_1.get("b_031_b_pu_address_state"):
                 bok_1["b_031_b_pu_address_state"] = warehouse.warehouse_state
 
-            if not "b_032_b_pu_address_suburb" in bok_1 or (
-                "b_032_b_pu_address_suburb" in bok_1
-                and not bok_1["b_032_b_pu_address_suburb"]
-            ):
+            if not bok_1.get("b_032_b_pu_address_suburb"):
                 bok_1["b_032_b_pu_address_suburb"] = warehouse.warehouse_suburb
 
-            if not "b_054_b_del_company" in bok_1 or (
-                "b_054_b_del_company" in bok_1 and not bok_1["b_054_b_del_company"]
-            ):
-                bok_1["b_054_b_del_company"] = "initial_DE_company"
+            if not bok_1.get("b_054_b_del_company"):
+                bok_1["b_054_b_del_company"] = "DE_PLUM_company"
 
-            if not "b_061_b_del_contact_full_name" in bok_1 or (
-                "b_061_b_del_contact_full_name" in bok_1
-                and not bok_1["b_061_b_del_contact_full_name"]
-            ):
-                bok_1["b_061_b_del_contact_full_name"] = "initial_DE_contact"
+            if not bok_1.get("b_061_b_del_contact_full_name"):
+                bok_1["b_061_b_del_contact_full_name"] = "DE_PLUM"
 
-            if not "b_063_b_del_email" in bok_1 or (
-                "b_063_b_del_email" in bok_1 and not bok_1["b_063_b_del_email"]
-            ):
-                bok_1["b_063_b_del_email"] = "initial_de@email.com"
+            if not bok_1.get("b_063_b_del_email"):
+                bok_1["b_063_b_del_email"] = "de_plum@email.com"
 
-            if not "b_064_b_del_phone_main" in bok_1 or (
-                "b_064_b_del_phone_main" in bok_1 and not bok_1["b_063_b_del_email"]
-            ):
+            if not bok_1.get("b_064_b_del_phone_main"):
                 bok_1["b_064_b_del_phone_main"] = "419294339"
 
-            if not "b_021_b_pu_avail_from_date" in bok_1 or (
-                "b_021_b_pu_avail_from_date" in bok_1
-                and not bok_1["b_021_b_pu_avail_from_date"]
-            ):
+            if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
                     datetime.now() + timedelta(days=7)
                 )[:10]
 
-            # if not "b_059_b_del_address_postalcode" in bok_1 or (
-            #     "b_059_b_del_address_postalcode" in bok_1
-            #     and not bok_1["b_059_b_del_address_postalcode"]
-            # ):
+            # Find `Suburb` and `State`
+            if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
+                "b_058_b_del_address_suburb"
+            ):
+                logger.info(f"@870 PUSH API - auto populating state and subrub...")
+                de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+                addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
-            # # Find `Suburb` and `State`
+                if not addresses.exists():
+                    message = "Delivery PostalCode is not valid"
+                    return Response(
+                        {"success": False, "message": message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    de_suburb = addresses[0].suburb
+                    de_state = addresses[0].state
 
-            # de_postal_code = bok_1["b_059_b_del_address_postalcode"]
-            # addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
+                if not bok_1.get("b_057_b_del_address_state"):
+                    bok_1["b_057_b_del_address_state"] = de_state
 
-            # if not addresses.exists():
-            #     message = "Delivery PostalCode is not valid"
-            #     return Response(
-            #         {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-            #     )
-            # else:
-            #     de_suburb = addresses[0].suburb
-            #     de_state = addresses[0].state
-
-            # if
+                if not bok_1.get("b_058_b_del_address_suburb"):
+                    bok_1["b_058_b_del_address_suburb"] = de_suburb
 
             bok_1["b_057_b_del_address_state"] = bok_1[
                 "b_057_b_del_address_state"
@@ -606,11 +579,7 @@ def push_boks(request):
                 bok_2["booking_line"]["success"] = bok_1["success"]
                 bok_2["booking_line"]["l_001_type_of_packaging"] = (
                     "Carton"
-                    if not "l_001_type_of_packaging" in bok_2["booking_line"]
-                    or (
-                        "l_001_type_of_packaging" in bok_2["booking_line"]
-                        and not bok_2["booking_line"]["l_001_type_of_packaging"]
-                    )
+                    if not bok_2["booking_line"].get("l_001_type_of_packaging")
                     else bok_2["booking_line"]["l_001_type_of_packaging"]
                 )
 
@@ -804,7 +773,12 @@ def partial_pricing(request):
         )
 
     # Find `Suburb` and `State`
-    de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
+
+    if not de_postal_code:
+        message = "'b_059_b_del_address_postalcode' is required."
+        raise ValidationError({"code": "missing_param", "description": message})
+
     addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
     if not addresses.exists():

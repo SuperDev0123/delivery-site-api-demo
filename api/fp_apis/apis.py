@@ -1344,7 +1344,7 @@ def get_pricing(body, booking_id, is_pricing_only):
     #       "Toll",
     #       "Sendle"
     # fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
-    fp_names = ["TNT", "Hunter"]
+    fp_names = ["Hunter"]
     DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:
