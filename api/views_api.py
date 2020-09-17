@@ -319,7 +319,9 @@ def push_boks(request):
     # Required fields
     if not bok_1.get("b_059_b_del_address_postalcode"):
         message = "'b_059_b_del_address_postalcode' is required."
-        raise ValidationError({"code": "missing_param", "description": message})
+        raise ValidationError(
+            {"success": False, "code": "missing_param", "description": message}
+        )
 
     # Find `Client`
     try:
@@ -374,13 +376,13 @@ def push_boks(request):
         if "Plum" in client_name:
             pk_header_id = None
 
-            if not bok_1.get("b_058_b_del_address_suburb"):
-                message = "'b_058_b_del_address_suburb' is required."
-                raise ValidationError({"code": "missing_param", "description": message})
+            # if not bok_1.get("b_058_b_del_address_suburb"):
+            #     message = "'b_058_b_del_address_suburb' is required."
+            #     raise ValidationError({"code": "missing_param", "description": message})
 
-            if not bok_1.get("b_057_b_del_address_state"):
-                message = "'b_057_b_del_address_state' is required."
-                raise ValidationError({"code": "missing_param", "description": message})
+            # if not bok_1.get("b_057_b_del_address_state"):
+            #     message = "'b_057_b_del_address_state' is required."
+            #     raise ValidationError({"code": "missing_param", "description": message})
 
             if "_sapb1" in user.username:
                 old_bok_1s = BOK_1_headers.objects.filter(
@@ -542,7 +544,7 @@ def push_boks(request):
                 addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
                 if not addresses.exists():
-                    message = "Delivery PostalCode is not valid"
+                    message = "Delivery PostalCode is not valid."
                     return Response(
                         {"success": False, "message": message},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -589,7 +591,8 @@ def push_boks(request):
                 else:
                     logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
                     return Response(
-                        bok_2_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                        {"success": False, "message": bok_3_serializer.errors},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
                 # Save bok_3s
@@ -607,7 +610,8 @@ def push_boks(request):
                     else:
                         logger.info(f"@8823 BOKS API Error - {bok_3_serializer.errors}")
                         return Response(
-                            bok_3_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                            {"success": False, "message": bok_3_serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
 
             bok_1_serializer.save()
@@ -777,7 +781,9 @@ def partial_pricing(request):
 
     if not de_postal_code:
         message = "'b_059_b_del_address_postalcode' is required."
-        raise ValidationError({"code": "missing_param", "description": message})
+        raise ValidationError(
+            {"success": False, "code": "missing_param", "description": message}
+        )
 
     addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
