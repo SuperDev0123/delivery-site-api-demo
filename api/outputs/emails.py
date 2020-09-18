@@ -373,29 +373,35 @@ def send_booking_email_using_template(bookingId, emailName, sender):
     # fp1 = open("dme_booking_email_" + emailName + ".html", "w+")
     # fp1.write(html)
 
-    if settings.ENV in ["local", "dev"]:
-        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au", "greatroyalone@outlook.com"]
-    else:
-        to_emails = ["bookings@deliver-me.com.au"]
-
     cc_emails = []
-
-    if booking.pu_Email:
-        to_emails.append(booking.pu_Email)
-    if booking.de_Email:
-        cc_emails.append(booking.de_Email)
-    if booking.pu_email_Group:
-        cc_emails = cc_emails + booking.pu_email_Group.split(",")
-    if booking.de_Email_Group_Emails:
-        cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
-    if booking.booking_Created_For_Email:
-        cc_emails.append(booking.booking_Created_For_Email)
 
     if emailName == "General Booking":
         subject = f"Tempo Freight Booking - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     else:
         subject = f"Tempo {emailName} - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
     mime_type = "html"
+
+    if settings.ENV in ["local", "dev"]:
+        to_emails = [
+            "bookings@deliver-me.com.au",
+            "petew@deliver-me.com.au",
+            "goldj@deliver-me.com.au",
+            "greatroyalone@outlook.com",
+        ]
+        subject = f"FROM TEST SERVER - {subject}"
+    else:
+        to_emails = ["bookings@deliver-me.com.au"]
+
+        if booking.pu_Email:
+            to_emails.append(booking.pu_Email)
+        if booking.de_Email:
+            cc_emails.append(booking.de_Email)
+        if booking.pu_email_Group:
+            cc_emails = cc_emails + booking.pu_email_Group.split(",")
+        if booking.de_Email_Group_Emails:
+            cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
+        if booking.booking_Created_For_Email:
+            cc_emails.append(booking.booking_Created_For_Email)
 
     send_email(to_emails, cc_emails, subject, html, files, mime_type)
 
