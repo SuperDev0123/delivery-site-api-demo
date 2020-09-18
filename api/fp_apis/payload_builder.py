@@ -14,49 +14,9 @@ from .constants import FP_CREDENTIALS, FP_UOM
 logger = logging.getLogger("dme_api")
 
 
-# def get_account_detail(booking, fp_name):
-#     # # Exceptional case for Bunnings
-#     # if (
-#     #     "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code
-#     #     and fp_name.lower() == "hunter"
-#     # ):
-#     #     if booking.pu_Address_State == "QLD":
-#     #         return "live_bunnings_0"
-#     #     elif booking.pu_Address_State == "NSW":
-#     #         return "live_bunnings_1"
-#     #     else:
-#     #         booking.b_errorCapture = f"Not supported State"
-#     #         booking.save()
-#     #         return None
-
-#     if fp_name.lower() not in FP_CREDENTIALS:
-#         booking.b_errorCapture = f"Not supported FP"
-#         booking.save()
-#         return None
-
-#     if not booking.api_booking_quote:
-#         return "live_0"
-#     else:
-#         account_code = booking.api_booking_quote.account_code
-#         account_detail = None
-
-#         for client_key in ACCOUNT_CODES[fp_name.lower()].keys():
-#             for key in FP_CREDENTIALS[fp_name.lower()][client_key].keys():
-#                 if (
-#                     FP_CREDENTIALS[fp_name.lower()][client_key][key]["code"]
-#                     == account_code
-#                 ):
-#                     account_detail = FP_CREDENTIALS[fp_name.lower()][client_key][key]
-#                     return account_detail
-
-#         if not account_detail:
-#             booking.b_errorCapture = f"Not supported ACCOUNT CODE"
-#             booking.save()
-#             return None
-
-
 def get_account_detail(booking, fp_name):
     _fp_name = fp_name.lower()
+    account_detail = None
 
     if fp_name.lower() not in FP_CREDENTIALS:
         booking.b_errorCapture = f"Not supported FP"
@@ -65,43 +25,29 @@ def get_account_detail(booking, fp_name):
 
     if booking.api_booking_quote:
         account_code = booking.api_booking_quote.account_code
-        account_detail = None
 
-        for client_key in ACCOUNT_CODES[_fp_name].keys():
-            for key in FP_CREDENTIALS[_fp_name][client_key].keys():
-                if FP_CREDENTIALS[_fp_name][client_key][key]["code"] == account_code:
-                    account_detail = FP_CREDENTIALS[_fp_name][client_key][key]
-                    return account_detail
+        for client_name in FP_CREDENTIALS[_fp_name].keys():
+            for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+                detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
-        if not account_detail:
-            booking.b_errorCapture = f"Not supported ACCOUNT CODE"
-            booking.save()
-            raise ValidationError(booking.b_errorCapture)
-    # else:
-    #     if settings.ENV in ["local", "dev"]:
-    #         if _fp_name in ["startrack", "allied", "hunter", "sendle"]:
-    #             account_detail = {
-    #                 "accountCode": ACCOUNT_CODES[_fp_name]["test_bed_1"],
-    #                 **KEY_CHAINS[_fp_name]["test_bed_1"],
-    #             }
-    #         elif fp_name.lower() in ["tnt", "capital", "fastway"]:
-    #             account_detail = {
-    #                 "accountCode": ACCOUNT_CODES[_fp_name][account_code_key],
-    #                 **KEY_CHAINS[_fp_name][account_code_key],
-    #             }
-    #     elif settings.ENV in ["prod"]:
-    #         if _fp_name in ["startrack"]:
-    #             account_detail = {
-    #                 "accountCode": ACCOUNT_CODES[_fp_name][client_warehouse_code],
-    #                 **KEY_CHAINS[_fp_name][client_warehouse_code],
-    #             }
-    #         else:
-    #             account_detail = {
-    #                 "accountCode": ACCOUNT_CODES[_fp_name][account_code_key],
-    #                 **KEY_CHAINS[_fp_name][account_code_key],
-    #             }
+                if detail["accountCode"] == account_code:
+                    account_detail = detail
 
-    # return account_detail
+    if _fp_name in ["startrack"] and _b_client_name == "biopak":
+        _b_client_name = booking.b_client_name.lower()
+        _warehouse_code = booking.fk_client_warehouse.client_warehouse_code
+
+        for client_name in FP_CREDENTIALS[_fp_name].keys():
+            for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+                if key == _warehouse_code:
+                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+
+    if not account_detail:
+        booking.b_errorCapture = f"Couldn't find Account Detail"
+        booking.save()
+        raise ValidationError(booking.b_errorCapture)
+    else:
+        return account_detail
 
 
 def get_service_provider(fp_name, upper=True):

@@ -1199,35 +1199,40 @@ def pricing(request):
     #       "Toll",
     #       "Sendle"
     fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+
     DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:
         for fp_name in fp_names:
             _fp_name = fp_name.lower()
+
             if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
                 return JsonResponse({"message": f"Not supported FP"}, status=400)
 
             if _fp_name in FP_CREDENTIALS:
-                for client_key in FP_CREDENTIALS[_fp_name].keys():
-                    logger.info(f"#905 INFO Pricing - {_fp_name}, {client_key}")
+                fp_client_names = FP_CREDENTIALS[_fp_name].keys()
+                b_client_name = booking.b_client_name.lower()
 
-                    for key in FP_CREDENTIALS[_fp_name][client_key].keys():
+                for client_name in fp_client_names:
+                    logger.info(f"#905 INFO Pricing - {_fp_name}, {client_name}")
+
+                    if (
+                        b_client_name in fp_client_names
+                        and b_client_name != client_name
+                    ):
+                        continue
+                    elif b_client_name not in fp_client_names and client_name not in [
+                        "dme",
+                        "test",
+                    ]:
+                        continue
+
+                    for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                         # Allow live pricing credentials only on PROD
                         if settings.ENV == "prod" and "test" in key:
                             continue
 
-                        if (
-                            "SWYTEMPBUN" in client_warehouse_code
-                            and not "bunnings" in key
-                        ):
-                            continue
-                        elif (
-                            not "SWYTEMPBUN" in client_warehouse_code
-                            and "bunnings" in key
-                        ):
-                            continue
-
-                        account_detail = FP_CREDENTIALS[_fp_name][client_key][key]
+                        account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
                         payload = get_pricing_payload(
                             booking, _fp_name, account_detail, booking_lines
                         )
