@@ -478,6 +478,7 @@ def push_boks(request):
 
         if "Plum" in client_name:  # Plum
             bok_1["success"] = dme_constants.BOK_SUCCESS_3
+            bok_1["b_client_name"] = client_name
             bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
             bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
@@ -823,6 +824,7 @@ def partial_pricing(request):
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
+        "b_client_name": client.company_name
     }
 
     booking_lines = []
