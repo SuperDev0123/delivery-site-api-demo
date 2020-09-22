@@ -14,6 +14,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import status
 from django.http import JsonResponse
 from django.conf import settings
 
@@ -27,7 +28,7 @@ from api.utils import get_eta_pu_by, get_eta_de_by
 from api.outputs import emails as email_module
 
 from .payload_builder import *
-from .self_pricing import get_pricing
+from .self_pricing import get_pricing as get_self_pricing
 from .utils import (
     get_dme_status_from_fp_status,
     auto_select_pricing,
@@ -100,29 +101,36 @@ def tracking(request, fp_name):
 
             return JsonResponse(
                 {
-                    "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
-                    "b_status_API": booking.b_status_API,
+                    "message": f"DME status: {booking.b_status},FP status: {booking.b_status_API}",
                     "b_status": booking.b_status,
+                    "b_status_API": booking.b_status_API,
                 },
-                status=200,
+                status=status.HTTP_200_OK,
             )
         except KeyError:
             if "errorMessage" in json_data:
                 error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
                 logger.info(f"#510 ERROR: {error_msg}")
-                return JsonResponse({"message": error_msg}, status=400)
-            trace_error.print()
+            else:
+                error_msg = "Failed Tracking"
 
-            return JsonResponse({"error": "Failed Tracking"}, status=400)
+            trace_error.print()
+            return JsonResponse(
+                {"error": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
     except Bookings.DoesNotExist:
         trace_error.print()
         logger.info(f"#511 ERROR: {e}")
-        return JsonResponse({"message": "Booking not found"}, status=400)
+        return JsonResponse(
+            {"message": "Booking not found"}, status=status.HTTP_400_BAD_REQUEST
+        )
     except Exception as e:
         trace_error.print()
         logger.info(f"#512 ERROR: {e}")
-        return JsonResponse({"message": "Tracking failed"}, status=400)
+        return JsonResponse(
+            {"message": "Tracking failed"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -139,7 +147,10 @@ def book(request, fp_name):
             error_msg = pre_check_book(booking)
 
             if error_msg:
-                return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
+                return JsonResponse(
+                    {"message": f"#700 Error: {error_msg}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             try:
                 payload = get_book_payload(booking, fp_name)
@@ -147,7 +158,8 @@ def book(request, fp_name):
                 trace_error.print()
                 logger.info(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
-                    {"message": f"Error while build payload {str(e)}"}, status=400
+                    {"message": f"Error while build payload {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             logger.info(f"### Payload ({fp_name} book): {payload}")
@@ -327,7 +339,9 @@ def book(request, fp_name):
 
                     error_msg = s0
                     _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg}, status=400)
+                    return JsonResponse(
+                        {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                    )
             elif response.status_code == 400:
                 Log(
                     request_payload=payload,
@@ -346,7 +360,9 @@ def book(request, fp_name):
                 else:
                     error_msg = s0
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
             elif response.status_code == 500:
                 Log(
                     request_payload=payload,
@@ -358,15 +374,21 @@ def book(request, fp_name):
 
                 error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
         except Exception as e:
             trace_error.print()
             error_msg = str(e)
             _set_error(booking, error_msg)
-            return JsonResponse({"message": error_msg}, status=400)
+            return JsonResponse(
+                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
     except SyntaxError as e:
         trace_error.print()
-        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
+        return JsonResponse(
+            {"message": f"SyntaxError: {e}"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -383,7 +405,10 @@ def rebook(request, fp_name):
             error_msg = pre_check_rebook(booking)
 
             if error_msg:
-                return JsonResponse({"message": f"#700 Error: {error_msg}"}, status=400)
+                return JsonResponse(
+                    {"message": f"#700 Error: {error_msg}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             try:
                 payload = get_book_payload(booking, fp_name)
@@ -391,7 +416,8 @@ def rebook(request, fp_name):
                 trace_error.print()
                 logger.info(f"#401 - Error while build payload: {e}")
                 return JsonResponse(
-                    {"message": f"Error while build payload {str(e)}"}, status=400
+                    {"message": f"Error while build payload {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             logger.info(f"### Payload ({fp_name} rebook): {payload}")
@@ -467,7 +493,9 @@ def rebook(request, fp_name):
 
                     error_msg = s0
                     _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg}, status=400)
+                    return JsonResponse(
+                        {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                    )
             elif response.status_code == 400:
                 Log(
                     request_payload=payload,
@@ -486,7 +514,9 @@ def rebook(request, fp_name):
                 else:
                     error_msg = s0
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
             elif response.status_code == 500:
                 Log(
                     request_payload=payload,
@@ -498,15 +528,21 @@ def rebook(request, fp_name):
 
                 error_msg = "DME bot: Tried rebooking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
         except Exception as e:
             trace_error.print()
             error_msg = str(e)
             _set_error(booking, error_msg)
-            return JsonResponse({"message": error_msg}, status=400)
+            return JsonResponse(
+                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
     except SyntaxError as e:
         trace_error.print()
-        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
+        return JsonResponse(
+            {"message": f"SyntaxError: {e}"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -602,13 +638,19 @@ def edit_book(request, fp_name):
 
                 error_msg = s0
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
         except IndexError as e:
             trace_error.print()
-            return JsonResponse({"message": f"IndexError {e}"}, status=400)
+            return JsonResponse(
+                {"message": f"IndexError {e}"}, status=status.HTTP_400_BAD_REQUEST
+            )
     except SyntaxError as e:
         trace_error.print()
-        return JsonResponse({"message": f"SyntaxError {e}"}, status=400)
+        return JsonResponse(
+            {"message": f"SyntaxError {e}"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -653,18 +695,23 @@ def cancel_book(request, fp_name):
                         ).save()
 
                         return JsonResponse(
-                            {"message": "Successfully cancelled book"}, status=200
+                            {"message": "Successfully cancelled book"},
+                            status=status.HTTP_200_OK,
                         )
                     else:
                         if "errorMessage" in json_data:
                             error_msg = json_data["errorMessage"]
                             _set_error(booking, error_msg)
-                            return JsonResponse({"message": error_msg}, status=400)
+                            return JsonResponse(
+                                {"message": error_msg},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
 
                         error_msg = json_data
                         _set_error(booking, error_msg)
                         return JsonResponse(
-                            {"message": "Failed to cancel book"}, status=400
+                            {"message": "Failed to cancel book"},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
                 except KeyError as e:
                     trace_error.print()
@@ -678,19 +725,30 @@ def cancel_book(request, fp_name):
 
                     error_msg = s0
                     _set_error(booking, error_msg)
-                    return JsonResponse({"message": error_msg}, status=400)
+                    return JsonResponse(
+                        {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                    )
             else:
                 error_msg = "Booking is not booked yet"
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
         else:
-            return JsonResponse({"message": "Booking is already cancelled"}, status=400)
+            return JsonResponse(
+                {"message": "Booking is already cancelled"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
     except IndexError as e:
         trace_error.print()
-        return JsonResponse({"message": f"IndexError: {e}"}, status=400)
+        return JsonResponse(
+            {"message": f"IndexError: {e}"}, status=status.HTTP_400_BAD_REQUEST
+        )
     except SyntaxError as e:
         trace_error.print()
-        return JsonResponse({"message": f"SyntaxError: {e}"}, status=400)
+        return JsonResponse(
+            {"message": f"SyntaxError: {e}"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -706,7 +764,9 @@ def get_label(request, fp_name):
         error_msg = pre_check_label(booking)
 
         if error_msg:
-            return JsonResponse({"message": error_msg}, status=400)
+            return JsonResponse(
+                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         payload = {}
         if _fp_name in ["startrack"]:
@@ -740,9 +800,12 @@ def get_label(request, fp_name):
 
                 error_msg = s0
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
         elif _fp_name in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
+
         try:
             logger.info(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
@@ -807,7 +870,9 @@ def get_label(request, fp_name):
                     if "errorMessage" in json_data:
                         error_msg = json_data["errorMessage"]
                         _set_error(booking, error_msg)
-                        return JsonResponse({"message": error_msg}, status=400)
+                        return JsonResponse(
+                            {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                        )
 
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
@@ -841,7 +906,7 @@ def get_label(request, fp_name):
                 ).save()
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
-                status=200,
+                status=status.HTTP_200_OK,
             )
         except KeyError as e:
             trace_error.print()
@@ -859,10 +924,14 @@ def get_label(request, fp_name):
                 error_msg = json_data["errorMessage"]
 
             _set_error(booking, error_msg)
-            return JsonResponse({"message": error_msg}, status=400)
+            return JsonResponse(
+                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
     except IndexError as e:
         trace_error.print()
-        return JsonResponse({"message": "IndexError: {e}"}, status=400)
+        return JsonResponse(
+            {"message": "IndexError: {e}"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -1023,13 +1092,15 @@ def pod(request, fp_name):
         _fp_name = fp_name.lower()
     except SyntaxError:
         trace_error.print()
-        return JsonResponse({"message": "Booking id is required"}, status=400)
+        return JsonResponse(
+            {"message": "Booking id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     try:
         booking = Bookings.objects.get(id=booking_id)
     except KeyError as e:
         trace_error.print()
-        return JsonResponse({"message": str(e)}, status=400)
+        return JsonResponse({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         payload = get_pod_payload(booking, fp_name)
@@ -1089,7 +1160,7 @@ def pod(request, fp_name):
         trace_error.print()
         error_msg = f"KeyError: {e}"
         _set_error(booking, error_msg)
-        return JsonResponse({"message": str(e)}, status=400)
+        return JsonResponse({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -1138,17 +1209,23 @@ def reprint(request, fp_name):
                 trace_error.print()
                 error_msg = f"KeyError: {e}"
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": s0}, status=400)
+                return JsonResponse({"message": s0}, status=status.HTTP_400_BAD_REQUEST)
         except KeyError as e:
             if "errorMessage" in json_data:
                 error_msg = json_data["errorMessage"]
                 _set_error(booking, error_msg)
-                return JsonResponse({"message": error_msg}, status=400)
+                return JsonResponse(
+                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
             trace_error.print()
-            return JsonResponse({"Error": "Too many request"}, status=400)
+            return JsonResponse(
+                {"Error": "Too many request"}, status=status.HTTP_400_BAD_REQUEST
+            )
     except SyntaxError:
         trace_error.print()
-        return JsonResponse({"message": "Booking id is required"}, status=400)
+        return JsonResponse(
+            {"message": "Booking id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @api_view(["POST"])
@@ -1159,12 +1236,43 @@ def pricing(request):
     booking_id = body["booking_id"]
     auto_select_type = body.get("auto_select_type", 1)
     is_pricing_only = False
+
+    if not booking_id and "booking" in body:
+        is_pricing_only = True
+
+    booking, success, message, results = get_pricing(body, booking_id, is_pricing_only)
+
+    if not success:
+        return JsonResponse(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        if is_pricing_only:
+            API_booking_quotes.objects.filter(
+                fk_booking_id=booking.pk_booking_id
+            ).delete()
+        else:
+            auto_select_pricing(booking, results, auto_select_type)
+
+        results = ApiBookingQuotesSerializer(
+            results, many=True, context={"booking": booking}
+        ).data
+        return JsonResponse(
+            {"success": True, "message": message, "results": results},
+            status=status.HTTP_200_OK,
+        )
+
+
+def get_pricing(body, booking_id, is_pricing_only):
+    """
+    @params:
+        * is_pricing_only: only get pricing info
+    """
     booking_lines = []
     booking = None
 
     # Only quote
-    if not booking_id and "booking" in body:
-        is_pricing_only = True
+    if is_pricing_only and not booking_id:
         booking = Struct(**body["booking"])
         client_warehouse_code = booking.client_warehouse_code
 
@@ -1184,7 +1292,7 @@ def pricing(request):
                 ).delete()
         except Exception as e:
             trace_error.print()
-            return JsonResponse({"message": f"Booking is not exist"}, status=400)
+            return False, "Booking does not exist", None
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
@@ -1192,14 +1300,14 @@ def pricing(request):
         if not is_pricing_only:
             _set_error(booking, error_msg)
 
-        return JsonResponse({"message": error_msg}, status=400)
+        return False, error_msg, None
 
     #       "Startrack"
     #       "Camerons",
     #       "Toll",
     #       "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
-
+    # fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
+    fp_names = ["TNT", "Hunter"]
     DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:
@@ -1207,7 +1315,8 @@ def pricing(request):
             _fp_name = fp_name.lower()
 
             if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
-                return JsonResponse({"message": f"Not supported FP"}, status=400)
+                continue
+                # return JsonResponse({"message": f"Not supported FP"}, status=400)
 
             if _fp_name in FP_CREDENTIALS:
                 fp_client_names = FP_CREDENTIALS[_fp_name].keys()
@@ -1240,33 +1349,32 @@ def pricing(request):
                         if not payload:
                             continue
 
+                    logger.info(f"### Payload ({fp_name.upper()} PRICING): {payload}")
+                    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+                    logger.info(f"### API url ({fp_name.upper()} PRICING): {url}")
+
+                    try:
+                        response = requests.post(url, params={}, json=payload)
                         logger.info(
-                            f"### Payload ({fp_name.upper()} PRICING): {payload}"
+                            f"### Response ({fp_name.upper()} PRICING): {response}"
                         )
-                        url = DME_LEVEL_API_URL + "/pricing/calculateprice"
 
-                        try:
-                            response = requests.post(url, params={}, json=payload)
+                        res_content = response.content.decode("utf8").replace("'", '"')
+                        json_data = json.loads(res_content)
+                        # Just for visual
+                        s0 = json.dumps(json_data, indent=2, sort_keys=True)
+                        logger.info(
+                            f"### Response Detail ({fp_name.upper()} PRICING): {s0}"
+                        )
 
-                            res_content = response.content.decode("utf8").replace(
-                                "'", '"'
+                        if not is_pricing_only:
+                            Log.objects.create(
+                                request_payload=payload,
+                                request_status="SUCCESS",
+                                request_type=f"{fp_name.upper()} PRICING",
+                                response=res_content,
+                                fk_booking_id=booking.id,
                             )
-                            json_data = json.loads(res_content)
-                            s0 = json.dumps(
-                                json_data, indent=2, sort_keys=True
-                            )  # Just for visual
-                            logger.info(
-                                f"### Response ({fp_name.upper()} PRICING): {s0}"
-                            )
-
-                            if not is_pricing_only:
-                                Log.objects.create(
-                                    request_payload=payload,
-                                    request_status="SUCCESS",
-                                    request_type=f"{fp_name.upper()} PRICING",
-                                    response=res_content,
-                                    fk_booking_id=booking.id,
-                                )
 
                             error = capture_errors(
                                 response,
@@ -1285,50 +1393,35 @@ def pricing(request):
                                         "spAccountDetails"
                                     ]["accountCode"]
 
-                                    try:
-                                        api_booking_quote = API_booking_quotes.objects.get(
-                                            fk_booking_id=booking.pk_booking_id,
-                                            fk_freight_provider_id=parse_result[
-                                                "fk_freight_provider_id"
-                                            ].upper(),
-                                            service_name=parse_result["service_name"],
-                                            account_code=payload["spAccountDetails"][
-                                                "accountCode"
-                                            ],
-                                        )
+                                    quotes = API_booking_quotes.objects.filter(
+                                        fk_booking_id=booking.pk_booking_id,
+                                        fk_freight_provider_id=parse_result[
+                                            "fk_freight_provider_id"
+                                        ].upper(),
+                                        service_name=parse_result["service_name"],
+                                        account_code=payload["spAccountDetails"][
+                                            "accountCode"
+                                        ],
+                                    )
+
+                                    if quotes.exists():
                                         serializer = ApiBookingQuotesSerializer(
-                                            api_booking_quote, data=parse_result
+                                            quotes[0], data=parse_result
                                         )
-
-                                        try:
-                                            if serializer.is_valid():
-                                                serializer.save()
-                                        except Exception as e:
-                                            trace_error.print()
-                                            logger.info("Exception: ", e)
-
-                                        api_booking_quote.save()
-                                    except API_booking_quotes.DoesNotExist as e:
-                                        trace_error.print()
+                                    else:
                                         serializer = ApiBookingQuotesSerializer(
                                             data=parse_result
                                         )
 
-                                        try:
-                                            if serializer.is_valid():
-                                                serializer.save()
-                                            else:
-                                                logger.info(
-                                                    f"@401 Serializer error: {serializer.errors}"
-                                                )
-                                        except Exception as e:
-                                            trace_error.print()
-                                            logger.info(f"@402 Exception: {e}")
-
-                        except Exception as e:
-                            trace_error.print()
-                            logger.info(f"@402 Exception: {e}")
-
+                                    if serializer.is_valid():
+                                        serializer.save()
+                                    else:
+                                        logger.info(
+                                            f"@401 Serializer error: {serializer.errors}"
+                                        )
+                    except Exception as e:
+                        trace_error.print()
+                        logger.info(f"@402 Exception: {e}")
             elif _fp_name in BUILT_IN_PRICINGS:
                 results = get_pricing(_fp_name, booking)
                 parse_results = parse_pricing_response(results, _fp_name, booking, True)
@@ -1356,27 +1449,13 @@ def pricing(request):
                         trace_error.print()
                         serializer = ApiBookingQuotesSerializer(data=parse_result)
 
-                        try:
-                            if serializer.is_valid():
-                                serializer.save()
-                            else:
-                                logger.info(
-                                    f"@404 Serializer error: {serializer.errors}"
-                                )
-                        except Exception as e:
-                            trace_error.print()
-                            logger.info(f"@405 Exception: {e}")
+                        if serializer.is_valid():
+                            serializer.save()
+                        else:
+                            logger.info(f"@404 Serializer error: {serializer.errors}")
+
         results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-        if is_pricing_only:
-            pk_booking_id = booking.pk_booking_id
-            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).delete()
-        elif not is_pricing_only and not booking.x_manual_booked_flag:
-            auto_select_pricing(booking, results, auto_select_type)
-
-        results = ApiBookingQuotesSerializer(results, many=True).data
-        response_json = {"message": "Retrieved all Pricing info", "results": results}
-        return JsonResponse(response_json, status=200)
+        return booking, True, "Retrieved all Pricing info", results
     except Exception as e:
         trace_error.print()
-        return JsonResponse({"message": f"Error: {e}"}, status=400)
+        return booking, False, f"Error: {e}", None

@@ -5356,6 +5356,9 @@ def get_clientname(request):
 
 
 def next_business_day(start_day, business_days, HOLIDAYS):
+    if not start_day:
+        return None
+
     ONE_DAY = timedelta(days=1)
     temp_day = start_day
     for i in range(0, business_days):
