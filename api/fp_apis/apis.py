@@ -1,10 +1,12 @@
 import time as t
 import json
 import requests
+import requests_async
 import datetime
 import base64
 import os
 import logging
+import asyncio
 from ast import literal_eval
 
 from rest_framework.decorators import (
@@ -38,7 +40,7 @@ from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from .build_label.dhl import build_dhl_label
 from .operations.tracking import update_booking_with_tracking_result
-from .constants import FP_CREDENTIALS, BUILT_IN_PRICINGS
+from .constants import FP_CREDENTIALS, BUILT_IN_PRICINGS, PRICING_TIME
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -1274,24 +1276,22 @@ def get_pricing(body, booking_id, is_pricing_only):
     # Only quote
     if is_pricing_only and not booking_id:
         booking = Struct(**body["booking"])
-        client_warehouse_code = booking.client_warehouse_code
 
         for booking_line in body["booking_lines"]:
             booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
-        try:
-            booking = Bookings.objects.get(id=booking_id)
-            client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
+        bookings = Bookings.objects.filter(id=booking_id)
 
-            if booking:  # Delete all pricing info if exist for this booking
-                booking.api_booking_quote = None  # Reset pricing relation
-                booking.save()
-                API_booking_quotes.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-        except Exception as e:
-            trace_error.print()
+        # Delete all pricing info if exist for this booking
+        if bookings.exists():
+            booking = bookings[0]
+            pk_booking_id = booking.pk_booking_id
+            booking.api_booking_quote = None  # Reset pricing relation
+            booking.save()
+            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).delete()
+            DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
+        else:
             return False, "Booking does not exist", None
 
     if not booking.puPickUpAvailFrom_Date:
@@ -1302,160 +1302,165 @@ def get_pricing(body, booking_id, is_pricing_only):
 
         return False, error_msg, None
 
-    #       "Startrack"
-    #       "Camerons",
-    #       "Toll",
-    #       "Sendle"
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(_pricing_process(booking, booking_lines, is_pricing_only))
+    finally:
+        loop.close()
+
+    results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
+    return booking, True, "Retrieved all Pricing info", results
+
+
+async def _pricing_process(booking, booking_lines, is_pricing_only):
+    try:
+        await asyncio.wait_for(
+            pricing_workers(booking, booking_lines, is_pricing_only),
+            timeout=PRICING_TIME,
+        )
+    except asyncio.TimeoutError:
+        logger.info(f"#990 - {PRICING_TIME}s Timeout! stop threads! :)")
+
+
+async def pricing_workers(booking, booking_lines, is_pricing_only):
+    # Schedule n pricing works *concurrently*:
+    _workers = set()
+
+    logger.info("#910 - Building Pricing workers...")
+    # "Startrack", "Camerons", "Toll", "Sendle"
     # fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
     fp_names = ["TNT", "Hunter"]
-    DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
+
+    for fp_name in fp_names:
+        _fp_name = fp_name.lower()
+
+        if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
+            continue
+
+        if _fp_name in FP_CREDENTIALS:
+            fp_client_names = FP_CREDENTIALS[_fp_name].keys()
+            b_client_name = booking.b_client_name.lower()
+
+            for client_name in fp_client_names:
+                if b_client_name in fp_client_names and b_client_name != client_name:
+                    continue
+                elif b_client_name not in fp_client_names and client_name not in [
+                    "dme",
+                    "test",
+                ]:
+                    continue
+
+                logger.info(f"#905 INFO Pricing - {_fp_name}, {client_name}")
+                for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+                    # Allow live pricing credentials only on PROD
+                    if settings.ENV == "prod" and "test" in key:
+                        continue
+
+                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+                    _worker = _api_pricing_worker_builder(
+                        _fp_name,
+                        booking,
+                        booking_lines,
+                        is_pricing_only,
+                        account_detail,
+                    )
+                    _workers.add(_worker)
+        # elif _fp_name in BUILT_IN_PRICINGS:
+        #     _worker = _built_in_pricing_worker_builder(_fp_name, booking)
+        #     _workers.add(_worker)
+
+    logger.info("#911 - Pricing workers will start soon")
+    await asyncio.gather(*_workers)
+    logger.info("#919 - Pricing workers finished all")
+
+
+async def _api_pricing_worker_builder(
+    _fp_name, booking, booking_lines, is_pricing_only, account_detail
+):
+    payload = get_pricing_payload(booking, _fp_name, account_detail, booking_lines)
+
+    if not payload:
+        return None
+
+    logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
+    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+    logger.info(f"### API url ({_fp_name.upper()} PRICING): {url}")
 
     try:
-        for fp_name in fp_names:
-            _fp_name = fp_name.lower()
+        response = await requests_async.post(url, params={}, json=payload)
+        logger.info(f"### Response ({_fp_name.upper()} PRICING): {response}")
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        s0 = json.dumps(json_data, indent=2, sort_keys=True) # Just for visual
+        logger.info(f"### Response Detail ({_fp_name.upper()} PRICING): {s0}")
 
-            if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
-                continue
-                # return JsonResponse({"message": f"Not supported FP"}, status=400)
+        if not is_pricing_only:
+            Log.objects.create(
+                request_payload=payload,
+                request_status="SUCCESS",
+                request_type=f"{_fp_name.upper()} PRICING",
+                response=res_content,
+                fk_booking_id=booking.id,
+            )
 
-            if _fp_name in FP_CREDENTIALS:
-                fp_client_names = FP_CREDENTIALS[_fp_name].keys()
-                b_client_name = booking.b_client_name.lower()
+        # error = capture_errors(
+        #     response,
+        #     booking,
+        #     _fp_name,
+        #     payload["spAccountDetails"]["accountCode"],
+        # )
 
-                for client_name in fp_client_names:
-                    logger.info(f"#905 INFO Pricing - {_fp_name}, {client_name}")
+        parse_results = parse_pricing_response(response, _fp_name, booking)
 
-                    if (
-                        b_client_name in fp_client_names
-                        and b_client_name != client_name
-                    ):
-                        continue
-                    elif b_client_name not in fp_client_names and client_name not in [
-                        "dme",
-                        "test",
-                    ]:
-                        continue
+        if parse_results and not "error" in parse_results:
+            for parse_result in parse_results:
+                parse_result["account_code"] = payload["spAccountDetails"][
+                    "accountCode"
+                ]
 
-                    for key in FP_CREDENTIALS[_fp_name][client_name].keys():
-                        # Allow live pricing credentials only on PROD
-                        if settings.ENV == "prod" and "test" in key:
-                            continue
+                quotes = API_booking_quotes.objects.filter(
+                    fk_booking_id=booking.pk_booking_id,
+                    fk_freight_provider_id=parse_result[
+                        "fk_freight_provider_id"
+                    ].upper(),
+                    service_name=parse_result["service_name"],
+                    account_code=payload["spAccountDetails"]["accountCode"],
+                )
 
-                        account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
-                        payload = get_pricing_payload(
-                            booking, _fp_name, account_detail, booking_lines
-                        )
+                if quotes.exists():
+                    serializer = ApiBookingQuotesSerializer(
+                        quotes[0], data=parse_result
+                    )
+                else:
+                    serializer = ApiBookingQuotesSerializer(data=parse_result)
 
-                        if not payload:
-                            continue
-
-                    logger.info(f"### Payload ({fp_name.upper()} PRICING): {payload}")
-                    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
-                    logger.info(f"### API url ({fp_name.upper()} PRICING): {url}")
-
-                    try:
-                        response = requests.post(url, params={}, json=payload)
-                        logger.info(
-                            f"### Response ({fp_name.upper()} PRICING): {response}"
-                        )
-
-                        res_content = response.content.decode("utf8").replace("'", '"')
-                        json_data = json.loads(res_content)
-                        # Just for visual
-                        s0 = json.dumps(json_data, indent=2, sort_keys=True)
-                        logger.info(
-                            f"### Response Detail ({fp_name.upper()} PRICING): {s0}"
-                        )
-
-                        if not is_pricing_only:
-                            Log.objects.create(
-                                request_payload=payload,
-                                request_status="SUCCESS",
-                                request_type=f"{fp_name.upper()} PRICING",
-                                response=res_content,
-                                fk_booking_id=booking.id,
-                            )
-
-                            error = capture_errors(
-                                response,
-                                booking,
-                                _fp_name,
-                                payload["spAccountDetails"]["accountCode"],
-                            )
-
-                            parse_results = parse_pricing_response(
-                                response, _fp_name, booking
-                            )
-
-                            if parse_results and not "error" in parse_results:
-                                for parse_result in parse_results:
-                                    parse_result["account_code"] = payload[
-                                        "spAccountDetails"
-                                    ]["accountCode"]
-
-                                    quotes = API_booking_quotes.objects.filter(
-                                        fk_booking_id=booking.pk_booking_id,
-                                        fk_freight_provider_id=parse_result[
-                                            "fk_freight_provider_id"
-                                        ].upper(),
-                                        service_name=parse_result["service_name"],
-                                        account_code=payload["spAccountDetails"][
-                                            "accountCode"
-                                        ],
-                                    )
-
-                                    if quotes.exists():
-                                        serializer = ApiBookingQuotesSerializer(
-                                            quotes[0], data=parse_result
-                                        )
-                                    else:
-                                        serializer = ApiBookingQuotesSerializer(
-                                            data=parse_result
-                                        )
-
-                                    if serializer.is_valid():
-                                        serializer.save()
-                                    else:
-                                        logger.info(
-                                            f"@401 Serializer error: {serializer.errors}"
-                                        )
-                    except Exception as e:
-                        trace_error.print()
-                        logger.info(f"@402 Exception: {e}")
-            elif _fp_name in BUILT_IN_PRICINGS:
-                results = get_pricing(_fp_name, booking)
-                parse_results = parse_pricing_response(results, _fp_name, booking, True)
-
-                for parse_result in parse_results:
-                    try:
-                        api_booking_quote = API_booking_quotes.objects.get(
-                            fk_booking_id=booking.pk_booking_id,
-                            fk_freight_provider_id=parse_result[
-                                "fk_freight_provider_id"
-                            ].upper(),
-                            service_name=parse_result["service_name"],
-                        )
-
-                        serializer = ApiBookingQuotesSerializer(
-                            api_booking_quote, data=parse_result
-                        )
-                        if serializer.is_valid():
-                            serializer.save()
-                        else:
-                            logger.info(f"@403 Serializer error: {serializer.errors}")
-
-                        api_booking_quote.save()
-                    except API_booking_quotes.DoesNotExist as e:
-                        trace_error.print()
-                        serializer = ApiBookingQuotesSerializer(data=parse_result)
-
-                        if serializer.is_valid():
-                            serializer.save()
-                        else:
-                            logger.info(f"@404 Serializer error: {serializer.errors}")
-
-        results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
-        return booking, True, "Retrieved all Pricing info", results
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    logger.info(f"@401 Serializer error: {serializer.errors}")
     except Exception as e:
         trace_error.print()
-        return booking, False, f"Error: {e}", None
+        logger.info(f"@402 Exception: {e}")
+
+
+async def _built_in_pricing_worker_builder(_fp_name, booking):
+    results = get_pricing(_fp_name, booking)
+    parse_results = parse_pricing_response(results, _fp_name, booking, True)
+
+    for parse_result in parse_results:
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            fk_freight_provider_id=parse_result["fk_freight_provider_id"].upper(),
+            service_name=parse_result["service_name"],
+        )
+
+        if quotes.exists():
+            serializer = ApiBookingQuotesSerializer(quotes[0], data=parse_result)
+        else:
+            serializer = ApiBookingQuotesSerializer(data=parse_result)
+
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            logger.info(f"@404 Serializer error: {serializer.errors}")

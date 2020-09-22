@@ -1,3 +1,5 @@
+PRICING_TIME = 10  # seconds
+
 BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},
