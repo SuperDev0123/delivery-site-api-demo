@@ -18,16 +18,8 @@ ACCOUNT_CODES = {
         "BIO - HTW": "10160226",
     },
     "hunter": {
-        "test_bed_1": "DUMMY",
+        "test_bed_1": "APITEST",
         "live_0": "DELIME",
-        "live_1": "DEMELP",
-        # "live_2": "DMEMEL",
-        "live_3": "DMEBNE",
-        "live_4": "DMEPAL",
-        "live_5": "DEMELK",
-        "live_6": "DMEADL",
-        "live_bunnings_0": "DELIMB",
-        "live_bunnings_1": "DELIMS",
     },
     "tnt": {"live_0": "30021385"},
     "capital": {"live_0": "DMENSW"},
@@ -77,22 +69,8 @@ KEY_CHAINS = {
         },
     },
     "hunter": {
-        "test_bed_1": {"accountKey": "aHh3czpoeHdz", "accountPassword": "hxws"},
-        "live_0": {"accountKey": "REVMSU1FOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_1": {"accountKey": "REVNRUxQOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_2": {"accountKey": "RE1FTUVMOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_3": {"accountKey": "RE1FQk5FOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_4": {"accountKey": "RE1FUEFMOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_5": {"accountKey": "REVNRUxLOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_6": {"accountKey": "RE1FQURMOmRlbGl2ZXI=", "accountPassword": "deliver"},
-        "live_bunnings_0": {
-            "accountKey": "REVMSU1COmRlbGl2ZXIyMA==",
-            "accountPassword": "deliver20",
-        },
-        "live_bunnings_1": {
-            "accountKey": "REVMSU1TOmRlbGl2ZXIyMA==",
-            "accountPassword": "deliver20",
-        },
+        "test_bed_1": {"accountKey": "55010|XXLFNZRLPW", "accountPassword": ""},
+        "live_0": {"accountKey": "55010|XXLFNZRLPW", "accountPassword": ""},
     },
     "tnt": {
         "live_0": {

@@ -837,6 +837,8 @@ def get_label(request, fp_name):
 
             elif fp_name.lower() in ["dhl"]:
                 z_label_url = build_dhl_label(booking)
+            elif fp_name.lower() in ["hunter"]:
+                z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
             booking.save()
@@ -1228,7 +1230,8 @@ def pricing(request):
     #       "Camerons",
     #       "Toll",
     #       "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    # fp_names = ["TNT", "Hunter", "Capital", "Century", "Demo", "Fastway"]
+    fp_names = ["Hunter"]
     DME_Error.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
 
     try:

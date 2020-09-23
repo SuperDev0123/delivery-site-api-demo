@@ -279,6 +279,9 @@ def get_book_payload(booking, fp_name, account_code_key=None):
         #     if booking.b_client_sales_inv_num is None
         #     else booking.b_client_sales_inv_num
         # )
+        payload[
+            "consignmentNoteNumber"
+        ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         payload["reference1"] = booking.clientRefNumbers
         payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
     elif fp_name.lower() == "tnt":

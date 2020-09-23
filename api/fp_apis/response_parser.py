@@ -35,8 +35,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                     price["serviceName"] if "serviceName" in price else None
                 )
                 result["service_code"] = price["serviceType"]
-                result["tax_id_1"] = price["totalTaxes"]["id"]
-                result["tax_value_1"] = price["totalTaxes"]["value"]
+                result["tax_value_1"] = price["taxPrice"] if "etd" in price else None
                 results.append(result)
         elif fp_name == "tnt" and "price" in json_data:  # TNT
             for price in json_data["price"]:

@@ -380,7 +380,7 @@ class API_booking_quotes(models.Model):
         verbose_name=_("Provider"), max_length=64, blank=True, null=True
     )
     service_code = models.CharField(
-        verbose_name=_("Service Code"), max_length=10, blank=True, null=True
+        verbose_name=_("Service Code"), max_length=32, blank=True, null=True
     )
     service_name = models.CharField(
         verbose_name=_("Service Name"), max_length=64, blank=True, null=True
