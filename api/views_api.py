@@ -913,21 +913,21 @@ def get_delivery_status(request):
     bookings = Bookings.objects.filter(b_client_booking_ref_num=client_booking_id)
 
     if bookings.exists():
-        status = bookings.first().b_status
-        category = get_status_category_from_status(status)
+        b_status = bookings.first().b_status
+        category = get_status_category_from_status(b_status)
 
         if category:
             if category == "Booked":
-                return Response({"step": 2, "status": status})
+                return Response({"step": 2, "status": b_status})
             elif category == "Transit":
-                return Response({"step": 3, "status": status})
+                return Response({"step": 3, "status": b_status})
             elif category == "Delivered":
-                return Response({"step": 4, "status": status})
+                return Response({"step": 4, "status": b_status})
             elif category == "Futile":
-                return Response({"step": 5, "status": status})
+                return Response({"step": 5, "status": b_status})
 
         logger.info(
-            f"#301 - unknown_status - client_booking_id={client_booking_id}, status={status}"
+            f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
         )
         return Response(
             {
