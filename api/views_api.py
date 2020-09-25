@@ -32,9 +32,10 @@ from api.serializers import SimpleQuoteSerializer
 from api.models import *
 from api.common import trace_error
 from api.common import constants as dme_constants
-from api.fp_apis.utils import select_best_options
+from api.fp_apis.utils import select_best_options, get_status_category_from_status
 from api.operations import push_operations
 from api.common import status_history
+
 
 logger = logging.getLogger("dme_api")
 
@@ -277,7 +278,8 @@ def order_boks(request):
     if message:
         logger.info(f"#822 {message}")
         return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST,
+            {"success": False, "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Update boks
@@ -299,7 +301,10 @@ def order_boks(request):
     status_history.create_4_bok(bok_1.pk_header_id, "Ordered", request.user.username)
 
     logger.info(f"#823 Order success")
-    return Response({"success": True}, status=status.HTTP_200_OK,)
+    return Response(
+        {"success": True},
+        status=status.HTTP_200_OK,
+    )
 
 
 @transaction.atomic
@@ -679,7 +684,9 @@ def push_boks(request):
 
                 body = {"booking": booking, "booking_lines": booking_lines}
                 _, success, message, quote_set = get_pricing(
-                    body=body, booking_id=None, is_pricing_only=True,
+                    body=body,
+                    booking_id=None,
+                    is_pricing_only=True,
                 )
                 logger.info(
                     f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
@@ -825,7 +832,7 @@ def partial_pricing(request):
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
-        "b_client_name": client.company_name
+        "b_client_name": client.company_name,
     }
 
     booking_lines = []
@@ -895,6 +902,58 @@ def partial_pricing(request):
                 "message": "Didn't get pricings due to wrong suburb and state",
             }
         )
+
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def get_delivery_status(request):
+    client_booking_id = request.GET.get("identifier")
+
+    # 1. Try to find from dme_bookings table
+    bookings = Bookings.objects.filter(b_client_booking_ref_num=client_booking_id)
+
+    if bookings.exists():
+        status = bookings.first().b_status
+        category = get_status_category_from_status(status)
+
+        if category:
+            if category == "Booked":
+                return Response({"step": 2, "status": status})
+            elif category == "Transit":
+                return Response({"step": 3, "status": status})
+            elif category == "Delivered":
+                return Response({"step": 4, "status": status})
+            elif category == "Futile":
+                return Response({"step": 5, "status": status})
+
+        logger.info(
+            f"#301 - unknown_status - client_booking_id={client_booking_id}, status={status}"
+        )
+        return Response(
+            {
+                "code": "unknown_status",
+                "message": "Please contact support center!",
+                "step": None,
+                "status": None,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 2. Try to find from Bok tables
+    bok_1s = BOK_1_headers.objects.filter(client_booking_id=client_booking_id)
+
+    if bok_1s.exists():
+        return Response({"step": 1, "status": None})
+
+    return Response(
+        {
+            "code": "does_not_exist",
+            "message": "Could not find Delivery!",
+            "step": None,
+            "status": None,
+        },
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @api_view(["GET"])
@@ -1040,7 +1099,10 @@ def get_all_zoho_tickets(request):
 
     elif get_tickets.status_code == 204:
         return JsonResponse(
-            {"status": "There are no tickets on zoho", "tickets": get_ticket,}
+            {
+                "status": "There are no tickets on zoho",
+                "tickets": get_ticket,
+            }
         )
     else:
         final_ticket = {"status": "success", "tickets": get_ticket}

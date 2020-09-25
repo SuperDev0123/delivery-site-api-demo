@@ -1305,7 +1305,9 @@ def get_pricing(body, booking_id, is_pricing_only):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(_pricing_process(booking, booking_lines, is_pricing_only))
+        loop.run_until_complete(
+            _pricing_process(booking, booking_lines, is_pricing_only)
+        )
     finally:
         loop.close()
 
@@ -1392,7 +1394,7 @@ async def _api_pricing_worker_builder(
         logger.info(f"### Response ({_fp_name.upper()} PRICING): {response}")
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
-        s0 = json.dumps(json_data, indent=2, sort_keys=True) # Just for visual
+        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.info(f"### Response Detail ({_fp_name.upper()} PRICING): {s0}")
 
         if not is_pricing_only:
