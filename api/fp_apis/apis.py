@@ -225,7 +225,7 @@ def book(request, fp_name):
                     elif booking.vx_freight_provider.lower() == "hunter":
                         booking.v_FPBookingNumber = json_data["consignmentNumber"]
                         booking.jobNumber = json_data["jobNumber"]
-                        booking.jobDate = json_data["jobDate"]
+                        # booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":
                         booking.v_FPBookingNumber = (
                             f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
@@ -238,9 +238,9 @@ def book(request, fp_name):
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
                     )
-                    booking.b_dateBookedDate = datetime.now()
+                    # booking.b_dateBookedDate = datetime.now()
                     status_history.create(booking, "Booked", request.user.username)
-                    booking.b_status = "Booked"
+                    # booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
 
@@ -256,7 +256,7 @@ def book(request, fp_name):
                     create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
                     if booking.vx_freight_provider.lower() == "hunter":
                         json_label_data = json.loads(response.content)
-                        file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+                        file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
 
                         if IS_PRODUCTION:
                             file_url = (
@@ -271,15 +271,37 @@ def book(request, fp_name):
                             booking.z_label_url = f"hunter_au/{file_name}"
                             booking.save()
 
-                            # Send email when GET_LABEL
-                            email_template_name = "General Booking"
+                        pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                        if IS_PRODUCTION:
+                            pod_file_url = (
+                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{pod_file_name}"
+                            )
+                        else:
+                            pod_file_url = f"./static/pdfs/{fp_name.lower()}_au/{pod_file_name}"
 
-                            if booking.b_booking_Category == "Salvage Expense":
-                                email_template_name = "Return Booking"
+                        f = open(pod_file_url, "wb")
+                        f.write(base64.b64decode(json_label_data["podImage"]))
+                        f.close()
 
+                        booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
+                        booking.save()
+
+                        # Send email when GET_LABEL
+                        email_template_name = "General Booking"
+
+                        if booking.b_booking_Category == "Salvage Expense":
+                            email_template_name = "Return Booking"
+
+                        email_module.send_booking_email_using_template(
+                            booking.pk, email_template_name, request.user.username
+                        )
+                        # POD Email
+                        if booking.b_send_POD_eMail:
+                            email_template_name = "POD"
                             email_module.send_booking_email_using_template(
                                 booking.pk, email_template_name, request.user.username
                             )
+
                     # Save Label for Capital
                     elif booking.vx_freight_provider.lower() == "capital":
                         json_label_data = json.loads(response.content)
@@ -551,10 +573,10 @@ def edit_book(request, fp_name):
                 error_msg = "Suburb name for pickup postal address is required."
                 _set_error(booking, error_msg)
                 return booking_id({"message": error_msg})
-            elif booking.z_manifest_url is not None or booking.z_manifest_url != "":
-                error_msg = "This booking is manifested."
-                _set_error(booking, error_msg)
-                return booking_id({"message": error_msg})
+            # elif booking.z_manifest_url is not None or booking.z_manifest_url != "":
+            #     error_msg = "This booking is manifested."
+            #     _set_error(booking, error_msg)
+            #     return booking_id({"message": error_msg})
 
             payload = get_book_payload(booking, fp_name)
 
@@ -584,9 +606,20 @@ def edit_book(request, fp_name):
                 request_type = f"{fp_name.upper()} EDIT BOOK"
                 request_status = "SUCCESS"
 
-                booking.v_FPBookingNumber = json_data["items"][0]["tracking_details"][
-                    "consignment_id"
-                ]
+                if booking.vx_freight_provider.lower() == "startrack":
+                    booking.v_FPBookingNumber = json_data["items"][0][
+                        "tracking_details"
+                    ]["consignment_id"]
+                elif booking.vx_freight_provider.lower() == "hunter":
+                    booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                    booking.jobNumber = json_data["jobNumber"]
+                elif booking.vx_freight_provider.lower() == "tnt":
+                    booking.v_FPBookingNumber = (
+                        f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+                    )
+                elif booking.vx_freight_provider.lower() == "sendle":
+                    booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
+
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                 booking.b_dateBookedDate = datetime.now()
                 booking.b_status = "Booked"
@@ -601,14 +634,63 @@ def edit_book(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
+                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
+                if booking.vx_freight_provider.lower() == "hunter":
+                    json_label_data = json.loads(response.content)
+                    file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
 
-                for item in json_data["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
-                    ).save()
+                    if IS_PRODUCTION:
+                        file_url = (
+                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
+                        )
+                    else:
+                        file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
+
+                    with open(file_url, "wb") as f:
+                        f.write(base64.b64decode(json_label_data["shippingLabel"]))
+                        f.close()
+                        booking.z_label_url = f"hunter_au/{file_name}"
+                        booking.save()
+
+                    pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                    if IS_PRODUCTION:
+                        pod_file_url = (
+                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{pod_file_name}"
+                        )
+                    else:
+                        pod_file_url = f"./static/pdfs/{fp_name.lower()}_au/{pod_file_name}"
+
+                    f = open(pod_file_url, "wb")
+                    f.write(base64.b64decode(json_label_data["podImage"]))
+                    f.close()
+
+                    booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
+                    booking.save()
+
+                    # Send email when GET_LABEL
+                    email_template_name = "General Booking"
+
+                    if booking.b_booking_Category == "Salvage Expense":
+                        email_template_name = "Return Booking"
+
+                    email_module.send_booking_email_using_template(
+                        booking.pk, email_template_name, request.user.username
+                    )
+                    # POD Email
+                    if booking.b_send_POD_eMail:
+                        email_template_name = "POD"
+                        email_module.send_booking_email_using_template(
+                            booking.pk, email_template_name, request.user.username
+                        )
+                else:
+                    Api_booking_confirmation_lines.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    ).delete()
+
+                    for item in json_data["items"]:
+                        book_con = Api_booking_confirmation_lines(
+                            fk_booking_id=booking.pk_booking_id, api_item_id=item["item_id"]
+                        ).save()
 
                 return JsonResponse(
                     {"message": f"Successfully edit book({booking.v_FPBookingNumber})"}
@@ -836,8 +918,6 @@ def get_label(request, fp_name):
                     _set_error(booking, error_msg)
 
             elif fp_name.lower() in ["dhl"]:
-                z_label_url = build_dhl_label(booking)
-            elif fp_name.lower() in ["hunter"]:
                 z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
