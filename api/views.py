@@ -2212,18 +2212,18 @@ class BookingViewSet(viewsets.ViewSet):
                     ).date()
                     booking.pu_PickUp_By_Date = (sydney_now + timedelta(days=1)).date()
 
-                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
-                    "%H"
+                booking.pu_PickUp_Avail_Time_Hours = (
+                    tempo_client.augment_pu_available_time.strftime("%H")
                 )
-                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
-                    "%M"
+                booking.pu_PickUp_Avail_Time_Minutes = (
+                    tempo_client.augment_pu_available_time.strftime("%M")
                 )
 
-                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
-                    "%H"
+                booking.pu_PickUp_By_Time_Hours = (
+                    tempo_client.augment_pu_by_time.strftime("%H")
                 )
-                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
-                    "%M"
+                booking.pu_PickUp_By_Time_Minutes = (
+                    tempo_client.augment_pu_by_time.strftime("%M")
                 )
             elif booking.x_ReadyStatus == "Available Now":
                 booking.puPickUpAvailFrom_Date = sydney_now.date()
@@ -2231,27 +2231,27 @@ class BookingViewSet(viewsets.ViewSet):
 
                 booking.pu_PickUp_Avail_Time_Hours = sydney_now.strftime("%H")
                 booking.pu_PickUp_Avail_Time_Minutes = 0
-                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
-                    "%H"
+                booking.pu_PickUp_By_Time_Hours = (
+                    tempo_client.augment_pu_by_time.strftime("%H")
                 )
-                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
-                    "%M"
+                booking.pu_PickUp_By_Time_Minutes = (
+                    tempo_client.augment_pu_by_time.strftime("%M")
                 )
             else:
                 booking.puPickUpAvailFrom_Date = sydney_now.date()
                 booking.pu_PickUp_By_Date = sydney_now.date()
 
-                booking.pu_PickUp_Avail_Time_Hours = tempo_client.augment_pu_available_time.strftime(
-                    "%H"
+                booking.pu_PickUp_Avail_Time_Hours = (
+                    tempo_client.augment_pu_available_time.strftime("%H")
                 )
-                booking.pu_PickUp_Avail_Time_Minutes = tempo_client.augment_pu_available_time.strftime(
-                    "%M"
+                booking.pu_PickUp_Avail_Time_Minutes = (
+                    tempo_client.augment_pu_available_time.strftime("%M")
                 )
-                booking.pu_PickUp_By_Time_Hours = tempo_client.augment_pu_by_time.strftime(
-                    "%H"
+                booking.pu_PickUp_By_Time_Hours = (
+                    tempo_client.augment_pu_by_time.strftime("%H")
                 )
-                booking.pu_PickUp_By_Time_Minutes = tempo_client.augment_pu_by_time.strftime(
-                    "%M"
+                booking.pu_PickUp_By_Time_Minutes = (
+                    tempo_client.augment_pu_by_time.strftime("%M")
                 )
 
             booking.save()
@@ -3818,7 +3818,12 @@ class SqlQueriesViewSet(viewsets.ViewSet):
     def list(self, request, pk=None):
         queryset = Utl_sql_queries.objects.all()
         serializer = SqlQueriesSerializer(queryset, many=True)
-        return JsonResponse({"results": serializer.data,}, status=status.HTTP_200_OK)
+        return JsonResponse(
+            {
+                "results": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
@@ -3957,8 +3962,27 @@ class FilesViewSet(viewsets.ViewSet):
         file_type = request.GET["fileType"]
         dme_files = DME_Files.objects.filter(file_type=file_type)
         dme_files = dme_files.order_by("-z_createdTimeStamp")[:50]
-        serializer = FilesSerializer(dme_files, many=True)
-        return Response(serializer.data)
+        json_results = FilesSerializer(dme_files, many=True).data
+        pk_booking_ids = []
+
+        for json_data in json_results:
+            pk_booking_ids += json_data["note"].split(", ")
+
+        bookings = Bookings.objects.filter(pk_booking_id__in=pk_booking_ids)
+
+        for index, json_data in enumerate(json_results):
+            b_bookingID_Visuals = []
+            booking_ids = []
+
+            for booking in bookings:
+                if booking.pk_booking_id in json_data["note"]:
+                    b_bookingID_Visuals.append(str(booking.b_bookingID_Visual))
+                    booking_ids.append(str(booking.pk))
+
+            json_results[index]["b_bookingID_Visual"] = ", ".join(b_bookingID_Visuals)
+            json_results[index]["booking_id"] = ", ".join(booking_ids)
+
+        return Response(json_results)
 
     def create(self, request):
         serializer = FilesSerializer(data=request.data)
@@ -4187,7 +4211,10 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
-            return JsonResponse({"result": serializer.data[0]}, status=200,)
+            return JsonResponse(
+                {"result": serializer.data[0]},
+                status=200,
+            )
         except Exception as e:
             return JsonResponse({"results": ""})
 
@@ -4242,7 +4269,10 @@ class ClientRasViewSet(viewsets.ViewSet):
         try:
             queryset = Client_Ras.objects.filter(pk=pk)
             serializer = ClientRasSerializer(queryset, many=True)
-            return JsonResponse({"result": serializer.data[0]}, status=200,)
+            return JsonResponse(
+                {"result": serializer.data[0]},
+                status=200,
+            )
 
         except Exception as e:
             return JsonResponse({"results": ""})

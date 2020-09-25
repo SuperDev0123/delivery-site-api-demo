@@ -5427,7 +5427,9 @@ def get_eta_de_by(booking, quote):
             if service_etd is not None:
                 if service_etd.fp_service_time_uom.lower() == "days":
                     etd_de_by = next_business_day(
-                        etd_de_by, round(service_etd.fp_03_delivery_hours / 24), [],
+                        etd_de_by,
+                        round(service_etd.fp_03_delivery_hours / 24),
+                        [],
                     )
 
                 if service_etd.fp_service_time_uom.lower() == "hours":
@@ -5449,29 +5451,3 @@ def get_eta_de_by(booking, quote):
         trace_error.print()
         logger.info(f"Error #1002: {e}")
         return None
-
-
-def get_b_bookingID_Visual(dme_file):
-    b_bookingID_Visuals = []
-
-    if dme_file.file_type == "xls import" and dme_file.note:
-        bookings = Bookings.objects.filter(pk_booking_id__in=dme_file.note.split(", "))
-
-        if bookings.exists():
-            for booking in bookings:
-                b_bookingID_Visuals.append(str(booking.b_bookingID_Visual))
-
-    return ", ".join(b_bookingID_Visuals)
-
-
-def get_booking_id(dme_file):
-    booking_ids = []
-
-    if dme_file.file_type == "xls import" and dme_file.note:
-        bookings = Bookings.objects.filter(pk_booking_id__in=dme_file.note.split(", "))
-
-        if bookings.exists():
-            for booking in bookings:
-                booking_ids.append(str(booking.pk))
-
-    return ", ".join(booking_ids)
