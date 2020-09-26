@@ -145,6 +145,7 @@ def _get_lowest_price(pricings):
     for pricing in pricings:
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
+            lowest_pricing["etd"] = get_etd_in_hour(pricing)
         elif lowest_pricing and pricing.fee:
             if float(lowest_pricing["pricing"].fee) > float(pricing.fee):
                 lowest_pricing["pricing"] = pricing
