@@ -239,7 +239,6 @@ def book(request, fp_name):
                         booking, booking.api_booking_quote
                     )
                     booking.b_dateBookedDate = datetime.now()
-                    status_history.create(booking, "Booked", request.user.username)
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
@@ -251,6 +250,9 @@ def book(request, fp_name):
                         response=res_content,
                         fk_booking_id=booking.id,
                     ).save()
+
+                    # Create new statusHistory
+                    status_history.create(booking, "Booked", request.user.username)
 
                     # Save Label for Hunter
                     create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
