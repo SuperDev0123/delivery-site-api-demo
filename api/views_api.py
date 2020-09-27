@@ -72,6 +72,8 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             client_warehouse_code=b_client_warehouse_code
         )
         bok_1_header["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1_header["success"] = BOK_SUCCESS_2
+        bok_1_header["client_booking_id"] = str(uuid.uuid4())
         serializer = BOK_1_Serializer(data=bok_1_header)
         if serializer.is_valid():
             serializer.save()
@@ -169,6 +171,7 @@ class BOK_2_ViewSet(viewsets.ViewSet):
     def create(self, request):
         bok_2_line = request.data
         bok_2_line["v_client_pk_consigment_num"] = bok_2_line["fk_header_id"]
+        bok_2_line["success"] = BOK_SUCCESS_2
         serializer = BOK_2_Serializer(data=bok_2_line)
 
         if serializer.is_valid():
@@ -277,7 +280,8 @@ def order_boks(request):
     if message:
         logger.info(f"#822 {message}")
         return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST,
+            {"success": False, "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Update boks
@@ -299,7 +303,10 @@ def order_boks(request):
     status_history.create_4_bok(bok_1.pk_header_id, "Ordered", request.user.username)
 
     logger.info(f"#823 Order success")
-    return Response({"success": True}, status=status.HTTP_200_OK,)
+    return Response(
+        {"success": True},
+        status=status.HTTP_200_OK,
+    )
 
 
 @transaction.atomic
@@ -677,7 +684,9 @@ def push_boks(request):
 
                 body = {"booking": booking, "booking_lines": booking_lines}
                 _, success, message, quote_set = get_pricing(
-                    body=body, booking_id=None, is_pricing_only=True,
+                    body=body,
+                    booking_id=None,
+                    is_pricing_only=True,
                 )
                 logger.info(
                     f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
@@ -1037,7 +1046,10 @@ def get_all_zoho_tickets(request):
 
     elif get_tickets.status_code == 204:
         return JsonResponse(
-            {"status": "There are no tickets on zoho", "tickets": get_ticket,}
+            {
+                "status": "There are no tickets on zoho",
+                "tickets": get_ticket,
+            }
         )
     else:
         final_ticket = {"status": "success", "tickets": get_ticket}
