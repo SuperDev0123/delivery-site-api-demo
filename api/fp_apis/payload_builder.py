@@ -16,6 +16,7 @@ logger = logging.getLogger("dme_api")
 
 def get_account_detail(booking, fp_name):
     _fp_name = fp_name.lower()
+    _b_client_name = booking.b_client_name.lower()
     account_detail = None
 
     if fp_name.lower() not in FP_CREDENTIALS:
