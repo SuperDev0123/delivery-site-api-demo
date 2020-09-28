@@ -593,6 +593,7 @@ def get_create_label_payload(booking, fp_name):
 def get_create_order_payload(bookings, fp_name):
     try:
         payload = {}
+        booking = bookings.first()
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
 
