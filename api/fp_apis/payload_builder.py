@@ -607,7 +607,7 @@ def get_create_order_payload(bookings, fp_name):
 
         return payload
     except Exception as e:
-        # print(f"#404 - Error while build payload: {e}")
+        logger.error(f"#404 - Error while build payload(CREATE ORDER): {e}")
         return None
 
 
