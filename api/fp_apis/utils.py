@@ -129,7 +129,9 @@ def _get_fastest_price(pricings):
                 fastest_pricing["pricing"] = pricing
                 fastest_pricing["etd_in_hour"] = etd
             elif (
-                fastest_pricing["etd_in_hour"] == etd
+                etd
+                and fastest_pricing["etd_in_hour"]
+                and fastest_pricing["etd_in_hour"] == etd
                 and fastest_pricing["pricing"].fee > pricing.fee
             ):
                 fastest_pricing["pricing"] = pricing
@@ -153,7 +155,7 @@ def _get_lowest_price(pricings):
             elif float(lowest_pricing["pricing"].fee) == float(pricing.fee):
                 etd = get_etd_in_hour(pricing)
 
-                if lowest_pricing["etd"] > etd:
+                if lowest_pricing["etd"] and etd and lowest_pricing["etd"] > etd:
                     lowest_pricing["pricing"] = pricing
                     lowest_pricing["etd"] = pricing
 
