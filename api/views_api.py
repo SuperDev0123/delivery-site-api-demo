@@ -75,6 +75,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         bok_1_header["success"] = dme_constants.BOK_SUCCESS_2
         bok_1_header["client_booking_id"] = str(uuid.uuid4())
         serializer = BOK_1_Serializer(data=bok_1_header)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
