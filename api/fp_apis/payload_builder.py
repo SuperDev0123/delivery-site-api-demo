@@ -16,6 +16,7 @@ logger = logging.getLogger("dme_api")
 
 def get_account_detail(booking, fp_name):
     _fp_name = fp_name.lower()
+    _b_client_name = booking.b_client_name.lower()
     account_detail = None
 
     if fp_name.lower() not in FP_CREDENTIALS:
@@ -592,6 +593,7 @@ def get_create_label_payload(booking, fp_name):
 def get_create_order_payload(bookings, fp_name):
     try:
         payload = {}
+        booking = bookings.first()
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
 
@@ -606,7 +608,7 @@ def get_create_order_payload(bookings, fp_name):
 
         return payload
     except Exception as e:
-        # print(f"#404 - Error while build payload: {e}")
+        logger.error(f"#404 - Error while build payload(CREATE ORDER): {e}")
         return None
 
 

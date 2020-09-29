@@ -27,6 +27,8 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "fk_client_id",
             "b_client_warehouse_code",
             "b_clientPU_Warehouse",
+            "fk_client_warehouse",
+            "b_000_1_b_clientReference_RA_Numbers",
             "b_000_2_b_price",
             "b_001_b_freight_provider",
             "b_002_b_vehicle_type",

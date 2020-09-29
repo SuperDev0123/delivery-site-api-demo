@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def _set_error(booking, error_msg):
     booking.b_error_Capture = str(error_msg)[:999]
     booking.z_ModifiedTimestamp = datetime.now()
@@ -5,27 +8,30 @@ def _set_error(booking, error_msg):
 
 
 def pre_check_book(booking):
+    _fp_name = booking.vx_freight_provider.lower()
+    _b_client_name = booking.b_client_name.lower()
+    error_msg = None
+
     if booking.b_status.lower() == "booked":
         error_msg = "Booking is already booked."
-        return error_msg
 
     if booking.pu_Address_State is None or not booking.pu_Address_State:
         error_msg = "State for pickup postal address is required."
         _set_error(booking, error_msg)
-        return error_msg
 
     if booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
         error_msg = "Suburb name for pickup postal address is required."
         _set_error(booking, error_msg)
-        return error_msg
 
-    if (
-        booking.vx_freight_provider.lower() == "hunter"
-        and not booking.puPickUpAvailFrom_Date
-    ):
+    if _fp_name == "hunter" and not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
         _set_error(booking, error_msg)
-        return error_msg
+
+    if _b_client_name == "biopak" and not booking.b_clientReference_RA_Numbers:
+        error_msg = "'FFL-' number is missing."
+        _set_error(booking, error_msg)
+
+    return error_msg
 
 
 def pre_check_rebook(booking):
