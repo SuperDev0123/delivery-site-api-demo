@@ -478,6 +478,12 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["pu_Comm_Booking_Communicate_Via"]
+            queryset = queryset.filter(pu_Address_PostalCode__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["deToCompanyName"]
             queryset = queryset.filter(deToCompanyName__icontains=column_filter)
         except KeyError:
@@ -499,6 +505,14 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = column_filters["de_To_Address_PostalCode"]
             queryset = queryset.filter(
                 de_To_Address_PostalCode__icontains=column_filter
+            )
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["de_To_Comm_Delivery_Communicate_Via "]
+            queryset = queryset.filter(
+                de_To_Comm_Delivery_Communicate_Via__icontains=column_filter
             )
         except KeyError:
             column_filter = ""
@@ -882,11 +896,15 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(pu_Address_Suburb__icontains=simple_search_keyword)
                             | Q(pu_Address_State__icontains=simple_search_keyword)
                             | Q(pu_Address_PostalCode__icontains=simple_search_keyword)
+                            | Q(pu_Comm_Booking_Communicate_Via__icontains=simple_search_keyword)
                             | Q(deToCompanyName__icontains=simple_search_keyword)
                             | Q(de_To_Address_Suburb__icontains=simple_search_keyword)
                             | Q(de_To_Address_State__icontains=simple_search_keyword)
                             | Q(
                                 de_To_Address_PostalCode__icontains=simple_search_keyword
+                            )
+                            | Q(
+                                de_To_Comm_Delivery_Communicate_Via=simple_search_keyword
                             )
                             | Q(
                                 b_clientReference_RA_Numbers__icontains=simple_search_keyword
