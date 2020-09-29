@@ -72,9 +72,10 @@ urlpatterns += [
     url(r"^generate-xml/", generate_xml),
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
-    # BOK apis(BIOPAK push apis, Get API - no auth)
-    url(r"^boks/", boks),
-    # url(r"^bok_1_to_bookings/", bok_1_to_bookings),
+    # BOK apis(BIOPAK push apis)
+    url(r"^boks/order/", order_boks),
+    url(r"^boks/", push_boks),
+    url(r"^price/partial/", partial_pricing),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),
@@ -91,5 +92,4 @@ urlpatterns += [
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
     url(r"^get_all_zoho_tickets/", get_all_zoho_tickets),
     url(r"^get_auth_zoho_tickets/", get_auth_zoho_tickets),
-    
 ]

@@ -1,6 +1,7 @@
-from datetime import datetime
-from rest_framework import serializers
 import re
+from datetime import datetime
+
+from rest_framework import serializers
 
 from api.models import (
     Bookings,
@@ -33,6 +34,7 @@ from api.models import (
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
+from api.common import math as dme_math
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -414,6 +416,33 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     class Meta:
         model = API_booking_quotes
         fields = "__all__"
+
+
+class SimpleQuoteSerializer(serializers.ModelSerializer):
+    cost_id = serializers.SerializerMethodField(read_only=True)
+    eta = serializers.SerializerMethodField(read_only=True)
+    cost = serializers.SerializerMethodField(read_only=True)
+
+    def get_cost_id(self, obj):
+        return obj.pk
+
+    def get_cost(self, obj):
+        if obj.tax_value_1:
+            return dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
+        else:
+            return dme_math.ceil(obj.client_mu_1_minimum_values, 2)
+
+    def get_eta(self, obj):
+        return obj.etd
+
+    class Meta:
+        model = API_booking_quotes
+        fields = (
+            "cost_id",
+            "cost",
+            "eta",
+            "service_name",
+        )
 
 
 class EmailTemplatesSerializer(serializers.ModelSerializer):

@@ -5,7 +5,8 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
-from .constants import FP_UOM
+from .constants import FP_CREDENTIALS, FP_UOM
+
 
 logger = logging.getLogger("dme_api")
 
@@ -64,46 +65,8 @@ def get_status_category_from_status(status):
         return ""
 
 
-def get_account_code_key(booking, fp_name):
-    from .payload_builder import ACCOUNT_CODES
-
-    # Exceptional case for Bunnings
-    if (
-        "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code
-        and fp_name.lower() == "hunter"
-    ):
-        if booking.pu_Address_State == "QLD":
-            return "live_bunnings_0"
-        elif booking.pu_Address_State == "NSW":
-            return "live_bunnings_1"
-        else:
-            booking.b_errorCapture = f"Not supported State"
-            booking.save()
-            return None
-
-    if fp_name.lower() not in ACCOUNT_CODES:
-        booking.b_errorCapture = f"Not supported FP"
-        booking.save()
-        return None
-    elif booking.api_booking_quote:
-        account_code = booking.api_booking_quote.account_code
-        account_code_key = None
-
-        for key in ACCOUNT_CODES[fp_name.lower()]:
-            if ACCOUNT_CODES[fp_name.lower()][key] == account_code:
-                account_code_key = key
-                return account_code_key
-
-        if not account_code_key:
-            booking.b_errorCapture = f"Not supported ACCOUNT CODE"
-            booking.save()
-            return None
-    elif not booking.api_booking_quote:
-        return "live_0"
-
-
 # Get ETD of Pricing in `hours` unit
-def _get_etd(pricing):
+def get_etd_in_hour(pricing):
     fp = Fp_freight_providers.objects.get(
         fp_company_name__iexact=pricing.fk_freight_provider_id
     )
@@ -140,7 +103,7 @@ def _is_deliverable_price(pricing, booking):
             delta_min -= pu_PickUp_By_Time_Minutes
 
         delta_min = timeDelta.total_seconds() / 60 + delta_min
-        eta = _get_etd(pricing)
+        eta = get_etd_in_hour(pricing)
 
         if not eta:
             return False
@@ -156,18 +119,24 @@ def _is_deliverable_price(pricing, booking):
 def _get_fastest_price(pricings):
     fastest_pricing = {}
     for pricing in pricings:
-        etd = _get_etd(pricing)
+        etd = get_etd_in_hour(pricing)
 
         if not fastest_pricing:
             fastest_pricing["pricing"] = pricing
             fastest_pricing["etd_in_hour"] = etd
-        elif fastest_pricing and etd:
-            if not fastest_pricing["etd_in_hour"] or (
-                fastest_pricing["etd_in_hour"] and fastest_pricing["etd_in_hour"] > etd
+        elif etd and fastest_pricing and fastest_pricing["etd_in_hour"]:
+            if fastest_pricing["etd_in_hour"] > etd:
+                fastest_pricing["pricing"] = pricing
+                fastest_pricing["etd_in_hour"] = etd
+            elif (
+                etd
+                and fastest_pricing["etd_in_hour"]
+                and fastest_pricing["etd_in_hour"] == etd
+                and fastest_pricing["pricing"].fee > pricing.fee
             ):
                 fastest_pricing["pricing"] = pricing
 
-    return fastest_pricing
+    return fastest_pricing["pricing"]
 
 
 # ######################## #
@@ -178,14 +147,34 @@ def _get_lowest_price(pricings):
     for pricing in pricings:
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
-        elif (
-            lowest_pricing
-            and pricing.fee
-            and float(lowest_pricing["pricing"].fee) > float(pricing.fee)
-        ):
-            lowest_pricing["pricing"] = pricing
+            lowest_pricing["etd"] = get_etd_in_hour(pricing)
+        elif lowest_pricing and pricing.fee:
+            if float(lowest_pricing["pricing"].fee) > float(pricing.fee):
+                lowest_pricing["pricing"] = pricing
+                lowest_pricing["etd"] = get_etd_in_hour(pricing)
+            elif float(lowest_pricing["pricing"].fee) == float(pricing.fee):
+                etd = get_etd_in_hour(pricing)
 
-    return lowest_pricing
+                if lowest_pricing["etd"] and etd and lowest_pricing["etd"] > etd:
+                    lowest_pricing["pricing"] = pricing
+                    lowest_pricing["etd"] = pricing
+
+    return lowest_pricing["pricing"]
+
+
+def select_best_options(pricings):
+    logger.info(f"#860 Select best options from {len(pricings)} pricings")
+
+    if not pricings:
+        return []
+
+    lowest_pricing = _get_lowest_price(pricings)
+    fastest_pricing = _get_fastest_price(pricings)
+
+    if lowest_pricing.pk == fastest_pricing.pk:
+        return [lowest_pricing]
+    else:
+        return [fastest_pricing, lowest_pricing]
 
 
 def auto_select_pricing(booking, pricings, auto_select_type):
@@ -221,17 +210,17 @@ def auto_select_pricing(booking, pricings, auto_select_type):
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
-        booking.api_booking_quote = filtered_pricing["pricing"]
-        booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
-        booking.vx_account_code = filtered_pricing["pricing"].account_code
-        booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.inv_cost_quoted = filtered_pricing["pricing"].fee * (
-            1 + filtered_pricing["pricing"].mu_percentage_fuel_levy
+        booking.api_booking_quote = filtered_pricing
+        booking.vx_freight_provider = filtered_pricing.fk_freight_provider_id
+        booking.vx_account_code = filtered_pricing.account_code
+        booking.vx_serviceName = filtered_pricing.service_name
+        booking.inv_cost_quoted = filtered_pricing.fee * (
+            1 + filtered_pricing.mu_percentage_fuel_levy
         )
-        booking.inv_sell_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
+        booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing["pricing"].fk_freight_provider_id
+            fp_company_name__iexact=filtered_pricing.fk_freight_provider_id
         )
 
         if fp and fp.service_cutoff_time:

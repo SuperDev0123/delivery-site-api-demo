@@ -2,7 +2,7 @@ import pytz
 import logging
 from datetime import datetime, date, timedelta, time
 
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -10,8 +10,8 @@ from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Max
 from django.contrib.auth.models import User
-from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.db.models.signals import pre_save, post_save
 
 from api.common import trace_error
 
@@ -1743,6 +1743,13 @@ class Bookings(models.Model):
         return None, None
 
 
+@receiver(pre_save, sender=Bookings)
+def pre_save_booking(sender, instance, **kwargs):
+    from api.signal_handlers.bookings import pre_save_booking_handler
+
+    pre_save_booking_handler(instance)
+
+
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(
@@ -1914,7 +1921,7 @@ class Booking_lines_data(models.Model):
     itemFaultDescription = models.TextField(
         verbose_name=_("Item Description"), max_length=200, blank=True, null=True
     )
-    insuranceValueEach = models.IntegerField(
+    insuranceValueEach = models.FloatField(
         verbose_name=_("Insurance Value Each"), blank=True, null=True
     )
     gap_ra = models.TextField(
@@ -2012,6 +2019,9 @@ class BOK_0_BookingKeys(models.Model):
 
 class BOK_1_headers(models.Model):
     pk_auto_id = models.AutoField(primary_key=True)
+    quote = models.OneToOneField(
+        API_booking_quotes, on_delete=models.CASCADE, null=True
+    )  # Optional
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
@@ -2411,8 +2421,24 @@ class BOK_1_headers(models.Model):
     zb_144_date_4 = models.DateField(default=date.today, blank=True, null=True)
     zb_145_date_5 = models.DateField(default=date.today, blank=True, null=True)
 
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            from api.signal_handlers.boks import on_create_bok_1_handler
+
+            on_create_bok_1_handler(self)
+
+        return super(BOK_1_headers, self).save(*args, **kwargs)
+
     class Meta:
         db_table = "bok_1_headers"
+
+
+# @receiver(post_save, sender=BOK_1_headers)
+# def post_save_bok_1(sender, instance, **kwargs):
+#     from api.signal_handlers.boks import post_save_bok_1_handler
+
+#     post_save_bok_1_handler(instance)
 
 
 class BOK_2_lines(models.Model):
@@ -2553,7 +2579,7 @@ class BOK_3_lines_data(models.Model):
     ld_005_item_serial_number = models.CharField(
         verbose_name=_("Item Serial Number"), max_length=40, blank=True, null=True
     )
-    ld_006_insurance_value = models.IntegerField(
+    ld_006_insurance_value = models.FloatField(
         verbose_name=_("Insurance Value"), blank=True, null=True
     )
     ld_007_gap_ra = models.TextField(
@@ -3682,56 +3708,6 @@ class FP_pricing_rules(models.Model):
 
     class Meta:
         db_table = "fp_pricing_rules"
-
-
-@receiver(pre_save, sender=Bookings)
-def pre_save_booking(sender, instance: Bookings, **kwargs):
-    if instance.id is None:  # new object will be created
-        pass
-    else:
-        previous = Bookings.objects.get(id=instance.id)
-
-        if (
-            previous.dme_status_detail != instance.dme_status_detail
-        ):  # field will be updated
-            instance.dme_status_detail_updated_by = "user"
-            instance.prev_dme_status_detail = previous.dme_status_detail
-            instance.dme_status_detail_updated_at = datetime.now()
-
-        if previous.b_status != instance.b_status:
-            try:
-                if instance.b_status == "In Transit":
-                    booking_Lines_cnt = Booking_lines.objects.filter(
-                        fk_booking_id=instance.pk_booking_id
-                    ).count()
-                    fp_scanned_cnt = Api_booking_confirmation_lines.objects.filter(
-                        fk_booking_id=instance.pk_booking_id, tally__gt=0
-                    ).count()
-
-                    dme_status_detail = ""
-                    if (
-                        instance.b_given_to_transport_date_time
-                        and not instance.fp_received_date_time
-                    ):
-                        dme_status_detail = "In transporter's depot"
-                    if instance.fp_received_date_time:
-                        dme_status_detail = "Good Received by Transport"
-
-                    if fp_scanned_cnt > 0 and fp_scanned_cnt < booking_Lines_cnt:
-                        dme_status_detail = dme_status_detail + " (Partial)"
-
-                    instance.dme_status_detail = dme_status_detail
-                    instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = previous.dme_status_detail
-                    instance.dme_status_detail_updated_at = datetime.now()
-                elif instance.b_status == "Delivered":
-                    instance.dme_status_detail = ""
-                    instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = previous.dme_status_detail
-                    instance.dme_status_detail_updated_at = datetime.now()
-            except Exception as e:
-                logger.info(f"Error 515 {e}")
-                pass
 
 
 class DME_Files(models.Model):
