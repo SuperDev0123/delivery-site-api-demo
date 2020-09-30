@@ -1251,16 +1251,18 @@ def pricing(request):
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
     else:
+        status_history.create(booking, "Pricing", request.user.username)
         if is_pricing_only:
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
             auto_select_pricing(booking, results, auto_select_type)
-
+        
         results = ApiBookingQuotesSerializer(
             results, many=True, context={"booking": booking}
         ).data
+
         return JsonResponse(
             {"success": True, "message": message, "results": results},
             status=status.HTTP_200_OK,

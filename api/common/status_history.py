@@ -1,7 +1,7 @@
 from datetime import datetime, date, timedelta
 
 from api.models import Dme_status_history
-from api.outputs import tempo
+from api.outputs import tempo, automation
 
 # Create new status_history for Booking
 def create(booking, status, username, event_timestamp=None):
@@ -29,6 +29,9 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.status_update_via = "Django"
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
+
+            automation.send_sms( dme_status_history.notes, booking.pu_Phone_Mobile)
+            automation.send_sms( dme_status_history.notes, booking.de_to_Phone_Mobile)
 
             if status.lower() == "delivered":
                 if event_timestamp:
