@@ -35,6 +35,7 @@ from api.common import constants as dme_constants
 from api.fp_apis.utils import select_best_options, get_status_category_from_status
 from api.operations import push_operations
 from api.common import status_history
+from api.operations import product_operations as product_oper
 
 
 logger = logging.getLogger("dme_api")
@@ -314,6 +315,9 @@ def order_boks(request):
 @transaction.atomic
 @api_view(["POST", "PUT"])
 def push_boks(request):
+    """
+    PUSH api (bok_1, bok_2, bok_3)
+    """
     user = request.user
     logger.info(f"@879 Pusher: {user.username}")
     boks_json = request.data
@@ -581,48 +585,112 @@ def push_boks(request):
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
             # Save bok_2s
-            for bok_2 in bok_2s:
-                bok_3s = bok_2["booking_lines_data"]
-                bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
-                bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
-                    "pk_header_id"
-                ]
-                bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
-                bok_2["booking_line"]["success"] = bok_1["success"]
-                bok_2["booking_line"]["l_001_type_of_packaging"] = (
-                    "Carton"
-                    if not bok_2["booking_line"].get("l_001_type_of_packaging")
-                    else bok_2["booking_line"]["l_001_type_of_packaging"]
-                )
+            for index, bok_2 in enumerate(bok_2s):
+                if "Plum" in client_name:  # Plum
+                    parent_model_number = bok_2.get("parent_model_number")
+                    qty = bok_2.get("qty")
 
-                bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
-                if bok_2_serializer.is_valid():
-                    bok_2_serializer.save()
-                else:
-                    logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
-                    return Response(
-                        {"success": False, "message": bok_3_serializer.errors},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                # Save bok_3s
-                for bok_3 in bok_3s:
-                    bok_3["fk_header_id"] = bok_1["pk_header_id"]
-                    bok_3["fk_booking_lines_id"] = bok_2["booking_line"][
-                        "pk_booking_lines_id"
-                    ]
-                    bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-                    bok_3["success"] = bok_1["success"]
-
-                    bok_3_serializer = BOK_3_Serializer(data=bok_3)
-                    if bok_3_serializer.is_valid():
-                        bok_3_serializer.save()
-                    else:
-                        logger.info(f"@8823 BOKS API Error - {bok_3_serializer.errors}")
+                    if not parent_model_number or not qty:
                         return Response(
-                            {"success": False, "message": bok_3_serializer.errors},
+                            {
+                                "success": False,
+                                "results": [],
+                                "message": "'parent_model_number' and 'qty' are required.",
+                            },
                             status=status.HTTP_400_BAD_REQUEST,
                         )
+
+                    product, items = product_oper.get_product_items(parent_model_number)
+
+                    for item in items:
+                        line = {}
+                        line["fk_header_id"] = bok_1["pk_header_id"]
+                        line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                        line["pk_booking_lines_id"] = str(uuid.uuid1())
+                        line["success"] = bok_1["success"]
+                        line["l_001_type_of_packaging"] = "Carton"
+                        line["l_002_qty"] = int(item["qty"]) * qty
+                        line["l_003_item"] = item["description"]
+                        line["l_004_dim_UOM"] = item["e_dimUOM"]
+                        line["l_005_dim_length"] = item["e_dimLength"]
+                        line["l_006_dim_width"] = item["e_dimWidth"]
+                        line["l_007_dim_height"] = item["e_dimHeight"]
+                        line["l_009_weight_per_each"] = item["e_weightPerEach"]
+                        line["l_008_weight_UOM"] = item["e_weightUOM"]
+                        bok_2s[index]["booking_line"] = line
+
+                        bok_2_serializer = BOK_2_Serializer(data=line)
+                        if bok_2_serializer.is_valid():
+                            bok_2_serializer.save()
+                        else:
+                            logger.info(
+                                f"@8822 BOKS API Error - {bok_2_serializer.errors}"
+                            )
+                            return Response(
+                                {"success": False, "message": bok_2_serializer.errors},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+
+                        product["fk_header_id"] = bok_1["pk_header_id"]
+                        product["fk_booking_lines_id"] = line["pk_booking_lines_id"]
+                        product["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                        product["success"] = bok_1["success"]
+
+                        bok_3_serializer = BOK_3_Serializer(data=product)
+                        if bok_3_serializer.is_valid():
+                            bok_3_serializer.save()
+                        else:
+                            logger.info(
+                                f"@8823 BOKS API Error - {bok_3_serializer.errors}"
+                            )
+                            return Response(
+                                {"success": False, "message": bok_3_serializer.errors},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                else:
+                    bok_3s = bok_2["booking_lines_data"]
+                    bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
+                    bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
+                        "pk_header_id"
+                    ]
+                    bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
+                    bok_2["booking_line"]["success"] = bok_1["success"]
+                    bok_2["booking_line"]["l_001_type_of_packaging"] = (
+                        "Carton"
+                        if not bok_2["booking_line"].get("l_001_type_of_packaging")
+                        else bok_2["booking_line"]["l_001_type_of_packaging"]
+                    )
+
+                    bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
+                    if bok_2_serializer.is_valid():
+                        bok_2_serializer.save()
+                    else:
+                        logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                        return Response(
+                            {"success": False, "message": bok_2_serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    # Save bok_3s
+                    for bok_3 in bok_3s:
+                        bok_3["fk_header_id"] = bok_1["pk_header_id"]
+                        bok_3["fk_booking_lines_id"] = bok_2["booking_line"][
+                            "pk_booking_lines_id"
+                        ]
+                        bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                        bok_3["success"] = bok_1["success"]
+
+                        bok_3_serializer = BOK_3_Serializer(data=bok_3)
+                        if bok_3_serializer.is_valid():
+                            bok_3_serializer.save()
+                        else:
+                            logger.info(
+                                f"@8823 BOKS API Error - {bok_3_serializer.errors}"
+                            )
+                            return Response(
+                                {"success": False, "message": bok_3_serializer.errors},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
 
             bok_1_serializer.save()
 
@@ -841,28 +909,47 @@ def partial_pricing(request):
 
     booking_lines = []
     for bok_2 in bok_2s:
-        e_type_of_packaging = (
-            "Carton"
-            if not "l_001_type_of_packaging" in bok_2["booking_line"]
-            or (
-                "l_001_type_of_packaging" in bok_2["booking_line"]
-                and not bok_2["booking_line"]["l_001_type_of_packaging"]
+        parent_model_number = bok_2.get("parent_model_number")
+        qty = bok_2.get("qty")
+
+        if not parent_model_number or not qty:
+            return Response(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": "'parent_model_number' and 'qty' are required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            else bok_2["booking_line"]["l_001_type_of_packaging"]
-        )
-        booking_line = {
-            "e_type_of_packaging": e_type_of_packaging,
-            "fk_booking_id": bok_1["pk_header_id"],
-            "e_qty": bok_2["booking_line"]["l_002_qty"],
-            "e_item": "initial_item",
-            "e_dimUOM": bok_2["booking_line"]["l_004_dim_UOM"],
-            "e_dimLength": bok_2["booking_line"]["l_005_dim_length"],
-            "e_dimWidth": bok_2["booking_line"]["l_006_dim_width"],
-            "e_dimHeight": bok_2["booking_line"]["l_007_dim_height"],
-            "e_weightUOM": bok_2["booking_line"]["l_008_weight_UOM"],
-            "e_weightPerEach": bok_2["booking_line"]["l_009_weight_per_each"],
-        }
-        booking_lines.append(booking_line)
+
+        _, items = product_oper.get_product_items(parent_model_number)
+
+        if not items:
+            return Response(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": "Can't find Product with provided 'parent_model_number'.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        for item in items:
+            booking_line = {
+                "e_type_of_packaging": "Carton"
+                if not item.get("e_type_of_packaging")
+                else item["e_type_of_packaging"],
+                "fk_booking_id": bok_1["pk_header_id"],
+                "e_qty": int(item["qty"]) * qty,
+                "e_item": item["description"],
+                "e_dimUOM": item["e_dimUOM"],
+                "e_dimLength": item["e_dimLength"],
+                "e_dimWidth": item["e_dimWidth"],
+                "e_dimHeight": item["e_dimHeight"],
+                "e_weightUOM": item["e_weightUOM"],
+                "e_weightPerEach": item["e_weightPerEach"],
+            }
+            booking_lines.append(booking_line)
 
     body = {"booking": booking, "booking_lines": booking_lines}
     _, success, message, quote_set = get_pricing(

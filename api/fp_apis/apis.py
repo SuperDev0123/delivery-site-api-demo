@@ -1331,7 +1331,8 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
 
     logger.info("#910 - Building Pricing workers...")
     # "Startrack", "Camerons", "Toll", "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
+    # fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
+    fp_names = ["Hunter"]
 
     for fp_name in fp_names:
         _fp_name = fp_name.lower()
