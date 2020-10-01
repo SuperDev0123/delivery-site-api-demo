@@ -26,8 +26,13 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name='dme_options',
-            name='show_in_admin',
+            model_name="dme_options",
+            name="show_in_admin",
             field=models.BooleanField(blank=True, default=False, null=True),
-        )
+        ),
+        migrations.AddField(
+            model_name="dme_options",
+            name="z_modifiedByAccount",
+            field=models.CharField(blank=True, default=False, null=True, max_length=64),
+        ),
     ]
