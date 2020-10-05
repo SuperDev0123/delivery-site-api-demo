@@ -233,3 +233,44 @@ def auto_select_pricing(booking, pricings, auto_select_type):
     else:
         logger.info("#855 - Could not find proper pricing")
         return False
+
+
+def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
+    if len(pricings) == 0:
+        logger.info("#855 - Could not find proper pricing")
+        return None
+
+    non_air_freight_pricings = []
+    for pricing in pricings:
+        if not pricing.service_name or (
+            pricing.service_name and pricing.service_name != "Air Freight"
+        ):
+            non_air_freight_pricings.append(pricing)
+
+    # Check booking.pu_PickUp_By_Date and booking.de_Deliver_By_Date and Pricings etd
+    # deliverable_pricings = []
+    # for pricing in non_air_freight_pricings:
+    #     if _is_deliverable_price(pricing, booking):
+    #         deliverable_pricings.append(pricing)
+
+    deliverable_pricings = non_air_freight_pricings
+    filtered_pricing = {}
+    if int(auto_select_type) == 1:  # Lowest
+        if deliverable_pricings:
+            filtered_pricing = _get_lowest_price(deliverable_pricings)
+        elif non_air_freight_pricings:
+            filtered_pricing = _get_lowest_price(non_air_freight_pricings)
+    else:  # Fastest
+        if deliverable_pricings:
+            filtered_pricing = _get_fastest_price(deliverable_pricings)
+        elif non_air_freight_pricings:
+            filtered_pricing = _get_fastest_price(non_air_freight_pricings)
+
+    if filtered_pricing:
+        logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
+        bok_1.quote = filtered_pricing
+        bok_1.save()
+        return True
+    else:
+        logger.info("#855 - Could not find proper pricing")
+        return False

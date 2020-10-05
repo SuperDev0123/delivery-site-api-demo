@@ -118,6 +118,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "fk_header_id",
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",
+            "e_item_type",
         )
 
 

@@ -68,6 +68,7 @@ class DME_clients(models.Model):
     client_min_markup_value = models.FloatField(default=0, null=True, blank=True)
     augment_pu_by_time = models.TimeField(blank=True, null=True, default=None)
     augment_pu_available_time = models.TimeField(blank=True, null=True, default=None)
+    client_customer_mark_up = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "dme_clients"

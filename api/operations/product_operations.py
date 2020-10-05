@@ -1,18 +1,64 @@
+from django.db.models import Q
+from rest_framework.exceptions import ValidationError
+
 from api.models import Client_Products
 
 
-def get_product_items(parent_model_number):
-    lines = []
-    products = Client_Products.objects.filter(parent_model_number=parent_model_number)
+def _append_line(results, line, qty):
+    """
+    if same e_item_type(model_number), then merge both
+    """
+    is_new = True
 
-    if products.count() == 0:
-        return None, []
-    elif products.count() == 1:
-        product = products.first()
-        lines = [
-            {
+    for index, result in enumerate(results):
+        if result["e_item_type"] == line["e_item_type"]:
+            results[index]["qty"] += line["qty"]
+            is_new = False
+            break
+
+    if is_new:
+        results.append(line)
+
+    return results
+
+
+def get_product_items(bok_2s):
+    """
+    get all items from array of "model_number" and "qty"
+    """
+    results = []
+
+    for bok_2 in bok_2s:
+        model_number = bok_2.get("model_number")
+        qty = bok_2.get("qty")
+
+        if not model_number or not qty:
+            raise ValidationError(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": "'model_number' and 'qty' are required for each booking_line",
+                }
+            )
+
+        products = Client_Products.objects.filter(
+            Q(parent_model_number=model_number) | Q(child_model_number=model_number)
+        )
+
+        if products.count() == 0:
+            raise ValidationError(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": f"Can't find Product with provided 'model_number'({model_number}).",
+                },
+            )
+        elif products.count() == 1:
+            product = products.first()
+            line = {
+                "e_item_type": product.child_model_number,
                 "description": product.description,
-                "qty": product.qty,
+                "qty": product.qty * qty,
                 "e_dimUOM": product.e_dimUOM,
                 "e_weightUOM": product.e_weightUOM,
                 "e_dimLength": product.e_dimLength,
@@ -20,32 +66,25 @@ def get_product_items(parent_model_number):
                 "e_dimHeight": product.e_dimHeight,
                 "e_weightPerEach": product.e_weightPerEach,
             }
-        ]
 
-        line_data = {
-            "model_number": product.parent_model_number,
-            "description": product.description,
-        }
-    elif products.count() > 1:
-        items = products.exclude(child_model_number=parent_model_number)
-        product = products.filter(child_model_number=parent_model_number).first()
+            results = _append_line(results, line, qty)
+        elif products.count() > 1:
+            child_items = products.exclude(
+                child_model_number=model_number, parent_model_number=model_number
+            )
 
-        for item in items:
-            line = {
-                "description": item.description,
-                "qty": item.qty,
-                "e_dimUOM": item.e_dimUOM,
-                "e_weightUOM": item.e_weightUOM,
-                "e_dimLength": item.e_dimLength,
-                "e_dimWidth": item.e_dimWidth,
-                "e_dimHeight": item.e_dimHeight,
-                "e_weightPerEach": item.e_weightPerEach,
-            }
-            lines.append(line)
+            for item in child_items:
+                line = {
+                    "e_item_type": item.child_model_number,
+                    "description": item.description,
+                    "qty": item.qty * qty,
+                    "e_dimUOM": item.e_dimUOM,
+                    "e_weightUOM": item.e_weightUOM,
+                    "e_dimLength": item.e_dimLength,
+                    "e_dimWidth": item.e_dimWidth,
+                    "e_dimHeight": item.e_dimHeight,
+                    "e_weightPerEach": item.e_weightPerEach,
+                }
+                results = _append_line(results, line, qty)
 
-        line_data = {
-            "model_number": product.parent_model_number,
-            "description": product.description,
-        }
-
-    return line_data, lines
+    return results

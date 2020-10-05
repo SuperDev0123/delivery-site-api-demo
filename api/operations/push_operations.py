@@ -1,41 +1,10 @@
 import math
 import logging
 
-from api.fp_apis.utils import get_etd_in_hour
+from api.models import Client_Products
+from api.operations import product_operations as product_oper
 
 logger = logging.getLogger("dme_api")
-
-
-def beautify_eta(json_results, quotes):
-    """
-    beautify eta as Days,
-    i.e:
-        3.51 -> 4 Days
-        3.00 -> 3 Days
-    """
-    _results = []
-
-    for index, result in enumerate(json_results):
-        try:
-            delta = float(result["eta"]) - round(float(result["eta"]))
-
-            if delta != 0:
-                result["eta"] = f"{math.ceil(float(result['eta']))} days"
-            else:
-                result["eta"] = f"{math.round(float(result['eta']))} days"
-        except Exception as e:
-            try:
-                etd_in_hour = get_etd_in_hour(quotes[index]) / 24
-                result["eta"] = f"{math.ceil(etd_in_hour)} days"
-            except Exception as e:
-                pass
-
-        if result["eta"] == "1 days":
-            result["eta"] = "1 day"
-
-        _results.append(result)
-
-    return _results
 
 
 def _get_bok_1_modifications(old_bok_1, bok_1):
@@ -231,23 +200,23 @@ def _get_bok_1_modifications(old_bok_1, bok_1):
             "new": bok_1["b_059_b_del_address_postalcode"],
         }
 
-    if (
-        "b_057_b_del_address_state" in bok_1
-        and bok_1["b_057_b_del_address_state"] != old_bok_1.b_057_b_del_address_state
-    ):
-        result["b_057_b_del_address_state"] = {
-            "old": old_bok_1.b_057_b_del_address_state,
-            "new": bok_1["b_057_b_del_address_state"],
-        }
+    # if (
+    #     "b_057_b_del_address_state" in bok_1
+    #     and bok_1["b_057_b_del_address_state"] != old_bok_1.b_057_b_del_address_state
+    # ):
+    #     result["b_057_b_del_address_state"] = {
+    #         "old": old_bok_1.b_057_b_del_address_state,
+    #         "new": bok_1["b_057_b_del_address_state"],
+    #     }
 
-    if (
-        "b_058_b_del_address_suburb" in bok_1
-        and bok_1["b_058_b_del_address_suburb"] != old_bok_1.b_058_b_del_address_suburb
-    ):
-        result["b_058_b_del_address_suburb"] = {
-            "old": old_bok_1.b_058_b_del_address_suburb,
-            "new": bok_1["b_058_b_del_address_suburb"],
-        }
+    # if (
+    #     "b_058_b_del_address_suburb" in bok_1
+    #     and bok_1["b_058_b_del_address_suburb"] != old_bok_1.b_058_b_del_address_suburb
+    # ):
+    #     result["b_058_b_del_address_suburb"] = {
+    #         "old": old_bok_1.b_058_b_del_address_suburb,
+    #         "new": bok_1["b_058_b_del_address_suburb"],
+    #     }
 
     if (
         "b_client_warehouse_code" in bok_1
@@ -281,6 +250,7 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
         for old_bok_3 in old_bok_3s:
             if old_bok_3.ld_002_model_number == line_data["ld_002_model_number"]:
                 exist = True
+                break
 
         if not exist:
             result["added"].append(line_data["ld_002_model_number"])
@@ -294,6 +264,7 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
 
             if old_bok_3.ld_002_model_number == line_data["ld_002_model_number"]:
                 exist = False
+                break
 
         if exist:
             # for old_bok_2 in old_bok_2s:
@@ -468,7 +439,80 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
     return result
 
 
-def detect_modified_data(old_bok_1, old_bok_2s, old_bok_3s, new_data):
+def _get_bok_2s_3s_modifications_4_plum(old_bok_2s, bok_2s):
+    result = {"added": [], "modified": [], "deleted": []}
+    items = product_oper.get_product_items(bok_2s)
+
+    _bok_2s = []
+    for index, item in enumerate(items):
+        line = {}
+        line["l_001_type_of_packaging"] = "Carton"
+        line["l_002_qty"] = item["qty"]
+        line["l_003_item"] = item["description"]
+        line["l_004_dim_UOM"] = item["e_dimUOM"]
+        line["l_005_dim_length"] = item["e_dimLength"]
+        line["l_006_dim_width"] = item["e_dimWidth"]
+        line["l_007_dim_height"] = item["e_dimHeight"]
+        line["l_009_weight_per_each"] = item["e_weightPerEach"]
+        line["l_008_weight_UOM"] = item["e_weightUOM"]
+        line["e_item_type"] = item["e_item_type"]
+        _bok_2s.append(line)
+
+    # Get New
+    for bok_2 in _bok_2s:
+        is_new = True
+
+        for old_bok_2 in old_bok_2s:
+            if old_bok_2.e_item_type == bok_2["e_item_type"]:
+                is_new = False
+                break
+
+        if is_new:
+            result["added"].append(
+                {"model_number": bok_2["e_item_type"], "qty": bok_2["l_002_qty"]}
+            )
+
+    # Get Deleted
+    for old_bok_2 in old_bok_2s:
+        is_deleted = True
+
+        for bok_2 in _bok_2s:
+            if old_bok_2.e_item_type == bok_2["e_item_type"]:
+                is_deleted = False
+                break
+
+        if is_deleted:
+            result["deleted"].append(
+                {
+                    "model_number": old_bok_2.e_item_type,
+                    "qty": old_bok_2.l_002_qty,
+                }
+            )
+
+    # Get Modified
+    for bok_2 in _bok_2s:
+        for old_bok_2 in old_bok_2s:
+            if (
+                old_bok_2.e_item_type == bok_2["e_item_type"]
+                and not old_bok_2.l_002_qty == bok_2["l_002_qty"]
+            ):
+                result["modified"].append(
+                    {
+                        "old": {
+                            "model_number": old_bok_2.e_item_type,
+                            "qty": old_bok_2.l_002_qty,
+                        },
+                        "new": {
+                            "model_number": bok_2["e_item_type"],
+                            "qty": bok_2["l_002_qty"],
+                        },
+                    }
+                )
+
+    return result
+
+
+def detect_modified_data(client_name, old_bok_1, old_bok_2s, old_bok_3s, new_data):
     _modified_data = {}
     bok_1 = new_data["booking"]
     bok_2s = new_data["booking_lines"]
@@ -480,9 +524,14 @@ def detect_modified_data(old_bok_1, old_bok_2s, old_bok_3s, new_data):
         del _modified_data["booking"]
 
     # bok_2
-    _modified_data["booking_lines"] = _get_bok_2s_3s_modifications(
-        old_bok_2s, old_bok_3s, bok_2s
-    )
+    if "Plum" in client_name:
+        _modified_data["booking_lines"] = _get_bok_2s_3s_modifications_4_plum(
+            old_bok_2s, bok_2s
+        )
+    else:
+        _modified_data["booking_lines"] = _get_bok_2s_3s_modifications(
+            old_bok_2s, old_bok_3s, bok_2s
+        )
 
     if not _modified_data["booking_lines"]["added"]:
         del _modified_data["booking_lines"]["added"]

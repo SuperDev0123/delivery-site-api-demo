@@ -30,12 +30,18 @@ from api.fp_apis.apis import get_pricing
 from api.serializers_api import *
 from api.serializers import SimpleQuoteSerializer
 from api.models import *
-from api.common import trace_error
-from api.common import constants as dme_constants
-from api.fp_apis.utils import select_best_options, get_status_category_from_status
-from api.operations import push_operations
-from api.common import status_history
-from api.operations import product_operations as product_oper
+from api.common import (
+    trace_error,
+    constants as dme_constants,
+    status_history,
+    common_times as dme_time_lib,
+)
+from api.fp_apis.utils import (
+    select_best_options,
+    get_status_category_from_status,
+    auto_select_pricing_4_bok,
+)
+from api.operations import push_operations, product_operations as product_oper
 
 
 logger = logging.getLogger("dme_api")
@@ -93,57 +99,105 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             return Response(
                 {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
             )
-        else:
-            try:
-                bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
-                bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
-                quote_set = API_booking_quotes.objects.filter(
-                    fk_booking_id=bok_1.pk_header_id
-                )
 
-                result = BOK_1_Serializer(bok_1).data
-                result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
-
-                # Select best quotes(fastest, lowest)
-                if quote_set.exists() and quote_set.count() > 1:
-                    best_quotes = select_best_options(pricings=quote_set)
-                    logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
-
-                # Set Express or Standard
-                if best_quotes:
-                    json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-                    json_results = push_operations.beautify_eta(
-                        json_results, best_quotes
-                    )
-
-                    if len(json_results) == 1:
-                        json_results[0]["service_name"] = "Standard"
-                    else:
-                        if float(json_results[0]["cost"]) > float(
-                            json_results[1]["cost"]
-                        ):
-                            json_results[0]["service_name"] = "Express"
-                            json_results[1]["service_name"] = "Standard"
-                            json_results = [json_results[1], json_results[0]]
-                        else:
-                            json_results[1]["service_name"] = "Express"
-                            json_results[0]["service_name"] = "Standard"
-
-                    result["pricings"] = json_results
-                else:
-                    result["pricings"] = []
-
-            except Exception as e:
-                logger.info(f"#490 Error: {e}")
-                return Response(
-                    {"message": "Couldn't find matching Booking."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            return Response(
-                {"message": "Succesfully get bok and pricings.", "data": result},
-                status=status.HTTP_200_OK,
+        try:
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+            quote_set = API_booking_quotes.objects.filter(
+                fk_booking_id=bok_1.pk_header_id
             )
+            client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+
+            result = BOK_1_Serializer(bok_1).data
+            result["client_customer_mark_up"] = client.client_customer_mark_up
+            result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
+
+            # Select best quotes(fastest, lowest)
+            if quote_set.exists() and quote_set.count() > 1:
+                best_quotes = quote_set
+                # best_quotes = select_best_options(pricings=quote_set)
+                # logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+
+            # Set Express or Standard
+            if best_quotes:
+                json_results = SimpleQuoteSerializer(best_quotes, many=True).data
+                json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
+
+                # if len(json_results) == 1:
+                #     json_results[0]["service_name"] = "Standard"
+                # else:
+                #     if float(json_results[0]["cost"]) > float(
+                #         json_results[1]["cost"]
+                #     ):
+                #         json_results[0]["service_name"] = "Express"
+                #         json_results[1]["service_name"] = "Standard"
+                #         json_results = [json_results[1], json_results[0]]
+                #     else:
+                #         json_results[1]["service_name"] = "Express"
+                #         json_results[0]["service_name"] = "Standard"
+
+                result["pricings"] = json_results
+            else:
+                result["pricings"] = []
+
+        except Exception as e:
+            logger.info(f"#490 Error: {e}")
+            return Response(
+                {"message": "Couldn't find matching Booking."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"message": "Succesfully get bok and pricings.", "data": result},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["patch"], permission_classes=[AllowAny])
+    def book(self, request):
+        identifier = request.GET["identifier"]
+
+        if not identifier:
+            return Response(
+                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+
+            for bok_2 in bok_2s:
+                bok_2.success = dme_constants.BOK_SUCCESS_4
+                bok_2.save()
+
+            bok_1.success = dme_constants.BOK_SUCCESS_4
+            bok_1.save()
+            logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
+            return Response({"success": True}, status.HTTP_200_OK)
+        except:
+            logger.info(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
+    def cancel(self, request):
+        identifier = request.GET["identifier"]
+
+        if not identifier:
+            return Response(
+                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
+            API_booking_quotes.objects.filter(fk_booking_id=bok_1.pk_header_id).delete()
+            bok_1.delete()
+            logger.info(f"@840 [CANCEL] BOK success with identifier: {identifier}")
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            logger.info(
+                f"@841 [CANCEL] BOK Failure with identifier: {identifier}, reason: {str(e)}"
+            )
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
@@ -439,13 +493,11 @@ def push_boks(request):
             if pk_header_id:
                 old_bok_1 = old_bok_1s.first()
                 old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-                old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
                 push_operations.detect_modified_data(
-                    old_bok_1, old_bok_2s, old_bok_3s, boks_json
+                    client_name, old_bok_1, old_bok_2s, None, boks_json
                 )
 
                 old_bok_1.delete()
-                old_bok_3s.delete()
                 old_bok_2s.delete()
                 API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
 
@@ -585,69 +637,38 @@ def push_boks(request):
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
             # Save bok_2s
-            for index, bok_2 in enumerate(bok_2s):
-                if "Plum" in client_name:  # Plum
-                    parent_model_number = bok_2.get("parent_model_number")
-                    qty = bok_2.get("qty")
+            if "Plum" in client_name:  # Plum
+                items = product_oper.get_product_items(bok_2s)
 
-                    if not parent_model_number or not qty:
+                for index, item in enumerate(items):
+                    line = {}
+                    line["fk_header_id"] = bok_1["pk_header_id"]
+                    line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                    line["pk_booking_lines_id"] = str(uuid.uuid1())
+                    line["success"] = bok_1["success"]
+                    line["l_001_type_of_packaging"] = "Carton"
+                    line["l_002_qty"] = item["qty"]
+                    line["l_003_item"] = item["description"]
+                    line["l_004_dim_UOM"] = item["e_dimUOM"]
+                    line["l_005_dim_length"] = item["e_dimLength"]
+                    line["l_006_dim_width"] = item["e_dimWidth"]
+                    line["l_007_dim_height"] = item["e_dimHeight"]
+                    line["l_009_weight_per_each"] = item["e_weightPerEach"]
+                    line["l_008_weight_UOM"] = item["e_weightUOM"]
+                    line["e_item_type"] = item["e_item_type"]
+                    bok_2s[index]["booking_line"] = line
+
+                    bok_2_serializer = BOK_2_Serializer(data=line)
+                    if bok_2_serializer.is_valid():
+                        bok_2_serializer.save()
+                    else:
+                        logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
                         return Response(
-                            {
-                                "success": False,
-                                "results": [],
-                                "message": "'parent_model_number' and 'qty' are required.",
-                            },
+                            {"success": False, "message": bok_2_serializer.errors},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-
-                    product, items = product_oper.get_product_items(parent_model_number)
-
-                    for item in items:
-                        line = {}
-                        line["fk_header_id"] = bok_1["pk_header_id"]
-                        line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-                        line["pk_booking_lines_id"] = str(uuid.uuid1())
-                        line["success"] = bok_1["success"]
-                        line["l_001_type_of_packaging"] = "Carton"
-                        line["l_002_qty"] = int(item["qty"]) * qty
-                        line["l_003_item"] = item["description"]
-                        line["l_004_dim_UOM"] = item["e_dimUOM"]
-                        line["l_005_dim_length"] = item["e_dimLength"]
-                        line["l_006_dim_width"] = item["e_dimWidth"]
-                        line["l_007_dim_height"] = item["e_dimHeight"]
-                        line["l_009_weight_per_each"] = item["e_weightPerEach"]
-                        line["l_008_weight_UOM"] = item["e_weightUOM"]
-                        bok_2s[index]["booking_line"] = line
-
-                        bok_2_serializer = BOK_2_Serializer(data=line)
-                        if bok_2_serializer.is_valid():
-                            bok_2_serializer.save()
-                        else:
-                            logger.info(
-                                f"@8822 BOKS API Error - {bok_2_serializer.errors}"
-                            )
-                            return Response(
-                                {"success": False, "message": bok_2_serializer.errors},
-                                status=status.HTTP_400_BAD_REQUEST,
-                            )
-
-                        product["fk_header_id"] = bok_1["pk_header_id"]
-                        product["fk_booking_lines_id"] = line["pk_booking_lines_id"]
-                        product["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-                        product["success"] = bok_1["success"]
-
-                        bok_3_serializer = BOK_3_Serializer(data=product)
-                        if bok_3_serializer.is_valid():
-                            bok_3_serializer.save()
-                        else:
-                            logger.info(
-                                f"@8823 BOKS API Error - {bok_3_serializer.errors}"
-                            )
-                            return Response(
-                                {"success": False, "message": bok_3_serializer.errors},
-                                status=status.HTTP_400_BAD_REQUEST,
-                            )
-                else:
+            else:
+                for index, bok_2 in enumerate(bok_2s):
                     bok_3s = bok_2["booking_lines_data"]
                     bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
                     bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
@@ -692,7 +713,7 @@ def push_boks(request):
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
 
-            bok_1_serializer.save()
+            bok_1_obj = bok_1_serializer.save()
 
             # create status history
             status_history.create_4_bok(
@@ -766,15 +787,14 @@ def push_boks(request):
 
                 # Select best quotes(fastest, lowest)
                 if quote_set.exists() and quote_set.count() > 1:
+                    auto_select_pricing_4_bok(bok_1_obj, quote_set)
                     best_quotes = select_best_options(pricings=quote_set)
                     logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
 
                 # Set Express or Standard
                 if best_quotes:
                     json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-                    json_results = push_operations.beautify_eta(
-                        json_results, best_quotes
-                    )
+                    json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
                     if len(json_results) == 1:
                         json_results[0]["service_name"] = "Standard"
@@ -790,16 +810,24 @@ def push_boks(request):
                             json_results[0]["service_name"] = "Standard"
 
                 if json_results:
-                    return JsonResponse(
-                        {
-                            "success": True,
-                            "results": json_results,
-                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
-                            "orderPageUrl": f"http://{settings.WEB_SITE_IP}/order/{bok_1['client_booking_id']}/",
-                            "statusPageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/",
-                        },
-                        status=status.HTTP_201_CREATED,
-                    )
+                    if "Plum" in client_name and "_sapb1" in user.username:
+                        return JsonResponse(
+                            {
+                                "success": True,
+                                "results": json_results,
+                                "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
+                                "statusPageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/",
+                            },
+                            status=status.HTTP_201_CREATED,
+                        )
+                    elif "Plum" in client_name and "_magento" in user.username:
+                        return JsonResponse(
+                            {
+                                "success": True,
+                                "results": json_results,
+                            },
+                            status=status.HTTP_201_CREATED,
+                        )
                 else:
                     return JsonResponse(
                         {
@@ -908,48 +936,24 @@ def partial_pricing(request):
     }
 
     booking_lines = []
-    for bok_2 in bok_2s:
-        parent_model_number = bok_2.get("parent_model_number")
-        qty = bok_2.get("qty")
+    items = product_oper.get_product_items(bok_2s)
 
-        if not parent_model_number or not qty:
-            return Response(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": "'parent_model_number' and 'qty' are required.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        _, items = product_oper.get_product_items(parent_model_number)
-
-        if not items:
-            return Response(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": "Can't find Product with provided 'parent_model_number'.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        for item in items:
-            booking_line = {
-                "e_type_of_packaging": "Carton"
-                if not item.get("e_type_of_packaging")
-                else item["e_type_of_packaging"],
-                "fk_booking_id": bok_1["pk_header_id"],
-                "e_qty": int(item["qty"]) * qty,
-                "e_item": item["description"],
-                "e_dimUOM": item["e_dimUOM"],
-                "e_dimLength": item["e_dimLength"],
-                "e_dimWidth": item["e_dimWidth"],
-                "e_dimHeight": item["e_dimHeight"],
-                "e_weightUOM": item["e_weightUOM"],
-                "e_weightPerEach": item["e_weightPerEach"],
-            }
-            booking_lines.append(booking_line)
+    for item in items:
+        booking_line = {
+            "e_type_of_packaging": "Carton"
+            if not item.get("e_type_of_packaging")
+            else item["e_type_of_packaging"],
+            "fk_booking_id": bok_1["pk_header_id"],
+            "e_qty": item["qty"],
+            "e_item": item["description"],
+            "e_dimUOM": item["e_dimUOM"],
+            "e_dimLength": item["e_dimLength"],
+            "e_dimWidth": item["e_dimWidth"],
+            "e_dimHeight": item["e_dimHeight"],
+            "e_weightUOM": item["e_weightUOM"],
+            "e_weightPerEach": item["e_weightPerEach"],
+        }
+        booking_lines.append(booking_line)
 
     body = {"booking": booking, "booking_lines": booking_lines}
     _, success, message, quote_set = get_pricing(
@@ -967,7 +971,7 @@ def partial_pricing(request):
     # Set Express or Standard
     if quote_set:
         json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-        json_results = push_operations.beautify_eta(json_results, best_quotes)
+        json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
         # delete quote quotes
         quote_set.delete()
