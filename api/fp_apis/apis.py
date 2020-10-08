@@ -143,9 +143,10 @@ def book(request, fp_name):
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
         _fp_name = fp_name.lower()
-
+        
         try:
             booking = Bookings.objects.get(id=booking_id)
+            status_history.create(booking, "Booked", request.user.username)
             error_msg = pre_check_book(booking)
 
             if error_msg:
@@ -236,7 +237,7 @@ def book(request, fp_name):
                     booking.b_dateBookedDate = datetime.now()
                     booking.b_status = "Booked"
                     booking.b_error_Capture = ""
-                    booking.save()
+                    # booking.save()
 
                     Log(
                         request_payload=request_payload,

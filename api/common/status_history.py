@@ -2,7 +2,7 @@ from datetime import datetime, date, timedelta
 
 from api.models import Dme_status_history
 from api.outputs import tempo, automation
-
+from django.conf import settings
 # Create new status_history for Booking
 def create(booking, status, username, event_timestamp=None):
     if not booking.z_lock_status:
@@ -19,8 +19,10 @@ def create(booking, status, username, event_timestamp=None):
             last_status_history and last_status_history.status_last != status
         ):
             dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
+            notes = f"{str(booking.b_status)} ---> {str(status)}"
+
             dme_status_history.status_old = booking.b_status
-            dme_status_history.notes = f"{str(booking.b_status)} ---> {str(status)}"
+            dme_status_history.notes = notes
             dme_status_history.status_last = status
             dme_status_history.event_time_stamp = (
                 event_timestamp if event_timestamp else datetime.now()
@@ -30,8 +32,10 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
 
-            automation.send_sms( dme_status_history.notes, booking.pu_Phone_Mobile)
-            automation.send_sms( dme_status_history.notes, booking.de_to_Phone_Mobile)
+            message = f"Status for this booking {booking.id} is changed as {notes}. Please use this link to see status information details. http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
+            automation.send_status_update_email(booking.pk, message, username)
+            automation.send_sms( message, booking.pu_Phone_Mobile)
+            automation.send_sms( message, booking.de_to_Phone_Mobile)
 
             if status.lower() == "delivered":
                 if event_timestamp:
