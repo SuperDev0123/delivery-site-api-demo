@@ -25,4 +25,9 @@ class Migration(migrations.Migration):
                 blank=True, null=True, verbose_name="Insurance Value Each"
             ),
         ),
+        migrations.AddField(
+            model_name='dme_options',
+            name='show_in_admin',
+            field=models.BooleanField(blank=True, default=False, null=True),
+        )
     ]

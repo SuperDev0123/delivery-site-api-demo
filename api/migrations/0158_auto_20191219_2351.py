@@ -15,20 +15,20 @@ class Migration(migrations.Migration):
         #     new_name="fk_booking_lines_id",
         # ),
         # migrations.RemoveField(model_name="bok_3_lines_data", name="fk_booking_id"),
-        migrations.AddField(
-            model_name="bok_2_lines",
-            name="pk_booking_lines_id",
-            field=models.CharField(
-                blank=True, max_length=64, null=True, verbose_name="PK Booking Line"
-            ),
-        ),
-        migrations.AddField(
-            model_name="bok_3_lines_data",
-            name="fk_booking_lines_id",
-            field=models.CharField(
-                blank=True, max_length=64, null=True, verbose_name="FK Booking Lines Id"
-            ),
-        ),
+        # migrations.AddField(
+        #     model_name="bok_2_lines",
+        #     name="pk_booking_lines_id",
+        #     field=models.CharField(
+        #         blank=True, max_length=64, null=True, verbose_name="PK Booking Line"
+        #     ),
+        # ),
+        # migrations.AddField(
+        #     model_name="bok_3_lines_data",
+        #     name="fk_booking_lines_id",
+        #     field=models.CharField(
+        #         blank=True, max_length=64, null=True, verbose_name="FK Booking Lines Id"
+        #     ),
+        # ),
         migrations.AddField(
             model_name="booking_lines",
             name="pk_booking_lines_id",
@@ -50,16 +50,16 @@ class Migration(migrations.Migration):
         # migrations.RemoveField(
         #     model_name="booking_lines_data", name="fk_id_booking_lines"
         # ),
-        migrations.AddField(
-            model_name="booking_lines",
-            name="pk_booking_lines_id",
-            field=models.CharField(blank=True, max_length=64, null=True),
-        ),
-        migrations.AddField(
-            model_name="booking_lines_data",
-            name="fk_booking_lines_id",
-            field=models.CharField(
-                blank=True, max_length=64, null=True, verbose_name="FK Booking Lines Id"
-            ),
-        ),
+        # migrations.AddField(
+        #     model_name="booking_lines",
+        #     name="pk_booking_lines_id",
+        #     field=models.CharField(blank=True, max_length=64, null=True),
+        # ),
+        # migrations.AddField(
+        #     model_name="booking_lines_data",
+        #     name="fk_booking_lines_id",
+        #     field=models.CharField(
+        #         blank=True, max_length=64, null=True, verbose_name="FK Booking Lines Id"
+        #     ),
+        # ),
     ]
