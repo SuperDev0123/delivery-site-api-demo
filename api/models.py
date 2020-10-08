@@ -1868,6 +1868,12 @@ class Booking_lines(models.Model):
     e_qty_shortages = models.IntegerField(blank=True, null=True, default=0)
     e_qty_scanned_fp = models.IntegerField(blank=True, null=True, default=0)
     z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
+    picked_up_timestamp = models.DateTimeField(
+        verbose_name=_("Picked up timestamp at Warehouse"),
+        null=True,
+        blank=True,
+        default=None,
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -1914,6 +1920,27 @@ class Booking_lines(models.Model):
             return ", ".join(_gap_ras)
         except Exception as e:
             return ""
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        # Check if all other lines are picked at Warehouse
+        if self.picked_up_timestamp:
+            booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+
+            if "plum" in booking.b_client_name.lower():
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                )
+                booking_lines_cnt = booking_lines.count()
+                picked_up_lines_cnt = booking_lines.filter(
+                    picked_up_timestamp__isnull=False
+                ).count()
+
+                if booking_lines_cnt == picked_up_lines_cnt:
+                    booking.b_status = "Ready for Booking"
+                    booking.save()
+
+        return super(Booking_lines, self).save(*args, **kwargs)
 
     class Meta:
         db_table = "dme_booking_lines"

@@ -166,10 +166,10 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
 
             for bok_2 in bok_2s:
-                bok_2.success = dme_constants.BOK_SUCCESS_4
+                bok_2.success = dme_constants.BOK_SUCCESS_2
                 bok_2.save()
 
-            bok_1.success = dme_constants.BOK_SUCCESS_4
+            bok_1.success = dme_constants.BOK_SUCCESS_2
             bok_1.save()
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
@@ -206,7 +206,6 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             identifier = request.data["identifier"]
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
-            bok_1.success = dme_constants.BOK_SUCCESS_4
             bok_1.quote_id = cost_id
             bok_1.save()
 
@@ -343,17 +342,17 @@ def order_boks(request):
 
     # Update boks
     bok_1.b_client_sales_inv_num = data_json["b_client_sales_inv_num"]
-    bok_1.success = dme_constants.BOK_SUCCESS_4
+    bok_1.success = dme_constants.BOK_SUCCESS_2
     bok_1.save()
 
     bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
     for bok_2 in bok_2s:
-        bok_2.success = dme_constants.BOK_SUCCESS_4
+        bok_2.success = dme_constants.BOK_SUCCESS_2
         bok_2.save()
 
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
     for bok_3 in bok_3s:
-        bok_3.success = dme_constants.BOK_SUCCESS_4
+        bok_3.success = dme_constants.BOK_SUCCESS_2
         bok_3.save()
 
     # create status history
@@ -639,6 +638,7 @@ def push_boks(request):
             # Save bok_2s
             if "Plum" in client_name:  # Plum
                 items = product_oper.get_product_items(bok_2s)
+                new_bok_2s = []
 
                 for index, item in enumerate(items):
                     line = {}
@@ -656,7 +656,7 @@ def push_boks(request):
                     line["l_009_weight_per_each"] = item["e_weightPerEach"]
                     line["l_008_weight_UOM"] = item["e_weightUOM"]
                     line["e_item_type"] = item["e_item_type"]
-                    bok_2s[index]["booking_line"] = line
+                    new_bok_2s.append({"booking_line": line})
 
                     bok_2_serializer = BOK_2_Serializer(data=line)
                     if bok_2_serializer.is_valid():
@@ -667,6 +667,8 @@ def push_boks(request):
                             {"success": False, "message": bok_2_serializer.errors},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
+
+                bok_2s = new_bok_2s
             else:
                 for index, bok_2 in enumerate(bok_2s):
                     bok_3s = bok_2["booking_lines_data"]
@@ -847,7 +849,7 @@ def push_boks(request):
             )
     except Exception as e:
         logger.info(f"@889 BOKS API Error - {e}")
-        # trace_error.print()
+        trace_error.print()
         return JsonResponse(
             {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
