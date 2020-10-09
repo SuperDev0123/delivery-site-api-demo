@@ -1930,13 +1930,13 @@ class Booking_lines(models.Model):
             if "plum" in booking.b_client_name.lower():
                 booking_lines = Booking_lines.objects.filter(
                     fk_booking_id=booking.pk_booking_id
-                )
+                ).exclude(pk=self.pk)
                 booking_lines_cnt = booking_lines.count()
                 picked_up_lines_cnt = booking_lines.filter(
                     picked_up_timestamp__isnull=False
                 ).count()
 
-                if booking_lines_cnt == picked_up_lines_cnt:
+                if booking_lines_cnt - 1 == picked_up_lines_cnt:
                     booking.b_status = "Ready for Booking"
                     booking.save()
 

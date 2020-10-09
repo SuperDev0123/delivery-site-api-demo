@@ -166,10 +166,10 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
 
             for bok_2 in bok_2s:
-                bok_2.success = dme_constants.BOK_SUCCESS_2
+                bok_2.success = dme_constants.BOK_SUCCESS_4
                 bok_2.save()
 
-            bok_1.success = dme_constants.BOK_SUCCESS_2
+            bok_1.success = dme_constants.BOK_SUCCESS_4
             bok_1.save()
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
@@ -342,17 +342,17 @@ def order_boks(request):
 
     # Update boks
     bok_1.b_client_sales_inv_num = data_json["b_client_sales_inv_num"]
-    bok_1.success = dme_constants.BOK_SUCCESS_2
+    bok_1.success = dme_constants.BOK_SUCCESS_4
     bok_1.save()
 
     bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
     for bok_2 in bok_2s:
-        bok_2.success = dme_constants.BOK_SUCCESS_2
+        bok_2.success = dme_constants.BOK_SUCCESS_4
         bok_2.save()
 
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
     for bok_3 in bok_3s:
-        bok_3.success = dme_constants.BOK_SUCCESS_2
+        bok_3.success = dme_constants.BOK_SUCCESS_4
         bok_3.save()
 
     # create status history
