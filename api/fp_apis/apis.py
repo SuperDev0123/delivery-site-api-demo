@@ -100,6 +100,8 @@ def tracking(request, fp_name):
             update_booking_with_tracking_result(
                 request, booking, fp_name, consignmentStatuses
             )
+            booking.b_error_Capture = None
+            booking.save()
 
             return JsonResponse(
                 {
@@ -236,8 +238,8 @@ def book(request, fp_name):
                     )
                     booking.b_dateBookedDate = datetime.now()
                     booking.b_status = "Booked"
-                    booking.b_error_Capture = ""
-                    # booking.save()
+                    booking.b_error_Capture = None
+                    booking.save()
 
                     Log(
                         request_payload=request_payload,
@@ -608,7 +610,7 @@ def edit_book(request, fp_name):
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                 booking.b_dateBookedDate = datetime.now()
                 booking.b_status = "Booked"
-                booking.b_error_Capture = ""
+                booking.b_error_Capture = None
                 booking.save()
 
                 Log(
@@ -689,6 +691,7 @@ def cancel_book(request, fp_name):
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
                         )
+                        booking.b_error_Capture = None
                         booking.save()
 
                         Log(
@@ -887,6 +890,7 @@ def get_label(request, fp_name):
                 z_label_url = build_dhl_label(booking)
 
             booking.z_label_url = z_label_url
+            booking.b_error_Capture = None
             booking.save()
 
             # Do not send email when booking is `Rebooked`
@@ -1151,6 +1155,7 @@ def pod(request, fp_name):
         f.close()
 
         booking.z_pod_url = f"{_fp_name}_au/{file_name}"
+        booking.b_error_Capture = None
         booking.save()
 
         # POD Email
@@ -1207,6 +1212,7 @@ def reprint(request, fp_name):
                     f.close()
 
                 booking.z_label_url = file_url
+                booking.b_error_Capture = None
                 booking.save()
 
                 return JsonResponse({"message": "Label is reprinted successfully."})
