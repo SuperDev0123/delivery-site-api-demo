@@ -3,8 +3,17 @@ from datetime import datetime, date, timedelta
 from api.models import Dme_status_history
 from api.outputs import tempo, automation
 from django.conf import settings
+from api.models import *
 # Create new status_history for Booking
 def create(booking, status, username, event_timestamp=None):
+    message = f"Status for this booking {booking.id} is changed as {notes}. Please use this link to see status information details. http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
+    subject = f"Status Update - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
+
+    if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
+        automation.send_status_update_email(booking.pk, subject, message, username)
+    if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
+        automation.send_sms( message, "+")
+
     if not booking.z_lock_status:
         status_histories = Dme_status_history.objects.filter(
             fk_booking_id=booking.pk_booking_id
@@ -32,10 +41,14 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
 
-            message = f"Status for this booking {booking.id} is changed as {notes}. Please use this link to see status information details. http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
-            automation.send_status_update_email(booking.pk, message, username)
-            automation.send_sms( message, booking.pu_Phone_Mobile)
-            automation.send_sms( message, booking.de_to_Phone_Mobile)
+            # if dme_status_history.status_last == "In Transit" and dme_status_history.status_old != "In Transit"
+            # message = f"Status for this booking {booking.id} is changed as {notes}. Please use this link to see status information details. http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
+            # subject = f"Status Update - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
+            # if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
+            #     automation.send_status_update_email(booking.pk, subject, message, username)
+            # if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
+            #     automation.send_sms( message, booking.pu_Phone_Mobile)
+            #     automation.send_sms( message, booking.de_to_Phone_Mobile)
 
             if status.lower() == "delivered":
                 if event_timestamp:
