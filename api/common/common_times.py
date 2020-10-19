@@ -69,18 +69,18 @@ def beautify_eta(json_results, quotes):
             delta = float(result["eta"]) - round(float(result["eta"]))
 
             if delta != 0:
-                result["eta"] = f"{math.ceil(float(result['eta']))} days"
+                result["readable_eta"] = f"{math.ceil(float(result['eta']))} days"
             else:
-                result["eta"] = f"{math.round(float(result['eta']))} days"
+                result["readable_eta"] = f"{math.round(float(result['eta']))} days"
         except Exception as e:
             try:
                 etd_in_hour = get_etd_in_hour(quotes[index]) / 24
-                result["eta"] = f"{math.ceil(etd_in_hour)} days"
+                result["readable_eta"] = f"{math.ceil(etd_in_hour)} days"
             except Exception as e:
                 pass
 
-        if result["eta"] == "1 days":
-            result["eta"] = "1 day"
+        if "readable_eta" in result and result["readable_eta"] == "1 days":
+            result["readable_eta"] = "1 day"
 
         _results.append(result)
 

@@ -142,6 +142,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
         except Exception as e:
             logger.info(f"#490 Error: {e}")
+            trace_error.print()
             return Response(
                 {"message": "Couldn't find matching Booking."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -492,12 +493,14 @@ def push_boks(request):
             if pk_header_id:
                 old_bok_1 = old_bok_1s.first()
                 old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
+                old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
                 push_operations.detect_modified_data(
-                    client_name, old_bok_1, old_bok_2s, None, boks_json
+                    client_name, old_bok_1, old_bok_2s, old_bok_3s, boks_json
                 )
 
                 old_bok_1.delete()
                 old_bok_2s.delete()
+                old_bok_3s.delete()
                 API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
 
     bok_1["pk_header_id"] = str(uuid.uuid4())
@@ -636,7 +639,7 @@ def push_boks(request):
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
             # Save bok_2s
-            if "Plum" in client_name:  # Plum
+            if "model_number" in bok_2s[0]:  # Product & Child items
                 items = product_oper.get_product_items(bok_2s)
                 new_bok_2s = []
 
@@ -907,6 +910,13 @@ def partial_pricing(request):
         de_suburb = addresses[0].suburb
         de_state = addresses[0].state
 
+    # Check if has lines
+    if len(bok_2s) == 0:
+        message = "No lines are provided"
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
         "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=7))[:10],
@@ -938,24 +948,46 @@ def partial_pricing(request):
     }
 
     booking_lines = []
-    items = product_oper.get_product_items(bok_2s)
 
-    for item in items:
-        booking_line = {
-            "e_type_of_packaging": "Carton"
-            if not item.get("e_type_of_packaging")
-            else item["e_type_of_packaging"],
-            "fk_booking_id": bok_1["pk_header_id"],
-            "e_qty": item["qty"],
-            "e_item": item["description"],
-            "e_dimUOM": item["e_dimUOM"],
-            "e_dimLength": item["e_dimLength"],
-            "e_dimWidth": item["e_dimWidth"],
-            "e_dimHeight": item["e_dimHeight"],
-            "e_weightUOM": item["e_weightUOM"],
-            "e_weightPerEach": item["e_weightPerEach"],
-        }
-        booking_lines.append(booking_line)
+    if "model_number" in bok_2s[0]:  # Product & Child items
+        items = product_oper.get_product_items(bok_2s)
+
+        for item in items:
+            booking_line = {
+                "e_type_of_packaging": "Carton"
+                if not item.get("e_type_of_packaging")
+                else item["e_type_of_packaging"],
+                "fk_booking_id": bok_1["pk_header_id"],
+                "e_qty": item["qty"],
+                "e_item": item["description"],
+                "e_dimUOM": item["e_dimUOM"],
+                "e_dimLength": item["e_dimLength"],
+                "e_dimWidth": item["e_dimWidth"],
+                "e_dimHeight": item["e_dimHeight"],
+                "e_weightUOM": item["e_weightUOM"],
+                "e_weightPerEach": item["e_weightPerEach"],
+            }
+            booking_lines.append(booking_line)
+    else:  # If lines have dimentions
+        for bok_2 in bok_2s:
+            e_type_of_packaging = (
+                "Carton"
+                if not bok_2["booking_line"].get("l_001_type_of_packaging")
+                else bok_2["booking_line"]["l_001_type_of_packaging"]
+            )
+            booking_line = {
+                "e_type_of_packaging": e_type_of_packaging,
+                "fk_booking_id": bok_1["pk_header_id"],
+                "e_qty": bok_2["booking_line"]["l_002_qty"],
+                "e_item": "initial_item",
+                "e_dimUOM": bok_2["booking_line"]["l_004_dim_UOM"],
+                "e_dimLength": bok_2["booking_line"]["l_005_dim_length"],
+                "e_dimWidth": bok_2["booking_line"]["l_006_dim_width"],
+                "e_dimHeight": bok_2["booking_line"]["l_007_dim_height"],
+                "e_weightUOM": bok_2["booking_line"]["l_008_weight_UOM"],
+                "e_weightPerEach": bok_2["booking_line"]["l_009_weight_per_each"],
+            }
+            booking_lines.append(booking_line)
 
     body = {"booking": booking, "booking_lines": booking_lines}
     _, success, message, quote_set = get_pricing(

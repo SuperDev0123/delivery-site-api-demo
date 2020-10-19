@@ -524,7 +524,7 @@ def detect_modified_data(client_name, old_bok_1, old_bok_2s, old_bok_3s, new_dat
         del _modified_data["booking"]
 
     # bok_2
-    if "Plum" in client_name:
+    if "model_number" in bok_2s[0]:  # Product & Child items
         _modified_data["booking_lines"] = _get_bok_2s_3s_modifications_4_plum(
             old_bok_2s, bok_2s
         )
