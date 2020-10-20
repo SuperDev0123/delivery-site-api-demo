@@ -1,4 +1,4 @@
-import pytz
+import pytz, math
 from datetime import date, timedelta, datetime
 from api.fp_apis.utils import get_etd_in_hour
 
@@ -75,6 +75,7 @@ def beautify_eta(json_results, quotes):
         except Exception as e:
             try:
                 etd_in_hour = get_etd_in_hour(quotes[index]) / 24
+                result["eta"] = etd_in_hour * 24
                 result["readable_eta"] = f"{math.ceil(etd_in_hour)} days"
             except Exception as e:
                 pass
