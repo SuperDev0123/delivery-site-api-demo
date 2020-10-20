@@ -119,7 +119,8 @@ FP_CREDENTIALS = {
         "plum": {
             "live_plum_0": {
                 "accountCode": "PLUMPR",
-                "accountKey": "plupro",
+                "accountKey": "UExVTVBSOnBsdXBybw==",
+                "accountPassword": "plupro",
                 "pricingOnly": True,
             },
         },
