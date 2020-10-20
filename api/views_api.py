@@ -383,6 +383,19 @@ def push_boks(request):
     json_results = []
     logger.info(f"@880 Push request payload - {boks_json}")
 
+    # Check missing model numbers
+    if bok_2s and "model_number" in bok_2s[0]:
+        missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s)
+
+        if missing_model_numbers:
+            return Response(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": f"Missing model numbers - {', '.join(missing_model_numbers)}",
+                }
+            )
+
     # Required fields
     if not bok_1.get("b_059_b_del_address_postalcode"):
         message = "'b_059_b_del_address_postalcode' is required."
@@ -950,6 +963,17 @@ def partial_pricing(request):
     booking_lines = []
 
     if "model_number" in bok_2s[0]:  # Product & Child items
+        missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s)
+
+        if missing_model_numbers:
+            return Response(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": f"Missing model numbers - {', '.join(missing_model_numbers)}",
+                }
+            )
+
         items = product_oper.get_product_items(bok_2s)
 
         for item in items:

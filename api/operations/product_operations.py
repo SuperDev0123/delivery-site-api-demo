@@ -88,3 +88,18 @@ def get_product_items(bok_2s):
                 results = _append_line(results, line, qty)
 
     return results
+
+
+def find_missing_model_numbers(bok_2s):
+    _missing_model_numbers = []
+
+    for bok_2 in bok_2s:
+        model_number = bok_2.get("model_number")
+        products = Client_Products.objects.filter(
+            Q(parent_model_number=model_number) | Q(child_model_number=model_number)
+        )
+
+        if not products.exists():
+            _missing_model_numbers.append(model_number)
+
+    return _missing_model_numbers
