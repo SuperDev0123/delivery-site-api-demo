@@ -1,7 +1,10 @@
 import pytz, math
+import logging
 from datetime import date, timedelta, datetime
+
 from api.fp_apis.utils import get_etd_in_hour
 
+logger = logging.getLogger("dme_api")
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 UTC_TZ = pytz.timezone("UTC")
 
@@ -80,6 +83,8 @@ def beautify_eta(json_results, quotes):
                 result["eta"] = etd_in_hour * 24
                 readable_eta = f"{math.ceil(etd_in_hour)} days"
             except Exception as e:
+                logger.info(f"@880 beautify_eta() error: {str(e)}")
+                readable_eta = f'{str(result["eta"])} days'
                 pass
 
         result["eta_in_hour"] = result["eta"]
