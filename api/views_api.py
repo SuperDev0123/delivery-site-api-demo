@@ -897,7 +897,7 @@ def partial_pricing(request):
     try:
         warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
     except Exception as e:
-        logger.info(f"@821 Client doesn't have Warehouse(s): {str(e)}")
+        logger.info(f"@812 Client doesn't have Warehouse(s): {str(e)}")
         return JsonResponse(
             {"success": False, "message": "Client doesn't have Warehouse(s)."},
             status=status.HTTP_400_BAD_REQUEST,
@@ -908,6 +908,7 @@ def partial_pricing(request):
 
     if not de_postal_code:
         message = "'b_059_b_del_address_postalcode' is required."
+        logger.info(f"@813 {message}")
         raise ValidationError(
             {"success": False, "code": "missing_param", "description": message}
         )
@@ -916,6 +917,7 @@ def partial_pricing(request):
 
     if not addresses.exists():
         message = "Delivery PostalCode is not valid"
+        logger.info(f"@814 {message}")
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -926,6 +928,7 @@ def partial_pricing(request):
     # Check if has lines
     if len(bok_2s) == 0:
         message = "No lines are provided"
+        logger.info(f"@815 {message}")
         return Response(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -966,11 +969,13 @@ def partial_pricing(request):
         missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s)
 
         if missing_model_numbers:
+            message = f"Missing model numbers - {', '.join(missing_model_numbers)}"
+            logger.info(f"@816 {message}")
             return Response(
                 {
                     "success": False,
                     "results": [],
-                    "message": f"Missing model numbers - {', '.join(missing_model_numbers)}",
+                    "message": message,
                 }
             )
 
@@ -1048,11 +1053,13 @@ def partial_pricing(request):
     if json_results:
         return Response({"success": True, "results": json_results})
     else:
+        message = "Didn't get pricings due to wrong suburb and state"
+        logger.info(f"@818 {message}")
         return Response(
             {
                 "success": False,
                 "results": json_results,
-                "message": "Didn't get pricings due to wrong suburb and state",
+                "message": message,
             }
         )
 
