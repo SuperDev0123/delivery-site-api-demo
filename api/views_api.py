@@ -393,7 +393,8 @@ def push_boks(request):
                     "success": False,
                     "results": [],
                     "message": f"Missing model numbers - {', '.join(missing_model_numbers)}",
-                }
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
     # Required fields
@@ -976,7 +977,8 @@ def partial_pricing(request):
                     "success": False,
                     "results": [],
                     "message": message,
-                }
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         items = product_oper.get_product_items(bok_2s)
