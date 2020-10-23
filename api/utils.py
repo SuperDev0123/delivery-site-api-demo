@@ -5454,3 +5454,15 @@ def get_eta_de_by(booking, quote):
         trace_error.print()
         logger.info(f"Error #1002: {e}")
         return None
+
+import re
+def ireplace(old, repl, text):
+    return re.sub('(?i)'+re.escape(old), lambda m: repl, text)
+
+def sanitize_address(address):
+    sanitize_address = ireplace("Corner", "Crn", address)
+    sanitize_address = ireplace("Street", "St", sanitize_address)
+    sanitize_address = ireplace("Road", "Rd", sanitize_address)
+    sanitize_address = ireplace("and", "&", sanitize_address)
+    sanitize_address = ireplace("Drive", "Dr ", sanitize_address)
+    return sanitize_address

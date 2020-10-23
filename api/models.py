@@ -1706,6 +1706,23 @@ class Bookings(models.Model):
             return ""
 
     @property
+    def clientRefNumbers_arr(self):
+        try:
+            clientRefNumbers = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_id=self.pk_booking_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.clientRefNumber is not None:
+                    clientRefNumbers.append(booking_line_data.clientRefNumber)
+
+            return clientRefNumbers
+        except Exception as e:
+            # print('Exception: ', e)
+            return []
+
+    @property
     def gap_ras(self):
         try:
             gap_ras = []
@@ -2020,9 +2037,9 @@ class BOK_0_BookingKeys(models.Model):
 
 class BOK_1_headers(models.Model):
     pk_auto_id = models.AutoField(primary_key=True)
-    quote = models.OneToOneField(
-        API_booking_quotes, on_delete=models.CASCADE, null=True
-    )  # Optional
+    # quote = models.OneToOneField(
+    #     API_booking_quotes, on_delete=models.CASCADE, null=True
+    # )  # Optional
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )

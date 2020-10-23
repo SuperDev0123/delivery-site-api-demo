@@ -108,10 +108,38 @@ def get_book_payload(booking, fp_name):
         if booking.b_clientReference_RA_Numbers is None
         else booking.b_clientReference_RA_Numbers
     )
+
+    client_process = (
+        Client_Process_Mgr.objects.select_related()
+        .filter(fk_booking_id=booking.id)
+        .first()
+    )
+
+    if client_process:
+        puCompany = client_process.origin_puCompany
+        pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
+        pu_Address_street_2 = client_process.origin_pu_Address_Street_2
+        pu_pickup_instructions_address = client_process.origin_pu_pickup_instructions_address
+        deToCompanyName = client_process.origin_deToCompanyName
+        de_Email = client_process.origin_de_Email
+        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
+        de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
+    else:
+        puCompany = booking.puCompany
+        pu_Address_Street_1 = booking.pu_Address_Street_1
+        pu_Address_street_2 = booking.pu_Address_street_2
+        pu_pickup_instructions_address = booking.pu_pickup_instructions_address
+        deToCompanyName = booking.deToCompanyName
+        de_Email = booking.de_Email
+        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        de_To_Address_Street_1 = booking.de_To_Address_Street_1
+        de_To_Address_Street_2 = booking.de_To_Address_Street_2
+
     payload["serviceType"] = "R" if booking.vx_serviceName is None else "R"
     payload["bookedBy"] = "Mr.CharlieBrown"
     payload["pickupAddress"] = {
-        "companyName": "" if booking.puCompany is None else booking.puCompany,
+        "companyName": "" if puCompany is None else puCompany,
         "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
@@ -124,10 +152,10 @@ def get_book_payload(booking, fp_name):
     }
 
     payload["pickupAddress"]["instruction"] = " "
-    if booking.pu_pickup_instructions_address:
+    if pu_pickup_instructions_address:
         payload["pickupAddress"][
             "instruction"
-        ] = f"{booking.pu_pickup_instructions_address}"
+        ] = f"{pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
@@ -135,11 +163,11 @@ def get_book_payload(booking, fp_name):
 
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
-        if booking.pu_Address_Street_1 is None
-        else booking.pu_Address_Street_1,
+        if pu_Address_Street_1 is None
+        else pu_Address_Street_1,
         "address2": "_"
-        if booking.pu_Address_street_2 is None
-        else booking.pu_Address_street_2,
+        if pu_Address_street_2 is None
+        else pu_Address_street_2,
         "country": ""
         if booking.pu_Address_Country is None
         else booking.pu_Address_Country,
@@ -156,12 +184,12 @@ def get_book_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": ""
-        if booking.deToCompanyName is None
-        else booking.deToCompanyName,
+        if deToCompanyName is None
+        else deToCompanyName,
         "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
-        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+        "emailAddress": "" if de_Email is None else de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": ""
@@ -181,11 +209,11 @@ def get_book_payload(booking, fp_name):
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
-        if booking.de_To_Address_Street_1 is None
-        else booking.de_To_Address_Street_1,
+        if de_To_Address_Street_1 is None
+        else de_To_Address_Street_1,
         "address2": "_"
-        if not booking.de_To_Address_Street_2
-        else booking.de_To_Address_Street_2,
+        if not de_To_Address_Street_2
+        else de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
         else booking.de_To_Address_Country,
@@ -386,8 +414,36 @@ def get_getlabel_payload(booking, fp_name):
     payload = {}
     payload["spAccountDetails"] = get_account_detail(booking, fp_name)
     payload["serviceProvider"] = get_service_provider(fp_name)
+
+    client_process = (
+        Client_Process_Mgr.objects.select_related()
+        .filter(fk_booking_id=booking.id)
+        .first()
+    )
+
+    if client_process:
+        puCompany = client_process.origin_puCompany
+        pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
+        pu_Address_street_2 = client_process.origin_pu_Address_Street_2
+        pu_pickup_instructions_address = client_process.origin_pu_pickup_instructions_address
+        deToCompanyName = client_process.origin_deToCompanyName
+        de_Email = client_process.origin_de_Email
+        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
+        de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
+    else:
+        puCompany = booking.puCompany
+        pu_Address_Street_1 = booking.pu_Address_Street_1
+        pu_Address_street_2 = booking.pu_Address_street_2
+        pu_pickup_instructions_address = booking.pu_pickup_instructions_address
+        deToCompanyName = booking.deToCompanyName
+        de_Email = booking.de_Email
+        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        de_To_Address_Street_1 = booking.de_To_Address_Street_1
+        de_To_Address_Street_2 = booking.de_To_Address_Street_2
+
     payload["pickupAddress"] = {
-        "companyName": "" if booking.puCompany is None else booking.puCompany,
+        "companyName": "" if puCompany is None else puCompany,
         "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
@@ -400,10 +456,10 @@ def get_getlabel_payload(booking, fp_name):
     }
 
     payload["pickupAddress"]["instruction"] = " "
-    if booking.pu_pickup_instructions_address:
+    if pu_pickup_instructions_address:
         payload["pickupAddress"][
             "instruction"
-        ] = f"{booking.pu_pickup_instructions_address}"
+        ] = f"{pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
@@ -411,11 +467,11 @@ def get_getlabel_payload(booking, fp_name):
 
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
-        if booking.pu_Address_Street_1 is None
-        else booking.pu_Address_Street_1,
+        if pu_Address_Street_1 is None
+        else pu_Address_Street_1,
         "address2": ""
-        if booking.pu_Address_street_2 is None
-        else booking.pu_Address_street_2,
+        if pu_Address_street_2 is None
+        else pu_Address_street_2,
         "country": ""
         if booking.pu_Address_Country is None
         else booking.pu_Address_Country,
@@ -432,12 +488,12 @@ def get_getlabel_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": ""
-        if booking.deToCompanyName is None
-        else booking.deToCompanyName,
+        if deToCompanyName is None
+        else deToCompanyName,
         "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
-        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+        "emailAddress": "" if de_Email is None else de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
         "phoneNumber": ""
@@ -457,11 +513,11 @@ def get_getlabel_payload(booking, fp_name):
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
-        if booking.de_To_Address_Street_1 is None
-        else booking.de_To_Address_Street_1,
+        if de_To_Address_Street_1 is None
+        else de_To_Address_Street_1,
         "address2": ""
-        if booking.de_To_Address_Street_2 is None
-        else booking.de_To_Address_Street_2,
+        if de_To_Address_Street_2 is None
+        else de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
         else booking.de_To_Address_Country,
@@ -684,8 +740,36 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
         else booking.b_clientReference_RA_Numbers
     )
     payload["bookedBy"] = "Mr.CharlieBrown"
+
+    client_process = (
+        Client_Process_Mgr.objects.select_related()
+        .filter(fk_booking_id=booking.id)
+        .first()
+    )
+    
+    if client_process:
+        puCompany = client_process.origin_puCompany
+        pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
+        pu_Address_street_2 = client_process.origin_pu_Address_Street_2
+        pu_pickup_instructions_address = client_process.origin_pu_pickup_instructions_address
+        deToCompanyName = client_process.origin_deToCompanyName
+        de_Email = client_process.origin_de_Email
+        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
+        de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
+    else:
+        puCompany = booking.puCompany
+        pu_Address_Street_1 = booking.pu_Address_Street_1
+        pu_Address_street_2 = booking.pu_Address_street_2
+        pu_pickup_instructions_address = booking.pu_pickup_instructions_address
+        deToCompanyName = booking.deToCompanyName
+        de_Email = booking.de_Email
+        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        de_To_Address_Street_1 = booking.de_To_Address_Street_1
+        de_To_Address_Street_2 = booking.de_To_Address_Street_2
+
     payload["pickupAddress"] = {
-        "companyName": "" if booking.puCompany is None else booking.puCompany,
+        "companyName": "" if puCompany is None else puCompany,
         "contact": "   "
         if booking.pu_Contact_F_L_Name is None
         else booking.pu_Contact_F_L_Name,
@@ -698,11 +782,11 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
 
     payload["pickupAddress"]["postalAddress"] = {
         "address1": ""
-        if booking.pu_Address_Street_1 is None
-        else booking.pu_Address_Street_1,
+        if pu_Address_Street_1 is None
+        else pu_Address_Street_1,
         "address2": ""
-        if booking.pu_Address_street_2 is None
-        else booking.pu_Address_street_2,
+        if pu_Address_street_2 is None
+        else pu_Address_street_2,
         "country": ""
         if booking.pu_Address_Country is None
         else booking.pu_Address_Country,
@@ -719,12 +803,12 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     }
     payload["dropAddress"] = {
         "companyName": ""
-        if booking.deToCompanyName is None
-        else booking.deToCompanyName,
+        if deToCompanyName is None
+        else deToCompanyName,
         "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
-        "emailAddress": "" if booking.de_Email is None else booking.de_Email,
+        "emailAddress": "" if de_Email is None else de_Email,
         "instruction": "",
         "phoneNumber": ""
         if booking.de_to_Phone_Main is None
@@ -733,11 +817,11 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
 
     payload["dropAddress"]["postalAddress"] = {
         "address1": ""
-        if booking.de_To_Address_Street_1 is None
-        else booking.de_To_Address_Street_1,
+        if de_To_Address_Street_1 is None
+        else de_To_Address_Street_1,
         "address2": ""
-        if booking.de_To_Address_Street_2 is None
-        else booking.de_To_Address_Street_2,
+        if de_To_Address_Street_2 is None
+        else de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
         else booking.de_To_Address_Country,
@@ -808,3 +892,4 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
         payload["serviceType"] = "R"
 
     return payload
+

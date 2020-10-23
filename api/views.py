@@ -67,6 +67,7 @@ from .utils import (
     get_clientname,
     get_eta_pu_by,
     get_eta_de_by,
+    sanitize_address
 )
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo, emails as email_module
@@ -2065,7 +2066,7 @@ class BookingViewSet(viewsets.ViewSet):
         body = literal_eval(request.body.decode("utf8"))
         bookingId = body["bookingId"]
         booking = Bookings.objects.get(pk=bookingId)
-
+       
         try:
             client_process = (
                 Client_Process_Mgr.objects.select_related()
@@ -2115,7 +2116,29 @@ class BookingViewSet(viewsets.ViewSet):
                         + booking.b_client_name
                         + ". Fragile"
                     )
+                    print('custRefNumVerbage', custRefNumVerbage)
+                    
+                    if len(custRefNumVerbage) >= 40:
+                        custRefLen = len("Ref:  Returns 4 "  +  booking.b_client_name + ". Fragile")
+                        clientRefNumbers = ""
+                        
+                        overflown = False                        
+                        for clientRefNumber in booking.clientRefNumbers_arr:
+                            if overflown == False:
+                                if len(clientRefNumbers + clientRefNumber) >= 40-custRefLen:
+                                    clientRefNumbers += "..."
+                                    overflown = True
+                                else:
+                                    clientRefNumbers += clientRefNumber
 
+                        custRefNumVerbage = (
+                            "Ref: "
+                            + clientRefNumbers
+                            + " Returns 4 "
+                            + booking.b_client_name
+                            + ". Fragile"
+                        )
+                        
                     booking.pu_Address_Street_1 = custRefNumVerbage
                     booking.de_Email = str(booking.de_Email or "").replace(";", ",")
                     booking.de_Email_Group_Emails = str(
@@ -2159,6 +2182,11 @@ class BookingViewSet(viewsets.ViewSet):
                         booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
                 client_process.save()
+                booking.pu_Address_Street_1 = sanitize_address( booking.pu_Address_Street_1 )
+                booking.pu_Address_street_2 = sanitize_address( booking.pu_Address_street_2 )
+                booking.de_To_Address_Street_1 = sanitize_address( booking.de_To_Address_Street_1 )
+                booking.de_To_Address_Street_2 = sanitize_address( booking.de_To_Address_Street_2 )
+                booking.pu_pickup_instructions_address = sanitize_address( booking.pu_pickup_instructions_address )
                 booking.save()
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
