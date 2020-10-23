@@ -2082,33 +2082,21 @@ class BookingViewSet(viewsets.ViewSet):
 
             client_process = Client_Process_Mgr(fk_booking_id=bookingId)
             client_process.process_name = "Auto Augment " + str(bookingId)
-            client_process.origin_puCompany = booking.puCompany
-            client_process.origin_pu_Address_Street_1 = booking.pu_Address_Street_1
-            client_process.origin_pu_Address_Street_2 = booking.pu_Address_street_2
-            client_process.origin_pu_pickup_instructions_address = (
-                booking.pu_pickup_instructions_address
-            )
-            client_process.origin_deToCompanyName = booking.deToCompanyName
-            client_process.origin_de_Email = booking.de_Email
-            client_process.origin_de_Email_Group_Emails = booking.de_Email_Group_Emails
-            client_process.origin_de_To_Address_Street_1 = (
-                booking.de_To_Address_Street_1
-            )
-            client_process.origin_de_To_Address_Street_2 = (
-                booking.de_To_Address_Street_2
-            )
+            
 
             if booking.b_booking_Category == "Salvage Expense":
                 pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
                 puCompany = booking.puCompany
                 deToCompanyName = booking.deToCompanyName
-                booking.puCompany = puCompany + " (Ctct: " + pu_Contact_F_L_Name + ")"
+                
+                client_process.origin_puCompany = booking.puCompany
 
                 if (
                     booking.pu_Address_street_2 == ""
                     or booking.pu_Address_street_2 == None
                 ):
-                    booking.pu_Address_street_2 = booking.pu_Address_Street_1
+                    client_process.origin_pu_Address_Street_2 = booking.pu_Address_Street_1
+
                     custRefNumVerbage = (
                         "Ref: "
                         + str(booking.clientRefNumbers or "")
@@ -2126,7 +2114,7 @@ class BookingViewSet(viewsets.ViewSet):
                         for clientRefNumber in booking.clientRefNumbers_arr:
                             if overflown == False:
                                 if len(clientRefNumbers + clientRefNumber) >= 40-custRefLen:
-                                    clientRefNumbers += "..."
+                                    clientRefNumbers += "."
                                     overflown = True
                                 else:
                                     clientRefNumbers += clientRefNumber
@@ -2139,12 +2127,13 @@ class BookingViewSet(viewsets.ViewSet):
                             + ". Fragile"
                         )
                         
-                    booking.pu_Address_Street_1 = custRefNumVerbage
-                    booking.de_Email = str(booking.de_Email or "").replace(";", ",")
-                    booking.de_Email_Group_Emails = str(
+                    client_process.origin_pu_Address_Street_1 = custRefNumVerbage
+
+                    client_process.origin_de_Email = str(booking.de_Email or "").replace(";", ",")
+                    client_process.origin_de_Email_Group_Emails = str(
                         booking.de_Email_Group_Emails or ""
                     ).replace(";", ",")
-                    booking.pu_pickup_instructions_address = (
+                    client_process.origin_pu_pickup_instructions_address = (
                         str(booking.pu_pickup_instructions_address or "")
                         + " "
                         + custRefNumVerbage
@@ -2161,33 +2150,34 @@ class BookingViewSet(viewsets.ViewSet):
 
                 if client_auto_augment is not None:
                     if client_auto_augment.de_Email is not None:
-                        booking.de_Email = client_auto_augment.de_Email
+                         client_process.origin_de_Email = client_auto_augment.de_Email
 
                     if client_auto_augment.de_Email_Group_Emails is not None:
-                        booking.de_Email_Group_Emails = (
+                        client_process.origin_de_Email_Group_Emails = (
                             client_auto_augment.de_Email_Group_Emails
                         )
 
                     if client_auto_augment.de_To_Address_Street_1 is not None:
-                        booking.de_To_Address_Street_1 = (
+                        client_process.origin_de_To_Address_Street_1 = (
                             client_auto_augment.de_To_Address_Street_1
                         )
 
                     if client_auto_augment.de_To_Address_Street_1 is not None:
-                        booking.de_To_Address_Street_2 = (
+                        client_process.origin_de_To_Address_Street_2 = (
                             client_auto_augment.de_To_Address_Street_2
                         )
 
                     if client_auto_augment.company_hours_info is not None:
-                        booking.deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
+                        client_process.origin_deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
+
+                print('client_process', client_process)
+                client_process.origin_pu_Address_Street_1 = sanitize_address( client_process.origin_pu_Address_Street_1 )
+                client_process.origin_pu_Address_Street_2 = sanitize_address( client_process.origin_pu_Address_Street_2 )
+                client_process.origin_de_To_Address_Street_1 = sanitize_address( client_process.origin_de_To_Address_Street_1 )
+                client_process.origin_de_To_Address_Street_2 = sanitize_address( client_process.origin_de_To_Address_Street_2 )
+                client_process.origin_pu_pickup_instructions_address = sanitize_address( client_process.origin_pu_pickup_instructions_address )
 
                 client_process.save()
-                booking.pu_Address_Street_1 = sanitize_address( booking.pu_Address_Street_1 )
-                booking.pu_Address_street_2 = sanitize_address( booking.pu_Address_street_2 )
-                booking.de_To_Address_Street_1 = sanitize_address( booking.de_To_Address_Street_1 )
-                booking.de_To_Address_Street_2 = sanitize_address( booking.de_To_Address_Street_2 )
-                booking.pu_pickup_instructions_address = sanitize_address( booking.pu_pickup_instructions_address )
-                booking.save()
                 serializer = BookingSerializer(booking)
                 return Response(serializer.data)
             else:
@@ -4185,7 +4175,6 @@ class ClientEmployeesViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ClientProductsViewSet(viewsets.ViewSet):
     serializer_class = ClientProductsSerializer
     queryset = Client_Products.objects.all()
@@ -4356,3 +4345,23 @@ class ErrorViewSet(viewsets.ViewSet):
 
         serializer = ErrorSerializer(queryset, many=True)
         return Response(serializer.data)
+
+class ClientProcessViewSet(viewsets.ViewSet):
+    serializer_class = ClientProcessSerializer
+    queryset = Client_Process_Mgr.objects.all()
+
+    def list(self, request, pk=None):
+        queryset = Client_Process_Mgr.objects.all()
+        serializer = ClientProcessSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def get(self, request, format=None):
+        try:
+            pk_booking_id = self.request.query_params.get("bookingId", None)
+            queryset = Client_Process_Mgr.objects.filter(fk_booking_id=pk_booking_id)
+            serializer = ClientProcessSerializer(queryset, many=False)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return JsonResponse({})

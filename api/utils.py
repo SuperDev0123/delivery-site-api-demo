@@ -5460,6 +5460,9 @@ def ireplace(old, repl, text):
     return re.sub('(?i)'+re.escape(old), lambda m: repl, text)
 
 def sanitize_address(address):
+    print('sanitize_address', address)
+    if address is None:
+        return address
     sanitize_address = ireplace("Corner", "Crn", address)
     sanitize_address = ireplace("Street", "St", sanitize_address)
     sanitize_address = ireplace("Road", "Rd", sanitize_address)
