@@ -17,6 +17,7 @@ logger = logging.getLogger("dme_api")
 def get_account_detail(booking, fp_name):
     _fp_name = fp_name.lower()
     _b_client_name = booking.b_client_name.lower()
+    account_code = None
     account_detail = None
 
     if fp_name.lower() not in FP_CREDENTIALS:
@@ -26,7 +27,10 @@ def get_account_detail(booking, fp_name):
 
     if booking.api_booking_quote:
         account_code = booking.api_booking_quote.account_code
+    elif booking.vx_account_code:
+        account_code = booking.vx_account_code
 
+    if account_code:
         for client_name in FP_CREDENTIALS[_fp_name].keys():
             for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                 detail = FP_CREDENTIALS[_fp_name][client_name][key]
@@ -35,7 +39,6 @@ def get_account_detail(booking, fp_name):
                     account_detail = detail
 
     if _fp_name in ["startrack"] and _b_client_name == "biopak":
-        _b_client_name = booking.b_client_name.lower()
         _warehouse_code = booking.fk_client_warehouse.client_warehouse_code
 
         for client_name in FP_CREDENTIALS[_fp_name].keys():

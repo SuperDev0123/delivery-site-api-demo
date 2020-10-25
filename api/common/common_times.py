@@ -12,7 +12,7 @@ UTC_TZ = pytz.timezone("UTC")
 def get_sydney_now_time(return_type="char"):
     sydney_tz = pytz.timezone("Australia/Sydney")
     sydney_now = sydney_tz.localize(datetime.utcnow())
-    sydney_now = sydney_now + timedelta(hours=10)
+    sydney_now = sydney_now + timedelta(hours=11)
 
     if return_type == "char":
         return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
@@ -23,7 +23,7 @@ def get_sydney_now_time(return_type="char"):
 
 
 def convert_to_AU_SYDNEY_tz(time, type="datetime"):
-    delta = timedelta(hours=10)
+    delta = timedelta(hours=11)
 
     if not time:
         return None
@@ -41,7 +41,7 @@ def convert_to_AU_SYDNEY_tz(time, type="datetime"):
 
 
 def convert_to_UTC_tz(time, type="datetime"):
-    delta = timedelta(hours=10)
+    delta = timedelta(hours=11)
 
     if not time:
         return None

@@ -100,7 +100,7 @@ def _is_deliverable_price(pricing, booking):
         if booking.pu_PickUp_By_Time_Hours:
             delta_min -= booking.pu_PickUp_By_Time_Hours * 60
         if booking.pu_PickUp_By_Time_Minutes:
-            delta_min -= pu_PickUp_By_Time_Minutes
+            delta_min -= booking.pu_PickUp_By_Time_Minutes
 
         delta_min = timeDelta.total_seconds() / 60 + delta_min
         eta = get_etd_in_hour(pricing)
