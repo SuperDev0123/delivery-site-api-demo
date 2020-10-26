@@ -429,6 +429,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_id = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
     cost = serializers.SerializerMethodField(read_only=True)
+    fp_name = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -442,14 +443,12 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     def get_eta(self, obj):
         return obj.etd
 
+    def get_fp_name(self, obj):
+        return obj.fk_freight_provider_id
+
     class Meta:
         model = API_booking_quotes
-        fields = (
-            "cost_id",
-            "cost",
-            "eta",
-            "service_name",
-        )
+        fields = ("cost_id", "cost", "eta", "service_name", "fp_name")
 
 
 class EmailTemplatesSerializer(serializers.ModelSerializer):
