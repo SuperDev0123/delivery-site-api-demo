@@ -56,7 +56,11 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 class SimpleBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
-        fields = (
+        read_only_fields = (
+            "clientRefNumbers",  # property
+            "gap_ras",  # property
+        )
+        fields = read_only_fields + (
             "id",
             "pk_booking_id",
             "b_bookingID_Visual",
