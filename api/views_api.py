@@ -440,6 +440,33 @@ def push_boks(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    # Check if already pushed 'b_client_order_num', then return URL only
+    if "Plum" in client_name and "_sapb1" in user.username:
+        old_bok_1s = BOK_1_headers.objects.filter(
+            fk_client_id=client.dme_account_num,
+            b_client_order_num=bok_1["b_client_order_num"],
+        )
+
+        if old_bok_1s.exists():
+            if int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_3):
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "results": [],
+                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{old_bok_1s[0].client_booking_id}/",
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            elif int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_4):
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "results": [],
+                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{old_bok_1s[0].client_booking_id}/",
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
     # Find `Warehouse`
     if "Plum" in client_name:
         try:
