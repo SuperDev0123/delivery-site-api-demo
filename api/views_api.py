@@ -441,31 +441,35 @@ def push_boks(request):
             )
 
     # Check if already pushed 'b_client_order_num', then return URL only
-    if "Plum" in client_name and "_sapb1" in user.username:
-        old_bok_1s = BOK_1_headers.objects.filter(
-            fk_client_id=client.dme_account_num,
-            b_client_order_num=bok_1["b_client_order_num"],
-        )
+    if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
+        if (
+            bok_1["b_client_order_num"][0] != "Q"
+            or bok_1["b_client_order_num"][1] != "_"
+        ):
+            old_bok_1s = BOK_1_headers.objects.filter(
+                fk_client_id=client.dme_account_num,
+                b_client_order_num=bok_1["b_client_order_num"],
+            )
 
-        if old_bok_1s.exists():
-            if int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_3):
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "results": [],
-                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{old_bok_1s[0].client_booking_id}/",
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
-            elif int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_4):
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "results": [],
-                        "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{old_bok_1s[0].client_booking_id}/",
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
+            if old_bok_1s.exists():
+                if int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_3):
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "results": [],
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{old_bok_1s[0].client_booking_id}/",
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                elif int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_4):
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "results": [],
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{old_bok_1s[0].client_booking_id}/",
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
 
     # Find `Warehouse`
     if "Plum" in client_name:
@@ -554,7 +558,24 @@ def push_boks(request):
                     b_client_order_num=bok_1["b_client_order_num"],
                 )
                 if bok_1s.exists():
-                    message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                    # If "sales quote" request, then clear all existing information
+                    if (
+                        bok_1["b_client_order_num"][0] == "Q"
+                        and bok_1["b_client_order_num"][1] == "_"
+                    ):
+                        pk_header_id = bok_1s.first().pk_header_id
+                        old_bok_1 = bok_1s.first()
+                        old_bok_2s = BOK_2_lines.objects.filter(
+                            fk_header_id=pk_header_id
+                        )
+                        old_bok_3s = BOK_3_lines_data.objects.filter(
+                            fk_header_id=pk_header_id
+                        )
+                        old_bok_1.delete()
+                        old_bok_2s.delete()
+                        old_bok_3s.delete()
+                    else:
+                        message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
 
             elif "_magento" in user.username:
                 bok_1s = BOK_1_headers.objects.filter(
