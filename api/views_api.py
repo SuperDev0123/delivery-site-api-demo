@@ -368,6 +368,75 @@ def order_boks(request):
 
 @transaction.atomic
 @api_view(["POST", "PUT"])
+def picked_up_boks(request):
+    """
+    request when item is picked up at warehouse
+    """
+    user = request.user
+    logger.info(f"@890 Picked up by: {user.username}")
+    b_client_order_num = request.data.get("b_client_order_num")
+    picked_up_items = request.data.get("picked_up_items")
+    fk_client_id = request.data.get("fk_client_id")
+    code = None
+    message = None
+
+    # Check required params are included
+    if not b_client_order_num:
+        code = "missing_param"
+        message = "'b_client_order_num' is required."
+
+    if not picked_up_items:
+        code = "missing_param"
+        message = "'picked_up_items' is required."
+
+    if not fk_client_id:
+        code = "missing_param"
+        message = "'fk_client_id' is required."
+
+    if message:
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    # Check if order does exist
+    bok_1s = BOK_1_headers.objects.filter(
+        fk_client_id=fk_client_id,
+        b_client_order_num=b_client_order_num,
+    )
+
+    if not bok_1s.exists():
+        code = "invalid_param"
+        message = (
+            "Order does not exist. 'fk_client_id' or 'b_client_order_num' is invalid."
+        )
+
+    if message:
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    # Check invalid model numbers
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1s.first().pk_header_id)
+    model_numbers_in_order = bok_2s.values_list("e_item_type", flat=True)
+    model_numbers_in_pickedup_items = [item["model_number"] for item in picked_up_items]
+    invalid_model_numbers = list(
+        set(model_numbers_in_pickedup_items) - set(list(model_numbers_in_order))
+    )
+
+    if invalid_model_numbers:
+        code = "invalid_param"
+        message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
+
+    if message:
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    for picked_up_item in picked_up_items:
+        bok_2 = bok_2s.get(e_item_type=picked_up_item["model_number"])
+        bok_2.sscc = picked_up_item["sscc"]
+        bok_2.picked_up_timestamp = picked_up_item["timestamp"]
+        bok_2.save()
+
+    return Response({"success": True, "message": "Successfully picked up at Warehouse"})
+
+
+@transaction.atomic
+@api_view(["POST", "PUT"])
 def push_boks(request):
     """
     PUSH api (bok_1, bok_2, bok_3)
