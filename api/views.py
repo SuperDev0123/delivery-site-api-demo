@@ -2104,20 +2104,28 @@ class BookingViewSet(viewsets.ViewSet):
                         + booking.b_client_name
                         + ". Fragile"
                     )
-                    print('custRefNumVerbage', custRefNumVerbage)
+
                     
                     if len(custRefNumVerbage) >= 40:
                         custRefLen = len("Ref:  Returns 4 "  +  booking.b_client_name + ". Fragile")
                         clientRefNumbers = ""
                         
-                        overflown = False                        
+                        overflown = False
+                        count = 0              
                         for clientRefNumber in booking.clientRefNumbers_arr:
                             if overflown == False:
-                                if len(clientRefNumbers + clientRefNumber) >= 40-custRefLen:
-                                    clientRefNumbers += "."
+                                count = count + 1
+                                if len(clientRefNumbers + clientRefNumber) >= 26-custRefLen:
+                                    clientRefNumbers += clientRefNumber
+
+                                    if len(booking.clientRefNumbers_arr) - count > 0:
+                                        clientRefNumbers += " " + str(len(booking.clientRefNumbers_arr) - count) + " more"
                                     overflown = True
                                 else:
-                                    clientRefNumbers += clientRefNumber
+                                    clientRefNumbers += clientRefNumber + ","
+
+                        if overflown == False:
+                            clientRefNumbers = clientRefNumbers[:-1]
 
                         custRefNumVerbage = (
                             "Ref: "
@@ -2126,7 +2134,7 @@ class BookingViewSet(viewsets.ViewSet):
                             + booking.b_client_name
                             + ". Fragile"
                         )
-                        
+                    
                     client_process.origin_pu_Address_Street_1 = custRefNumVerbage
 
                     client_process.origin_de_Email = str(booking.de_Email or "").replace(";", ",")
@@ -2170,7 +2178,6 @@ class BookingViewSet(viewsets.ViewSet):
                     if client_auto_augment.company_hours_info is not None:
                         client_process.origin_deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
 
-                print('client_process', client_process)
                 client_process.origin_pu_Address_Street_1 = sanitize_address( client_process.origin_pu_Address_Street_1 )
                 client_process.origin_pu_Address_Street_2 = sanitize_address( client_process.origin_pu_Address_Street_2 )
                 client_process.origin_de_To_Address_Street_1 = sanitize_address( client_process.origin_de_To_Address_Street_1 )
@@ -4365,3 +4372,65 @@ class ClientProcessViewSet(viewsets.ViewSet):
 
         except Exception as e:
             return JsonResponse({})
+
+
+class AugmentAddressViewSet(viewsets.ViewSet):
+    serializer_class = AugmentAddressSerializer
+    queryset = DME_Augment_Address.objects.all()
+
+    def list(self, request, pk=None):
+        queryset = DME_Augment_Address.objects.all()
+        serializer = AugmentAddressSerializer(queryset, many=True)
+
+        return JsonResponse(
+            {"results": serializer.data}
+        )
+
+    @action(detail=False, methods=["get"])
+    def get(self, request, format=None):
+        try:
+            id = self.request.query_params.get("id", None)
+            queryset = DME_Augment_Address.objects.filter(id=id)
+            serializer = AugmentAddressSerializer(queryset, many=False)
+            return JsonResponse(
+                {"results": serializer.data}
+            )
+
+        except Exception as e:
+            return JsonResponse({})
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            resultObject = DME_Augment_Address.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": AugmentAddressSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({"result": None}, status=400)
+
+    @action(detail=True, methods=["delete"])
+    def delete(self, request, pk, format=None):
+        augmentaddress = DME_Augment_Address.objects.get(pk=pk)
+        serializer = AugmentAddressSerializer(augmentaddress)
+        augmentaddress.delete()
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["put"])
+    def edit(self, request, pk, format=None):
+        data = DME_Augment_Address.objects.get(pk=pk)
+        serializer = AugmentAddressSerializer(data, data=request.data)
+        try:
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # print("Exception: ", e)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

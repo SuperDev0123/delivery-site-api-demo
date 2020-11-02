@@ -32,6 +32,7 @@ from api.models import (
     Client_Products,
     DME_Error,
     Client_Process_Mgr,
+    DME_Augment_Address,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -603,3 +604,8 @@ class ErrorSerializer(serializers.ModelSerializer):
             "error_description",
             "fp_name",
         )
+
+class AugmentAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Augment_Address
+        fields = "__all__"
