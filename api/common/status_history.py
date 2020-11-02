@@ -34,7 +34,7 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.save()
 
             if dme_status_history.status_last == "In Transit" and dme_status_history.status_old != "In Transit":
-                message = f"Status for this booking {booking.id} is changed as {notes}. Please use this link to see status information details. http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
+                message = f"Status for this booking {booking.id} is changed as {notes}. \n Please use this link to see status information details. \n http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
                 subject = f"Status Update - DME#{booking.b_bookingID_Visual} / Freight Provider# {booking.v_FPBookingNumber}"
                 if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
                     automation.send_status_update_email(booking.pk, subject, message, username)
