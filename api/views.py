@@ -2074,11 +2074,11 @@ class BookingViewSet(viewsets.ViewSet):
                 .first()
             )
 
-            if client_process:
-                return JsonResponse(
-                    {"message": "Already Augmented", "type": "Failure"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            # if client_process:
+            #     return JsonResponse(
+            #         {"message": "Already Augmented", "type": "Failure"},
+            #         status=status.HTTP_400_BAD_REQUEST,
+            #     )
 
             client_process = Client_Process_Mgr(fk_booking_id=bookingId)
             client_process.process_name = "Auto Augment " + str(bookingId)
@@ -2101,15 +2101,14 @@ class BookingViewSet(viewsets.ViewSet):
                         "Ref: "
                         + str(booking.clientRefNumbers or "")
                         + " Returns 4 "
-                        + booking.b_client_name
-                        + ". Fragile"
+                        # + booking.b_client_name
+                        # + ". Fragile"
                     )
 
                     
-                    if len(custRefNumVerbage) >= 40:
+                    if len(custRefNumVerbage) >= 26:
                         custRefLen = len("Ref:  Returns 4 "  +  booking.b_client_name + ". Fragile")
                         clientRefNumbers = ""
-                        
                         overflown = False
                         count = 0              
                         for clientRefNumber in booking.clientRefNumbers_arr:
@@ -2117,9 +2116,9 @@ class BookingViewSet(viewsets.ViewSet):
                                 count = count + 1
                                 if len(clientRefNumbers + clientRefNumber) >= 26-custRefLen:
                                     clientRefNumbers += clientRefNumber
-
-                                    if len(booking.clientRefNumbers_arr) - count > 0:
-                                        clientRefNumbers += " " + str(len(booking.clientRefNumbers_arr) - count) + " more"
+                                    
+                                    if len(booking.clientRefNumbers_arr) - count >= 0:
+                                        clientRefNumbers += ", +" + str(len(booking.clientRefNumbers_arr) - count)
                                     overflown = True
                                 else:
                                     clientRefNumbers += clientRefNumber + ","
@@ -2131,10 +2130,10 @@ class BookingViewSet(viewsets.ViewSet):
                             "Ref: "
                             + clientRefNumbers
                             + " Returns 4 "
-                            + booking.b_client_name
-                            + ". Fragile"
+                            # + booking.b_client_name
+                            # + ". Fragile"
                         )
-                    
+                        
                     client_process.origin_pu_Address_Street_1 = custRefNumVerbage
 
                     client_process.origin_de_Email = str(booking.de_Email or "").replace(";", ",")

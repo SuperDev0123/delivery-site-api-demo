@@ -5465,6 +5465,6 @@ def sanitize_address(address):
 
     dme_augment_address = DME_Augment_Address.objects.all()
     for rule in dme_augment_address:
-        sanitize_address = ireplace(rule.origin_word, rule.augmented_word, address)
+        address = ireplace(rule.origin_word, rule.augmented_word, address)
 
-    return sanitize_address
+    return address
