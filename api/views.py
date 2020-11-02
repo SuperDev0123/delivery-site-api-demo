@@ -2133,7 +2133,7 @@ class BookingViewSet(viewsets.ViewSet):
                             # + booking.b_client_name
                             # + ". Fragile"
                         )
-                        
+
                     client_process.origin_pu_Address_Street_1 = custRefNumVerbage
 
                     client_process.origin_de_Email = str(booking.de_Email or "").replace(";", ",")
@@ -4385,18 +4385,18 @@ class AugmentAddressViewSet(viewsets.ViewSet):
             {"results": serializer.data}
         )
 
-    @action(detail=False, methods=["get"])
-    def get(self, request, format=None):
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
         try:
-            id = self.request.query_params.get("id", None)
-            queryset = DME_Augment_Address.objects.filter(id=id)
-            serializer = AugmentAddressSerializer(queryset, many=False)
+            queryset = DME_Augment_Address.objects.filter(pk=pk)
+            serializer = AugmentAddressSerializer(queryset, many=True)
             return JsonResponse(
-                {"results": serializer.data}
+                {"result": serializer.data[0]},
+                status=200,
             )
 
         except Exception as e:
-            return JsonResponse({})
+            return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
@@ -4422,6 +4422,7 @@ class AugmentAddressViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
+        print('pk', pk)
         data = DME_Augment_Address.objects.get(pk=pk)
         serializer = AugmentAddressSerializer(data, data=request.data)
         try:
