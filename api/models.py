@@ -214,7 +214,10 @@ class Client_employees(models.Model):
         verbose_name=_("Modified By Account"), max_length=25, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
     status_time = models.DateTimeField(
         verbose_name=_("Status Time"), default=timezone.now, blank=True
@@ -247,7 +250,10 @@ class Dme_manifest_log(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -257,10 +263,23 @@ class Dme_manifest_log(models.Model):
 class RuleTypes(models.Model):
     id = models.AutoField(primary_key=True)
     rule_type_code = models.CharField(
-        max_length=16, blank=True, null=True, default=None,
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
     )
-    calc_type = models.CharField(max_length=128, blank=True, null=True, default=None,)
-    charge_rule = models.CharField(max_length=255, blank=True, null=True, default=None,)
+    calc_type = models.CharField(
+        max_length=128,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    charge_rule = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        default=None,
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -271,7 +290,10 @@ class RuleTypes(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -299,7 +321,10 @@ class Fp_freight_providers(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -321,7 +346,10 @@ class DME_Service_Codes(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -353,7 +381,10 @@ class FP_Service_ETDs(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -515,7 +546,10 @@ class API_booking_quotes(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -1103,7 +1137,10 @@ class Bookings(models.Model):
         verbose_name=_("Service DE Hours To PU"), blank=True, default=0, null=True
     )
     x_booking_Created_With = models.CharField(
-        verbose_name=_("Booking Created With"), max_length=32, blank=True, null=True,
+        verbose_name=_("Booking Created With"),
+        max_length=32,
+        blank=True,
+        null=True,
     )
     x_manual_booked_flag = models.BooleanField(default=False, blank=True, null=True)
     de_Email_Group_Emails = models.TextField(
@@ -1289,11 +1326,18 @@ class Bookings(models.Model):
         null=True,
         default="",
     )
-    z_CreatedTimestamp = models.DateTimeField(default=timezone.now, blank=True, null=True)
-    z_ModifiedByAccount = models.CharField(
-        verbose_name=_("Modified By Account"), max_length=25, blank=True, null=True,
+    z_CreatedTimestamp = models.DateTimeField(
+        default=timezone.now, blank=True, null=True
     )
-    z_ModifiedTimestamp = models.DateTimeField(default=timezone.now, null=True, blank=True)
+    z_ModifiedByAccount = models.CharField(
+        verbose_name=_("Modified By Account"),
+        max_length=25,
+        blank=True,
+        null=True,
+    )
+    z_ModifiedTimestamp = models.DateTimeField(
+        default=timezone.now, null=True, blank=True
+    )
     pu_PickUp_TimeSlot_TimeEnd = models.TimeField(
         verbose_name=_("PU TimeSlot TimeEnd"), blank=True, null=True
     )
@@ -1706,23 +1750,6 @@ class Bookings(models.Model):
             return ""
 
     @property
-    def clientRefNumbers_arr(self):
-        try:
-            clientRefNumbers = []
-            booking_lines_data = Booking_lines_data.objects.filter(
-                fk_booking_id=self.pk_booking_id
-            )
-
-            for booking_line_data in booking_lines_data:
-                if booking_line_data.clientRefNumber is not None:
-                    clientRefNumbers.append(booking_line_data.clientRefNumber)
-
-            return clientRefNumbers
-        except Exception as e:
-            # print('Exception: ', e)
-            return []
-
-    @property
     def gap_ras(self):
         try:
             gap_ras = []
@@ -1876,7 +1903,10 @@ class Booking_lines(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     def booking(self):
@@ -1962,7 +1992,10 @@ class Booking_lines_data(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     def booking(self):
@@ -2389,7 +2422,10 @@ class BOK_1_headers(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
     b_client_warehouse_code = models.CharField(
         verbose_name=_("Warehouse code"),
@@ -2415,7 +2451,10 @@ class BOK_1_headers(models.Model):
         max_length=32, blank=True, null=True, default=None
     )
     x_booking_Created_With = models.CharField(
-        verbose_name=_("Booking Created With"), max_length=32, blank=True, null=True,
+        verbose_name=_("Booking Created With"),
+        max_length=32,
+        blank=True,
+        null=True,
     )
     z_test = models.CharField(max_length=64, blank=True, null=True, default="")
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default="")
@@ -2547,7 +2586,10 @@ class BOK_2_lines(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
     zbl_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default="")
     zbl_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default="")
@@ -2688,7 +2730,10 @@ class Log(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -2757,7 +2802,10 @@ class Api_booking_confirmation_lines(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -2838,7 +2886,10 @@ class Api_booking_quotes_confirmation(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -2893,7 +2944,10 @@ class Utl_suburbs(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -2931,7 +2985,10 @@ class Utl_states(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -2959,7 +3016,10 @@ class Utl_country_codes(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -2986,7 +3046,10 @@ class Utl_sql_queries(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3083,7 +3146,10 @@ class Dme_status_history(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3207,7 +3273,10 @@ class Dme_comm_and_task(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3249,7 +3318,10 @@ class Dme_comm_notes(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3287,7 +3359,10 @@ class Dme_package_types(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3315,7 +3390,10 @@ class Utl_dme_status(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3346,7 +3424,10 @@ class Dme_utl_fp_statuses(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3368,7 +3449,10 @@ class Dme_utl_client_customer_group(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3392,7 +3476,10 @@ class Utl_fp_delivery_times(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3412,7 +3499,10 @@ class Utl_dme_status_details(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3432,7 +3522,10 @@ class Utl_dme_status_actions(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3488,7 +3581,10 @@ class FP_label_scans(models.Model):
         verbose_name=_("Created Timestamp"), null=True, blank=True, default=timezone.now
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3511,7 +3607,10 @@ class DME_reports(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3541,7 +3640,10 @@ class DME_Label_Settings(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3567,7 +3669,10 @@ class DME_Email_Templates(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3599,7 +3704,10 @@ class DME_Options(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3609,16 +3717,25 @@ class DME_Options(models.Model):
 class FP_Store_Booking_Log(models.Model):
     id = models.AutoField(primary_key=True)
     v_FPBookingNumber = models.CharField(
-        max_length=40, blank=True, null=True, default=None,
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
     )
     delivery_booking = models.DateField(default=None, blank=True, null=True)
     fp_store_event_date = models.DateField(default=None, blank=True, null=True)
     fp_store_event_time = models.TimeField(default=None, blank=True, null=True)
     fp_store_event_desc = models.CharField(
-        max_length=255, blank=True, null=True, default=None,
+        max_length=255,
+        blank=True,
+        null=True,
+        default=None,
     )
     csv_file_name = models.CharField(
-        max_length=255, blank=True, null=True, default=None,
+        max_length=255,
+        blank=True,
+        null=True,
+        default=None,
     )
     z_createdTimeStamp = models.DateTimeField(
         verbose_name=_("Created Timestamp"), default=timezone.now
@@ -3631,22 +3748,45 @@ class FP_Store_Booking_Log(models.Model):
 class FP_vehicles(models.Model):
     id = models.AutoField(primary_key=True)
     freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
-    description = models.CharField(max_length=64, blank=True, null=True, default=None,)
-    dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    description = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    dim_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
     max_length = models.FloatField(default=0, null=True, blank=True)
     max_width = models.FloatField(default=0, null=True, blank=True)
     max_height = models.FloatField(default=0, null=True, blank=True)
-    mass_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    mass_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
     max_mass = models.IntegerField(default=0, null=True, blank=True)
     pallets = models.IntegerField(default=0, null=True, blank=True)
-    pallet_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    pallet_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
     max_pallet_length = models.FloatField(default=0, null=True, blank=True)
     max_pallet_width = models.FloatField(default=0, null=True, blank=True)
     max_pallet_height = models.FloatField(default=0, null=True, blank=True)
     base_charge = models.IntegerField(default=0, null=True, blank=True)
     min_charge = models.IntegerField(default=0, null=True, blank=True)
     limited_state = models.CharField(
-        max_length=16, blank=True, null=True, default=None,
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
     )
 
     class Meta:
@@ -3656,7 +3796,12 @@ class FP_vehicles(models.Model):
 class FP_availabilities(models.Model):
     id = models.AutoField(primary_key=True)
     freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
-    code = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    code = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
     mon_start = models.TimeField(default=None, blank=True, null=True)
     mon_end = models.TimeField(default=None, blank=True, null=True)
     tue_start = models.TimeField(default=None, blank=True, null=True)
@@ -3678,7 +3823,12 @@ class FP_availabilities(models.Model):
 
 class FP_costs(models.Model):
     id = models.AutoField(primary_key=True)
-    UOM_charge = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    UOM_charge = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
     start_qty = models.IntegerField(default=0, null=True, blank=True)
     end_qty = models.IntegerField(default=0, null=True, blank=True)
     basic_charge = models.FloatField(default=0, null=True, blank=True)
@@ -3687,11 +3837,21 @@ class FP_costs(models.Model):
     oversize_premium = models.FloatField(default=0, null=True, blank=True)
     oversize_price = models.FloatField(default=0, null=True, blank=True)
     m3_to_kg_factor = models.IntegerField(default=0, null=True, blank=True)
-    dim_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    dim_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
     price_up_to_length = models.FloatField(default=0, null=True, blank=True)
     price_up_to_width = models.FloatField(default=0, null=True, blank=True)
     price_up_to_height = models.FloatField(default=0, null=True, blank=True)
-    weight_UOM = models.CharField(max_length=16, blank=True, null=True, default=None,)
+    weight_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
     price_up_to_weight = models.FloatField(default=0, null=True, blank=True)
     max_length = models.FloatField(default=0, null=True, blank=True)
     max_width = models.FloatField(default=0, null=True, blank=True)
@@ -3710,9 +3870,17 @@ class FP_pricing_rules(models.Model):
     vehicle = models.ForeignKey(
         FP_vehicles, on_delete=models.CASCADE, null=True, default=None
     )
-    service_type = models.CharField(max_length=64, blank=True, null=True, default=None,)
+    service_type = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
     service_timing_code = models.CharField(
-        max_length=32, blank=True, null=True, default=None,
+        max_length=32,
+        blank=True,
+        null=True,
+        default=None,
     )
     both_way = models.BooleanField(blank=True, null=True, default=False)
     pu_zone = models.CharField(max_length=16, blank=True, null=True, default=None)
@@ -3829,7 +3997,10 @@ class Client_Process_Mgr(models.Model):
     )
 
     origin_de_Email_Group_Emails = models.TextField(
-        max_length=512, blank=True, null=True, default=None,
+        max_length=512,
+        blank=True,
+        null=True,
+        default=None,
     )
 
     origin_de_To_Address_Street_1 = models.CharField(
@@ -3874,11 +4045,17 @@ class Client_Process_Mgr(models.Model):
     )
 
     origin_pu_PickUp_By_Time_Hours = models.IntegerField(
-        verbose_name=_("Origin PU By Time Hours"), blank=True, default=0, null=True,
+        verbose_name=_("Origin PU By Time Hours"),
+        blank=True,
+        default=0,
+        null=True,
     )
 
     origin_pu_PickUp_By_Time_Minutes = models.IntegerField(
-        verbose_name=_("Origin PU By Time Minutes"), blank=True, default=0, null=True,
+        verbose_name=_("Origin PU By Time Minutes"),
+        blank=True,
+        default=0,
+        null=True,
     )
 
     class Meta:
@@ -3921,7 +4098,10 @@ class BookingSets(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -3971,7 +4151,10 @@ class Client_Products(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -4009,7 +4192,10 @@ class Client_Ras(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -4035,7 +4221,10 @@ class DME_Error(models.Model):
         verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
     )
     z_modifiedTimeStamp = models.DateTimeField(
-        verbose_name=_("Modified Timestamp"), null=True, blank=True, default=timezone.now
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
     )
 
     class Meta:
@@ -4044,7 +4233,7 @@ class DME_Error(models.Model):
 
 class DME_Augment_Address(models.Model):
     id = models.AutoField(primary_key=True)
-    
+
     origin_word = models.CharField(max_length=32, blank=True, null=True)
     augmented_word = models.CharField(max_length=32, blank=True, null=True)
 
