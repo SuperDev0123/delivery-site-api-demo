@@ -31,6 +31,8 @@ from api.models import (
     Utl_sql_queries,
     Client_Products,
     DME_Error,
+    Client_Process_Mgr,
+    DME_Augment_Address,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -573,6 +575,10 @@ class ClientRasSerializer(serializers.ModelSerializer):
         model = Client_Ras
         fields = "__all__"
 
+class ClientProcessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Process_Mgr
+        fields = "__all__"
 
 class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)
@@ -602,3 +608,8 @@ class ErrorSerializer(serializers.ModelSerializer):
             "error_description",
             "fp_name",
         )
+
+class AugmentAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Augment_Address
+        fields = "__all__"

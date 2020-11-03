@@ -46,6 +46,8 @@ router.register(r"clientproducts", ClientProductsViewSet, basename="client_produ
 router.register(r"clientras", ClientRasViewSet, basename="client_ras")
 router.register(r"charts", ChartsViewSet, basename="charts")
 router.register(r"errors", ErrorViewSet, basename="error")
+router.register(r"clientprocess", ClientProcessViewSet, basename="clientprocess_mgr")
+router.register(r"augmentaddress", AugmentAddressViewSet, basename="augmentaddress_rules")
 
 urlpatterns = router.urls
 
