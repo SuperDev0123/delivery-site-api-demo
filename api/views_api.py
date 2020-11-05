@@ -1137,6 +1137,39 @@ class ChartsViewSet(viewsets.ViewSet):
             return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
+    def get_num_bookings_per_status(self, request):
+        try:
+            startDate = request.GET.get("startDate")
+            endDate = request.GET.get("endDate")
+            category_result = (
+                Bookings.objects.filter(
+                    Q(b_dateBookedDate__range=[startDate, endDate])
+                )
+                .extra(select={"status": "b_status"})
+                .values("status")
+                .annotate(value=Count("b_status"))
+                .order_by("value")
+            )
+
+            categories = []
+            category_reports = list(category_result)
+            
+            for category_report in category_reports:
+                if category_report['status'] is not None and  category_report['status']!='':
+                    utl_dme_status = Utl_dme_status.objects.filter(
+                        dme_delivery_status=category_report['status']
+                    ).first()
+
+                    if utl_dme_status:
+                        category_report['status'] = utl_dme_status.dme_delivery_status_category + "(" + category_report['status'] + ")"
+                        categories.append(category_report)
+
+            return JsonResponse({"results": categories})
+        except Exception as e:
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
+
+    @action(detail=False, methods=["get"])
     def get_num_bookings_per_client(self, request):
         try:
             startDate = request.GET.get("startDate")
@@ -1144,8 +1177,7 @@ class ChartsViewSet(viewsets.ViewSet):
 
             result = (
                 Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
+                    Q(b_dateBookedDate__range=[startDate, endDate])
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -1155,8 +1187,7 @@ class ChartsViewSet(viewsets.ViewSet):
 
             late_result = (
                 Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
+                   Q(b_dateBookedDate__range=[startDate, endDate])
                     & Q(
                         s_21_Actual_Delivery_TimeStamp__gt=F(
                             "s_06_Latest_Delivery_Date_TimeSet"
@@ -1171,8 +1202,7 @@ class ChartsViewSet(viewsets.ViewSet):
 
             ontime_result = (
                 Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
+                    Q(b_dateBookedDate__range=[startDate, endDate])
                     & Q(
                         s_21_Actual_Delivery_TimeStamp__lte=F(
                             "s_06_Latest_Delivery_Date_TimeSet"
@@ -1185,19 +1215,40 @@ class ChartsViewSet(viewsets.ViewSet):
                 .order_by("ontime_deliveries")
             )
 
-            cost_result = (
+            inv_sell_quoted_result = (
                 Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
+                    Q(b_dateBookedDate__range=[startDate, endDate])
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
-                .annotate(total_cost=Sum("inv_cost_actual"))
-                .order_by("total_cost")
+                .annotate(inv_sell_quoted=Sum("inv_sell_quoted"))
+                .order_by("inv_sell_quoted")
+            )
+
+            inv_sell_quoted_override_result = (
+                Bookings.objects.filter(
+                    Q(b_dateBookedDate__range=[startDate, endDate])
+                )
+                .extra(select={"client_name": "b_client_name"})
+                .values("client_name")
+                .annotate(inv_sell_quoted_override=Sum("inv_sell_quoted_override"))
+                .order_by("inv_sell_quoted_override")
+            )
+
+            inv_cost_quoted_result = (
+                Bookings.objects.filter(
+                    Q(b_dateBookedDate__range=[startDate, endDate])
+                )
+                .extra(select={"client_name": "b_client_name"})
+                .values("client_name")
+                .annotate(inv_cost_quoted=Sum("inv_cost_quoted"))
+                .order_by("inv_cost_quoted")
             )
 
             deliveries_reports = list(result)
-            cost_reports = list(cost_result)
+            inv_sell_quoted_reports = list(inv_sell_quoted_result)
+            inv_sell_quoted_override_reports = list(inv_sell_quoted_override_result)
+            inv_cost_quoted_reports = list(inv_cost_quoted_result)
             late_reports = list(late_result)
             ontime_reports = list(ontime_result)
 
@@ -1210,17 +1261,33 @@ class ChartsViewSet(viewsets.ViewSet):
                     if report["client_name"] == ontime_report["client_name"]:
                         report["ontime_deliveries"] = ontime_report["ontime_deliveries"]
 
-                for cost_report in cost_reports:
-                    if report["client_name"] == cost_report["client_name"]:
-                        report["total_cost"] = (
+                for inv_sell_quoted_report in inv_sell_quoted_reports:
+                    if report["client_name"] == inv_sell_quoted_report["client_name"]:
+                        report["inv_sell_quoted"] = (
                             0
-                            if not cost_report["total_cost"]
-                            else round(float(cost_report["total_cost"]), 2)
+                            if not inv_sell_quoted_report["inv_sell_quoted"]
+                            else round(float(inv_sell_quoted_report["inv_sell_quoted"]), 2)
+                        )
+
+                for inv_sell_quoted_override_report in inv_sell_quoted_override_reports:
+                    if report["client_name"] == inv_sell_quoted_override_report["client_name"]:
+                        report["inv_sell_quoted_override"] = (
+                            0
+                            if not inv_sell_quoted_override_report["inv_sell_quoted_override"]
+                            else round(float(inv_sell_quoted_override_report["inv_sell_quoted_override"]), 2)
+                        )
+
+                for inv_cost_quoted_report in inv_cost_quoted_reports:
+                    if report["client_name"] == inv_cost_quoted_report["client_name"]:
+                        report["inv_cost_quoted"] = (
+                            0
+                            if not inv_cost_quoted_report["inv_cost_quoted"]
+                            else round(float(inv_cost_quoted_report["inv_cost_quoted"]), 2)
                         )
 
             return JsonResponse({"results": deliveries_reports})
         except Exception as e:
-            # print(f"Error #102: {e}")
+            print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])
