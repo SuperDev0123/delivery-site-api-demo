@@ -2604,6 +2604,7 @@ class BOK_2_lines(models.Model):
     client_item_reference = models.CharField(
         max_length=64, blank=True, null=True, default=""
     )
+    is_deleted = models.BooleanField(default=False)
     sscc = models.CharField(
         max_length=32, blank=True, null=True, default=None
     )  # Code from warehouse when item is picked up

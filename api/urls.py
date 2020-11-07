@@ -4,6 +4,7 @@ from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 
 from .views import *
 from .views_api import *
+from .views_zoho import *
 from .views_external_apis import *
 from .fp_apis import apis as fp_apis
 from .file_operations.uploads import get_upload_status
@@ -47,7 +48,9 @@ router.register(r"clientras", ClientRasViewSet, basename="client_ras")
 router.register(r"charts", ChartsViewSet, basename="charts")
 router.register(r"errors", ErrorViewSet, basename="error")
 router.register(r"clientprocess", ClientProcessViewSet, basename="clientprocess_mgr")
-router.register(r"augmentaddress", AugmentAddressViewSet, basename="augmentaddress_rules")
+router.register(
+    r"augmentaddress", AugmentAddressViewSet, basename="augmentaddress_rules"
+)
 
 urlpatterns = router.urls
 
@@ -76,7 +79,7 @@ urlpatterns += [
     url(r"^generate-manifest/", generate_manifest),
     # BOK apis(BIOPAK push apis)
     url(r"^boks/order/", order_boks),
-    url(r"^boks/picked_up/", picked_up_boks),
+    url(r"^boks/picked/", picked_boks),
     url(r"^boks/", push_boks),
     url(r"^price/partial/", partial_pricing),
     # Freight Provider apis

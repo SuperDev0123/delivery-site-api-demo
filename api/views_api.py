@@ -368,14 +368,14 @@ def order_boks(request):
 
 @transaction.atomic
 @api_view(["POST", "PUT"])
-def picked_up_boks(request):
+def picked_boks(request):
     """
-    request when item is picked up at warehouse
+    request when item(s) is picked at warehouse
     """
     user = request.user
-    logger.info(f"@890 Picked up by: {user.username}")
+    logger.info(f"@890 Picked by: {user.username}")
     b_client_order_num = request.data.get("b_client_order_num")
-    picked_up_items = request.data.get("picked_up_items")
+    picked_items = request.data.get("picked_items")
     fk_client_id = request.data.get("fk_client_id")
     code = None
     message = None
@@ -385,9 +385,9 @@ def picked_up_boks(request):
         code = "missing_param"
         message = "'b_client_order_num' is required."
 
-    if not picked_up_items:
+    if not picked_items:
         code = "missing_param"
-        message = "'picked_up_items' is required."
+        message = "'picked_items' is required."
 
     if not fk_client_id:
         code = "missing_param"
@@ -407,32 +407,93 @@ def picked_up_boks(request):
         message = (
             "Order does not exist. 'fk_client_id' or 'b_client_order_num' is invalid."
         )
-
-    if message:
         raise ValidationError({"success": False, "code": code, "description": message})
+    else:
+        pk_header_id = bok_1s.first().pk_header_id
+        bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
+        model_numbers = bok_2s.values_list("e_item_type", flat=True)
 
     # Check invalid model numbers
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1s.first().pk_header_id)
-    model_numbers_in_order = bok_2s.values_list("e_item_type", flat=True)
-    model_numbers_in_pickedup_items = [item["model_number"] for item in picked_up_items]
-    invalid_model_numbers = list(
-        set(model_numbers_in_pickedup_items) - set(list(model_numbers_in_order))
-    )
+    invalid_model_numbers = []
+
+    for item in picked_items:
+        if "model_number" in item and not item["model_number"] in model_numbers:
+            invalid_model_numbers.append(item["model_number"])
+        elif "is_repacked" in item and "items" in item and item["items"]:
+            for repacked_item in item["items"]:
+                if (
+                    "model_number" in repacked_item
+                    and not repacked_item["model_number"] in model_numbers
+                ):
+                    invalid_model_numbers.append(repacked_item["model_number"])
+                elif not "model_number" in repacked_item:
+                    code = "invalid_repacked_item"
+                    message = f"There is a repacked item which doesn`t have 'model_number' information. Invalid item: {json.dumps(item)}"
+                    raise ValidationError(
+                        {"success": False, "code": code, "description": message}
+                    )
+        elif not "model_number" in item:
+            code = "invalid_item"
+            message = f"There is an item which doesn`t have 'model_number' information. Invalid item: {json.dumps(item)}"
+            raise ValidationError(
+                {"success": False, "code": code, "description": message}
+            )
 
     if invalid_model_numbers:
         code = "invalid_param"
         message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
-
-    if message:
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    for picked_up_item in picked_up_items:
-        bok_2 = bok_2s.get(e_item_type=picked_up_item["model_number"])
-        bok_2.sscc = picked_up_item["sscc"]
-        bok_2.picked_up_timestamp = picked_up_item["timestamp"]
-        bok_2.save()
+    # Check missing SSCC
+    for item in picked_items:
+        if not "sscc" in item:
+            code = "missing_sscc"
+            message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(item)}"
+            raise ValidationError(
+                {"success": False, "code": code, "description": message}
+            )
 
-    return Response({"success": True, "message": "Successfully picked up at Warehouse"})
+    for item in picked_items:
+        if "model_number" in item:
+            bok_2 = bok_2s.get(e_item_type=item["model_number"])
+            bok_2.sscc = item["sscc"]
+            bok_2.picked_up_timestamp = item["timestamp"]
+            bok_2.save()
+        else:
+            new_bok_2 = BOK_2_lines()
+            new_bok_2.fk_header_id = pk_header_id
+            new_bok_2.pk_booking_lines_id = str(uuid.uuid4())
+            new_bok_2.l_001_type_of_packaging = item["package_type"]
+            new_bok_2.l_002_qty = 1
+            new_bok_2.l_003_item = "Repacked Item"
+            new_bok_2.l_004_dim_UOM = item["demensions"]["unit"]
+            new_bok_2.l_005_dim_length = item["demensions"]["length"]
+            new_bok_2.l_006_dim_width = item["demensions"]["width"]
+            new_bok_2.l_007_dim_height = item["demensions"]["height"]
+            new_bok_2.l_008_weight_UOM = item["weight"]["unit"]
+            new_bok_2.l_009_weight_per_each = item["weight"]["weight"]
+            new_bok_2.sscc = item["sscc"]
+            new_bok_2.picked_up_timestamp = item["timestamp"]
+            new_bok_2.success = 3
+            new_bok_2.save()
+
+            model_numbers = []
+            for repacked_item in item["items"]:
+                model_numbers.append(repacked_item["model_number"])
+                bok_2 = bok_2s.get(e_item_type=repacked_item["model_number"])
+                bok_2.is_deleted = True
+                bok_2.save()
+
+            new_bok_3 = BOK_3_lines_data()
+            new_bok_3.fk_header_id = pk_header_id
+            new_bok_3.fk_booking_lines_id = new_bok_2.pk_booking_lines_id
+            new_bok_3.ld_002_model_number = ",".join(model_numbers)
+            new_bok_3.ld_003_item_description = "Repacked"
+            new_bok_3.ld_008_client_ref_number = ",".join(model_numbers)
+            new_bok_3.success = 3
+            new_bok_3.save()
+
+    return Response({"success": True, "message": "Successfully picked at Warehouse"})
 
 
 @transaction.atomic
@@ -1233,409 +1294,3 @@ def get_delivery_status(request):
         },
         status=status.HTTP_400_BAD_REQUEST,
     )
-
-
-@api_view(["GET"])
-@permission_classes((AllowAny,))
-def get_auth_zoho_tickets(request):
-    if Tokens.objects.filter(type="access_token").count() == 0:
-        response = redirect(
-            "https://accounts.zoho.com.au/oauth/v2/auth?response_type=code&client_id="
-            + settings.CLIENT_ID_ZOHO
-            + "&scope=Desk.tickets.ALL&redirect_uri="
-            + settings.REDIRECT_URI_ZOHO
-            + "&state=-5466400890088961855"
-            + "&prompt=consent&access_type=offline&dmeid="
-        )
-
-        return response
-    else:
-        get_all_zoho_tickets(1)
-
-
-@api_view(["GET"])
-@permission_classes((AllowAny,))
-def get_all_zoho_tickets(request):
-    dmeid = 0
-
-    if Tokens.objects.filter(type="access_token").count() == 0:
-        dat = request.GET.get("code")
-        if not dat:
-            dat = ""
-
-        response = requests.post(
-            "https://accounts.zoho.com.au/oauth/v2/token?code="
-            + dat
-            + "&grant_type=authorization_code&client_id="
-            + settings.CLIENT_ID_ZOHO
-            + "&client_secret="
-            + settings.CLIENT_SECRET_ZOHO
-            + "&redirect_uri="
-            + settings.REDIRECT_URI_ZOHO
-            + "&prompt=consent&access_type=offline"
-        ).json()
-
-        refresh_token = response["refresh_token"]
-        access_token = response["access_token"]
-
-        Tokens.objects.all().delete()
-        Tokens(
-            value=access_token,
-            type="access_token",
-            z_createdTimeStamp=datetime.utcnow(),
-            z_expiryTimeStamp=datetime.utcnow() + timedelta(hours=1),
-        ).save()
-        Tokens(
-            value=refresh_token,
-            type="refresh_token",
-            z_createdTimeStamp=datetime.utcnow(),
-            z_expiryTimeStamp=datetime.utcnow() + timedelta(hours=1),
-        ).save()
-        headers_for_tickets = {
-            "content-type": "application/json",
-            "orgId": settings.ORG_ID,
-            "Authorization": "Zoho-oauthtoken " + response["access_token"],
-        }
-        get_tickets = requests.get(
-            "https://desk.zoho.com.au/api/v1/tickets",
-            data={},
-            headers=headers_for_tickets,
-        )
-
-    else:
-        dmeid = request.GET.get("dmeid")
-        data = Tokens.objects.filter(type="access_token")
-        tz_info = data[0].z_expiryTimeStamp.tzinfo
-        present_time = datetime.now(tz_info)
-
-        if data[0].z_expiryTimeStamp > present_time:
-            headers_for_tickets = {
-                "content-type": "application/json",
-                "orgId": settings.ORG_ID,
-                "Authorization": "Zoho-oauthtoken " + data[0].value,
-            }
-            get_tickets = requests.get(
-                "https://desk.zoho.com.au/api/v1/tickets",
-                data={},
-                headers=headers_for_tickets,
-            )
-        else:
-            data = Tokens.objects.filter(type="refresh_token")
-            response = requests.post(
-                "https://accounts.zoho.com.au/oauth/v2/token?refresh_token="
-                + data[0].value
-                + "&grant_type=refresh_token&client_id="
-                + settings.CLIENT_ID_ZOHO
-                + "&client_secret="
-                + settings.CLIENT_SECRET_ZOHO
-                + "&redirect_uri="
-                + settings.REDIRECT_URI_ZOHO
-                + "&prompt=consent&access_type=offline"
-            ).json()
-            updatedata = Tokens.objects.get(type="access_token")
-            updatedata.value = response["access_token"]
-            updatedata.z_createdTimeStamp = datetime.utcnow()
-            updatedata.z_expiryTimeStamp = datetime.utcnow() + timedelta(hours=1)
-            updatedata.save()
-            headers_for_tickets = {
-                "content-type": "application/json",
-                "orgId": settings.ORG_ID,
-                "Authorization": "Zoho-oauthtoken " + response["access_token"],
-            }
-            get_tickets = requests.get(
-                "https://desk.zoho.com.au/api/v1/tickets",
-                data={},
-                headers=headers_for_tickets,
-            )
-    get_ticket = []
-
-    if get_tickets.status_code == 200:
-        data = Tokens.objects.filter(type="access_token")
-        for ticket in get_tickets.json()["data"]:
-            headers_for_single_ticket = {
-                "content-type": "application/json",
-                "orgId": settings.ORG_ID,
-                "Authorization": "Zoho-oauthtoken " + data[0].value,
-            }
-            ticket_data = requests.get(
-                "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
-                data={},
-                headers=headers_for_single_ticket,
-            ).json()
-
-            if ticket_data["customFields"]["DME Id/Consignment No."] == dmeid:
-                get_ticket.append(ticket_data)
-        if not get_ticket:
-            return JsonResponse(
-                {
-                    "status": "No ticket with this DME Id is available.",
-                    "tickets": get_ticket,
-                }
-            )
-        else:
-            final_ticket = {"status": "success", "tickets": get_ticket}
-            return JsonResponse(final_ticket)
-
-    elif get_tickets.status_code == 204:
-        return JsonResponse(
-            {
-                "status": "There are no tickets on zoho",
-                "tickets": get_ticket,
-            }
-        )
-    else:
-        final_ticket = {"status": "success", "tickets": get_ticket}
-        return JsonResponse(final_ticket)
-    # return JsonResponse({"message": "This feature is deactivated!"})
-
-
-class ChartsViewSet(viewsets.ViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
-    @action(detail=False, methods=["get"])
-    def get_num_bookings_per_fp(self, request):
-        try:
-            startDate = request.GET.get("startDate")
-            endDate = request.GET.get("endDate")
-
-            result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                )
-                .extra(select={"freight_provider": "vx_freight_provider"})
-                .values("freight_provider")
-                .annotate(deliveries=Count("vx_freight_provider"))
-                .order_by("deliveries")
-            )
-
-            late_result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(
-                        s_21_Actual_Delivery_TimeStamp__gt=F(
-                            "s_06_Latest_Delivery_Date_TimeSet"
-                        )
-                    )
-                )
-                .extra(select={"freight_provider": "vx_freight_provider"})
-                .values("freight_provider")
-                .annotate(late_deliveries=Count("vx_freight_provider"))
-                .order_by("late_deliveries")
-            )
-
-            ontime_result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(
-                        s_21_Actual_Delivery_TimeStamp__lte=F(
-                            "s_06_Latest_Delivery_Date_TimeSet"
-                        )
-                    )
-                )
-                .extra(select={"freight_provider": "vx_freight_provider"})
-                .values("freight_provider")
-                .annotate(ontime_deliveries=Count("vx_freight_provider"))
-                .order_by("ontime_deliveries")
-            )
-
-            num_reports = list(result)
-            num_late_reports = list(late_result)
-            num_ontime_reports = list(ontime_result)
-
-            for report in num_reports:
-                for late_report in num_late_reports:
-                    if report["freight_provider"] == late_report["freight_provider"]:
-                        report["late_deliveries"] = late_report["late_deliveries"]
-                        report["late_deliveries_percentage"] = math.ceil(
-                            late_report["late_deliveries"] / report["deliveries"] * 100
-                        )
-
-                for ontime_report in num_ontime_reports:
-                    if report["freight_provider"] == ontime_report["freight_provider"]:
-                        report["ontime_deliveries"] = ontime_report["ontime_deliveries"]
-                        report["ontime_deliveries_percentage"] = math.ceil(
-                            ontime_report["ontime_deliveries"]
-                            / report["deliveries"]
-                            * 100
-                        )
-
-            return JsonResponse({"results": num_reports})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_bookings_per_client(self, request):
-        try:
-            startDate = request.GET.get("startDate")
-            endDate = request.GET.get("endDate")
-
-            result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                )
-                .extra(select={"client_name": "b_client_name"})
-                .values("client_name")
-                .annotate(deliveries=Count("b_client_name"))
-                .order_by("deliveries")
-            )
-
-            late_result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(
-                        s_21_Actual_Delivery_TimeStamp__gt=F(
-                            "s_06_Latest_Delivery_Date_TimeSet"
-                        )
-                    )
-                )
-                .extra(select={"client_name": "b_client_name"})
-                .values("client_name")
-                .annotate(late_deliveries=Count("b_client_name"))
-                .order_by("late_deliveries")
-            )
-
-            ontime_result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                    & Q(
-                        s_21_Actual_Delivery_TimeStamp__lte=F(
-                            "s_06_Latest_Delivery_Date_TimeSet"
-                        )
-                    )
-                )
-                .extra(select={"client_name": "b_client_name"})
-                .values("client_name")
-                .annotate(ontime_deliveries=Count("b_client_name"))
-                .order_by("ontime_deliveries")
-            )
-
-            cost_result = (
-                Bookings.objects.filter(
-                    Q(b_status="Delivered")
-                    & Q(b_dateBookedDate__range=[startDate, endDate])
-                )
-                .extra(select={"client_name": "b_client_name"})
-                .values("client_name")
-                .annotate(total_cost=Sum("inv_cost_actual"))
-                .order_by("total_cost")
-            )
-
-            deliveries_reports = list(result)
-            cost_reports = list(cost_result)
-            late_reports = list(late_result)
-            ontime_reports = list(ontime_result)
-
-            for report in deliveries_reports:
-                for late_report in late_reports:
-                    if report["client_name"] == late_report["client_name"]:
-                        report["late_deliveries"] = late_report["late_deliveries"]
-
-                for ontime_report in ontime_reports:
-                    if report["client_name"] == ontime_report["client_name"]:
-                        report["ontime_deliveries"] = ontime_report["ontime_deliveries"]
-
-                for cost_report in cost_reports:
-                    if report["client_name"] == cost_report["client_name"]:
-                        report["total_cost"] = (
-                            0
-                            if not cost_report["total_cost"]
-                            else round(float(cost_report["total_cost"]), 2)
-                        )
-
-            return JsonResponse({"results": deliveries_reports})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_ready_bookings_per_fp(self, request):
-        try:
-            result = (
-                Bookings.objects.filter(b_status="Ready for booking")
-                .values("vx_freight_provider")
-                .annotate(vx_freight_provider_count=Count("vx_freight_provider"))
-                .order_by("vx_freight_provider_count")
-            )
-            return JsonResponse({"results": list(result)})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_booked_bookings_per_fp(self, request):
-        try:
-            result = (
-                Bookings.objects.filter(b_status="Booked")
-                .values("vx_freight_provider")
-                .annotate(vx_freight_provider_count=Count("vx_freight_provider"))
-                .order_by("vx_freight_provider_count")
-            )
-            return JsonResponse({"results": list(result)})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_rebooked_bookings_per_fp(self, request):
-        try:
-            result = (
-                Bookings.objects.filter(b_status="Pu Rebooked")
-                .values("vx_freight_provider")
-                .annotate(vx_freight_provider_count=Count("vx_freight_provider"))
-                .order_by("vx_freight_provider_count")
-            )
-            return JsonResponse({"results": list(result)})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_closed_bookings_per_fp(self, request):
-        try:
-            result = (
-                Bookings.objects.filter(b_status="Closed")
-                .values("vx_freight_provider")
-                .annotate(vx_freight_provider_count=Count("vx_freight_provider"))
-                .order_by("vx_freight_provider_count")
-            )
-            return JsonResponse({"results": list(result)})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_month_bookings(self, request):
-        try:
-            result = (
-                Bookings.objects.filter(b_status="Delivered")
-                .extra(select={"month": "EXTRACT(month FROM b_dateBookedDate)"})
-                .values("month")
-                .annotate(count_items=Count("b_dateBookedDate"))
-            )
-
-            return JsonResponse({"results": list(result)})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-    @action(detail=False, methods=["get"])
-    def get_num_year_bookings(self, request):
-        try:
-            result = (
-                Bookings.objects.filter(b_status="Delivered")
-                .extra(select={"year": "EXTRACT(year FROM b_dateBookedDate)"})
-                .values("year")
-                .annotate(count_items=Count("b_dateBookedDate"))
-            )
-
-            return JsonResponse({"results": list(result)})
-        except Exception as e:
-            # print(f"Error #102: {e}")
-            return JsonResponse({"results": [], "success": False, "message": str(e)})
