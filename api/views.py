@@ -34,7 +34,7 @@ from rest_framework.decorators import (
 )
 from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
-from django.db.models import Q, Case, When
+from django.db.models import Q, Case, When, Count, F, Sum
 from django.db import connection
 from django.utils import timezone
 from django.conf import settings

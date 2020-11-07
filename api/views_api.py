@@ -9,7 +9,6 @@ from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from django.db.models import Count, Q, F, Sum
 from django.db import transaction
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
