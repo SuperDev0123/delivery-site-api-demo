@@ -126,7 +126,7 @@ def get_book_payload(booking, fp_name):
         )
         deToCompanyName = client_process.origin_deToCompanyName
         de_Email = client_process.origin_de_Email
-        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
         de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
         de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
     else:
@@ -136,7 +136,7 @@ def get_book_payload(booking, fp_name):
         pu_pickup_instructions_address = booking.pu_pickup_instructions_address
         deToCompanyName = booking.deToCompanyName
         de_Email = booking.de_Email
-        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        # de_Email_Group_Emails = booking.de_Email_Group_Emails
         de_To_Address_Street_1 = booking.de_To_Address_Street_1
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
@@ -424,7 +424,7 @@ def get_getlabel_payload(booking, fp_name):
         )
         deToCompanyName = client_process.origin_deToCompanyName
         de_Email = client_process.origin_de_Email
-        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
         de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
         de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
     else:
@@ -434,7 +434,7 @@ def get_getlabel_payload(booking, fp_name):
         pu_pickup_instructions_address = booking.pu_pickup_instructions_address
         deToCompanyName = booking.deToCompanyName
         de_Email = booking.de_Email
-        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        # de_Email_Group_Emails = booking.de_Email_Group_Emails
         de_To_Address_Street_1 = booking.de_To_Address_Street_1
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
@@ -737,22 +737,22 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
         puCompany = client_process.origin_puCompany
         pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
         pu_Address_street_2 = client_process.origin_pu_Address_Street_2
-        pu_pickup_instructions_address = (
-            client_process.origin_pu_pickup_instructions_address
-        )
+        # pu_pickup_instructions_address = (
+        #    client_process.origin_pu_pickup_instructions_address
+        # )
         deToCompanyName = client_process.origin_deToCompanyName
         de_Email = client_process.origin_de_Email
-        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
         de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
         de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
     else:
         puCompany = booking.puCompany
         pu_Address_Street_1 = booking.pu_Address_Street_1
         pu_Address_street_2 = booking.pu_Address_street_2
-        pu_pickup_instructions_address = booking.pu_pickup_instructions_address
+        # pu_pickup_instructions_address = booking.pu_pickup_instructions_address
         deToCompanyName = booking.deToCompanyName
         de_Email = booking.de_Email
-        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        # de_Email_Group_Emails = booking.de_Email_Group_Emails
         de_To_Address_Street_1 = booking.de_To_Address_Street_1
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
