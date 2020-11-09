@@ -457,6 +457,16 @@ def picked_boks(request):
             bok_2.sscc = item["sscc"]
             bok_2.picked_up_timestamp = item["timestamp"]
             bok_2.save()
+
+            # Create bok_3
+            new_bok_3 = BOK_3_lines_data()
+            new_bok_3.fk_header_id = pk_header_id
+            new_bok_3.fk_booking_lines_id = bok_2.pk_booking_lines_id
+            new_bok_3.ld_002_model_number = item["model_number"]
+            new_bok_3.ld_003_item_description = "Original"
+            new_bok_3.ld_008_client_ref_number = item["model_number"]
+            new_bok_3.success = 3
+            new_bok_3.save()
         else:
             new_bok_2 = BOK_2_lines()
             new_bok_2.fk_header_id = pk_header_id

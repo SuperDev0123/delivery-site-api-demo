@@ -2098,9 +2098,9 @@ class BOK_0_BookingKeys(models.Model):
 
 class BOK_1_headers(models.Model):
     pk_auto_id = models.AutoField(primary_key=True)
-    # quote = models.OneToOneField(
-    #     API_booking_quotes, on_delete=models.CASCADE, null=True
-    # )  # Optional
+    quote = models.OneToOneField(
+        API_booking_quotes, on_delete=models.CASCADE, null=True
+    )  # Optional
     client_booking_id = models.CharField(
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
