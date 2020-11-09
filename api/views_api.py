@@ -110,11 +110,11 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             result["client_customer_mark_up"] = client.client_customer_mark_up
             result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
 
+            best_quotes = quote_set
             # Select best quotes(fastest, lowest)
-            if quote_set.exists() and quote_set.count() > 1:
-                best_quotes = quote_set
-                # best_quotes = select_best_options(pricings=quote_set)
-                # logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+            # if quote_set.exists() and quote_set.count() > 1:
+            # best_quotes = select_best_options(pricings=quote_set)
+            # logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
 
             # Set Express or Standard
             if best_quotes:
