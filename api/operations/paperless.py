@@ -6,7 +6,7 @@ from django.conf import settings
 
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
-from api.models import BOK_1_headers, BOK_2_lines
+from api.models import BOK_1_headers, BOK_2_lines, Log
 
 logger = logging.getLogger("dme_api")
 
@@ -192,6 +192,8 @@ def send_order_info(bok_1):
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
         subject = "Error on Paperless workflow"
         to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
+        log = Log(fk_booking_id=bok_1.pk_header_id, request_type="PAPERLESS_ORDER")
+        log.save()
 
         if settings.ENV == "prod":
             to_emails.append(settings.SUPPORT_CENTER_EMAIL)
@@ -204,30 +206,37 @@ def send_order_info(bok_1):
             logger.error(error)
             raise Exception(error)
 
+        log.request_payload = body.decode("utf-8")
+        log.save()
         response = send_soap_request(url, body, headers)
         logger.error(
             f"@9001 - Paperless response status_code: {response.status_code}, content: {response.content}"
         )
+        log.request_status = response.status_code
+        log.response = response.content.decode("utf-8")
+        log.save()
 
         try:
             json_res = parse_xml(response)
-
-            if response.status_code > 400 or "ErrorDetails" in json_res:
-                error = f"@902 Paperless response error.\n\nBok_1: {str(bok_1.pk)}\n\n"
-                error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
-                error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}\n\n"
-                error += f"Parsed json: {json.dumps(json_res, indent=4)}"
-                logger.error(error)
-                send_email(send_to=to_emails, send_cc=[], subject=subject, text=error)
-                logger.error("Sent email notification!")
-
-            return json_res
         except Exception as e:
             error = f"@902 Paperless error on response parser.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\n\n"
             error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
             error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}"
             logger.error(error)
             raise Exception(error)
+
+        if response.status_code > 400 or "ErrorDetails" in json_res:
+            error = f"@902 Paperless response error.\n\nBok_1: {str(bok_1.pk)}\n\n"
+            error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
+            error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}\n\n"
+            error += f"Parsed json: {json.dumps(json_res, indent=4)}"
+            logger.error(error)
+            send_email(send_to=to_emails, send_cc=[], subject=subject, text=error)
+            logger.error("Sent email notification!")
+
+        log.response = json.dumps(json_res, indent=4)
+        log.save()
+        return json_res
     except Exception as e:
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
         logger.error("Sent email notification!")
