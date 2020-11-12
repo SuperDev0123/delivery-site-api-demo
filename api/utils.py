@@ -11,7 +11,6 @@ import redis
 import xml.etree.ElementTree as xml
 import pysftp
 import shutil
-import smtplib
 import pytz
 import logging
 import re
@@ -19,12 +18,6 @@ from dateutil.rrule import *
 from pytz import timezone
 from datetime import timedelta
 from os.path import basename
-
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
-from email.utils import COMMASPACE, formatdate
 
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import letter, landscape, A6
@@ -58,6 +51,7 @@ from django.conf import settings
 from api.models import *
 from api.common import trace_error
 from api.operations.generate_xls_report import build_xls
+from api.outputs.email import send_email
 
 if settings.ENV == "local":
     production = False  # Local
@@ -178,47 +172,6 @@ def calc_collect_after_status_change(pk_booking_id, status):
             booking_line.e_qty_collected = booking_line.e_qty
 
         booking_line.save()
-
-
-def send_email(
-    send_to,
-    send_cc,
-    subject,
-    text,
-    files=None,
-    mime_type="plain",
-    server="localhost",
-    use_tls=True,
-):
-    assert isinstance(send_to, list)
-
-    msg = MIMEMultipart()
-    msg["From"] = settings.EMAIL_HOST_USER
-    msg["To"] = COMMASPACE.join(send_to)
-    msg["Cc"] = COMMASPACE.join(send_cc)
-    msg["Date"] = formatdate(localtime=True)
-    msg["Subject"] = subject
-    msg.attach(MIMEText(text, mime_type))
-
-    for f in files or []:
-        file_content = open(f, "rb").read()
-
-        if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif")):
-            image = MIMEImage(file_content, name=os.path.basename(f))
-            msg.attach(image)
-        else:
-            pdf = MIMEApplication(file_content, Name=basename(f))
-            pdf["Content-Disposition"] = 'attachment; filename="%s"' % basename(f)
-            msg.attach(pdf)
-
-    smtp = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
-
-    if use_tls:
-        smtp.starttls()
-
-    smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-    smtp.sendmail(settings.EMAIL_HOST_USER, send_to + send_cc, msg.as_string())
-    smtp.close()
 
 
 def upload_sftp(
@@ -5456,8 +5409,10 @@ def get_eta_de_by(booking, quote):
         logger.info(f"Error #1002: {e}")
         return None
 
+
 def ireplace(old, repl, text):
-    return re.sub('(?i)'+re.escape(old), lambda m: repl, text)
+    return re.sub("(?i)" + re.escape(old), lambda m: repl, text)
+
 
 def sanitize_address(address):
     if address is None:

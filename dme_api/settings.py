@@ -186,7 +186,10 @@ if ENV == "prod":
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
-        "root": {"level": "ERROR", "handlers": ["bugsnag"],},
+        "root": {
+            "level": "ERROR",
+            "handlers": ["bugsnag"],
+        },
         "handlers": {
             "console": {
                 "level": "INFO",
@@ -200,7 +203,10 @@ if ENV == "prod":
                 "backupCount": 10,  # keep at most 10 log files
                 "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
             },
-            "bugsnag": {"level": "ERROR", "class": "bugsnag.handlers.BugsnagHandler",},
+            "bugsnag": {
+                "level": "ERROR",
+                "class": "bugsnag.handlers.BugsnagHandler",
+            },
         },
         "loggers": {
             "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}
@@ -241,3 +247,8 @@ CLIENT_ID_ZOHO = os.environ["CLIENT_ID_ZOHO"]
 CLIENT_SECRET_ZOHO = os.environ["CLIENT_SECRET_ZOHO"]
 ORG_ID = os.environ["ORG_ID"]
 REDIRECT_URI_ZOHO = os.environ["REDIRECT_URI_ZOHO"]
+
+# Emails
+ADMIN_EMAIL_01 = os.environ["ADMIN_EMAIL_01"]
+ADMIN_EMAIL_02 = os.environ["ADMIN_EMAIL_02"]
+SUPPORT_CENTER_EMAIL = os.environ["SUPPORT_CENTER_EMAIL"]

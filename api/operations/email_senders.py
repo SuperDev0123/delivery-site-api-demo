@@ -1,15 +1,20 @@
 import sys, time
 import os, base64
 from datetime import datetime
-from email.utils import COMMASPACE
 
 from django.conf import settings
 
-from api.models import *
-from api.utils import send_email
+from api.models import (
+    DME_Email_Templates,
+    Bookings,
+    Booking_lines,
+    Booking_lines_data,
+    EmailLogs,
+)
+from api.outputs.email import send_email
 
 
-def send_booking_email_using_template(bookingId, emailName, sender):
+def send_booking_status_email(bookingId, emailName, sender):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
     booking_lines = Booking_lines.objects.filter(

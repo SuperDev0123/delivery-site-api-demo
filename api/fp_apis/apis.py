@@ -27,7 +27,7 @@ from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
-from api.outputs import emails as email_module
+from api.operations.email_senders import send_booking_status_email
 
 from .payload_builder import *
 from .self_pricing import get_pricing as get_self_pricing
@@ -274,7 +274,7 @@ def book(request, fp_name):
                             if booking.b_booking_Category == "Salvage Expense":
                                 email_template_name = "Return Booking"
 
-                            email_module.send_booking_email_using_template(
+                            send_booking_status_email(
                                 booking.pk, email_template_name, request.user.username
                             )
                     # Save Label for Capital
@@ -299,7 +299,7 @@ def book(request, fp_name):
                             if booking.b_booking_Category == "Salvage Expense":
                                 email_template_name = "Return Booking"
 
-                            email_module.send_booking_email_using_template(
+                            send_booking_status_email(
                                 booking.pk, email_template_name, request.user.username
                             )
                     # Save Label for Startrack
@@ -900,7 +900,7 @@ def get_label(request, fp_name):
                 if booking.b_booking_Category == "Salvage Expense":
                     email_template_name = "Return Booking"
 
-                email_module.send_booking_email_using_template(
+                send_booking_status_email(
                     booking.pk, email_template_name, request.user.username
                 )
 
@@ -1160,7 +1160,7 @@ def pod(request, fp_name):
         # POD Email
         if booking.b_send_POD_eMail:
             email_template_name = "POD"
-            email_module.send_booking_email_using_template(
+            send_booking_status_email(
                 booking.pk, email_template_name, request.user.username
             )
 

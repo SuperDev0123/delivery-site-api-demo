@@ -63,7 +63,6 @@ from .utils import (
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
-    send_email,
     tables_in_query,
     get_clientname,
     get_eta_pu_by,
@@ -71,7 +70,9 @@ from .utils import (
     sanitize_address,
 )
 from api.fp_apis.utils import get_status_category_from_status
-from api.outputs import tempo, emails as email_module
+from api.outputs import tempo
+from api.operations.email_senders import send_booking_status_email
+from api.outputs.email import send_email
 from api.common import status_history
 from api.common.common_times import convert_to_UTC_tz
 from api.stats.pricing import analyse_booking_quotes_table
@@ -1644,9 +1645,7 @@ class BookingsViewSet(viewsets.ViewSet):
         user_id = int(self.request.user.id)
         template_name = self.request.query_params.get("templateName", None)
         booking_id = self.request.query_params.get("bookingId", None)
-        email_module.send_booking_email_using_template(
-            booking_id, template_name, self.request.user.username
-        )
+        send_booking_status_email(booking_id, template_name, self.request.user.username)
         return JsonResponse({"message": "success"}, status=200)
 
     @action(detail=False, methods=["post"])
