@@ -155,48 +155,48 @@ def upload_attachment_file(user_id, file, booking_id, upload_option):
 
 def upload_pricing_only_file(user_id, username, file, upload_option):
     dme_file = DME_Files.objects.create(
-        file_name=f"{file.name}",
+        file_name=f"__{file.name}",
         z_createdByAccount=username,
         file_type="pricing-only",
         file_extension="xlsx",
         note="Uploaded to get Pricings only",
     )
-
-    file_index = DME_Files.objects.all().order_by("id").last().id
     dir_path = f"./static/uploaded/pricing_only/indata/"
-    full_path = f"./static/uploaded/pricing_only/indata/{file_index}__{file.name}"
+    dme_file.file_name = f"{dme_file.pk}__{file.name}"
+    dme_file.file_path = (
+        f"./static/uploaded/pricing_only/indata/{dme_file.pk}__{file.name}"
+    )
+    dme_file.save()
 
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
 
-    with open(full_path, "wb+") as destination:
+    with open(dme_file.file_path, "wb+") as destination:
         for chunk in file.chunks():
             destination.write(chunk)
 
-    dme_file.file_name = f"{file_index}__{file.name}"
-    dme_file.file_path = full_path
-    dme_file.save()
     return {
         "status": "success",
-        "file_name": f"{file_index}__{file.name}",
+        "file_name": dme_file.file_name,
         "type": upload_option,
     }
 
 
 def upload_pricing_rule_file(user_id, username, file, upload_option, rule_type):
     dme_file = DME_Files.objects.create(
-        file_name=f"{file.name}",
+        file_name=f"__{file.name}",
         z_createdByAccount=username,
         file_type="pricing-rule",
         file_extension="xlsx",
         note="Uploaded to import Pricings Rules sheet",
     )
-
-    file_index = DME_Files.objects.all().order_by("id").last().id
     dir_path = f"./static/uploaded/pricing_rule/indata/"
     full_path = (
-        f"./static/uploaded/pricing_rule/indata/{file_index}__{rule_type}__{file.name}"
+        f"./static/uploaded/pricing_rule/indata/{dme_file.pk}__{rule_type}__{file.name}"
     )
+    dme_file.file_name = f"{dme_file.pk}__{rule_type}__{file.name}"
+    dme_file.file_path = full_path
+    dme_file.save()
 
     if not os.path.isdir(dir_path):
         os.makedirs(dir_path)
@@ -205,9 +205,6 @@ def upload_pricing_rule_file(user_id, username, file, upload_option, rule_type):
         for chunk in file.chunks():
             destination.write(chunk)
 
-    dme_file.file_name = f"{file_index}__{rule_type}__{file.name}"
-    dme_file.file_path = full_path
-    dme_file.save()
     return {
         "status": "success",
         "file_name": dme_file.file_name,

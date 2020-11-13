@@ -14,6 +14,7 @@ import shutil
 import smtplib
 import pytz
 import logging
+import re
 from dateutil.rrule import *
 from pytz import timezone
 from datetime import timedelta
@@ -5454,3 +5455,16 @@ def get_eta_de_by(booking, quote):
         trace_error.print()
         logger.info(f"Error #1002: {e}")
         return None
+
+def ireplace(old, repl, text):
+    return re.sub('(?i)'+re.escape(old), lambda m: repl, text)
+
+def sanitize_address(address):
+    if address is None:
+        return address
+
+    dme_augment_address = DME_Augment_Address.objects.all()
+    for rule in dme_augment_address:
+        address = ireplace(rule.origin_word, rule.augmented_word, address)
+
+    return address
