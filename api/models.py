@@ -4239,3 +4239,26 @@ class DME_Augment_Address(models.Model):
 
     class Meta:
         db_table = "dme_augment_address"
+
+class DME_SMS_Templates(models.Model):
+    id = models.AutoField(primary_key=True)
+    smsName = models.CharField(max_length=255, blank=True, null=True)
+    smsMessage = models.TextField(blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), null=True, blank=True, default=timezone.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
+    )
+
+    class Meta:
+        db_table = "dme_sms_templates"
