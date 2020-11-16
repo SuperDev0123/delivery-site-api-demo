@@ -66,6 +66,8 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        logger.info(f"@871 User: {request.user.username}")
+        logger.info(f"@872 request payload - {request.data}")
         bok_1_header = request.data
         b_client_warehouse_code = bok_1_header["b_client_warehouse_code"]
         warehouse = Client_warehouses.objects.get(
@@ -170,6 +172,8 @@ class BOK_2_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        logger.info(f"@873 User: {request.user.username}")
+        logger.info(f"@874 request payload - {request.data}")
         bok_2_line = request.data
         bok_2_line["v_client_pk_consigment_num"] = bok_2_line["fk_header_id"]
         bok_2_line["success"] = dme_constants.BOK_SUCCESS_2
@@ -1142,9 +1146,7 @@ class ChartsViewSet(viewsets.ViewSet):
             startDate = request.GET.get("startDate")
             endDate = request.GET.get("endDate")
             category_result = (
-                Bookings.objects.filter(
-                    Q(b_dateBookedDate__range=[startDate, endDate])
-                )
+                Bookings.objects.filter(Q(b_dateBookedDate__range=[startDate, endDate]))
                 .extra(select={"status": "b_status"})
                 .values("status")
                 .annotate(value=Count("b_status"))
@@ -1153,15 +1155,23 @@ class ChartsViewSet(viewsets.ViewSet):
 
             categories = []
             category_reports = list(category_result)
-            
+
             for category_report in category_reports:
-                if category_report['status'] is not None and  category_report['status']!='':
+                if (
+                    category_report["status"] is not None
+                    and category_report["status"] != ""
+                ):
                     utl_dme_status = Utl_dme_status.objects.filter(
-                        dme_delivery_status=category_report['status']
+                        dme_delivery_status=category_report["status"]
                     ).first()
 
                     if utl_dme_status:
-                        category_report['status'] = utl_dme_status.dme_delivery_status_category + "(" + category_report['status'] + ")"
+                        category_report["status"] = (
+                            utl_dme_status.dme_delivery_status_category
+                            + "("
+                            + category_report["status"]
+                            + ")"
+                        )
                         categories.append(category_report)
 
             return JsonResponse({"results": categories})
@@ -1176,9 +1186,7 @@ class ChartsViewSet(viewsets.ViewSet):
             endDate = request.GET.get("endDate")
 
             result = (
-                Bookings.objects.filter(
-                    Q(b_dateBookedDate__range=[startDate, endDate])
-                )
+                Bookings.objects.filter(Q(b_dateBookedDate__range=[startDate, endDate]))
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
                 .annotate(deliveries=Count("b_client_name"))
@@ -1187,7 +1195,7 @@ class ChartsViewSet(viewsets.ViewSet):
 
             late_result = (
                 Bookings.objects.filter(
-                   Q(b_dateBookedDate__range=[startDate, endDate])
+                    Q(b_dateBookedDate__range=[startDate, endDate])
                     & Q(
                         s_21_Actual_Delivery_TimeStamp__gt=F(
                             "s_06_Latest_Delivery_Date_TimeSet"
@@ -1216,9 +1224,7 @@ class ChartsViewSet(viewsets.ViewSet):
             )
 
             inv_sell_quoted_result = (
-                Bookings.objects.filter(
-                    Q(b_dateBookedDate__range=[startDate, endDate])
-                )
+                Bookings.objects.filter(Q(b_dateBookedDate__range=[startDate, endDate]))
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
                 .annotate(inv_sell_quoted=Sum("inv_sell_quoted"))
@@ -1226,9 +1232,7 @@ class ChartsViewSet(viewsets.ViewSet):
             )
 
             inv_sell_quoted_override_result = (
-                Bookings.objects.filter(
-                    Q(b_dateBookedDate__range=[startDate, endDate])
-                )
+                Bookings.objects.filter(Q(b_dateBookedDate__range=[startDate, endDate]))
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
                 .annotate(inv_sell_quoted_override=Sum("inv_sell_quoted_override"))
@@ -1236,9 +1240,7 @@ class ChartsViewSet(viewsets.ViewSet):
             )
 
             inv_cost_quoted_result = (
-                Bookings.objects.filter(
-                    Q(b_dateBookedDate__range=[startDate, endDate])
-                )
+                Bookings.objects.filter(Q(b_dateBookedDate__range=[startDate, endDate]))
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
                 .annotate(inv_cost_quoted=Sum("inv_cost_quoted"))
@@ -1266,15 +1268,29 @@ class ChartsViewSet(viewsets.ViewSet):
                         report["inv_sell_quoted"] = (
                             0
                             if not inv_sell_quoted_report["inv_sell_quoted"]
-                            else round(float(inv_sell_quoted_report["inv_sell_quoted"]), 2)
+                            else round(
+                                float(inv_sell_quoted_report["inv_sell_quoted"]), 2
+                            )
                         )
 
                 for inv_sell_quoted_override_report in inv_sell_quoted_override_reports:
-                    if report["client_name"] == inv_sell_quoted_override_report["client_name"]:
+                    if (
+                        report["client_name"]
+                        == inv_sell_quoted_override_report["client_name"]
+                    ):
                         report["inv_sell_quoted_override"] = (
                             0
-                            if not inv_sell_quoted_override_report["inv_sell_quoted_override"]
-                            else round(float(inv_sell_quoted_override_report["inv_sell_quoted_override"]), 2)
+                            if not inv_sell_quoted_override_report[
+                                "inv_sell_quoted_override"
+                            ]
+                            else round(
+                                float(
+                                    inv_sell_quoted_override_report[
+                                        "inv_sell_quoted_override"
+                                    ]
+                                ),
+                                2,
+                            )
                         )
 
                 for inv_cost_quoted_report in inv_cost_quoted_reports:
@@ -1282,7 +1298,9 @@ class ChartsViewSet(viewsets.ViewSet):
                         report["inv_cost_quoted"] = (
                             0
                             if not inv_cost_quoted_report["inv_cost_quoted"]
-                            else round(float(inv_cost_quoted_report["inv_cost_quoted"]), 2)
+                            else round(
+                                float(inv_cost_quoted_report["inv_cost_quoted"]), 2
+                            )
                         )
 
             return JsonResponse({"results": deliveries_reports})
