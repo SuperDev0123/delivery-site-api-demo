@@ -841,7 +841,12 @@ def push_boks(request):
         if bok_1_serializer.is_valid():
             # Save bok_2s
             if "model_number" in bok_2s[0]:  # Product & Child items
-                items = product_oper.get_product_items(bok_2s)
+                ignore_product = False
+
+                if "Plum" in client_name and "_sapb1" in user.username:
+                    ignore_product = True
+
+                items = product_oper.get_product_items(bok_2s, ignore_product)
                 new_bok_2s = []
 
                 for index, item in enumerate(items):

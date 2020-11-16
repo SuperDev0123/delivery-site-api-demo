@@ -22,7 +22,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s):
+def get_product_items(bok_2s, ignore_product=False):
     """
     get all items from array of "model_number" and "qty"
     """
@@ -68,7 +68,7 @@ def get_product_items(bok_2s):
             }
 
             results = _append_line(results, line, qty)
-        elif products.count() > 1:
+        elif products.count() > 1 and not ignore_product:
             child_items = products.exclude(
                 child_model_number=model_number, parent_model_number=model_number
             )
