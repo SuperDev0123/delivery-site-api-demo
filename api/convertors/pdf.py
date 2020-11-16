@@ -47,11 +47,13 @@ def pdf_to_zpl(pdf_path, zpl_path):
     try:
         with open(pdf_path, "rb") as pdf:
             pages = GRF.from_pdf(pdf.read(), "DEMO", center_of_pixel=True)
-
-        for grf in pages:
             f = open(zpl_path, "w")
-            f.write(grf.to_zpl())
+
+            for grf in pages:
+                f.write(grf.to_zpl())
+
             f.close()
+            return True
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
         send_mail(

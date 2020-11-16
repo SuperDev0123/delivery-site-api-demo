@@ -40,6 +40,7 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
 )
 from api.operations import push_operations, product_operations as product_oper
+from api.convertors import pdf
 
 
 logger = logging.getLogger("dme_api")
@@ -1250,6 +1251,83 @@ def partial_pricing(request):
                 "message": message,
             }
         )
+
+
+@api_view(["GET"])
+def get_label(request):
+    logger.info(f"@810 - GET LABEL: {request.user.username}")
+    bok_1_pk = request.GET.get("HostOrderNumber")
+    client_name = request.GET.get("CustomerName")
+
+    if not bok_1_pk:
+        code = "missing_param"
+        description = "'HostOrderNumber' is required."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    if not client_name:
+        code = "missing_param"
+        description = "'CustomerName' is required."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    if not BOK_1_headers.objects.filter(pk=b_client_order_num).exists():
+        code = "not_found"
+        description = "Order does not exist."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    try:
+        client = DME_clients.objects.get(company_name=client_name)
+    except:
+        code = "not_found"
+        description = "Client does not exist."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    try:
+        booking = Bookings.objects.get(
+            b_client_order_num=b_client_order_num, fk_client_id=client.dme_account_num
+        )
+    except:
+        code = "not_ready"
+        description = "Order is not booked."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    if not booking.z_label_url:
+        code = "not_ready"
+        description = "Label is not ready."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    if settings.ENV == "prod":
+        label_url = f"/opt/s3_public/pdfs/{booking.z_label_url}"
+    else:
+        label_url = f"./static/pdfs/{booking.z_label_url}"
+
+    result = pdf.pdf_to_zpl(label_url, label_url + ".zpl")
+
+    if not result:
+        code = "unknown_status"
+        description = "Please contact DME support center. <bookings@deliver-me.com.au>"
+        raise Exception({"success": False, "code": code, "description": description})
+
+    with open(label_url + ".zpl", "r") as zpl:
+        zpl_data = zpl.read()
+
+    return Response(
+        {
+            "success": True,
+            "zpl": zpl_data,
+        }
+    )
 
 
 @api_view(["GET"])
