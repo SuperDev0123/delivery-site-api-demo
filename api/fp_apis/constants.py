@@ -1,5 +1,8 @@
 PRICING_TIME = 10  # seconds
 
+# "Camerons", "Toll", "Sendle"
+AVAILABLE_FPS_4_FC = ["TNT", "Hunter", "Capital", "Century", "Fastway", "Startrack"]
+
 BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},

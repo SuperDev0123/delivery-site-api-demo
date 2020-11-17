@@ -40,7 +40,12 @@ from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
 from .build_label.dhl import build_dhl_label
 from .operations.tracking import update_booking_with_tracking_result
-from .constants import FP_CREDENTIALS, BUILT_IN_PRICINGS, PRICING_TIME
+from .constants import (
+    FP_CREDENTIALS,
+    BUILT_IN_PRICINGS,
+    PRICING_TIME,
+    AVAILABLE_FPS_4_FC,
+)
 
 if settings.ENV == "local":
     IS_PRODUCTION = False  # Local
@@ -1336,12 +1341,9 @@ async def _pricing_process(booking, booking_lines, is_pricing_only):
 async def pricing_workers(booking, booking_lines, is_pricing_only):
     # Schedule n pricing works *concurrently*:
     _workers = set()
-
     logger.info("#910 - Building Pricing workers...")
-    # "Startrack", "Camerons", "Toll", "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
 
-    for fp_name in fp_names:
+    for fp_name in AVAILABLE_FPS_4_FC:
         _fp_name = fp_name.lower()
 
         if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
