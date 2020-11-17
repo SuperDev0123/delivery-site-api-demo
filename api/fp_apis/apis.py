@@ -1262,6 +1262,10 @@ def pricing(request):
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
     else:
+        json_results = ApiBookingQuotesSerializer(
+            results, many=True, context={"booking": booking}
+        ).data
+
         if is_pricing_only:
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
@@ -1269,11 +1273,8 @@ def pricing(request):
         else:
             auto_select_pricing(booking, results, auto_select_type)
 
-        results = ApiBookingQuotesSerializer(
-            results, many=True, context={"booking": booking}
-        ).data
         return JsonResponse(
-            {"success": True, "message": message, "results": results},
+            {"success": True, "message": message, "results": json_results},
             status=status.HTTP_200_OK,
         )
 
@@ -1356,19 +1357,25 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
             for client_name in fp_client_names:
                 if b_client_name in fp_client_names and b_client_name != client_name:
                     continue
-                elif b_client_name not in fp_client_names and client_name not in [
-                    "dme",
-                    "test",
-                ]:
+                elif (
+                    b_client_name not in fp_client_names
+                    and client_name not in ["dme", "test"]
+                    and not is_pricing_only
+                ):
                     continue
 
                 logger.info(f"#905 INFO Pricing - {_fp_name}, {client_name}")
                 for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+
                     # Allow live pricing credentials only on PROD
                     if settings.ENV == "prod" and "test" in key:
                         continue
 
-                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+                    # Pricing only accounts can be used on pricing_only mode
+                    if "pricingOnly" in account_detail and not is_pricing_only:
+                        continue
+
                     _worker = _api_pricing_worker_builder(
                         _fp_name,
                         booking,

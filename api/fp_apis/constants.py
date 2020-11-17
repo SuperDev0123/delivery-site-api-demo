@@ -119,6 +119,14 @@ FP_CREDENTIALS = {
                 "accountPassword": "deliver20",
             },
         },
+        "plum": {
+            "live_plum_0": {
+                "accountCode": "PLUMPR",
+                "accountKey": "UExVTVBSOnBsdXBybw==",
+                "accountPassword": "plupro",
+                "pricingOnly": True,
+            },
+        },
     },
     "tnt": {
         "dme": {
