@@ -374,14 +374,14 @@ def picked_boks(request):
     """
     user = request.user
     logger.info(f"@890 Picked by: {user.username}")
-    b_client_order_num = request.data.get("HostOrderNumber")
+    bok_1_pk = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
     client_name = request.data.get("CustomerName")
     code = None
     message = None
 
     # Check required params are included
-    if not b_client_order_num:
+    if not bok_1_pk:
         code = "missing_param"
         message = "'HostOrderNumber' is required."
 
@@ -406,10 +406,7 @@ def picked_boks(request):
         )
 
     # Check if order exists
-    bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=client.fk_client_id,
-        b_client_order_num=b_client_order_num,
-    )
+    bok_1s = BOK_1_headers.objects.filter(fk_client_id=client.fk_client_id, pk=bok_1_pk)
 
     if not bok_1s.exists():
         code = "not_found"

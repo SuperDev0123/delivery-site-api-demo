@@ -44,13 +44,13 @@ def build_xml_with_bok(bok_1, bok_2s):
     Header = ET.SubElement(SalesOrderToWMS, "Header")
 
     OrderNumber = ET.SubElement(Header, "OrderNumber")
-    OrderNumber.text = f"{dme_account_num}{bok_1.pk}"
+    OrderNumber.text = f"{dme_account_num}{bok_1.b_client_order_num}"
 
     NumberOfDetails = ET.SubElement(Header, "NumberOfDetails")
     NumberOfDetails.text = str(bok_2s.count())
 
     HostOrderNumber = ET.SubElement(Header, "HostOrderNumber")
-    HostOrderNumber.text = f"{dme_account_num}{bok_1.b_client_order_num}"
+    HostOrderNumber.text = f"{dme_account_num}{bok_1.pk}"
 
     CustomerNumber = ET.SubElement(Header, "CustomerNumber")
     CustomerNumber.text = f"{dme_account_num}testcust123"
