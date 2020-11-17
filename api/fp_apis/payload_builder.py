@@ -716,7 +716,7 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     payload["readyDate"] = (
         ""
         if booking.puPickUpAvailFrom_Date is None
-        else str(booking.puPickUpAvailFrom_Date)
+        else booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
     )
     payload["referenceNumber"] = (
         ""
