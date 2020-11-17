@@ -9,6 +9,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.db import transaction
+from django.core.mail import send_mail
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, viewsets
@@ -373,38 +374,47 @@ def picked_boks(request):
     """
     user = request.user
     logger.info(f"@890 Picked by: {user.username}")
-    b_client_order_num = request.data.get("b_client_order_num")
+    b_client_order_num = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
-    fk_client_id = request.data.get("fk_client_id")
+    client_name = request.data.get("CustomerName")
     code = None
     message = None
 
     # Check required params are included
     if not b_client_order_num:
         code = "missing_param"
-        message = "'b_client_order_num' is required."
+        message = "'HostOrderNumber' is required."
 
     if not picked_items:
         code = "missing_param"
         message = "'picked_items' is required."
 
-    if not fk_client_id:
+    if not client_name:
         code = "missing_param"
-        message = "'fk_client_id' is required."
+        message = "'CustomerName' is required."
 
     if message:
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    # Check if order does exist
+    try:
+        client = DME_clients.objects.get(company_name=client_name)
+    except:
+        code = "not_found"
+        description = "Client does not exist."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    # Check if order exists
     bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=fk_client_id,
+        fk_client_id=client.fk_client_id,
         b_client_order_num=b_client_order_num,
     )
 
     if not bok_1s.exists():
-        code = "invalid_param"
+        code = "not_found"
         message = (
-            "Order does not exist. 'fk_client_id' or 'b_client_order_num' is invalid."
+            "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
         )
         raise ValidationError({"success": False, "code": code, "description": message})
     else:
@@ -427,13 +437,13 @@ def picked_boks(request):
                     invalid_model_numbers.append(repacked_item["model_number"])
                 elif not "model_number" in repacked_item:
                     code = "invalid_repacked_item"
-                    message = f"There is a repacked item which doesn`t have 'model_number' information. Invalid item: {json.dumps(item)}"
+                    message = f"There is a repacked item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
                     raise ValidationError(
                         {"success": False, "code": code, "description": message}
                     )
         elif not "model_number" in item:
             code = "invalid_item"
-            message = f"There is an item which doesn`t have 'model_number' information. Invalid item: {json.dumps(item)}"
+            message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
             raise ValidationError(
                 {"success": False, "code": code, "description": message}
             )
@@ -446,63 +456,81 @@ def picked_boks(request):
     # Check missing SSCC
     for item in picked_items:
         if not "sscc" in item:
-            code = "missing_sscc"
+            code = "missing_param"
             message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(item)}"
             raise ValidationError(
                 {"success": False, "code": code, "description": message}
             )
 
-    for item in picked_items:
-        if "model_number" in item:
-            bok_2 = bok_2s.get(e_item_type=item["model_number"])
-            bok_2.sscc = item["sscc"]
-            bok_2.picked_up_timestamp = item["timestamp"]
-            bok_2.save()
-
-            # Create bok_3
-            new_bok_3 = BOK_3_lines_data()
-            new_bok_3.fk_header_id = pk_header_id
-            new_bok_3.fk_booking_lines_id = bok_2.pk_booking_lines_id
-            new_bok_3.ld_002_model_number = item["model_number"]
-            new_bok_3.ld_003_item_description = "Original"
-            new_bok_3.ld_008_client_ref_number = item["model_number"]
-            new_bok_3.success = 3
-            new_bok_3.save()
-        else:
-            new_bok_2 = BOK_2_lines()
-            new_bok_2.fk_header_id = pk_header_id
-            new_bok_2.pk_booking_lines_id = str(uuid.uuid4())
-            new_bok_2.l_001_type_of_packaging = item["package_type"]
-            new_bok_2.l_002_qty = 1
-            new_bok_2.l_003_item = "Repacked Item"
-            new_bok_2.l_004_dim_UOM = item["demensions"]["unit"]
-            new_bok_2.l_005_dim_length = item["demensions"]["length"]
-            new_bok_2.l_006_dim_width = item["demensions"]["width"]
-            new_bok_2.l_007_dim_height = item["demensions"]["height"]
-            new_bok_2.l_008_weight_UOM = item["weight"]["unit"]
-            new_bok_2.l_009_weight_per_each = item["weight"]["weight"]
-            new_bok_2.sscc = item["sscc"]
-            new_bok_2.picked_up_timestamp = item["timestamp"]
-            new_bok_2.success = 3
-            new_bok_2.save()
-
-            model_numbers = []
-            for repacked_item in item["items"]:
-                model_numbers.append(repacked_item["model_number"])
-                bok_2 = bok_2s.get(e_item_type=repacked_item["model_number"])
-                bok_2.is_deleted = True
+    try:
+        for item in picked_items:
+            if "model_number" in item:
+                bok_2 = bok_2s.get(e_item_type=item["model_number"])
+                bok_2.sscc = item["sscc"]
+                bok_2.picked_up_timestamp = item["timestamp"]
                 bok_2.save()
 
-            new_bok_3 = BOK_3_lines_data()
-            new_bok_3.fk_header_id = pk_header_id
-            new_bok_3.fk_booking_lines_id = new_bok_2.pk_booking_lines_id
-            new_bok_3.ld_002_model_number = ",".join(model_numbers)
-            new_bok_3.ld_003_item_description = "Repacked"
-            new_bok_3.ld_008_client_ref_number = ",".join(model_numbers)
-            new_bok_3.success = 3
-            new_bok_3.save()
+                # Create bok_3
+                new_bok_3 = BOK_3_lines_data()
+                new_bok_3.fk_header_id = pk_header_id
+                new_bok_3.fk_booking_lines_id = bok_2.pk_booking_lines_id
+                new_bok_3.ld_002_model_number = item["model_number"]
+                new_bok_3.ld_003_item_description = "Original"
+                new_bok_3.ld_008_client_ref_number = item["model_number"]
+                new_bok_3.success = 3
+                new_bok_3.save()
+            else:
+                new_bok_2 = BOK_2_lines()
+                new_bok_2.fk_header_id = pk_header_id
+                new_bok_2.pk_booking_lines_id = str(uuid.uuid4())
+                new_bok_2.l_001_type_of_packaging = item["package_type"]
+                new_bok_2.l_002_qty = 1
+                new_bok_2.l_003_item = "Repacked Item"
+                new_bok_2.l_004_dim_UOM = item["dimensions"]["unit"]
+                new_bok_2.l_005_dim_length = item["dimensions"]["length"]
+                new_bok_2.l_006_dim_width = item["dimensions"]["width"]
+                new_bok_2.l_007_dim_height = item["dimensions"]["height"]
+                new_bok_2.l_008_weight_UOM = item["weight"]["unit"]
+                new_bok_2.l_009_weight_per_each = item["weight"]["weight"]
+                new_bok_2.sscc = item["sscc"]
+                new_bok_2.picked_up_timestamp = item["timestamp"]
+                new_bok_2.success = 3
+                new_bok_2.save()
 
-    return Response({"success": True, "message": "Successfully picked at Warehouse"})
+                model_numbers = []
+                for repacked_item in item["items"]:
+                    model_numbers.append(repacked_item["model_number"])
+                    bok_2 = bok_2s.get(e_item_type=repacked_item["model_number"])
+                    bok_2.is_deleted = True
+                    bok_2.save()
+
+                new_bok_3 = BOK_3_lines_data()
+                new_bok_3.fk_header_id = pk_header_id
+                new_bok_3.fk_booking_lines_id = new_bok_2.pk_booking_lines_id
+                new_bok_3.ld_002_model_number = ",".join(model_numbers)
+                new_bok_3.ld_003_item_description = "Repacked"
+                new_bok_3.ld_008_client_ref_number = ",".join(model_numbers)
+                new_bok_3.success = 3
+                new_bok_3.save()
+
+        return Response(
+            {"success": True, "message": "Successfully updated picked info."}
+        )
+    except Exception as e:
+        error_msg = f"@370 Error on PICKED api: {str(e)}"
+        send_mail(
+            "PICKED api-endpoint error",
+            error_msg,
+            "Support Center<dme@deliver-me.com.au>",
+            ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
+            fail_silently=False,
+        )
+        return Response(
+            {
+                "success": False,
+                "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
+            }
+        )
 
 
 @transaction.atomic
