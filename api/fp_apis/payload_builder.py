@@ -329,7 +329,26 @@ def get_book_payload(booking, fp_name):
         else:
             payload["collectionCloseTime"] = "1500"
 
-        payload["serviceCode"] = "76"
+        if booking.api_booking_quote.service_name == "Overnight 09:00":
+            payload["serviceCode"] = "712"
+        elif booking.api_booking_quote.service_name == "Overnight 10:00":
+            payload["serviceCode"] = "EX10"
+        elif booking.api_booking_quote.service_name == "Overnight 12:00":
+            payload["serviceCode"] = "EX12"
+        elif booking.api_booking_quote.service_name == "Overnight Express":
+            payload["serviceCode"] = "75"
+        elif booking.api_booking_quote.service_name == "Road Express":
+            payload["serviceCode"] = "76"
+        elif booking.api_booking_quote.service_name == "Technology - Sensitive Express":
+            payload["serviceCode"] = "717B"
+        elif booking.api_booking_quote.service_name == "Fashion Express – Carton":
+            payload["serviceCode"] = "718"
+        elif booking.api_booking_quote.service_name == "Sameday Domestic":
+            payload["serviceCode"] = "701"
+        else:
+            logger.info(
+                f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
+            )
 
         payload["collectionInstructions"] = " "
         if payload["pickupAddress"]["instruction"]:
