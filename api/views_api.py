@@ -74,6 +74,8 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        logger.info(f"@871 User: {request.user.username}")
+        logger.info(f"@872 request payload - {request.data}")
         bok_1_header = request.data
         b_client_warehouse_code = bok_1_header["b_client_warehouse_code"]
         warehouse = Client_warehouses.objects.get(
@@ -226,6 +228,8 @@ class BOK_2_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        logger.info(f"@873 User: {request.user.username}")
+        logger.info(f"@874 request payload - {request.data}")
         bok_2_line = request.data
         bok_2_line["v_client_pk_consigment_num"] = bok_2_line["fk_header_id"]
         bok_2_line["success"] = dme_constants.BOK_SUCCESS_2
