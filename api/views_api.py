@@ -1290,10 +1290,10 @@ def partial_pricing(request):
 @api_view(["GET"])
 def get_label(request):
     logger.info(f"@810 - GET LABEL: {request.user.username}")
-    bok_1_pk = request.GET.get("HostOrderNumber")
+    b_client_order_num = request.GET.get("HostOrderNumber")
     client_name = request.GET.get("CustomerName")
 
-    if not bok_1_pk:
+    if not b_client_order_num:
         code = "missing_param"
         description = "'HostOrderNumber' is required."
         raise ValidationError(
@@ -1307,7 +1307,7 @@ def get_label(request):
             {"success": False, "code": code, "description": description}
         )
 
-    if not BOK_1_headers.objects.filter(pk=b_client_order_num).exists():
+    if not BOK_1_headers.objects.filter(b_client_order_num=b_client_order_num).exists():
         code = "not_found"
         description = "Order does not exist."
         raise ValidationError(
@@ -1325,7 +1325,7 @@ def get_label(request):
 
     try:
         booking = Bookings.objects.get(
-            b_client_order_num=b_client_order_num, fk_client_id=client.dme_account_num
+            b_client_order_num=b_client_order_num, kf_client_id=client.dme_account_num
         )
     except:
         code = "not_ready"
