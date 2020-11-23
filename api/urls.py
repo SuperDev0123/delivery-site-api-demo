@@ -83,6 +83,8 @@ urlpatterns += [
     url(r"^get_label/", get_label),
     url(r"^boks/", push_boks),
     url(r"^price/partial/", partial_pricing),
+    # External apis
+    url(r"^external/paperless/send_order_to_paperless/", send_order_to_paperless),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),

@@ -231,17 +231,14 @@ def get_book_payload(booking, fp_name):
     maxWidth = 0
     maxLength = 0
     for line in booking_lines:
-        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert_UOM(
-            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
-        )
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
+        weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
 
         for i in range(line.e_qty):
             item = {
                 "dangerous": 0,
-                "itemId": "EXP",
                 "width": 0 if not line.e_dimWidth else width,
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
@@ -251,16 +248,19 @@ def get_book_payload(booking, fp_name):
                 "description": line.e_item,
             }
 
-            if fp_name.lower() == "startrack":
+            if fp_name == "startrack":
+                item["itemId"] = "EXP"
                 item["packagingType"] = "CTN"
-            elif fp_name.lower() == "hunter":
+            elif fp_name == "auspost":
+                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+            elif fp_name == "hunter":
                 if line.e_type_of_packaging == "PALLET":
                     item["packagingType"] = "PLT"
                 else:
                     item["packagingType"] = "CTN"
-            elif fp_name.lower() == "tnt":
+            elif fp_name == "tnt":
                 item["packagingType"] = "D"
-            elif fp_name.lower() == "dhl":
+            elif fp_name == "dhl":
                 item["packagingType"] = "PLT"
                 fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
                 consignmentNoteNumber = f"DME{booking.b_bookingID_Visual}"
@@ -294,7 +294,7 @@ def get_book_payload(booking, fp_name):
     payload["items"] = items
 
     # Detail for each FP
-    if fp_name.lower() == "hunter":
+    if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"
         elif booking.vx_serviceName == "Air Freight":
@@ -311,7 +311,7 @@ def get_book_payload(booking, fp_name):
         # )
         payload["reference1"] = booking.clientRefNumbers
         payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
-    elif fp_name.lower() == "tnt":
+    elif fp_name == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
         payload["totalWeight"] = totalWeight
@@ -366,9 +366,8 @@ def get_book_payload(booking, fp_name):
         elif booking.api_booking_quote.service_name == "Sameday Domestic":
             payload["serviceCode"] = "701"
         else:
-            logger.info(
-                f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
-            )
+            error_msg = f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
+            logger.info(error_msg)
 
         payload["collectionInstructions"] = " "
         if payload["pickupAddress"]["instruction"]:
@@ -387,9 +386,9 @@ def get_book_payload(booking, fp_name):
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
-    elif fp_name.lower() == "capital":
+    elif fp_name == "capital":
         payload["serviceType"] = "EC"
-    elif fp_name.lower() == "dhl":
+    elif fp_name == "dhl":
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
             payload["clientType"] = "aldi"
             payload["consignmentNoteNumber"] = f"DME{booking.b_bookingID_Visual}"
@@ -843,12 +842,10 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
 
     items = []
     for line in booking_lines:
-        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert_UOM(
-            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
-        )
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
+        weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
 
         # Sendle size limitation: 120cm
         if fp_name == "sendle" and (width > 120 or height > 120 or length > 120):
@@ -857,7 +854,6 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
         for i in range(line.e_qty):
             item = {
                 "dangerous": 0,
-                "itemId": "EXP",
                 "width": 0 if not line.e_dimWidth else width,
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
@@ -867,11 +863,14 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
                 "description": line.e_item,
             }
 
-            if fp_name.lower() == "startrack":
+            if fp_name == "startrack":
+                item["itemId"] = "EXP"
                 item["packagingType"] = "CTN"
-            elif fp_name.lower() == "hunter":
+            elif fp_name == "auspost":
+                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+            elif fp_name == "hunter":
                 item["packagingType"] = "PAL"
-            elif fp_name.lower() == "tnt":
+            elif fp_name == "tnt":
                 item["packagingType"] = "D"
 
             items.append(item)
@@ -879,13 +878,13 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     payload["items"] = items
 
     # Detail for each FP
-    if fp_name.lower() == "startrack":
+    if fp_name == "startrack":
         payload["serviceType"] = "R" if not booking.vx_serviceName else "R"
-    elif fp_name.lower() == "hunter":
+    elif fp_name == "hunter":
         payload["serviceType"] = "RF"
-    elif fp_name.lower() == "capital":
+    elif fp_name == "capital":
         payload["serviceType"] = "EC"
-    elif fp_name.lower() == "allied":
+    elif fp_name == "allied":
         payload["serviceType"] = "R"
 
     return payload

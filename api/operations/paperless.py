@@ -7,6 +7,7 @@ from django.conf import settings
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
 from api.models import BOK_1_headers, BOK_2_lines, Log
+from api.common import constants
 
 logger = logging.getLogger("dme_api")
 
@@ -219,24 +220,26 @@ def send_order_info(bok_1):
         try:
             json_res = parse_xml(response)
         except Exception as e:
-            error = f"@902 Paperless error on response parser.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\n\n"
+            error = f"@902 Paperless error on parseing response.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\n\n"
             error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
             error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}"
             logger.error(error)
             raise Exception(error)
 
         if response.status_code > 400 or "ErrorDetails" in json_res:
-            error = f"@902 Paperless response error.\n\nBok_1: {str(bok_1.pk)}\n\n"
+            error = f"@903 Paperless response error.\n\nBok_1: {str(bok_1.pk)}\n\n"
             error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
             error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}\n\n"
             error += f"Parsed json: {json.dumps(json_res, indent=4)}"
             logger.error(error)
-            send_email(send_to=to_emails, send_cc=[], subject=subject, text=error)
-            logger.error("Sent email notification!")
+            raise Exception(error)
 
         log.response = json.dumps(json_res, indent=4)
         log.save()
+        bok_1.success = constants.BOK_SUCCESS_4
+        bok_1.save()
         return json_res
     except Exception as e:
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
-        logger.error("Sent email notification!")
+        logger.error("@905 Sent email notification!")
+        return None

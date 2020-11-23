@@ -83,7 +83,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 price["serviceName"] if "serviceName" in price else None
             )
             results.append(result)
-        elif fp_name == "startrack" and "price" in json_data:  # Startrack
+        # Startrack | AUSPost
+        elif fp_name in ["startrack", "auspost"] and "price" in json_data:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]

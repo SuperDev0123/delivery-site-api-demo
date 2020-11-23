@@ -162,7 +162,7 @@ def book(request, fp_name):
                 )
 
             try:
-                payload = get_book_payload(booking, fp_name)
+                payload = get_book_payload(booking, _fp_name)
             except Exception as e:
                 trace_error.print()
                 logger.info(f"#401 - Error while build payload: {e}")
