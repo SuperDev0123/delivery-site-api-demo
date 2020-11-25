@@ -1141,9 +1141,12 @@ class ChartsViewSet(viewsets.ViewSet):
         try:
             startDate = request.GET.get("startDate")
             endDate = request.GET.get("endDate")
+            client_name = request.GET.get("client_name")
+
             category_result = (
                 Bookings.objects.filter(
                     Q(b_dateBookedDate__range=[startDate, endDate])
+                    & Q(b_client_name = client_name)
                 )
                 .extra(select={"status": "b_status"})
                 .values("status")
@@ -1178,6 +1181,7 @@ class ChartsViewSet(viewsets.ViewSet):
             result = (
                 Bookings.objects.filter(
                     Q(b_dateBookedDate__range=[startDate, endDate])
+                    & Q(b_client_name = client_name)
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -1208,6 +1212,7 @@ class ChartsViewSet(viewsets.ViewSet):
                             "s_06_Latest_Delivery_Date_TimeSet"
                         )
                     )
+                    & Q(b_client_name = client_name)
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -1218,6 +1223,7 @@ class ChartsViewSet(viewsets.ViewSet):
             inv_sell_quoted_result = (
                 Bookings.objects.filter(
                     Q(b_dateBookedDate__range=[startDate, endDate])
+                    & Q(b_client_name = client_name)
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -1228,6 +1234,7 @@ class ChartsViewSet(viewsets.ViewSet):
             inv_sell_quoted_override_result = (
                 Bookings.objects.filter(
                     Q(b_dateBookedDate__range=[startDate, endDate])
+                    & Q(b_client_name = client_name)
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
@@ -1238,6 +1245,7 @@ class ChartsViewSet(viewsets.ViewSet):
             inv_cost_quoted_result = (
                 Bookings.objects.filter(
                     Q(b_dateBookedDate__range=[startDate, endDate])
+                    & Q(b_client_name = client_name)
                 )
                 .extra(select={"client_name": "b_client_name"})
                 .values("client_name")
