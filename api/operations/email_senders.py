@@ -1,5 +1,3 @@
-import sys, time
-import os, base64
 from datetime import datetime
 
 from django.conf import settings
@@ -418,3 +416,12 @@ def send_booking_status_email(bookingId, emailName, sender):
         z_createdTimeStamp=str(datetime.now()),
         z_createdByAccount=sender,
     )
+
+
+def send_email_to_admins(subject, message):
+    to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+
+    if settings.ENV in ["prod"]:
+        to_emails.append("bookings@deliver-me.com.au")
+
+    send_email(to_emails, [], subject, message)
