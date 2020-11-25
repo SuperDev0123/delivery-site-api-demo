@@ -100,53 +100,46 @@ class Client_warehouses(models.Model):
     pk_id_client_warehouses = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
     warehousename = models.CharField(
-        verbose_name=_("warehoursename"),
-        max_length=230,
-        blank=False,
-        null=True,
-        default="",
-    )
-    warehouse_address1 = models.CharField(
-        verbose_name=_("warehouse address1"),
-        max_length=255,
-        blank=False,
-        null=True,
-        default="",
-    )
-    warehouse_address2 = models.CharField(
-        verbose_name=_("warehouse address2"),
-        max_length=255,
-        blank=False,
-        null=True,
-        default="",
-    )
-    warehouse_state = models.CharField(
-        verbose_name=_("warehouse state"),
         max_length=64,
         blank=False,
         null=True,
-        default="",
+        default=None,
     )
-    warehouse_suburb = models.CharField(
-        verbose_name=_("warehouse suburb"),
-        max_length=255,
+    warehouse_address1 = models.CharField(
+        max_length=64,
         blank=False,
         null=True,
-        default="",
+        default=None,
+    )
+    warehouse_address2 = models.CharField(
+        max_length=64,
+        blank=False,
+        null=True,
+        default=None,
+    )
+    warehouse_state = models.CharField(
+        max_length=64,
+        blank=False,
+        null=True,
+        default=None,
+    )
+    warehouse_suburb = models.CharField(
+        max_length=32,
+        blank=False,
+        null=True,
+        default=None,
     )
     warehouse_phone_main = models.CharField(
-        verbose_name=_("warehouse phone number"),
         max_length=16,
         blank=False,
         null=True,
-        default="",
+        default=None,
     )
     warehouse_postal_code = models.CharField(
-        verbose_name=_("warehouse postal code"),
         max_length=64,
         blank=False,
         null=True,
-        default="",
+        default=None,
     )
     warehouse_hours = models.IntegerField(verbose_name=_("warehouse hours"))
     type = models.CharField(
@@ -156,6 +149,7 @@ class Client_warehouses(models.Model):
         verbose_name=_("warehouse code"), max_length=100, blank=True, null=True
     )
     success_type = models.IntegerField(default=0)
+    use_dme_label = models.BooleanField(default=False)
 
     class Meta:
         db_table = "dme_client_warehouses"
