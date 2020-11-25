@@ -419,14 +419,9 @@ def send_booking_status_email(bookingId, emailName, sender):
 
 
 def send_email_to_admins(subject, message):
-    if settings.ENV in ["local", "dev"]:
-        to_emails = [
-            "petew@deliver-me.com.au",
-            "goldj@deliver-me.com.au",
-            "greatroyalone@outlook.com",
-        ]
-        subject = f"{subject}"
-    else:
-        to_emails = ["bookings@deliver-me.com.au"]
+    to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+
+    if settings.ENV in ["prod"]:
+        to_emails.append("bookings@deliver-me.com.au")
 
     send_email(to_emails, [], subject, message)
