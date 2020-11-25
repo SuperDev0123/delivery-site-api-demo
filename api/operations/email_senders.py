@@ -419,9 +419,17 @@ def send_booking_status_email(bookingId, emailName, sender):
 
 
 def send_email_to_admins(subject, message):
-    to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+    dme_option_4_email_to_admin = DME_Options.objects.filter(
+        option_name="send_email_to_admins"
+    ).first()
 
-    if settings.ENV in ["prod"]:
-        to_emails.append("bookings@deliver-me.com.au")
+    if (
+        dme_option_4_email_to_admins
+        and dme_option_4_email_to_admins.option_value == "1"
+    ):
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
 
-    send_email(to_emails, [], subject, message)
+        if settings.ENV in ["prod"]:
+            to_emails.append("bookings@deliver-me.com.au")
+
+        send_email(to_emails, [], subject, message)

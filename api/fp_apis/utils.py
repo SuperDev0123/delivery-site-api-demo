@@ -47,7 +47,7 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        message = f"#818 {fp_name.upper()} new status: {b_status_API}"
+        message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
         logger.error(message)
         send_email_to_admins("New FP status", message)
 
@@ -66,9 +66,9 @@ def get_status_category_from_status(status):
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
-        message = f"#819 Status Category not found!: {status}"
+        message = f"#819 Category not found with this status: {status}"
         logger.error(message)
-        send_email_to_admins("New status category", message)
+        send_email_to_admins("Category for Status not Found", message)
         return None
 
 
