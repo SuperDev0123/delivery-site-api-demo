@@ -47,17 +47,21 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        message = f"#818 New FP status: {b_status_API}"
+        message = f"#818 {fp_name.upper()} new status: {b_status_API}"
         logger.error(message)
         send_email_to_admins("New FP status", message)
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
             booking.save()
+
         return None
 
 
 def get_status_category_from_status(status):
+    if not status:
+        return None
+
     try:
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
