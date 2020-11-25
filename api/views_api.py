@@ -410,7 +410,9 @@ def picked_boks(request):
         )
 
     # Check if order exists
-    bok_1s = BOK_1_headers.objects.filter(fk_client_id=client.fk_client_id, pk=bok_1_pk)
+    bok_1s = BOK_1_headers.objects.filter(
+        fk_client_id=client.dme_account_num, pk=bok_1_pk
+    )
 
     if not bok_1s.exists():
         code = "not_found"
