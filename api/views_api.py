@@ -1142,7 +1142,6 @@ class ChartsViewSet(viewsets.ViewSet):
             startDate = request.GET.get("startDate")
             endDate = request.GET.get("endDate")
             client_name = request.GET.get("client_name")
-
             category_result = (
                 Bookings.objects.filter(
                     Q(b_dateBookedDate__range=[startDate, endDate])
