@@ -6,7 +6,7 @@ from django.conf import settings
 from api.models import *
 from api.common import ratio
 from .constants import FP_CREDENTIALS, FP_UOM
-
+from api.operations.email_senders import send_email_to_admins
 
 logger = logging.getLogger("dme_api")
 
@@ -47,7 +47,9 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        logger.info(f"#818 New FP status: {b_status_API}")
+        message = f"#818 New FP status: {b_status_API}"
+        logger.info(message)
+        send_email_to_admins("New FP status", message)
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
