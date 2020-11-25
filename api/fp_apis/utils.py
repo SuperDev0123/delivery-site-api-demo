@@ -48,7 +48,7 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
         message = f"#818 New FP status: {b_status_API}"
-        logger.info(message)
+        logger.error(message)
         send_email_to_admins("New FP status", message)
 
         if booking:
@@ -62,9 +62,10 @@ def get_status_category_from_status(status):
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
-        logger.info(f"#819 Status Category not found!: {status}")
-        # print('Exception: ', e)
-        return ""
+        message = f"#819 Status Category not found!: {status}"
+        logger.error(message)
+        send_email_to_admins("New status category", message)
+        return None
 
 
 # Get ETD of Pricing in `hours` unit
