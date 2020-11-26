@@ -401,7 +401,7 @@ def picked_boks(request):
         raise ValidationError({"success": False, "code": code, "description": message})
 
     try:
-        client = DME_clients.objects.get(company_name=client_name)
+        client = DME_clients.objects.get(company_name__iexact=client_name.lower())
     except:
         code = "not_found"
         description = "Client does not exist."
@@ -411,7 +411,7 @@ def picked_boks(request):
 
     # Check if order exists
     bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=client.dme_account_num, pk=bok_1_pk
+        fk_client_id=client.dme_account_num, pk=bok_1_pk[:5]
     )
 
     if not bok_1s.exists():
