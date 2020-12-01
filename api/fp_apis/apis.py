@@ -781,9 +781,9 @@ def get_label(request, fp_name):
             )
 
         payload = {}
-        if _fp_name in ["startrack"]:
+        if _fp_name in ["startrack", "auspost"]:
             try:
-                payload = get_create_label_payload(booking, fp_name)
+                payload = get_create_label_payload(booking, _fp_name)
 
                 logger.info(
                     f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"

@@ -631,7 +631,7 @@ def get_create_label_payload(booking, fp_name):
             items.append(temp_item)
         payload["items"] = items
 
-        if fp_name.lower() == "startrack":
+        if fp_name in ["startrack", "auspost"]:
             payload["type"] = "PRINT"
             payload["labelType"] = "PRINT"
             payload["pageFormat"] = [
