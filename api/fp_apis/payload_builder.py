@@ -658,7 +658,7 @@ def get_create_order_payload(bookings, fp_name):
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
 
-        if fp_name.lower() == "startrack":
+        if fp_name.lower() in ["startrack", "auspost"]:
             payload["paymentMethods"] = "CHARGE_TO_ACCOUNT"
             payload["referenceNumber"] = "refer1"
 
