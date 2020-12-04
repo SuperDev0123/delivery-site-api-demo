@@ -379,14 +379,14 @@ def picked_boks(request):
     user = request.user
     logger.info(f"@890 Picked by: {user.username}")
     logger.info(f"@891 Picked info: {request.data}")
-    bok_1_pk = request.data.get("HostOrderNumber")
+    b_client_order_num = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
     client_name = request.data.get("CustomerName")
     code = None
     message = None
 
     # Check required params are included
-    if not bok_1_pk:
+    if not b_client_order_num:
         code = "missing_param"
         message = "'HostOrderNumber' is required."
 
@@ -412,7 +412,7 @@ def picked_boks(request):
 
     # Check if order exists
     bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=client.dme_account_num, b_client_order_num=bok_1_pk[5:]
+        fk_client_id=client.dme_account_num, b_client_order_num=b_client_order_num[5:]
     )
 
     if not bok_1s.exists():
@@ -421,18 +421,19 @@ def picked_boks(request):
             "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
         )
         raise ValidationError({"success": False, "code": code, "description": message})
-    else:
-        bok_1 = bok_1s.first()
-        pk_header_id = bok_1.pk_header_id
-        bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-        bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
-        original_items = bok_2s.filter(sscc__isnull=True)
-        scanned_items = bok_2s.filter(sscc__isnull=False, l_003_item="Picked Item")
-        repacked_items_count = bok_2s.filter(
-            sscc__isnull=False, l_003_item="Repacked Item"
-        ).count()
-        model_number_qtys = original_items.values_list("e_item_type", "l_002_qty")
-        sscc_list = scanned_items.values_list("sscc", flat=True)
+
+    # Else
+    bok_1 = bok_1s.first()
+    pk_header_id = bok_1.pk_header_id
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
+    bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
+    original_items = bok_2s.filter(sscc__isnull=True)
+    scanned_items = bok_2s.filter(sscc__isnull=False, l_003_item="Picked Item")
+    repacked_items_count = bok_2s.filter(
+        sscc__isnull=False, l_003_item="Repacked Item"
+    ).count()
+    model_number_qtys = original_items.values_list("e_item_type", "l_002_qty")
+    sscc_list = scanned_items.values_list("sscc", flat=True)
 
     logger.info(f"@360 - bok_1: {bok_1}")
     logger.info(f"@361 - bok_2: {bok_2s}")
@@ -667,6 +668,150 @@ def picked_boks(request):
                 "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
             }
         )
+
+
+@transaction.atomic
+@api_view(["POST"])
+def ready_boks(request):
+    """
+    When it is ready(picked all items) on Warehouse
+    """
+    user = request.user
+    logger.info(f"@840 Ready api-endpoint: {user.username}")
+    logger.info(f"@841 payload: {request.data}")
+    b_client_order_num = request.data.get("HostOrderNumber")
+    is_ready = request.data.get("is_ready")
+    client_name = request.data.get("CustomerName")
+    code = None
+    message = None
+
+    # Check required params are included
+    if not b_client_order_num:
+        code = "missing_param"
+        message = "'HostOrderNumber' is required."
+
+    if is_ready is None:
+        code = "missing_param"
+        message = "'is_ready' is required."
+
+    if not client_name:
+        code = "missing_param"
+        message = "'CustomerName' is required."
+
+    if message:
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    try:
+        client = DME_clients.objects.get(company_name__iexact=client_name.lower())
+    except:
+        code = "not_found"
+        description = "Client does not exist."
+        raise ValidationError(
+            {"success": False, "code": code, "description": description}
+        )
+
+    # Check if order exists
+    bok_1s = BOK_1_headers.objects.filter(
+        fk_client_id=client.dme_account_num, b_client_order_num=b_client_order_num[5:]
+    )
+
+    if not bok_1s.exists():
+        code = "not_found"
+        message = (
+            "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
+        )
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    if not is_ready:
+        return Response(
+            {
+                "success": False,
+                "message": f"`is_ready` is false.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    bok_1 = bok_1s.first()
+    pk_header_id = bok_1.pk_header_id
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
+    bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
+
+    # Check if Order items are all picked
+    original_items = bok_2s.filter(sscc__isnull=True)
+    scanned_items = bok_2s.filter(sscc__isnull=False, l_003_item="Picked Item")
+    repacked_items_count = bok_2s.filter(
+        sscc__isnull=False, l_003_item="Repacked Item"
+    ).count()
+    model_number_qtys = original_items.values_list("e_item_type", "l_002_qty")
+    estimated_picked = {}
+    is_picked_all = True
+    not_picked_items = []
+
+    for model_number_qty in model_number_qtys:
+        estimated_picked[model_number_qty[0]] = 0
+
+    for scanned_item in scanned_items:
+        if scanned_item.e_item_type:
+            estimated_picked[scanned_item.e_item_type] += scanned_item.l_002_qty
+
+        for bok_3 in bok_3s:
+            if (
+                bok_3.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+                and bok_3.ld_003_item_description != "Repacked at warehouse"
+            ):
+                estimated_picked[bok_3.ld_002_model_number] += bok_3.ld_001_qty
+
+    logger.info(f"@843 - limit: {model_number_qtys}, picked: {estimated_picked}")
+
+    for item in estimated_picked:
+        for model_number_qty in model_number_qtys:
+            if (
+                item == model_number_qty[0]
+                and estimated_picked[item] != model_number_qty[1]
+            ):
+                not_picked_items.append(
+                    {
+                        "all_items_count": model_number_qty[1],
+                        "picked_items_count": estimated_picked[item],
+                    }
+                )
+                is_picked_all = False
+
+    if not is_picked_all:
+        return Response(
+            {
+                "success": False,
+                "message": f"There are some items are not picked yet - {json.dumps(not_picked_items)}",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if bok_1.success == dme_constants.BOK_SUCCESS_2:
+        return Response(
+            {
+                "success": True,
+                "message": f"Order is ready(Already got READY request).",
+            }
+        )
+
+    # Update DB so that Bok can be mapped to Booking
+    for bok_3 in bok_3s:
+        bok_3.success = dme_constants.BOK_SUCCESS_2
+        bok_3.save()
+
+    for bok_2 in bok_2s:
+        bok_2.success = dme_constants.BOK_SUCCESS_2
+        bok_2.save()
+
+    bok_1.success = dme_constants.BOK_SUCCESS_2
+    bok_1.save()
+
+    return Response(
+        {
+            "success": True,
+            "message": "Order will be BOOKED soon.",
+        }
+    )
 
 
 @transaction.atomic
