@@ -371,13 +371,14 @@ def order_boks(request):
 
 
 @transaction.atomic
-@api_view(["POST", "PUT"])
+@api_view(["POST"])
 def picked_boks(request):
     """
     request when item(s) is picked at warehouse
     """
     user = request.user
     logger.info(f"@890 Picked by: {user.username}")
+    logger.info(f"@891 Picked info: {request.data}")
     bok_1_pk = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
     client_name = request.data.get("CustomerName")
@@ -411,7 +412,7 @@ def picked_boks(request):
 
     # Check if order exists
     bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=client.dme_account_num, pk=bok_1_pk[:5]
+        fk_client_id=client.dme_account_num, b_client_order_num=bok_1_pk[5:]
     )
 
     if not bok_1s.exists():
@@ -421,100 +422,232 @@ def picked_boks(request):
         )
         raise ValidationError({"success": False, "code": code, "description": message})
     else:
-        pk_header_id = bok_1s.first().pk_header_id
+        bok_1 = bok_1s.first()
+        pk_header_id = bok_1.pk_header_id
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-        model_numbers = bok_2s.values_list("e_item_type", flat=True)
+        bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
+        original_items = bok_2s.filter(sscc__isnull=True)
+        scanned_items = bok_2s.filter(sscc__isnull=False, l_003_item="Picked Item")
+        repacked_items_count = bok_2s.filter(
+            sscc__isnull=False, l_003_item="Repacked Item"
+        ).count()
+        model_number_qtys = original_items.values_list("e_item_type", "l_002_qty")
+        sscc_list = scanned_items.values_list("sscc", flat=True)
 
-    # Check invalid model numbers
+    logger.info(f"@360 - bok_1: {bok_1}")
+    logger.info(f"@361 - bok_2: {bok_2s}")
+    logger.info(f"@362 - original_items: {original_items}")
+    logger.info(f"@363 - scanned_items: {scanned_items}")
+    logger.info(f"@364 - model_number and qty(s): {model_number_qtys}")
+    logger.info(f"@365 - sscc(s): {sscc_list}")
+
+    # Validation
+    missing_sscc_picked_items = []
     invalid_model_numbers = []
-
-    for item in picked_items:
-        if "model_number" in item and not item["model_number"] in model_numbers:
-            invalid_model_numbers.append(item["model_number"])
-        elif "is_repacked" in item and "items" in item and item["items"]:
-            for repacked_item in item["items"]:
-                if (
-                    "model_number" in repacked_item
-                    and not repacked_item["model_number"] in model_numbers
-                ):
-                    invalid_model_numbers.append(repacked_item["model_number"])
-                elif not "model_number" in repacked_item:
-                    code = "invalid_repacked_item"
-                    message = f"There is a repacked item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
-                    raise ValidationError(
-                        {"success": False, "code": code, "description": message}
-                    )
-        elif not "model_number" in item:
-            code = "invalid_item"
-            message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
+    invalid_sscc_list = []
+    duplicated_sscc_list = []
+    for picked_item in picked_items:
+        # Check `sscc` is provided
+        if not "sscc" in picked_item:
+            code = "missing_param"
+            message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
             raise ValidationError(
                 {"success": False, "code": code, "description": message}
             )
+
+        # Check if sscc is invalid
+        if BOK_2_lines.objects.filter(sscc=picked_item["sscc"]).exists():
+            duplicated_sscc_list.append(picked_item["sscc"])
+
+        # Validate repacked items
+        if (
+            "is_repacked" in picked_item
+            and "items" in picked_item
+            and picked_item["items"]
+        ):
+            repack_type = None
+
+            for item in picked_item["items"]:
+                # Get and check repack_type
+                if "model_number" in item and not repack_type:
+                    repack_type = "model_number"
+
+                if "sscc" in item and not repack_type:
+                    repack_type = "sscc"
+
+                # Invalid sscc check
+                if repack_type == "sscc" and not item["sscc"] in sscc_list:
+                    invalid_sscc_list.append(item["sscc"])
+
+                # Check qty
+                if repack_type == "model_number":
+                    if not "qty" in item:
+                        code = "missing_param"
+                        message = f"Qty is required. Invalid item: {json.dumps(item)}"
+                        raise ValidationError(
+                            {"success": False, "code": code, "description": message}
+                        )
+                    elif "qty" in item and not item["qty"]:
+                        code = "invalid_param"
+                        message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
+                        raise ValidationError(
+                            {"success": False, "code": code, "description": message}
+                        )
+
+                # Accumulate invalid_model_numbers
+                if "model_number" in item:
+                    is_valid = False
+
+                    for model_number_qty in model_number_qtys:
+                        if model_number_qty[0] == item["model_number"]:
+                            is_valid = True
+
+                    if not is_valid:
+                        invalid_model_numbers.append(item["model_number"])
+
+                # Invalid repack_type (which has both 'sscc' and 'model_number')
+                if ("model_number" in item and repack_type == "sscc") or (
+                    "sscc" in item and repack_type == "model_number"
+                ):
+                    code = "invalid_repacked_item"
+                    message = f"Can not repack 'model_number' and 'sscc'."
+                    raise ValidationError(
+                        {"success": False, "code": code, "description": message}
+                    )
+
+                # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
+                if not "model_number" in item and not "sscc" in item:
+                    code = "invalid_repacked_item"
+                    message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
+                    raise ValidationError(
+                        {"success": False, "code": code, "description": message}
+                    )
+        else:
+            code = "invalid_item"
+            message = f"There is an invalid item: {json.dumps(picked_item)}"
+            raise ValidationError(
+                {"success": False, "code": code, "description": message}
+            )
+
+    if duplicated_sscc_list:
+        code = "duplicated_sscc"
+        message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    if invalid_sscc_list:
+        code = "invalid_sscc"
+        message = (
+            f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
+        )
+        raise ValidationError({"success": False, "code": code, "description": message})
 
     if invalid_model_numbers:
         code = "invalid_param"
         message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    # Check missing SSCC
-    for item in picked_items:
-        if not "sscc" in item:
-            code = "missing_param"
-            message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(item)}"
-            raise ValidationError(
-                {"success": False, "code": code, "description": message}
-            )
+    # Check over picked items
+    over_picked_items = []
+    estimated_picked = {}
+    is_picked_all = True
+
+    for model_number_qty in model_number_qtys:
+        estimated_picked[model_number_qty[0]] = 0
+
+    for scanned_item in scanned_items:
+        if scanned_item.e_item_type:
+            estimated_picked[scanned_item.e_item_type] += scanned_item.l_002_qty
+
+        for bok_3 in bok_3s:
+            if (
+                bok_3.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+                and bok_3.ld_003_item_description != "Repacked at warehouse"
+            ):
+                estimated_picked[bok_3.ld_002_model_number] += bok_3.ld_001_qty
+
+    if repack_type == "model_number":
+        for picked_item in picked_items:
+            for item in picked_item["items"]:
+                estimated_picked[item["model_number"]] += item["qty"]
+
+    logger.info(
+        f"@366 - over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
+    )
+
+    for item in estimated_picked:
+        for model_number_qty in model_number_qtys:
+            if (
+                item == model_number_qty[0]
+                and estimated_picked[item] > model_number_qty[1]
+            ):
+                over_picked_items.append(model_number_qty[0])
+
+            if (
+                item == model_number_qty[0]
+                and estimated_picked[item] != model_number_qty[1]
+            ):
+                is_picked_all = False
+
+    if over_picked_items:
+        logger.error(
+            f"@367 - over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
+        )
+        code = "over_picked"
+        message = f"There are over picked items: {', '.join(over_picked_items)}"
+        raise ValidationError({"success": False, "code": code, "description": message})
 
     try:
-        for item in picked_items:
-            if "model_number" in item:
-                bok_2 = bok_2s.get(e_item_type=item["model_number"])
-                bok_2.sscc = item["sscc"]
-                bok_2.picked_up_timestamp = item["timestamp"]
+        for picked_item in picked_items:
+            # Create new bok_2s
+            new_bok_2 = BOK_2_lines()
+            new_bok_2.fk_header_id = pk_header_id
+            new_bok_2.pk_booking_lines_id = str(uuid.uuid4())
+            new_bok_2.l_001_type_of_packaging = picked_item["package_type"]
+            new_bok_2.l_002_qty = 1
+
+            if repack_type == "model_number":
+                new_bok_2.l_003_item = "Picked Item"
+            else:
+                new_bok_2.l_003_item = "Repacked Item"
+
+            new_bok_2.l_004_dim_UOM = picked_item["dimensions"]["unit"]
+            new_bok_2.l_005_dim_length = picked_item["dimensions"]["length"]
+            new_bok_2.l_006_dim_width = picked_item["dimensions"]["width"]
+            new_bok_2.l_007_dim_height = picked_item["dimensions"]["height"]
+            new_bok_2.l_008_weight_UOM = picked_item["weight"]["unit"]
+            new_bok_2.l_009_weight_per_each = picked_item["weight"]["weight"]
+            new_bok_2.sscc = picked_item["sscc"]
+            new_bok_2.picked_up_timestamp = picked_item["timestamp"]
+            new_bok_2.success = 4
+            new_bok_2.save()
+
+            for item in picked_item["items"]:
+                # Soft delete original bok_2
+                if repack_type == "model_number":
+                    bok_2 = bok_2s.get(e_item_type=item["model_number"])
+                elif repack_type == "sscc":
+                    bok_2 = bok_2s.get(sscc=item["sscc"])
+
+                bok_2.is_deleted = True
                 bok_2.save()
 
-                # Create bok_3
-                new_bok_3 = BOK_3_lines_data()
-                new_bok_3.fk_header_id = pk_header_id
-                new_bok_3.fk_booking_lines_id = bok_2.pk_booking_lines_id
-                new_bok_3.ld_002_model_number = item["model_number"]
-                new_bok_3.ld_003_item_description = "Original"
-                new_bok_3.ld_008_client_ref_number = item["model_number"]
-                new_bok_3.success = 3
-                new_bok_3.save()
-            else:
-                new_bok_2 = BOK_2_lines()
-                new_bok_2.fk_header_id = pk_header_id
-                new_bok_2.pk_booking_lines_id = str(uuid.uuid4())
-                new_bok_2.l_001_type_of_packaging = item["package_type"]
-                new_bok_2.l_002_qty = 1
-                new_bok_2.l_003_item = "Repacked Item"
-                new_bok_2.l_004_dim_UOM = item["dimensions"]["unit"]
-                new_bok_2.l_005_dim_length = item["dimensions"]["length"]
-                new_bok_2.l_006_dim_width = item["dimensions"]["width"]
-                new_bok_2.l_007_dim_height = item["dimensions"]["height"]
-                new_bok_2.l_008_weight_UOM = item["weight"]["unit"]
-                new_bok_2.l_009_weight_per_each = item["weight"]["weight"]
-                new_bok_2.sscc = item["sscc"]
-                new_bok_2.picked_up_timestamp = item["timestamp"]
-                new_bok_2.success = 3
-                new_bok_2.save()
-
-                model_numbers = []
-                for repacked_item in item["items"]:
-                    model_numbers.append(repacked_item["model_number"])
-                    bok_2 = bok_2s.get(e_item_type=repacked_item["model_number"])
-                    bok_2.is_deleted = True
-                    bok_2.save()
-
+                # Create new bok_3s
                 new_bok_3 = BOK_3_lines_data()
                 new_bok_3.fk_header_id = pk_header_id
                 new_bok_3.fk_booking_lines_id = new_bok_2.pk_booking_lines_id
-                new_bok_3.ld_002_model_number = ",".join(model_numbers)
-                new_bok_3.ld_003_item_description = "Repacked"
-                new_bok_3.ld_008_client_ref_number = ",".join(model_numbers)
-                new_bok_3.success = 3
+
+                if repack_type == "model_number":
+                    new_bok_3.ld_002_model_number = item["model_number"]
+                    new_bok_3.ld_003_item_description = "Picked at warehouse"
+                    new_bok_3.ld_001_qty = item["qty"]
+                else:
+                    new_bok_3.ld_002_model_number = item["sscc"]
+                    new_bok_3.ld_003_item_description = "Repacked at warehouse"
+
+                new_bok_3.success = 4
                 new_bok_3.save()
+
+        print("@1 - ", is_picked_all, repacked_items_count)
 
         return Response(
             {"success": True, "message": "Successfully updated picked info."}
