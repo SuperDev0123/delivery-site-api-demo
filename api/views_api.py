@@ -887,6 +887,17 @@ def push_boks(request):
             {"success": False, "code": "missing_param", "description": message}
         )
 
+    if not bok_1.get("shipping_type"):
+        message = "'shipping_type' is required."
+        raise ValidationError(
+            {"success": False, "code": "missing_param", "description": message}
+        )
+    elif len(bok_1.get("shipping_type")) != 4:
+        message = "'shipping_type' is not valid."
+        raise ValidationError(
+            {"success": False, "code": "invalid_param", "description": message}
+        )
+
     # Find `Client`
     try:
         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
@@ -903,32 +914,25 @@ def push_boks(request):
 
     # Check required fields
     if "Plum" in client_name and "_sapb1" in user.username:
-        if not "b_client_order_num" in bok_1 or (
-            "b_client_order_num" in bok_1 and not bok_1["b_client_order_num"]
-        ):
+        if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
             logger.info(message)
             return Response(
-                {"success": False, "message": message},
+                {"success": False, "code": "missing_param", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
     elif "Plum" in client_name and "_magento" in user.username:
-        if not "client_booking_id" in bok_1 or (
-            "client_booking_id" in bok_1 and not bok_1["client_booking_id"]
-        ):
+        if not bok_1.get("client_booking_id"):
             message = "'client_booking_id' is required."
             logger.info(message)
             return Response(
-                {"success": False, "message": message},
+                {"success": False, "code": "missing_param", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
     # Check if already pushed 'b_client_order_num', then return URL only
     if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
-        if (
-            bok_1["b_client_order_num"][0] != "Q"
-            or bok_1["b_client_order_num"][1] != "_"
-        ):
+        if bok_1["b_client_order_num"][:2] != "Q_":
             old_bok_1s = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
@@ -1042,10 +1046,7 @@ def push_boks(request):
                 )
                 if bok_1s.exists():
                     # If "sales quote" request, then clear all existing information
-                    if (
-                        bok_1["b_client_order_num"][0] == "Q"
-                        and bok_1["b_client_order_num"][1] == "_"
-                    ):
+                    if bok_1["b_client_order_num"][:2] == "Q_":
                         pk_header_id = bok_1s.first().pk_header_id
                         old_bok_1 = bok_1s.first()
                         old_bok_2s = BOK_2_lines.objects.filter(
@@ -1089,7 +1090,11 @@ def push_boks(request):
             bok_1["b_001_b_freight_provider"] = "DHL"
 
         if "Plum" in client_name:  # Plum
-            bok_1["success"] = dme_constants.BOK_SUCCESS_3
+            if bok_1["shipping_type"] == "DMEA":
+                bok_1["success"] = dme_constants.BOK_SUCCESS_4
+            elif bok_1["shipping_type"] == "DMEM":
+                bok_1["success"] = dme_constants.BOK_SUCCESS_3
+
             bok_1["b_client_name"] = client_name
             bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
             bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
@@ -1178,7 +1183,7 @@ def push_boks(request):
             bok_1["b_031_b_pu_address_state"] = bok_1[
                 "b_031_b_pu_address_state"
             ].upper()
-        else:
+        else:  # If not from Plum, then set success to be ready for mapping
             bok_1["success"] = dme_constants.BOK_SUCCESS_2
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)

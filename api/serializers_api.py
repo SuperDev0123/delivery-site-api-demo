@@ -88,6 +88,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "x_booking_Created_With",
             "quote_id",
             "b_client_order_num",
+            "b_client_sales_inv_num",
         )
 
 
