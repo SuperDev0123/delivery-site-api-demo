@@ -168,10 +168,15 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         try:
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+            bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
             for bok_2 in bok_2s:
                 bok_2.success = dme_constants.BOK_SUCCESS_4
                 bok_2.save()
+
+            for bok_3 in bok_3s:
+                bok_3.success = dme_constants.BOK_SUCCESS_4
+                bok_3.save()
 
             bok_1.success = dme_constants.BOK_SUCCESS_4
             bok_1.save()
@@ -933,27 +938,28 @@ def push_boks(request):
     # Check if already pushed 'b_client_order_num', then return URL only
     if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
         if bok_1["b_client_order_num"][:2] != "Q_":
-            old_bok_1s = BOK_1_headers.objects.filter(
+            old_bok_1 = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
-            )
+                b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
+            ).first()
 
-            if old_bok_1s.exists():
-                if int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_3):
+            if old_bok_1:
+                if int(old_bok_1.success) == int(dme_constants.BOK_SUCCESS_3):
                     return JsonResponse(
                         {
                             "success": True,
                             "results": [],
-                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{old_bok_1s[0].client_booking_id}/",
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{old_bok_1.client_booking_id}/",
                         },
                         status=status.HTTP_201_CREATED,
                     )
-                elif int(old_bok_1s[0].success) == int(dme_constants.BOK_SUCCESS_4):
+                elif int(old_bok_1.success) == int(dme_constants.BOK_SUCCESS_4):
                     return JsonResponse(
                         {
                             "success": True,
                             "results": [],
-                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{old_bok_1s[0].client_booking_id}/",
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{old_bok_1.client_booking_id}/",
                         },
                         status=status.HTTP_201_CREATED,
                     )
