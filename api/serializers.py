@@ -446,7 +446,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.etd
 
     def get_fp_name(self, obj):
-        return obj.fk_freight_provider_id
+        return obj.freight_provider
 
     class Meta:
         model = API_booking_quotes
@@ -577,10 +577,12 @@ class ClientRasSerializer(serializers.ModelSerializer):
         model = Client_Ras
         fields = "__all__"
 
+
 class ClientProcessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client_Process_Mgr
         fields = "__all__"
+
 
 class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)
@@ -610,6 +612,7 @@ class ErrorSerializer(serializers.ModelSerializer):
             "error_description",
             "fp_name",
         )
+
 
 class AugmentAddressSerializer(serializers.ModelSerializer):
     class Meta:

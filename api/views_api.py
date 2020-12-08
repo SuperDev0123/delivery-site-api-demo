@@ -41,6 +41,7 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
 )
 from api.operations import push_operations, product_operations as product_oper
+from api.operations.labels.index import build_label_with_bok
 from api.convertors import pdf
 
 
@@ -384,6 +385,7 @@ def picked_boks(request):
     client_name = request.data.get("CustomerName")
     code = None
     message = None
+    final_result = []
 
     # Check required params are included
     if not b_client_order_num:
@@ -597,6 +599,7 @@ def picked_boks(request):
         message = f"There are over picked items: {', '.join(over_picked_items)}"
         raise ValidationError({"success": False, "code": code, "description": message})
 
+    # Save
     try:
         for picked_item in picked_items:
             # Create new bok_2s
@@ -648,10 +651,42 @@ def picked_boks(request):
                 new_bok_3.success = 4
                 new_bok_3.save()
 
+            # Build label with Line
+            if settings.ENV == "prod":
+                label_url = f"/opt/s3_public/pdfs/built_in/"
+            else:
+                label_url = f"./static/pdfs/built_in/"
+
+            logger.info(f"@368 - building label...")
+            label_url = build_label_with_bok(bok_1, [new_bok_2], label_url, "ship_it")
+
+            # Convert label into ZPL format
+            logger.info(f"@369 - converting LABEL into ZPL format...")
+            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+            if not result:
+                code = "unknown_status"
+                description = (
+                    "Please contact DME support center. <bookings@deliver-me.com.au>"
+                )
+                raise Exception(
+                    {"success": False, "code": code, "description": description}
+                )
+
+            with open(label_url[:-4] + ".zpl", "r") as zpl:
+                zpl_data = zpl.read()
+                final_result.append(
+                    {"sscc": picked_item["sscc"], "zpl_label": zpl_data}
+                )
+
         print("@1 - ", is_picked_all, repacked_items_count)
 
         return Response(
-            {"success": True, "message": "Successfully updated picked info."}
+            {
+                "success": True,
+                "message": "Successfully updated picked info.",
+                "labels": json.dumps(final_result),
+            }
         )
     except Exception as e:
         error_msg = f"@370 Error on PICKED api: {str(e)}"
@@ -662,7 +697,7 @@ def picked_boks(request):
             ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
             fail_silently=False,
         )
-        return Response(
+        raise ValidationError(
             {
                 "success": False,
                 "message": "Please contact DME support center. <bookings@deliver-me.com.au>",

@@ -75,7 +75,7 @@ def get_status_category_from_status(status):
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
     fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=pricing.fk_freight_provider_id
+        fp_company_name__iexact=pricing.freight_provider
     )
 
     if fp.fp_company_name.lower() == "tnt":
@@ -218,7 +218,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
         booking.api_booking_quote = filtered_pricing
-        booking.vx_freight_provider = filtered_pricing.fk_freight_provider_id
+        booking.vx_freight_provider = filtered_pricing.freight_provider
         booking.vx_account_code = filtered_pricing.account_code
         booking.vx_serviceName = filtered_pricing.service_name
         booking.inv_cost_quoted = filtered_pricing.fee * (
@@ -227,7 +227,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing.fk_freight_provider_id
+            fp_company_name__iexact=filtered_pricing.freight_provider
         )
 
         if fp and fp.service_cutoff_time:

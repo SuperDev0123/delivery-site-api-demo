@@ -6,7 +6,7 @@ from api.models import Bookings, API_booking_quotes
 def _is_new_diff(diffs, pricing):
     for diff in diffs:
         if (
-            diff["fp_name"] == pricing.fk_freight_provider_id
+            diff["fp_name"] == pricing.freight_provider
             and diff["service_name"] == pricing.service_name
             and diff["account_code"] == pricing.account_code
         ):
@@ -29,7 +29,7 @@ def analyse_booking_quotes_table(bookingIds):
         if not diffs or _is_new_diff(diffs, pricing):
             diffs.append(
                 {
-                    "fp_name": pricing.fk_freight_provider_id,
+                    "fp_name": pricing.freight_provider,
                     "service_name": pricing.service_name,
                     "account_code": pricing.account_code,
                 }
@@ -40,7 +40,7 @@ def analyse_booking_quotes_table(bookingIds):
 
         for pricing in api_booking_quotes:
             if (
-                diff["fp_name"] == pricing.fk_freight_provider_id
+                diff["fp_name"] == pricing.freight_provider
                 and diff["service_name"] == pricing.service_name
                 and diff["account_code"] == pricing.account_code
             ):
@@ -59,7 +59,7 @@ def analyse_booking_quotes_table(bookingIds):
 
         results.append(
             {
-                "fp_name": pricing_group[0].fk_freight_provider_id,
+                "fp_name": pricing_group[0].freight_provider,
                 "service_name": pricing_group[0].service_name,
                 "account_code": pricing_group[0].account_code,
                 "count": len(pricing_group),

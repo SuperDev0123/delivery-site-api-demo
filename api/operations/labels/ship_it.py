@@ -23,6 +23,7 @@ from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines
+from api.helpers.cubic import get_cubic_meter
 
 
 styles = getSampleStyleSheet()
@@ -768,3 +769,655 @@ def build_label(booking, filepath):
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
+    return True
+
+
+def build_label_with_bok(bok_1, bok_2s, filepath):
+    # start check if pdfs folder exists
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+    # end check if pdfs folder exists
+
+    totalQty = 0
+    for bok_2 in bok_2s:
+        totalQty = totalQty + bok_2.l_002_qty
+
+    # start pdf file name using naming convention
+    filename = bok_1.b_057_b_del_address_state + "_" + str(bok_1.pk) + ".pdf"
+    file = open(filepath + filename, "w")
+    # end pdf file name using naming convention
+
+    date = datetime.datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+
+    # label_settings = get_label_settings( 146, 104 )[0]
+    label_settings = {
+        "font_family": "Verdana",
+        "font_size_extra_small": "5",
+        "font_size_small": "7.5",
+        "font_size_medium": "9",
+        "font_size_large": "11",
+        "font_size_extra_large": "13",
+        "label_dimension_length": "100",
+        "label_dimension_width": "150",
+        "label_image_size_length": "95",
+        "label_image_size_width": "145",
+        "barcode_dimension_length": "85",
+        "barcode_dimension_width": "30",
+        "barcode_font_size": "18",
+        "line_height_extra_small": "3",
+        "line_height_small": "5",
+        "line_height_medium": "6",
+        "line_height_large": "8",
+    }
+
+    doc = SimpleDocTemplate(
+        filepath + filename,
+        pagesize=(
+            float(label_settings["label_dimension_length"]) * mm,
+            float(label_settings["label_dimension_width"]) * mm,
+        ),
+        rightMargin=float(
+            float(label_settings["label_dimension_width"])
+            - float(label_settings["label_image_size_width"])
+        )
+        * mm,
+        leftMargin=float(
+            float(label_settings["label_dimension_width"])
+            - float(label_settings["label_image_size_width"])
+        )
+        * mm,
+        topMargin=float(
+            float(label_settings["label_dimension_length"])
+            - float(label_settings["label_image_size_length"])
+        )
+        * mm,
+        bottomMargin=float(
+            float(label_settings["label_dimension_length"])
+            - float(label_settings["label_image_size_length"])
+        )
+        * mm,
+    )
+
+    dme_logo = "./static/assets/dme_logo.png"
+    dme_im = Image(dme_logo, 30 * mm, 8 * mm)
+
+    Story = []
+    j = 1
+
+    for bok_2 in bok_2s:
+        for k in range(bok_2.l_002_qty):
+
+            tbl_data1 = [[dme_im]]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                ),
+                rowHeights=(float(label_settings["line_height_large"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ],
+            )
+
+            tbl_data2 = [
+                [
+                    Paragraph(
+                        "<font size=%s><b>%s</b></font>"
+                        % (
+                            label_settings["font_size_extra_large"],
+                            (bok_1.quote.freight_provider),
+                        ),
+                        style_center,
+                    )
+                ]
+            ]
+
+            t2 = Table(
+                tbl_data2,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                ),
+                rowHeights=(float(label_settings["line_height_medium"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ],
+            )
+            barcode = str(j).zfill(2)
+
+            tbl_data3 = [[Paragraph("", style_left)]]
+
+            t3 = Table(
+                tbl_data3,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ],
+            )
+
+            data = [[t1, t2, t3]]
+
+            t1_w = float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+            t3_w = float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+
+            shell_table = Table(
+                data,
+                colWidths=[t1_w, t2_w, t2_w],
+                style=[
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    # ('SPAN',(0,0),(0,-1)),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                    # ('BOX', (0, 0), (-1, -1), 1, colors.black)
+                ],
+            )
+
+            hr = HRFlowable(
+                width=(float(label_settings["label_image_size_length"]) * mm),
+                thickness=1,
+                lineCap="square",
+                color=colors.black,
+                spaceBefore=1,
+                spaceAfter=1,
+                hAlign="CENTER",
+                vAlign="BOTTOM",
+                dash=None,
+            )
+
+            Story.append(shell_table)
+            Story.append(hr)
+            Story.append(Spacer(1, 5))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s>Connote:%s </font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            "Consignment number",
+                        ),
+                        style_left,
+                    ),
+                    Paragraph(
+                        "<font size=%s><b>%s</b></font> "
+                        % (label_settings["font_size_extra_large"], "SYD-EST"),
+                        style_left,
+                    ),
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>Order: %s</font>"
+                        % (label_settings["font_size_medium"], ""),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>Date:  %s</font> "
+                        % (
+                            label_settings["font_size_medium"],
+                            "N/A",
+                            # booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                            # if booking.b_dateBookedDate
+                            # else "N/A",
+                        ),
+                        style_left,
+                    )
+                ],
+            ]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                ),
+                rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ],
+            )
+
+            Story.append(t1)
+            Story.append(Spacer(1, 5))
+            Story.append(hr)
+            Story.append(Spacer(1, 5))
+
+            barcode = "PRD" + str(bok_2.sscc) + "R1"
+
+            tbl_data1 = [
+                [
+                    code128.Code128(
+                        barcode,
+                        barHeight=10 * mm,
+                        barWidth=1,
+                        humanReadable=True,
+                    )
+                ]
+            ]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+            Story.append(t1)
+            Story.append(Spacer(1, 10))
+            Story.append(hr)
+            Story.append(Spacer(1, 5))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s><b>TO:</b> %s %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            bok_1.b_061_b_del_contact_full_name,
+                            (bok_1.b_054_b_del_company)
+                            if (bok_1.b_054_b_del_company)
+                            else "",
+                        ),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>  %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            bok_1.b_055_b_del_address_street_1,
+                        ),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>  %s</font> "
+                        % (label_settings["font_size_medium"], ""),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>  %s</font> "
+                        % (
+                            label_settings["font_size_medium"],
+                            bok_1.b_058_b_del_address_suburb,
+                        ),
+                        style_left,
+                    )
+                ],
+            ]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+
+            d = Drawing(80, 80)
+            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d.add(QrCodeWidget(value="01234567"))
+
+            tbl_data2 = [[d]]
+            t2 = Table(
+                tbl_data2,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+
+            data = [[t1, t2]]
+            t1_w = float(label_settings["label_image_size_length"]) * (2 / 3) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+
+            shell_table = Table(
+                data,
+                colWidths=[t1_w, t2_w],
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+            Story.append(shell_table)
+            Story.append(hr)
+            Story.append(Spacer(1, 5))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s>Insts: %s %s</font>"
+                        % (
+                            label_settings["font_size_small"],
+                            str(bok_1.b_044_b_del_instructions_address)
+                            if bok_1.b_044_b_del_instructions_address
+                            else "",
+                            str(bok_1.b_043_b_del_instructions_contact)
+                            if bok_1.b_043_b_del_instructions_contact
+                            else "",
+                        ),
+                        style_left,
+                    )
+                ]
+            ]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ],
+            )
+            Story.append(t1)
+            Story.append(hr)
+            Story.append(Spacer(1, 5))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s><b>FROM:</b> %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            (bok_1.b_035_b_pu_contact_full_name)
+                            if (bok_1.b_035_b_pu_contact_full_name)
+                            else "",
+                        ),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>%s %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            str(bok_1.b_029_b_pu_address_street_1)
+                            if bok_1.b_029_b_pu_address_street_1
+                            else "",
+                            str(bok_1.b_030_b_pu_address_street_2)
+                            if bok_1.b_030_b_pu_address_street_2
+                            else "",
+                        ),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>%s %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            str(bok_1.b_032_b_pu_address_suburb)
+                            if bok_1.b_032_b_pu_address_suburb
+                            else "",
+                            str(bok_1.b_033_b_pu_address_postalcode)
+                            if bok_1.b_033_b_pu_address_postalcode
+                            else "",
+                        ),
+                        style_left,
+                    )
+                ],
+            ]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ],
+            )
+
+            tbl_data2 = [
+                [
+                    Paragraph(
+                        "<font size=%s>Items: %s</font>"
+                        % (label_settings["font_size_medium"], totalQty),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>Weight: %s KG</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            bok_2.l_009_weight_per_each
+                            if bok_2.l_009_weight_per_each
+                            else "N/A",
+                        ),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>Cube: %s M3</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            str(
+                                round(
+                                    get_cubic_meter(
+                                        length=bok_2.l_005_dim_length,
+                                        width=bok_2.l_006_dim_width,
+                                        height=bok_2.l_007_dim_height,
+                                        uom=bok_2.l_004_dim_UOM,
+                                        qty=bok_2.l_002_qty,
+                                    ),
+                                    2,
+                                )
+                            ),
+                        ),
+                        style_left,
+                    )
+                ],
+            ]
+
+            t2 = Table(
+                tbl_data2,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ],
+            )
+
+            data = [[t1, t2]]
+
+            t1_w = float(label_settings["label_image_size_length"]) * (2 / 3) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+
+            shell_table = Table(
+                data,
+                colWidths=[t1_w, t2_w],
+                style=[
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    # ('SPAN',(0,0),(0,-1)),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    # ('BOX', (0, 0), (-1, -1), 1, colors.black)
+                ],
+            )
+
+            Story.append(shell_table)
+            Story.append(Spacer(1, 15))
+            Story.append(hr)
+            Story.append(Spacer(1, 5))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s>Delivery:</font>"
+                        % (label_settings["font_size_small"]),
+                        style_left,
+                    )
+                ]
+            ]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+
+            Story.append(t1)
+
+            # barcode = (
+            #     booking.v_FPBookingNumber
+            #     + "DESC"
+            #     + str(k + 1).zfill(10)
+            #     + booking.de_To_Address_PostalCode
+            # )
+            barcode = "000"  # TODO: need to set correct barcode
+
+            tbl_data = [
+                [
+                    code128.Code128(
+                        barcode,
+                        barHeight=15 * mm,
+                        barWidth=0.7,
+                        humanReadable=True,
+                    )
+                ]
+            ]
+
+            t1 = Table(
+                tbl_data,
+                colWidths=((float(label_settings["label_image_size_length"])) * mm),
+                style=[
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ("LEFTPADDING", (0, 0), (0, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (0, -1), 0),
+                    # ('BOX', (0, 0), (-1, -1), 1, colors.black)
+                ],
+            )
+
+            Story.append(t1)
+            Story.append(Spacer(1, 5))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s>%s of %s</font>"
+                        % (label_settings["font_size_small"], j, totalQty),
+                        style_center,
+                    )
+                ]
+            ]
+
+            shell_table = Table(
+                tbl_data1,
+                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ],
+            )
+
+            Story.append(shell_table)
+            Story.append(Spacer(1, 10))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s color=%s >%s</font>"
+                        % (
+                            label_settings["font_size_small"],
+                            colors.white,
+                            "Powerd by DeliverMe Learn more at Deliverme.com",
+                        ),
+                        style_center,
+                    )
+                ]
+            ]
+
+            shell_table = Table(
+                tbl_data1,
+                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.black),
+                ],
+            )
+            Story.append(shell_table)
+            Story.append(PageBreak())
+
+            j += 1
+
+    doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
+    file.close()
+    return filepath + filename

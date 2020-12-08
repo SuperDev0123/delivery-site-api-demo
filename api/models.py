@@ -397,7 +397,7 @@ class API_booking_quotes(models.Model):
     fk_client_id = models.CharField(
         verbose_name=_("Client ID"), max_length=64, blank=True, null=True
     )
-    fk_freight_provider_id = models.CharField(
+    freight_provider = models.CharField(
         verbose_name=_("Freight Provider ID"), max_length=64, blank=True, null=True
     )
     account_code = models.CharField(

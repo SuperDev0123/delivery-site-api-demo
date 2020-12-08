@@ -38,7 +38,7 @@ from .utils import (
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
-from .build_label.dhl import build_dhl_label
+from api.operations.labels.index import build_label
 from .operations.tracking import update_booking_with_tracking_result
 from .constants import (
     FP_CREDENTIALS,
@@ -877,7 +877,6 @@ def get_label(request, fp_name):
                     else:
                         pdf_url = json_data["pdfURL"]
                         download_from_url(pdf_url, label_url)
-
                 except KeyError as e:
                     if "errorMessage" in json_data:
                         error_msg = json_data["errorMessage"]
@@ -889,9 +888,8 @@ def get_label(request, fp_name):
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
-
             elif _fp_name in ["dhl"]:
-                z_label_url = build_dhl_label(booking)
+                z_label_url = build_label(booking, "dhl")
 
             booking.z_label_url = z_label_url
             booking.b_error_Capture = None
@@ -1439,9 +1437,7 @@ async def _api_pricing_worker_builder(
 
                 quotes = API_booking_quotes.objects.filter(
                     fk_booking_id=booking.pk_booking_id,
-                    fk_freight_provider_id=parse_result[
-                        "fk_freight_provider_id"
-                    ].upper(),
+                    freight_provider__iexact=parse_result["freight_provider"],
                     service_name=parse_result["service_name"],
                     account_code=payload["spAccountDetails"]["accountCode"],
                 )
@@ -1469,7 +1465,7 @@ async def _built_in_pricing_worker_builder(_fp_name, booking):
     for parse_result in parse_results:
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id,
-            fk_freight_provider_id=parse_result["fk_freight_provider_id"].upper(),
+            freight_provider__iexact=parse_result["freight_provider"],
             service_name=parse_result["service_name"],
         )
 

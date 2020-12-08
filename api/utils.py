@@ -5397,7 +5397,7 @@ def get_eta_de_by(booking, quote):
                     if weekno > 4:
                         etd_de_by = etd_de_by + timedelta(days=7 - weekno)
             else:
-                if quote.fk_freight_provider_id == "TNT":
+                if quote.freight_provider == "TNT":
                     days = round(float(quote.etd))
                     etd_de_by = next_business_day(etd_de_by, days, [])
 
