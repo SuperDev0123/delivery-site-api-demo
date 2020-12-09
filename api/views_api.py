@@ -733,7 +733,7 @@ def ready_boks(request):
         raise ValidationError({"success": False, "code": code, "description": message})
 
     # Check if order exists
-    booking = Booking.objects.filter(
+    booking = Bookings.objects.filter(
         b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:]
     ).first()
 
