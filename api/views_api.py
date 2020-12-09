@@ -647,9 +647,9 @@ def picked_boks(request):
 
             # Build label with Line
             if settings.ENV == "prod":
-                label_url = f"/opt/s3_public/pdfs/built_in/"
+                label_url = f"/opt/s3_public/pdfs/"
             else:
-                label_url = f"./static/pdfs/built_in/"
+                label_url = f"./static/pdfs/"
 
             logger.info(f"@368 - building label...")
             label_url = build_label_with_lines(
@@ -657,7 +657,7 @@ def picked_boks(request):
             )
 
             # Convert label into ZPL format
-            logger.info(f"@369 - converting LABEL into ZPL format...")
+            logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
             result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
             if not result:

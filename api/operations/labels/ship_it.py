@@ -784,7 +784,9 @@ def build_label_with_lines(booking, lines, filepath):
         totalQty = totalQty + line.e_qty
 
     # start pdf file name using naming convention
-    filename = booking.de_To_Address_State + "_" + str(booking.pk) + ".pdf"
+    filename = (
+        booking.de_To_Address_State + "_" + str(booking.b_bookingID_Visual) + ".pdf"
+    )
     file = open(filepath + filename, "w")
     # end pdf file name using naming convention
 
