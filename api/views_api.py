@@ -1249,7 +1249,10 @@ def push_boks(request):
                 bok_1["pk_header_id"], "Pushed", request.user.username
             )
 
-            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+            if bok_1["success"] in [
+                dme_constants.BOK_SUCCESS_3,
+                dme_constants.BOK_SUCCESS_4,
+            ]:
                 booking = {}
                 booking_lines = []
 
