@@ -263,7 +263,9 @@ def get_book_payload(booking, fp_name):
             elif fp_name == "dhl":
                 item["packagingType"] = "PLT"
                 fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
-                consignmentNoteNumber = f"DME{booking.b_bookingID_Visual}"
+                consignmentNoteNumber = gen_consignment_num(
+                    "dhl", booking.b_bookingID_Visual
+                )
 
                 labelCode = str(fp_carrier.label_start_value + fp_carrier.current_value)
                 fp_carrier.current_value = fp_carrier.current_value + 1
@@ -310,7 +312,9 @@ def get_book_payload(booking, fp_name):
         #     else booking.b_client_sales_inv_num
         # )
         payload["reference1"] = booking.clientRefNumbers
-        payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
+        payload["reference2"] = gen_consignment_num(
+            "hunter", booking.b_bookingID_Visual, 2, 6
+        )
     elif fp_name == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
@@ -379,9 +383,9 @@ def get_book_payload(booking, fp_name):
                 "collectionInstructions"
             ] += f" {payload['dropAddress']['instruction']}"
 
-        payload[
-            "consignmentNoteNumber"
-        ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNoteNumber"] = gen_consignment_num(
+            "tnt", booking.b_bookingID_Visual
+        )
         payload["customerReference"] = booking.clientRefNumbers
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
@@ -391,7 +395,9 @@ def get_book_payload(booking, fp_name):
     elif fp_name == "dhl":
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
             payload["clientType"] = "aldi"
-            payload["consignmentNoteNumber"] = f"DME{booking.b_bookingID_Visual}"
+            payload["consignmentNoteNumber"] = gen_consignment_num(
+                "dhl", booking.b_bookingID_Visual
+            )
             payload["orderNumber"] = booking.pk_booking_id
             booking.b_client_sales_inv_num = booking.pk_booking_id
             booking.save()
@@ -588,7 +594,9 @@ def get_getlabel_payload(booking, fp_name):
 
     # Detail for each FP
     if fp_name.lower() == "tnt":
-        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNumber"] = gen_consignment_num(
+            "tnt", booking.b_bookingID_Visual
+        )
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
@@ -712,7 +720,9 @@ def get_reprint_payload(booking, fp_name):
         payload = {}
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
-        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNumber"] = gen_consignment_num(
+            "tnt", booking.b_bookingID_Visual
+        )
         payload["labelType"] = "A"
         return payload
     except Exception as e:

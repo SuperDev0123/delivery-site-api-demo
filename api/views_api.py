@@ -198,6 +198,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         try:
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
+            BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
             API_booking_quotes.objects.filter(fk_booking_id=bok_1.pk_header_id).delete()
             bok_1.delete()
             logger.info(f"@840 [CANCEL] BOK success with identifier: {identifier}")

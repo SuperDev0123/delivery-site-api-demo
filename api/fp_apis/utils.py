@@ -24,20 +24,25 @@ def _convert_UOM(value, uom, type, fp_name):
         )
 
 
-def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
-    limiter = "1"
+def gen_consignment_num(fp_name, booking_visual_id, prefix_len=None, digit_len=None):
+    if fp_name == "hunter":
+        limiter = "1"
 
-    for i in range(digit_len):
-        limiter += "0"
+        for i in range(digit_len):
+            limiter += "0"
 
-    limiter = int(limiter)
+        limiter = int(limiter)
 
-    prefix_index = int(booking_visual_id / limiter) + 1
-    prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
-        ((prefix_index - 1) % 26) + 65
-    )
+        prefix_index = int(booking_visual_id / limiter) + 1
+        prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
+            ((prefix_index - 1) % 26) + 65
+        )
 
-    return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+        return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+    elif fp_name == "tnt":
+        return f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+    elif fp_name == "dhl":
+        return f"DME{str(booking.b_bookingID_Visual)}"
 
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
