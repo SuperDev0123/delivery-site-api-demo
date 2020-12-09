@@ -40,9 +40,11 @@ def gen_consignment_num(fp_name, booking_visual_id, prefix_len=None, digit_len=N
 
         return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
     elif fp_name == "tnt":
-        return f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        return f"DME{str(booking_visual_id).zfill(9)}"
     elif fp_name == "dhl":
-        return f"DME{str(booking.b_bookingID_Visual)}"
+        return f"DME{str(booking_visual_id)}"
+    else:
+        return f"DME{str(booking_visual_id)}"
 
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):

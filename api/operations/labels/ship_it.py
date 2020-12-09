@@ -24,6 +24,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
+from api.fp_apis.utils import gen_consignment_num
 
 
 styles = getSampleStyleSheet()
@@ -952,7 +953,9 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>Connote:%s </font>"
                         % (
                             label_settings["font_size_medium"],
-                            "Consignment number",
+                            gen_consignment_num(
+                                bok_1.quote.freight_provider.lower(), "16000"
+                            ),
                         ),
                         style_left,
                     ),
@@ -974,10 +977,7 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>Date:  %s</font> "
                         % (
                             label_settings["font_size_medium"],
-                            "N/A",
-                            # booking.b_dateBookedDate.strftime("%d/%m/%Y")
-                            # if booking.b_dateBookedDate
-                            # else "N/A",
+                            datetime.datetime.now().strftime("%d/%m/%Y"),
                         ),
                         style_left,
                     )
