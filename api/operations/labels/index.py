@@ -25,8 +25,8 @@ def build_label_with_lines(booking, lines, file_path, format="ship_it"):
     result = None
 
     if format == "ship_it":
-        result = ship_it.build_label_with_lines(booing, lines, file_path)
+        result = ship_it.build_label_with_lines(booking, lines, file_path)
     elif format == "dhl":
-        result = dhl.build_label_with_lines(booing, lines, file_path)
+        result = dhl.build_label_with_lines(booking, lines, file_path)
 
     return result
