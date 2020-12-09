@@ -388,7 +388,7 @@ def picked_boks(request):
     logger.info(f"@891 Picked info: {request.data}")
     b_client_order_num = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
-    client_name = request.data.get("CustomerName")
+    b_client_name = request.data.get("CustomerName")
     code = None
     message = None
     final_result = []
@@ -402,28 +402,19 @@ def picked_boks(request):
         code = "missing_param"
         message = "'picked_items' is required."
 
-    if not client_name:
+    if not b_client_name:
         code = "missing_param"
         message = "'CustomerName' is required."
 
     if message:
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    try:
-        client = DME_clients.objects.get(company_name__iexact=client_name.lower())
-    except:
-        code = "not_found"
-        description = "Client does not exist."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
-
     # Check if order exists
-    bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=client.dme_account_num, b_client_order_num=b_client_order_num[5:]
-    )
+    booking = Bookings.objects.filter(
+        b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:]
+    ).first()
 
-    if not bok_1s.exists():
+    if not booking:
         code = "not_found"
         message = (
             "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
@@ -431,20 +422,19 @@ def picked_boks(request):
         raise ValidationError({"success": False, "code": code, "description": message})
 
     # Else
-    bok_1 = bok_1s.first()
-    pk_header_id = bok_1.pk_header_id
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-    bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
-    original_items = bok_2s.filter(sscc__isnull=True)
-    scanned_items = bok_2s.filter(sscc__isnull=False, l_003_item="Picked Item")
-    repacked_items_count = bok_2s.filter(
-        sscc__isnull=False, l_003_item="Repacked Item"
+    pk_booking_id = booking.pk_booking_id
+    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+    original_items = lines.filter(sscc__isnull=True)
+    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
+    repacked_items_count = lines.filter(
+        sscc__isnull=False, e_item="Repacked Item"
     ).count()
-    model_number_qtys = original_items.values_list("e_item_type", "l_002_qty")
+    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
     sscc_list = scanned_items.values_list("sscc", flat=True)
 
-    logger.info(f"@360 - bok_1: {bok_1}")
-    logger.info(f"@361 - bok_2: {bok_2s}")
+    logger.info(f"@360 - Booking: {booking}")
+    logger.info(f"@361 - Lines: {lines}")
     logger.info(f"@362 - original_items: {original_items}")
     logger.info(f"@363 - scanned_items: {scanned_items}")
     logger.info(f"@364 - model_number and qty(s): {model_number_qtys}")
@@ -465,7 +455,7 @@ def picked_boks(request):
             )
 
         # Check if sscc is invalid
-        if BOK_2_lines.objects.filter(sscc=picked_item["sscc"]).exists():
+        if Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists():
             duplicated_sscc_list.append(picked_item["sscc"])
 
         # Validate repacked items
@@ -565,14 +555,14 @@ def picked_boks(request):
 
     for scanned_item in scanned_items:
         if scanned_item.e_item_type:
-            estimated_picked[scanned_item.e_item_type] += scanned_item.l_002_qty
+            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
 
-        for bok_3 in bok_3s:
+        for line_data in line_datas:
             if (
-                bok_3.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-                and bok_3.ld_003_item_description != "Repacked at warehouse"
+                line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+                and line_data.itemDescription != "Repacked at warehouse"
             ):
-                estimated_picked[bok_3.ld_002_model_number] += bok_3.ld_001_qty
+                estimated_picked[line_data.modelNumber] += line_data.quantity
 
     if repack_type == "model_number":
         for picked_item in picked_items:
@@ -608,54 +598,52 @@ def picked_boks(request):
     # Save
     try:
         for picked_item in picked_items:
-            # Create new bok_2s
-            new_bok_2 = BOK_2_lines()
-            new_bok_2.fk_header_id = pk_header_id
-            new_bok_2.pk_booking_lines_id = str(uuid.uuid4())
-            new_bok_2.l_001_type_of_packaging = picked_item["package_type"]
-            new_bok_2.l_002_qty = 1
+            # Create new Lines
+            new_line = Booking_lines()
+            new_line.fk_booking_id = pk_booking_id
+            new_line.pk_booking_lines_id = str(uuid.uuid4())
+            new_line.e_type_of_packaging = picked_item["package_type"]
+            new_line.e_qty = 1
 
             if repack_type == "model_number":
-                new_bok_2.l_003_item = "Picked Item"
+                new_line.e_item = "Picked Item"
             else:
-                new_bok_2.l_003_item = "Repacked Item"
+                new_line.e_item = "Repacked Item"
 
-            new_bok_2.l_004_dim_UOM = picked_item["dimensions"]["unit"]
-            new_bok_2.l_005_dim_length = picked_item["dimensions"]["length"]
-            new_bok_2.l_006_dim_width = picked_item["dimensions"]["width"]
-            new_bok_2.l_007_dim_height = picked_item["dimensions"]["height"]
-            new_bok_2.l_008_weight_UOM = picked_item["weight"]["unit"]
-            new_bok_2.l_009_weight_per_each = picked_item["weight"]["weight"]
-            new_bok_2.sscc = picked_item["sscc"]
-            new_bok_2.picked_up_timestamp = picked_item["timestamp"]
-            new_bok_2.success = 4
-            new_bok_2.save()
+            new_line.e_dimUOM = picked_item["dimensions"]["unit"]
+            new_line.e_dimLength = picked_item["dimensions"]["length"]
+            new_line.e_dimWidth = picked_item["dimensions"]["width"]
+            new_line.e_dimHeight = picked_item["dimensions"]["height"]
+            new_line.e_weightUOM = picked_item["weight"]["unit"]
+            new_line.e_weightPerEach = picked_item["weight"]["weight"]
+            new_line.sscc = picked_item["sscc"]
+            new_line.picked_up_timestamp = picked_item["timestamp"]
+            new_line.save()
 
             for item in picked_item["items"]:
-                # Soft delete original bok_2
+                # Soft delete original line
                 if repack_type == "model_number":
-                    bok_2 = bok_2s.get(e_item_type=item["model_number"])
+                    line = lines.get(e_item_type=item["model_number"])
                 elif repack_type == "sscc":
-                    bok_2 = bok_2s.get(sscc=item["sscc"])
+                    line = lines.get(sscc=item["sscc"])
 
-                bok_2.is_deleted = True
-                bok_2.save()
+                line.is_deleted = True
+                line.save()
 
-                # Create new bok_3s
-                new_bok_3 = BOK_3_lines_data()
-                new_bok_3.fk_header_id = pk_header_id
-                new_bok_3.fk_booking_lines_id = new_bok_2.pk_booking_lines_id
+                # Create new Line_Data
+                line_data = Booking_lines_data()
+                line_data.fk_booking_id = pk_booking_id
+                line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
 
                 if repack_type == "model_number":
-                    new_bok_3.ld_002_model_number = item["model_number"]
-                    new_bok_3.ld_003_item_description = "Picked at warehouse"
-                    new_bok_3.ld_001_qty = item["qty"]
+                    line_data.modelNumber = item["model_number"]
+                    line_data.itemDescription = "Picked at warehouse"
+                    line_data.quantity = item["qty"]
                 else:
-                    new_bok_3.ld_002_model_number = item["sscc"]
-                    new_bok_3.ld_003_item_description = "Repacked at warehouse"
+                    line_data.modelNumber = item["sscc"]
+                    line_data.itemDescription = "Repacked at warehouse"
 
-                new_bok_3.success = 4
-                new_bok_3.save()
+                line_data.save()
 
             # Build label with Line
             if settings.ENV == "prod":
@@ -664,7 +652,7 @@ def picked_boks(request):
                 label_url = f"./static/pdfs/built_in/"
 
             logger.info(f"@368 - building label...")
-            label_url = build_label_with_bok(bok_1, [new_bok_2], label_url, "ship_it")
+            label_url = build_label_with_bok(booking, [new_line], label_url, "ship_it")
 
             # Convert label into ZPL format
             logger.info(f"@369 - converting LABEL into ZPL format...")
@@ -722,7 +710,7 @@ def ready_boks(request):
     logger.info(f"@841 payload: {request.data}")
     b_client_order_num = request.data.get("HostOrderNumber")
     is_ready = request.data.get("is_ready")
-    client_name = request.data.get("CustomerName")
+    b_client_name = request.data.get("CustomerName")
     code = None
     message = None
 
@@ -735,28 +723,19 @@ def ready_boks(request):
         code = "missing_param"
         message = "'is_ready' is required."
 
-    if not client_name:
+    if not b_client_name:
         code = "missing_param"
         message = "'CustomerName' is required."
 
     if message:
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    try:
-        client = DME_clients.objects.get(company_name__iexact=client_name.lower())
-    except:
-        code = "not_found"
-        description = "Client does not exist."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
-
     # Check if order exists
-    bok_1s = BOK_1_headers.objects.filter(
-        fk_client_id=client.dme_account_num, b_client_order_num=b_client_order_num[5:]
-    )
+    booking = Booking.objects.filter(
+        b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:]
+    ).first()
 
-    if not bok_1s.exists():
+    if not booking:
         code = "not_found"
         message = (
             "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
@@ -772,18 +751,17 @@ def ready_boks(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    bok_1 = bok_1s.first()
-    pk_header_id = bok_1.pk_header_id
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-    bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
+    pk_booking_id = booking.pk_booking_id
+    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
 
     # Check if Order items are all picked
-    original_items = bok_2s.filter(sscc__isnull=True)
-    scanned_items = bok_2s.filter(sscc__isnull=False, l_003_item="Picked Item")
-    repacked_items_count = bok_2s.filter(
-        sscc__isnull=False, l_003_item="Repacked Item"
+    original_items = lines.filter(sscc__isnull=True)
+    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
+    repacked_items_count = lines.filter(
+        sscc__isnull=False, e_item="Repacked Item"
     ).count()
-    model_number_qtys = original_items.values_list("e_item_type", "l_002_qty")
+    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
     estimated_picked = {}
     is_picked_all = True
     not_picked_items = []
@@ -793,14 +771,14 @@ def ready_boks(request):
 
     for scanned_item in scanned_items:
         if scanned_item.e_item_type:
-            estimated_picked[scanned_item.e_item_type] += scanned_item.l_002_qty
+            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
 
-        for bok_3 in bok_3s:
+        for line_data in line_datas:
             if (
-                bok_3.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-                and bok_3.ld_003_item_description != "Repacked at warehouse"
+                line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+                and line_data.itemDescription != "Repacked at warehouse"
             ):
-                estimated_picked[bok_3.ld_002_model_number] += bok_3.ld_001_qty
+                estimated_picked[line_data.modelNumber] += line_data.quantity
 
     logger.info(f"@843 - limit: {model_number_qtys}, picked: {estimated_picked}")
 
@@ -827,25 +805,9 @@ def ready_boks(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if bok_1.success == dme_constants.BOK_SUCCESS_2:
-        return Response(
-            {
-                "success": True,
-                "message": f"Order is ready(Already got READY request).",
-            }
-        )
-
-    # Update DB so that Bok can be mapped to Booking
-    for bok_3 in bok_3s:
-        bok_3.success = dme_constants.BOK_SUCCESS_2
-        bok_3.save()
-
-    for bok_2 in bok_2s:
-        bok_2.success = dme_constants.BOK_SUCCESS_2
-        bok_2.save()
-
-    bok_1.success = dme_constants.BOK_SUCCESS_2
-    bok_1.save()
+    # Update DB so that Booking can be BOOKED
+    booking.b_status = "Ready for Booking"
+    booking.save()
 
     return Response(
         {
