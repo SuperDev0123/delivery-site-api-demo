@@ -41,7 +41,7 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
 )
 from api.operations import push_operations, product_operations as product_oper
-from api.operations.labels.index import build_label_with_bok
+from api.operations.labels.index import build_label_with_lines
 from api.convertors import pdf
 
 
@@ -652,7 +652,9 @@ def picked_boks(request):
                 label_url = f"./static/pdfs/built_in/"
 
             logger.info(f"@368 - building label...")
-            label_url = build_label_with_bok(booking, [new_line], label_url, "ship_it")
+            label_url = build_label_with_lines(
+                booking, [new_line], label_url, "ship_it"
+            )
 
             # Convert label into ZPL format
             logger.info(f"@369 - converting LABEL into ZPL format...")

@@ -773,18 +773,18 @@ def build_label(booking, filepath):
     return True
 
 
-def build_label_with_bok(bok_1, bok_2s, filepath):
+def build_label_with_lines(booking, lines, filepath):
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
         os.makedirs(filepath)
     # end check if pdfs folder exists
 
     totalQty = 0
-    for bok_2 in bok_2s:
-        totalQty = totalQty + bok_2.l_002_qty
+    for line in lines:
+        totalQty = totalQty + line.e_qty
 
     # start pdf file name using naming convention
-    filename = bok_1.b_057_b_del_address_state + "_" + str(bok_1.pk) + ".pdf"
+    filename = booking.de_To_Address_State + "_" + str(booking.pk) + ".pdf"
     file = open(filepath + filename, "w")
     # end pdf file name using naming convention
 
@@ -845,8 +845,8 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
     Story = []
     j = 1
 
-    for bok_2 in bok_2s:
-        for k in range(bok_2.l_002_qty):
+    for line in lines:
+        for k in range(line.e_qty):
 
             tbl_data1 = [[dme_im]]
 
@@ -871,7 +871,7 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_extra_large"],
-                            (bok_1.quote.freight_provider),
+                            (line.api_booking_quote.freight_provider),
                         ),
                         style_center,
                     )
@@ -954,7 +954,8 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         % (
                             label_settings["font_size_medium"],
                             gen_consignment_num(
-                                bok_1.quote.freight_provider.lower(), "16000"
+                                booking.api_booking_quote.freight_provider.lower(),
+                                "16000",
                             ),
                         ),
                         style_left,
@@ -1004,7 +1005,7 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
             Story.append(hr)
             Story.append(Spacer(1, 5))
 
-            barcode = "PRD" + str(bok_2.sscc) + "R1"
+            barcode = "PRD" + str(line.sscc) + "R1"
 
             tbl_data1 = [
                 [
@@ -1042,9 +1043,9 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s><b>TO:</b> %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            bok_1.b_061_b_del_contact_full_name,
-                            (bok_1.b_054_b_del_company)
-                            if (bok_1.b_054_b_del_company)
+                            booking.de_to_Contact_F_LName,
+                            (booking.deToCompanyName)
+                            if (booking.deToCompanyName)
                             else "",
                         ),
                         style_left,
@@ -1055,7 +1056,7 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>  %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            bok_1.b_055_b_del_address_street_1,
+                            booking.de_To_Address_Street_1,
                         ),
                         style_left,
                     )
@@ -1072,7 +1073,7 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>  %s</font> "
                         % (
                             label_settings["font_size_medium"],
-                            bok_1.b_058_b_del_address_suburb,
+                            booking.de_To_Address_Suburb,
                         ),
                         style_left,
                     )
@@ -1140,11 +1141,11 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>Insts: %s %s</font>"
                         % (
                             label_settings["font_size_small"],
-                            str(bok_1.b_044_b_del_instructions_address)
-                            if bok_1.b_044_b_del_instructions_address
+                            str(booking.de_to_PickUp_Instructions_Address)
+                            if booking.de_to_PickUp_Instructions_Address
                             else "",
-                            str(bok_1.b_043_b_del_instructions_contact)
-                            if bok_1.b_043_b_del_instructions_contact
+                            str(booking.de_to_Pick_Up_Instructions_Contact)
+                            if booking.de_to_Pick_Up_Instructions_Contact
                             else "",
                         ),
                         style_left,
@@ -1172,8 +1173,8 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s><b>FROM:</b> %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            (bok_1.b_035_b_pu_contact_full_name)
-                            if (bok_1.b_035_b_pu_contact_full_name)
+                            (booking.pu_Contact_F_L_Name)
+                            if (booking.pu_Contact_F_L_Name)
                             else "",
                         ),
                         style_left,
@@ -1184,11 +1185,11 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>%s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            str(bok_1.b_029_b_pu_address_street_1)
-                            if bok_1.b_029_b_pu_address_street_1
+                            str(booking.pu_Address_Street_1)
+                            if booking.pu_Address_Street_1
                             else "",
-                            str(bok_1.b_030_b_pu_address_street_2)
-                            if bok_1.b_030_b_pu_address_street_2
+                            str(booking.pu_Address_street_2)
+                            if booking.pu_Address_street_2
                             else "",
                         ),
                         style_left,
@@ -1199,11 +1200,11 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>%s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            str(bok_1.b_032_b_pu_address_suburb)
-                            if bok_1.b_032_b_pu_address_suburb
+                            str(booking.pu_Address_Suburb)
+                            if booking.pu_Address_Suburb
                             else "",
-                            str(bok_1.b_033_b_pu_address_postalcode)
-                            if bok_1.b_033_b_pu_address_postalcode
+                            str(booking.pu_Address_PostalCode)
+                            if booking.pu_Address_PostalCode
                             else "",
                         ),
                         style_left,
@@ -1237,9 +1238,7 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                         "<font size=%s>Weight: %s KG</font>"
                         % (
                             label_settings["font_size_medium"],
-                            bok_2.l_009_weight_per_each
-                            if bok_2.l_009_weight_per_each
-                            else "N/A",
+                            line.e_weightPerEach if line.e_weightPerEach else "N/A",
                         ),
                         style_left,
                     )
@@ -1252,11 +1251,11 @@ def build_label_with_bok(bok_1, bok_2s, filepath):
                             str(
                                 round(
                                     get_cubic_meter(
-                                        length=bok_2.l_005_dim_length,
-                                        width=bok_2.l_006_dim_width,
-                                        height=bok_2.l_007_dim_height,
-                                        uom=bok_2.l_004_dim_UOM,
-                                        qty=bok_2.l_002_qty,
+                                        length=line.e_dimLength,
+                                        width=line.e_dimWidth,
+                                        height=line.e_dimHeight,
+                                        uom=line.e_weightUOM,
+                                        qty=line.e_qty,
                                     ),
                                     2,
                                 )
