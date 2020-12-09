@@ -313,7 +313,7 @@ def get_book_payload(booking, fp_name):
         # )
         payload["reference1"] = booking.clientRefNumbers
         payload["reference2"] = gen_consignment_num(
-            "hunter", booking.b_bookingID_Visual, 2, 6
+            "hunter", booking.b_bookingID_Visual
         )
     elif fp_name == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]

@@ -24,8 +24,9 @@ def _convert_UOM(value, uom, type, fp_name):
         )
 
 
-def gen_consignment_num(fp_name, booking_visual_id, prefix_len=None, digit_len=None):
+def gen_consignment_num(fp_name, booking_visual_id):
     if fp_name == "hunter":
+        digit_len = 6
         limiter = "1"
 
         for i in range(digit_len):
