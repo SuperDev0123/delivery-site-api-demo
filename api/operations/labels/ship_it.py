@@ -871,7 +871,7 @@ def build_label_with_lines(booking, lines, filepath):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_extra_large"],
-                            (line.api_booking_quote.freight_provider),
+                            (booking.api_booking_quote.freight_provider),
                         ),
                         style_center,
                     )
