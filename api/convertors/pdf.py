@@ -46,7 +46,7 @@ def pdf_to_base64(pdf_path):
 def pdf_to_zpl(pdf_path, zpl_path):
     try:
         with open(pdf_path, "rb") as pdf:
-            pages = GRF.from_pdf(pdf.read(), "DEMO", center_of_pixel=True)
+            pages = GRF.from_pdf(pdf.read(), "DEMO")
             f = open(zpl_path, "w")
 
             for grf in pages:
