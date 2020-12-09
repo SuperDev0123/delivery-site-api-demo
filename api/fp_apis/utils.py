@@ -34,7 +34,7 @@ def gen_consignment_num(fp_name, booking_visual_id):
 
         limiter = int(limiter)
 
-        prefix_index = int(booking_visual_id / limiter) + 1
+        prefix_index = int(int(booking_visual_id) / limiter) + 1
         prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
             ((prefix_index - 1) % 26) + 65
         )
