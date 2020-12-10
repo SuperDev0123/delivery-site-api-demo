@@ -675,7 +675,30 @@ def picked_boks(request):
                     {"sscc": picked_item["sscc"], "zpl_label": zpl_data}
                 )
 
-        print("@1 - ", is_picked_all, repacked_items_count)
+        if is_picked_all:
+            _, success, message, quotes = get_pricing(body=None, booking_id=booking.pk)
+            logger.info(
+                f"#371 - Pricing result: success: {success}, message: {message}, results cnt: {quotes}"
+            )
+
+            # Select best quotes(fastest, lowest)
+            if quotes.exists() and quotes.count() > 1:
+                quotes = quotes.filter(
+                    freight_provider__iexact=booking.vx_freight_provider
+                )
+                best_quotes = select_best_options(pricings=quotes)
+                logger.info(f"#372 - Selected Best Pricings: {best_quotes}")
+
+                if best_quotes:
+                    booking.api_booking_quote = best_quotes[0]
+                else:
+                    send_mail(
+                        "PICKED api-endpoint error",
+                        f"Can not get new Quote for this Order: {booking.b_bookingID_Visual}",
+                        "Support Center<dme@deliver-me.com.au>",
+                        ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
+                        fail_silently=False,
+                    )
 
         return Response(
             {

@@ -223,7 +223,9 @@ def get_book_payload(booking, fp_name):
         else booking.de_To_Address_PostalCode,
     }
 
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_deleted=False
+    )
 
     items = []
     totalWeight = 0
@@ -543,7 +545,9 @@ def get_getlabel_payload(booking, fp_name):
         else booking.de_To_Address_PostalCode,
     }
 
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_deleted=False
+    )
 
     items = []
     for line in booking_lines:
@@ -847,7 +851,7 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
 
     if not booking_lines:
         booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
         )
 
     items = []

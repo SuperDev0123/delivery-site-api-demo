@@ -1277,7 +1277,7 @@ def pricing(request):
         )
 
 
-def get_pricing(body, booking_id, is_pricing_only):
+def get_pricing(body, booking_id, is_pricing_only=False):
     """
     @params:
         * is_pricing_only: only get pricing info
@@ -1293,11 +1293,10 @@ def get_pricing(body, booking_id, is_pricing_only):
             booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
-        bookings = Bookings.objects.filter(id=booking_id)
+        booking = Bookings.objects.filter(id=booking_id).first()
 
         # Delete all pricing info if exist for this booking
-        if bookings.exists():
-            booking = bookings[0]
+        if booking:
             pk_booking_id = booking.pk_booking_id
             booking.api_booking_quote = None  # Reset pricing relation
             booking.save()
