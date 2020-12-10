@@ -1585,7 +1585,8 @@ def partial_pricing(request):
 def get_label(request):
     logger.info(f"@810 - GET LABEL: {request.user.username}")
     b_client_order_num = request.GET.get("HostOrderNumber")
-    client_name = request.GET.get("CustomerName")
+    b_client_name = request.GET.get("CustomerName")
+    sscc = request.GET.get("sscc")
 
     if not b_client_order_num:
         code = "missing_param"
@@ -1609,17 +1610,8 @@ def get_label(request):
         )
 
     try:
-        client = DME_clients.objects.get(company_name=client_name)
-    except:
-        code = "not_found"
-        description = "Client does not exist."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
-
-    try:
         booking = Bookings.objects.get(
-            b_client_order_num=b_client_order_num, kf_client_id=client.dme_account_num
+            b_client_order_num=b_client_order_num, b_client_name=b_client_name
         )
     except:
         code = "not_ready"
@@ -1628,27 +1620,71 @@ def get_label(request):
             {"success": False, "code": code, "description": description}
         )
 
-    if not booking.z_label_url:
+    if sscc:
+        is_exist = False
+        sscc_line = None
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+        for line in lines:
+            if line.sscc == sscc:
+                is_exist = True
+                sscc_line = line
+
+        if not is_exist:
+            code = "not_found"
+            description = "SSCC is not found."
+            raise ValidationError(
+                {"success": False, "code": code, "description": description}
+            )
+
+    if not sscc and not booking.z_label_url:
         code = "not_ready"
         description = "Label is not ready."
         raise ValidationError(
             {"success": False, "code": code, "description": description}
         )
 
-    if settings.ENV == "prod":
-        label_url = f"/opt/s3_public/pdfs/{booking.z_label_url}"
+    if sscc:
+        # Build label with Line
+        if settings.ENV == "prod":
+            label_url = f"/opt/s3_public/pdfs/"
+        else:
+            label_url = f"./static/pdfs/"
+
+        logger.info(f"@368 - building label...")
+        label_url = build_label_with_lines(booking, [sscc_line], label_url, "ship_it")
+
+        # Convert label into ZPL format
+        logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
+        result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+        if not result:
+            code = "unknown_status"
+            description = (
+                "Please contact DME support center. <bookings@deliver-me.com.au>"
+            )
+            raise Exception(
+                {"success": False, "code": code, "description": description}
+            )
     else:
-        label_url = f"./static/pdfs/{booking.z_label_url}"
+        if settings.ENV == "prod":
+            label_url = f"/opt/s3_public/pdfs/{booking.z_label_url}"
+        else:
+            label_url = f"./static/pdfs/{booking.z_label_url}"
 
-    result = pdf.pdf_to_zpl(label_url, label_url + ".zpl")
+        result = pdf.pdf_to_zpl(label_url, label_url + ".zpl")
 
-    if not result:
-        code = "unknown_status"
-        description = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        raise Exception({"success": False, "code": code, "description": description})
+        if not result:
+            code = "unknown_status"
+            description = (
+                "Please contact DME support center. <bookings@deliver-me.com.au>"
+            )
+            raise Exception(
+                {"success": False, "code": code, "description": description}
+            )
 
-    with open(label_url + ".zpl", "r") as zpl:
-        zpl_data = zpl.read()
+        with open(label_url + ".zpl", "r") as zpl:
+            zpl_data = zpl.read()
 
     return Response(
         {
