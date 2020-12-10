@@ -1602,20 +1602,13 @@ def get_label(request):
             {"success": False, "code": code, "description": description}
         )
 
-    if not BOK_1_headers.objects.filter(b_client_order_num=b_client_order_num).exists():
-        code = "not_found"
-        description = "Order does not exist."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
-
     try:
         booking = Bookings.objects.get(
             b_client_order_num=b_client_order_num[5:], b_client_name=b_client_name
         )
     except:
-        code = "not_ready"
-        description = "Order is not booked."
+        code = "not_found"
+        description = "Order is not found."
         raise ValidationError(
             {"success": False, "code": code, "description": description}
         )
