@@ -1611,7 +1611,7 @@ def get_label(request):
 
     try:
         booking = Bookings.objects.get(
-            b_client_order_num=b_client_order_num, b_client_name=b_client_name
+            b_client_order_num=b_client_order_num[5:], b_client_name=b_client_name
         )
     except:
         code = "not_ready"
