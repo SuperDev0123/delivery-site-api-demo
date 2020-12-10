@@ -1676,8 +1676,8 @@ def get_label(request):
                 {"success": False, "code": code, "description": description}
             )
 
-        with open(label_url + ".zpl", "r") as zpl:
-            zpl_data = zpl.read()
+    with open(label_url + ".zpl", "r") as zpl:
+        zpl_data = zpl.read()
 
     return Response(
         {
