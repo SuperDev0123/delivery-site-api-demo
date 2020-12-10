@@ -1665,7 +1665,7 @@ def get_label(request):
         else:
             label_url = f"./static/pdfs/{booking.z_label_url}"
 
-        result = pdf.pdf_to_zpl(label_url, label_url + ".zpl")
+        result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
         if not result:
             code = "unknown_status"
@@ -1676,7 +1676,7 @@ def get_label(request):
                 {"success": False, "code": code, "description": description}
             )
 
-    with open(label_url + ".zpl", "r") as zpl:
+    with open(label_url, "r") as zpl:
         zpl_data = zpl.read()
 
     return Response(
