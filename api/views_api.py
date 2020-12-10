@@ -692,6 +692,7 @@ def picked_boks(request):
 
                 if best_quotes:
                     booking.api_booking_quote = best_quotes[0]
+                    booking.save()
                 else:
                     send_mail(
                         "PICKED api-endpoint error",
