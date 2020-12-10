@@ -676,9 +676,12 @@ def picked_boks(request):
                 )
 
         if is_picked_all:
+            logger.info(
+                f"#371 - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
+            )
             _, success, message, quotes = get_pricing(body=None, booking_id=booking.pk)
             logger.info(
-                f"#371 - Pricing result: success: {success}, message: {message}, results cnt: {quotes}"
+                f"#372 - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
             )
 
             # Select best quotes(fastest, lowest)
@@ -687,7 +690,7 @@ def picked_boks(request):
                     freight_provider__iexact=booking.vx_freight_provider
                 )
                 best_quotes = select_best_options(pricings=quotes)
-                logger.info(f"#372 - Selected Best Pricings: {best_quotes}")
+                logger.info(f"#373 - Selected Best Pricings: {best_quotes}")
 
                 if best_quotes:
                     booking.api_booking_quote = best_quotes[0]
