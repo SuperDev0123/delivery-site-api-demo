@@ -377,7 +377,6 @@ def order_boks(request):
     )
 
 
-@transaction.atomic
 @api_view(["POST"])
 def picked_boks(request):
     """
@@ -597,83 +596,82 @@ def picked_boks(request):
 
     # Save
     try:
-        for picked_item in picked_items:
-            # Create new Lines
-            new_line = Booking_lines()
-            new_line.fk_booking_id = pk_booking_id
-            new_line.pk_booking_lines_id = str(uuid.uuid4())
-            new_line.e_type_of_packaging = picked_item["package_type"]
-            new_line.e_qty = 1
-
-            if repack_type == "model_number":
-                new_line.e_item = "Picked Item"
-            else:
-                new_line.e_item = "Repacked Item"
-
-            new_line.e_dimUOM = picked_item["dimensions"]["unit"]
-            new_line.e_dimLength = picked_item["dimensions"]["length"]
-            new_line.e_dimWidth = picked_item["dimensions"]["width"]
-            new_line.e_dimHeight = picked_item["dimensions"]["height"]
-            new_line.e_weightUOM = picked_item["weight"]["unit"]
-            new_line.e_weightPerEach = picked_item["weight"]["weight"]
-            new_line.sscc = picked_item["sscc"]
-            new_line.picked_up_timestamp = picked_item["timestamp"]
-            new_line.save()
-
-            for item in picked_item["items"]:
-                # Soft delete original line
-                if repack_type == "model_number":
-                    line = lines.get(e_item_type=item["model_number"])
-                elif repack_type == "sscc":
-                    line = lines.get(sscc=item["sscc"])
-
-                line.is_deleted = True
-                line.save()
-
-                # Create new Line_Data
-                line_data = Booking_lines_data()
-                line_data.fk_booking_id = pk_booking_id
-                line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
+        with transaction.atomic():
+            for picked_item in picked_items:
+                # Create new Lines
+                new_line = Booking_lines()
+                new_line.fk_booking_id = pk_booking_id
+                new_line.pk_booking_lines_id = str(uuid.uuid4())
+                new_line.e_type_of_packaging = picked_item["package_type"]
+                new_line.e_qty = 1
 
                 if repack_type == "model_number":
-                    line_data.modelNumber = item["model_number"]
-                    line_data.itemDescription = "Picked at warehouse"
-                    line_data.quantity = item["qty"]
+                    new_line.e_item = "Picked Item"
                 else:
-                    line_data.modelNumber = item["sscc"]
-                    line_data.itemDescription = "Repacked at warehouse"
+                    new_line.e_item = "Repacked Item"
 
-                line_data.save()
+                new_line.e_dimUOM = picked_item["dimensions"]["unit"]
+                new_line.e_dimLength = picked_item["dimensions"]["length"]
+                new_line.e_dimWidth = picked_item["dimensions"]["width"]
+                new_line.e_dimHeight = picked_item["dimensions"]["height"]
+                new_line.e_weightUOM = picked_item["weight"]["unit"]
+                new_line.e_weightPerEach = picked_item["weight"]["weight"]
+                new_line.sscc = picked_item["sscc"]
+                new_line.picked_up_timestamp = picked_item["timestamp"]
+                new_line.save()
 
-            # Build label with Line
-            if settings.ENV == "prod":
-                label_url = f"/opt/s3_public/pdfs/"
-            else:
-                label_url = f"./static/pdfs/"
+                for item in picked_item["items"]:
+                    # Soft delete original line
+                    if repack_type == "model_number":
+                        line = lines.get(e_item_type=item["model_number"])
+                    elif repack_type == "sscc":
+                        line = lines.get(sscc=item["sscc"])
 
-            logger.info(f"@368 - building label...")
-            label_url = build_label_with_lines(
-                booking, [new_line], label_url, "ship_it"
-            )
+                    line.is_deleted = True
+                    line.save()
 
-            # Convert label into ZPL format
-            logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
-            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+                    # Create new Line_Data
+                    line_data = Booking_lines_data()
+                    line_data.fk_booking_id = pk_booking_id
+                    line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
 
-            if not result:
-                code = "unknown_status"
-                description = (
-                    "Please contact DME support center. <bookings@deliver-me.com.au>"
+                    if repack_type == "model_number":
+                        line_data.modelNumber = item["model_number"]
+                        line_data.itemDescription = "Picked at warehouse"
+                        line_data.quantity = item["qty"]
+                    else:
+                        line_data.modelNumber = item["sscc"]
+                        line_data.itemDescription = "Repacked at warehouse"
+
+                    line_data.save()
+
+                # Build label with Line
+                if settings.ENV == "prod":
+                    label_url = f"/opt/s3_public/pdfs/"
+                else:
+                    label_url = f"./static/pdfs/"
+
+                logger.info(f"@368 - building label...")
+                label_url = build_label_with_lines(
+                    booking, [new_line], label_url, "ship_it"
                 )
-                raise Exception(
-                    {"success": False, "code": code, "description": description}
-                )
 
-            with open(label_url[:-4] + ".zpl", "r") as zpl:
-                zpl_data = zpl.read()
-                final_result.append(
-                    {"sscc": picked_item["sscc"], "zpl_label": zpl_data}
-                )
+                # Convert label into ZPL format
+                logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
+                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+                if not result:
+                    code = "unknown_status"
+                    description = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                    raise Exception(
+                        {"success": False, "code": code, "description": description}
+                    )
+
+                with open(label_url[:-4] + ".zpl", "r") as zpl:
+                    zpl_data = zpl.read()
+                    final_result.append(
+                        {"sscc": picked_item["sscc"], "zpl_label": zpl_data}
+                    )
 
         if is_picked_all:
             logger.info(
