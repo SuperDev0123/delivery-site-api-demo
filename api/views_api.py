@@ -1595,7 +1595,7 @@ def get_label(request):
             {"success": False, "code": code, "description": description}
         )
 
-    if not client_name:
+    if not b_client_name:
         code = "missing_param"
         description = "'CustomerName' is required."
         raise ValidationError(
