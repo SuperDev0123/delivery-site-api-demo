@@ -39,10 +39,12 @@ from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
     auto_select_pricing_4_bok,
+    get_etd_in_hour,
 )
 from api.operations import push_operations, product_operations as product_oper
 from api.operations.labels.index import build_label_with_lines
 from api.convertors import pdf
+from api.serializers import SimpleQuoteSerializer
 
 
 logger = logging.getLogger("dme_api")
@@ -1370,15 +1372,29 @@ def push_boks(request):
 
                 if json_results:
                     if "Plum" in client_name and "_sapb1" in user.username:
+                        result = {
+                            "success": True,
+                            "results": json_results,
+                        }
+
+                        if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+                            result[
+                                "pricePageUrl"
+                            ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+                        elif bok_2["success"] == dme_constants.BOK_SUCCESS_4:
+                            result[
+                                "statusPageUrl"
+                            ]: f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+
                         return JsonResponse(
                             {
                                 "success": True,
                                 "results": json_results,
                                 "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
-                                "statusPageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/",
                             },
                             status=status.HTTP_201_CREATED,
                         )
+
                     elif "Plum" in client_name and "_magento" in user.username:
                         return JsonResponse(
                             {
@@ -1718,21 +1734,29 @@ def get_delivery_status(request):
     client_booking_id = request.GET.get("identifier")
 
     # 1. Try to find from dme_bookings table
-    bookings = Bookings.objects.filter(b_client_booking_ref_num=client_booking_id)
+    booking = Bookings.objects.filter(
+        b_client_booking_ref_num=client_booking_id
+    ).first()
 
-    if bookings.exists():
-        b_status = bookings.first().b_status
+    if booking:
+        b_status = booking.b_status
+        quote = booking.api_booking_quote
+        quote_data = {}
+
+        if quote:
+            quote_data = SimpleQuoteSerializer(quote).data
+            quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
         category = get_status_category_from_status(b_status)
 
         if category:
             if category == "Booked":
-                return Response({"step": 2, "status": b_status})
+                return Response({"step": 2, "status": b_status, "quote": quote_data})
             elif category == "Transit":
-                return Response({"step": 3, "status": b_status})
+                return Response({"step": 3, "status": b_status, "quote": quote_data})
             elif category == "Delivered":
-                return Response({"step": 4, "status": b_status})
+                return Response({"step": 4, "status": b_status, "quote": quote_data})
             elif category == "Futile":
-                return Response({"step": 5, "status": b_status})
+                return Response({"step": 5, "status": b_status, "quote": quote_data})
 
         logger.info(
             f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
@@ -1748,9 +1772,9 @@ def get_delivery_status(request):
         )
 
     # 2. Try to find from Bok tables
-    bok_1s = BOK_1_headers.objects.filter(client_booking_id=client_booking_id)
+    bok_1s = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
 
-    if bok_1s.exists():
+    if bok_1:
         return Response({"step": 1, "status": None})
 
     return Response(
