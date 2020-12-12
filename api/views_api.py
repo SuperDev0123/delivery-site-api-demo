@@ -42,7 +42,7 @@ from api.fp_apis.utils import (
     get_etd_in_hour,
 )
 from api.operations import push_operations, product_operations as product_oper
-from api.operations.labels.index import build_label_with_lines
+from api.operations.labels.index import build_label
 from api.convertors import pdf
 from api.serializers import SimpleQuoteSerializer
 
@@ -655,7 +655,7 @@ def picked_boks(request):
 
                 logger.info(f"@368 - building label...")
                 label_url = build_label_with_lines(
-                    booking, [new_line], label_url, "ship_it"
+                    booking, label_url, "ship_it", [new_line]
                 )
 
                 # Convert label into ZPL format
@@ -1686,7 +1686,7 @@ def get_label(request):
             label_url = f"./static/pdfs/"
 
         logger.info(f"@368 - building label...")
-        label_url = build_label_with_lines(booking, [sscc_line], label_url, "ship_it")
+        label_url = build_label_with_lines(booking, label_url, "ship_it", [sscc_line])
 
         # Convert label into ZPL format
         logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
