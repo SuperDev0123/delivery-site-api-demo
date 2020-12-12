@@ -123,11 +123,6 @@ def buildSenderSection(
 ):
     booking_line = booking_lines[line_index]
 
-    if booking.v_FPBookingNumber is not None:
-        v_FPBookingNumber = ""
-    else:
-        v_FPBookingNumber = booking.v_FPBookingNumber
-
     tbl_data1 = [[dme_img]]
 
     t1 = Table(
@@ -371,12 +366,7 @@ def buildSenderSection(
         ],
     )
 
-    barcode = (
-        v_FPBookingNumber
-        + "DESC"
-        + str(line_index + 1).zfill(10)
-        + booking.de_To_Address_PostalCode
-    )
+    barcode = gen_barcode(booking, booking_lines, line_index)
     barcode128 = get_barcode_rotated(
         barcode,
         (float(label_settings["barcode_dimension_length"])) * mm,
@@ -388,10 +378,7 @@ def buildSenderSection(
 
     dme_senderscopy = "./static/assets/hunter_senders_copy.png"
     img_senderscopy = Image(dme_senderscopy, 10 * mm, 65 * mm)
-    tbl_data3 = [
-        [""],
-        [img_senderscopy],
-    ]
+    tbl_data3 = [[""], [img_senderscopy]]
     t3 = Table(
         tbl_data3,
         colWidths=(float(label_settings["label_image_size_length"]) * (1 / 6) * mm),
@@ -458,18 +445,11 @@ def buildSenderSection(
         ],
     )
 
-    barcode = (
-        v_FPBookingNumber
-        + "DESC"
-        + str(line_index + 1).zfill(10)
-        + booking.de_To_Address_PostalCode
-        + "   "
-    )
-
+    barcode = gen_barcode(booking, booking_lines, line_index)
     tbl_data2 = [
         [
             code128.Code128(
-                barcode, barHeight=10 * mm, barWidth=0.7, humanReadable=False
+                barcode, barHeight=10 * mm, barWidth=2.7, humanReadable=False
             )
         ],
     ]
@@ -577,7 +557,12 @@ def buildSenderSection(
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
-                % (label_settings["font_size_large"], v_FPBookingNumber),
+                % (
+                    label_settings["font_size_large"],
+                    gen_consignment_num(
+                        booking.vx_freight_provider, booking.b_bookingID_Visual
+                    ),
+                ),
                 style_left,
             ),
         ],
@@ -861,11 +846,6 @@ def buildReceiverSection(
     Story, booking, booking_lines, dme_img, label_settings, line_index
 ):
     booking_line = booking_lines[line_index]
-
-    if booking.v_FPBookingNumber is not None:
-        v_FPBookingNumber = ""
-    else:
-        v_FPBookingNumber = booking.v_FPBookingNumber
 
     tbl_data1 = [[dme_img]]
     t1 = Table(
@@ -1184,14 +1164,7 @@ def buildReceiverSection(
         ],
     )
 
-    barcode = (
-        v_FPBookingNumber
-        + "DESC"
-        + str(line_index + 1).zfill(10)
-        + booking.de_To_Address_PostalCode
-        + "   "
-    )
-
+    barcode = gen_barcode(booking, booking_lines, line_index)
     tbl_data2 = [
         [
             code128.Code128(
@@ -1303,7 +1276,12 @@ def buildReceiverSection(
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
-                % (label_settings["font_size_large"], v_FPBookingNumber),
+                % (
+                    label_settings["font_size_large"],
+                    gen_consignment_num(
+                        booking.vx_freight_provider, booking.b_bookingID_Visual
+                    ),
+                ),
                 style_left,
             ),
         ],
@@ -1585,11 +1563,6 @@ def buildReceiverSection(
 
 def buildPodSection(Story, booking, booking_lines, dme_img, label_settings, line_index):
     booking_line = booking_lines[line_index]
-
-    if booking.v_FPBookingNumber is not None:
-        v_FPBookingNumber = ""
-    else:
-        v_FPBookingNumber = booking.v_FPBookingNumber
 
     tbl_data1 = [
         [
@@ -1953,13 +1926,7 @@ def buildPodSection(Story, booking, booking_lines, dme_img, label_settings, line
         ],
     )
 
-    barcode = (
-        v_FPBookingNumber
-        + "DESC"
-        + str(line_index + 1).zfill(10)
-        + booking.de_To_Address_PostalCode
-        + "   "
-    )
+    barcode = gen_barcode(booking, booking_lines, line_index)
 
     tbl_data2 = [
         [
@@ -2072,7 +2039,12 @@ def buildPodSection(Story, booking, booking_lines, dme_img, label_settings, line
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
-                % (label_settings["font_size_large"], v_FPBookingNumber),
+                % (
+                    label_settings["font_size_large"],
+                    gen_consignment_num(
+                        booking.vx_freight_provider, booking.b_bookingID_Visual
+                    ),
+                ),
                 style_left,
             ),
         ],
@@ -2471,6 +2443,17 @@ def get_total_weight(lines):
         _total_weight += booking_line.e_Total_KG_weight
 
     return _total_weight
+
+
+def gen_barcode(booking, booking_lines, line_index):
+    consignment_num = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
+    )
+    item_index = str(line_index + 1).zfill(3)
+    items_count = str(len(booking_lines)).zfill(3)
+    postal_code = booking.de_To_Address_PostalCode
+
+    return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
 def build_label(booking, filepath=None, lines=[]):

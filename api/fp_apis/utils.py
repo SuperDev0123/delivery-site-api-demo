@@ -25,7 +25,7 @@ def _convert_UOM(value, uom, type, fp_name):
 
 
 def gen_consignment_num(fp_name, booking_visual_id):
-    if fp_name == "hunter":
+    if fp_name.lower() == "hunter":
         digit_len = 6
         limiter = "1"
 
@@ -40,9 +40,9 @@ def gen_consignment_num(fp_name, booking_visual_id):
         )
 
         return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
-    elif fp_name == "tnt":
+    elif fp_name.lower() == "tnt":
         return f"DME{str(booking_visual_id).zfill(9)}"
-    elif fp_name == "dhl":
+    elif fp_name.lower() == "dhl":
         return f"DME{str(booking_visual_id)}"
     else:
         return f"DME{str(booking_visual_id)}"
