@@ -2,14 +2,15 @@ from api.models import Bookings
 from api.operations.labels import ship_it, dhl, hunter
 
 
-def build_label(booking, file_path, format="ship_it", lines=[]):
+def build_label(booking, file_path, lines=[]):
     result = None
+    fp_name = booking.vx_freight_provider.lower()
 
-    if format == "ship_it":
+    if fp_name == "auspost":
         result = ship_it.build_label(booking, file_path, lines)
-    elif format == "dhl":
+    elif fp_name == "dhl":
         result = dhl.build_label(booking, file_path, lines)
-    elif format == "hunter":
+    elif fp_name == "hunter":
         result = hunter.build_label(booking, file_path, lines)
 
     return result

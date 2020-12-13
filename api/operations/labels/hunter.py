@@ -449,7 +449,7 @@ def buildSenderSection(
     tbl_data2 = [
         [
             code128.Code128(
-                barcode, barHeight=10 * mm, barWidth=2.7, humanReadable=False
+                barcode, barHeight=10 * mm, barWidth=0.7, humanReadable=False
             )
         ],
     ]

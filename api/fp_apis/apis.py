@@ -868,8 +868,6 @@ def get_label(request, fp_name):
                     else:
                         label_url = f"./static/pdfs/{z_label_url}"
 
-                    create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-
                     if _fp_name == "tnt":
                         with open(label_url, "wb") as f:
                             f.write(label_data)
@@ -889,7 +887,15 @@ def get_label(request, fp_name):
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
             elif _fp_name in ["dhl"]:
-                z_label_url = build_label(booking, "dhl")
+                file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
+                z_label_url = f"{_fp_name}_au/{file_name}"
+
+                if settings.ENV == "prod":
+                    label_url = f"/opt/s3_public/pdfs/{z_label_url}"
+                else:
+                    label_url = f"./static/pdfs/{z_label_url}"
+
+                build_label(booking, label_url)
 
             booking.z_label_url = z_label_url
             booking.b_error_Capture = None
