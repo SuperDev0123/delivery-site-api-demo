@@ -4389,3 +4389,20 @@ class DME_Augment_Address(models.Model):
 
     class Meta:
         db_table = "dme_augment_address"
+
+
+class FC_Log(models.Model):
+    id = models.AutoField(primary_key=True)
+    client_booking_id = models.CharField(max_length=64)
+    old_quote = models.OneToOneField(
+        API_booking_quotes, on_delete=models.CASCADE, null=True, related_name="+"
+    )  # Optional
+    new_quote = models.OneToOneField(
+        API_booking_quotes, on_delete=models.CASCADE, null=True, related_name="+"
+    )  # Optional
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), null=True, blank=True, default=timezone.now
+    )
+
+    class Meta:
+        db_table = "fc_log"

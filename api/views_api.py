@@ -201,7 +201,6 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
             BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
-            API_booking_quotes.objects.filter(fk_booking_id=bok_1.pk_header_id).delete()
             bok_1.delete()
             logger.info(f"@840 [CANCEL] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
@@ -221,7 +220,13 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             bok_1.quote_id = cost_id
             bok_1.save()
 
-            # TODO: update bok_2 and bok_3
+            fc_log = (
+                FC_Log.objects.filter(client_booking_id=bok_1.client_booking_id)
+                .order_by("z_createdTimeStamp")
+                .last()
+            )
+            fc_log.new_quote = bok_1.quote
+            fc_log.save()
 
             return Response({"success": True}, status.HTTP_200_OK)
         except:
@@ -684,6 +689,18 @@ def picked_boks(request):
 
             # Select best quotes(fastest, lowest)
             if quotes.exists() and quotes.count() > 1:
+                old_fc_log = (
+                    FC_Log.objects.filter(
+                        client_booking_id=booking.b_client_booking_ref_num
+                    )
+                    .order_by("-z_createdTimeStamp")
+                    .first()
+                )
+                new_fc_log = FC_Log.objects.create(
+                    client_booking_id=booking.b_client_booking_ref_num,
+                    old_quote=booking.api_booking_quote,
+                )
+                new_fc_log.save()
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider
                 )
@@ -693,6 +710,8 @@ def picked_boks(request):
                 if best_quotes:
                     booking.api_booking_quote = best_quotes[0]
                     booking.save()
+                    new_fc_log.new_quote = booking.api_booking_quote
+                    new_fc_log.save()
                 else:
                     send_mail(
                         "PICKED api-endpoint error",
@@ -857,6 +876,7 @@ def push_boks(request):
     bok_2s = boks_json["booking_lines"]
     client_name = None
     message = None
+    old_quote = None
     best_quotes = None
     json_results = []
     logger.info(f"@880 Push request payload - {boks_json}")
@@ -882,17 +902,6 @@ def push_boks(request):
             {"success": False, "code": "missing_param", "description": message}
         )
 
-    if not bok_1.get("shipping_type"):
-        message = "'shipping_type' is required."
-        raise ValidationError(
-            {"success": False, "code": "missing_param", "description": message}
-        )
-    elif len(bok_1.get("shipping_type")) != 4:
-        message = "'shipping_type' is not valid."
-        raise ValidationError(
-            {"success": False, "code": "invalid_param", "description": message}
-        )
-
     # Find `Client`
     try:
         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
@@ -909,6 +918,17 @@ def push_boks(request):
 
     # Check required fields
     if "Plum" in client_name and "_sapb1" in user.username:
+        if not bok_1.get("shipping_type"):
+            message = "'shipping_type' is required."
+            raise ValidationError(
+                {"success": False, "code": "missing_param", "description": message}
+            )
+        elif len(bok_1.get("shipping_type")) != 4:
+            message = "'shipping_type' is not valid."
+            raise ValidationError(
+                {"success": False, "code": "invalid_param", "description": message}
+            )
+
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
             logger.info(message)
@@ -1029,7 +1049,6 @@ def push_boks(request):
                 old_bok_1.delete()
                 old_bok_2s.delete()
                 old_bok_3s.delete()
-                API_booking_quotes.objects.filter(fk_booking_id=pk_header_id).delete()
 
     bok_1["pk_header_id"] = str(uuid.uuid4())
     # Check duplicated push with `b_client_order_num`
@@ -1054,6 +1073,7 @@ def push_boks(request):
                         old_bok_1.delete()
                         old_bok_2s.delete()
                         old_bok_3s.delete()
+                        old_quote = old_bok_1.quote
                     else:
                         message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
 
@@ -1086,9 +1106,9 @@ def push_boks(request):
             bok_1["b_001_b_freight_provider"] = "DHL"
 
         if "Plum" in client_name:  # Plum
-            if bok_1["shipping_type"] == "DMEA":
+            if bok_1.get("shipping_type") == "DMEA":
                 bok_1["success"] = dme_constants.BOK_SUCCESS_4
-            elif bok_1["shipping_type"] == "DMEM":
+            else:
                 bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
             bok_1["b_client_name"] = client_name
@@ -1334,6 +1354,12 @@ def push_boks(request):
                     }
                     booking_lines.append(bok_2_line)
 
+                fc_log, _ = FC_Log.objects.get_or_create(
+                    client_booking_id=bok_1["client_booking_id"],
+                    old_quote__isnull=True,
+                    new_quote__isnull=True,
+                )
+                fc_log.old_quote = old_quote
                 body = {"booking": booking, "booking_lines": booking_lines}
                 _, success, message, quote_set = get_pricing(
                     body=body,
@@ -1355,6 +1381,10 @@ def push_boks(request):
                     json_results = SimpleQuoteSerializer(best_quotes, many=True).data
                     json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
+                    if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                        fc_log.new_quote = best_quotes[0]
+                        fc_log.save()
+
                     if len(json_results) == 1:
                         json_results[0]["service_name"] = "Standard"
                     else:
@@ -1367,6 +1397,12 @@ def push_boks(request):
                         else:
                             json_results[1]["service_name"] = "Express"
                             json_results[0]["service_name"] = "Standard"
+                else:
+                    message = (
+                        f"#521 No Pricing results to select - Booking ID: {booking.pk}"
+                    )
+                    logger.error(message)
+                    send_email_to_admins("No FC result", message)
 
                 if json_results:
                     if "Plum" in client_name and "_sapb1" in user.username:
