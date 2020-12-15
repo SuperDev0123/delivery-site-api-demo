@@ -894,8 +894,9 @@ def get_label(request, fp_name):
 
             # Do not send email when booking is `Rebooked`
             if (
-                not _fp_name in ["startrack"] and not "Rebooked" in booking.b_status
-            ) or _fp_name != "sendle":
+                not _fp_name in ["startrack", "sendle"]
+                and not "Rebooked" in booking.b_status
+            ):
                 # Send email when GET_LABEL
                 email_template_name = "General Booking"
 
