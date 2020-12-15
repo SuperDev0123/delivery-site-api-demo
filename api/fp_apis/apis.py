@@ -893,7 +893,9 @@ def get_label(request, fp_name):
             booking.save()
 
             # Do not send email when booking is `Rebooked`
-            if not _fp_name in ["startrack"] and not "Rebooked" in booking.b_status:
+            if (
+                not _fp_name in ["startrack"] and not "Rebooked" in booking.b_status
+            ) or _fp_name != "sendle":
                 # Send email when GET_LABEL
                 email_template_name = "General Booking"
 
@@ -904,14 +906,15 @@ def get_label(request, fp_name):
                     booking.pk, email_template_name, request.user.username
                 )
 
-            if not _fp_name in ["sendle"]:
-                Log(
-                    request_payload=payload,
-                    request_status="SUCCESS",
-                    request_type=f"{fp_name.upper()} GET LABEL",
-                    response=res_content,
-                    fk_booking_id=booking.id,
-                ).save()
+            # if not _fp_name in ["sendle"]:
+            Log(
+                request_payload=payload,
+                request_status="SUCCESS",
+                request_type=f"{fp_name.upper()} GET LABEL",
+                response=res_content,
+                fk_booking_id=booking.id,
+            ).save()
+
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
                 status=status.HTTP_200_OK,
