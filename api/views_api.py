@@ -1435,12 +1435,9 @@ def push_boks(request):
                                 "pricePageUrl"
                             ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
                         elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                            print(
-                                "@1 - ", bok_1["success"], dme_constants.BOK_SUCCESS_4
-                            )
                             result[
                                 "pricePageUrl"
-                            ]: f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+                            ] = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
 
                         return JsonResponse(
                             result,
