@@ -3,8 +3,11 @@ from api.operations.labels import ship_it, dhl, hunter
 
 
 def build_label(booking, file_path, lines=[]):
+    if not booking.api_booking_quote:
+        raise Exception("Booking doens't have quote.")
+
     result = None
-    fp_name = booking.vx_freight_provider.lower()
+    fp_name = booking.api_booking_quote.freight_provider.lower()
 
     if fp_name == "auspost":
         result = ship_it.build_label(booking, file_path, lines)
@@ -17,8 +20,11 @@ def build_label(booking, file_path, lines=[]):
 
 
 def get_barcode(booking, booking_lines):
+    if not booking.api_booking_quote:
+        raise Exception("Booking doens't have quote.")
+
     result = None
-    fp_name = booking.vx_freight_provider.lower()
+    fp_name = booking.api_booking_quote.freight_provider.lower()
 
     if fp_name == "auspost":
         result = ship_it.gen_barcode(booking, booking_lines)
