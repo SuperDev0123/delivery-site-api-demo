@@ -30,7 +30,7 @@ def build_label(booking, file_path, lines=[]):
     if not booking.api_booking_quote:
         raise Exception("Booking doens't have quote.")
 
-    if booking.vx_freight_provider:
+    if not booking.vx_freight_provider:
         _booking = populate_quote_info_to_booking(booking, booking.api_booking_quote)
 
     fp_name = booking.api_booking_quote.freight_provider.lower()
