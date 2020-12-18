@@ -974,7 +974,7 @@ def push_boks(request):
                     if bok_1.get("shipping_type") == "DMEA":
                         bok_1.success = dme_constants.BOK_SUCCESS_4
 
-                if int(old_bok_1.success) == int(dme_constants.BOK_SUCCESS_3):
+                if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
                     return JsonResponse(
                         {
                             "success": True,
@@ -983,7 +983,7 @@ def push_boks(request):
                         },
                         status=status.HTTP_201_CREATED,
                     )
-                elif int(old_bok_1.success) == int(dme_constants.BOK_SUCCESS_4):
+                elif int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_4):
                     return JsonResponse(
                         {
                             "success": True,
@@ -1434,7 +1434,7 @@ def push_boks(request):
                             result[
                                 "pricePageUrl"
                             ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                        elif bok_2["success"] == dme_constants.BOK_SUCCESS_4:
+                        elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
                             result[
                                 "statusPageUrl"
                             ]: f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
