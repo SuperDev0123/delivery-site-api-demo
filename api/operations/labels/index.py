@@ -20,16 +20,19 @@ def populate_quote_info_to_booking(booking, quote):
         booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
     booking.save()
+    return booking
 
 
 def build_label(booking, file_path, lines=[]):
+    result = None
+    _booking = booking
+
     if not booking.api_booking_quote:
         raise Exception("Booking doens't have quote.")
 
     if booking.vx_freight_provider:
-        populate_quote_info_to_booking(booking, booking.api_booking_quote)
+        _booking = populate_quote_info_to_booking(booking, booking.api_booking_quote)
 
-    result = None
     fp_name = booking.api_booking_quote.freight_provider.lower()
 
     if fp_name == "auspost":
