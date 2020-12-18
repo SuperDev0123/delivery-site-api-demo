@@ -1429,13 +1429,15 @@ def push_boks(request):
                             "success": True,
                             "results": json_results,
                         }
-                        print("@1 - ", bok_1["success"], dme_constants.BOK_SUCCESS_3)
 
                         if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
                             result[
                                 "pricePageUrl"
                             ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
                         elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                            print(
+                                "@1 - ", bok_1["success"], dme_constants.BOK_SUCCESS_4
+                            )
                             result[
                                 "pricePageUrl"
                             ]: f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
