@@ -1824,7 +1824,7 @@ def get_delivery_status(request):
         )
 
     # 2. Try to find from Bok tables
-    bok_1s = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
 
     if bok_1:
         return Response({"step": 1, "status": None})
