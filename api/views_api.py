@@ -1315,7 +1315,7 @@ def push_boks(request):
                 bok_1["pk_header_id"], "Pushed", request.user.username
             )
 
-            if bok_1["success"] in [
+            if int(bok_1["success"]) in [
                 dme_constants.BOK_SUCCESS_3,
                 dme_constants.BOK_SUCCESS_4,
             ]:
@@ -1400,7 +1400,7 @@ def push_boks(request):
                     json_results = SimpleQuoteSerializer(best_quotes, many=True).data
                     json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
-                    if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                    if int(bok_1["success"]) == dme_constants.BOK_SUCCESS_4:
                         fc_log.new_quote = best_quotes[0]
                         fc_log.save()
 
@@ -1430,11 +1430,11 @@ def push_boks(request):
                             "results": json_results,
                         }
 
-                        if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+                        if int(bok_1["success"]) == dme_constants.BOK_SUCCESS_3:
                             result[
                                 "pricePageUrl"
                             ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                        elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                        elif int(bok_1["success"]) == dme_constants.BOK_SUCCESS_4:
                             result[
                                 "pricePageUrl"
                             ]: f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
