@@ -78,9 +78,9 @@ urlpatterns += [
     url(r"^generate-pdf/", generate_pdf),
     url(r"^generate-manifest/", generate_manifest),
     # APIs for Warehouse(Paperless)
-    url(r"^boks/picked/", picked_boks),
+    url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
-    url(r"^get_label/", get_label),
+    url(r"^reprint_label/", reprint_label),
     # BOK apis
     url(r"^boks/order/", order_boks),
     url(r"^boks/", push_boks),

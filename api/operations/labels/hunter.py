@@ -2445,7 +2445,7 @@ def get_total_weight(lines):
     return _total_weight
 
 
-def gen_barcode(booking, booking_lines, line_index):
+def gen_barcode(booking, booking_lines, line_index=0):
     consignment_num = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
     )

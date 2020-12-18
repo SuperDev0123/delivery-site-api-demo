@@ -121,6 +121,17 @@ class RotatedImage(Image):
         Image.draw(self)
 
 
+def gen_barcode(booking, booking_lines, line_index=0):
+    consignment_num = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
+    )
+    item_index = str(line_index + 1).zfill(3)
+    items_count = str(len(booking_lines)).zfill(3)
+    postal_code = booking.de_To_Address_PostalCode
+
+    return f"{consignment_num}{item_index}{items_count}{postal_code}"
+
+
 def build_label(booking, filepath, lines=[]):
     logger.info(
         f"#110 Started building label... (Booking ID:{booking.b_bookingID_Visual}, Format: Ship-it)"

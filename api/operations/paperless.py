@@ -21,7 +21,6 @@ def build_xml_with_bok(bok_1, bok_2s):
     order_priority = "11"
     warehouse_code = "01"
     geographic_code = "y"
-    carrier = "STAR"
     reference_number = "y"
     send_status = "x"
 
@@ -105,7 +104,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     SpecialInstructions.text = ""
 
     Carrier = ET.SubElement(Header, "Carrier")
-    Carrier.text = carrier
+    Carrier.text = bok_1.quote.freight_provider if bok_1.quote else ""
 
     ReferenceNumber = ET.SubElement(Header, "ReferenceNumber")
     ReferenceNumber.text = reference_number

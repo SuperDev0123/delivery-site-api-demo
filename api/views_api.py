@@ -40,9 +40,10 @@ from api.fp_apis.utils import (
     get_status_category_from_status,
     auto_select_pricing_4_bok,
     get_etd_in_hour,
+    gen_consignment_num,
 )
 from api.operations import push_operations, product_operations as product_oper
-from api.operations.labels.index import build_label
+from api.operations.labels.index import build_label, get_barcode
 from api.convertors import pdf
 from api.serializers import SimpleQuoteSerializer
 
@@ -385,9 +386,9 @@ def order_boks(request):
 
 
 @api_view(["POST"])
-def picked_boks(request):
+def scanned(request):
     """
-    request when item(s) is picked at warehouse
+    request when item(s) is picked(scanned) at warehouse
     """
     user = request.user
     logger.info(f"@890 Picked by: {user.username}")
@@ -397,7 +398,7 @@ def picked_boks(request):
     b_client_name = request.data.get("CustomerName")
     code = None
     message = None
-    final_result = []
+    labels = []
 
     # Check required params are included
     if not b_client_order_num:
@@ -646,9 +647,11 @@ def picked_boks(request):
                         line_data.modelNumber = item["model_number"]
                         line_data.itemDescription = "Picked at warehouse"
                         line_data.quantity = item["qty"]
+                        line_data.clientRefNumber = picked_item["sscc"]
                     else:
                         line_data.modelNumber = item["sscc"]
                         line_data.itemDescription = "Repacked at warehouse"
+                        line_data.clientRefNumber = picked_item["sscc"]
 
                     line_data.save()
 
@@ -659,7 +662,7 @@ def picked_boks(request):
                     label_url = f"./static/pdfs/"
 
                 logger.info(f"@368 - building label...")
-                label_url = build_label_with_lines(booking, label_url, [new_line])
+                label_url = build_label(booking, label_url, [new_line])
 
                 # Convert label into ZPL format
                 logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
@@ -674,8 +677,12 @@ def picked_boks(request):
 
                 with open(label_url[:-4] + ".zpl", "r") as zpl:
                     zpl_data = zpl.read()
-                    final_result.append(
-                        {"sscc": picked_item["sscc"], "zpl_label": zpl_data}
+                    labels.append(
+                        {
+                            "sscc": picked_item["sscc"],
+                            "label": zpl_data,
+                            "barcode": get_barcode(booking, [new_line]),
+                        }
                     )
 
         if is_picked_all:
@@ -702,7 +709,8 @@ def picked_boks(request):
                 )
                 new_fc_log.save()
                 quotes = quotes.filter(
-                    freight_provider__iexact=booking.vx_freight_provider
+                    freight_provider__iexact=booking.vx_freight_provider,
+                    service_name=booking.vx_serviceName,
                 )
                 best_quotes = select_best_options(pricings=quotes)
                 logger.info(f"#373 - Selected Best Pricings: {best_quotes}")
@@ -725,7 +733,10 @@ def picked_boks(request):
             {
                 "success": True,
                 "message": "Successfully updated picked info.",
-                "labels": json.dumps(final_result),
+                "consignment_number": gen_consignment_num(
+                    booking.vx_freight_provider, booking.b_bookingID_Visual
+                ),
+                "labels": json.dumps(labels),
             }
         )
     except Exception as e:
@@ -948,19 +959,27 @@ def push_boks(request):
     # Check if already pushed 'b_client_order_num', then return URL only
     if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
         if bok_1["b_client_order_num"][:2] != "Q_":
-            old_bok_1 = BOK_1_headers.objects.filter(
+            bok_1_obj = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
-                b_client_order_num=bok_1["b_client_order_num"],
+                # b_client_order_num=bok_1["b_client_order_num"],
                 b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
+                success=dme_constants.BOK_SUCCESS_3,
             ).first()
 
-            if old_bok_1:
+            if bok_1_obj:
+                if not bok_1_obj.b_client_order_num:
+                    bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
+                    bok_1_obj.save()
+
+                    if bok_1.get("shipping_type") == "DMEA":
+                        bok_1.success = dme_constants.BOK_SUCCESS_4
+
                 if int(old_bok_1.success) == int(dme_constants.BOK_SUCCESS_3):
                     return JsonResponse(
                         {
                             "success": True,
                             "results": [],
-                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{old_bok_1.client_booking_id}/",
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1_obj.client_booking_id}/",
                         },
                         status=status.HTTP_201_CREATED,
                     )
@@ -969,7 +988,7 @@ def push_boks(request):
                         {
                             "success": True,
                             "results": [],
-                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{old_bok_1.client_booking_id}/",
+                            "pricePageUrl": f"http://{settings.WEB_SITE_IP}/status/{bok_1_obj.client_booking_id}/",
                         },
                         status=status.HTTP_201_CREATED,
                     )
@@ -1657,7 +1676,10 @@ def partial_pricing(request):
 
 
 @api_view(["GET"])
-def get_label(request):
+def reprint_label(request):
+    """
+    get label(already built)
+    """
     logger.info(f"@810 - GET LABEL: {request.user.username}")
     b_client_order_num = request.GET.get("HostOrderNumber")
     b_client_name = request.GET.get("CustomerName")
