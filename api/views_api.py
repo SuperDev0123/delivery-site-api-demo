@@ -1440,11 +1440,7 @@ def push_boks(request):
                             ]: f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
 
                         return JsonResponse(
-                            {
-                                "success": True,
-                                "results": json_results,
-                                "pricePageUrl": f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/",
-                            },
+                            result,
                             status=status.HTTP_201_CREATED,
                         )
 
