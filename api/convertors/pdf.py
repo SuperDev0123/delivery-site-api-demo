@@ -27,13 +27,7 @@ def pdf_to_base64(pdf_path):
         return b64encode(f.read())
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
-        send_email_to_admins(
-            "PDF covertion error",
-            error_msg,
-            "Support Center<dme@deliver-me.com.au>",
-            ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
-            fail_silently=False,
-        )
+        send_email_to_admins("PDF covertion error", error_msg)
         return False
 
 
@@ -50,11 +44,5 @@ def pdf_to_zpl(pdf_path, zpl_path):
             return True
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
-        send_mail(
-            "PDF covertion error",
-            error_msg,
-            "Support Center<dme@deliver-me.com.au>",
-            ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
-            fail_silently=False,
-        )
+        send_mail("PDF covertion error", error_msg)
         return False
