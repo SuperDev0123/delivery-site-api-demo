@@ -744,7 +744,7 @@ def scanned(request):
         logger.error(error_msg)
         send_email_to_admins(
             "Scanned api-endpoint error",
-            f"error_msg",
+            f"{error_msg}",
         )
         raise ValidationError(
             {
