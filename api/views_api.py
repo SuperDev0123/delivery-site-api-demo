@@ -690,6 +690,11 @@ def scanned(request):
                     )
 
         if is_picked_all:
+            new_fc_log = FC_Log.objects.create(
+                client_booking_id=booking.b_client_booking_ref_num,
+                old_quote=booking.api_booking_quote,
+            )
+            new_fc_log.save()
             logger.info(
                 f"#371 - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
             )
@@ -700,18 +705,6 @@ def scanned(request):
 
             # Select best quotes(fastest, lowest)
             if quotes.exists() and quotes.count() > 1:
-                old_fc_log = (
-                    FC_Log.objects.filter(
-                        client_booking_id=booking.b_client_booking_ref_num
-                    )
-                    .order_by("-z_createdTimeStamp")
-                    .first()
-                )
-                new_fc_log = FC_Log.objects.create(
-                    client_booking_id=booking.b_client_booking_ref_num,
-                    old_quote=booking.api_booking_quote,
-                )
-                new_fc_log.save()
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
