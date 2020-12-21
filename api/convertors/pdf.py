@@ -1,7 +1,7 @@
 from zplgrf import GRF
 from base64 import b64decode, b64encode
 
-from django.core.mail import send_mail
+from api.operations.email_senders import send_email_to_admins
 
 
 def base64_to_pdf(base64, pdf_path):
@@ -17,13 +17,7 @@ def base64_to_pdf(base64, pdf_path):
         return True
     except Exception as e:
         error_msg = f"@300 Error on base64_to_pdf(): {str(e)}"
-        send_mail(
-            "PDF covertion error",
-            error_msg,
-            "Support Center<dme@deliver-me.com.au>",
-            ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
-            fail_silently=False,
-        )
+        send_email_to_admins("PDF covertion error", error_msg)
         return False
 
 
@@ -33,7 +27,7 @@ def pdf_to_base64(pdf_path):
         return b64encode(f.read())
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
-        send_mail(
+        send_email_to_admins(
             "PDF covertion error",
             error_msg,
             "Support Center<dme@deliver-me.com.au>",
