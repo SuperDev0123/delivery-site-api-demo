@@ -44,6 +44,7 @@ from api.fp_apis.utils import (
 )
 from api.operations import push_operations, product_operations as product_oper
 from api.operations.labels.index import build_label, get_barcode
+from api.operations.email_senders import send_email_to_admins
 from api.convertors import pdf
 from api.serializers import SimpleQuoteSerializer
 
@@ -724,12 +725,9 @@ def scanned(request):
                     new_fc_log.new_quote = booking.api_booking_quote
                     new_fc_log.save()
                 else:
-                    send_mail(
-                        "PICKED api-endpoint error",
+                    send_email_to_admins(
+                        "Scanned api-endpoint error",
                         f"Can not get new Quote for this Order: {booking.b_bookingID_Visual}",
-                        "Support Center<dme@deliver-me.com.au>",
-                        ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
-                        fail_silently=False,
                     )
 
         return Response(
@@ -744,12 +742,10 @@ def scanned(request):
         )
     except Exception as e:
         error_msg = f"@370 Error on PICKED api: {str(e)}"
-        send_mail(
-            "PICKED api-endpoint error",
-            error_msg,
-            "Support Center<dme@deliver-me.com.au>",
-            ["goldj@deliver-me.com.au", "petew@deliver-me.com.au"],
-            fail_silently=False,
+        logger.error(error_msg)
+        send_email_to_admins(
+            "Scanned api-endpoint error",
+            f"error_msg",
         )
         raise ValidationError(
             {
