@@ -52,7 +52,7 @@ def get_barcode(booking, booking_lines):
     result = None
     fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    if fp_name == "auspost":
+    if fp_name in ["auspost", "startrack"]:
         result = ship_it.gen_barcode(booking, booking_lines)
     # elif fp_name == "dhl":
     #     result = dhl.build_label(booking, file_path, lines)
