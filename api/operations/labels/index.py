@@ -23,7 +23,7 @@ def populate_quote_info_to_booking(booking, quote):
     return booking
 
 
-def build_label(booking, file_path, lines=[]):
+def build_label(booking, file_path, lines=[], label_index=0):
     result = None
     _booking = booking
 
@@ -36,11 +36,11 @@ def build_label(booking, file_path, lines=[]):
     fp_name = booking.api_booking_quote.freight_provider.lower()
 
     if fp_name == "auspost":
-        result = ship_it.build_label(booking, file_path, lines)
+        result = ship_it.build_label(booking, file_path, lines, label_index)
     elif fp_name == "dhl":
-        result = dhl.build_label(booking, file_path, lines)
+        result = dhl.build_label(booking, file_path, lines, label_index)
     elif fp_name == "hunter":
-        result = hunter.build_label(booking, file_path, lines)
+        result = hunter.build_label(booking, file_path, lines, label_index)
 
     return result
 

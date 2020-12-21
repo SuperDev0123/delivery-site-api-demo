@@ -556,6 +556,7 @@ def scanned(request):
     over_picked_items = []
     estimated_picked = {}
     is_picked_all = True
+    scanned_items_count = 0
 
     for model_number_qty in model_number_qtys:
         estimated_picked[model_number_qty[0]] = 0
@@ -563,6 +564,7 @@ def scanned(request):
     for scanned_item in scanned_items:
         if scanned_item.e_item_type:
             estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
+            scanned_items_count += scanned_item.e_qty
 
         for line_data in line_datas:
             if (
@@ -662,7 +664,8 @@ def scanned(request):
                     label_url = f"./static/pdfs/"
 
                 logger.info(f"@368 - building label...")
-                label_url = build_label(booking, label_url, [new_line])
+                label_index = scanned_items_count + repacked_items_count
+                label_url = build_label(booking, label_url, [new_line], label_index)
 
                 # Convert label into ZPL format
                 logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
@@ -1731,14 +1734,20 @@ def reprint_label(request):
         )
 
     if sscc:
+        filename = (
+            booking.pu_Address_State
+            + "_"
+            + str(booking.b_bookingID_Visual)
+            + "_"
+            + str(sscc_line.pk)
+            + ".pdf"
+        )
+
         # Build label with Line
         if settings.ENV == "prod":
-            label_url = f"/opt/s3_public/pdfs/"
+            label_url = f"/opt/s3_public/pdfs/{filename}"
         else:
-            label_url = f"./static/pdfs/"
-
-        logger.info(f"@368 - building label...")
-        label_url = build_label(booking, label_url, [sscc_line])
+            label_url = f"./static/pdfs/{filename}"
 
         # Convert label into ZPL format
         logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")

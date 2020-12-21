@@ -119,10 +119,8 @@ class RotatedImage(Image):
 
 
 def buildSenderSection(
-    Story, booking, booking_lines, dme_img, label_settings, line_index
+    Story, booking, booking_lines, booking_line, dme_img, label_settings, barcode
 ):
-    booking_line = booking_lines[line_index]
-
     tbl_data1 = [[dme_img]]
 
     t1 = Table(
@@ -366,7 +364,6 @@ def buildSenderSection(
         ],
     )
 
-    barcode = gen_barcode(booking, booking_lines, line_index)
     barcode128 = get_barcode_rotated(
         barcode,
         (float(label_settings["barcode_dimension_length"])) * mm,
@@ -445,7 +442,6 @@ def buildSenderSection(
         ],
     )
 
-    barcode = gen_barcode(booking, booking_lines, line_index)
     tbl_data2 = [
         [
             code128.Code128(
@@ -843,10 +839,8 @@ def buildSenderSection(
 
 
 def buildReceiverSection(
-    Story, booking, booking_lines, dme_img, label_settings, line_index
+    Story, booking, booking_lines, booking_line, dme_img, label_settings, barcode
 ):
-    booking_line = booking_lines[line_index]
-
     tbl_data1 = [[dme_img]]
     t1 = Table(
         tbl_data1,
@@ -1164,7 +1158,6 @@ def buildReceiverSection(
         ],
     )
 
-    barcode = gen_barcode(booking, booking_lines, line_index)
     tbl_data2 = [
         [
             code128.Code128(
@@ -1561,9 +1554,9 @@ def buildReceiverSection(
     return Story
 
 
-def buildPodSection(Story, booking, booking_lines, dme_img, label_settings, line_index):
-    booking_line = booking_lines[line_index]
-
+def buildPodSection(
+    Story, booking, booking_lines, booking_line, dme_img, label_settings, barcode
+):
     tbl_data1 = [
         [
             Paragraph(
@@ -1925,8 +1918,6 @@ def buildPodSection(Story, booking, booking_lines, dme_img, label_settings, line
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ],
     )
-
-    barcode = gen_barcode(booking, booking_lines, line_index)
 
     tbl_data2 = [
         [
@@ -2445,18 +2436,18 @@ def get_total_weight(lines):
     return _total_weight
 
 
-def gen_barcode(booking, booking_lines, line_index=0):
+def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     consignment_num = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
     )
-    item_index = str(line_index + 1).zfill(3)
+    item_index = str(label_index + line_index + 1).zfill(3)
     items_count = str(len(booking_lines)).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, filepath=None, lines=[]):
+def build_label(booking, filepath=None, lines=[], label_index=0):
     logger.info(
         f"#100 Started building label... (Booking ID:{booking.b_bookingID_Visual}, Format: Hunter)"
     )
@@ -2544,11 +2535,13 @@ def build_label(booking, filepath=None, lines=[]):
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 30 * mm, 8 * mm)
     Story = []
+    line_index = 0
 
     for line in lines:
-        for line_index in range(line.e_qty):
+        for j in range(line.e_qty):
+            barcode = gen_barcode(booking, lines, line_index, label_index)
             buildSenderSection(
-                Story, booking, lines, dme_img, label_settings, line_index
+                Story, booking, lines, line, dme_img, label_settings, barcode
             )
             Story.append(Spacer(1, 15))
             hr = HRFlowable(
@@ -2564,12 +2557,16 @@ def build_label(booking, filepath=None, lines=[]):
             Story.append(hr)
             Story.append(Spacer(1, 5))
             buildReceiverSection(
-                Story, booking, lines, dme_img, label_settings, line_index
+                Story, booking, lines, line, dme_img, label_settings, barcode
             )
             Story.append(hr)
             Story.append(Spacer(1, 5))
-            buildPodSection(Story, booking, lines, dme_img, label_settings, line_index)
+            buildPodSection(
+                Story, booking, lines, line, dme_img, label_settings, barcode
+            )
             Story.append(PageBreak())
+
+            line_index += 1
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()

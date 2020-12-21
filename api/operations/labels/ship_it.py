@@ -132,7 +132,7 @@ def gen_barcode(booking, booking_lines, line_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, filepath, lines=[]):
+def build_label(booking, filepath, lines=[], label_index=0):
     logger.info(
         f"#110 Started building label... (Booking ID:{booking.b_bookingID_Visual}, Format: Ship-it)"
     )
@@ -704,7 +704,7 @@ def build_label(booking, filepath, lines=[]):
             barcode = (
                 booking.v_FPBookingNumber
                 + "DESC"
-                + str(k + 1).zfill(10)
+                + str(label_index + k + 1).zfill(10)
                 + booking.de_To_Address_PostalCode
             )
 
