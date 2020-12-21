@@ -1415,9 +1415,7 @@ def push_boks(request):
                             json_results[1]["service_name"] = "Express"
                             json_results[0]["service_name"] = "Standard"
                 else:
-                    message = (
-                        f"#521 No Pricing results to select - Booking ID: {booking.pk}"
-                    )
+                    message = f"#521 No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
                     logger.error(message)
                     send_email_to_admins("No FC result", message)
 
