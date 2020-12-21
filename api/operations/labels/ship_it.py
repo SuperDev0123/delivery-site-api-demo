@@ -701,12 +701,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             Story.append(t1)
 
-            barcode = (
-                booking.v_FPBookingNumber
-                + "DESC"
-                + str(label_index + k + 1).zfill(10)
-                + booking.de_To_Address_PostalCode
-            )
+            barcode = gen_barcode(booking, lines, label_index)
 
             tbl_data = [
                 [
