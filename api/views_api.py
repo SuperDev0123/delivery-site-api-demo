@@ -231,6 +231,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
             return Response({"success": True}, status.HTTP_200_OK)
         except:
+            trace_error.print()
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
 
@@ -740,6 +741,7 @@ def scanned(request):
             }
         )
     except Exception as e:
+        trace_error.print()
         error_msg = f"@370 Error on PICKED api: {str(e)}"
         logger.error(error_msg)
         send_email_to_admins(
@@ -918,6 +920,7 @@ def push_boks(request):
         client_name = client.company_name
         logger.info(f"@810 - client: , {client_name}")
     except Exception as e:
+        trace_error()
         logger.info(f"@811 - client_employee does not exist, {str(e)}")
         message = "You are not allowed to use this api-endpoint."
         logger.info(message)
