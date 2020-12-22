@@ -121,11 +121,11 @@ class RotatedImage(Image):
         Image.draw(self)
 
 
-def gen_barcode(booking, booking_lines, line_index=0):
+def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     consignment_num = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
     )
-    item_index = str(line_index + 1).zfill(3)
+    item_index = str(label_index + line_index + 1).zfill(3)
     items_count = str(len(booking_lines)).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
@@ -228,7 +228,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
     j = 1
 
     for booking_line in lines:
-        for k in range(booking_line.e_qty):
+        for line_index in range(booking_line.e_qty):
             tbl_data1 = [[dme_img]]
             t1 = Table(
                 tbl_data1,
@@ -275,7 +275,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ],
             )
 
-            barcode = gen_barcode(booking, lines, label_index)
+            barcode = gen_barcode(booking, lines, line_index, label_index)
 
             tbl_data3 = [[Paragraph("", style_left)]]
 
@@ -389,7 +389,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             Story.append(hr)
             Story.append(Spacer(1, 5))
 
-            barcode = gen_barcode(booking, lines, label_index)
+            barcode = gen_barcode(booking, lines, line_index, label_index)
 
             tbl_data1 = [
                 [
@@ -702,7 +702,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             Story.append(t1)
 
-            barcode = gen_barcode(booking, lines, label_index)
+            barcode = gen_barcode(booking, lines, line_index, label_index)
 
             tbl_data = [
                 [
