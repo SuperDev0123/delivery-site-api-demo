@@ -35,14 +35,18 @@ def build_label(booking, file_path, lines=[], label_index=0):
 
     fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    if fp_name in ["auspost", "startrack"]:
-        result = ship_it.build_label(booking, file_path, lines, label_index)
-    elif fp_name == "dhl":
-        result = dhl.build_label(booking, file_path, lines, label_index)
-    elif fp_name == "hunter":
-        result = hunter.build_label(booking, file_path, lines, label_index)
-
+    # For test
+    result = ship_it.build_label(booking, file_path, lines, label_index)
     return result
+
+    # if fp_name in ["auspost", "startrack", "TNT"]:
+    #     result = ship_it.build_label(booking, file_path, lines, label_index)
+    # elif fp_name == "dhl":
+    #     result = dhl.build_label(booking, file_path, lines, label_index)
+    # elif fp_name == "hunter":
+    #     result = hunter.build_label(booking, file_path, lines, label_index)
+
+    # return result
 
 
 def get_barcode(booking, booking_lines):
@@ -52,7 +56,7 @@ def get_barcode(booking, booking_lines):
     result = None
     fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    if fp_name in ["auspost", "startrack"]:
+    if fp_name in ["auspost", "startrack", "TNT"]:
         result = ship_it.gen_barcode(booking, booking_lines)
     # elif fp_name == "dhl":
     #     result = dhl.build_label(booking, file_path, lines)
