@@ -531,6 +531,7 @@ class API_booking_quotes(models.Model):
     z_selected_timestamp = models.DateTimeField(
         verbose_name=_("Selected Timestamp"), default=timezone.now
     )
+    is_used = models.BooleanField(default=False)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
