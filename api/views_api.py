@@ -1431,12 +1431,13 @@ def push_boks(request):
                                 "pricePageUrl"
                             ] = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
 
+                        logger.info(f"@8837 - success: True, 201_created")
                         return JsonResponse(
                             result,
                             status=status.HTTP_201_CREATED,
                         )
-
                     elif "Plum" in client_name and "_magento" in user.username:
+                        logger.info(f"@8838 - success: True, 201_created")
                         return JsonResponse(
                             {
                                 "success": True,
@@ -1445,6 +1446,9 @@ def push_boks(request):
                             status=status.HTTP_201_CREATED,
                         )
                 else:
+                    logger.info(
+                        f"@8839 - success: False, message: Didn't get pricings due to wrong suburb and state"
+                    )
                     return JsonResponse(
                         {
                             "success": False,
