@@ -274,7 +274,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
                 ],
             )
-            barcode = str(j).zfill(2)
+
+            barcode = gen_barcode(booking, lines, label_index)
 
             tbl_data3 = [[Paragraph("", style_left)]]
 
@@ -388,7 +389,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             Story.append(hr)
             Story.append(Spacer(1, 5))
 
-            barcode = "PRD" + booking.de_To_Address_PostalCode + "R1"
+            barcode = gen_barcode(booking, lines, label_index)
 
             tbl_data1 = [
                 [

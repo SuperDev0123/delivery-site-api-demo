@@ -1443,6 +1443,10 @@ async def _api_pricing_worker_builder(
                 account_code = payload["spAccountDetails"]["accountCode"]
                 parse_result["account_code"] = account_code
 
+                ###########################
+                # Commented at 12/22/2020 #
+                ###########################
+
                 # quotes = API_booking_quotes.objects.filter(
                 #     fk_booking_id=booking.pk_booking_id,
                 #     freight_provider__iexact=parse_result["freight_provider"],
