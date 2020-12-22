@@ -1440,23 +1440,23 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                parse_result["account_code"] = payload["spAccountDetails"][
-                    "accountCode"
-                ]
+                account_code = payload["spAccountDetails"]["accountCode"]
+                parse_result["account_code"] = account_code
 
-                quotes = API_booking_quotes.objects.filter(
-                    fk_booking_id=booking.pk_booking_id,
-                    freight_provider__iexact=parse_result["freight_provider"],
-                    service_name=parse_result["service_name"],
-                    account_code=payload["spAccountDetails"]["accountCode"],
-                )
+                # quotes = API_booking_quotes.objects.filter(
+                #     fk_booking_id=booking.pk_booking_id,
+                #     freight_provider__iexact=parse_result["freight_provider"],
+                #     service_name=parse_result["service_name"],
+                #     account_code=payload["spAccountDetails"]["accountCode"],
+                # )
 
-                if quotes.exists():
-                    serializer = ApiBookingQuotesSerializer(
-                        quotes[0], data=parse_result
-                    )
-                else:
-                    serializer = ApiBookingQuotesSerializer(data=parse_result)
+                # if quotes.exists():
+                #     serializer = ApiBookingQuotesSerializer(
+                #         quotes[0], data=parse_result
+                #     )
+                # else:
+
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
 
                 if serializer.is_valid():
                     serializer.save()
