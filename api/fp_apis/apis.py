@@ -1306,7 +1306,7 @@ def get_pricing(body, booking_id, is_pricing_only=False):
             pk_booking_id = booking.pk_booking_id
             booking.api_booking_quote = None  # Reset pricing relation
             booking.save()
-            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).delete()
+            # API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).delete()
             DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
         else:
             return False, "Booking does not exist", None
