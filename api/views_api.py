@@ -681,7 +681,7 @@ def scanned(request):
                     )
 
                 with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                    zpl_data = b64encode(zpl.read())
+                    zpl_data = str(b64encode(zpl.read()))
                     labels.append(
                         {
                             "sscc": picked_item["sscc"],
@@ -1773,7 +1773,7 @@ def reprint_label(request):
             )
 
     with open(label_url[:-4] + ".zpl", "rb") as zpl:
-        zpl_data = b64encode(zpl.read())
+        zpl_data = str(b64encode(zpl.read()))
 
     return Response(
         {
