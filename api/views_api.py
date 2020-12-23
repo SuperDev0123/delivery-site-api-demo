@@ -680,7 +680,7 @@ def scanned(request):
                         {"success": False, "code": code, "description": description}
                     )
 
-                with open(label_url[:-4] + ".zpl", "r") as zpl:
+                with open(label_url[:-4] + ".zpl", "rb") as zpl:
                     zpl_data = b64encode(zpl.read())
                     labels.append(
                         {
@@ -1772,7 +1772,7 @@ def reprint_label(request):
                 {"success": False, "code": code, "description": description}
             )
 
-    with open(label_url[:-4] + ".zpl", "r") as zpl:
+    with open(label_url[:-4] + ".zpl", "rb") as zpl:
         zpl_data = b64encode(zpl.read())
 
     return Response(
