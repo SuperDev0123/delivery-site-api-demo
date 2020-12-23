@@ -227,7 +227,6 @@ class Client_employees(models.Model):
         role = DME_Roles.objects.get(id=self.role_id)
         return role.role_code
 
-
 class Dme_manifest_log(models.Model):
     id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(
