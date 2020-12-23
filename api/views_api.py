@@ -731,7 +731,7 @@ def scanned(request):
                 "consignment_number": gen_consignment_num(
                     booking.vx_freight_provider, booking.b_bookingID_Visual
                 ),
-                "labels": json.dumps(labels),
+                "labels": labels,
             }
         )
     except Exception as e:
