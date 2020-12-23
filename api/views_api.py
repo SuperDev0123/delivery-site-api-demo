@@ -4,6 +4,7 @@ import json
 import logging
 import requests
 from datetime import datetime
+from base64 import b64decode, b64encode
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -680,7 +681,7 @@ def scanned(request):
                     )
 
                 with open(label_url[:-4] + ".zpl", "r") as zpl:
-                    zpl_data = zpl.read()
+                    zpl_data = b64encode(zpl.read())
                     labels.append(
                         {
                             "sscc": picked_item["sscc"],
@@ -1772,7 +1773,7 @@ def reprint_label(request):
             )
 
     with open(label_url[:-4] + ".zpl", "r") as zpl:
-        zpl_data = zpl.read()
+        zpl_data = b64encode(zpl.read())
 
     return Response(
         {
