@@ -46,6 +46,8 @@ router.register(r"clientproducts", ClientProductsViewSet, basename="client_produ
 router.register(r"clientras", ClientRasViewSet, basename="client_ras")
 router.register(r"charts", ChartsViewSet, basename="charts")
 router.register(r"errors", ErrorViewSet, basename="error")
+router.register(r"clients", ClientViewSet, basename="clients")
+router.register(r"roles", RoleViewSet, basename="roles")
 
 urlpatterns = router.urls
 
