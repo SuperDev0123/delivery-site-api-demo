@@ -38,7 +38,7 @@ def pdf_to_zpl(pdf_path, zpl_path):
             f = open(zpl_path, "w")
 
             for grf in pages:
-                f.write(grf.to_zpl())
+                f.write(grf.to_zpl(compression=2, quantity=1))
 
             f.close()
             return True
