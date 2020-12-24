@@ -1828,9 +1828,14 @@ def get_delivery_status(request):
 
     # 2. Try to find from Bok tables
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    quote = bok_1.quote
+
+    if quote:
+        quote_data = SimpleQuoteSerializer(quote).data
+        quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
 
     if bok_1:
-        return Response({"step": 1, "status": None})
+        return Response({"step": 1, "status": None, "quote": quote_data})
 
     return Response(
         {
