@@ -958,7 +958,6 @@ def push_boks(request):
                 fk_client_id=client.dme_account_num,
                 # b_client_order_num=bok_1["b_client_order_num"],
                 b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
-                success=dme_constants.BOK_SUCCESS_3,
             ).first()
 
             if bok_1_obj:
@@ -978,7 +977,7 @@ def push_boks(request):
                         },
                         status=status.HTTP_201_CREATED,
                     )
-                elif int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_4):
+                else:
                     return JsonResponse(
                         {
                             "success": True,
@@ -1787,6 +1786,7 @@ def reprint_label(request):
 @permission_classes((AllowAny,))
 def get_delivery_status(request):
     client_booking_id = request.GET.get("identifier")
+    quote_data = {}
 
     # 1. Try to find from dme_bookings table
     booking = Bookings.objects.filter(
@@ -1796,7 +1796,6 @@ def get_delivery_status(request):
     if booking:
         b_status = booking.b_status
         quote = booking.api_booking_quote
-        quote_data = {}
 
         if quote:
             quote_data = SimpleQuoteSerializer(quote).data
