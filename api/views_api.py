@@ -103,15 +103,15 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_boks_with_pricings(self, request):
-        identifier = request.GET["identifier"]
+        client_booking_id = request.GET["identifier"]
 
-        if not identifier:
+        if not client_booking_id:
             return Response(
                 {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
-            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
             quote_set = API_booking_quotes.objects.filter(
                 fk_booking_id=bok_1.pk_header_id
@@ -1831,37 +1831,56 @@ def get_delivery_status(request):
     if booking:
         b_status = booking.b_status
         quote = booking.api_booking_quote
+        category = get_status_category_from_status(b_status)
+
+        if not category:
+            logger.info(
+                f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
+            )
+            return Response(
+                {
+                    "code": "unknown_status",
+                    "message": "Please contact support center!",
+                    "step": None,
+                    "status": None,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        booking = {
+            "b_bookingID_Visual": booking.b_bookingID_Visual,
+            "b_client_order_num": booking.b_client_order_num,
+            "b_client_sales_inv_num": booking.b_client_sales_inv_num,
+        }
 
         if quote:
             quote_data = SimpleQuoteSerializer(quote).data
             quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
-        category = get_status_category_from_status(b_status)
 
-        if category:
-            if category == "Booked":
-                return Response({"step": 2, "status": b_status, "quote": quote_data})
-            elif category == "Transit":
-                return Response({"step": 3, "status": b_status, "quote": quote_data})
-            elif category == "Delivered":
-                return Response({"step": 4, "status": b_status, "quote": quote_data})
-            elif category == "Futile":
-                return Response({"step": 5, "status": b_status, "quote": quote_data})
+        if category == "Booked":
+            step = 2
+        elif category == "Transit":
+            step = 3
+        elif category == "Delivered":
+            step = 4
+        elif category == "Futile":
+            step = 5
 
-        logger.info(
-            f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
-        )
         return Response(
             {
-                "code": "unknown_status",
-                "message": "Please contact support center!",
-                "step": None,
-                "status": None,
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+                "step": step,
+                "status": b_status,
+                "quote": quote_data,
+                "booking": booking,
+            }
         )
 
     # 2. Try to find from Bok tables
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    booking = {
+        "b_client_order_num": bok_1.b_client_order_num,
+        "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
+    }
     quote = bok_1.quote
 
     if quote:
@@ -1869,7 +1888,9 @@ def get_delivery_status(request):
         quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
 
     if bok_1:
-        return Response({"step": 1, "status": None, "quote": quote_data})
+        return Response(
+            {"step": 1, "status": None, "quote": quote_data, "booking": booking}
+        )
 
     return Response(
         {
