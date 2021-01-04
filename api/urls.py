@@ -81,6 +81,7 @@ urlpatterns += [
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
     url(r"^reprint_label/", reprint_label),
+    url(r"^manifest/", manifest_boks),
     # BOK apis
     url(r"^boks/order/", order_boks),
     url(r"^boks/", push_boks),

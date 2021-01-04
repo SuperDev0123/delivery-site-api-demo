@@ -1,8 +1,10 @@
+import io
 import time
 import uuid
 import json
 import logging
 import requests
+import zipfile
 from datetime import datetime
 from base64 import b64decode, b64encode
 
@@ -45,6 +47,7 @@ from api.fp_apis.utils import (
 from api.operations import push_operations, product_operations as product_oper
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.email_senders import send_email_to_admins
+from api.operations.manifests.index import build_manifest
 from api.convertors import pdf
 from api.serializers import SimpleQuoteSerializer
 
@@ -884,7 +887,7 @@ def push_boks(request):
     old_quote = None
     best_quotes = None
     json_results = []
-    logger.info(f"@880 Push request payload - {boks_json}")
+    logger.info(f"@880 Push request - [{request.method}] {boks_json}")
 
     # Check missing model numbers
     if bok_2s and "model_number" in bok_2s[0]:
@@ -1778,6 +1781,38 @@ def reprint_label(request):
         {
             "success": True,
             "zpl": zpl_data,
+        }
+    )
+
+
+@transaction.atomic
+@api_view(["POST"])
+def manifest_boks(request):
+    """
+    MANIFEST api
+    """
+    user = request.user
+    request_json = request.data
+    logger.info(f"@879 Pusher: {user.username}")
+    logger.info(f"@880 Push request - [{request.method}] {request_json}")
+
+    # Required fields
+    if not request_json.get("OrderNumbers"):
+        message = "'OrderNumbers' is required."
+        raise ValidationError(
+            {"success": False, "code": "missing_param", "description": message}
+        )
+
+    booking_ids = request_json.get("OrderNumbers")
+    manifest_url = build_manifest(booking_ids, user.username)
+
+    with open(manifest_url, "rb") as manifest:
+        manifest_data = str(b64encode(manifest.read()))
+
+    return Response(
+        {
+            "success": True,
+            "manifest": manifest_data,
         }
     )
 

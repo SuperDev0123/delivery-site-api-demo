@@ -9,6 +9,7 @@ import logging
 import operator
 import requests
 import tempfile
+import zipfile
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 from time import gmtime, strftime
@@ -59,7 +60,6 @@ from .utils import (
     build_pdf,
     build_xls_and_send,
     make_3digit,
-    build_manifest,
     get_sydney_now_time,
     get_client_name,
     calc_collect_after_status_change,
@@ -69,6 +69,7 @@ from .utils import (
     get_eta_de_by,
     sanitize_address,
 )
+from api.operations.manifests.index import build_manifest
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
 from api.operations.email_senders import send_booking_status_email
