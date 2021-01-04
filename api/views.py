@@ -4192,6 +4192,18 @@ class ClientEmployeesViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": ""})
 
+    @action(detail=False, methods=["get"])
+    def get_client_employees(self, request, format=None):
+        results = []
+        try:
+            pk_id_dme_client = self.request.query_params.get("client_id", None)
+            queryset = Client_employees.objects.filter(fk_id_dme_client=pk_id_dme_client)
+            serializer = ClientEmployeesSerializer(queryset, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return JsonResponse({"results": ""})
+
 class ClientProductsViewSet(viewsets.ViewSet):
     serializer_class = ClientProductsSerializer
     queryset = Client_Products.objects.all()
@@ -4371,6 +4383,45 @@ class ClientViewSet(viewsets.ViewSet):
         queryset = DME_clients.objects.all()
         serializer = ClientSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    def update(self, request, pk=None):
+        client = DME_clients.objects.get(pk=pk)
+        print('client', client)
+        serializer = ClientSerializer(client, data=request.data)
+        print('serializer', serializer)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = DME_clients.objects.get_or_create(**request.data)
+            print('resultObject', resultObject)
+            return JsonResponse(
+                {
+                    "result": ClientSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            print("@Exception",e)
+            return JsonResponse({"results": None})
+
+    @action(detail=True, methods=["get"])
+    def get(self, request, pk, format=None):
+        try:
+            queryset = DME_clients.objects.filter(pk=pk)
+            serializer = ClientSerializer(queryset, many=True)
+            return JsonResponse(
+                {"result": serializer.data[0]},
+                status=200,
+            )
+        except Exception as e:
+            return JsonResponse({"results": ""})
 
 class RoleViewSet(viewsets.ViewSet):
     serializer_class = RoleSerializer
