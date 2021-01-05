@@ -1,4 +1,5 @@
 import os
+from os.path import basename
 import smtplib
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -33,7 +34,7 @@ def send_email(
         file_content = open(f, "rb").read()
 
         if f.lower().endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif")):
-            image = MIMEImage(file_content, name=os.path.basename(f))
+            image = MIMEImage(file_content, name=basename(f))
             msg.attach(image)
         else:
             pdf = MIMEApplication(file_content, Name=basename(f))

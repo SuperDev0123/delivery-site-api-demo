@@ -2855,16 +2855,14 @@ class Log(models.Model):
         verbose_name=_("Request Type"), max_length=30, blank=True, default=None
     )
     fk_service_provider_id = models.CharField(
-        verbose_name=_("Service Provider ID"), max_length=36, blank=True, default=None
+        verbose_name=_("Service Provider ID"),
+        max_length=36,
+        blank=True,
+        default=None,
+        null=True,
     )
     z_temp_success_seaway_history = models.BooleanField(
         verbose_name=_("Passed by log script"), default=False, blank=True, null=True
-    )
-    z_createdBy = models.CharField(
-        verbose_name=_("Created By"), max_length=40, blank=True, default=None
-    )
-    z_modifiedBy = models.CharField(
-        verbose_name=_("Modified By"), max_length=40, blank=True, default=None
     )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True

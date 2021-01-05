@@ -827,7 +827,7 @@ def get_label(request, fp_name):
                 json_data is None
                 or (
                     json_data is not None
-                    and _fp_name == "startrack"
+                    and _fp_name in ["startrack", "auspost"]
                     and json_data["labels"][0]["status"] == "PENDING"
                 )
                 or (
@@ -849,7 +849,8 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.info(f"### Response ({fp_name} get_label): {s0}")
 
-            if _fp_name in ["startrack"]:
+            if _fp_name in ["startrack", "auspost"]:
+                print("@1 - ", json_data["labels"][0]["url"])
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
@@ -902,7 +903,10 @@ def get_label(request, fp_name):
             booking.save()
 
             # Do not send email when booking is `Rebooked`
-            if not _fp_name in ["startrack"] and not "Rebooked" in booking.b_status:
+            if (
+                not _fp_name in ["startrack", "auspost"]
+                and not "Rebooked" in booking.b_status
+            ):
                 # Send email when GET_LABEL
                 email_template_name = "General Booking"
 
