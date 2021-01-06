@@ -4148,61 +4148,50 @@ class BookingSetsViewSet(viewsets.ViewSet):
 class ClientEmployeesViewSet(viewsets.ViewSet):
     serializer_class = ClientEmployeesSerializer
 
-    def list(self, request, pk=None):
+    def list(self, request):
         queryset = Client_employees.objects.all()
         serializer = ClientEmployeesSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def update(self, request, pk=None):
+    def update(self, request):
         clientEmployee = Client_employees.objects.get(pk=pk)
-        print('clientEmployee', clientEmployee)
         serializer = ClientEmployeesSerializer(clientEmployee, data=request.data)
-        print('serializer', serializer)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def add(self, request, pk=None):
-        try:
-            request.data.pop("id", None)
-            resultObject = Client_employees.objects.get_or_create(**request.data)
-            print('resultObject', resultObject)
-            return JsonResponse(
-                {
-                    "result": ClientEmployeesSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            print("@Exception",e)
-            return JsonResponse({"results": None})
+        request.data.pop("id", None)
+        obj, is_created = Client_employees.objects.get_or_create(**request.data)
+
+        return JsonResponse(
+            {
+                "result": ClientEmployeesSerializer(obj).data,
+                "isCreated": is_created,
+            },
+            status=200,
+        )
 
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
-        try:
-            queryset = Client_employees.objects.filter(pk=pk)
-            serializer = ClientEmployeesSerializer(queryset, many=True)
-            return JsonResponse(
-                {"result": serializer.data[0]},
-                status=200,
-            )
-        except Exception as e:
-            return JsonResponse({"results": ""})
+        serializer = ClientEmployeesSerializer(self.get_object())
+        return JsonResponse(
+            {"result": serializer.data},
+            status=200,
+        )
 
     @action(detail=False, methods=["get"])
     def get_client_employees(self, request, format=None):
         results = []
-        try:
-            pk_id_dme_client = self.request.query_params.get("client_id", None)
-            queryset = Client_employees.objects.filter(fk_id_dme_client=pk_id_dme_client)
-            serializer = ClientEmployeesSerializer(queryset, many=True)
-            return Response(serializer.data)
+        pk_id_dme_client = self.request.query_params.get("client_id", None)
+        queryset = Client_employees.objects.filter(fk_id_dme_client=pk_id_dme_client)
+        serializer = ClientEmployeesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-        except Exception as e:
-            return JsonResponse({"results": ""})
 
 class ClientProductsViewSet(viewsets.ViewSet):
     serializer_class = ClientProductsSerializer
@@ -4375,6 +4364,7 @@ class ErrorViewSet(viewsets.ViewSet):
         serializer = ErrorSerializer(queryset, many=True)
         return Response(serializer.data)
 
+
 class ClientViewSet(viewsets.ViewSet):
     serializer_class = ClientSerializer
     queryset = DME_clients.objects.all()
@@ -4386,9 +4376,9 @@ class ClientViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         client = DME_clients.objects.get(pk=pk)
-        print('client', client)
+        print("client", client)
         serializer = ClientSerializer(client, data=request.data)
-        print('serializer', serializer)
+        print("serializer", serializer)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -4399,7 +4389,7 @@ class ClientViewSet(viewsets.ViewSet):
         try:
             request.data.pop("id", None)
             resultObject = DME_clients.objects.get_or_create(**request.data)
-            print('resultObject', resultObject)
+            print("resultObject", resultObject)
             return JsonResponse(
                 {
                     "result": ClientSerializer(resultObject[0]).data,
@@ -4408,7 +4398,7 @@ class ClientViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            print("@Exception",e)
+            print("@Exception", e)
             return JsonResponse({"results": None})
 
     @action(detail=True, methods=["get"])
@@ -4423,6 +4413,7 @@ class ClientViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": ""})
 
+
 class RoleViewSet(viewsets.ViewSet):
     serializer_class = RoleSerializer
     queryset = DME_Roles.objects.all()
@@ -4431,4 +4422,3 @@ class RoleViewSet(viewsets.ViewSet):
         queryset = DME_Roles.objects.all()
         serializer = RoleSerializer(queryset, many=True)
         return Response(serializer.data)
-
