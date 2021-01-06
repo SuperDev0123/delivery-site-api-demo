@@ -4145,39 +4145,9 @@ class BookingSetsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class ClientEmployeesViewSet(viewsets.ViewSet):
+class ClientEmployeesViewSet(viewsets.ModelViewSet):
+    queryset = Client_employees.objects.all()
     serializer_class = ClientEmployeesSerializer
-
-    def update(self, request):
-        clientEmployee = Client_employees.objects.get(pk=pk)
-        serializer = ClientEmployeesSerializer(clientEmployee, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        request.data.pop("id", None)
-        obj, is_created = Client_employees.objects.get_or_create(**request.data)
-
-        return JsonResponse(
-            {
-                "result": ClientEmployeesSerializer(obj).data,
-                "isCreated": is_created,
-            },
-            status=200,
-        )
-
-    @action(detail=True, methods=["get"])
-    def get(self, request, pk, format=None):
-        serializer = ClientEmployeesSerializer(self.get_object())
-        return JsonResponse(
-            {"result": serializer.data},
-            status=200,
-        )
 
     @action(detail=False, methods=["get"])
     def get_client_employees(self, request, format=None):

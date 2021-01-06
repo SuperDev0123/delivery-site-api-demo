@@ -541,8 +541,8 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 
 
 class ClientEmployeesSerializer(serializers.ModelSerializer):
-    role_name = serializers.CharField(source='role.role_code')
-    client_name = serializers.CharField(source='fk_id_dme_client.company_name')
+    role_name = serializers.CharField(source="role.role_code")
+    client_name = serializers.CharField(source="fk_id_dme_client.company_name")
     warehouse_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -550,11 +550,14 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_warehouse_name(self, instance):
-        if instance.warehouse_id is None:
-            return ""
-        else:
-            warehouse = Client_warehouses.objects.get(pk_id_client_warehouses=instance.warehouse_id + 1)
+        if instance.warehouse_id:
+            warehouse = Client_warehouses.objects.get(
+                pk_id_client_warehouses=instance.warehouse_id + 1
+            )
             return warehouse.warehousename
+
+        return None
+
 
 class SqlQueriesSerializer(serializers.ModelSerializer):
     sql_query = serializers.CharField()
@@ -614,10 +617,12 @@ class ErrorSerializer(serializers.ModelSerializer):
             "fp_name",
         )
 
+
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Roles
         fields = "__all__"
+
 
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
