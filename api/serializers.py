@@ -541,8 +541,10 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 
 
 class ClientEmployeesSerializer(serializers.ModelSerializer):
-    role_name = serializers.CharField(source="role.role_code")
-    client_name = serializers.CharField(source="fk_id_dme_client.company_name")
+    role_name = serializers.CharField(source="role.role_code", required=False)
+    client_name = serializers.CharField(
+        source="fk_id_dme_client.company_name", required=False
+    )
     warehouse_name = serializers.SerializerMethodField()
 
     class Meta:
