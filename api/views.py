@@ -4148,11 +4148,6 @@ class BookingSetsViewSet(viewsets.ViewSet):
 class ClientEmployeesViewSet(viewsets.ViewSet):
     serializer_class = ClientEmployeesSerializer
 
-    def list(self, request):
-        queryset = Client_employees.objects.all()
-        serializer = ClientEmployeesSerializer(queryset, many=True)
-        return Response(serializer.data)
-
     def update(self, request):
         clientEmployee = Client_employees.objects.get(pk=pk)
         serializer = ClientEmployeesSerializer(clientEmployee, data=request.data)
