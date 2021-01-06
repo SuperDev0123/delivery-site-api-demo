@@ -51,6 +51,8 @@ router.register(r"clientprocess", ClientProcessViewSet, basename="clientprocess_
 router.register(
     r"augmentaddress", AugmentAddressViewSet, basename="augmentaddress_rules"
 )
+router.register(r"clients", ClientViewSet, basename="clients")
+router.register(r"roles", RoleViewSet, basename="roles")
 
 urlpatterns = router.urls
 

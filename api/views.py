@@ -4212,20 +4212,19 @@ class BookingSetsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class ClientEmployeesViewSet(viewsets.ViewSet):
+class ClientEmployeesViewSet(viewsets.ModelViewSet):
+    queryset = Client_employees.objects.all()
     serializer_class = ClientEmployeesSerializer
 
-    def update(self, request, pk=None):
-        clientEmployee = Client_employees.objects.get(pk=pk)
-        serializer = ClientEmployeesSerializer(clientEmployee, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=False, methods=["get"])
+    def get_client_employees(self, request, format=None):
+        pk_id_dme_client = self.request.query_params.get("client_id", None)
+        queryset = Client_employees.objects.filter(fk_id_dme_client=pk_id_dme_client)
+        serializer = ClientEmployeesSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
-class ClientProductsViewSet(viewsets.ViewSet):
+class ClientProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProductsSerializer
     queryset = Client_Products.objects.all()
 
@@ -4241,147 +4240,13 @@ class ClientProductsViewSet(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"results": ""})
 
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            resultObject = Client_Products.objects.get_or_create(**request.data)
 
-            return JsonResponse(
-                {
-                    "result": ClientProductsSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            return JsonResponse({"result": None}, status=400)
-
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        clientproducts = Client_Products.objects.get(pk=pk)
-        serializer = ClientProductsSerializer(clientproducts)
-        clientproducts.delete()
-        return Response(serializer.data)
-
-
-class ClientRasViewSet(viewsets.ViewSet):
+class ClientRasViewSet(viewsets.ModelViewSet):
     serializer_class = ClientRasSerializer
     queryset = Client_Ras.objects.all()
 
-    def list(self, request, pk=None):
-        queryset = Client_Ras.objects.all()
-        serializer = ClientRasSerializer(queryset, many=True)
-        return Response(serializer.data)
 
-    @action(detail=True, methods=["get"])
-    def get(self, request, pk, format=None):
-        try:
-            queryset = Client_Ras.objects.filter(pk=pk)
-            serializer = ClientRasSerializer(queryset, many=True)
-            return JsonResponse(
-                {"result": serializer.data[0]},
-                status=200,
-            )
-        except Exception as e:
-            return JsonResponse({"results": ""})
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            resultObject = Client_Ras.objects.get_or_create(**request.data)
-
-            return JsonResponse(
-                {
-                    "result": ClientRasSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            return JsonResponse({"result": None}, status=400)
-
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        clientras = Client_Ras.objects.get(pk=pk)
-        serializer = ClientRasSerializer(clientras)
-        clientras.delete()
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["put"])
-    def edit(self, request, pk, format=None):
-        data = Client_Ras.objects.get(pk=pk)
-        serializer = ClientRasSerializer(data, data=request.data)
-        try:
-
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print("Exception: ", e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ClientRasViewSet(viewsets.ViewSet):
-    serializer_class = ClientRasSerializer
-    queryset = Client_Ras.objects.all()
-
-    def list(self, request, pk=None):
-        queryset = Client_Ras.objects.all()
-        serializer = ClientRasSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def get(self, request, pk, format=None):
-        try:
-            queryset = Client_Ras.objects.filter(pk=pk)
-            serializer = ClientRasSerializer(queryset, many=True)
-            return JsonResponse(
-                {"result": serializer.data[0]},
-                status=200,
-            )
-
-        except Exception as e:
-            return JsonResponse({"results": ""})
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            resultObject = Client_Ras.objects.get_or_create(**request.data)
-
-            return JsonResponse(
-                {
-                    "result": ClientRasSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            return JsonResponse({"result": None}, status=400)
-
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        clientras = Client_Ras.objects.get(pk=pk)
-        serializer = ClientRasSerializer(clientras)
-        clientras.delete()
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["put"])
-    def edit(self, request, pk, format=None):
-        data = Client_Ras.objects.get(pk=pk)
-        serializer = ClientRasSerializer(data, data=request.data)
-        try:
-
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print("Exception: ", e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ErrorViewSet(viewsets.ViewSet):
+class ErrorViewSet(viewsets.ModelViewSet):
     serializer_class = ErrorSerializer
     queryset = DME_Error.objects.all()
 
@@ -4397,86 +4262,24 @@ class ErrorViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class ClientProcessViewSet(viewsets.ViewSet):
+class ClientProcessViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProcessSerializer
     queryset = Client_Process_Mgr.objects.all()
 
-    def list(self, request, pk=None):
-        queryset = Client_Process_Mgr.objects.all()
-        serializer = ClientProcessSerializer(queryset, many=True)
-        return Response(serializer.data)
 
-    @action(detail=False, methods=["get"])
-    def get(self, request, format=None):
-        try:
-            pk_booking_id = self.request.query_params.get("bookingId", None)
-            queryset = Client_Process_Mgr.objects.filter(fk_booking_id=pk_booking_id)
-            serializer = ClientProcessSerializer(queryset, many=False)
-            return Response(serializer.data)
-
-        except Exception as e:
-            return JsonResponse({})
-
-
-class AugmentAddressViewSet(viewsets.ViewSet):
+class AugmentAddressViewSet(viewsets.ModelViewSet):
     serializer_class = AugmentAddressSerializer
     queryset = DME_Augment_Address.objects.all()
 
-    def list(self, request, pk=None):
-        queryset = DME_Augment_Address.objects.all()
-        serializer = AugmentAddressSerializer(queryset, many=True)
 
-        return JsonResponse({"results": serializer.data})
+class ClientViewSet(viewsets.ModelViewSet):
+    serializer_class = ClientSerializer
+    queryset = DME_clients.objects.all()
 
-    @action(detail=True, methods=["get"])
-    def get(self, request, pk, format=None):
-        try:
-            queryset = DME_Augment_Address.objects.filter(pk=pk)
-            serializer = AugmentAddressSerializer(queryset, many=True)
-            return JsonResponse(
-                {"result": serializer.data[0]},
-                status=200,
-            )
 
-        except Exception as e:
-            return JsonResponse({"results": ""})
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            resultObject = DME_Augment_Address.objects.get_or_create(**request.data)
-
-            return JsonResponse(
-                {
-                    "result": AugmentAddressSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            return JsonResponse({"result": None}, status=400)
-
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        augmentaddress = DME_Augment_Address.objects.get(pk=pk)
-        serializer = AugmentAddressSerializer(augmentaddress)
-        augmentaddress.delete()
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["put"])
-    def edit(self, request, pk, format=None):
-        print("pk", pk)
-        data = DME_Augment_Address.objects.get(pk=pk)
-        serializer = AugmentAddressSerializer(data, data=request.data)
-        try:
-
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # print("Exception: ", e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class RoleViewSet(viewsets.ModelViewSet):
+    serializer_class = RoleSerializer
+    queryset = DME_Roles.objects.all()
 
 
 class ChartsViewSet(viewsets.ViewSet):
