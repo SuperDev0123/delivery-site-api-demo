@@ -9,6 +9,7 @@ from api.models import (
     Booking_lines,
     Booking_lines_data,
     EmailLogs,
+    DME_Options,
 )
 from api.outputs.email import send_email
 
