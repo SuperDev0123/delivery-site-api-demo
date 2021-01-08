@@ -1675,7 +1675,8 @@ def reprint_label(request):
     """
     get label(already built)
     """
-    logger.info(f"@810 - GET LABEL: {request.user.username}")
+    logger.info(f"@871 User: {request.user.username}")
+    logger.info(f"@872 request payload - {request.data}")
     b_client_order_num = request.GET.get("HostOrderNumber")
     b_client_name = request.GET.get("CustomerName")
     sscc = request.GET.get("sscc")
