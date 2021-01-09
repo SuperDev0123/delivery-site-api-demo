@@ -74,11 +74,11 @@ urlpatterns += [
     url(r"^download/", download),
     # Delete
     url(r"^delete-file/", delete_file),
-    # Generates
-    url(r"^generate-csv/", generate_csv),
-    url(r"^generate-xml/", generate_xml),
-    url(r"^generate-pdf/", generate_pdf),
-    url(r"^generate-manifest/", generate_manifest),
+    # Build & download
+    url(r"^get-csv/", get_csv),  # build & download CSV
+    url(r"^get-xml/", get_xml),  # build & download XML
+    url(r"^get-pdf/", get_pdf),  # build & download PDF
+    url(r"^get-manifest/", get_manifest),  # build & download Manifest
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),

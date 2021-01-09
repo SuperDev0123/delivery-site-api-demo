@@ -55,7 +55,6 @@ from django_rest_passwordreset.signals import (
 from .serializers import *
 from .models import *
 from .utils import (
-    _generate_csv,
     build_xml,
     build_pdf,
     build_xls_and_send,
@@ -70,6 +69,7 @@ from .utils import (
     sanitize_address,
 )
 from api.operations.manifests.index import build_manifest
+from api.operations.csv.index import build_csv
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
 from api.operations.email_senders import send_booking_status_email
@@ -1113,7 +1113,7 @@ class BookingsViewSet(viewsets.ViewSet):
             return Response({"status": "error"})
 
     @action(detail=False, methods=["post"])
-    def generate_xls(self, request, format=None):
+    def get_xls(self, request, format=None):
         user_id = int(self.request.user.id)
         dme_employee = (
             DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
@@ -3599,7 +3599,7 @@ def delete_file(request):
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def generate_csv(request):
+def get_csv(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body.get("vx_freight_provider", None)
@@ -3616,7 +3616,7 @@ def generate_csv(request):
             id=booking_ids[0]
         ).vx_freight_provider
 
-    has_error = _generate_csv(booking_ids, vx_freight_provider.lower())
+    has_error = build_csv(booking_ids, vx_freight_provider.lower())
 
     if has_error:
         return JsonResponse({"status": "Failed to create CSV"}, status=400)
@@ -3666,7 +3666,7 @@ def generate_csv(request):
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def generate_xml(request):
+def get_xml(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
@@ -3686,13 +3686,13 @@ def generate_xml(request):
                 {"error": "Found set has booked bookings", "booked_list": booked_list}
             )
     except Exception as e:
-        # print('generate_xml error: ', e)
+        # print('get_xml error: ', e)
         return JsonResponse({"error": "error"})
 
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def generate_manifest(request):
+def get_manifest(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
@@ -3724,13 +3724,13 @@ def generate_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
-        # print("generate_mainifest error: ", e)
+        # print("get_mainifest error: ", e)
         return JsonResponse({"error": "error"})
 
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def generate_pdf(request):
+def get_pdf(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
@@ -3743,7 +3743,7 @@ def generate_pdf(request):
         else:
             return JsonResponse({"error": "No one has been generated"})
     except Exception as e:
-        # print('generate_pdf error: ', e)
+        # print('get_pdf error: ', e)
         return JsonResponse({"error": "error"})
 
 
