@@ -32,7 +32,7 @@ def build_csv(booking_ids):
         csv_name = f"State-Transport__{str(len(booking_ids))}__{now_str}.csv"
 
     # Open CSV file
-    if production:
+    if settings.ENV == "prod":
         if vx_freight_provider == "cope":
             f = open(f"/dme_sftp/cope_au/pickup_ext/cope_au/{csv_name}", "w")
         elif vx_freight_provider == "dhl":

@@ -48,16 +48,14 @@ from .constants import (
 )
 
 if settings.ENV == "local":
-    IS_PRODUCTION = False  # Local
-else:
-    IS_PRODUCTION = True  # Dev
-
-if settings.ENV == "local":
     DME_LEVEL_API_URL = "http://localhost:3000"
+    S3_URL = "./static"
 elif settings.ENV == "dev":
     DME_LEVEL_API_URL = "http://52.62.109.115:3000"
+    S3_URL = "/opt/s3_public"
 elif settings.ENV == "prod":
     DME_LEVEL_API_URL = "http://52.62.102.72:3000"
+    S3_URL = "/opt/s3_public"
 
 logger = logging.getLogger("dme_api")
 
@@ -257,20 +255,16 @@ def book(request, fp_name):
                     status_history.create(booking, "Booked", request.user.username)
 
                     # Save Label for Hunter
-                    create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-                    if booking.vx_freight_provider.lower() == "hunter":
+                    create_dir_if_not_exist(f"{S3_URL}/pdfs/{_fp_name}_au")
+                    if _fp_name == "hunter":
                         json_label_data = json.loads(response.content)
                         file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                        if IS_PRODUCTION:
-                            file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                        else:
-                            file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                        with open(file_url, "wb") as f:
+                        with open(full_path, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
-                            booking.z_label_url = f"hunter_au/{file_name}"
+                            booking.z_label_url = f"{_fp_name}_au/{file_name}"
                             booking.save()
 
                             # Send email when GET_LABEL
@@ -283,19 +277,15 @@ def book(request, fp_name):
                                 booking.pk, email_template_name, request.user.username
                             )
                     # Save Label for Capital
-                    elif booking.vx_freight_provider.lower() == "capital":
+                    elif _fp_name == "capital":
                         json_label_data = json.loads(response.content)
                         file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                        if IS_PRODUCTION:
-                            file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                        else:
-                            file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                        with open(file_url, "wb") as f:
+                        with open(full_path, "wb") as f:
                             f.write(base64.b64decode(json_label_data["Label"]))
                             f.close()
-                            booking.z_label_url = f"capital_au/{file_name}"
+                            booking.z_label_url = f"{_fp_name}_au/{file_name}"
                             booking.save()
 
                             # Send email when GET_LABEL
@@ -308,7 +298,7 @@ def book(request, fp_name):
                                 booking.pk, email_template_name, request.user.username
                             )
                     # Save Label for Startrack
-                    elif booking.vx_freight_provider.lower() == "startrack":
+                    elif _fp_name == "startrack":
                         Api_booking_confirmation_lines.objects.filter(
                             fk_booking_id=booking.pk_booking_id
                         ).delete()
@@ -319,7 +309,7 @@ def book(request, fp_name):
                                 api_item_id=item["item_id"],
                             ).save()
                     # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
-                    elif booking.vx_freight_provider.lower() == "dhl":
+                    elif _fp_name == "dhl":
                         if (
                             booking.kf_client_id
                             == "461162D2-90C7-BF4E-A905-000000000002"
@@ -850,7 +840,6 @@ def get_label(request, fp_name):
                 logger.info(f"### Response ({fp_name} get_label): {s0}")
 
             if _fp_name in ["startrack", "auspost"]:
-                print("@1 - ", json_data["labels"][0]["url"])
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
@@ -863,19 +852,15 @@ def get_label(request, fp_name):
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
                     z_label_url = f"{_fp_name}_au/{file_name}"
-
-                    if settings.ENV == "prod":
-                        label_url = f"/opt/s3_public/pdfs/{z_label_url}"
-                    else:
-                        label_url = f"./static/pdfs/{z_label_url}"
+                    full_path = f"{S3_URL}/pdfs/{z_label_url}"
 
                     if _fp_name == "tnt":
-                        with open(label_url, "wb") as f:
+                        with open(full_path, "wb") as f:
                             f.write(label_data)
                             f.close()
                     else:
                         pdf_url = json_data["pdfURL"]
-                        download_from_url(pdf_url, label_url)
+                        download_from_url(pdf_url, full_path)
                 except KeyError as e:
                     if "errorMessage" in json_data:
                         error_msg = json_data["errorMessage"]
@@ -888,15 +873,9 @@ def get_label(request, fp_name):
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
             elif _fp_name in ["dhl"]:
-                file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
+                file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+                file_path, file_name = build_label(booking, file_path)
                 z_label_url = f"{_fp_name}_au/{file_name}"
-
-                if settings.ENV == "prod":
-                    label_url = f"/opt/s3_public/pdfs/{z_label_url}"
-                else:
-                    label_url = f"./static/pdfs/{z_label_url}"
-
-                build_label(booking, label_url)
 
             booking.z_label_url = z_label_url
             booking.b_error_Capture = None
@@ -1053,14 +1032,9 @@ def get_order_summary(request, fp_name):
 
             try:
                 file_name = f"biopak_manifest_{str(booking.vx_fp_order_id)}_{str(datetime.now())}.pdf"
+                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                else:
-                    file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-                with open(file_url, "wb") as f:
+                with open(full_path, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
                     f.close()
 
@@ -1156,14 +1130,9 @@ def pod(request, fp_name):
         file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
 
         file_name += ".jpeg" if _fp_name in ["hunter"] else ".png"
+        full_path = f"{S3_URL}/imgs/{_fp_name}_au/{file_name}"
 
-        if IS_PRODUCTION:
-            file_url = f"/opt/s3_public/imgs/{_fp_name}_au/{file_name}"
-        else:
-            file_url = f"./static/imgs/{file_name}"
-
-        create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-        f = open(file_url, "wb")
+        f = open(full_path, "wb")
         f.write(base64.b64decode(podData))
         f.close()
 
@@ -1213,18 +1182,13 @@ def reprint(request, fp_name):
 
             try:
                 file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                else:
-                    file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-                with open(file_url, "wb") as f:
+                with open(full_path, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
 
-                booking.z_label_url = file_url
+                booking.z_label_url = f"{_fp_name}_au/{file_name}"
                 booking.b_error_Capture = None
                 booking.save()
 

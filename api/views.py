@@ -19,22 +19,6 @@ from pydash import _
 
 from django.shortcuts import render
 from django.core import serializers, files
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import viewsets, views, status, authentication, permissions
-from rest_framework.permissions import (
-    IsAuthenticated,
-    AllowAny,
-    IsAuthenticatedOrReadOnly,
-)
-from rest_framework.authentication import BasicAuthentication, SessionAuthentication
-from rest_framework.decorators import (
-    api_view,
-    authentication_classes,
-    permission_classes,
-    action,
-)
-from rest_framework.parsers import MultiPartParser
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.db.models import Q, Case, When, Count, F, Sum
 from django.db import connection
@@ -45,16 +29,27 @@ from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
-
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import viewsets, views, status, authentication, permissions
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+    action,
+)
+from rest_framework.parsers import MultiPartParser
 from django_rest_passwordreset.signals import (
     reset_password_token_created,
     post_password_reset,
     pre_password_reset,
 )
 
-from .serializers import *
-from .models import *
-from .utils import (
+from api.serializers import *
+from api.models import *
+from api.utils import (
     build_xml,
     build_pdf,
     build_xls_and_send,
@@ -70,9 +65,10 @@ from .utils import (
 )
 from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
+from api.operations.email_senders import send_booking_status_email
+from api.operations.labels.index import build_label
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
-from api.operations.email_senders import send_booking_status_email
 from api.outputs.email import send_email
 from api.common import status_history
 from api.common.common_times import convert_to_UTC_tz
@@ -82,6 +78,13 @@ from api.file_operations import (
     delete as delete_lib,
     downloads as download_libs,
 )
+
+if settings.ENV == "local":
+    S3_URL = "./static"
+elif settings.ENV == "dev":
+    S3_URL = "/opt/s3_public"
+elif settings.ENV == "prod":
+    S3_URL = "/opt/s3_public"
 
 logger = logging.getLogger("dme_api")
 
@@ -1108,8 +1111,6 @@ class BookingsViewSet(viewsets.ViewSet):
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
-            if settings.env == "local":
-                print("Exception: ", e)
             return Response({"status": "error"})
 
     @action(detail=False, methods=["post"])
@@ -3598,7 +3599,8 @@ def delete_file(request):
 
 
 @api_view(["POST"])
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
 def get_csv(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
@@ -3606,25 +3608,24 @@ def get_csv(request):
     file_paths = []
     label_names = []
 
-    if len(booking_ids) == 0:
+    if not booking_ids:
         return JsonResponse(
-            {"filename": "", "status": "No bookings to build CSV"}, status=400
+            {"success": False, "filename": "", "status": "No bookings to build CSV."},
+            status=400,
         )
 
-    if not vx_freight_provider:
-        vx_freight_provider = Bookings.objects.get(
-            id=booking_ids[0]
-        ).vx_freight_provider
+    bookings = Bookings.objects.filter(pk__in=booking_ids)
 
-    has_error = build_csv(booking_ids, vx_freight_provider.lower())
+    if bookings and not vx_freight_provider:
+        vx_freight_provider = bookings.first().vx_freight_provider.lower()
+
+    has_error = build_csv(booking_ids)
 
     if has_error:
         return JsonResponse({"status": "Failed to create CSV"}, status=400)
     else:
-        for booking_id in booking_ids:
-            booking = Bookings.objects.get(id=booking_id)
-
-            if vx_freight_provider.lower() == "cope":
+        for booking in bookings:
+            if vx_freight_provider == "cope":
                 ############################################################################################
                 # This is a comment this is what I did and why to make this happen 05/09/2019 pete walbolt #
                 ############################################################################################
@@ -3655,26 +3656,42 @@ def get_csv(request):
                         )
                         api_booking_confirmation_line.save()
                         index = index + 1
-            elif vx_freight_provider == "dhl":
+            elif vx_freight_provider in ["dhl", "state transport"]:
                 booking.b_dateBookedDate = get_sydney_now_time()
+                booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.save()
+
+                if vx_freight_provider == "state transport":
+                    file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
+                    file_path, file_name = build_label(booking, file_path)
+                    booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
+                    booking.save()
+
+                    # Send email when GET_LABEL
+                    email_template_name = "General Booking"
+
+                    # if booking.b_booking_Category == "Salvage Expense":
+                    #     email_template_name = "Return Booking"
+
+                    send_booking_status_email(
+                        booking.pk, email_template_name, request.user.username
+                    )
 
         return JsonResponse({"status": "Created CSV successfully"}, status=200)
 
 
 @api_view(["POST"])
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
 def get_xml(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
 
     if len(booking_ids) == 0:
-        return JsonResponse(
-            {"success": "success", "status": "No bookings to build XML"}
-        )
+        return JsonResponse({"success": True, "status": "No bookings to build XML"})
 
     try:
         booked_list = build_xml(booking_ids, vx_freight_provider, 1)
@@ -3686,12 +3703,12 @@ def get_xml(request):
                 {"error": "Found set has booked bookings", "booked_list": booked_list}
             )
     except Exception as e:
-        # print('get_xml error: ', e)
-        return JsonResponse({"error": "error"})
+        return JsonResponse({"error": str(e)})
 
 
 @api_view(["POST"])
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
 def get_manifest(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
@@ -3729,7 +3746,8 @@ def get_manifest(request):
 
 
 @api_view(["POST"])
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
 def get_pdf(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
@@ -3748,8 +3766,8 @@ def get_pdf(request):
 
 
 @api_view(["GET"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
 def getAttachmentsHistory(request):
     fk_booking_id = request.GET.get("fk_booking_id")
     return_data = []
@@ -3778,8 +3796,8 @@ def getAttachmentsHistory(request):
 
 
 @api_view(["GET"])
-@authentication_classes((SessionAuthentication, BasicAuthentication))
-@permission_classes((AllowAny,))
+@authentication_classes([JSONWebTokenAuthentication])
+@permission_classes([IsAuthenticated])
 def getSuburbs(request):
     requestType = request.GET.get("type")
     return_data = []
@@ -4163,7 +4181,8 @@ class PricingRulesViewSet(viewsets.ViewSet):
             return JsonResponse({"result": None}, status=400)
 
 
-class BookingSetsViewSet(viewsets.ViewSet):
+class BookingSetsViewSet(viewsets.ModelViewSet):
+    queryset = BookingSets.objects.all()
     serializer_class = BookingSetsSerializer
 
     def list(self, request, pk=None):
@@ -4195,21 +4214,6 @@ class BookingSetsViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, pk=None):
-        bookingset = BookingSets.objects.get(pk=pk)
-        serializer = BookingSetsSerializer(bookingset, data=request.data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk=None):
-        bookingset = BookingSets.objects.get(pk=pk)
-        serializer = BookingSetsSerializer(bookingset)
-        bookingset.delete()
-        return Response(serializer.data)
 
 
 class ClientEmployeesViewSet(viewsets.ModelViewSet):

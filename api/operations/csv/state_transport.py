@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def filter_booking_lines(booking, booking_lines):
     _booking_lines = []
 
@@ -13,8 +16,6 @@ def wrap_in_quote(string):
 
 
 def build_csv(fileHandler, bookings, booking_lines):
-    has_error = None
-
     # Write Header
     fileHandler.write(
         "account, reference, ownno, sender_name, sender_address1, sender_address2, sender_suburb, sender_postcode, \
@@ -96,16 +97,12 @@ items, weight, service, labels, ready_time \n"
 
         for booking_line in _booking_lines:
             if booking_line.e_weightUOM and booking_line.e_weightPerEach:
-                if (
-                    booking_line.e_weightUOM.upper() == "GRAM"
-                    or booking_line.e_weightUOM.upper() == "GRAMS"
-                ):
+                e_weightUOM = booking_line.e_weightUOM.upper()
+
+                if e_weightUOM in ["GRAM", "GRAMS"]:
                     h15 += booking_line.e_qty * booking_line.e_weightPerEach / 1000
 
-                elif (
-                    booking_line.e_weightUOM.upper() == "TON"
-                    or booking_line.e_weightUOM.upper() == "TONS"
-                ):
+                elif e_weightUOM in ["TON", "TONS"]:
                     h15 += booking_line.e_qty * booking_line.e_weightPerEach * 1000
                 else:
                     h15 += booking_line.e_qty * booking_line.e_weightPerEach
@@ -157,10 +154,4 @@ items, weight, service, labels, ready_time \n"
 
         fileHandler.write(eachLineText + newLine)
 
-    if has_error:
-        for booking in bookings:
-            booking.v_FPBookingNumber = None
-            booking.vx_freight_provider_carrier = None
-            booking.save()
-
-    return has_error
+    return None

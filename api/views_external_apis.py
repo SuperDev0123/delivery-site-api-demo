@@ -12,7 +12,7 @@ from rest_framework.decorators import (
     permission_classes,
 )
 from rest_framework import views, serializers, status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from api.serializers_api import *
 from api.models import *

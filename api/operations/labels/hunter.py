@@ -2574,4 +2574,4 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
     logger.info(
         f"#109 Finished building HUNTER label... (Booking ID: {booking.b_bookingID_Visual}, Format: Hunter)"
     )
-    return filepath + filename
+    return filepath, filename

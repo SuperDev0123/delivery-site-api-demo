@@ -37,6 +37,7 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
+from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -663,17 +664,32 @@ def scanned(request):
                     line_data.save()
 
                 # Build label with Line
+                if not booking.api_booking_quote:
+                    raise Exception("Booking doens't have quote.")
+
+                if not booking.vx_freight_provider and booking.api_booking_quote:
+                    _booking = migrate_quote_info_to_booking(
+                        booking, booking.api_booking_quote
+                    )
+
                 if settings.ENV == "prod":
-                    label_url = f"/opt/s3_public/pdfs/"
+                    file_path = (
+                        f"/opt/s3_public/pdfs/{booking.vx_freight_provider.lower()}_au/"
+                    )
                 else:
-                    label_url = f"./static/pdfs/"
+                    file_path = f"./static/pdfs/"
 
                 logger.info(f"@368 - building label...")
                 label_index = scanned_items_count + repacked_items_count
-                label_url = build_label(booking, label_url, [new_line], label_index)
+                file_path, file_name = build_label(
+                    booking, file_path, [new_line], label_index
+                )
 
                 # Convert label into ZPL format
-                logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
+                logger.info(
+                    f"@369 - converting LABEL({file_path}/{file_name}) into ZPL format..."
+                )
+                label_url = f"{file_path}/{file_name}"
                 result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
                 if not result:

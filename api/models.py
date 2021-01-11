@@ -1,20 +1,26 @@
 import pytz
 import logging
 from datetime import datetime, date, timedelta, time
-from django.utils import timezone
 
-from django.db import models, transaction
 from django.utils import timezone
 from django.conf import settings
+from django.db import models, transaction
+from django.db.models import Max
+from django.db.models.signals import pre_save, post_save
 from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Max
 from django.contrib.auth.models import User
 from django.dispatch import receiver
-from django.db.models.signals import pre_save, post_save
 
 from api.common import trace_error
+
+if settings.ENV == "local":
+    S3_URL = "./static"
+elif settings.ENV == "dev":
+    S3_URL = "/opt/s3_public"
+elif settings.ENV == "prod":
+    S3_URL = "/opt/s3_public"
 
 logger = logging.getLogger("dme_api")
 
@@ -224,6 +230,7 @@ class Client_employees(models.Model):
     def get_role(self):
         role = DME_Roles.objects.get(id=self.role_id)
         return role.role_code
+
 
 class Dme_manifest_log(models.Model):
     id = models.AutoField(primary_key=True)
@@ -4253,6 +4260,55 @@ class BookingSets(models.Model):
 
     class Meta:
         db_table = "dme_booking_sets"
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+
+        if not creating:
+            old_obj = BookingSets.objects.get(pk=self.pk)
+
+        if self.status == "Starting BOOK" and self.status != old_obj.status:
+            # Check if set includes bookings that should be BOOKed via CSV
+            booking_ids = self.booking_ids.split(", ")
+            bookings = Bookings.objects.filter(
+                pk__in=booking_ids,
+                vx_freight_provider="State Transport",
+                b_dateBookedDate__isnull=True,
+            )
+
+            if bookings:
+                from api.operations.csv.index import build_csv
+                from api.operations.labels.index import build_label
+                from api.operations.email_senders import send_booking_status_email
+                from api.utils import get_sydney_now_time
+                from api.common import status_history
+
+                build_csv(bookings.values_list("pk", flat=True))
+
+                for booking in bookings:
+                    booking.b_dateBookedDate = get_sydney_now_time()
+                    booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
+                    status_history.create(booking, "Booked", "DME_BE")
+                    booking.b_status = "Booked"
+                    booking.save()
+
+                    # Build Label and send booking email
+                    _fp_name = booking.vx_freight_provider.lower()
+                    file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+                    file_path, file_name = build_label(booking, file_path)
+                    booking.z_label_url = f"{_fp_name}_au/{file_name}"
+                    booking.save()
+
+                    # Send email when GET_LABEL
+                    email_template_name = "General Booking"
+
+                    # if booking.b_booking_Category == "Salvage Expense":
+                    #     email_template_name = "Return Booking"
+
+                    send_booking_status_email(booking.pk, email_template_name, "DME_BE")
+
+        return super(BookingSets, self).save(*args, **kwargs)
 
 
 class Tokens(models.Model):
