@@ -1882,6 +1882,8 @@ def get_delivery_status(request):
             step = 4
         elif category == "Futile":
             step = 5
+        else:
+            step = 1
 
         return Response(
             {
