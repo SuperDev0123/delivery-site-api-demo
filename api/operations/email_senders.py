@@ -425,7 +425,7 @@ def send_email_to_admins(subject, message):
         option_name="send_email_to_admins"
     ).first()
 
-    if dme_option_4_email_to_admin and dme_option_4_email_to_admins.option_value == "1":
+    if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
         to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
 
         if settings.ENV in ["prod"]:
