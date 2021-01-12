@@ -1164,7 +1164,7 @@ def push_boks(request):
                 bok_1["b_037_b_pu_email"] = "pu_plum@email.com"
 
             if not bok_1.get("b_038_b_pu_phone_main"):
-                bok_1["b_038_b_pu_phone_main"] = "419294339"
+                bok_1["b_038_b_pu_phone_main"] = "0419294339"
 
             if not bok_1.get("b_029_b_pu_address_street_1"):
                 bok_1["b_029_b_pu_address_street_1"] = warehouse.warehouse_address1
@@ -1173,7 +1173,7 @@ def push_boks(request):
                 bok_1["b_030_b_pu_address_street_2"] = warehouse.warehouse_address2
 
             if not bok_1.get("b_034_b_pu_address_country"):
-                bok_1["b_034_b_pu_address_country"] = "Australia"
+                bok_1["b_034_b_pu_address_country"] = "AU"
 
             if not bok_1.get("b_033_b_pu_address_postalcode"):
                 bok_1["b_033_b_pu_address_postalcode"] = warehouse.warehouse_postal_code
@@ -1194,7 +1194,7 @@ def push_boks(request):
                 bok_1["b_063_b_del_email"] = "de_plum@email.com"
 
             if not bok_1.get("b_064_b_del_phone_main"):
-                bok_1["b_064_b_del_phone_main"] = "419294339"
+                bok_1["b_064_b_del_phone_main"] = "0419294339"
 
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
