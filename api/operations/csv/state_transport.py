@@ -18,9 +18,9 @@ def wrap_in_quote(string):
 def build_csv(fileHandler, bookings, booking_lines):
     # Write Header
     fileHandler.write(
-        "account, reference, ownno, sender_name, sender_address1, sender_address2, sender_suburb, sender_postcode, \
-receiver_name, receiver_addres1, receiver_addres2, receiver_suburb, receiver_postcode, \
-items, weight, service, labels, ready_time \n"
+        "account,reference,ownno,sender_name,sender_address1,sender_address2,sender_suburb,sender_postcode,\
+receiver_name,receiver_addres1,receiver_addres2,receiver_suburb,receiver_postcode,\
+items,weight,service,labels,ready_time\n"
     )
 
     # Write Each Line
@@ -35,82 +35,82 @@ items, weight, service, labels, ready_time \n"
         if not booking.b_clientReference_RA_Numbers:
             h02 = ""
         else:
-            h02 = str(booking.b_clientReference_RA_Numbers)
+            h02 = wrap_in_quote(str(booking.b_clientReference_RA_Numbers))
 
         if not booking.b_client_sales_inv_num:
             h03 = ""
         else:
-            h03 = str(booking.b_client_sales_inv_num)
+            h03 = wrap_in_quote(str(booking.b_client_sales_inv_num))
 
         if not booking.puCompany:
             h04 = ""
         else:
-            h04 = str(booking.puCompany)
+            h04 = wrap_in_quote(str(booking.puCompany))
 
         if not booking.pu_Address_Street_1:
             h05 = ""
         else:
-            h05 = str(booking.pu_Address_Street_1)
+            h05 = wrap_in_quote(str(booking.pu_Address_Street_1))
 
         if not booking.pu_Address_street_2:
             h06 = ""
         else:
-            h06 = str(booking.pu_Address_street_2)
+            h06 = wrap_in_quote(str(booking.pu_Address_street_2))
 
         if not booking.pu_Address_Suburb:
             h07 = ""
         else:
-            h07 = str(booking.pu_Address_Suburb)
+            h07 = wrap_in_quote(str(booking.pu_Address_Suburb))
 
         if not booking.pu_Address_PostalCode:
             h08 = ""
         else:
-            h08 = str(booking.pu_Address_PostalCode)
+            h08 = wrap_in_quote(str(booking.pu_Address_PostalCode))
 
         if not booking.deToCompanyName:
             h09 = ""
         else:
-            h09 = str(booking.deToCompanyName)
+            h09 = wrap_in_quote(str(booking.deToCompanyName))
 
         if not booking.de_To_Address_Street_1:
             h10 = ""
         else:
-            h10 = str(booking.de_To_Address_Street_1)
+            h10 = wrap_in_quote(str(booking.de_To_Address_Street_1))
 
         if not booking.de_To_Address_Street_2:
             h11 = ""
         else:
-            h11 = str(booking.de_To_Address_Street_2)
+            h11 = wrap_in_quote(str(booking.de_To_Address_Street_2))
 
         if not booking.de_To_Address_Suburb:
             h12 = ""
         else:
-            h12 = str(booking.de_To_Address_Suburb)
+            h12 = wrap_in_quote(str(booking.de_To_Address_Suburb))
 
         if not booking.de_To_Address_PostalCode:
             h13 = ""
         else:
-            h13 = str(booking.de_To_Address_PostalCode)
+            h13 = wrap_in_quote(str(booking.de_To_Address_PostalCode))
 
-        h14 = str(len(booking_lines))
+        h14 = 0
         h15 = 0
-
         for booking_line in _booking_lines:
             if booking_line.e_weightUOM and booking_line.e_weightPerEach:
+                h14 += booking_line.e_qty
                 e_weightUOM = booking_line.e_weightUOM.upper()
 
                 if e_weightUOM in ["GRAM", "GRAMS"]:
                     h15 += booking_line.e_qty * booking_line.e_weightPerEach / 1000
-
                 elif e_weightUOM in ["TON", "TONS"]:
                     h15 += booking_line.e_qty * booking_line.e_weightPerEach * 1000
                 else:
                     h15 += booking_line.e_qty * booking_line.e_weightPerEach
 
-        h15 = str(h15)
+        h14 = wrap_in_quote(str(h14))
+        h15 = wrap_in_quote(str(h15))
         h16 = "vip"
         h17 = ""
-        h18 = str(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+        h18 = wrap_in_quote(str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
         eachLineText = (
             h00

@@ -357,7 +357,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>Date:  %s</font> "
+                        "<font size=%s>Date: %s</font> "
                         % (
                             label_settings["font_size_medium"],
                             booking.b_dateBookedDate.strftime("%d/%m/%Y")

@@ -3657,7 +3657,7 @@ def get_csv(request):
                         api_booking_confirmation_line.save()
                         index = index + 1
             elif vx_freight_provider in ["dhl", "state transport"]:
-                booking.b_dateBookedDate = get_sydney_now_time()
+                booking.b_dateBookedDate = get_sydney_now_time(return_type="datetime")
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"

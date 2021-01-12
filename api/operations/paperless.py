@@ -16,12 +16,12 @@ def build_xml_with_bok(bok_1, bok_2s):
     # Constants
     dme_account_num = "50365"
     customer_order_number = "y"
-    order_type_code = "OV"
-    customer_country = "AUS"
+    order_type_code = "QI"
+    customer_country = "AU"
     order_priority = "11"
     warehouse_code = "01"
     geographic_code = "y"
-    reference_number = "y"
+    reference_number = ""
     send_status = "x"
 
     # Init result var

@@ -4287,7 +4287,9 @@ class BookingSets(models.Model):
                 build_csv(bookings.values_list("pk", flat=True))
 
                 for booking in bookings:
-                    booking.b_dateBookedDate = get_sydney_now_time()
+                    booking.b_dateBookedDate = get_sydney_now_time(
+                        return_type="datetime"
+                    )
                     booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                     status_history.create(booking, "Booked", "DME_BE")
                     booking.b_status = "Booked"
