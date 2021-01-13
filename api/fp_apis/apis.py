@@ -1278,7 +1278,7 @@ def get_pricing(body, booking_id, is_pricing_only=False):
             API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).update(
                 is_used=True
             )
-            DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
+            # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
         else:
             return False, "Booking does not exist", None
 
@@ -1312,7 +1312,7 @@ async def _pricing_process(booking, booking_lines, is_pricing_only):
             timeout=PRICING_TIME,
         )
     except asyncio.TimeoutError:
-        logger.info(f"#990 - {PRICING_TIME}s Timeout! stop threads! :)")
+        logger.info(f"#990 - {PRICING_TIME}s Timeout! stop threads! ;)")
 
 
 async def pricing_workers(booking, booking_lines, is_pricing_only):
@@ -1320,9 +1320,24 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
     _workers = set()
     logger.info("#910 - Building Pricing workers...")
 
+    client_fps = Client_FP.objects.prefetch_related("fp").filter(
+        client__company_name__iexact=booking.b_client_name
+    )
+
+    if client_fps:
+        client_fps = list(client_fps.values_list("fp__fp_company_name", flat=True))
+        client_fps = [i.lower() for i in client_fps]
+    else:
+        client_fps = []
+
     for fp_name in AVAILABLE_FPS_4_FC:
         _fp_name = fp_name.lower()
 
+        # If not allowed for this Client
+        if _fp_name not in client_fps:
+            continue
+
+        # If no credential
         if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
             continue
 
@@ -1377,9 +1392,9 @@ async def _api_pricing_worker_builder(
     if not payload:
         return None
 
-    logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
     logger.info(f"### API url ({_fp_name.upper()} PRICING): {url}")
+    logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
 
     try:
         response = await requests_async.post(url, params={}, json=payload)

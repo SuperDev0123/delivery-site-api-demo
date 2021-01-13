@@ -4439,7 +4439,6 @@ class DME_Error(models.Model):
 
 class DME_Augment_Address(models.Model):
     id = models.AutoField(primary_key=True)
-
     origin_word = models.CharField(max_length=32, blank=True, null=True)
     augmented_word = models.CharField(max_length=32, blank=True, null=True)
 
@@ -4450,10 +4449,10 @@ class DME_Augment_Address(models.Model):
 class FC_Log(models.Model):
     id = models.AutoField(primary_key=True)
     client_booking_id = models.CharField(max_length=64)
-    old_quote = models.OneToOneField(
+    old_quote = models.ForeignKey(
         API_booking_quotes, on_delete=models.CASCADE, null=True, related_name="+"
     )  # Optional
-    new_quote = models.OneToOneField(
+    new_quote = models.ForeignKey(
         API_booking_quotes, on_delete=models.CASCADE, null=True, related_name="+"
     )  # Optional
     z_createdTimeStamp = models.DateTimeField(
@@ -4462,3 +4461,14 @@ class FC_Log(models.Model):
 
     class Meta:
         db_table = "fc_log"
+
+
+class Client_FP(models.Model):
+    id = models.AutoField(primary_key=True)
+    client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    z_createdTimeStamp = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "client_fp"
