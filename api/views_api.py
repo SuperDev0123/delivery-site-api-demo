@@ -275,120 +275,109 @@ class BOK_3_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-# @transaction.atomic
-# @api_view(["POST"])
-# def order_boks(request):
-#     user = request.user
-#     data_json = request.data
-#     logger.info(f"@879 Pusher: {user.username}")
-#     logger.info(f"@880 request payload - {data_json}")
-#     message = None
+@transaction.atomic
+@api_view(["POST"])
+def order_boks(request):
+    user = request.user
+    data_json = request.data
+    logger.info(f"@879 Pusher: {user.username}")
+    logger.info(f"@880 request payload - {data_json}")
+    message = None
 
-#     # Find `Client`
-#     try:
-#         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
-#         client = client_employee.fk_id_dme_client
-#         client_name = client.company_name
-#         logger.info(f"@810 - client: , {client_name}")
-#     except Exception as e:
-#         logger.info(f"@811 - client_employee does not exist, {str(e)}")
-#         message = "You are not allowed to use this api-endpoint."
-#         logger.info(message)
-#         return Response(
-#             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-#         )
+    # Find `Client`
+    try:
+        client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
+        client = client_employee.fk_id_dme_client
+        client_name = client.company_name
+        logger.info(f"@810 - client: , {client_name}")
+    except Exception as e:
+        logger.info(f"@811 - client_employee does not exist, {str(e)}")
+        message = "You are not allowed to use this api-endpoint."
+        logger.info(message)
+        return Response(
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+        )
 
-#     # Check required fields
-#     if "Plum" in client_name:
-#         if not "cost_id" in data_json or (
-#             "cost_id" in data_json and not data_json["cost_id"]
-#         ):
-#             message = "'cost_id' is required."
+    # Check required fields
+    if "Plum" in client_name:
+        if not "cost_id" in data_json or (
+            "cost_id" in data_json and not data_json["cost_id"]
+        ):
+            message = "'cost_id' is required."
 
-#         if not "b_client_sales_inv_num" in data_json or (
-#             "b_client_sales_inv_num" in data_json
-#             and not data_json["b_client_sales_inv_num"]
-#         ):
-#             message = "'b_client_sales_inv_num' is required."
+        if not "b_client_sales_inv_num" in data_json or (
+            "b_client_sales_inv_num" in data_json
+            and not data_json["b_client_sales_inv_num"]
+        ):
+            message = "'b_client_sales_inv_num' is required."
 
-#         if "_sapb1" in user.username:
-#             if not "b_client_order_num" in data_json or (
-#                 "b_client_order_num" in data_json
-#                 and not data_json["b_client_order_num"]
-#             ):
-#                 message = "'b_client_order_num' is required."
-#         if "_magento" in user.username:
-#             if not "client_booking_id" in data_json or (
-#                 "client_booking_id" in data_json and not data_json["client_booking_id"]
-#             ):
-#                 message = "'client_booking_id' is required."
+        if "_sapb1" in user.username:
+            if not "b_client_order_num" in data_json or (
+                "b_client_order_num" in data_json
+                and not data_json["b_client_order_num"]
+            ):
+                message = "'b_client_order_num' is required."
+        if "_magento" in user.username:
+            if not "client_booking_id" in data_json or (
+                "client_booking_id" in data_json and not data_json["client_booking_id"]
+            ):
+                message = "'client_booking_id' is required."
 
-#         if message:
-#             logger.info(f"#821 {message}")
-#             return Response(
-#                 {"success": False, "message": message},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
+        if message:
+            logger.info(f"#821 {message}")
+            return Response(
+                {"success": False, "message": message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-#     # Validate `client_booking_id` and `b_client_order_num`
-#     if "Plum" in client_name and "_sapb1" in user.username:
-#         b_client_order_num = data_json["b_client_order_num"]
-#         bok_1s = BOK_1_headers.objects.filter(b_client_order_num=b_client_order_num)
+    # Validate `client_booking_id` and `b_client_order_num`
+    if "Plum" in client_name and "_sapb1" in user.username:
+        b_client_order_num = data_json["b_client_order_num"]
+        bok_1s = BOK_1_headers.objects.filter(b_client_order_num=b_client_order_num)
 
-#         if not bok_1s.exists():
-#             message = f"Object(b_client_order_num={b_client_order_num}) does not exist."
-#         else:
-#             bok_1 = bok_1s.first()
-#             pk_header_id = bok_1.pk_header_id
-#     if "Plum" in client_name and "_magento" in user.username:
-#         client_booking_id = data_json["client_booking_id"]
-#         bok_1s = BOK_1_headers.objects.filter(client_booking_id=client_booking_id)
+        if not bok_1s.exists():
+            message = f"Object(b_client_order_num={b_client_order_num}) does not exist."
+        else:
+            bok_1 = bok_1s.first()
+            pk_header_id = bok_1.pk_header_id
+    if "Plum" in client_name and "_magento" in user.username:
+        client_booking_id = data_json["client_booking_id"]
+        bok_1s = BOK_1_headers.objects.filter(client_booking_id=client_booking_id)
 
-#         if not bok_1s.exists():
-#             message = f"Object(client_booking_id={client_booking_id}) does not exist."
-#         else:
-#             bok_1 = bok_1s.first()
-#             pk_header_id = bok_1.pk_header_id
+        if not bok_1s.exists():
+            message = f"Object(client_booking_id={client_booking_id}) does not exist."
+        else:
+            bok_1 = bok_1s.first()
+            pk_header_id = bok_1.pk_header_id
 
-#     # Validate `cost_id`
-#     cost_id = data_json["cost_id"]
-#     quotes = API_booking_quotes.objects.filter(
-#         pk=cost_id, fk_booking_id=bok_1.pk_header_id
-#     )
+    # Validate `cost_id`
+    cost_id = data_json["cost_id"]
+    quotes = API_booking_quotes.objects.filter(
+        pk=cost_id, fk_booking_id=bok_1.pk_header_id
+    )
 
-#     if not quotes.exists():
-#         message = f"Invalid cost_id: {cost_id}, Please get costs again."
+    if not quotes.exists():
+        message = f"Invalid cost_id: {cost_id}, Please get costs again."
 
-#     if message:
-#         logger.info(f"#822 {message}")
-#         return Response(
-#             {"success": False, "message": message},
-#             status=status.HTTP_400_BAD_REQUEST,
-#         )
+    if message:
+        logger.info(f"#822 {message}")
+        return Response(
+            {"success": False, "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-#     # Update boks
-#     bok_1.b_client_sales_inv_num = data_json["b_client_sales_inv_num"]
-#     bok_1.success = dme_constants.BOK_SUCCESS_4
-#     bok_1.save()
+    # Update boks
+    bok_1.b_client_sales_inv_num = data_json["b_client_sales_inv_num"]
+    bok_1.save()
 
-#     bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-#     for bok_2 in bok_2s:
-#         bok_2.success = dme_constants.BOK_SUCCESS_4
-#         bok_2.save()
+    # create status history
+    status_history.create_4_bok(bok_1.pk_header_id, "Ordered", request.user.username)
 
-#     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
-#     for bok_3 in bok_3s:
-#         bok_3.success = dme_constants.BOK_SUCCESS_4
-#         bok_3.save()
-
-#     # create status history
-#     status_history.create_4_bok(bok_1.pk_header_id, "Ordered", request.user.username)
-
-#     logger.info(f"#823 Order success")
-#     return Response(
-#         {"success": True},
-#         status=status.HTTP_200_OK,
-#     )
+    logger.info(f"#823 Order success")
+    return Response(
+        {"success": True},
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST"])
