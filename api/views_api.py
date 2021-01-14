@@ -174,7 +174,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             )
 
         try:
-            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_1 = BOK_1_headers.objects.prefetch_related("quote").get(
+                client_booking_id=identifier
+            )
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
             bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
@@ -188,6 +190,12 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
             bok_1.success = dme_constants.BOK_SUCCESS_4
             bok_1.save()
+
+            if bok_1.quote:
+                bok_1.b_001_b_freight_provider = bok_1.quote.freight_provider
+                bok_1.b_003_b_service_name = bok_1.quote.service_name
+                bok_1.save()
+
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
         except:
@@ -962,11 +970,15 @@ def push_boks(request):
     # Check if already pushed 'b_client_order_num', then return URL only
     if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
         if bok_1["b_client_order_num"][:2] != "Q_":
-            bok_1_obj = BOK_1_headers.objects.filter(
-                fk_client_id=client.dme_account_num,
-                # b_client_order_num=bok_1["b_client_order_num"],
-                b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
-            ).first()
+            bok_1_obj = (
+                BOK_1_headers.objects.prefetch_related("quote")
+                .filter(
+                    fk_client_id=client.dme_account_num,
+                    # b_client_order_num=bok_1["b_client_order_num"],
+                    b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
+                )
+                .first()
+            )
 
             if bok_1_obj:
                 if not bok_1_obj.b_client_order_num:
@@ -991,6 +1003,15 @@ def push_boks(request):
 
                         bok_1_obj.success = dme_constants.BOK_SUCCESS_4
                         bok_1_obj.save()
+
+                        if bok_1_obj.quote:
+                            bok_1_obj.b_001_b_freight_provider = (
+                                bok_1_obj.quote.freight_provider
+                            )
+                            bok_1_obj.b_003_b_service_name = (
+                                bok_1_obj.quote.service_name
+                            )
+                            bok_1_obj.save()
 
                 if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
                     return JsonResponse(
@@ -1419,6 +1440,10 @@ def push_boks(request):
                     json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
                     if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                        best_quote = best_quotes[0]
+                        bok_1_obj.b_003_b_service_name = best_quote.service_name
+                        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+                        bok_1_obj.save()
                         fc_log.new_quote = best_quotes[0]
                         fc_log.save()
 
