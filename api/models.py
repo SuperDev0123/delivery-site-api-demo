@@ -13,7 +13,8 @@ from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 
-from api.common import trace_error
+from api.common import trace_error, constants as dme_constants
+
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -2616,6 +2617,21 @@ class BOK_1_headers(models.Model):
             from api.signal_handlers.boks import on_create_bok_1_handler
 
             on_create_bok_1_handler(self)
+
+            if self.success == dme_constants.BOK_SUCCESS_4:
+                from api.operations.paperless import send_order_info
+
+                send_order_info(self)
+        else:
+            old_obj = BOK_1_headers.objects.get(pk=self.pk)
+
+            if (
+                self.success != old_obj.success
+                and self.success == dme_constants.BOK_SUCCESS_4
+            ):
+                from api.operations.paperless import send_order_info
+
+                send_order_info(self)
 
         return super(BOK_1_headers, self).save(*args, **kwargs)
 

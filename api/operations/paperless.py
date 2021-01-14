@@ -235,8 +235,6 @@ def send_order_info(bok_1):
 
         log.response = json.dumps(json_res, indent=4)
         log.save()
-        bok_1.success = constants.BOK_SUCCESS_4
-        bok_1.save()
         return json_res
     except Exception as e:
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
