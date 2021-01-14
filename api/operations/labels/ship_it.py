@@ -617,6 +617,16 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ],
                 [
                     Paragraph(
+                        "<font size=%s>Reference: %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            booking_line.sscc if booking_line.sscc else "N/A",
+                        ),
+                        style_left,
+                    )
+                ],
+                [
+                    Paragraph(
                         "<font size=%s>Weight: %s KG</font>"
                         % (
                             label_settings["font_size_medium"],
