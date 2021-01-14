@@ -559,6 +559,24 @@ class API_booking_quotes(models.Model):
 
 
 class Bookings(models.Model):
+    DDWD = "Drop at Door / Warehouse Dock"
+    DDW = "Drop in Door / Warehouse"
+    ROC = "Room of Choice"
+    DEL_LOCATION_CHOICES = (
+        (DDWD, "Drop at Door / Warehouse Dock"),
+        (DDW, "Drop in Door / Warehouse"),
+        (ROC, "Room of Choice"),
+    )
+
+    ELEVATOR = "Elevator"
+    ESCALATOR = "Escalator"
+    STAIRS = "Stairs"
+    FLOOR_ACCESS_BY_CHOICES = (
+        (ELEVATOR, "Elevator"),
+        (ESCALATOR, "Escalator"),
+        (STAIRS, "Stairs"),
+    )
+
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
         verbose_name=_("BookingID Visual"), blank=True, null=True, default=0
@@ -1738,6 +1756,15 @@ class Bookings(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     delivery_booking = models.DateField(default=None, blank=True, null=True)
+    de_to_assembly_required = models.BooleanField(default=False, null=True)
+    de_to_location = models.CharField(
+        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+    )
+    de_to_floor_number = models.IntegerField(default=0, null=True)
+    de_to_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
+    de_to_sufficient_space = models.BooleanField(default=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -2197,6 +2224,24 @@ class BOK_0_BookingKeys(models.Model):
 
 
 class BOK_1_headers(models.Model):
+    DDWD = "Drop at Door / Warehouse Dock"
+    DDW = "Drop in Door / Warehouse"
+    ROC = "Room of Choice"
+    DEL_LOCATION_CHOICES = (
+        (DDWD, "Drop at Door / Warehouse Dock"),
+        (DDW, "Drop in Door / Warehouse"),
+        (ROC, "Room of Choice"),
+    )
+
+    ELEVATOR = "Elevator"
+    ESCALATOR = "Escalator"
+    STAIRS = "Stairs"
+    FLOOR_ACCESS_BY_CHOICES = (
+        (ELEVATOR, "Elevator"),
+        (ESCALATOR, "Escalator"),
+        (STAIRS, "Stairs"),
+    )
+
     pk_auto_id = models.AutoField(primary_key=True)
     quote = models.OneToOneField(
         API_booking_quotes, on_delete=models.CASCADE, null=True
@@ -2588,6 +2633,15 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
+    b_067_assembly_required = models.BooleanField(default=False, null=True)
+    b_068_b_del_location = models.CharField(
+        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+    )
+    b_069_b_del_floor_number = models.IntegerField(default=0, null=True)
+    b_070_b_del_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
+    b_071_b_del_sufficient_space = models.BooleanField(default=True, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
