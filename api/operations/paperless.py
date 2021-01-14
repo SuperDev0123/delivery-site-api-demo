@@ -20,7 +20,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     customer_country = "AU"
     order_priority = "11"
     warehouse_code = "01"
-    geographic_code = "y"
+    geographic_code = ""
     reference_number = ""
     send_status = "x"
 
