@@ -987,10 +987,10 @@ def push_boks(request):
 
                     if bok_1.get("shipping_type") == "DMEA":
                         bok_2_objs = BOK_2_lines.objects.filter(
-                            fk_header_id=bok_1.pk_header_id
+                            fk_header_id=bok_1_obj.pk_header_id
                         )
                         bok_3_objs = BOK_3_lines_data.objects.filter(
-                            fk_header_id=bok_1.pk_header_id
+                            fk_header_id=bok_1_obj.pk_header_id
                         )
 
                         for bok_2_obj in bok_2_objs:
