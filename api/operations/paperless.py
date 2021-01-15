@@ -235,6 +235,9 @@ def send_order_info(bok_1):
 
         log.response = json.dumps(json_res, indent=4)
         log.save()
+        logger.error(
+            f"@9009 - Paperless send_order_info() result: {json.dumps(json_res, indent=4)}"
+        )
         return json_res
     except Exception as e:
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
