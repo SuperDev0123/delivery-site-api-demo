@@ -37,29 +37,30 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
 
-            if (
-                dme_status_history.status_last == "In Transit"
-                and dme_status_history.status_old != "In Transit"
-            ):
-                url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
+            # if (
+            #     booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+            #     and dme_status_history.status_last == "In Transit"
+            #     and dme_status_history.status_old != "In Transit"
+            # ):
+            #     url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
 
-                if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
-                    send_status_update_email(booking.pk, notes, username, url)
-                if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
-                    send_status_update_sms(
-                        booking.pu_Phone_Mobile,
-                        booking.pk_booking_id,
-                        notes,
-                        username,
-                        url,
-                    )
-                    send_status_update_sms(
-                        booking.de_to_Phone_Mobile,
-                        booking.pk_booking_id,
-                        notes,
-                        username,
-                        url,
-                    )
+            #     if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
+            #         send_status_update_email(booking.pk, notes, username, url)
+            #     if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
+            #         send_status_update_sms(
+            #             booking.pu_Phone_Mobile,
+            #             booking.b_client_order_num,
+            #             notes,
+            #             username,
+            #             url,
+            #         )
+            #         send_status_update_sms(
+            #             booking.de_to_Phone_Mobile,
+            #             booking.b_client_order_num,
+            #             notes,
+            #             username,
+            #             url,
+            #         )
 
             if status.lower() == "delivered":
                 if event_timestamp:
