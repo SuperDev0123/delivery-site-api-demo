@@ -1911,7 +1911,7 @@ def get_delivery_status(request):
 
         if quote:
             quote_data = SimpleQuoteSerializer(quote).data
-            quote_data["cost"] = rountd(
+            quote_data["cost"] = round(
                 quote_data["cost"] * (1 + client.client_customer_mark_up), 2
             )
             quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
@@ -1948,7 +1948,7 @@ def get_delivery_status(request):
 
     if quote:
         quote_data = SimpleQuoteSerializer(quote).data
-        quote_data["cost"] = rountd(
+        quote_data["cost"] = round(
             quote_data["cost"] * (1 + client.client_customer_mark_up), 2
         )
         quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
