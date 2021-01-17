@@ -4,6 +4,7 @@ from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 
 from .views import *
 from .views_api import *
+from .views_zoho import *
 from .views_external_apis import *
 from .fp_apis import apis as fp_apis
 from .file_operations.uploads import get_upload_status
@@ -47,7 +48,11 @@ router.register(r"clientras", ClientRasViewSet, basename="client_ras")
 router.register(r"charts", ChartsViewSet, basename="charts")
 router.register(r"errors", ErrorViewSet, basename="error")
 router.register(r"clientprocess", ClientProcessViewSet, basename="clientprocess_mgr")
-router.register(r"augmentaddress", AugmentAddressViewSet, basename="augmentaddress_rules")
+router.register(
+    r"augmentaddress", AugmentAddressViewSet, basename="augmentaddress_rules"
+)
+router.register(r"clients", ClientViewSet, basename="clients")
+router.register(r"roles", RoleViewSet, basename="roles")
 
 urlpatterns = router.urls
 
@@ -69,15 +74,22 @@ urlpatterns += [
     url(r"^download/", download),
     # Delete
     url(r"^delete-file/", delete_file),
-    # Generates
-    url(r"^generate-csv/", generate_csv),
-    url(r"^generate-xml/", generate_xml),
-    url(r"^generate-pdf/", generate_pdf),
-    url(r"^generate-manifest/", generate_manifest),
-    # BOK apis(BIOPAK push apis)
+    # Build & download
+    url(r"^get-csv/", get_csv),  # build & download CSV
+    url(r"^get-xml/", get_xml),  # build & download XML
+    url(r"^get-pdf/", get_pdf),  # build & download PDF
+    url(r"^get-manifest/", get_manifest),  # build & download Manifest
+    # APIs for Warehouse(Paperless)
+    url(r"^boks/get_label/", scanned),
+    url(r"^boks/ready/", ready_boks),
+    url(r"^reprint_label/", reprint_label),
+    url(r"^manifest/", manifest_boks),
+    # BOK apis
     url(r"^boks/order/", order_boks),
     url(r"^boks/", push_boks),
     url(r"^price/partial/", partial_pricing),
+    # External apis
+    url(r"^external/paperless/send_order_to_paperless/", send_order_to_paperless),
     # Freight Provider apis
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),
@@ -94,4 +106,6 @@ urlpatterns += [
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
     url(r"^get_all_zoho_tickets/", get_all_zoho_tickets),
     url(r"^get_auth_zoho_tickets/", get_auth_zoho_tickets),
+    # DE Status
+    url(r"^get_delivery_status/", get_delivery_status),
 ]

@@ -113,7 +113,7 @@ def get_barcode_rotated(
     return drawing_rotated
 
 
-def build_dhl_label(booking):
+def build_label(booking):
     filename = ""
     try:
         if not os.path.exists(filepath):
@@ -710,4 +710,4 @@ def build_dhl_label(booking):
         print("Error1: " + str(e))
 
     # print('#901 - Finished %s' % datetime.datetime.now())
-    return "dhl_au/" + filename
+    return filepath, filename

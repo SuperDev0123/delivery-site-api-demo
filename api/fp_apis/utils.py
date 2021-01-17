@@ -6,7 +6,7 @@ from django.conf import settings
 from api.models import *
 from api.common import ratio
 from .constants import FP_CREDENTIALS, FP_UOM
-
+from api.operations.email_senders import send_email_to_admins
 
 logger = logging.getLogger("dme_api")
 
@@ -24,20 +24,28 @@ def _convert_UOM(value, uom, type, fp_name):
         )
 
 
-def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
-    limiter = "1"
+def gen_consignment_num(fp_name, booking_visual_id):
+    if fp_name.lower() == "hunter":
+        digit_len = 6
+        limiter = "1"
 
-    for i in range(digit_len):
-        limiter += "0"
+        for i in range(digit_len):
+            limiter += "0"
 
-    limiter = int(limiter)
+        limiter = int(limiter)
 
-    prefix_index = int(booking_visual_id / limiter) + 1
-    prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
-        ((prefix_index - 1) % 26) + 65
-    )
+        prefix_index = int(int(booking_visual_id) / limiter) + 1
+        prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
+            ((prefix_index - 1) % 26) + 65
+        )
 
-    return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+        return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+    elif fp_name.lower() == "tnt":
+        return f"DME{str(booking_visual_id).zfill(9)}"
+    elif fp_name.lower() == "dhl":
+        return f"DME{str(booking_visual_id)}"
+    else:
+        return f"DME{str(booking_visual_id)}"
 
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
@@ -47,28 +55,35 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        logger.info(f"#818 New FP status: {b_status_API}")
+        message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
+        logger.error(message)
+        send_email_to_admins("New FP status", message)
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
             booking.save()
+
         return None
 
 
 def get_status_category_from_status(status):
+    if not status:
+        return None
+
     try:
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
-        logger.info(f"#819 Status Category not found!: {status}")
-        # print('Exception: ', e)
-        return ""
+        message = f"#819 Category not found with this status: {status}"
+        logger.error(message)
+        send_email_to_admins("Category for Status not Found", message)
+        return None
 
 
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
     fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=pricing.fk_freight_provider_id
+        fp_company_name__iexact=pricing.freight_provider
     )
 
     if fp.fp_company_name.lower() == "tnt":
@@ -211,7 +226,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
         booking.api_booking_quote = filtered_pricing
-        booking.vx_freight_provider = filtered_pricing.fk_freight_provider_id
+        booking.vx_freight_provider = filtered_pricing.freight_provider
         booking.vx_account_code = filtered_pricing.account_code
         booking.vx_serviceName = filtered_pricing.service_name
         booking.inv_cost_quoted = filtered_pricing.fee * (
@@ -220,7 +235,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing.fk_freight_provider_id
+            fp_company_name__iexact=filtered_pricing.freight_provider
         )
 
         if fp and fp.service_cutoff_time:
@@ -229,6 +244,47 @@ def auto_select_pricing(booking, pricings, auto_select_type):
             booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
         booking.save()
+        return True
+    else:
+        logger.info("#855 - Could not find proper pricing")
+        return False
+
+
+def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
+    if len(pricings) == 0:
+        logger.info("#855 - Could not find proper pricing")
+        return None
+
+    non_air_freight_pricings = []
+    for pricing in pricings:
+        if not pricing.service_name or (
+            pricing.service_name and pricing.service_name != "Air Freight"
+        ):
+            non_air_freight_pricings.append(pricing)
+
+    # Check booking.pu_PickUp_By_Date and booking.de_Deliver_By_Date and Pricings etd
+    # deliverable_pricings = []
+    # for pricing in non_air_freight_pricings:
+    #     if _is_deliverable_price(pricing, booking):
+    #         deliverable_pricings.append(pricing)
+
+    deliverable_pricings = non_air_freight_pricings
+    filtered_pricing = {}
+    if int(auto_select_type) == 1:  # Lowest
+        if deliverable_pricings:
+            filtered_pricing = _get_lowest_price(deliverable_pricings)
+        elif non_air_freight_pricings:
+            filtered_pricing = _get_lowest_price(non_air_freight_pricings)
+    else:  # Fastest
+        if deliverable_pricings:
+            filtered_pricing = _get_fastest_price(deliverable_pricings)
+        elif non_air_freight_pricings:
+            filtered_pricing = _get_fastest_price(non_air_freight_pricings)
+
+    if filtered_pricing:
+        logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
+        bok_1.quote = filtered_pricing
+        bok_1.save()
         return True
     else:
         logger.info("#855 - Could not find proper pricing")

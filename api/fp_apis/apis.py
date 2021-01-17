@@ -27,7 +27,7 @@ from api.common.build_object import Struct
 from api.file_operations.directory import create_dir_if_not_exist
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
-from api.outputs import emails as email_module
+from api.operations.email_senders import send_booking_status_email
 
 from .payload_builder import *
 from .self_pricing import get_pricing as get_self_pricing
@@ -38,21 +38,24 @@ from .utils import (
 from .response_parser import *
 from .pre_check import *
 from .update_by_json import update_biopak_with_booked_booking
-from .build_label.dhl import build_dhl_label
+from api.operations.labels.index import build_label
 from .operations.tracking import update_booking_with_tracking_result
-from .constants import FP_CREDENTIALS, BUILT_IN_PRICINGS, PRICING_TIME
-
-if settings.ENV == "local":
-    IS_PRODUCTION = False  # Local
-else:
-    IS_PRODUCTION = True  # Dev
+from .constants import (
+    FP_CREDENTIALS,
+    BUILT_IN_PRICINGS,
+    PRICING_TIME,
+    AVAILABLE_FPS_4_FC,
+)
 
 if settings.ENV == "local":
     DME_LEVEL_API_URL = "http://localhost:3000"
+    S3_URL = "./static"
 elif settings.ENV == "dev":
     DME_LEVEL_API_URL = "http://52.62.109.115:3000"
+    S3_URL = "/opt/s3_public"
 elif settings.ENV == "prod":
     DME_LEVEL_API_URL = "http://52.62.102.72:3000"
+    S3_URL = "/opt/s3_public"
 
 logger = logging.getLogger("dme_api")
 
@@ -157,7 +160,7 @@ def book(request, fp_name):
                 )
 
             try:
-                payload = get_book_payload(booking, fp_name)
+                payload = get_book_payload(booking, _fp_name)
             except Exception as e:
                 trace_error.print()
                 logger.info(f"#401 - Error while build payload: {e}")
@@ -252,20 +255,16 @@ def book(request, fp_name):
                     status_history.create(booking, "Booked", request.user.username)
 
                     # Save Label for Hunter
-                    create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-                    if booking.vx_freight_provider.lower() == "hunter":
+                    create_dir_if_not_exist(f"{S3_URL}/pdfs/{_fp_name}_au")
+                    if _fp_name == "hunter":
                         json_label_data = json.loads(response.content)
                         file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                        if IS_PRODUCTION:
-                            file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                        else:
-                            file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                        with open(file_url, "wb") as f:
+                        with open(full_path, "wb") as f:
                             f.write(base64.b64decode(json_label_data["shippingLabel"]))
                             f.close()
-                            booking.z_label_url = f"hunter_au/{file_name}"
+                            booking.z_label_url = f"{_fp_name}_au/{file_name}"
                             booking.save()
 
                             # Send email when GET_LABEL
@@ -274,23 +273,19 @@ def book(request, fp_name):
                             if booking.b_booking_Category == "Salvage Expense":
                                 email_template_name = "Return Booking"
 
-                            email_module.send_booking_email_using_template(
+                            send_booking_status_email(
                                 booking.pk, email_template_name, request.user.username
                             )
                     # Save Label for Capital
-                    elif booking.vx_freight_provider.lower() == "capital":
+                    elif _fp_name == "capital":
                         json_label_data = json.loads(response.content)
                         file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                        if IS_PRODUCTION:
-                            file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                        else:
-                            file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                        with open(file_url, "wb") as f:
+                        with open(full_path, "wb") as f:
                             f.write(base64.b64decode(json_label_data["Label"]))
                             f.close()
-                            booking.z_label_url = f"capital_au/{file_name}"
+                            booking.z_label_url = f"{_fp_name}_au/{file_name}"
                             booking.save()
 
                             # Send email when GET_LABEL
@@ -299,11 +294,11 @@ def book(request, fp_name):
                             if booking.b_booking_Category == "Salvage Expense":
                                 email_template_name = "Return Booking"
 
-                            email_module.send_booking_email_using_template(
+                            send_booking_status_email(
                                 booking.pk, email_template_name, request.user.username
                             )
                     # Save Label for Startrack
-                    elif booking.vx_freight_provider.lower() == "startrack":
+                    elif _fp_name == "startrack":
                         Api_booking_confirmation_lines.objects.filter(
                             fk_booking_id=booking.pk_booking_id
                         ).delete()
@@ -314,7 +309,7 @@ def book(request, fp_name):
                                 api_item_id=item["item_id"],
                             ).save()
                     # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
-                    elif booking.vx_freight_provider.lower() == "dhl":
+                    elif _fp_name == "dhl":
                         if (
                             booking.kf_client_id
                             == "461162D2-90C7-BF4E-A905-000000000002"
@@ -776,9 +771,9 @@ def get_label(request, fp_name):
             )
 
         payload = {}
-        if _fp_name in ["startrack"]:
+        if _fp_name in ["startrack", "auspost"]:
             try:
-                payload = get_create_label_payload(booking, fp_name)
+                payload = get_create_label_payload(booking, _fp_name)
 
                 logger.info(
                     f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
@@ -822,7 +817,7 @@ def get_label(request, fp_name):
                 json_data is None
                 or (
                     json_data is not None
-                    and _fp_name == "startrack"
+                    and _fp_name in ["startrack", "auspost"]
                     and json_data["labels"][0]["status"] == "PENDING"
                 )
                 or (
@@ -844,7 +839,7 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.info(f"### Response ({fp_name} get_label): {s0}")
 
-            if _fp_name in ["startrack"]:
+            if _fp_name in ["startrack", "auspost"]:
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
@@ -857,22 +852,15 @@ def get_label(request, fp_name):
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
                     z_label_url = f"{_fp_name}_au/{file_name}"
-
-                    if settings.ENV == "prod":
-                        label_url = f"/opt/s3_public/pdfs/{z_label_url}"
-                    else:
-                        label_url = f"./static/pdfs/{z_label_url}"
-
-                    create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
+                    full_path = f"{S3_URL}/pdfs/{z_label_url}"
 
                     if _fp_name == "tnt":
-                        with open(label_url, "wb") as f:
+                        with open(full_path, "wb") as f:
                             f.write(label_data)
                             f.close()
                     else:
                         pdf_url = json_data["pdfURL"]
-                        download_from_url(pdf_url, label_url)
-
+                        download_from_url(pdf_url, full_path)
                 except KeyError as e:
                     if "errorMessage" in json_data:
                         error_msg = json_data["errorMessage"]
@@ -884,34 +872,39 @@ def get_label(request, fp_name):
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
-
             elif _fp_name in ["dhl"]:
-                z_label_url = build_dhl_label(booking)
+                file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+                file_path, file_name = build_label(booking, file_path)
+                z_label_url = f"{_fp_name}_au/{file_name}"
 
             booking.z_label_url = z_label_url
             booking.b_error_Capture = None
             booking.save()
 
             # Do not send email when booking is `Rebooked`
-            if not _fp_name in ["startrack"] and not "Rebooked" in booking.b_status:
+            if (
+                not _fp_name in ["startrack", "auspost"]
+                and not "Rebooked" in booking.b_status
+            ):
                 # Send email when GET_LABEL
                 email_template_name = "General Booking"
 
                 if booking.b_booking_Category == "Salvage Expense":
                     email_template_name = "Return Booking"
 
-                email_module.send_booking_email_using_template(
+                send_booking_status_email(
                     booking.pk, email_template_name, request.user.username
                 )
 
-            if not _fp_name in ["sendle"]:
-                Log(
-                    request_payload=payload,
-                    request_status="SUCCESS",
-                    request_type=f"{fp_name.upper()} GET LABEL",
-                    response=res_content,
-                    fk_booking_id=booking.id,
-                ).save()
+            # if not _fp_name in ["sendle"]:
+            Log(
+                request_payload=payload,
+                request_status="SUCCESS",
+                request_type=f"{fp_name.upper()} GET LABEL",
+                response=res_content,
+                fk_booking_id=booking.id,
+            ).save()
+
             return JsonResponse(
                 {"message": f"Successfully created label({booking.z_label_url})"},
                 status=status.HTTP_200_OK,
@@ -1039,14 +1032,9 @@ def get_order_summary(request, fp_name):
 
             try:
                 file_name = f"biopak_manifest_{str(booking.vx_fp_order_id)}_{str(datetime.now())}.pdf"
+                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                else:
-                    file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-                with open(file_url, "wb") as f:
+                with open(full_path, "wb") as f:
                     f.write(bytes(json_data["pdfData"]["data"]))
                     f.close()
 
@@ -1142,14 +1130,9 @@ def pod(request, fp_name):
         file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
 
         file_name += ".jpeg" if _fp_name in ["hunter"] else ".png"
+        full_path = f"{S3_URL}/imgs/{_fp_name}_au/{file_name}"
 
-        if IS_PRODUCTION:
-            file_url = f"/opt/s3_public/imgs/{_fp_name}_au/{file_name}"
-        else:
-            file_url = f"./static/imgs/{file_name}"
-
-        create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-        f = open(file_url, "wb")
+        f = open(full_path, "wb")
         f.write(base64.b64decode(podData))
         f.close()
 
@@ -1160,7 +1143,7 @@ def pod(request, fp_name):
         # POD Email
         if booking.b_send_POD_eMail:
             email_template_name = "POD"
-            email_module.send_booking_email_using_template(
+            send_booking_status_email(
                 booking.pk, email_template_name, request.user.username
             )
 
@@ -1199,18 +1182,13 @@ def reprint(request, fp_name):
 
             try:
                 file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                if IS_PRODUCTION:
-                    file_url = f"/opt/s3_public/pdfs/{_fp_name}_au/{file_name}"
-                else:
-                    file_url = f"./static/pdfs/{_fp_name}_au/{file_name}"
-
-                create_dir_if_not_exist(f"./static/pdfs/{_fp_name}_au")
-                with open(file_url, "wb") as f:
+                with open(full_path, "wb") as f:
                     f.write(base64.b64decode(podData))
                     f.close()
 
-                booking.z_label_url = file_url
+                booking.z_label_url = f"{_fp_name}_au/{file_name}"
                 booking.b_error_Capture = None
                 booking.save()
 
@@ -1257,6 +1235,10 @@ def pricing(request):
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
     else:
+        json_results = ApiBookingQuotesSerializer(
+            results, many=True, context={"booking": booking}
+        ).data
+
         if is_pricing_only:
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
@@ -1264,17 +1246,13 @@ def pricing(request):
         else:
             auto_select_pricing(booking, results, auto_select_type)
 
-        results = ApiBookingQuotesSerializer(
-            results, many=True, context={"booking": booking}
-        ).data
-
         return JsonResponse(
-            {"success": True, "message": message, "results": results},
+            {"success": True, "message": message, "results": json_results},
             status=status.HTTP_200_OK,
         )
 
 
-def get_pricing(body, booking_id, is_pricing_only):
+def get_pricing(body, booking_id, is_pricing_only=False):
     """
     @params:
         * is_pricing_only: only get pricing info
@@ -1290,16 +1268,17 @@ def get_pricing(body, booking_id, is_pricing_only):
             booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
-        bookings = Bookings.objects.filter(id=booking_id)
+        booking = Bookings.objects.filter(id=booking_id).first()
 
         # Delete all pricing info if exist for this booking
-        if bookings.exists():
-            booking = bookings[0]
+        if booking:
             pk_booking_id = booking.pk_booking_id
             booking.api_booking_quote = None  # Reset pricing relation
             booking.save()
-            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).delete()
-            DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
+            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).update(
+                is_used=True
+            )
+            # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
         else:
             return False, "Booking does not exist", None
 
@@ -1320,7 +1299,9 @@ def get_pricing(body, booking_id, is_pricing_only):
     finally:
         loop.close()
 
-    results = API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id)
+    results = API_booking_quotes.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_used=False
+    )
     return booking, True, "Retrieved all Pricing info", results
 
 
@@ -1331,20 +1312,32 @@ async def _pricing_process(booking, booking_lines, is_pricing_only):
             timeout=PRICING_TIME,
         )
     except asyncio.TimeoutError:
-        logger.info(f"#990 - {PRICING_TIME}s Timeout! stop threads! :)")
+        logger.info(f"#990 - {PRICING_TIME}s Timeout! stop threads! ;)")
 
 
 async def pricing_workers(booking, booking_lines, is_pricing_only):
     # Schedule n pricing works *concurrently*:
     _workers = set()
-
     logger.info("#910 - Building Pricing workers...")
-    # "Startrack", "Camerons", "Toll", "Sendle"
-    fp_names = ["TNT", "Hunter", "Capital", "Century", "Fastway"]
 
-    for fp_name in fp_names:
+    client_fps = Client_FP.objects.prefetch_related("fp").filter(
+        client__company_name__iexact=booking.b_client_name
+    )
+
+    if client_fps:
+        client_fps = list(client_fps.values_list("fp__fp_company_name", flat=True))
+        client_fps = [i.lower() for i in client_fps]
+    else:
+        client_fps = []
+
+    for fp_name in AVAILABLE_FPS_4_FC:
         _fp_name = fp_name.lower()
 
+        # If not allowed for this Client
+        if _fp_name not in client_fps:
+            continue
+
+        # If no credential
         if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
             continue
 
@@ -1355,19 +1348,25 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
             for client_name in fp_client_names:
                 if b_client_name in fp_client_names and b_client_name != client_name:
                     continue
-                elif b_client_name not in fp_client_names and client_name not in [
-                    "dme",
-                    "test",
-                ]:
+                elif (
+                    b_client_name not in fp_client_names
+                    and client_name not in ["dme", "test"]
+                    and not is_pricing_only
+                ):
                     continue
 
                 logger.info(f"#905 INFO Pricing - {_fp_name}, {client_name}")
                 for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+
                     # Allow live pricing credentials only on PROD
                     if settings.ENV == "prod" and "test" in key:
                         continue
 
-                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+                    # Pricing only accounts can be used on pricing_only mode
+                    if "pricingOnly" in account_detail and not is_pricing_only:
+                        continue
+
                     _worker = _api_pricing_worker_builder(
                         _fp_name,
                         booking,
@@ -1393,9 +1392,9 @@ async def _api_pricing_worker_builder(
     if not payload:
         return None
 
-    logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
     logger.info(f"### API url ({_fp_name.upper()} PRICING): {url}")
+    logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
 
     try:
         response = await requests_async.post(url, params={}, json=payload)
@@ -1425,25 +1424,27 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                parse_result["account_code"] = payload["spAccountDetails"][
-                    "accountCode"
-                ]
+                account_code = payload["spAccountDetails"]["accountCode"]
+                parse_result["account_code"] = account_code
 
-                quotes = API_booking_quotes.objects.filter(
-                    fk_booking_id=booking.pk_booking_id,
-                    fk_freight_provider_id=parse_result[
-                        "fk_freight_provider_id"
-                    ].upper(),
-                    service_name=parse_result["service_name"],
-                    account_code=payload["spAccountDetails"]["accountCode"],
-                )
+                ###########################
+                # Commented at 12/22/2020 #
+                ###########################
 
-                if quotes.exists():
-                    serializer = ApiBookingQuotesSerializer(
-                        quotes[0], data=parse_result
-                    )
-                else:
-                    serializer = ApiBookingQuotesSerializer(data=parse_result)
+                # quotes = API_booking_quotes.objects.filter(
+                #     fk_booking_id=booking.pk_booking_id,
+                #     freight_provider__iexact=parse_result["freight_provider"],
+                #     service_name=parse_result["service_name"],
+                #     account_code=payload["spAccountDetails"]["accountCode"],
+                # )
+
+                # if quotes.exists():
+                #     serializer = ApiBookingQuotesSerializer(
+                #         quotes[0], data=parse_result
+                #     )
+                # else:
+
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
 
                 if serializer.is_valid():
                     serializer.save()
@@ -1461,7 +1462,7 @@ async def _built_in_pricing_worker_builder(_fp_name, booking):
     for parse_result in parse_results:
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id,
-            fk_freight_provider_id=parse_result["fk_freight_provider_id"].upper(),
+            freight_provider__iexact=parse_result["freight_provider"],
             service_name=parse_result["service_name"],
         )
 

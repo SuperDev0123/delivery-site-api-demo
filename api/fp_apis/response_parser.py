@@ -31,7 +31,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = (
@@ -47,7 +47,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
@@ -64,7 +64,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["fee"] = price["quote"]["net"]["amount"]
                 result["tax_value_1"] = price["quote"]["tax"]["amount"]
                 result["service_name"] = price["plan_name"]
@@ -76,20 +76,21 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
-            result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+            result["freight_provider"] = get_service_provider(fp_name, False)
             result["fee"] = price["netPrice"]
             result["tax_value_1"] = price["totalTaxes"]
             result["service_name"] = (
                 price["serviceName"] if "serviceName" in price else None
             )
             results.append(result)
-        elif fp_name == "startrack" and "price" in json_data:  # Startrack
+        # Startrack | AUSPost
+        elif fp_name in ["startrack", "auspost"] and "price" in json_data:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["fee"] = price["netPrice"]
                 result["tax_value_1"] = price["totalTaxes"]
                 result["service_name"] = (
@@ -102,7 +103,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
-            result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+            result["freight_provider"] = get_service_provider(fp_name, False)
             result["etd"] = price["delivery_timeframe_days"]
 
             min_fee = 0
@@ -147,7 +148,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name.lower())
+                result["freight_provider"] = get_service_provider(fp_name.lower())
                 result["fee"] = price["netPrice"]
                 result["etd"] = price["etd"]
                 result["tax_value_1"] = price["totalTaxes"]

@@ -109,20 +109,24 @@ def get_book_payload(booking, fp_name):
         else booking.b_clientReference_RA_Numbers
     )
 
-    client_process = (
-        Client_Process_Mgr.objects.select_related()
-        .filter(fk_booking_id=booking.id)
-        .first()
-    )
+    client_process = None
+    if hasattr(booking, "id"):
+        client_process = (
+            Client_Process_Mgr.objects.select_related()
+            .filter(fk_booking_id=booking.id)
+            .first()
+        )
 
     if client_process:
         puCompany = client_process.origin_puCompany
         pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
         pu_Address_street_2 = client_process.origin_pu_Address_Street_2
-        pu_pickup_instructions_address = client_process.origin_pu_pickup_instructions_address
+        pu_pickup_instructions_address = (
+            client_process.origin_pu_pickup_instructions_address
+        )
         deToCompanyName = client_process.origin_deToCompanyName
         de_Email = client_process.origin_de_Email
-        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
         de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
         de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
     else:
@@ -132,7 +136,7 @@ def get_book_payload(booking, fp_name):
         pu_pickup_instructions_address = booking.pu_pickup_instructions_address
         deToCompanyName = booking.deToCompanyName
         de_Email = booking.de_Email
-        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        # de_Email_Group_Emails = booking.de_Email_Group_Emails
         de_To_Address_Street_1 = booking.de_To_Address_Street_1
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
@@ -153,21 +157,15 @@ def get_book_payload(booking, fp_name):
 
     payload["pickupAddress"]["instruction"] = " "
     if pu_pickup_instructions_address:
-        payload["pickupAddress"][
-            "instruction"
-        ] = f"{pu_pickup_instructions_address}"
+        payload["pickupAddress"]["instruction"] = f"{pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
         ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": ""
-        if pu_Address_Street_1 is None
-        else pu_Address_Street_1,
-        "address2": "_"
-        if pu_Address_street_2 is None
-        else pu_Address_street_2,
+        "address1": "" if pu_Address_Street_1 is None else pu_Address_Street_1,
+        "address2": "_" if pu_Address_street_2 is None else pu_Address_street_2,
         "country": ""
         if booking.pu_Address_Country is None
         else booking.pu_Address_Country,
@@ -183,9 +181,7 @@ def get_book_payload(booking, fp_name):
         else booking.pu_Address_PostalCode,
     }
     payload["dropAddress"] = {
-        "companyName": ""
-        if deToCompanyName is None
-        else deToCompanyName,
+        "companyName": "" if deToCompanyName is None else deToCompanyName,
         "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
@@ -208,12 +204,8 @@ def get_book_payload(booking, fp_name):
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
-        "address1": ""
-        if de_To_Address_Street_1 is None
-        else de_To_Address_Street_1,
-        "address2": "_"
-        if not de_To_Address_Street_2
-        else de_To_Address_Street_2,
+        "address1": "" if de_To_Address_Street_1 is None else de_To_Address_Street_1,
+        "address2": "_" if not de_To_Address_Street_2 else de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
         else booking.de_To_Address_Country,
@@ -231,7 +223,9 @@ def get_book_payload(booking, fp_name):
         else booking.de_To_Address_PostalCode,
     }
 
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_deleted=False
+    )
 
     items = []
     totalWeight = 0
@@ -239,17 +233,14 @@ def get_book_payload(booking, fp_name):
     maxWidth = 0
     maxLength = 0
     for line in booking_lines:
-        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert_UOM(
-            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
-        )
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
+        weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
 
         for i in range(line.e_qty):
             item = {
                 "dangerous": 0,
-                "itemId": "EXP",
                 "width": 0 if not line.e_dimWidth else width,
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
@@ -259,19 +250,24 @@ def get_book_payload(booking, fp_name):
                 "description": line.e_item,
             }
 
-            if fp_name.lower() == "startrack":
+            if fp_name == "startrack":
+                item["itemId"] = "EXP"
                 item["packagingType"] = "CTN"
-            elif fp_name.lower() == "hunter":
+            elif fp_name == "auspost":
+                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+            elif fp_name == "hunter":
                 if line.e_type_of_packaging == "PALLET":
                     item["packagingType"] = "PLT"
                 else:
                     item["packagingType"] = "CTN"
-            elif fp_name.lower() == "tnt":
+            elif fp_name == "tnt":
                 item["packagingType"] = "D"
-            elif fp_name.lower() == "dhl":
+            elif fp_name == "dhl":
                 item["packagingType"] = "PLT"
                 fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
-                consignmentNoteNumber = f"DME{booking.b_bookingID_Visual}"
+                consignmentNoteNumber = gen_consignment_num(
+                    "dhl", booking.b_bookingID_Visual
+                )
 
                 labelCode = str(fp_carrier.label_start_value + fp_carrier.current_value)
                 fp_carrier.current_value = fp_carrier.current_value + 1
@@ -302,7 +298,7 @@ def get_book_payload(booking, fp_name):
     payload["items"] = items
 
     # Detail for each FP
-    if fp_name.lower() == "hunter":
+    if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"
         elif booking.vx_serviceName == "Air Freight":
@@ -318,8 +314,10 @@ def get_book_payload(booking, fp_name):
         #     else booking.b_client_sales_inv_num
         # )
         payload["reference1"] = booking.clientRefNumbers
-        payload["reference2"] = gen_consignment_num(booking.b_bookingID_Visual, 2, 6)
-    elif fp_name.lower() == "tnt":
+        payload["reference2"] = gen_consignment_num(
+            "hunter", booking.b_bookingID_Visual
+        )
+    elif fp_name == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
         payload["totalWeight"] = totalWeight
@@ -357,7 +355,25 @@ def get_book_payload(booking, fp_name):
         else:
             payload["collectionCloseTime"] = "1500"
 
-        payload["serviceCode"] = "76"
+        if booking.api_booking_quote.service_name == "Overnight 09:00":
+            payload["serviceCode"] = "712"
+        elif booking.api_booking_quote.service_name == "Overnight 10:00":
+            payload["serviceCode"] = "EX10"
+        elif booking.api_booking_quote.service_name == "Overnight 12:00":
+            payload["serviceCode"] = "EX12"
+        elif booking.api_booking_quote.service_name == "Overnight Express":
+            payload["serviceCode"] = "75"
+        elif booking.api_booking_quote.service_name == "Road Express":
+            payload["serviceCode"] = "76"
+        elif booking.api_booking_quote.service_name == "Technology - Sensitive Express":
+            payload["serviceCode"] = "717B"
+        elif booking.api_booking_quote.service_name == "Fashion Express – Carton":
+            payload["serviceCode"] = "718"
+        elif booking.api_booking_quote.service_name == "Sameday Domestic":
+            payload["serviceCode"] = "701"
+        else:
+            error_msg = f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
+            logger.info(error_msg)
 
         payload["collectionInstructions"] = " "
         if payload["pickupAddress"]["instruction"]:
@@ -369,19 +385,21 @@ def get_book_payload(booking, fp_name):
                 "collectionInstructions"
             ] += f" {payload['dropAddress']['instruction']}"
 
-        payload[
-            "consignmentNoteNumber"
-        ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNoteNumber"] = gen_consignment_num(
+            "tnt", booking.b_bookingID_Visual
+        )
         payload["customerReference"] = booking.clientRefNumbers
         payload["isDangerousGoods"] = "false"
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
-    elif fp_name.lower() == "capital":
+    elif fp_name == "capital":
         payload["serviceType"] = "EC"
-    elif fp_name.lower() == "dhl":
+    elif fp_name == "dhl":
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
             payload["clientType"] = "aldi"
-            payload["consignmentNoteNumber"] = f"DME{booking.b_bookingID_Visual}"
+            payload["consignmentNoteNumber"] = gen_consignment_num(
+                "dhl", booking.b_bookingID_Visual
+            )
             payload["orderNumber"] = booking.pk_booking_id
             booking.b_client_sales_inv_num = booking.pk_booking_id
             booking.save()
@@ -415,20 +433,24 @@ def get_getlabel_payload(booking, fp_name):
     payload["spAccountDetails"] = get_account_detail(booking, fp_name)
     payload["serviceProvider"] = get_service_provider(fp_name)
 
-    client_process = (
-        Client_Process_Mgr.objects.select_related()
-        .filter(fk_booking_id=booking.id)
-        .first()
-    )
+    client_process = None
+    if hasattr(booking, "id"):
+        client_process = (
+            Client_Process_Mgr.objects.select_related()
+            .filter(fk_booking_id=booking.id)
+            .first()
+        )
 
     if client_process:
         puCompany = client_process.origin_puCompany
         pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
         pu_Address_street_2 = client_process.origin_pu_Address_Street_2
-        pu_pickup_instructions_address = client_process.origin_pu_pickup_instructions_address
+        pu_pickup_instructions_address = (
+            client_process.origin_pu_pickup_instructions_address
+        )
         deToCompanyName = client_process.origin_deToCompanyName
         de_Email = client_process.origin_de_Email
-        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
         de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
         de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
     else:
@@ -438,7 +460,7 @@ def get_getlabel_payload(booking, fp_name):
         pu_pickup_instructions_address = booking.pu_pickup_instructions_address
         deToCompanyName = booking.deToCompanyName
         de_Email = booking.de_Email
-        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        # de_Email_Group_Emails = booking.de_Email_Group_Emails
         de_To_Address_Street_1 = booking.de_To_Address_Street_1
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
@@ -457,21 +479,15 @@ def get_getlabel_payload(booking, fp_name):
 
     payload["pickupAddress"]["instruction"] = " "
     if pu_pickup_instructions_address:
-        payload["pickupAddress"][
-            "instruction"
-        ] = f"{pu_pickup_instructions_address}"
+        payload["pickupAddress"]["instruction"] = f"{pu_pickup_instructions_address}"
     if booking.pu_PickUp_Instructions_Contact:
         payload["pickupAddress"][
             "instruction"
         ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": ""
-        if pu_Address_Street_1 is None
-        else pu_Address_Street_1,
-        "address2": ""
-        if pu_Address_street_2 is None
-        else pu_Address_street_2,
+        "address1": "" if pu_Address_Street_1 is None else pu_Address_Street_1,
+        "address2": "" if pu_Address_street_2 is None else pu_Address_street_2,
         "country": ""
         if booking.pu_Address_Country is None
         else booking.pu_Address_Country,
@@ -487,9 +503,7 @@ def get_getlabel_payload(booking, fp_name):
         else booking.pu_Address_PostalCode,
     }
     payload["dropAddress"] = {
-        "companyName": ""
-        if deToCompanyName is None
-        else deToCompanyName,
+        "companyName": "" if deToCompanyName is None else deToCompanyName,
         "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
@@ -512,12 +526,8 @@ def get_getlabel_payload(booking, fp_name):
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
     payload["dropAddress"]["postalAddress"] = {
-        "address1": ""
-        if de_To_Address_Street_1 is None
-        else de_To_Address_Street_1,
-        "address2": ""
-        if de_To_Address_Street_2 is None
-        else de_To_Address_Street_2,
+        "address1": "" if de_To_Address_Street_1 is None else de_To_Address_Street_1,
+        "address2": "" if de_To_Address_Street_2 is None else de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
         else booking.de_To_Address_Country,
@@ -535,7 +545,9 @@ def get_getlabel_payload(booking, fp_name):
         else booking.de_To_Address_PostalCode,
     }
 
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_deleted=False
+    )
 
     items = []
     for line in booking_lines:
@@ -586,7 +598,9 @@ def get_getlabel_payload(booking, fp_name):
 
     # Detail for each FP
     if fp_name.lower() == "tnt":
-        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNumber"] = gen_consignment_num(
+            "tnt", booking.b_bookingID_Visual
+        )
         payload["serviceType"] = "76"
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
@@ -629,7 +643,7 @@ def get_create_label_payload(booking, fp_name):
             items.append(temp_item)
         payload["items"] = items
 
-        if fp_name.lower() == "startrack":
+        if fp_name in ["startrack", "auspost"]:
             payload["type"] = "PRINT"
             payload["labelType"] = "PRINT"
             payload["pageFormat"] = [
@@ -656,7 +670,7 @@ def get_create_order_payload(bookings, fp_name):
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
 
-        if fp_name.lower() == "startrack":
+        if fp_name.lower() in ["startrack", "auspost"]:
             payload["paymentMethods"] = "CHARGE_TO_ACCOUNT"
             payload["referenceNumber"] = "refer1"
 
@@ -710,7 +724,9 @@ def get_reprint_payload(booking, fp_name):
         payload = {}
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
-        payload["consignmentNumber"] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNumber"] = gen_consignment_num(
+            "tnt", booking.b_bookingID_Visual
+        )
         payload["labelType"] = "A"
         return payload
     except Exception as e:
@@ -732,7 +748,7 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     payload["readyDate"] = (
         ""
         if booking.puPickUpAvailFrom_Date is None
-        else str(booking.puPickUpAvailFrom_Date)
+        else str(booking.puPickUpAvailFrom_Date)[:10]
     )
     payload["referenceNumber"] = (
         ""
@@ -741,30 +757,34 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     )
     payload["bookedBy"] = "Mr.CharlieBrown"
 
-    client_process = (
-        Client_Process_Mgr.objects.select_related()
-        .filter(fk_booking_id=booking.id)
-        .first()
-    )
-    
+    client_process = None
+    if hasattr(booking, "id"):
+        client_process = (
+            Client_Process_Mgr.objects.select_related()
+            .filter(fk_booking_id=booking.id)
+            .first()
+        )
+
     if client_process:
         puCompany = client_process.origin_puCompany
         pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
         pu_Address_street_2 = client_process.origin_pu_Address_Street_2
-        pu_pickup_instructions_address = client_process.origin_pu_pickup_instructions_address
+        # pu_pickup_instructions_address = (
+        #    client_process.origin_pu_pickup_instructions_address
+        # )
         deToCompanyName = client_process.origin_deToCompanyName
         de_Email = client_process.origin_de_Email
-        de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+        # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
         de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
         de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
     else:
         puCompany = booking.puCompany
         pu_Address_Street_1 = booking.pu_Address_Street_1
         pu_Address_street_2 = booking.pu_Address_street_2
-        pu_pickup_instructions_address = booking.pu_pickup_instructions_address
+        # pu_pickup_instructions_address = booking.pu_pickup_instructions_address
         deToCompanyName = booking.deToCompanyName
         de_Email = booking.de_Email
-        de_Email_Group_Emails = booking.de_Email_Group_Emails
+        # de_Email_Group_Emails = booking.de_Email_Group_Emails
         de_To_Address_Street_1 = booking.de_To_Address_Street_1
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
@@ -781,12 +801,8 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     }
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": ""
-        if pu_Address_Street_1 is None
-        else pu_Address_Street_1,
-        "address2": ""
-        if pu_Address_street_2 is None
-        else pu_Address_street_2,
+        "address1": "" if pu_Address_Street_1 is None else pu_Address_Street_1,
+        "address2": "" if pu_Address_street_2 is None else pu_Address_street_2,
         "country": ""
         if booking.pu_Address_Country is None
         else booking.pu_Address_Country,
@@ -802,9 +818,7 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
         else booking.pu_Address_PostalCode,
     }
     payload["dropAddress"] = {
-        "companyName": ""
-        if deToCompanyName is None
-        else deToCompanyName,
+        "companyName": "" if deToCompanyName is None else deToCompanyName,
         "contact": "   "
         if booking.de_to_Contact_F_LName is None
         else booking.de_to_Contact_F_LName,
@@ -816,12 +830,8 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     }
 
     payload["dropAddress"]["postalAddress"] = {
-        "address1": ""
-        if de_To_Address_Street_1 is None
-        else de_To_Address_Street_1,
-        "address2": ""
-        if de_To_Address_Street_2 is None
-        else de_To_Address_Street_2,
+        "address1": "" if de_To_Address_Street_1 is None else de_To_Address_Street_1,
+        "address2": "" if de_To_Address_Street_2 is None else de_To_Address_Street_2,
         "country": ""
         if booking.de_To_Address_Country is None
         else booking.de_To_Address_Country,
@@ -841,17 +851,15 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
 
     if not booking_lines:
         booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
         )
 
     items = []
     for line in booking_lines:
-        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower())
-        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower())
-        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower())
-        weight = _convert_UOM(
-            line.e_weightPerEach, line.e_weightUOM, "weight", fp_name.lower()
-        )
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
+        weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
 
         # Sendle size limitation: 120cm
         if fp_name == "sendle" and (width > 120 or height > 120 or length > 120):
@@ -860,7 +868,6 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
         for i in range(line.e_qty):
             item = {
                 "dangerous": 0,
-                "itemId": "EXP",
                 "width": 0 if not line.e_dimWidth else width,
                 "height": 0 if not line.e_dimHeight else height,
                 "length": 0 if not line.e_dimLength else length,
@@ -870,11 +877,14 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
                 "description": line.e_item,
             }
 
-            if fp_name.lower() == "startrack":
+            if fp_name == "startrack":
+                item["itemId"] = "EXP"
                 item["packagingType"] = "CTN"
-            elif fp_name.lower() == "hunter":
+            elif fp_name == "auspost":
+                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+            elif fp_name == "hunter":
                 item["packagingType"] = "PAL"
-            elif fp_name.lower() == "tnt":
+            elif fp_name == "tnt":
                 item["packagingType"] = "D"
 
             items.append(item)
@@ -882,14 +892,13 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
     payload["items"] = items
 
     # Detail for each FP
-    if fp_name.lower() == "startrack":
+    if fp_name == "startrack":
         payload["serviceType"] = "R" if not booking.vx_serviceName else "R"
-    elif fp_name.lower() == "hunter":
+    elif fp_name == "hunter":
         payload["serviceType"] = "RF"
-    elif fp_name.lower() == "capital":
+    elif fp_name == "capital":
         payload["serviceType"] = "EC"
-    elif fp_name.lower() == "allied":
+    elif fp_name == "allied":
         payload["serviceType"] = "R"
 
     return payload
-

@@ -3,7 +3,7 @@ from api.models import DME_clients, Fp_freight_providers
 
 
 def fp_price_2_dme_price(api_booking_quote):
-    fp_name = api_booking_quote["fk_freight_provider_id"]
+    fp_name = api_booking_quote["freight_provider"]
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name.lower())
 
     try:

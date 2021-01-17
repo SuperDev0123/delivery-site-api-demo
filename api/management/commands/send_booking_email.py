@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from api.outputs.emails import send_booking_email_using_template
+from api.operations.email_senders import send_booking_status_email
 
 
 class Command(BaseCommand):
@@ -31,4 +31,4 @@ class Command(BaseCommand):
             print(
                 f"Test sending booking email - Booking ID: {booking_id}, Email Type: {email_type}"
             )
-            send_booking_email_using_template(booking_id, email_type, "TESTER")
+            send_booking_status_email(booking_id, email_type, "TESTER")

@@ -1,5 +1,8 @@
 PRICING_TIME = 10  # seconds
 
+# "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost"
+AVAILABLE_FPS_4_FC = ["Startrack", "AUSPost", "TNT", "Capital", "Hunter"]
+
 BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},
@@ -8,6 +11,15 @@ BUILT_IN_PRICINGS = {
 }
 
 FP_CREDENTIALS = {
+    "auspost": {
+        "test": {
+            "test_bed_0": {
+                "accountCode": "2006871123",  # eParcel and International (Stephen)
+                "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
+                "accountPassword": "x06503301e1ddfb58a7a",
+            },
+        },
+    },
     "startrack": {
         "test": {
             "test_bed_0": {
@@ -19,6 +31,16 @@ FP_CREDENTIALS = {
                 "accountCode": "00251522",  # ST Premium and ST Express
                 "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
                 "accountPassword": "x9083d2fed4d50aa2ad5",
+            },
+            "test_bed_2": {
+                "accountCode": "3006871123",  # Same Day Services (Stephen)
+                "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
+                "accountPassword": "x06503301e1ddfb58a7a",
+            },
+            "test_bed_3": {
+                "accountCode": "06871123",  # ST Premium and ST Express (Stephen)
+                "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
+                "accountPassword": "x06503301e1ddfb58a7a",
             },
         },
         "biopak": {
@@ -104,16 +126,24 @@ FP_CREDENTIALS = {
                 "accountPassword": "deliver",
             },
         },
-        "bunnings": {
-            "live_bunnings_0": {
-                "accountCode": "DELIMB",
-                "accountKey": "REVMSU1COmRlbGl2ZXIyMA==",
-                "accountPassword": "deliver20",
-            },
-            "live_bunnings_1": {
-                "accountCode": "DELIMS",
-                "accountKey": "REVMSU1TOmRlbGl2ZXIyMA==",
-                "accountPassword": "deliver20",
+        # "bunnings": {
+        #     "live_bunnings_0": {
+        #         "accountCode": "DELIMB",
+        #         "accountKey": "REVMSU1COmRlbGl2ZXIyMA==",
+        #         "accountPassword": "deliver20",
+        #     },
+        #     "live_bunnings_1": {
+        #         "accountCode": "DELIMS",
+        #         "accountKey": "REVMSU1TOmRlbGl2ZXIyMA==",
+        #         "accountPassword": "deliver20",
+        #     },
+        # },
+        "plum": {
+            "live_plum_0": {
+                "accountCode": "PLUMPR",
+                "accountKey": "UExVTVBSOnBsdXBybw==",
+                "accountPassword": "plupro",
+                "pricingOnly": True,
             },
         },
     },
@@ -192,6 +222,7 @@ FP_CREDENTIALS = {
 
 FP_UOM = {
     "startrack": {"dim": "cm", "weight": "kg"},
+    "auspost": {"dim": "cm", "weight": "kg"},
     "hunter": {"dim": "cm", "weight": "kg"},
     "tnt": {"dim": "cm", "weight": "kg"},
     "capital": {"dim": "cm", "weight": "kg"},

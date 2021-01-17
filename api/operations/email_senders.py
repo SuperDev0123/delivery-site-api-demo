@@ -1,15 +1,20 @@
-import sys, time
-import os, base64
 from datetime import datetime
-from email.utils import COMMASPACE
+from email.utils import COMMASPACE, formatdate
 
 from django.conf import settings
 
-from api.models import *
-from api.utils import send_email
+from api.models import (
+    DME_Email_Templates,
+    Bookings,
+    Booking_lines,
+    Booking_lines_data,
+    EmailLogs,
+    DME_Options,
+)
+from api.outputs.email import send_email
 
 
-def send_booking_email_using_template(bookingId, emailName, sender):
+def send_booking_status_email(bookingId, emailName, sender):
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
     booking_lines = Booking_lines.objects.filter(
@@ -413,3 +418,17 @@ def send_booking_email_using_template(bookingId, emailName, sender):
         z_createdTimeStamp=str(datetime.now()),
         z_createdByAccount=sender,
     )
+
+
+def send_email_to_admins(subject, message):
+    dme_option_4_email_to_admin = DME_Options.objects.filter(
+        option_name="send_email_to_admins"
+    ).first()
+
+    if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+
+        if settings.ENV in ["prod"]:
+            to_emails.append("bookings@deliver-me.com.au")
+
+        send_email(to_emails, [], subject, message)
