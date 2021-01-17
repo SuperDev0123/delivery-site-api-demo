@@ -11,12 +11,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="log",
-            name="z_createdBy",
-        ),
-        migrations.RemoveField(
-            model_name="log",
-            name="z_modifiedBy",
-        ),
+        # migrations.RemoveField(
+        #     model_name="log",
+        #     name="z_createdBy",
+        # ),
+        # migrations.RemoveField(
+        #     model_name="log",
+        #     name="z_modifiedBy",
+        # ),
     ]
