@@ -1882,7 +1882,7 @@ def get_delivery_status(request):
     booking = Bookings.objects.filter(
         b_client_booking_ref_num=client_booking_id
     ).first()
-    client = DME_clients.objects.get(dme_account_num=booking.fk_client_id)
+    client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
 
     if booking:
         b_status = booking.b_status
