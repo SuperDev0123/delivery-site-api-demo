@@ -115,7 +115,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
             quote_set = API_booking_quotes.objects.filter(
-                fk_booking_id=bok_1.pk_header_id
+                fk_booking_id=bok_1.pk_header_id, is_used=False
             )
             client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
