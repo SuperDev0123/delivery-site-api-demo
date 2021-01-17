@@ -3,7 +3,9 @@ from datetime import datetime, date, timedelta
 from django.conf import settings
 
 from api.models import Dme_status_history
-from api.outputs import tempo, automation
+from api.outputs import tempo
+from api.operations.sms_senders import send_status_update_sms
+from api.operations.email_senders import send_status_update_email
 
 
 # Create new status_history for Booking
@@ -42,18 +44,16 @@ def create(booking, status, username, event_timestamp=None):
                 url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
 
                 if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
-                    automation.send_status_update_email(
-                        booking.pk, notes, username, url
-                    )
+                    send_status_update_email(booking.pk, notes, username, url)
                 if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
-                    automation.send_sms(
+                    send_status_update_sms(
                         booking.pu_Phone_Mobile,
                         booking.pk_booking_id,
                         notes,
                         username,
                         url,
                     )
-                    automation.send_sms(
+                    send_status_update_sms(
                         booking.de_to_Phone_Mobile,
                         booking.pk_booking_id,
                         notes,
