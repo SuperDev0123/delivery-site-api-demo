@@ -1916,9 +1916,9 @@ def get_delivery_status(request):
             step = 2
         elif category == "Transit":
             step = 3
-        elif category == "Delivered":
+        elif category == "Complete":
             step = 4
-        elif category == "Futile":
+        elif category == "Hold":
             step = 5
         else:
             step = 1
