@@ -145,10 +145,9 @@ def book(request, fp_name):
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
         _fp_name = fp_name.lower()
-        
+
         try:
             booking = Bookings.objects.get(id=booking_id)
-            status_history.create(booking, "Booked", request.user.username)
             error_msg = pre_check_book(booking)
 
             if error_msg:
@@ -1258,14 +1257,13 @@ def pricing(request):
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
     else:
-        status_history.create(booking, "Pricing", request.user.username)
         if is_pricing_only:
             API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             ).delete()
         else:
             auto_select_pricing(booking, results, auto_select_type)
-        
+
         results = ApiBookingQuotesSerializer(
             results, many=True, context={"booking": booking}
         ).data

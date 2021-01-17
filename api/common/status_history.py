@@ -1,9 +1,11 @@
 from datetime import datetime, date, timedelta
 
+from django.conf import settings
+
 from api.models import Dme_status_history
 from api.outputs import tempo, automation
-from django.conf import settings
-from api.models import *
+
+
 # Create new status_history for Booking
 def create(booking, status, username, event_timestamp=None):
     if not booking.z_lock_status:
@@ -33,14 +35,31 @@ def create(booking, status, username, event_timestamp=None):
             dme_status_history.z_createdByAccount = username
             dme_status_history.save()
 
-            if dme_status_history.status_last == "In Transit" and dme_status_history.status_old != "In Transit":
-                url = f"http://{settings.WEB_SITE_IP}/status/{booking.pk_booking_id}/"
-                
+            if (
+                dme_status_history.status_last == "In Transit"
+                and dme_status_history.status_old != "In Transit"
+            ):
+                url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
+
                 if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
-                    automation.send_status_update_email(booking.pk, notes, username, url)
+                    automation.send_status_update_email(
+                        booking.pk, notes, username, url
+                    )
                 if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
-                    automation.send_sms( booking.pu_Phone_Mobile, booking.pk_booking_id, notes, username, url )
-                    automation.send_sms( booking.de_to_Phone_Mobile, booking.pk_booking_id, notes, username, url )
+                    automation.send_sms(
+                        booking.pu_Phone_Mobile,
+                        booking.pk_booking_id,
+                        notes,
+                        username,
+                        url,
+                    )
+                    automation.send_sms(
+                        booking.de_to_Phone_Mobile,
+                        booking.pk_booking_id,
+                        notes,
+                        username,
+                        url,
+                    )
 
             if status.lower() == "delivered":
                 if event_timestamp:
