@@ -1910,7 +1910,7 @@ def get_delivery_status(request):
 
         if quote:
             quote_data = SimpleQuoteSerializer(quote).data
-            quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
+            quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
 
         if category == "Booked":
             step = 2
