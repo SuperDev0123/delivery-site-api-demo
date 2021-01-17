@@ -735,10 +735,8 @@ def scanned(request):
                     new_fc_log.new_quote = booking.api_booking_quote
                     new_fc_log.save()
                 else:
-                    send_email_to_admins(
-                        "Scanned api-endpoint error",
-                        f"Can not get new Quote for this Order: {booking.b_bookingID_Visual}",
-                    )
+                    booking.api_booking_quote = None
+                    booking.save()
 
         return Response(
             {
@@ -873,7 +871,17 @@ def ready_boks(request):
         )
 
     # Update DB so that Booking can be BOOKED
-    booking.b_status = "Ready for Booking"
+    if booking.api_booking_quote:
+        booking.b_status = "Ready for Booking"
+    else:
+        booking.b_status = "On Hold"
+        send_email_to_admins(
+            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
+            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
+            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
+            + f" Please do FC manually again on DME portal.",
+        )
+
     booking.save()
 
     return Response(
