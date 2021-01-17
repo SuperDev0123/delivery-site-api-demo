@@ -1882,6 +1882,7 @@ def get_delivery_status(request):
     booking = Bookings.objects.filter(
         b_client_booking_ref_num=client_booking_id
     ).first()
+    client = DME_clients.objects.get(dme_account_num=booking.fk_client_id)
 
     if booking:
         b_status = booking.b_status
@@ -1910,6 +1911,9 @@ def get_delivery_status(request):
 
         if quote:
             quote_data = SimpleQuoteSerializer(quote).data
+            quote_data["cost"] = rountd(
+                quote_data["cost"] * (1 + client.client_customer_mark_up), 2
+            )
             quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
 
         if category == "Booked":
@@ -1934,6 +1938,8 @@ def get_delivery_status(request):
 
     # 2. Try to find from Bok tables
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+
     booking = {
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
@@ -1942,6 +1948,9 @@ def get_delivery_status(request):
 
     if quote:
         quote_data = SimpleQuoteSerializer(quote).data
+        quote_data["cost"] = rountd(
+            quote_data["cost"] * (1 + client.client_customer_mark_up), 2
+        )
         quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
 
     if bok_1:
