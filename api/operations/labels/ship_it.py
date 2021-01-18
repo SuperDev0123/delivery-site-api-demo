@@ -175,10 +175,10 @@ def build_label(booking, filepath, lines=[], label_index=0):
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
         "font_family": "Verdana",
-        "font_size_extra_small": "5",
-        "font_size_small": "7.5",
-        "font_size_medium": "9",
-        "font_size_large": "11",
+        "font_size_extra_small": "4",
+        "font_size_small": "6",
+        "font_size_medium": "8",
+        "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "100",
         "label_dimension_width": "150",
@@ -597,7 +597,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm
+                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -611,7 +611,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 [
                     Paragraph(
                         "<font size=%s>Items: %s</font>"
-                        % (label_settings["font_size_medium"], totalQty),
+                        % (label_settings["font_size_small"], totalQty),
                         style_left,
                     )
                 ],
@@ -619,7 +619,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     Paragraph(
                         "<font size=%s>Reference: %s</font>"
                         % (
-                            label_settings["font_size_medium"],
+                            label_settings["font_size_small"],
                             booking_line.sscc if booking_line.sscc else "N/A",
                         ),
                         style_left,
@@ -629,7 +629,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     Paragraph(
                         "<font size=%s>Weight: %s KG</font>"
                         % (
-                            label_settings["font_size_medium"],
+                            label_settings["font_size_small"],
                             booking_line.e_Total_KG_weight
                             if booking_line.e_Total_KG_weight
                             else "N/A",
@@ -641,7 +641,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     Paragraph(
                         "<font size=%s>Cube: %s M3</font>"
                         % (
-                            label_settings["font_size_medium"],
+                            label_settings["font_size_small"],
                             booking_line.e_1_Total_dimCubicMeter
                             if booking_line.e_1_Total_dimCubicMeter
                             else "N/A",
@@ -654,7 +654,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             t2 = Table(
                 tbl_data2,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -666,8 +666,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             data = [[t1, t2]]
 
-            t1_w = float(label_settings["label_image_size_length"]) * (2 / 3) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+            t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
 
             shell_table = Table(
                 data,
@@ -684,7 +684,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 15))
+            Story.append(Spacer(1, 5))
             Story.append(hr)
             Story.append(Spacer(1, 5))
 
