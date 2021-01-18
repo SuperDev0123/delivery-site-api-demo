@@ -1474,7 +1474,7 @@ def push_boks(request):
 
                 if json_results:
                     if "Plum" in client_name and "_sapb1" in user.username:
-                        for json_result, index in enumerate(json_results):
+                        for index, _ in enumerate(json_results):
                             json_results[index]["cost"] = json_results[index][
                                 "cost"
                             ] * (1 + client.client_customer_mark_up)
@@ -1719,7 +1719,7 @@ def partial_pricing(request):
                 json_results[0]["service_name"] = "Standard"
 
     if json_results:
-        for json_result, index in enumerate(json_results):
+        for index, _ in enumerate(json_results):
             json_results[index]["cost"] = json_results[index]["cost"] * (
                 1 + client.client_customer_mark_up
             )
