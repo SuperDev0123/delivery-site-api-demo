@@ -1474,6 +1474,12 @@ def push_boks(request):
 
                 if json_results:
                     if "Plum" in client_name and "_sapb1" in user.username:
+                        for json_result in json_results:
+                            json_result["cost"] = json_result["cost"] * (
+                                1 + client.client_customer_mark_up
+                            )
+                            json_result["cost"] = round(json_result["cost"], 2)
+
                         result = {
                             "success": True,
                             "results": json_results,
@@ -1711,6 +1717,12 @@ def partial_pricing(request):
                 json_results[0]["service_name"] = "Standard"
 
     if json_results:
+        for json_result in json_results:
+            json_result["cost"] = json_result["cost"] * (
+                1 + client.client_customer_mark_up
+            )
+            json_result["cost"] = round(json_result["cost"], 2)
+
         return Response({"success": True, "results": json_results})
     else:
         message = "Didn't get pricings due to wrong suburb and state"
