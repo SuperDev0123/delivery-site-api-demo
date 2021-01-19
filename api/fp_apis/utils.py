@@ -5,27 +5,31 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
-from .constants import FP_CREDENTIALS, FP_UOM
+from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
 
 logger = logging.getLogger("dme_api")
 
 
 def _convert_UOM(value, uom, type, fp_name):
+    _fp_name = fp_name.lower()
+
     try:
-        converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+        converted_value = value * ratio.get_ratio(uom, FP_UOM[_fp_name][type], type)
         return round(converted_value, 2)
     except Exception as e:
-        raise Exception(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
-        )
         logger.info(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
+            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+        )
+        raise Exception(
+            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
         )
 
 
 def gen_consignment_num(fp_name, booking_visual_id):
-    if fp_name.lower() == "hunter":
+    _fp_name = fp_name.lower()
+
+    if _fp_name == "hunter":
         digit_len = 6
         limiter = "1"
 
@@ -40,9 +44,9 @@ def gen_consignment_num(fp_name, booking_visual_id):
         )
 
         return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
-    elif fp_name.lower() == "tnt":
+    elif _fp_name == "tnt":
         return f"DME{str(booking_visual_id).zfill(9)}"
-    elif fp_name.lower() == "dhl":
+    elif _fp_name == "dhl":
         return f"DME{str(booking_visual_id)}"
     else:
         return f"DME{str(booking_visual_id)}"

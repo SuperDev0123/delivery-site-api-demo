@@ -7,8 +7,8 @@ from django.conf import settings
 from api.models import *
 from api.common import common_times
 from api.common import common_times
-from .utils import _convert_UOM, gen_consignment_num
-from .constants import FP_CREDENTIALS, FP_UOM
+from api.fp_apis.utils import _convert_UOM, gen_consignment_num
+from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 
 
 logger = logging.getLogger("dme_api")

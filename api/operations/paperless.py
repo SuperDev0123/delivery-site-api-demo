@@ -104,7 +104,13 @@ def build_xml_with_bok(bok_1, bok_2s):
     SpecialInstructions.text = ""
 
     Carrier = ET.SubElement(Header, "Carrier")
-    Carrier.text = bok_1.quote.freight_provider if bok_1.quote else ""
+
+    if not bok_1.quote:
+        Carrier.text = ""
+    elif bok_1.quote.freight_provider.lower() == "tnt":
+        Carrier.text = "D_TNT"
+    elif bok_1.quote.freight_provider.lower() == "hunter":
+        Carrier.text = "D_HTX"
 
     ReferenceNumber = ET.SubElement(Header, "ReferenceNumber")
     ReferenceNumber.text = reference_number
