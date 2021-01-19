@@ -399,6 +399,7 @@ def rebook(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
+        _fp_name = fp_name.lower()
 
         try:
             booking = Bookings.objects.get(id=booking_id)
@@ -412,7 +413,7 @@ def rebook(request, fp_name):
                 )
 
             try:
-                payload = get_book_payload(booking, fp_name)
+                payload = get_book_payload(booking, _fp_name)
             except Exception as e:
                 trace_error.print()
                 logger.info(f"#401 - Error while build payload: {e}")
