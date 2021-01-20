@@ -45,7 +45,7 @@ def create(booking, status, username, event_timestamp=None):
             #     url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
 
             #     if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
-            #         send_status_update_email(booking.pk, notes, username, url)
+            #         send_status_update_email(booking, notes, username, url)
             #     if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
             #         send_status_update_sms(
             #             booking.pu_Phone_Mobile,

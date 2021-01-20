@@ -424,14 +424,12 @@ def send_booking_status_email(bookingId, emailName, sender):
     )
 
 
-def send_status_update_email(bookingId, status, sender, status_url):
+def send_status_update_email(booking, status, sender, status_url):
     """
     When 'Plum Products Australia Ltd' bookings status is updated
     """
 
-    booking = Bookings.objects.get(pk=int(bookingId))
     cc_emails = []
-
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
@@ -449,7 +447,7 @@ def send_status_update_email(bookingId, status, sender, status_url):
     for template in templates:
         emailBody = template.emailBody
         emailVarList["USERNAME"] = sender
-        emailVarList["BOOKIGNO"] = bookingId
+        emailVarList["BOOKIGNO"] = booking.b_client_order_num
         emailVarList["STATUS"] = status
         emailVarList["STATUS_URL"] = status_url
 
@@ -495,7 +493,7 @@ def send_status_update_email(bookingId, status, sender, status_url):
     )
 
     EmailLogs.objects.create(
-        booking_id=bookingId,
+        booking_id=booking.pk,
         emailName="Status Update",
         to_emails=COMMASPACE.join(to_emails),
         cc_emails=COMMASPACE.join(cc_emails),
