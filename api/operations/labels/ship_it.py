@@ -382,8 +382,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
         Story.append(hr)
         Story.append(Spacer(1, 5))
 
-        barcode = gen_barcode(booking, lines, 0, label_index)
-
         tbl_data1 = [
             [
                 code128.Code128(
@@ -468,7 +466,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
         d = Drawing(80, 80)
         d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-        d.add(QrCodeWidget(value="01234567"))
+        d.add(QrCodeWidget(value=barcode))
 
         tbl_data2 = [[d]]
         t2 = Table(
@@ -694,8 +692,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(t1)
-
-        barcode = gen_barcode(booking, lines, 0, label_index)
 
         tbl_data = [
             [

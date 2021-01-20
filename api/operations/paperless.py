@@ -116,6 +116,8 @@ def build_xml_with_bok(bok_1, bok_2s):
         Carrier.text = "D_CAM"
     elif _fp_name == "hunter":
         Carrier.text = "D_HTX"
+    elif _fp_name == "auspost" and bok_1.quote.account_code == "2006871123":
+        Carrier.text = "D_EPI"
 
     ReferenceNumber = ET.SubElement(Header, "ReferenceNumber")
     ReferenceNumber.text = reference_number
