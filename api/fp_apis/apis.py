@@ -269,14 +269,9 @@ def book(request, fp_name):
                             booking.save()
 
                         pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-                        if IS_PRODUCTION:
-                            pod_file_url = (
-                                f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{pod_file_name}"
-                            )
-                        else:
-                            pod_file_url = f"./static/pdfs/{fp_name.lower()}_au/{pod_file_name}"
+                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pod_file_name}"
 
-                        f = open(pod_file_url, "wb")
+                        f = open(full_path, "wb")
                         f.write(base64.b64decode(json_label_data["podImage"]))
                         f.close()
 
@@ -575,6 +570,7 @@ def edit_book(request, fp_name):
     try:
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
+        _fp_name = fp_name.lower()
 
         try:
             booking = Bookings.objects.get(id=booking_id)
@@ -652,29 +648,18 @@ def edit_book(request, fp_name):
                 if booking.vx_freight_provider.lower() == "hunter":
                     json_label_data = json.loads(response.content)
                     file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-
-                    if IS_PRODUCTION:
-                        file_url = (
-                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{file_name}"
-                        )
-                    else:
-                        file_url = f"./static/pdfs/{fp_name.lower()}_au/{file_name}"
-
-                    with open(file_url, "wb") as f:
+                    full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
+                
+                    with open(full_path, "wb") as f:
                         f.write(base64.b64decode(json_label_data["shippingLabel"]))
                         f.close()
                         booking.z_label_url = f"hunter_au/{file_name}"
                         booking.save()
 
                     pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-                    if IS_PRODUCTION:
-                        pod_file_url = (
-                            f"/opt/s3_public/pdfs/{fp_name.lower()}_au/{pod_file_name}"
-                        )
-                    else:
-                        pod_file_url = f"./static/pdfs/{fp_name.lower()}_au/{pod_file_name}"
+                    full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pod_file_name}"
 
-                    f = open(pod_file_url, "wb")
+                    f = open(full_path, "wb")
                     f.write(base64.b64decode(json_label_data["podImage"]))
                     f.close()
 
