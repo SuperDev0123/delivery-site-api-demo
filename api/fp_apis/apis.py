@@ -225,7 +225,7 @@ def book(request, fp_name):
                     elif booking.vx_freight_provider.lower() == "hunter":
                         booking.v_FPBookingNumber = json_data["consignmentNumber"]
                         booking.jobNumber = json_data["jobNumber"]
-                        # booking.jobDate = json_data["jobDate"]
+                        booking.jobDate = json_data["jobDate"]
                     elif booking.vx_freight_provider.lower() == "tnt":
                         booking.v_FPBookingNumber = (
                             f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
@@ -238,9 +238,9 @@ def book(request, fp_name):
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
                     )
-                    # booking.b_dateBookedDate = datetime.now()
+                    booking.b_dateBookedDate = datetime.now()
                     status_history.create(booking, "Booked", request.user.username)
-                    # booking.b_status = "Booked"
+                    booking.b_status = "Booked"
                     booking.b_error_Capture = ""
                     booking.save()
 
