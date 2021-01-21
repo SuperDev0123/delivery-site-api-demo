@@ -182,8 +182,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "font_size_extra_large": "13",
         "label_dimension_length": "100",
         "label_dimension_width": "150",
-        "label_image_size_length": "95",
-        "label_image_size_width": "145",
+        "label_image_size_length": "90",
+        "label_image_size_width": "130",
         "barcode_dimension_length": "85",
         "barcode_dimension_width": "30",
         "barcode_font_size": "18",
@@ -191,34 +191,19 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "line_height_small": "5",
         "line_height_medium": "6",
         "line_height_large": "8",
+        "margin_v": "5",
+        "margin_h": "5",
     }
 
+    width = float(label_settings["label_dimension_length"]) * mm
+    height = float(label_settings["label_dimension_width"]) * mm
     doc = SimpleDocTemplate(
         filepath + filename,
-        pagesize=(
-            float(label_settings["label_dimension_length"]) * mm,
-            float(label_settings["label_dimension_width"]) * mm,
-        ),
-        rightMargin=float(
-            float(label_settings["label_dimension_width"])
-            - float(label_settings["label_image_size_width"])
-        )
-        * mm,
-        leftMargin=float(
-            float(label_settings["label_dimension_width"])
-            - float(label_settings["label_image_size_width"])
-        )
-        * mm,
-        topMargin=float(
-            float(label_settings["label_dimension_length"])
-            - float(label_settings["label_image_size_length"])
-        )
-        * mm,
-        bottomMargin=float(
-            float(label_settings["label_dimension_length"])
-            - float(label_settings["label_image_size_length"])
-        )
-        * mm,
+        pagesize=(width, height),
+        rightMargin=float(label_settings["margin_h"]) * mm,
+        leftMargin=float(label_settings["margin_h"]) * mm,
+        topMargin=float(label_settings["margin_v"]) * mm,
+        bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
     dme_logo = "./static/assets/dme_logo.png"
@@ -264,8 +249,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (0, -1), "TOP"),
             ],
         )
@@ -280,8 +265,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (0, -1), "TOP"),
             ],
         )
@@ -300,8 +285,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 # ('SPAN',(0,0),(0,-1)),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
                 # ('BOX', (0, 0), (-1, -1), 1, colors.black)
             ],
@@ -312,8 +297,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             thickness=1,
             lineCap="square",
             color=colors.black,
-            spaceBefore=1,
-            spaceAfter=1,
+            spaceBefore=0,
+            spaceAfter=0,
             hAlign="CENTER",
             vAlign="BOTTOM",
             dash=None,
@@ -372,15 +357,15 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ],
         )
 
         Story.append(t1)
         Story.append(Spacer(1, 5))
         Story.append(hr)
-        Story.append(Spacer(1, 5))
+        Story.append(Spacer(1, 10))
 
         tbl_data1 = [
             [
@@ -399,14 +384,14 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
         Story.append(t1)
-        Story.append(Spacer(1, 10))
+        Story.append(Spacer(1, 15))
         Story.append(hr)
         Story.append(Spacer(1, 5))
 
@@ -457,8 +442,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
@@ -475,8 +460,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
@@ -492,8 +477,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
@@ -526,8 +511,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ],
         )
         Story.append(t1)
@@ -640,8 +625,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ],
         )
 
@@ -658,8 +643,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 # ('SPAN',(0,0),(0,-1)),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 # ('BOX', (0, 0), (-1, -1), 1, colors.black)
             ],
         )
@@ -685,8 +670,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
@@ -737,13 +722,13 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ],
         )
 
         Story.append(shell_table)
-        Story.append(Spacer(1, 10))
+        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
@@ -752,7 +737,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     % (
                         label_settings["font_size_small"],
                         colors.white,
-                        "Powerd by DeliverMe Learn more at Deliverme.com",
+                        "Powered by DeliverMe Learn more at Deliverme.com",
                     ),
                     style_center,
                 )
@@ -765,8 +750,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                # ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                # ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("BACKGROUND", (0, 0), (-1, -1), colors.black),
             ],
         )
