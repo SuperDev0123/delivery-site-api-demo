@@ -4,10 +4,11 @@ import logging
 from django.conf import settings
 
 from .payload_builder import get_service_provider
-from api.common import convert_price
+from api.common import convert_price, trace_error
 
 logger = logging.getLogger("dme_api")
 from api.models import *
+
 
 def parse_pricing_response(response, fp_name, booking, is_from_self=False):
     try:
@@ -16,6 +17,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         else:
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
+
+        dme_client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
 
         results = []
         if fp_name == "hunter" and "price" in json_data:  # Hunter
@@ -27,8 +30,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
-                result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["fk_client_id"] = dme_client.company_name
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = (
@@ -42,8 +45,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
-                result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["fk_client_id"] = dme_client.company_name
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
@@ -59,8 +62,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
-                result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["fk_client_id"] = dme_client.company_name
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["fee"] = price["quote"]["net"]["amount"]
                 result["tax_value_1"] = price["quote"]["tax"]["amount"]
                 result["service_name"] = price["plan_name"]
@@ -71,21 +74,22 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             result = {}
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
-            result["fk_client_id"] = booking.b_client_name
-            result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+            result["fk_client_id"] = dme_client.company_name
+            result["freight_provider"] = get_service_provider(fp_name, False)
             result["fee"] = price["netPrice"]
             result["tax_value_1"] = price["totalTaxes"]
             result["service_name"] = (
                 price["serviceName"] if "serviceName" in price else None
             )
             results.append(result)
-        elif fp_name == "startrack" and "price" in json_data:  # Startrack
+        # Startrack | AUSPost
+        elif fp_name in ["startrack", "auspost"] and "price" in json_data:
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
-                result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+                result["fk_client_id"] = dme_client.company_name
+                result["freight_provider"] = get_service_provider(fp_name, False)
                 result["fee"] = price["netPrice"]
                 result["tax_value_1"] = price["totalTaxes"]
                 result["service_name"] = (
@@ -97,8 +101,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             result = {}
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
-            result["fk_client_id"] = booking.b_client_name
-            result["fk_freight_provider_id"] = get_service_provider(fp_name, False)
+            result["fk_client_id"] = dme_client.company_name
+            result["freight_provider"] = get_service_provider(fp_name, False)
             result["etd"] = price["delivery_timeframe_days"]
 
             min_fee = 0
@@ -137,14 +141,13 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             result["service_name"] = min_serviceName
 
             results.append(result)
-        # Built-in
-        elif is_from_self and "price" in json_data:
+        elif is_from_self and "price" in json_data:  # Built-in
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
-                result["fk_client_id"] = booking.b_client_name
-                result["fk_freight_provider_id"] = get_service_provider(fp_name.lower())
+                result["fk_client_id"] = dme_client.company_name
+                result["freight_provider"] = get_service_provider(fp_name.lower())
                 result["fee"] = price["netPrice"]
                 result["etd"] = price["etd"]
                 result["tax_value_1"] = price["totalTaxes"]
@@ -159,9 +162,11 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 results[index]["client_mu_1_minimum_values"],
                 results[index]["mu_percentage_fuel_levy"],
             ) = convert_price.fp_price_2_dme_price(result)
+
         return results
     except Exception as e:
-        error_msg = f"Error while parse Pricing response: {e}"
+        trace_error.print()
+        error_msg = f"#580 Error while parse Pricing response: {e}"
         logger.info(error_msg)
         return None
 
@@ -174,25 +179,51 @@ def capture_errors(response, booking, fp_name, accountCode, is_from_self=False):
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
 
-        fp = Fp_freight_providers.objects.filter(fp_company_name__iexact = fp_name).first()
+        fp = Fp_freight_providers.objects.filter(
+            fp_company_name__iexact=fp_name
+        ).first()
 
         if fp_name == "hunter" and "errorMessage" in json_data:  # Hunter
-            DME_Error(error_code = json_data["errorCode"], error_description = json_data["errorMessage"], fk_booking_id=booking.pk_booking_id, accountCode = accountCode, freight_provider=fp).save()
-            
+            DME_Error(
+                error_code=json_data["errorCode"],
+                error_description=json_data["errorMessage"],
+                fk_booking_id=booking.pk_booking_id,
+                accountCode=accountCode,
+                freight_provider=fp,
+            ).save()
+
         elif fp_name == "tnt" and "errors" in json_data:  # TNT
             errors = json_data["errors"]
             for error in errors:
-                DME_Error(error_code = error["errorCode"], error_description = error["errorMsg"],fk_booking_id=booking.pk_booking_id, accountCode = accountCode, freight_provider=fp).save()
+                DME_Error(
+                    error_code=error["errorCode"],
+                    error_description=error["errorMsg"],
+                    fk_booking_id=booking.pk_booking_id,
+                    accountCode=accountCode,
+                    freight_provider=fp,
+                ).save()
 
         elif fp_name == "capital" and "status" in json_data:  # Capital
             if json_data["status"] == 3:
 
-                DME_Error(error_code=json_data["status"], error_description = json_data["statusDescription"],fk_booking_id=booking.pk_booking_id, accountCode=accountCode, freight_provider=fp).save()
-       
+                DME_Error(
+                    error_code=json_data["status"],
+                    error_description=json_data["statusDescription"],
+                    fk_booking_id=booking.pk_booking_id,
+                    accountCode=accountCode,
+                    freight_provider=fp,
+                ).save()
+
         if fp_name == "fastway" and "error" in json_data:  # Fastway
-            DME_Error( error_description = json_data["error"],fk_booking_id=booking.pk_booking_id, accountCode=accountCode, freight_provider=fp).save()
-            
+            DME_Error(
+                error_description=json_data["error"],
+                fk_booking_id=booking.pk_booking_id,
+                accountCode=accountCode,
+                freight_provider=fp,
+            ).save()
+
     except Exception as e:
-        error_msg = f"Error while parse Pricing response: {e}"
+        trace_error.print()
+        error_msg = f"#581 Error while parse Pricing response: {e}"
         logger.info(error_msg)
         return None

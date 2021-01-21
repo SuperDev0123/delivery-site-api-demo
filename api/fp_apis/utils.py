@@ -5,38 +5,51 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
-from .constants import FP_UOM
+from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
+from api.operations.email_senders import send_email_to_admins
 
 logger = logging.getLogger("dme_api")
 
 
 def _convert_UOM(value, uom, type, fp_name):
+    _fp_name = fp_name.lower()
+
     try:
-        converted_value = value * ratio.get_ratio(uom, FP_UOM[fp_name][type], type)
+        converted_value = value * ratio.get_ratio(uom, FP_UOM[_fp_name][type], type)
         return round(converted_value, 2)
     except Exception as e:
-        raise Exception(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
-        )
         logger.info(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[fp_name][type]}"
+            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+        )
+        raise Exception(
+            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
         )
 
 
-def gen_consignment_num(booking_visual_id, prefix_len, digit_len):
-    limiter = "1"
+def gen_consignment_num(fp_name, booking_visual_id):
+    _fp_name = fp_name.lower()
 
-    for i in range(digit_len):
-        limiter += "0"
+    if _fp_name == "hunter":
+        digit_len = 6
+        limiter = "1"
 
-    limiter = int(limiter)
+        for i in range(digit_len):
+            limiter += "0"
 
-    prefix_index = int(booking_visual_id / limiter) + 1
-    prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
-        ((prefix_index - 1) % 26) + 65
-    )
+        limiter = int(limiter)
 
-    return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+        prefix_index = int(int(booking_visual_id) / limiter) + 1
+        prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
+            ((prefix_index - 1) % 26) + 65
+        )
+
+        return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+    elif _fp_name == "tnt":
+        return f"DME{str(booking_visual_id).zfill(9)}"
+    elif _fp_name == "dhl":
+        return f"DME{str(booking_visual_id)}"
+    else:
+        return f"DME{str(booking_visual_id)}"
 
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
@@ -46,66 +59,35 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         )
         return status_info.dme_status
     except Dme_utl_fp_statuses.DoesNotExist:
-        logger.info(f"#818 New FP status: {b_status_API}")
+        message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
+        logger.error(message)
+        send_email_to_admins("New FP status", message)
 
         if booking:
             booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
             booking.save()
+
         return None
 
 
 def get_status_category_from_status(status):
+    if not status:
+        return None
+
     try:
         utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
         return utl_dme_status.dme_delivery_status_category
     except Exception as e:
-        logger.info(f"#819 Status Category not found!: {status}")
-        # print('Exception: ', e)
-        return ""
-
-
-def get_account_code_key(booking, fp_name):
-    from .payload_builder import ACCOUNT_CODES
-
-    # Exceptional case for Bunnings
-    if (
-        "SWYTEMPBUN" in booking.fk_client_warehouse.client_warehouse_code
-        and fp_name.lower() == "hunter"
-    ):
-        if booking.pu_Address_State == "QLD":
-            return "live_bunnings_0"
-        elif booking.pu_Address_State == "NSW":
-            return "live_bunnings_1"
-        else:
-            booking.b_errorCapture = f"Not supported State"
-            booking.save()
-            return None
-
-    if fp_name.lower() not in ACCOUNT_CODES:
-        booking.b_errorCapture = f"Not supported FP"
-        booking.save()
+        message = f"#819 Category not found with this status: {status}"
+        logger.error(message)
+        send_email_to_admins("Category for Status not Found", message)
         return None
-    elif booking.api_booking_quote:
-        account_code = booking.api_booking_quote.account_code
-        account_code_key = None
-
-        for key in ACCOUNT_CODES[fp_name.lower()]:
-            if ACCOUNT_CODES[fp_name.lower()][key] == account_code:
-                account_code_key = key
-                return account_code_key
-
-        if not account_code_key:
-            booking.b_errorCapture = f"Not supported ACCOUNT CODE"
-            booking.save()
-            return None
-    elif not booking.api_booking_quote:
-        return "live_0"
 
 
 # Get ETD of Pricing in `hours` unit
-def _get_etd(pricing):
+def get_etd_in_hour(pricing):
     fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=pricing.fk_freight_provider_id
+        fp_company_name__iexact=pricing.freight_provider
     )
 
     if fp.fp_company_name.lower() == "tnt":
@@ -137,10 +119,10 @@ def _is_deliverable_price(pricing, booking):
         if booking.pu_PickUp_By_Time_Hours:
             delta_min -= booking.pu_PickUp_By_Time_Hours * 60
         if booking.pu_PickUp_By_Time_Minutes:
-            delta_min -= pu_PickUp_By_Time_Minutes
+            delta_min -= booking.pu_PickUp_By_Time_Minutes
 
         delta_min = timeDelta.total_seconds() / 60 + delta_min
-        eta = _get_etd(pricing)
+        eta = get_etd_in_hour(pricing)
 
         if not eta:
             return False
@@ -156,18 +138,24 @@ def _is_deliverable_price(pricing, booking):
 def _get_fastest_price(pricings):
     fastest_pricing = {}
     for pricing in pricings:
-        etd = _get_etd(pricing)
+        etd = get_etd_in_hour(pricing)
 
         if not fastest_pricing:
             fastest_pricing["pricing"] = pricing
             fastest_pricing["etd_in_hour"] = etd
-        elif fastest_pricing and etd:
-            if not fastest_pricing["etd_in_hour"] or (
-                fastest_pricing["etd_in_hour"] and fastest_pricing["etd_in_hour"] > etd
+        elif etd and fastest_pricing and fastest_pricing["etd_in_hour"]:
+            if fastest_pricing["etd_in_hour"] > etd:
+                fastest_pricing["pricing"] = pricing
+                fastest_pricing["etd_in_hour"] = etd
+            elif (
+                etd
+                and fastest_pricing["etd_in_hour"]
+                and fastest_pricing["etd_in_hour"] == etd
+                and fastest_pricing["pricing"].fee > pricing.fee
             ):
                 fastest_pricing["pricing"] = pricing
 
-    return fastest_pricing
+    return fastest_pricing["pricing"]
 
 
 # ######################## #
@@ -178,14 +166,34 @@ def _get_lowest_price(pricings):
     for pricing in pricings:
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
-        elif (
-            lowest_pricing
-            and pricing.fee
-            and float(lowest_pricing["pricing"].fee) > float(pricing.fee)
-        ):
-            lowest_pricing["pricing"] = pricing
+            lowest_pricing["etd"] = get_etd_in_hour(pricing)
+        elif lowest_pricing and pricing.fee:
+            if float(lowest_pricing["pricing"].fee) > float(pricing.fee):
+                lowest_pricing["pricing"] = pricing
+                lowest_pricing["etd"] = get_etd_in_hour(pricing)
+            elif float(lowest_pricing["pricing"].fee) == float(pricing.fee):
+                etd = get_etd_in_hour(pricing)
 
-    return lowest_pricing
+                if lowest_pricing["etd"] and etd and lowest_pricing["etd"] > etd:
+                    lowest_pricing["pricing"] = pricing
+                    lowest_pricing["etd"] = pricing
+
+    return lowest_pricing["pricing"]
+
+
+def select_best_options(pricings):
+    logger.info(f"#860 Select best options from {len(pricings)} pricings")
+
+    if not pricings:
+        return []
+
+    lowest_pricing = _get_lowest_price(pricings)
+    fastest_pricing = _get_fastest_price(pricings)
+
+    if lowest_pricing.pk == fastest_pricing.pk:
+        return [lowest_pricing]
+    else:
+        return [fastest_pricing, lowest_pricing]
 
 
 def auto_select_pricing(booking, pricings, auto_select_type):
@@ -221,17 +229,17 @@ def auto_select_pricing(booking, pricings, auto_select_type):
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
-        booking.api_booking_quote = filtered_pricing["pricing"]
-        booking.vx_freight_provider = filtered_pricing["pricing"].fk_freight_provider_id
-        booking.vx_account_code = filtered_pricing["pricing"].account_code
-        booking.vx_serviceName = filtered_pricing["pricing"].service_name
-        booking.inv_cost_quoted = filtered_pricing["pricing"].fee * (
-            1 + filtered_pricing["pricing"].mu_percentage_fuel_levy
+        booking.api_booking_quote = filtered_pricing
+        booking.vx_freight_provider = filtered_pricing.freight_provider
+        booking.vx_account_code = filtered_pricing.account_code
+        booking.vx_serviceName = filtered_pricing.service_name
+        booking.inv_cost_quoted = filtered_pricing.fee * (
+            1 + filtered_pricing.mu_percentage_fuel_levy
         )
-        booking.inv_sell_quoted = filtered_pricing["pricing"].client_mu_1_minimum_values
+        booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
 
         fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing["pricing"].fk_freight_provider_id
+            fp_company_name__iexact=filtered_pricing.freight_provider
         )
 
         if fp and fp.service_cutoff_time:
@@ -240,6 +248,47 @@ def auto_select_pricing(booking, pricings, auto_select_type):
             booking.s_02_Booking_Cutoff_Time = "12:00:00"
 
         booking.save()
+        return True
+    else:
+        logger.info("#855 - Could not find proper pricing")
+        return False
+
+
+def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
+    if len(pricings) == 0:
+        logger.info("#855 - Could not find proper pricing")
+        return None
+
+    non_air_freight_pricings = []
+    for pricing in pricings:
+        if not pricing.service_name or (
+            pricing.service_name and pricing.service_name != "Air Freight"
+        ):
+            non_air_freight_pricings.append(pricing)
+
+    # Check booking.pu_PickUp_By_Date and booking.de_Deliver_By_Date and Pricings etd
+    # deliverable_pricings = []
+    # for pricing in non_air_freight_pricings:
+    #     if _is_deliverable_price(pricing, booking):
+    #         deliverable_pricings.append(pricing)
+
+    deliverable_pricings = non_air_freight_pricings
+    filtered_pricing = {}
+    if int(auto_select_type) == 1:  # Lowest
+        if deliverable_pricings:
+            filtered_pricing = _get_lowest_price(deliverable_pricings)
+        elif non_air_freight_pricings:
+            filtered_pricing = _get_lowest_price(non_air_freight_pricings)
+    else:  # Fastest
+        if deliverable_pricings:
+            filtered_pricing = _get_fastest_price(deliverable_pricings)
+        elif non_air_freight_pricings:
+            filtered_pricing = _get_fastest_price(non_air_freight_pricings)
+
+    if filtered_pricing:
+        logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
+        bok_1.quote = filtered_pricing
+        bok_1.save()
         return True
     else:
         logger.info("#855 - Could not find proper pricing")

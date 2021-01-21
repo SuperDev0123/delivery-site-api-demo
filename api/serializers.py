@@ -1,6 +1,7 @@
-from datetime import datetime
-from rest_framework import serializers
 import re
+from datetime import datetime
+
+from rest_framework import serializers
 
 from api.models import (
     Bookings,
@@ -28,11 +29,15 @@ from api.models import (
     Client_Products,
     Client_Ras,
     Utl_sql_queries,
-    Client_Products,
     DME_Error,
+    Client_Process_Mgr,
+    DME_Augment_Address,
+    DME_Roles,
+    DME_clients,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
+from api.common import math as dme_math
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -54,7 +59,11 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 class SimpleBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
-        fields = (
+        read_only_fields = (
+            "clientRefNumbers",  # property
+            "gap_ras",  # property
+        )
+        fields = read_only_fields + (
             "id",
             "pk_booking_id",
             "b_bookingID_Visual",
@@ -182,6 +191,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "pu_Email",
             "pu_email_Group_Name",
             "pu_email_Group",
+            "pu_Comm_Booking_Communicate_Via",
             "de_To_Address_Street_1",
             "de_To_Address_Street_2",
             "de_To_Address_PostalCode",
@@ -193,6 +203,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Email_Group_Name",
             "de_Email_Group_Emails",
             "deToCompanyName",
+            "de_To_Comm_Delivery_Communicate_Via",
             "v_FPBookingNumber",
             "vx_freight_provider",
             "z_label_url",
@@ -329,6 +340,7 @@ class BookingLineSerializer(serializers.ModelSerializer):
             "e_qty_shortages",
             "e_qty_scanned_fp",
             "is_scanned",
+            "picked_up_timestamp",
         )
 
 
@@ -416,6 +428,32 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class SimpleQuoteSerializer(serializers.ModelSerializer):
+    cost_id = serializers.SerializerMethodField(read_only=True)
+    eta = serializers.SerializerMethodField(read_only=True)
+    cost = serializers.SerializerMethodField(read_only=True)
+    fp_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_cost_id(self, obj):
+        return obj.pk
+
+    def get_cost(self, obj):
+        if obj.tax_value_1:
+            return dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
+        else:
+            return dme_math.ceil(obj.client_mu_1_minimum_values, 2)
+
+    def get_eta(self, obj):
+        return obj.etd
+
+    def get_fp_name(self, obj):
+        return obj.freight_provider
+
+    class Meta:
+        model = API_booking_quotes
+        fields = ("cost_id", "cost", "eta", "service_name", "fp_name")
+
+
 class EmailTemplatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Email_Templates
@@ -471,15 +509,6 @@ class OptionsSerializer(serializers.ModelSerializer):
 
 
 class FilesSerializer(serializers.ModelSerializer):
-    b_bookingID_Visual = serializers.SerializerMethodField(read_only=True)
-    booking_id = serializers.SerializerMethodField(read_only=True)
-
-    def get_b_bookingID_Visual(self, obj):
-        return utils.get_b_bookingID_Visual(obj)
-
-    def get_booking_id(self, obj):
-        return utils.get_booking_id(obj)
-
     class Meta:
         model = DME_Files
         fields = "__all__"
@@ -516,9 +545,24 @@ class EmailLogsSerializer(serializers.ModelSerializer):
 
 
 class ClientEmployeesSerializer(serializers.ModelSerializer):
+    role_name = serializers.CharField(source="role.role_code", required=False)
+    client_name = serializers.CharField(
+        source="fk_id_dme_client.company_name", required=False
+    )
+    warehouse_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Client_employees
         fields = "__all__"
+
+    def get_warehouse_name(self, instance):
+        if instance.warehouse_id:
+            warehouse = Client_warehouses.objects.get(
+                pk_id_client_warehouses=instance.warehouse_id + 1
+            )
+            return warehouse.warehousename
+
+        return None
 
 
 class SqlQueriesSerializer(serializers.ModelSerializer):
@@ -550,6 +594,12 @@ class ClientRasSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ClientProcessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client_Process_Mgr
+        fields = "__all__"
+
+
 class BookingSetsSerializer(serializers.ModelSerializer):
     bookings_cnt = serializers.SerializerMethodField(read_only=True)
 
@@ -578,3 +628,21 @@ class ErrorSerializer(serializers.ModelSerializer):
             "error_description",
             "fp_name",
         )
+
+
+class AugmentAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Augment_Address
+        fields = "__all__"
+
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_Roles
+        fields = "__all__"
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DME_clients
+        fields = "__all__"
