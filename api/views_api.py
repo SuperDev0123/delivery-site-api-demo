@@ -1940,6 +1940,7 @@ def get_delivery_status(request):
             step = 5
         else:
             step = 1
+            b_status = "Processing"
 
         return Response(
             {
