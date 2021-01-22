@@ -183,7 +183,7 @@ def book(request, fp_name):
 
             if (
                 response.status_code == 500
-                and _fp_name == "startrack"
+                and _fp_name in ["startrack", "auspost"]
                 and "An internal system error" in json_data[0]["message"]
             ):
                 for i in range(4):
@@ -218,7 +218,7 @@ def book(request, fp_name):
                     ]
                     request_payload["trackingId"] = json_data["consignmentNumber"]
 
-                    if booking.vx_freight_provider.lower() == "startrack":
+                    if booking.vx_freight_provider.lower() in ["startrack", "auspost"]:
                         booking.v_FPBookingNumber = json_data["items"][0][
                             "tracking_details"
                         ]["consignment_id"]
@@ -297,8 +297,8 @@ def book(request, fp_name):
                             send_booking_status_email(
                                 booking.pk, email_template_name, request.user.username
                             )
-                    # Save Label for Startrack
-                    elif _fp_name == "startrack":
+                    # Save Label for Startrack and AusPost
+                    elif _fp_name in ["startrack", "auspost"]:
                         Api_booking_confirmation_lines.objects.filter(
                             fk_booking_id=booking.pk_booking_id
                         ).delete()
@@ -1322,7 +1322,7 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
     logger.info("#910 - Building Pricing workers...")
 
     client_fps = Client_FP.objects.prefetch_related("fp").filter(
-        client__company_name__iexact=booking.b_client_name
+        client__company_name__iexact=booking.b_client_name, is_active=True
     )
 
     if client_fps:
