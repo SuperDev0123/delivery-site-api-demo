@@ -1476,3 +1476,33 @@ async def _built_in_pricing_worker_builder(_fp_name, booking):
             serializer.save()
         else:
             logger.info(f"@404 Serializer error: {serializer.errors}")
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def update_servce_code(request, fp_name):
+    try:
+        _fp_name = fp_name.lower()
+
+        try:
+            booking = Bookings.objects.get(id=booking_ids[0])
+            payload = get_get_accounts_payload(booking, fp_name)
+            headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+
+            logger.info(f"### Payload ({fp_name} Get Accounts): {payload}")
+            url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
+            response = requests.post(url, json=payload, headers=headers)
+            res_content = response.content
+            json_data = json.loads(res_content)
+            s0 = json.dumps(
+                json_data, indent=2, sort_keys=True, default=str
+            )  # Just for visual
+
+        except IndexError as e:
+            trace_error.print()
+            error_msg = "GetAccounts is failed."
+            _set_error(booking, error_msg)
+            return JsonResponse({"message": error_msg})
+    except SyntaxError:
+        trace_error.print()
+        return JsonResponse({"message": "Syntax Error"})
