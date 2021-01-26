@@ -1501,24 +1501,32 @@ def update_servce_code(request, fp_name):
             for data in json_data['returns_products']:
                 product_type = data['type']
                 product_id = data['product_id']
-                
-                etd = FP_Service_ETDs()
-                etd.fp_delivery_service_code = product_id
-                etd.fp_delivery_time_description = product_type
-                etd.freight_provider_id = fp_auspost.id
-                etd.dme_service_code_id = 1
-                etd.save()
+
+                etd, is_created = FP_Service_ETDs.objects.get_or_create(
+                    fp_delivery_service_code = product_id,
+                    fp_delivery_time_description = product_type,
+                    freight_provider_id = fp_auspost.id,
+                    dme_service_code_id = 1
+                )
+
+                if not is_created:
+                    etd.z_modifiedTimeStamp = datetime.now()
+                    etd.save()
 
             for data in json_data['postage_products']:
                 product_type = data['type']
                 product_id = data['product_id']
 
-                etd = FP_Service_ETDs()
-                etd.fp_delivery_service_code = product_id
-                etd.fp_delivery_time_description = product_type
-                etd.freight_provider_id = fp_auspost.id
-                etd.dme_service_code_id = 1
-                etd.save()
+                etd, is_created = FP_Service_ETDs.objects.get_or_create(
+                    fp_delivery_service_code = product_id,
+                    fp_delivery_time_description = product_type,
+                    freight_provider_id = fp_auspost.id,
+                    dme_service_code_id = 1
+                )
+
+                if not is_created:
+                    etd.z_modifiedTimeStamp = datetime.now()
+                    etd.save()
             
             return JsonResponse({"message": "Updated service codes successfully."})
         except IndexError as e:
