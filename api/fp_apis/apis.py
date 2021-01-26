@@ -1485,8 +1485,7 @@ def update_servce_code(request, fp_name):
         _fp_name = fp_name.lower()
 
         try:
-            booking = Bookings.objects.get(id=booking_ids[0])
-            payload = get_get_accounts_payload(booking, fp_name)
+            payload = get_get_accounts_payload(_fp_name)
             headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
 
             logger.info(f"### Payload ({fp_name} Get Accounts): {payload}")
@@ -1497,7 +1496,31 @@ def update_servce_code(request, fp_name):
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
+            fp_auspost = Fp_freight_providers.objects.filter(fp_company_name='AusPost').first()
 
+            for data in json_data['returns_products']:
+                product_type = data['type']
+                product_id = data['product_id']
+                
+                etd = FP_Service_ETDs()
+                etd.fp_delivery_service_code = product_id
+                etd.fp_delivery_time_description = product_type
+                etd.freight_provider_id = fp_auspost.id
+                etd.dme_service_code_id = 1
+                etd.save()
+
+            for data in json_data['postage_products']:
+                product_type = data['type']
+                product_id = data['product_id']
+
+                etd = FP_Service_ETDs()
+                etd.fp_delivery_service_code = product_id
+                etd.fp_delivery_time_description = product_type
+                etd.freight_provider_id = fp_auspost.id
+                etd.dme_service_code_id = 1
+                etd.save()
+            
+            return JsonResponse({"message": "Updated service codes successfully."})
         except IndexError as e:
             trace_error.print()
             error_msg = "GetAccounts is failed."
