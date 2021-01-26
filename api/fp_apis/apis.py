@@ -1477,6 +1477,7 @@ async def _built_in_pricing_worker_builder(_fp_name, booking):
         else:
             logger.info(f"@404 Serializer error: {serializer.errors}")
 
+
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
@@ -1488,46 +1489,39 @@ def update_servce_code(request, fp_name):
             payload = get_get_accounts_payload(_fp_name)
             headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
 
-            logger.info(f"### Payload ({fp_name} Get Accounts): {payload}")
+            logger.info(f"### Payload ({fp_name.upper()} Get Accounts): {payload}")
             url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
             response = requests.post(url, json=payload, headers=headers)
             res_content = response.content
             json_data = json.loads(res_content)
-            s0 = json.dumps(
-                json_data, indent=2, sort_keys=True, default=str
-            )  # Just for visual
-            fp_auspost = Fp_freight_providers.objects.filter(fp_company_name='AusPost').first()
+            # Just for visual
+            s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)
+            fp = Fp_freight_providers.objects.filter(
+                fp_company_name__iexact=_fp_name
+            ).first()
 
-            for data in json_data['returns_products']:
-                product_type = data['type']
-                product_id = data['product_id']
+            for data in json_data["returns_products"]:
+                product_type = data["type"]
+                product_id = data["product_id"]
 
-                etd, is_created = FP_Service_ETDs.objects.get_or_create(
-                    fp_delivery_service_code = product_id,
-                    fp_delivery_time_description = product_type,
-                    freight_provider_id = fp_auspost.id,
-                    dme_service_code_id = 1
+                etd, is_created = FP_Service_ETDs.objects.update_or_create(
+                    fp_delivery_service_code=product_id,
+                    fp_delivery_time_description=product_type,
+                    freight_provider=fp,
+                    dme_service_code_id=1,
                 )
 
-                if not is_created:
-                    etd.z_modifiedTimeStamp = datetime.now()
-                    etd.save()
+            for data in json_data["postage_products"]:
+                product_type = data["type"]
+                product_id = data["product_id"]
 
-            for data in json_data['postage_products']:
-                product_type = data['type']
-                product_id = data['product_id']
-
-                etd, is_created = FP_Service_ETDs.objects.get_or_create(
-                    fp_delivery_service_code = product_id,
-                    fp_delivery_time_description = product_type,
-                    freight_provider_id = fp_auspost.id,
-                    dme_service_code_id = 1
+                etd, is_created = FP_Service_ETDs.objects.update_or_create(
+                    fp_delivery_service_code=product_id,
+                    fp_delivery_time_description=product_type,
+                    freight_provider=fp,
+                    dme_service_code_id=1,
                 )
 
-                if not is_created:
-                    etd.z_modifiedTimeStamp = datetime.now()
-                    etd.save()
-            
             return JsonResponse({"message": "Updated service codes successfully."})
         except IndexError as e:
             trace_error.print()
