@@ -34,6 +34,9 @@ from api.models import (
     DME_Augment_Address,
     DME_Roles,
     DME_clients,
+    CostOption,
+    CostOptionMap,
+    BookingCostOption,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -526,7 +529,7 @@ class AvailabilitiesSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CostsSerializer(serializers.ModelSerializer):
+class FPCostsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_costs
         fields = "__all__"
@@ -646,3 +649,39 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_clients
         fields = "__all__"
+
+
+class CostOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CostOption
+        fields = ("id", "code", "description")
+
+
+class CostOptionMapSerializer(serializers.ModelSerializer):
+    cost_option = serializers.SerializerMethodField(read_only=True)
+
+    def get_cost_option(self, obj):
+        return CostOptionSerializer(obj.dme_cost_option).data
+
+    class Meta:
+        model = CostOptionMap
+        exclude = (
+            "z_createdBy",
+            "z_modifiedAt",
+            "z_modifiedBy",
+            "fp",
+            "dme_cost_option",
+            "is_active",
+        )
+
+
+class BookingCostOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingCostOption
+        exclude = (
+            "z_createdBy",
+            "z_modifiedAt",
+            "z_modifiedBy",
+            "booking",
+            "is_active",
+        )

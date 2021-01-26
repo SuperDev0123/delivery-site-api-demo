@@ -4512,3 +4512,58 @@ class Client_FP(models.Model):
 
     class Meta:
         db_table = "client_fp"
+
+
+class CostOption(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=16, default=None, null=True)
+    description = models.CharField(max_length=64, default=None, null=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_cost_options"
+
+
+class CostOptionMap(models.Model):
+    """
+    Mapping table from FP cost option to DME's
+    """
+
+    id = models.AutoField(primary_key=True)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    fp_cost_option = models.CharField(max_length=128, default=None, null=True)
+    dme_cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    amount = models.FloatField(default=0, null=True)
+    is_percentage = models.BooleanField(default=False)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_utl_map_fp_cost_options"
+
+
+class BookingCostOption(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    amount = models.FloatField(default=0, null=True)
+    is_percentage = models.BooleanField(default=False)
+    qty = models.FloatField(default=1, null=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_booking_cost_options"
+        unique_together = (
+            "booking",
+            "cost_option",
+        )

@@ -4129,30 +4129,9 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
             return JsonResponse({"result": None}, status=400)
 
 
-class CostsViewSet(viewsets.ViewSet):
-    serializer_class = CostsSerializer
-
-    def list(self, request, pk=None):
-        queryset = FP_costs.objects.all()
-        serializer = CostsSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            request.data.pop("id", None)
-            resultObject = FP_costs.objects.get_or_create(**request.data)
-
-            return JsonResponse(
-                {
-                    "result": CostsSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            # print("@Exception", e, request.data["per_UOM_charge"])
-            return JsonResponse({"result": None}, status=400)
+class FPCostsViewSet(viewsets.ModelViewSet):
+    queryset = FP_costs.objects.all()
+    serializer_class = FPCostsSerializer
 
 
 class PricingRulesViewSet(viewsets.ViewSet):
@@ -4617,3 +4596,43 @@ class ChartsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
+
+
+class CostOptionViewSet(viewsets.ModelViewSet):
+    queryset = CostOption.objects.all().order_by("z_createdAt")
+    serializer_class = CostOptionSerializer
+
+
+class CostOptionMapViewSet(viewsets.ModelViewSet):
+    queryset = CostOptionMap.objects.all().order_by("z_createdAt")
+    serializer_class = CostOptionMapSerializer
+
+    def get_queryset(self):
+        fp_name = self.request.GET["fpName"]
+
+        if fp_name:
+            queryset = CostOptionMap.objects.prefetch_related("dme_cost_option").filter(
+                is_active=True, fp__fp_company_name__iexact=fp_name
+            )
+        else:
+            queryset = CostOptionMap.objects.prefetch_related("dme_cost_option").filter(
+                is_active=True
+            )
+
+        return queryset.order_by("z_createdAt")
+
+
+class BookingCostOptionViewSet(viewsets.ModelViewSet):
+    serializer_class = BookingCostOptionSerializer
+
+    def get_queryset(self):
+        booking_id = self.request.GET["bookingId"]
+
+        if booking_id:
+            queryset = BookingCostOption.objects.filter(
+                booking_id=booking_id, is_active=True
+            )
+        else:
+            queryset = BookingCostOption.objects.filter(is_active=True)
+
+        return queryset.order_by("z_createdAt")
