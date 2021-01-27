@@ -643,6 +643,11 @@ def get_create_label_payload(booking, fp_name):
             items.append(temp_item)
         payload["items"] = items
 
+        if fp_name == "startrack":
+            layout = "A4-1pp"
+        elif fp_name == "auspost":
+            layout = "A4-4pp"
+
         if fp_name in ["startrack", "auspost"]:
             payload["type"] = "PRINT"
             payload["labelType"] = "PRINT"
@@ -650,7 +655,7 @@ def get_create_label_payload(booking, fp_name):
                 {
                     "branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
                     "branded": False,
-                    "layout": "A4-1pp",
+                    "layout": layout,
                     "leftOffset": 0,
                     "topOffset": 0,
                     "typeOfPost": "Express Post",
@@ -697,6 +702,7 @@ def get_get_order_summary_payload(booking, fp_name):
         # print(f"#405 - Error while build payload: {e}")
         return None
 
+
 def get_get_accounts_payload(fp_name):
     try:
         payload = {}
@@ -705,13 +711,14 @@ def get_get_accounts_payload(fp_name):
             for key in FP_CREDENTIALS[fp_name][client_name].keys():
                 detail = FP_CREDENTIALS[fp_name][client_name][key]
                 payload["spAccountDetails"] = detail
-                
+
         payload["serviceProvider"] = get_service_provider(fp_name)
-        
+
         return payload
     except Exception as e:
         # print(f"#405 - Error while build payload: {e}")
         return None
+
 
 def get_pod_payload(booking, fp_name):
     try:
