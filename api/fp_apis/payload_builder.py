@@ -697,6 +697,21 @@ def get_get_order_summary_payload(booking, fp_name):
         # print(f"#405 - Error while build payload: {e}")
         return None
 
+def get_get_accounts_payload(fp_name):
+    try:
+        payload = {}
+
+        for client_name in FP_CREDENTIALS[fp_name].keys():
+            for key in FP_CREDENTIALS[fp_name][client_name].keys():
+                detail = FP_CREDENTIALS[fp_name][client_name][key]
+                payload["spAccountDetails"] = detail
+                
+        payload["serviceProvider"] = get_service_provider(fp_name)
+        
+        return payload
+    except Exception as e:
+        # print(f"#405 - Error while build payload: {e}")
+        return None
 
 def get_pod_payload(booking, fp_name):
     try:
