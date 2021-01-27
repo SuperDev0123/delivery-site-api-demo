@@ -4161,19 +4161,23 @@ class ClientEmployeesViewSet(viewsets.ModelViewSet):
 
 class ClientProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProductsSerializer
-    queryset = Client_Products.objects.all()
 
-    @action(detail=False, methods=["get"])
-    def get(self, request, format=None):
-        results = []
-        try:
-            pk_id_dme_client = self.request.query_params.get("client_id", None)
-            queryset = Client_Products.objects.filter(fk_id_dme_client=pk_id_dme_client)
-            serializer = ClientProductsSerializer(queryset, many=True)
-            return Response(serializer.data)
+    def get_queryset(self):
+        user_id = int(self.request.user.id)
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
-        except Exception as e:
-            return JsonResponse({"results": ""})
+        if dme_employee:
+            client_employees = Client_employees.objects.filter(email__isnull=False)
+        else:
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
+            client_products = Client_Products.objects.filter(fk_id_dme_client=client)
+
+        return client_products.order_by("id")
 
 
 class ClientRasViewSet(viewsets.ModelViewSet):
