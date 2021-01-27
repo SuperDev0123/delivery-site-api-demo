@@ -726,6 +726,14 @@ def get_pod_payload(booking, fp_name):
 
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
+        payload["delivery_timestamp"] = booking.s_21_Actual_Delivery_TimeStamp
+        payload["b_del_to_signed_name"] = booking.b_del_to_signed_name
+
+        payload["referenceNumber"] = (
+            ""
+            if booking.b_clientReference_RA_Numbers is None
+            else booking.b_clientReference_RA_Numbers
+        )
 
         if fp_name.lower() == "hunter":
             payload["consignmentDetails"] = {"consignmentNumber": booking.jobNumber}
@@ -735,9 +743,199 @@ def get_pod_payload(booking, fp_name):
                 "consignmentNumber": booking.v_FPBookingNumber
             }
 
+        payload['consignmentNumber'] = booking.fk_fp_pickup_id
+
+        client_process = None
+        if hasattr(booking, "id"):
+            client_process = (
+                Client_Process_Mgr.objects.select_related()
+                .filter(fk_booking_id=booking.id)
+                .first()
+            )
+        if client_process:
+            puCompany = client_process.origin_puCompany
+            pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
+            pu_Address_street_2 = client_process.origin_pu_Address_Street_2
+            pu_pickup_instructions_address = (
+                client_process.origin_pu_pickup_instructions_address
+            )
+            deToCompanyName = client_process.origin_deToCompanyName
+            de_Email = client_process.origin_de_Email
+            # de_Email_Group_Emails = client_process.origin_de_Email_Group_Emails
+            de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
+            de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
+        else:
+            puCompany = booking.puCompany
+            pu_Address_Street_1 = booking.pu_Address_Street_1
+            pu_Address_street_2 = booking.pu_Address_street_2
+            pu_pickup_instructions_address = booking.pu_pickup_instructions_address
+            deToCompanyName = booking.deToCompanyName
+            de_Email = booking.de_Email
+            # de_Email_Group_Emails = booking.de_Email_Group_Emails
+            de_To_Address_Street_1 = booking.de_To_Address_Street_1
+            de_To_Address_Street_2 = booking.de_To_Address_Street_2
+
+        payload["pickupAddress"] = {
+            "companyName": "" if puCompany is None else puCompany,
+            "contact": "   "
+            if booking.pu_Contact_F_L_Name is None
+            else booking.pu_Contact_F_L_Name,
+            "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
+            "instruction": "",
+            "contactPhoneAreaCode": "0",
+            "phoneNumber": "0267651109"
+            if booking.pu_Phone_Main is None
+            else booking.pu_Phone_Main,
+        }
+
+        payload["pickupAddress"]["instruction"] = " "
+        if pu_pickup_instructions_address:
+            payload["pickupAddress"]["instruction"] = f"{pu_pickup_instructions_address}"
+        if booking.pu_PickUp_Instructions_Contact:
+            payload["pickupAddress"][
+                "instruction"
+            ] += f" {booking.pu_PickUp_Instructions_Contact}"
+
+        payload["pickupAddress"]["postalAddress"] = {
+            "address1": "" if pu_Address_Street_1 is None else pu_Address_Street_1,
+            "address2": "" if pu_Address_street_2 is None else pu_Address_street_2,
+            "country": ""
+            if booking.pu_Address_Country is None
+            else booking.pu_Address_Country,
+            "postCode": ""
+            if booking.pu_Address_PostalCode is None
+            else booking.pu_Address_PostalCode,
+            "state": "" if booking.pu_Address_State is None else booking.pu_Address_State,
+            "suburb": ""
+            if booking.pu_Address_Suburb is None
+            else booking.pu_Address_Suburb,
+            "sortCode": ""
+            if booking.pu_Address_PostalCode is None
+            else booking.pu_Address_PostalCode,
+        }
+        payload["dropAddress"] = {
+            "companyName": "" if deToCompanyName is None else deToCompanyName,
+            "contact": "   "
+            if booking.de_to_Contact_F_LName is None
+            else booking.de_to_Contact_F_LName,
+            "emailAddress": "" if de_Email is None else de_Email,
+            "instruction": "",
+            "contactPhoneAreaCode": "0",
+            "phoneNumber": ""
+            if booking.de_to_Phone_Main is None
+            else booking.de_to_Phone_Main,
+        }
+
+        payload["dropAddress"]["instruction"] = " "
+        if booking.de_to_PickUp_Instructions_Address:
+            payload["dropAddress"][
+                "instruction"
+            ] = f"{booking.de_to_PickUp_Instructions_Address}"
+        if booking.de_to_Pick_Up_Instructions_Contact:
+            payload["dropAddress"][
+                "instruction"
+            ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
+
+        payload["dropAddress"]["postalAddress"] = {
+            "address1": "" if de_To_Address_Street_1 is None else de_To_Address_Street_1,
+            "address2": "" if de_To_Address_Street_2 is None else de_To_Address_Street_2,
+            "country": ""
+            if booking.de_To_Address_Country is None
+            else booking.de_To_Address_Country,
+            "postCode": ""
+            if booking.de_To_Address_PostalCode is None
+            else booking.de_To_Address_PostalCode,
+            "state": ""
+            if booking.de_To_Address_State is None
+            else booking.de_To_Address_State,
+            "suburb": ""
+            if booking.de_To_Address_Suburb is None
+            else booking.de_To_Address_Suburb,
+            "sortCode": ""
+            if booking.de_To_Address_PostalCode is None
+            else booking.de_To_Address_PostalCode,
+        }
+
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
+
+        items = []
+        totalWeight = 0
+        maxHeight = 0
+        maxWidth = 0
+        maxLength = 0
+        for line in booking_lines:
+            width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
+            height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
+            length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
+            weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
+
+            for i in range(line.e_qty):
+                item = {
+                    "dangerous": 0,
+                    "width": 0 if not line.e_dimWidth else width,
+                    "height": 0 if not line.e_dimHeight else height,
+                    "length": 0 if not line.e_dimLength else length,
+                    "quantity": 1,
+                    "volume": "{0:.3f}".format(width * height * length / 1000000),
+                    "weight": 0 if not line.e_weightPerEach else weight,
+                    "description": line.e_item,
+                }
+
+                if fp_name == "startrack":
+                    item["itemId"] = "EXP"
+                    item["packagingType"] = "CTN"
+                elif fp_name == "auspost":
+                    item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+                elif fp_name == "hunter":
+                    if line.e_type_of_packaging == "PALLET":
+                        item["packagingType"] = "PLT"
+                    else:
+                        item["packagingType"] = "CTN"
+                elif fp_name == "tnt":
+                    item["packagingType"] = "D"
+                elif fp_name == "dhl":
+                    item["packagingType"] = "PLT"
+                    fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
+                    consignmentNoteNumber = gen_consignment_num(
+                        "dhl", booking.b_bookingID_Visual
+                    )
+
+                    labelCode = str(fp_carrier.label_start_value + fp_carrier.current_value)
+                    fp_carrier.current_value = fp_carrier.current_value + 1
+                    fp_carrier.save()
+
+                    # Create api_bcls
+                    Api_booking_confirmation_lines(
+                        fk_booking_id=booking.pk_booking_id,
+                        fk_booking_line_id=line.pk_lines_id,
+                        api_item_id=labelCode,
+                        service_provider=booking.vx_freight_provider,
+                        label_code=labelCode,
+                        client_item_reference=line.client_item_reference,
+                    ).save()
+                    item["packageCode"] = labelCode
+
+                items.append(item)
+
+                if line.e_weightPerEach:
+                    totalWeight += weight
+                if maxHeight < height:
+                    maxHeight = height
+                if maxWidth < width:
+                    maxWidth = width
+                if maxLength < length:
+                    maxLength = length
+
+        payload["items"] = items
+        payload["serviceName"] = booking.vx_serviceName
+        payload["totalWeight"] = totalWeight
+
+        print('get_pod_payload', payload)
         return payload
     except Exception as e:
-        # print(f"#400 - Error while build payload: {e}")
+        print(f"#400 - Error while build payload: {e}")
         return None
 
 
