@@ -181,8 +181,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "100",
-        "label_dimension_width": "150",
-        "label_image_size_length": "90",
+        "label_dimension_width": "145",
+        "label_image_size_length": "85",
         "label_image_size_width": "130",
         "barcode_dimension_length": "85",
         "barcode_dimension_width": "30",
@@ -192,7 +192,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "line_height_medium": "6",
         "line_height_large": "8",
         "margin_v": "5",
-        "margin_h": "5",
+        "margin_h": "0",
     }
 
     width = float(label_settings["label_dimension_length"]) * mm
@@ -363,7 +363,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(t1)
-        Story.append(Spacer(1, 5))
         Story.append(hr)
         Story.append(Spacer(1, 10))
 
@@ -728,7 +727,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(shell_table)
-        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
