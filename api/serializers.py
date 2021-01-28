@@ -682,6 +682,5 @@ class BookingCostOptionSerializer(serializers.ModelSerializer):
             "z_createdBy",
             "z_modifiedAt",
             "z_modifiedBy",
-            "booking",
             "is_active",
         )
