@@ -19,10 +19,10 @@ def _convert_UOM(value, uom, type, fp_name):
         return round(converted_value, 2)
     except Exception as e:
         logger.info(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
         )
         raise Exception(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
         )
 
 
