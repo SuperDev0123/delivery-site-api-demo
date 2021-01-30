@@ -654,7 +654,7 @@ class ClientSerializer(serializers.ModelSerializer):
 class CostOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CostOption
-        fields = ("id", "code", "description")
+        fields = ("id", "code", "description", "initial_markup_percentage")
 
 
 class CostOptionMapSerializer(serializers.ModelSerializer):
