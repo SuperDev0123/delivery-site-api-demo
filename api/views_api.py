@@ -988,7 +988,7 @@ def push_boks(request):
                 .first()
             )
 
-            if bok_1_obj:
+            if bok_1_obj and bok_1["b_client_sales_inv_num"]:
                 if not bok_1_obj.b_client_order_num:
                     bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
                     bok_1_obj.save()
