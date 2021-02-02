@@ -53,7 +53,7 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
         model = Client_warehouses
         fields = (
             "pk_id_client_warehouses",
-            "warehousename",
+            "name",
             "client_warehouse_code",
             "client_company_name",
         )
@@ -563,7 +563,7 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
             warehouse = Client_warehouses.objects.get(
                 pk_id_client_warehouses=instance.warehouse_id + 1
             )
-            return warehouse.warehousename
+            return warehouse.name
 
         return None
 

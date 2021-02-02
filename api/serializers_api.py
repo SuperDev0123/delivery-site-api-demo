@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, BOK_3_lines_data
+from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, BOK_3_lines_data, DME_clients
 from .validators import should_have_value, should_have_positive_value
 
 
@@ -18,12 +18,17 @@ class BOK_1_Serializer(serializers.ModelSerializer):
         validators=[should_have_value]
     )
     success = serializers.CharField(validators=[should_have_value])
+    b_client_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_b_client_name(self, obj):
+        return DME_clients.objects.get(dme_account_num=obj.fk_client_id).company_name
 
     class Meta:
         model = BOK_1_headers
         fields = (
             "pk_header_id",
             "client_booking_id",
+            "b_client_name",
             "fk_client_id",
             "b_client_warehouse_code",
             "b_clientPU_Warehouse",

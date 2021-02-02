@@ -1551,7 +1551,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 result["z_manifest_url"] = first_booking.z_manifest_url
                 result[
                     "warehouse_name"
-                ] = first_booking.fk_client_warehouse.warehousename
+                ] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
                 results.append(result)
         else:

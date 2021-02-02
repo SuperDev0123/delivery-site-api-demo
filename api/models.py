@@ -106,49 +106,58 @@ class DME_employees(models.Model):
 class Client_warehouses(models.Model):
     pk_id_client_warehouses = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    warehousename = models.CharField(
+    name = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_address1 = models.CharField(
+    address1 = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_address2 = models.CharField(
+    address2 = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_state = models.CharField(
+    state = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_suburb = models.CharField(
+    suburb = models.CharField(
         max_length=32,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_phone_main = models.CharField(
+    phone_main = models.CharField(
         max_length=16,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_postal_code = models.CharField(
+    postal_code = models.CharField(
         max_length=64,
-        blank=False,
         null=True,
         default=None,
     )
-    warehouse_hours = models.IntegerField(verbose_name=_("warehouse hours"))
+    contact_name = models.CharField(
+        max_length=64,
+        null=True,
+        default=None,
+    )
+    contact_email = models.CharField(
+        max_length=64,
+        null=True,
+        default=None,
+    )
+    hours = models.IntegerField(verbose_name=_("warehouse hours"))
     type = models.CharField(
         verbose_name=_("warehouse type"), max_length=30, blank=True, null=True
     )
