@@ -1399,7 +1399,7 @@ def push_boks(request):
                     "client_warehouse_code": bok_1["b_client_warehouse_code"],
                     "vx_serviceName": bok_1["b_003_b_service_name"],
                     "kf_client_id": bok_1["fk_client_id"],
-                    "b_client_name": bok_1["b_client_name"],
+                    "b_client_name": client.company_name,
                 }
 
                 for bok_2 in bok_2s:
