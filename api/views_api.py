@@ -1634,7 +1634,7 @@ def partial_pricing(request):
     booking_lines = []
 
     if "model_number" in bok_2s[0]:  # Product & Child items
-        missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s)
+        missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s, client)
 
         if missing_model_numbers:
             message = f"Missing model numbers - {', '.join(missing_model_numbers)}"
@@ -1648,7 +1648,7 @@ def partial_pricing(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        items = product_oper.get_product_items(bok_2s)
+        items = product_oper.get_product_items(bok_2s, client)
 
         for item in items:
             booking_line = {
