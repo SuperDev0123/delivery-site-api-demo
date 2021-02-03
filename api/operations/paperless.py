@@ -20,7 +20,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     customer_country = "AU"
     order_priority = "11"
     warehouse_code = "01"
-    geographic_code = "y"
+    geographic_code = ""
     reference_number = ""
     send_status = "x"
 
@@ -104,7 +104,20 @@ def build_xml_with_bok(bok_1, bok_2s):
     SpecialInstructions.text = ""
 
     Carrier = ET.SubElement(Header, "Carrier")
-    Carrier.text = bok_1.quote.freight_provider if bok_1.quote else ""
+    _fp_name = bok_1.quote.freight_provider.lower()
+
+    if not bok_1.quote:
+        Carrier.text = ""
+    elif _fp_name == "tnt":
+        Carrier.text = "D_TNT"
+    elif _fp_name == "hunter":
+        Carrier.text = "D_HTX"
+    elif _fp_name == "camerons":
+        Carrier.text = "D_CAM"
+    elif _fp_name == "hunter":
+        Carrier.text = "D_HTX"
+    elif _fp_name == "auspost" and bok_1.quote.account_code == "2006871123":
+        Carrier.text = "D_EPI"
 
     ReferenceNumber = ET.SubElement(Header, "ReferenceNumber")
     ReferenceNumber.text = reference_number
@@ -235,8 +248,9 @@ def send_order_info(bok_1):
 
         log.response = json.dumps(json_res, indent=4)
         log.save()
-        bok_1.success = constants.BOK_SUCCESS_4
-        bok_1.save()
+        logger.error(
+            f"@9009 - Paperless send_order_info() result: {json.dumps(json_res, indent=4)}"
+        )
         return json_res
     except Exception as e:
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))

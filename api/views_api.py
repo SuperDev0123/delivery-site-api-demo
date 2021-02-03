@@ -115,7 +115,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
             quote_set = API_booking_quotes.objects.filter(
-                fk_booking_id=bok_1.pk_header_id
+                fk_booking_id=bok_1.pk_header_id, is_used=False
             )
             client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
@@ -174,7 +174,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             )
 
         try:
-            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_1 = BOK_1_headers.objects.prefetch_related("quote").get(
+                client_booking_id=identifier
+            )
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
             bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
@@ -188,6 +190,12 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
             bok_1.success = dme_constants.BOK_SUCCESS_4
             bok_1.save()
+
+            if bok_1.quote:
+                bok_1.b_001_b_freight_provider = bok_1.quote.freight_provider
+                bok_1.b_003_b_service_name = bok_1.quote.service_name
+                bok_1.save()
+
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
         except:
@@ -368,18 +376,7 @@ def order_boks(request):
 
     # Update boks
     bok_1.b_client_sales_inv_num = data_json["b_client_sales_inv_num"]
-    bok_1.success = dme_constants.BOK_SUCCESS_4
     bok_1.save()
-
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-    for bok_2 in bok_2s:
-        bok_2.success = dme_constants.BOK_SUCCESS_4
-        bok_2.save()
-
-    bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
-    for bok_3 in bok_3s:
-        bok_3.success = dme_constants.BOK_SUCCESS_4
-        bok_3.save()
 
     # create status history
     status_history.create_4_bok(bok_1.pk_header_id, "Ordered", request.user.username)
@@ -738,10 +735,8 @@ def scanned(request):
                     new_fc_log.new_quote = booking.api_booking_quote
                     new_fc_log.save()
                 else:
-                    send_email_to_admins(
-                        "Scanned api-endpoint error",
-                        f"Can not get new Quote for this Order: {booking.b_bookingID_Visual}",
-                    )
+                    booking.api_booking_quote = None
+                    booking.save()
 
         return Response(
             {
@@ -876,7 +871,17 @@ def ready_boks(request):
         )
 
     # Update DB so that Booking can be BOOKED
-    booking.b_status = "Ready for Booking"
+    if booking.api_booking_quote:
+        booking.b_status = "Ready for Booking"
+    else:
+        booking.b_status = "On Hold"
+        send_email_to_admins(
+            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
+            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
+            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
+            + f" Please do FC manually again on DME portal.",
+        )
+
     booking.save()
 
     return Response(
@@ -922,6 +927,17 @@ def push_boks(request):
     # Required fields
     if not bok_1.get("b_059_b_del_address_postalcode"):
         message = "'b_059_b_del_address_postalcode' is required."
+
+    if not bok_1.get("b_054_b_del_company") and not bok_1.get("b_061_b_del_contact_full_name"):
+        message = "'b_061_b_del_contact_full_name' is required."
+
+    if not bok_1.get("b_063_b_del_email"):
+        message = "'b_063_b_del_email' is required."
+
+    if not bok_1.get("b_064_b_del_phone_main"):
+        message = "'b_064_b_del_phone_main' is required."
+
+    if message:
         raise ValidationError(
             {"success": False, "code": "missing_param", "description": message}
         )
@@ -973,19 +989,48 @@ def push_boks(request):
     # Check if already pushed 'b_client_order_num', then return URL only
     if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
         if bok_1["b_client_order_num"][:2] != "Q_":
-            bok_1_obj = BOK_1_headers.objects.filter(
-                fk_client_id=client.dme_account_num,
-                # b_client_order_num=bok_1["b_client_order_num"],
-                b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
-            ).first()
+            bok_1_obj = (
+                BOK_1_headers.objects.prefetch_related("quote")
+                .filter(
+                    fk_client_id=client.dme_account_num,
+                    # b_client_order_num=bok_1["b_client_order_num"],
+                    b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
+                )
+                .first()
+            )
 
-            if bok_1_obj:
+            if bok_1_obj and bok_1["b_client_sales_inv_num"]:
                 if not bok_1_obj.b_client_order_num:
                     bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
                     bok_1_obj.save()
 
                     if bok_1.get("shipping_type") == "DMEA":
-                        bok_1.success = dme_constants.BOK_SUCCESS_4
+                        bok_2_objs = BOK_2_lines.objects.filter(
+                            fk_header_id=bok_1_obj.pk_header_id
+                        )
+                        bok_3_objs = BOK_3_lines_data.objects.filter(
+                            fk_header_id=bok_1_obj.pk_header_id
+                        )
+
+                        for bok_2_obj in bok_2_objs:
+                            bok_2_obj.success = dme_constants.BOK_SUCCESS_4
+                            bok_2_obj.save()
+
+                        for bok_3_obj in bok_3_objs:
+                            bok_3_obj.success = dme_constants.BOK_SUCCESS_4
+                            bok_3_obj.save()
+
+                        bok_1_obj.success = dme_constants.BOK_SUCCESS_4
+                        bok_1_obj.save()
+
+                        if bok_1_obj.quote:
+                            bok_1_obj.b_001_b_freight_provider = (
+                                bok_1_obj.quote.freight_provider
+                            )
+                            bok_1_obj.b_003_b_service_name = (
+                                bok_1_obj.quote.service_name
+                            )
+                            bok_1_obj.save()
 
                 if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
                     return JsonResponse(
@@ -1143,9 +1188,8 @@ def push_boks(request):
             else:
                 bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
-            bok_1["b_client_name"] = client_name
             bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-            bok_1["b_clientPU_Warehouse"] = warehouse.warehousename
+            bok_1["b_clientPU_Warehouse"] = warehouse.name
             bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
             if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
@@ -1155,46 +1199,37 @@ def push_boks(request):
                 bok_1["b_003_b_service_name"] = "RF"
 
             if not bok_1.get("b_028_b_pu_company"):
-                bok_1["b_028_b_pu_company"] = "PU_PLUM_company"
+                bok_1["b_028_b_pu_company"] = warehouse.name
 
             if not bok_1.get("b_035_b_pu_contact_full_name"):
-                bok_1["b_035_b_pu_contact_full_name"] = "PU_PLUM"
+                bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
 
             if not bok_1.get("b_037_b_pu_email"):
-                bok_1["b_037_b_pu_email"] = "pu_plum@email.com"
+                bok_1["b_037_b_pu_email"] = warehouse.contact_email
 
             if not bok_1.get("b_038_b_pu_phone_main"):
-                bok_1["b_038_b_pu_phone_main"] = "0419294339"
+                bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
 
             if not bok_1.get("b_029_b_pu_address_street_1"):
-                bok_1["b_029_b_pu_address_street_1"] = warehouse.warehouse_address1
+                bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
 
             if not bok_1.get("b_030_b_pu_address_street_2"):
-                bok_1["b_030_b_pu_address_street_2"] = warehouse.warehouse_address2
+                bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
 
             if not bok_1.get("b_034_b_pu_address_country"):
                 bok_1["b_034_b_pu_address_country"] = "AU"
 
             if not bok_1.get("b_033_b_pu_address_postalcode"):
-                bok_1["b_033_b_pu_address_postalcode"] = warehouse.warehouse_postal_code
+                bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
 
             if not bok_1.get("b_031_b_pu_address_state"):
-                bok_1["b_031_b_pu_address_state"] = warehouse.warehouse_state
+                bok_1["b_031_b_pu_address_state"] = warehouse.state
 
             if not bok_1.get("b_032_b_pu_address_suburb"):
-                bok_1["b_032_b_pu_address_suburb"] = warehouse.warehouse_suburb
+                bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
             if not bok_1.get("b_054_b_del_company"):
-                bok_1["b_054_b_del_company"] = "DE_PLUM_company"
-
-            if not bok_1.get("b_061_b_del_contact_full_name"):
-                bok_1["b_061_b_del_contact_full_name"] = "DE_PLUM"
-
-            if not bok_1.get("b_063_b_del_email"):
-                bok_1["b_063_b_del_email"] = "de_plum@email.com"
-
-            if not bok_1.get("b_064_b_del_phone_main"):
-                bok_1["b_064_b_del_phone_main"] = "0419294339"
+                bok_1["b_054_b_del_company"] = bok_1.get("b_061_b_del_contact_full_name")
 
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
@@ -1414,6 +1449,10 @@ def push_boks(request):
                     json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
                     if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                        best_quote = best_quotes[0]
+                        bok_1_obj.b_003_b_service_name = best_quote.service_name
+                        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+                        bok_1_obj.save()
                         fc_log.new_quote = best_quotes[0]
                         fc_log.save()
 
@@ -1436,6 +1475,14 @@ def push_boks(request):
 
                 if json_results:
                     if "Plum" in client_name and "_sapb1" in user.username:
+                        for index, _ in enumerate(json_results):
+                            json_results[index]["cost"] = json_results[index][
+                                "cost"
+                            ] * (1 + client.client_customer_mark_up)
+                            json_results[index]["cost"] = round(
+                                json_results[index]["cost"], 2
+                            )
+
                         result = {
                             "success": True,
                             "results": json_results,
@@ -1558,16 +1605,16 @@ def partial_pricing(request):
         "pk_booking_id": bok_1["pk_header_id"],
         "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=7))[:10],
         "b_clientReference_RA_Numbers": "initial_RA_num",
-        "puCompany": warehouse.warehousename,
+        "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",
         "pu_Email": "pu@email.com",
         "pu_Phone_Main": "419294339",
-        "pu_Address_Street_1": warehouse.warehouse_address1,
-        "pu_Address_street_2": warehouse.warehouse_address2,
+        "pu_Address_Street_1": warehouse.address1,
+        "pu_Address_street_2": warehouse.address2,
         "pu_Address_Country": "Australia",
-        "pu_Address_PostalCode": warehouse.warehouse_postal_code,
-        "pu_Address_State": warehouse.warehouse_state,
-        "pu_Address_Suburb": warehouse.warehouse_suburb,
+        "pu_Address_PostalCode": warehouse.postal_code,
+        "pu_Address_State": warehouse.state,
+        "pu_Address_Suburb": warehouse.suburb,
         "deToCompanyName": "initial_DE_company",
         "de_to_Contact_F_LName": "initial_DE_contact",
         "de_Email": "de@email.com",
@@ -1673,6 +1720,12 @@ def partial_pricing(request):
                 json_results[0]["service_name"] = "Standard"
 
     if json_results:
+        for index, _ in enumerate(json_results):
+            json_results[index]["cost"] = json_results[index]["cost"] * (
+                1 + client.client_customer_mark_up
+            )
+            json_results[index]["cost"] = round(json_results[index]["cost"], 2)
+
         return Response({"success": True, "results": json_results})
     else:
         message = "Didn't get pricings due to wrong suburb and state"
@@ -1844,6 +1897,7 @@ def get_delivery_status(request):
     booking = Bookings.objects.filter(
         b_client_booking_ref_num=client_booking_id
     ).first()
+    client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
 
     if booking:
         b_status = booking.b_status
@@ -1872,18 +1926,22 @@ def get_delivery_status(request):
 
         if quote:
             quote_data = SimpleQuoteSerializer(quote).data
-            quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
+            quote_data["cost"] = round(
+                quote_data["cost"] * (1 + client.client_customer_mark_up), 2
+            )
+            quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
 
         if category == "Booked":
             step = 2
         elif category == "Transit":
             step = 3
-        elif category == "Delivered":
+        elif category == "Complete":
             step = 4
-        elif category == "Futile":
+        elif category == "Hold":
             step = 5
         else:
             step = 1
+            b_status = "Processing"
 
         return Response(
             {
@@ -1896,6 +1954,8 @@ def get_delivery_status(request):
 
     # 2. Try to find from Bok tables
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+
     booking = {
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
@@ -1904,7 +1964,10 @@ def get_delivery_status(request):
 
     if quote:
         quote_data = SimpleQuoteSerializer(quote).data
-        quote_data["eta_readable"] = get_etd_in_hour(quote) / 24
+        quote_data["cost"] = round(
+            quote_data["cost"] * (1 + client.client_customer_mark_up), 2
+        )
+        quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
 
     if bok_1:
         return Response(

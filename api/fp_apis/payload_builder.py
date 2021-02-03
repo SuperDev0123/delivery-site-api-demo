@@ -7,8 +7,8 @@ from django.conf import settings
 from api.models import *
 from api.common import common_times
 from api.common import common_times
-from .utils import _convert_UOM, gen_consignment_num
-from .constants import FP_CREDENTIALS, FP_UOM
+from api.fp_apis.utils import _convert_UOM, gen_consignment_num
+from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 
 
 logger = logging.getLogger("dme_api")
@@ -643,6 +643,11 @@ def get_create_label_payload(booking, fp_name):
             items.append(temp_item)
         payload["items"] = items
 
+        if fp_name == "startrack":
+            layout = "A4-1pp"
+        elif fp_name == "auspost":
+            layout = "A4-4pp"
+
         if fp_name in ["startrack", "auspost"]:
             payload["type"] = "PRINT"
             payload["labelType"] = "PRINT"
@@ -650,7 +655,7 @@ def get_create_label_payload(booking, fp_name):
                 {
                     "branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
                     "branded": False,
-                    "layout": "A4-1pp",
+                    "layout": layout,
                     "leftOffset": 0,
                     "topOffset": 0,
                     "typeOfPost": "Express Post",
@@ -691,6 +696,23 @@ def get_get_order_summary_payload(booking, fp_name):
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
         payload["orderId"] = booking.vx_fp_order_id
+
+        return payload
+    except Exception as e:
+        # print(f"#405 - Error while build payload: {e}")
+        return None
+
+
+def get_get_accounts_payload(fp_name):
+    try:
+        payload = {}
+
+        for client_name in FP_CREDENTIALS[fp_name].keys():
+            for key in FP_CREDENTIALS[fp_name][client_name].keys():
+                detail = FP_CREDENTIALS[fp_name][client_name][key]
+                payload["spAccountDetails"] = detail
+
+        payload["serviceProvider"] = get_service_provider(fp_name)
 
         return payload
     except Exception as e:

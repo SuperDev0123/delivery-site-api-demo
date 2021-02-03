@@ -13,7 +13,8 @@ from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 
-from api.common import trace_error
+from api.common import trace_error, constants as dme_constants
+
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -105,49 +106,58 @@ class DME_employees(models.Model):
 class Client_warehouses(models.Model):
     pk_id_client_warehouses = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    warehousename = models.CharField(
+    name = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_address1 = models.CharField(
+    address1 = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_address2 = models.CharField(
+    address2 = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_state = models.CharField(
+    state = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_suburb = models.CharField(
+    suburb = models.CharField(
         max_length=32,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_phone_main = models.CharField(
+    phone_main = models.CharField(
         max_length=16,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_postal_code = models.CharField(
+    postal_code = models.CharField(
         max_length=64,
-        blank=False,
         null=True,
         default=None,
     )
-    warehouse_hours = models.IntegerField(verbose_name=_("warehouse hours"))
+    contact_name = models.CharField(
+        max_length=64,
+        null=True,
+        default=None,
+    )
+    contact_email = models.CharField(
+        max_length=64,
+        null=True,
+        default=None,
+    )
+    hours = models.IntegerField(verbose_name=_("warehouse hours"))
     type = models.CharField(
         verbose_name=_("warehouse type"), max_length=30, blank=True, null=True
     )
@@ -2671,6 +2681,21 @@ class BOK_1_headers(models.Model):
 
             on_create_bok_1_handler(self)
 
+            if self.success == dme_constants.BOK_SUCCESS_4:
+                from api.operations.paperless import send_order_info
+
+                send_order_info(self)
+        else:
+            old_obj = BOK_1_headers.objects.get(pk=self.pk)
+
+            if (
+                self.success != old_obj.success
+                and self.success == dme_constants.BOK_SUCCESS_4
+            ):
+                from api.operations.paperless import send_order_info
+
+                send_order_info(self)
+
         return super(BOK_1_headers, self).save(*args, **kwargs)
 
     class Meta:
@@ -4500,6 +4525,30 @@ class DME_Augment_Address(models.Model):
         db_table = "dme_augment_address"
 
 
+class DME_SMS_Templates(models.Model):
+    id = models.AutoField(primary_key=True)
+    smsName = models.CharField(max_length=255, blank=True, null=True)
+    smsMessage = models.TextField(blank=True, null=True)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"), null=True, blank=True, default=timezone.now
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        default=timezone.now,
+    )
+
+    class Meta:
+        db_table = "dme_sms_templates"
+
+
 class FC_Log(models.Model):
     id = models.AutoField(primary_key=True)
     client_booking_id = models.CharField(max_length=64)
@@ -4526,3 +4575,61 @@ class Client_FP(models.Model):
 
     class Meta:
         db_table = "client_fp"
+
+
+class CostOption(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=16, default=None, null=True)
+    description = models.CharField(max_length=64, default=None, null=True)
+    initial_markup_percentage = models.FloatField(default=0, null=True)
+    is_active = models.BooleanField(default=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_cost_options"
+
+
+class CostOptionMap(models.Model):
+    """
+    Mapping table from FP cost option to DME's
+    """
+
+    id = models.AutoField(primary_key=True)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    fp_cost_option = models.CharField(max_length=128, default=None, null=True)
+    dme_cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    amount = models.FloatField(default=0, null=True)
+    is_percentage = models.BooleanField(default=False)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_utl_map_fp_cost_options"
+
+
+class BookingCostOption(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    amount = models.FloatField(default=0, null=True)
+    is_percentage = models.BooleanField(default=False)
+    qty = models.FloatField(default=1, null=True)
+    markup_percentage = models.FloatField(default=0, null=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_booking_cost_options"
+        unique_together = (
+            "booking",
+            "cost_option",
+        )

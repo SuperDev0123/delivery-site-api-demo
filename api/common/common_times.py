@@ -76,7 +76,7 @@ def beautify_eta(json_results, quotes):
             else:
                 readable_eta = f"{math.round(float(result['eta']))} days"
 
-            result["eta"] = result["eta"] * 24
+            result["eta"] = float(result["eta"]) * 24
         except Exception as e:
             try:
                 etd_in_hour = get_etd_in_hour(quotes[index]) / 24
@@ -87,8 +87,12 @@ def beautify_eta(json_results, quotes):
                 readable_eta = f'{str(result["eta"])} days'
                 pass
 
-        result["eta_in_hour"] = result["eta"]
-        result["eta"] = readable_eta
-        _results.append(result)
+        try:
+            result["eta_in_hour"] = round(float(result["eta"]), 2)
+            result["eta"] = readable_eta
+            _results.append(result)
+        except:
+            logger.info(f"@881 beautify_eta() error: {result['eta']}")
+            pass
 
     return _results
