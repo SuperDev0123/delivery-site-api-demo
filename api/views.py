@@ -2072,7 +2072,7 @@ class BookingViewSet(viewsets.ViewSet):
                             if 26 - custRefLen > ",".join(cl_ref_nums):
                                 cl_ref_nums.append(cl_ref_num)
 
-                        custRefNumVerbage = f"Ref: {",".join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns 4"
+                        custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns 4"
 
                     client_process.origin_pu_Address_Street_1 = custRefNumVerbage
 
