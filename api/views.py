@@ -2059,7 +2059,7 @@ class BookingViewSet(viewsets.ViewSet):
                         booking.pu_Address_Street_1
                     )
 
-                    custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or "")} Returns 4"
+                    custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns 4"
 
                     if len(custRefNumVerbage) >= 26:
                         custRefLen = len(
