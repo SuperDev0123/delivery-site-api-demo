@@ -2069,7 +2069,7 @@ class BookingViewSet(viewsets.ViewSet):
                         clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
                         for cl_ref_num in clientRefNumbers_arr:
-                            if 26 - custRefLen > ",".join(cl_ref_nums):
+                            if 26 - custRefLen > len(",".join(cl_ref_nums)):
                                 cl_ref_nums.append(cl_ref_num)
 
                         custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns 4"
