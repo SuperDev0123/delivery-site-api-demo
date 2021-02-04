@@ -2034,9 +2034,9 @@ class BookingViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(pk=bookingId)
 
         try:
-            client_process = Client_Process_Mgr.objects.filter(
-                fk_booking_id=bookingId
-            ).first()
+            # client_process = Client_Process_Mgr.objects.filter(
+            #     fk_booking_id=bookingId
+            # ).first()
 
             # if client_process:
             #     return JsonResponse(
@@ -2054,57 +2054,25 @@ class BookingViewSet(viewsets.ViewSet):
 
                 client_process.origin_puCompany = booking.puCompany
 
-                if (
-                    booking.pu_Address_street_2 == ""
-                    or booking.pu_Address_street_2 == None
-                ):
+                if not booking.pu_Address_street_2:
                     client_process.origin_pu_Address_Street_2 = (
                         booking.pu_Address_Street_1
                     )
 
-                    custRefNumVerbage = (
-                        "Ref: "
-                        + str(booking.clientRefNumbers or "")
-                        + " Returns 4 "
-                        # + booking.b_client_name
-                        # + ". Fragile"
-                    )
+                    custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or "")} Returns 4"
 
                     if len(custRefNumVerbage) >= 26:
                         custRefLen = len(
-                            "Ref:  Returns 4 " + booking.b_client_name + ". Fragile"
+                            "Ref:  Returns 4"
                         )
-                        clientRefNumbers = ""
-                        overflown = False
-                        count = 0
+                        cl_ref_nums = []
                         clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
-                        for clientRefNumber in clientRefNumbers_arr:
-                            if overflown == False:
-                                count = count + 1
-                                if (
-                                    len(clientRefNumbers + clientRefNumber)
-                                    >= 26 - custRefLen
-                                ):
-                                    clientRefNumbers += clientRefNumber
 
-                                    if len(clientRefNumbers_arr) - count >= 0:
-                                        clientRefNumbers += ", +" + str(
-                                            len(clientRefNumbers_arr) - count
-                                        )
-                                    overflown = True
-                                else:
-                                    clientRefNumbers += clientRefNumber + ","
+                        for cl_ref_num in clientRefNumbers_arr:
+                            if 26 - custRefLen > ",".join(cl_ref_nums):
+                                cl_ref_nums.append(cl_ref_num)
 
-                        if overflown == False:
-                            clientRefNumbers = clientRefNumbers[:-1]
-
-                        custRefNumVerbage = (
-                            "Ref: "
-                            + clientRefNumbers
-                            + " Returns 4 "
-                            # + booking.b_client_name
-                            # + ". Fragile"
-                        )
+                        custRefNumVerbage = f"Ref: {",".join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns 4"
 
                     client_process.origin_pu_Address_Street_1 = custRefNumVerbage
 
