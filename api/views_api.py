@@ -198,8 +198,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
-        except:
-            logger.info(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
+        except Exception as e:
+            logger.error(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
+            logger.error(f"@845 [BOOK] BOK Failure: {str(e)}")
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
