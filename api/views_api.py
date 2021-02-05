@@ -1232,6 +1232,12 @@ def push_boks(request):
             if not bok_1.get("b_054_b_del_company"):
                 bok_1["b_054_b_del_company"] = bok_1.get("b_061_b_del_contact_full_name")
 
+            if not bok_1.get("b_054_b_del_company"):
+                bok_1["b_064_b_del_phone_main"] = '0289682200'
+
+            if not bok_1.get("b_063_b_del_email"):
+                bok_1["b_063_b_del_email"] = 'aushelpdesk@plumproducts.com'
+            
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
                     datetime.now() + timedelta(days=7)
