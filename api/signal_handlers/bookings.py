@@ -1,7 +1,7 @@
 import logging
 
 from datetime import datetime
-from api.models import Bookings
+from api.models import Bookings, Booking_lines, Api_booking_confirmation_lines
 
 logger = logging.getLogger("dme_api")
 

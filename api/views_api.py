@@ -198,8 +198,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
-        except:
-            logger.info(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
+        except Exception as e:
+            logger.error(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
+            logger.error(f"@845 [BOOK] BOK Failure: {str(e)}")
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
@@ -1231,6 +1232,12 @@ def push_boks(request):
             if not bok_1.get("b_054_b_del_company"):
                 bok_1["b_054_b_del_company"] = bok_1.get("b_061_b_del_contact_full_name")
 
+            if not bok_1.get("b_054_b_del_company"):
+                bok_1["b_064_b_del_phone_main"] = '0289682200'
+
+            if not bok_1.get("b_063_b_del_email"):
+                bok_1["b_063_b_del_email"] = 'aushelpdesk@plumproducts.com'
+            
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
                     datetime.now() + timedelta(days=7)
