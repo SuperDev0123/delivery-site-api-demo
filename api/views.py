@@ -2136,14 +2136,13 @@ class BookingViewSet(viewsets.ViewSet):
                 )
 
                 client_process.save()
-                serializer = BookingSerializer(booking)
-                return Response(serializer.data)
+                return Response({"success": True})
             else:
                 if booking.b_booking_Category != "Salvage Expense":
                     return JsonResponse(
                         {
                             "message": "Booking Category is not  Salvage Expense",
-                            "type": "Failure",
+                            "success": False,
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
@@ -2151,14 +2150,14 @@ class BookingViewSet(viewsets.ViewSet):
                     return JsonResponse(
                         {
                             "message": "This client is not set up for auto augment",
-                            "type": "Failure",
+                            "success": False,
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
         except Exception as e:
             return JsonResponse(
-                {"type": "Failure", "message": str(e)},
+                {"success": False, "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
