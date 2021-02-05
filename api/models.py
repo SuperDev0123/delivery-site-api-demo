@@ -2620,7 +2620,6 @@ class BOK_1_headers(models.Model):
     zb_144_date_4 = models.DateField(default=date.today, blank=True, null=True)
     zb_145_date_5 = models.DateField(default=date.today, blank=True, null=True)
 
-    @transaction.atomic
     def save(self, *args, **kwargs):
         if self._state.adding:
             from api.signal_handlers.boks import on_create_bok_1_handler
