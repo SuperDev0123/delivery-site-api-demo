@@ -1,12 +1,12 @@
 import logging
-
 from datetime import datetime
+
 from api.models import Bookings, Booking_lines, Api_booking_confirmation_lines
 
 logger = logging.getLogger("dme_api")
 
 
-def pre_save_booking_handler(instance):
+def pre_save_handler(instance):
     if instance.id is None:  # new object will be created
         pass
     else:
