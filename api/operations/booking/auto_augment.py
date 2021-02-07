@@ -17,10 +17,12 @@ def auto_augment(booking, client_aa, cl_proc=None):
         if not booking.pu_Address_street_2:
             cl_proc.origin_pu_Address_Street_2 = booking.pu_Address_Street_1
 
-            custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns 4"
+            custRefNumVerbage = (
+                f"Ref: {str(booking.clientRefNumbers or '')} Tempo Returns"
+            )
 
             if len(custRefNumVerbage) >= 26:
-                custRefLen = len("Ref:  Returns 4")
+                custRefLen = len("Ref:  Tempo Returns")
                 cl_ref_nums = []
                 clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
@@ -28,7 +30,7 @@ def auto_augment(booking, client_aa, cl_proc=None):
                     if 26 - custRefLen > len(",".join(cl_ref_nums)):
                         cl_ref_nums.append(cl_ref_num)
 
-                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns 4"
+                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
 
             cl_proc.origin_pu_Address_Street_1 = custRefNumVerbage
             cl_proc.origin_pu_pickup_instructions_address = (
@@ -48,10 +50,10 @@ def auto_augment(booking, client_aa, cl_proc=None):
     if not booking.pu_Address_street_2:
         cl_proc.origin_pu_Address_Street_2 = booking.pu_Address_Street_1
 
-        custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns 4"
+        custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Tempo Returns"
 
         if len(custRefNumVerbage) >= 26:
-            custRefLen = len("Ref:  Returns 4")
+            custRefLen = len("Ref:  Tempo Returns")
             cl_ref_nums = []
             clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
@@ -59,7 +61,7 @@ def auto_augment(booking, client_aa, cl_proc=None):
                 if 26 - custRefLen > len(",".join(cl_ref_nums)):
                     cl_ref_nums.append(cl_ref_num)
 
-            custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns 4"
+            custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
 
         cl_proc.origin_pu_Address_Street_1 = custRefNumVerbage
         cl_proc.origin_pu_pickup_instructions_address = (
