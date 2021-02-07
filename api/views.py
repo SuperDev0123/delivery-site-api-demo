@@ -4057,7 +4057,16 @@ class ErrorViewSet(viewsets.ModelViewSet):
 
 class ClientProcessViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProcessSerializer
-    queryset = Client_Process_Mgr.objects.all()
+
+    def get_queryset(self):
+        booking_id = self.request.GET["bookingId"]
+
+        if booking_id:
+            queryset = Client_Process_Mgr.objects.filter(fk_booking_id=booking_id)
+        else:
+            queryset = Client_Process_Mgr.all()
+
+        return queryset.order_by("id")
 
 
 class AugmentAddressViewSet(viewsets.ModelViewSet):
