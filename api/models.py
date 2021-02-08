@@ -49,6 +49,9 @@ class DME_Roles(models.Model):
     class Meta:
         db_table = "dme_roles"
 
+    def __str__(self):
+        return self.role_code
+
 
 class DME_clients(models.Model):
     pk_id_dme_client = models.AutoField(primary_key=True)
@@ -80,6 +83,9 @@ class DME_clients(models.Model):
 
     class Meta:
         db_table = "dme_clients"
+
+    def __str__(self):
+        return self.company_name
 
 
 class DME_employees(models.Model):
@@ -169,6 +175,9 @@ class Client_warehouses(models.Model):
 
     class Meta:
         db_table = "dme_client_warehouses"
+
+    def __str__(self):
+        return self.name
 
 
 class Client_employees(models.Model):
@@ -340,6 +349,9 @@ class Fp_freight_providers(models.Model):
 
     class Meta:
         db_table = "fp_freight_providers"
+
+    def __str__(self):
+        return self.fp_company_name
 
 
 class DME_Service_Codes(models.Model):

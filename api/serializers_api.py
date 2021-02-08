@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import BOK_0_BookingKeys, BOK_1_headers, BOK_2_lines, BOK_3_lines_data, DME_clients
+from .models import (
+    BOK_0_BookingKeys,
+    BOK_1_headers,
+    BOK_2_lines,
+    BOK_3_lines_data,
+    DME_clients,
+)
 from .validators import should_have_value, should_have_positive_value
 
 
@@ -88,6 +94,11 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_064_b_del_phone_main",
             "b_066_b_del_communicate_via",
             "b_065_b_del_phone_mobile",
+            "b_067_assembly_required",
+            "b_068_b_del_location",
+            "b_069_b_del_floor_number",
+            "b_070_b_del_floor_access_by",
+            "b_071_b_del_sufficient_space",
             "b_000_3_consignment_number",
             "success",
             "x_booking_Created_With",

@@ -900,7 +900,8 @@ def push_boks(request):
     PUSH api (bok_1, bok_2, bok_3)
     """
     user = request.user
-    logger.info(f"@879 Pusher: {user.username}")
+    username = user.username
+    logger.info(f"@879 Pusher: {username}")
     boks_json = request.data
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
@@ -911,25 +912,13 @@ def push_boks(request):
     json_results = []
     logger.info(f"@880 Push request - [{request.method}] {boks_json}")
 
-    # Check missing model numbers
-    if bok_2s and "model_number" in bok_2s[0]:
-        missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s)
-
-        if missing_model_numbers:
-            return Response(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": f"Missing model numbers - {', '.join(missing_model_numbers)}",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
     # Required fields
     if not bok_1.get("b_059_b_del_address_postalcode"):
         message = "'b_059_b_del_address_postalcode' is required."
 
-    if not bok_1.get("b_054_b_del_company") and not bok_1.get("b_061_b_del_contact_full_name"):
+    b_054 = bok_1.get("b_054_b_del_company")
+    b_061 = bok_1.get("b_061_b_del_contact_full_name")
+    if not b_054 and not b_061:
         message = "'b_061_b_del_contact_full_name' is required."
 
     if not bok_1.get("b_063_b_del_email"):
@@ -939,9 +928,8 @@ def push_boks(request):
         message = "'b_064_b_del_phone_main' is required."
 
     if message:
-        raise ValidationError(
-            {"success": False, "code": "missing_param", "description": message}
-        )
+        res_json = {"success": False, "code": "missing_param", "description": message}
+        raise ValidationError(res_json)
 
     # Find `Client`
     try:
@@ -954,12 +942,27 @@ def push_boks(request):
         logger.info(f"@811 - client_employee does not exist, {str(e)}")
         message = "You are not allowed to use this api-endpoint."
         logger.info(message)
-        return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
-        )
+        res_json = {"success": False, "message": message}
+        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check missing model numbers
+    if bok_2s and "model_number" in bok_2s[0]:
+        missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s, client)
+
+        if missing_model_numbers:
+            return Response(
+                {
+                    "success": False,
+                    "results": [],
+                    "message": f"Wrong model numbers - {', '.join(missing_model_numbers)}",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     # Check required fields
-    if "Plum" in client_name and "_sapb1" in user.username:
+    if ("Plum" in client_name and "_sapb1" in username) or (
+        "Jason" in client_name and "_bizsys" in username
+    ):
         if not bok_1.get("shipping_type"):
             message = "'shipping_type' is required."
             raise ValidationError(
@@ -978,7 +981,9 @@ def push_boks(request):
                 {"success": False, "code": "missing_param", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-    elif "Plum" in client_name and "_magento" in user.username:
+    elif ("Plum" in client_name and "_magento" in username) or (
+        "Jason" in client_name and "_websys" in username
+    ):
         if not bok_1.get("client_booking_id"):
             message = "'client_booking_id' is required."
             logger.info(message)
@@ -988,7 +993,11 @@ def push_boks(request):
             )
 
     # Check if already pushed 'b_client_order_num', then return URL only
-    if request.method == "POST" and "Plum" in client_name and "_sapb1" in user.username:
+    if request.method == "POST" and (
+        ("Plum" in client_name and "_sapb1" in username)
+        or ("Jason" in client_name and "_bizsys" in username)
+    ):
+
         if bok_1["b_client_order_num"][:2] != "Q_":
             bok_1_obj = (
                 BOK_1_headers.objects.prefetch_related("quote")
@@ -1053,7 +1062,7 @@ def push_boks(request):
                     )
 
     # Find `Warehouse`
-    if "Plum" in client_name:
+    if client_name in ["Plum Products Australia Ltd", "Jason L"]:
         try:
             warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
         except Exception as e:
@@ -1066,7 +1075,7 @@ def push_boks(request):
 
     # "Detect modified data" and "delete existing boks" if request method is PUT
     if request.method == "PUT":
-        if "Plum" in client_name:
+        if client_name in ["Plum Products Australia Ltd", "Jason L"]:
             pk_header_id = None
 
             # if not bok_1.get("b_058_b_del_address_suburb"):
@@ -1077,7 +1086,7 @@ def push_boks(request):
             #     message = "'b_057_b_del_address_state' is required."
             #     raise ValidationError({"code": "missing_param", "description": message})
 
-            if "_sapb1" in user.username:
+            if "_sapb1" in username or "_bizsys" in username:
                 old_bok_1s = BOK_1_headers.objects.filter(
                     fk_client_id=client.dme_account_num,
                     b_client_order_num=bok_1["b_client_order_num"],
@@ -1102,9 +1111,10 @@ def push_boks(request):
                             )
                 else:
                     pk_header_id = old_bok_1s.first().pk_header_id
-            elif "_magento" in user.username:
+            elif "_magento" in username or "_websys" in username:
                 old_bok_1s = BOK_1_headers.objects.filter(
                     client_booking_id=bok_1["client_booking_id"],
+                    fk_client_id=client.dme_account_num,
                 )
                 if not old_bok_1s.exists():
                     message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does not exist."
@@ -1121,7 +1131,7 @@ def push_boks(request):
                 old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                 old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
                 push_operations.detect_modified_data(
-                    client_name, old_bok_1, old_bok_2s, old_bok_3s, boks_json
+                    client, old_bok_1, old_bok_2s, old_bok_3s, boks_json
                 )
 
                 old_bok_1.delete()
@@ -1131,8 +1141,8 @@ def push_boks(request):
     bok_1["pk_header_id"] = str(uuid.uuid4())
     # Check duplicated push with `b_client_order_num`
     if request.method == "POST":
-        if "Plum" in client_name:
-            if "_sapb1" in user.username:
+        if client_name in ["Plum Products Australia Ltd", "Jason L"]:
+            if "_sapb1" in username or "_bizsys" in username:
                 bok_1s = BOK_1_headers.objects.filter(
                     fk_client_id=client.dme_account_num,
                     b_client_order_num=bok_1["b_client_order_num"],
@@ -1155,8 +1165,9 @@ def push_boks(request):
                     else:
                         message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
 
-            elif "_magento" in user.username:
+            elif "_magento" in username or "_websys" in username:
                 bok_1s = BOK_1_headers.objects.filter(
+                    fk_client_id=client.dme_account_num,
                     client_booking_id=bok_1["client_booking_id"],
                 )
                 if bok_1s.exists():
@@ -1170,7 +1181,9 @@ def push_boks(request):
             )
 
     # Generate `client_booking_id` for SAPB1
-    if "Plum" in client_name and "_sapb1" in user.username:
+    if ("Plum" in client_name and "_sapb1" in username) or (
+        "Jason" in client_name and "_bizsys" in username
+    ):
         client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
         bok_1["client_booking_id"] = client_booking_id
 
@@ -1183,7 +1196,7 @@ def push_boks(request):
         if client_name == "Seaway-Tempo-Aldi":  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
 
-        if "Plum" in client_name:  # Plum
+        if client_name in ["Plum Products Australia Ltd", "Jason L"]:  # Plum | Jason L
             if bok_1.get("shipping_type") == "DMEA":
                 bok_1["success"] = dme_constants.BOK_SUCCESS_4
             else:
@@ -1230,14 +1243,8 @@ def push_boks(request):
                 bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
             if not bok_1.get("b_054_b_del_company"):
-                bok_1["b_054_b_del_company"] = bok_1.get("b_061_b_del_contact_full_name")
+                bok_1["b_054_b_del_company"] = b_061
 
-            if not bok_1.get("b_054_b_del_company"):
-                bok_1["b_064_b_del_phone_main"] = '0289682200'
-
-            if not bok_1.get("b_063_b_del_email"):
-                bok_1["b_063_b_del_email"] = 'aushelpdesk@plumproducts.com'
-            
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
                     datetime.now() + timedelta(days=7)
@@ -1276,16 +1283,45 @@ def push_boks(request):
         else:  # If not from Plum, then set success to be ready for mapping
             bok_1["success"] = dme_constants.BOK_SUCCESS_2
 
+        # Populate default values
+        if client_name == "Plum Products Australia Ltd":  # Plum
+            if not bok_1.get("b_054_b_del_company"):
+                bok_1["b_064_b_del_phone_main"] = "0289682200"
+
+            if not bok_1.get("b_063_b_del_email"):
+                bok_1["b_063_b_del_email"] = "aushelpdesk@plumproducts.com"
+        elif client_name == "Jason L":  # Jason L
+            if not bok_1.get("b_054_b_del_company"):
+                bok_1["b_064_b_del_phone_main"] = "0289682200"
+
+            if not bok_1.get("b_067_assembly_required"):
+                bok_1["b_067_assembly_required"] = False
+
+            if not bok_1.get("b_068_b_del_location"):
+                # "Drop at Door / Warehouse Dock"
+                bok_1["b_068_b_del_location"] = BOK_1_headers.DDWD
+
+            if not bok_1.get("b_069_b_del_floor_number"):
+                bok_1["b_069_b_del_floor_number"] = 0
+
+            if not bok_1.get("b_070_b_del_floor_access_by"):
+                bok_1["b_070_b_del_floor_access_by"] = BOK_1_headers.ELEVATOR
+
+            if not bok_1.get("b_071_b_del_sufficient_space"):
+                bok_1["b_071_b_del_sufficient_space"] = True
+
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
             # Save bok_2s
             if "model_number" in bok_2s[0]:  # Product & Child items
                 ignore_product = False
 
-                if "Plum" in client_name and "_sapb1" in user.username:
+                if ("Plum" in client_name and "_sapb1" in username) or (
+                    "Jason" in client_name and "_bizsys" in username
+                ):
                     ignore_product = True
 
-                items = product_oper.get_product_items(bok_2s, ignore_product)
+                items = product_oper.get_product_items(bok_2s, client, ignore_product)
                 new_bok_2s = []
 
                 for index, item in enumerate(items):
@@ -1366,9 +1402,7 @@ def push_boks(request):
             bok_1_obj = bok_1_serializer.save()
 
             # create status history
-            status_history.create_4_bok(
-                bok_1["pk_header_id"], "Pushed", request.user.username
-            )
+            status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
             if bok_1["success"] in [
                 dme_constants.BOK_SUCCESS_3,
@@ -1481,7 +1515,9 @@ def push_boks(request):
                     send_email_to_admins("No FC result", message)
 
                 if json_results:
-                    if "Plum" in client_name and "_sapb1" in user.username:
+                    if ("Plum" in client_name and "_sapb1" in username) or (
+                        "Jason" in client_name and "_bizsys" in username
+                    ):
                         for index, _ in enumerate(json_results):
                             json_results[index]["cost"] = json_results[index][
                                 "cost"
@@ -1509,7 +1545,9 @@ def push_boks(request):
                             result,
                             status=status.HTTP_201_CREATED,
                         )
-                    elif "Plum" in client_name and "_magento" in user.username:
+                    elif ("Plum" in client_name and "_magento" in username) or (
+                        "Jason" in client_name and "_websys" in username
+                    ):
                         logger.info(f"@8838 - success: True, 201_created")
                         return JsonResponse(
                             {
@@ -1629,8 +1667,8 @@ def partial_pricing(request):
         "de_To_Address_Street_1": "initial_DE_street_1",
         "de_To_Address_Street_2": "",
         "de_To_Address_Country": "Australia",
-        "de_To_Address_PostalCode": de_postal_code.upper(),
-        "de_To_Address_State": de_state,
+        "de_To_Address_PostalCode": de_postal_code,
+        "de_To_Address_State": de_state.upper(),
         "de_To_Address_Suburb": de_suburb,
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
