@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Max
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
@@ -1924,9 +1924,9 @@ class Bookings(models.Model):
 
 @receiver(pre_save, sender=Bookings)
 def pre_save_booking(sender, instance, **kwargs):
-    from api.signal_handlers.bookings import pre_save_booking_handler
+    from api.signal_handlers.booking import pre_save_handler
 
-    pre_save_booking_handler(instance)
+    pre_save_handler(instance)
 
 
 class Booking_lines(models.Model):
@@ -2112,6 +2112,13 @@ class Booking_lines(models.Model):
         db_table = "dme_booking_lines"
 
 
+@receiver(post_delete, sender=Booking_lines)
+def post_delete_booking_line(sender, instance, **kwargs):
+    from api.signal_handlers.booking_line import post_delete_handler
+
+    post_delete_handler(instance)
+
+
 class Booking_lines_data(models.Model):
     pk_id_lines_data = models.AutoField(primary_key=True)
     fk_booking_lines_id = models.CharField(
@@ -2181,6 +2188,13 @@ class Booking_lines_data(models.Model):
 
     class Meta:
         db_table = "dme_booking_lines_data"
+
+
+@receiver(post_delete, sender=Booking_lines_data)
+def post_delete_booking_lines_data(sender, instance, **kwargs):
+    from api.signal_handlers.booking_line_data import post_delete_handler
+
+    post_delete_handler(instance)
 
 
 class Dme_attachments(models.Model):
@@ -2674,10 +2688,9 @@ class BOK_1_headers(models.Model):
     zb_144_date_4 = models.DateField(default=date.today, blank=True, null=True)
     zb_145_date_5 = models.DateField(default=date.today, blank=True, null=True)
 
-    @transaction.atomic
     def save(self, *args, **kwargs):
         if self._state.adding:
-            from api.signal_handlers.boks import on_create_bok_1_handler
+            from api.signal_handlers.bok_1 import on_create_bok_1_handler
 
             on_create_bok_1_handler(self)
 

@@ -67,6 +67,7 @@ from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label
+from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
 from api.outputs.email import send_email
@@ -1549,9 +1550,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 first_booking = each_day_manifest_bookings.first()
                 result["count"] = each_day_manifest_bookings.count()
                 result["z_manifest_url"] = first_booking.z_manifest_url
-                result[
-                    "warehouse_name"
-                ] = first_booking.fk_client_warehouse.name
+                result["warehouse_name"] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
                 results.append(result)
         else:
@@ -2033,164 +2032,53 @@ class BookingViewSet(viewsets.ViewSet):
         bookingId = body["bookingId"]
         booking = Bookings.objects.get(pk=bookingId)
 
-        try:
-            client_process = Client_Process_Mgr.objects.filter(
-                fk_booking_id=bookingId
-            ).first()
+        # Do now allow create new client_progress_mgr when already exist for this Booking.
+        client_process = Client_Process_Mgr.objects.filter(
+            fk_booking_id=bookingId
+        ).first()
 
-            # if client_process:
-            #     return JsonResponse(
-            #         {"message": "Already Augmented", "type": "Failure"},
-            #         status=status.HTTP_400_BAD_REQUEST,
-            #     )
-
-            client_process = Client_Process_Mgr(fk_booking_id=bookingId)
-            client_process.process_name = "Auto Augment " + str(bookingId)
-
-            if booking.b_booking_Category == "Salvage Expense":
-                pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
-                puCompany = booking.puCompany
-                deToCompanyName = booking.deToCompanyName
-
-                client_process.origin_puCompany = booking.puCompany
-
-                if (
-                    booking.pu_Address_street_2 == ""
-                    or booking.pu_Address_street_2 == None
-                ):
-                    client_process.origin_pu_Address_Street_2 = (
-                        booking.pu_Address_Street_1
-                    )
-
-                    custRefNumVerbage = (
-                        "Ref: "
-                        + str(booking.clientRefNumbers or "")
-                        + " Returns 4 "
-                        # + booking.b_client_name
-                        # + ". Fragile"
-                    )
-
-                    if len(custRefNumVerbage) >= 26:
-                        custRefLen = len(
-                            "Ref:  Returns 4 " + booking.b_client_name + ". Fragile"
-                        )
-                        clientRefNumbers = ""
-                        overflown = False
-                        count = 0
-                        clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
-                        for clientRefNumber in clientRefNumbers_arr:
-                            if overflown == False:
-                                count = count + 1
-                                if (
-                                    len(clientRefNumbers + clientRefNumber)
-                                    >= 26 - custRefLen
-                                ):
-                                    clientRefNumbers += clientRefNumber
-
-                                    if len(clientRefNumbers_arr) - count >= 0:
-                                        clientRefNumbers += ", +" + str(
-                                            len(clientRefNumbers_arr) - count
-                                        )
-                                    overflown = True
-                                else:
-                                    clientRefNumbers += clientRefNumber + ","
-
-                        if overflown == False:
-                            clientRefNumbers = clientRefNumbers[:-1]
-
-                        custRefNumVerbage = (
-                            "Ref: "
-                            + clientRefNumbers
-                            + " Returns 4 "
-                            # + booking.b_client_name
-                            # + ". Fragile"
-                        )
-
-                    client_process.origin_pu_Address_Street_1 = custRefNumVerbage
-
-                    client_process.origin_de_Email = str(
-                        booking.de_Email or ""
-                    ).replace(";", ",")
-                    client_process.origin_de_Email_Group_Emails = str(
-                        booking.de_Email_Group_Emails or ""
-                    ).replace(";", ",")
-                    client_process.origin_pu_pickup_instructions_address = (
-                        str(booking.pu_pickup_instructions_address or "")
-                        + " "
-                        + custRefNumVerbage
-                    )
-
-                dme_client = DME_clients.objects.filter(
-                    dme_account_num=booking.kf_client_id
-                ).first()
-
-                client_auto_augment = Client_Auto_Augment.objects.filter(
-                    fk_id_dme_client_id=dme_client.pk_id_dme_client,
-                    de_to_companyName__iexact=booking.deToCompanyName.strip().lower(),
-                ).first()
-
-                if client_auto_augment is not None:
-                    if client_auto_augment.de_Email is not None:
-                        client_process.origin_de_Email = client_auto_augment.de_Email
-
-                    if client_auto_augment.de_Email_Group_Emails is not None:
-                        client_process.origin_de_Email_Group_Emails = (
-                            client_auto_augment.de_Email_Group_Emails
-                        )
-
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        client_process.origin_de_To_Address_Street_1 = (
-                            client_auto_augment.de_To_Address_Street_1
-                        )
-
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        client_process.origin_de_To_Address_Street_2 = (
-                            client_auto_augment.de_To_Address_Street_2
-                        )
-
-                    if client_auto_augment.company_hours_info is not None:
-                        client_process.origin_deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
-
-                client_process.origin_pu_Address_Street_1 = sanitize_address(
-                    client_process.origin_pu_Address_Street_1
-                )
-                client_process.origin_pu_Address_Street_2 = sanitize_address(
-                    client_process.origin_pu_Address_Street_2
-                )
-                client_process.origin_de_To_Address_Street_1 = sanitize_address(
-                    client_process.origin_de_To_Address_Street_1
-                )
-                client_process.origin_de_To_Address_Street_2 = sanitize_address(
-                    client_process.origin_de_To_Address_Street_2
-                )
-                client_process.origin_pu_pickup_instructions_address = sanitize_address(
-                    client_process.origin_pu_pickup_instructions_address
-                )
-
-                client_process.save()
-                serializer = BookingSerializer(booking)
-                return Response(serializer.data)
-            else:
-                if booking.b_booking_Category != "Salvage Expense":
-                    return JsonResponse(
-                        {
-                            "message": "Booking Category is not  Salvage Expense",
-                            "type": "Failure",
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                elif client_auto_augment is None:
-                    return JsonResponse(
-                        {
-                            "message": "This client is not set up for auto augment",
-                            "type": "Failure",
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-        except Exception as e:
+        if client_process:
             return JsonResponse(
-                {"type": "Failure", "message": str(e)},
+                {"message": "Already Augmented!", "success": False},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Apply only "Salvage Expense" category
+        if booking.b_booking_Category != "Salvage Expense":
+            return JsonResponse(
+                {
+                    "message": "Booking Category is not Salvage Expense",
+                    "success": False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get client_auto_augment
+        dme_client = DME_clients.objects.filter(
+            dme_account_num=booking.kf_client_id
+        ).first()
+
+        client_auto_augment = Client_Auto_Augment.objects.filter(
+            fk_id_dme_client_id=dme_client.pk_id_dme_client,
+            de_to_companyName__icontains=booking.deToCompanyName.strip().split()[0],
+        ).first()
+
+        if not client_auto_augment:
+            return JsonResponse(
+                {
+                    "message": "This Client is not set up for auto augment",
+                    "success": False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            auto_augment_oper(booking, client_auto_augment)
+            return Response({"success": True})
+        except Exception as e:
+            logger.error(f"@207 Auto Augment - {str(e)}")
+            return JsonResponse(
+                {"success": False, "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -2318,19 +2206,6 @@ class BookingViewSet(viewsets.ViewSet):
             )
 
     @action(detail=False, methods=["get"])
-    def check_augmented(self, request, format=None):
-        bookingId = request.GET.get("bookingId")
-
-        client_process = Client_Process_Mgr.objects.filter(
-            fk_booking_id=bookingId
-        ).first()
-
-        if client_process is not None:
-            return JsonResponse({"isAutoAugmented": True})
-        else:
-            return JsonResponse({"isAutoAugmented": False})
-
-    @action(detail=False, methods=["get"])
     def get_email_logs(self, request, format=None):
         booking_id = request.GET["bookingId"]
 
@@ -2449,7 +2324,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             booking_line.delete()
             return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            # print("Exception: ", e)
+            logger.error(f"#330 - booking line delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLine"})
 
     @action(detail=False, methods=["post"])
@@ -2559,7 +2434,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             booking_line_detail.delete()
             return JsonResponse({"Deleted BookingLineDetail ": booking_line_detail})
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#331 - booking lines data delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLineDetail"})
 
 
@@ -4182,7 +4057,16 @@ class ErrorViewSet(viewsets.ModelViewSet):
 
 class ClientProcessViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProcessSerializer
-    queryset = Client_Process_Mgr.objects.all()
+
+    def get_queryset(self):
+        booking_id = self.request.GET["bookingId"]
+
+        if booking_id:
+            queryset = Client_Process_Mgr.objects.filter(fk_booking_id=booking_id)
+        else:
+            queryset = Client_Process_Mgr.all()
+
+        return queryset.order_by("id")
 
 
 class AugmentAddressViewSet(viewsets.ModelViewSet):
