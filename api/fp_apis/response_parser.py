@@ -168,6 +168,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
     except Exception as e:
         trace_error.print()
         error_msg = f"#580 Parse pricing res: FP - {fp_name}, {json_data}"
+        logger.info(error_msg)
         error_msg = f"#581 Parse pricing res: {e}"
         logger.info(error_msg)
         return None
