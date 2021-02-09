@@ -1348,7 +1348,9 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
             b_client_name = booking.b_client_name.lower()
 
             for client_name in fp_client_names:
-                if b_client_name in fp_client_names and b_client_name != client_name:
+                if client_name == "test":
+                    pass
+                elif b_client_name in fp_client_names and b_client_name != client_name:
                     continue
                 elif (
                     b_client_name not in fp_client_names
@@ -1483,52 +1485,47 @@ async def _built_in_pricing_worker_builder(_fp_name, booking):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def update_servce_code(request, fp_name):
+    _fp_name = fp_name.lower()
+
     try:
-        _fp_name = fp_name.lower()
+        payload = get_get_accounts_payload(_fp_name)
+        headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+        logger.info(f"### Payload ({fp_name.upper()} Get Accounts): {payload}")
+        url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
+        response = requests.post(url, json=payload, headers=headers)
+        res_content = response.content
+        json_data = json.loads(res_content)
+        # Just for visual
+        s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)
+        fp = Fp_freight_providers.objects.filter(
+            fp_company_name__iexact=_fp_name
+        ).first()
 
-        try:
-            payload = get_get_accounts_payload(_fp_name)
-            headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+        for data in json_data["returns_products"]:
+            product_type = data["type"]
+            product_id = data["product_id"]
 
-            logger.info(f"### Payload ({fp_name.upper()} Get Accounts): {payload}")
-            url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
-            response = requests.post(url, json=payload, headers=headers)
-            res_content = response.content
-            json_data = json.loads(res_content)
-            # Just for visual
-            s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)
-            fp = Fp_freight_providers.objects.filter(
-                fp_company_name__iexact=_fp_name
-            ).first()
+            etd, is_created = FP_Service_ETDs.objects.update_or_create(
+                fp_delivery_service_code=product_id,
+                fp_delivery_time_description=product_type,
+                freight_provider=fp,
+                dme_service_code_id=1,
+            )
 
-            for data in json_data["returns_products"]:
-                product_type = data["type"]
-                product_id = data["product_id"]
+        for data in json_data["postage_products"]:
+            product_type = data["type"]
+            product_id = data["product_id"]
 
-                etd, is_created = FP_Service_ETDs.objects.update_or_create(
-                    fp_delivery_service_code=product_id,
-                    fp_delivery_time_description=product_type,
-                    freight_provider=fp,
-                    dme_service_code_id=1,
-                )
+            etd, is_created = FP_Service_ETDs.objects.update_or_create(
+                fp_delivery_service_code=product_id,
+                fp_delivery_time_description=product_type,
+                freight_provider=fp,
+                dme_service_code_id=1,
+            )
 
-            for data in json_data["postage_products"]:
-                product_type = data["type"]
-                product_id = data["product_id"]
-
-                etd, is_created = FP_Service_ETDs.objects.update_or_create(
-                    fp_delivery_service_code=product_id,
-                    fp_delivery_time_description=product_type,
-                    freight_provider=fp,
-                    dme_service_code_id=1,
-                )
-
-            return JsonResponse({"message": "Updated service codes successfully."})
-        except IndexError as e:
-            trace_error.print()
-            error_msg = "GetAccounts is failed."
-            _set_error(booking, error_msg)
-            return JsonResponse({"message": error_msg})
-    except SyntaxError:
+        return JsonResponse({"message": "Updated service codes successfully."})
+    except IndexError as e:
         trace_error.print()
-        return JsonResponse({"message": "Syntax Error"})
+        error_msg = "GetAccounts is failed."
+        _set_error(booking, error_msg)
+        return JsonResponse({"message": error_msg})
