@@ -206,14 +206,25 @@ def build_label(booking, filepath, lines=[], label_index=0):
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
-    dme_img = Image(dme_logo, 30 * mm, 8 * mm)
+    dme_logo = "dme_logo.png"
+    # dme_img = Image(dme_logo, 30 * mm, 8 * mm)
 
     Story = []
     j = 1
 
     for booking_line in lines:
-        tbl_data1 = [[dme_img]]
+        tbl_data1 = [[
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_extra_large"],
+                        (booking.vx_freight_provider)
+                        if (booking.vx_freight_provider)
+                        else "",
+                    ),
+                    style_center,
+                )
+            ]]
         t1 = Table(
             tbl_data1,
             colWidths=(float(label_settings["label_image_size_length"]) * (1 / 3) * mm),

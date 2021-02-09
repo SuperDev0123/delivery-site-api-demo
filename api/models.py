@@ -4567,3 +4567,22 @@ class BookingCostOption(models.Model):
             "booking",
             "cost_option",
         )
+
+
+class FPRouting(models.Model):
+    id = models.AutoField(primary_key=True)
+    suburb = models.CharField(max_length=45, default=None, null=True)
+    state = models.CharField(max_length=45, default=None, null=True)
+    dest_postcode = models.CharField(max_length=45, default=None, null=True)
+    orig_depot = models.CharField(max_length=10, default=None, null=True)
+    orig_depot_except = models.CharField(max_length=10, default=None, null=True)
+    gateway = models.CharField(max_length=10, default=None, null=True)
+    onfwd = models.CharField(max_length=10, default=None, null=True)
+    sort_bin = models.CharField(max_length=10, default=None, null=True)
+    orig_postcode = models.CharField(max_length=10, default=None, null=True)
+    service_group = models.CharField(max_length=10, default=None, null=True)
+    
+    class Meta:
+        db_table = "fp_routing"
+
+

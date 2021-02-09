@@ -764,13 +764,17 @@ def get_label(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         _fp_name = fp_name.lower()
 
-        error_msg = pre_check_label(booking)
+        # error_msg = pre_check_label(booking)
 
-        if error_msg:
-            return JsonResponse(
-                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
-            )
+        # if error_msg:
+        #     return JsonResponse(
+        #         {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+        #     )
 
+        file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+        file_path, file_name = build_label(booking, file_path)
+        z_label_url = f"{_fp_name}_au/{file_name}"
+        print('label url', z_label_url)
         payload = {}
         if _fp_name in ["startrack", "auspost"]:
             try:
