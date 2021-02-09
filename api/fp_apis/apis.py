@@ -24,45 +24,34 @@ from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
 from api.common import status_history, download_external, trace_error
 from api.common.build_object import Struct
-from api.file_operations.directory import create_dir_if_not_exist
+from api.file_operations.directory import create_dir
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
 from api.operations.email_senders import send_booking_status_email
+from api.operations.labels.index import build_label
 
-from .payload_builder import *
-from .self_pricing import get_pricing as get_self_pricing
-from .utils import (
+from api.fp_apis.payload_builder import *
+from api.fp_apis.self_pricing import get_pricing as get_self_pricing
+from api.fp_apis.response_parser import *
+from api.fp_apis.pre_check import *
+from api.fp_apis.operations.common import _set_error
+from api.fp_apis.operations.tracking import update_booking_with_tracking_result
+from api.fp_apis.operations.book import book as book_oper
+from api.fp_apis.utils import (
     get_dme_status_from_fp_status,
     auto_select_pricing,
 )
-from .response_parser import *
-from .pre_check import *
-from .update_by_json import update_biopak_with_booked_booking
-from api.operations.labels.index import build_label
-from .operations.tracking import update_booking_with_tracking_result
-from .constants import (
+from api.fp_apis.constants import (
     FP_CREDENTIALS,
     BUILT_IN_PRICINGS,
     PRICING_TIME,
     AVAILABLE_FPS_4_FC,
+    DME_LEVEL_API_URL,
+    S3_URL,
 )
 
-if settings.ENV == "local":
-    DME_LEVEL_API_URL = "http://localhost:3000"
-    S3_URL = "./static"
-elif settings.ENV == "dev":
-    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
-    S3_URL = "/opt/s3_public"
-elif settings.ENV == "prod":
-    DME_LEVEL_API_URL = "http://52.62.102.72:3000"
-    S3_URL = "/opt/s3_public"
 
 logger = logging.getLogger("dme_api")
-
-
-def _set_error(booking, error_msg):
-    booking.b_error_Capture = str(error_msg)[:999]
-    booking.save()
 
 
 @api_view(["POST"])
@@ -129,13 +118,13 @@ def tracking(request, fp_name):
             )
     except Bookings.DoesNotExist:
         trace_error.print()
-        logger.info(f"#511 ERROR: {e}")
+        logger.error(f"#511 ERROR: {e}")
         return JsonResponse(
             {"message": "Booking not found"}, status=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:
         trace_error.print()
-        logger.info(f"#512 ERROR: {e}")
+        logger.error(f"#512 ERROR: {e}")
         return JsonResponse(
             {"message": "Tracking failed"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -146,251 +135,31 @@ def tracking(request, fp_name):
 @permission_classes((AllowAny,))
 def book(request, fp_name):
     try:
+        username = request.user.username
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
-        _fp_name = fp_name.lower()
-
-        try:
-            booking = Bookings.objects.get(id=booking_id)
-            error_msg = pre_check_book(booking)
-
-            if error_msg:
-                return JsonResponse(
-                    {"message": f"#700 Error: {error_msg}"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            try:
-                payload = get_book_payload(booking, _fp_name)
-            except Exception as e:
-                trace_error.print()
-                logger.info(f"#401 - Error while build payload: {e}")
-                return JsonResponse(
-                    {"message": f"Error while build payload {str(e)}"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            logger.info(f"### Payload ({fp_name} book): {payload}")
-            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response = requests.post(url, params={}, json=payload)
-            res_content = (
-                response.content.decode("utf8").replace("'t", " not").replace("'", '"')
-            )
-            json_data = json.loads(res_content)
-            s0 = json.dumps(
-                json_data, indent=2, sort_keys=True, default=str
-            )  # Just for visual
-            logger.info(f"### Response ({fp_name} book): {s0}")
-
-            if (
-                response.status_code == 500
-                and _fp_name in ["startrack", "auspost"]
-                and "An internal system error" in json_data[0]["message"]
-            ):
-                for i in range(4):
-                    t.sleep(180)
-                    logger.info(f"### Payload ({fp_name} book): {payload}")
-                    url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-                    response = requests.post(url, params={}, json=payload)
-                    res_content = response.content.decode("utf8").replace("'", '"')
-                    json_data = json.loads(res_content)
-                    s0 = json.dumps(
-                        json_data, indent=2, sort_keys=True, default=str
-                    )  # Just for visual
-                    logger.info(f"### Response ({fp_name} book): {s0}")
-
-                    if response.status_code == 200:
-                        break
-
-            if response.status_code == 200:
-                try:
-                    request_payload = {
-                        "apiUrl": "",
-                        "accountCode": "",
-                        "authKey": "",
-                        "trackingId": "",
-                    }
-                    request_payload["apiUrl"] = url
-                    request_payload["accountCode"] = payload["spAccountDetails"][
-                        "accountCode"
-                    ]
-                    request_payload["authKey"] = payload["spAccountDetails"][
-                        "accountKey"
-                    ]
-                    request_payload["trackingId"] = json_data["consignmentNumber"]
-
-                    if booking.vx_freight_provider.lower() in ["startrack", "auspost"]:
-                        booking.v_FPBookingNumber = json_data["items"][0][
-                            "tracking_details"
-                        ]["consignment_id"]
-                    elif booking.vx_freight_provider.lower() == "hunter":
-                        booking.v_FPBookingNumber = json_data["consignmentNumber"]
-                        booking.jobNumber = json_data["jobNumber"]
-                        booking.jobDate = json_data["jobDate"]
-                    elif booking.vx_freight_provider.lower() == "tnt":
-                        booking.v_FPBookingNumber = (
-                            f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
-                        )
-                    elif booking.vx_freight_provider.lower() == "sendle":
-                        booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
-
-                    booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-                    booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-                    booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-                        booking, booking.api_booking_quote
-                    )
-                    booking.b_dateBookedDate = datetime.now()
-                    booking.b_status = "Booked"
-                    booking.b_error_Capture = None
-                    booking.save()
-
-                    Log(
-                        request_payload=request_payload,
-                        request_status="SUCCESS",
-                        request_type=f"{fp_name.upper()} BOOK",
-                        response=res_content,
-                        fk_booking_id=booking.id,
-                    ).save()
-
-                    # Create new statusHistory
-                    status_history.create(booking, "Booked", request.user.username)
-
-                    # Save Label for Hunter
-                    create_dir_if_not_exist(f"{S3_URL}/pdfs/{_fp_name}_au")
-                    if _fp_name == "hunter":
-                        json_label_data = json.loads(response.content)
-                        file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
-                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
-
-                        with open(full_path, "wb") as f:
-                            f.write(base64.b64decode(json_label_data["shippingLabel"]))
-                            f.close()
-                            booking.z_label_url = f"{_fp_name}_au/{file_name}"
-                            booking.save()
-
-                            # Send email when GET_LABEL
-                            email_template_name = "General Booking"
-
-                            if booking.b_booking_Category == "Salvage Expense":
-                                email_template_name = "Return Booking"
-
-                            send_booking_status_email(
-                                booking.pk, email_template_name, request.user.username
-                            )
-                    # Save Label for Capital
-                    elif _fp_name == "capital":
-                        json_label_data = json.loads(response.content)
-                        file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
-                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
-
-                        with open(full_path, "wb") as f:
-                            f.write(base64.b64decode(json_label_data["Label"]))
-                            f.close()
-                            booking.z_label_url = f"{_fp_name}_au/{file_name}"
-                            booking.save()
-
-                            # Send email when GET_LABEL
-                            email_template_name = "General Booking"
-
-                            if booking.b_booking_Category == "Salvage Expense":
-                                email_template_name = "Return Booking"
-
-                            send_booking_status_email(
-                                booking.pk, email_template_name, request.user.username
-                            )
-                    # Save Label for Startrack and AusPost
-                    elif _fp_name in ["startrack", "auspost"]:
-                        Api_booking_confirmation_lines.objects.filter(
-                            fk_booking_id=booking.pk_booking_id
-                        ).delete()
-
-                        for item in json_data["items"]:
-                            book_con = Api_booking_confirmation_lines(
-                                fk_booking_id=booking.pk_booking_id,
-                                api_item_id=item["item_id"],
-                            ).save()
-                    # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
-                    elif _fp_name == "dhl":
-                        if (
-                            booking.kf_client_id
-                            == "461162D2-90C7-BF4E-A905-000000000002"
-                        ):
-                            booking.v_FPBookingNumber = (
-                                f"DME{booking.b_bookingID_Visual}"
-                            )
-                            booking.save()
-                        else:
-                            booking.v_FPBookingNumber = str(json_data["orderNumber"])
-                            booking.save()
-
-                    if booking.b_client_name.lower() == "biopak":
-                        update_biopak_with_booked_booking(booking_id)
-
-                    return JsonResponse(
-                        {"message": f"Successfully booked({booking.v_FPBookingNumber})"}
-                    )
-                except KeyError as e:
-                    trace_error.print()
-                    Log(
-                        request_payload=payload,
-                        request_status="ERROR",
-                        request_type=f"{fp_name.upper()} BOOK",
-                        response=res_content,
-                        fk_booking_id=booking.id,
-                    ).save()
-
-                    error_msg = s0
-                    _set_error(booking, error_msg)
-                    return JsonResponse(
-                        {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
-                    )
-            elif response.status_code == 400:
-                Log(
-                    request_payload=payload,
-                    request_status="ERROR",
-                    request_type=f"{fp_name.upper()} BOOK",
-                    response=res_content,
-                    fk_booking_id=booking.id,
-                ).save()
-
-                if "errors" in json_data:
-                    error_msg = json_data["errors"]
-                elif "errorMessage" in json_data:  # Sendle, TNT Error
-                    error_msg = json_data["errorMessage"]
-                elif "errorMessage" in json_data[0]:
-                    error_msg = json_data[0]["errorMessage"]
-                else:
-                    error_msg = s0
-                _set_error(booking, error_msg)
-                return JsonResponse(
-                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
-                )
-            elif response.status_code == 500:
-                Log(
-                    request_payload=payload,
-                    request_status="ERROR",
-                    request_type=f"{fp_name.upper()} BOOK",
-                    response=res_content,
-                    fk_booking_id=booking.id,
-                ).save()
-
-                error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
-                _set_error(booking, error_msg)
-                return JsonResponse(
-                    {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
-                )
-        except Exception as e:
-            trace_error.print()
-            error_msg = str(e)
-            _set_error(booking, error_msg)
-            return JsonResponse(
-                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
-            )
     except SyntaxError as e:
         trace_error.print()
+        logger.error(f"#514 BOOK error: {error_msg}")
         return JsonResponse(
             {"message": f"SyntaxError: {e}"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    try:
+        booking = Bookings.objects.get(id=booking_id)
+        success, message = book_oper(fp_name, booking, username)
+        res_json = {"success": success, "message": message}
+
+        if success:
+            return JsonResponse(res_json)
+        else:
+            return JsonResponse(res_json, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        trace_error.print()
+        error_msg = str(e)
+        logger.error(f"#513 BOOK error: {error_msg}")
+        _set_error(booking, error_msg)
+        return JsonResponse({"message": error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

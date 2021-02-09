@@ -308,12 +308,13 @@ def get_book_payload(booking, fp_name):
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
 
-        # payload["reference1"] = (
-        #     ""
-        #     if booking.b_client_sales_inv_num is None
-        #     else booking.b_client_sales_inv_num
-        # )
-        payload["reference1"] = booking.clientRefNumbers
+        if booking.clientRefNumbers:
+            payload["reference1"] = booking.clientRefNumbers
+        elif booking.b_client_sales_inv_num:
+            payload["reference1"] = booking.b_client_sales_inv_num
+        else:
+            payload["reference1"] = "reference1"
+
         payload["reference2"] = gen_consignment_num(
             "hunter", booking.b_bookingID_Visual
         )

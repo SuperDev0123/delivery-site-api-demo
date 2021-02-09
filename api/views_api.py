@@ -28,6 +28,7 @@ from rest_framework.decorators import (
 )
 
 from api.fp_apis.apis import get_pricing
+from api.fp_apis.operations.book import book as book_oper
 from api.serializers_api import *
 from api.serializers import SimpleQuoteSerializer
 from api.models import *
@@ -393,6 +394,7 @@ def order_boks(request):
 def scanned(request):
     """
     request when item(s) is picked(scanned) at warehouse
+    should response LABEL if payload is correct
     """
     user = request.user
     logger.info(f"@890 Picked by: {user.username}")
@@ -420,10 +422,12 @@ def scanned(request):
     if message:
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    # Check if order exists
-    booking = Bookings.objects.filter(
-        b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:]
-    ).first()
+    # Check if Order exists on Bookings table
+    booking = (
+        Bookings.objects.prefetch_related("api_booking_quote")
+        .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
+        .first()
+    )
 
     if not booking:
         code = "not_found"
@@ -432,7 +436,13 @@ def scanned(request):
         )
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    # Else
+    # If FP is Hunter, then raise exception
+    if booking.api_booking_quote.freight_provider.lower() == "hunter":
+        code = "invalid_request"
+        message = "For Hunter Order, you can't use this api-endpoint."
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    # If Order exists
     pk_booking_id = booking.pk_booking_id
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
@@ -796,10 +806,12 @@ def ready_boks(request):
     if message:
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    # Check if order exists
-    booking = Bookings.objects.filter(
-        b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:]
-    ).first()
+    # Check if Order exists
+    booking = (
+        Bookings.objects.prefetch_related("api_booking_quote")
+        .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
+        .first()
+    )
 
     if not booking:
         code = "not_found"
@@ -817,6 +829,52 @@ def ready_boks(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Check if already ready
+    if booking.b_status not in ["Picking", "Ready for Booking"]:
+        code = "invalid_request"
+        description = "Order is already Ready."
+        return Response({"success": False, "code": code, "description": description})
+
+    # If Hunter Order?
+    _fp_name = booking.api_booking_quote.freight_provider.lower()
+
+    if _fp_name == "hunter":
+        booking.b_status = "Ready for Booking"
+        booking.save()
+
+        success, message = book_oper(_fp_name, booking, "DME_API")
+
+        if not success:
+            code = "unknown_status"
+            description = (
+                "Please contact DME support center. <bookings@deliver-me.com.au>"
+            )
+            return Response(
+                {"success": False, "code": code, "description": description}
+            )
+        else:
+            label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+
+            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+            if not result:
+                code = "unknown_status"
+                description = (
+                    "Please contact DME support center. <bookings@deliver-me.com.au>"
+                )
+                raise Exception(
+                    {"success": False, "code": code, "description": description}
+                )
+
+            with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+            return Response(
+                {"success": True, "label": zpl_data},
+                status=status.HTTP_200_OK,
+            )
+
+    # If NOT
     pk_booking_id = booking.pk_booking_id
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)

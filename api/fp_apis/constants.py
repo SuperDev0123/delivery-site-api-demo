@@ -1,3 +1,17 @@
+from django.conf import settings
+
+
+if settings.ENV == "local":
+    DME_LEVEL_API_URL = "http://localhost:3000"
+    S3_URL = "./static"
+elif settings.ENV == "dev":
+    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
+    S3_URL = "/opt/s3_public"
+elif settings.ENV == "prod":
+    DME_LEVEL_API_URL = "http://52.62.102.72:3000"
+    S3_URL = "/opt/s3_public"
+
+
 PRICING_TIME = 10  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost"
