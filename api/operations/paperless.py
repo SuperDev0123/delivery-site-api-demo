@@ -196,6 +196,9 @@ def parse_xml(response):
 
 
 def send_order_info(bok_1):
+    if settings.ENV == "local":
+        return True
+
     try:
         headers = {
             "content-type": "text/xml",
