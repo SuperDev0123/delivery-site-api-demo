@@ -220,11 +220,11 @@ def build_label(booking, filepath, lines=[], label_index=0):
     Story = []
     j = 1
 
-    # Get routing_group with service_name
+    # Get routing_group with vx_service_name
     routing_group = None
-    if booking.service_name == "Road Express":
+    if booking.vx_service_name == "Road Express":
         routing_group = "EXP"
-    elif booking.service_name in [
+    elif booking.vx_service_name in [
         "09:00 Express",
         "10:00 Express",
         "12:00 Express",
@@ -233,7 +233,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "ONFC Satchel",
     ]:
         routing_group = "PRI"
-    elif booking.service_name in [
+    elif booking.vx_service_name in [
         "Technology Express - Sensitive Express",
         "Sensitive Express",
         "Fashion Delivery",
