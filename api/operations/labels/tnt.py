@@ -215,7 +215,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
     )
 
     dme_logo = "./static/assets/dme_logo.png"
-    dme_im = Image(path_relative_to_file(__file__, dme_logo), 30 * mm, 8 * mm)
+    dme_im = Image(dme_logo, 30 * mm, 8 * mm)
 
     Story = []
     j = 1
