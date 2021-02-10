@@ -220,6 +220,26 @@ def build_label(booking, filepath, lines=[], label_index=0):
     Story = []
     j = 1
 
+    # Get routing_group with service_name
+    routing_group = None
+    if booking.service_name == "Road Express":
+        routing_group = "EXP"
+    elif booking.service_name in [
+        "09:00 Express",
+        "10:00 Express",
+        "12:00 Express",
+        "Overnight Express",
+        "PAYU - Satchel",
+        "ONFC Satchel",
+    ]:
+        routing_group = "PRI"
+    elif booking.service_name in [
+        "Technology Express - Sensitive Express",
+        "Sensitive Express",
+        "Fashion Delivery",
+    ]:
+        routing_group = "TE"
+
     """
     Let's assume service group EXP
     Using the D records relating to that service group, establish the origin depot thaservices the consignment’s origin postcode.
@@ -229,27 +249,27 @@ def build_label(booking, filepath, lines=[], label_index=0):
         suburb=booking.de_To_Address_Suburb,
         dest_postcode=booking.de_To_Address_PostalCode,
         state=booking.de_To_Address_State,
-        service_group="EXP",
-    )
+        routing_group=routing_group,
+    ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
     if crecords.exists():
-        drecord = FPRouting.objects.filter(
-            orig_postcode=booking.de_To_Address_PostalCode, service_group="EXP"
-        ).first()
-        routing = FPRouting.objects.filter(
-            suburb=booking.de_To_Address_Suburb,
-            dest_postcode=booking.de_To_Address_PostalCode,
-            state=booking.de_To_Address_State,
-            service_group="EXP",
-            orig_depot_except=drecord.orig_depot,
-        ).first()
+        drecord = (
+            FPRouting.objects.filter(
+                orig_postcode=booking.de_To_Address_PostalCode,
+                routing_group=routing_group,
+            )
+            .only("orig_depot")
+            .first()
+        )
+        routing = None
+
+        for crecord in crecords:
+            if crecord.orig_depot_except == drecord.orig_depot:
+                routing = crecord
+                break
+
         if not routing:
-            routing = FPRouting.objects.filter(
-                suburb=booking.de_To_Address_Suburb,
-                dest_postcode=booking.de_To_Address_PostalCode,
-                state=booking.de_To_Address_State,
-                service_group="EXP",
-            ).first()
+            routing = crecords.first()
 
     for booking_line in lines:
         tbl_data1 = [
