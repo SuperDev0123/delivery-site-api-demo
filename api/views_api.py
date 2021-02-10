@@ -1,5 +1,5 @@
 import io
-import time
+import time as t
 import uuid
 import json
 import logging
@@ -105,6 +105,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_boks_with_pricings(self, request):
+        if settings.ENV == "local":
+            t.sleep(2)
+
         client_booking_id = request.GET["identifier"]
 
         if not client_booking_id:
@@ -167,6 +170,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["patch"], permission_classes=[AllowAny])
     def book(self, request):
+        if settings.ENV == "local":
+            t.sleep(2)
+
         identifier = request.GET["identifier"]
 
         if not identifier:
@@ -207,6 +213,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
     def cancel(self, request):
+        if settings.ENV == "local":
+            t.sleep(2)
+
         identifier = request.GET["identifier"]
 
         if not identifier:
@@ -229,6 +238,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
+        if settings.ENV == "local":
+            t.sleep(2)
+
         try:
             cost_id = request.data["costId"]
             identifier = request.data["identifier"]
