@@ -435,12 +435,6 @@ def scanned(request):
         )
         raise ValidationError({"success": False, "code": code, "description": message})
 
-    # If FP is Hunter, then raise exception
-    if booking.api_booking_quote.freight_provider.lower() == "hunter":
-        code = "invalid_request"
-        message = "For Hunter Order, you can't use this api-endpoint."
-        raise ValidationError({"success": False, "code": code, "description": message})
-
     # If Order exists
     pk_booking_id = booking.pk_booking_id
     fp_name = booking.api_booking_quote.company_name.lower()
