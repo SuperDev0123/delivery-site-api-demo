@@ -322,6 +322,7 @@ def get_book_payload(booking, fp_name):
         payload["reference2"] = gen_consignment_num(
             "hunter", booking.b_bookingID_Visual
         )
+        payload["connoteFormat"] = "Thermal"  # For `Thermal` type printers
     elif fp_name == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
