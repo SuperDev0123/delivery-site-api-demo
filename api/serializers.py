@@ -53,7 +53,7 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
         model = Client_warehouses
         fields = (
             "pk_id_client_warehouses",
-            "warehousename",
+            "name",
             "client_warehouse_code",
             "client_company_name",
         )
@@ -137,6 +137,7 @@ class BookingSerializer(serializers.ModelSerializer):
     pricing_cost = serializers.SerializerMethodField(read_only=True)
     pricing_service_name = serializers.SerializerMethodField(read_only=True)
     pricing_account_code = serializers.SerializerMethodField(read_only=True)
+    is_auto_augmented = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -165,6 +166,14 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return None
 
+    def get_is_auto_augmented(self, obj):
+        cl_proc = Client_Process_Mgr.objects.filter(fk_booking_id=obj.pk).first()
+
+        if cl_proc:
+            return True
+
+        return False
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -178,6 +187,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "client_item_references",  # property
             "clientRefNumbers",  # property
             "gap_ras",  # property
+            "is_auto_augmented",  # Auto Augmented
         )
         fields = read_only_fields + (
             "id",
@@ -563,7 +573,7 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
             warehouse = Client_warehouses.objects.get(
                 pk_id_client_warehouses=instance.warehouse_id + 1
             )
-            return warehouse.warehousename
+            return warehouse.name
 
         return None
 
@@ -654,7 +664,7 @@ class ClientSerializer(serializers.ModelSerializer):
 class CostOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CostOption
-        fields = ("id", "code", "description")
+        fields = ("id", "code", "description", "initial_markup_percentage")
 
 
 class CostOptionMapSerializer(serializers.ModelSerializer):

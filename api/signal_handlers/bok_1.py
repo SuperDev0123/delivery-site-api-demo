@@ -7,7 +7,7 @@ logger = logging.getLogger("dme_api")
 
 
 def on_create_bok_1_handler(bok_1):
-    logger.info("#501 - bok_1 post_save handler")
+    logger.info("#501 - bok_1 post_save(create) handler")
     # logger.info(
     #     f"#502 - bok_1 pk_header_id: {bok_1.pk_header_id}, succss code: {bok_1.success}"
     # )
