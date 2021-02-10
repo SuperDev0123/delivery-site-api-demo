@@ -298,7 +298,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     style_left,
                 ),
                 Paragraph(
-                    "<font size=%s><b>via %s to %s</b></font>"
+                    "<font size=%s><b>via %s  &#160 &#160 to &#160  &#160  %s </b></font>"
                     % (
                         label_settings["font_size_extra_large"],
                         routing.gateway,
@@ -316,9 +316,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ),
             rowHeights=(float(label_settings["line_height_small"]) * mm),
             style=[
-                # ("TOPPADDING", (0, 0), (-1, -1), 0),
-                # ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                # ("VALIGN", (0, 0), (0, -1), "TOP"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -427,7 +424,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(shell_table)
-        Story.append(Spacer(1, 2))
+        Story.append(Spacer(1, 5))
         Story.append(hr)
 
         tbl_data1 = [
