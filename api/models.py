@@ -4595,6 +4595,11 @@ class BookingCostOption(models.Model):
 
 
 class FPRouting(models.Model):
+    """
+    This table is used only for TNT
+    zFpDpc_Label spec with Full Integration Doc.pdf - 33p
+    """
+
     id = models.AutoField(primary_key=True)
     suburb = models.CharField(max_length=45, default=None, null=True)
     state = models.CharField(max_length=45, default=None, null=True)
@@ -4605,9 +4610,7 @@ class FPRouting(models.Model):
     onfwd = models.CharField(max_length=10, default=None, null=True)
     sort_bin = models.CharField(max_length=10, default=None, null=True)
     orig_postcode = models.CharField(max_length=10, default=None, null=True)
-    service_group = models.CharField(max_length=10, default=None, null=True)
-    
+    routing_group = models.CharField(max_length=10, default=None, null=True)
+
     class Meta:
         db_table = "fp_routing"
-
-
