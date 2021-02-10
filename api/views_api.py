@@ -437,7 +437,7 @@ def scanned(request):
 
     # If Order exists
     pk_booking_id = booking.pk_booking_id
-    fp_name = booking.api_booking_quote.company_name.lower()
+    fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
     original_items = lines.filter(sscc__isnull=True)
