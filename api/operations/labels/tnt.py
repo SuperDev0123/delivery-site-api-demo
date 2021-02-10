@@ -938,7 +938,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             [
                 Paragraph(
                     "<font size=%s><b>Itm:%s</b></font>"
-                    % (label_settings["font_size_medium"], "00132214000166765001"),
+                    % (label_settings["font_size_medium"], booking_line.sscc),
                     style_left,
                 )
             ],
