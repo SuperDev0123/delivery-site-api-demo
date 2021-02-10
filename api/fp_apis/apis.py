@@ -540,7 +540,7 @@ def get_label(request, fp_name):
             return JsonResponse(
                 {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
             )
-
+            
         payload = {}
         if _fp_name in ["startrack", "auspost"]:
             try:

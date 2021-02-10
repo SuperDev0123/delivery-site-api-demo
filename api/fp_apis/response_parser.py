@@ -51,6 +51,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
+                result["service_code"] = price["rateCode"]
                 results.append(result)
         elif fp_name == "sendle" and "price" in json_data:  # Sendle
             for price in json_data["price"]:
