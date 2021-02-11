@@ -757,6 +757,44 @@ def scanned(request):
                     booking.api_booking_quote = None
                     booking.save()
 
+        # If Hunter Order?
+        if fp_name == "hunter":
+            booking.b_status = "Ready for Booking"
+            booking.save()
+
+            success, message = book_oper(fp_name, booking, "DME_API")
+
+            if not success:
+                code = "unknown_status"
+                description = (
+                    "Please contact DME support center. <bookings@deliver-me.com.au>"
+                )
+                return Response(
+                    {"success": False, "code": code, "description": description}
+                )
+            else:
+                label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+
+                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+                if not result:
+                    code = "unknown_status"
+                    description = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                    raise Exception(
+                        {"success": False, "code": code, "description": description}
+                    )
+
+                with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                    zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+                labels.append(
+                    {
+                        "sscc": picked_item["sscc"],
+                        "label": zpl_data,
+                        "barcode": get_barcode(booking, [new_line]),
+                    }
+                )
+
         return Response(
             {
                 "success": True,
@@ -837,50 +875,31 @@ def ready_boks(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # If Hunter Order
+    fp_name = booking.api_booking_quote.freight_provider.lower()
+
+    if fp_name == "hunter" and booking.b_status == "Booked":
+        return Response(
+            {
+                "success": True,
+                "message": "Order is already BOOKED.",
+            }
+        )
+    else:
+        # DME don't get the ready api for Hunter Order
+        return Response(
+            {
+                "success": False,
+                "code": "not allowed",
+                "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
+            }
+        )
+
     # Check if already ready
     if booking.b_status not in ["Picking", "Ready for Booking"]:
         code = "invalid_request"
         description = "Order is already Ready."
         return Response({"success": False, "code": code, "description": description})
-
-    # If Hunter Order?
-    _fp_name = booking.api_booking_quote.freight_provider.lower()
-
-    if _fp_name == "hunter":
-        booking.b_status = "Ready for Booking"
-        booking.save()
-
-        success, message = book_oper(_fp_name, booking, "DME_API")
-
-        if not success:
-            code = "unknown_status"
-            description = (
-                "Please contact DME support center. <bookings@deliver-me.com.au>"
-            )
-            return Response(
-                {"success": False, "code": code, "description": description}
-            )
-        else:
-            label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-
-            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-            if not result:
-                code = "unknown_status"
-                description = (
-                    "Please contact DME support center. <bookings@deliver-me.com.au>"
-                )
-                raise Exception(
-                    {"success": False, "code": code, "description": description}
-                )
-
-            with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-            return Response(
-                {"success": True, "label": zpl_data},
-                status=status.HTTP_200_OK,
-            )
 
     # If NOT
     pk_booking_id = booking.pk_booking_id
