@@ -154,7 +154,7 @@ def path_relative_to_file(base_file_path, relative_path):
 
 def build_label(booking, filepath, lines=[], label_index=0):
     logger.info(
-        f"#110 Started building label... (Booking ID:{booking.b_bookingID_Visual}, Format: TNT)"
+        f"#110 [TNT LABEL] Started building label... (Booking ID:{booking.b_bookingID_Visual}, Lines: {lines}, Format: TNT)"
     )
 
     # start check if pdfs folder exists
@@ -183,6 +183,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
     file = open(f"{filepath}/{filename}", "w")
+    logger.info(f"#111 [TNT LABEL] File full path: {filepath}/{filename}")
     # end pdf file name using naming convention
 
     if not lines:
