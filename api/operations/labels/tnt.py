@@ -814,7 +814,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
             [
                 Paragraph(
-                    "font size=%s><b>%s</b></font>"
+                    "<font size=%s><b>%s</b></font>"
                     % (
                         label_settings["font_size_medium"],
                         booking.de_to_PickUp_Instructions_Address or "",
