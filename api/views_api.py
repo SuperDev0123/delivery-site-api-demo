@@ -693,7 +693,7 @@ def scanned(request):
                     )
 
                 if fp_name != "hunter":
-                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}"
 
                     logger.info(f"@368 - building label...")
                     label_index = scanned_items_count + repacked_items_count
