@@ -35,7 +35,8 @@ style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
     alignment=TA_LEFT,
-    leading=12,
+    leading=10,
+    spaceBefore=0,
 )
 style_center = ParagraphStyle(
     name="center",
@@ -43,6 +44,17 @@ style_center = ParagraphStyle(
     alignment=TA_CENTER,
     leading=10,
 )
+
+style_uppercase = ParagraphStyle(
+    name="uppercase",
+    parent=styles["Normal"],
+    alignment=TA_LEFT,
+    leading=9,
+    spaceBefore=0,
+    spaceAfter=0,
+    textTransform='uppercase'
+)
+
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 
 
@@ -185,6 +197,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "font_family": "Verdana",
         "font_size_extra_small": "4",
         "font_size_small": "6",
+        "font_size_normal": "7",
         "font_size_medium": "8",
         "font_size_large": "10",
         "font_size_extra_large": "13",
@@ -275,9 +288,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
         tbl_data1 = [
             [
                 Paragraph(
-                    "<font size=%s><b>%s</b></font>"
+                    "<p style='vertical-align: top; padding: 0px; line-height: 0px'><font size=%s><b> %s </b></font></p>"
                     % (
-                        22,
+                        35,
                         (booking.de_To_Address_PostalCode)
                         if (booking.de_To_Address_PostalCode)
                         else "",
@@ -285,7 +298,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     style_left,
                 ),
                 Paragraph(
-                    "<font size=%s><b>via %s to %s</b></font>"
+                    "<font size=%s><b>via %s  &#160 &#160 to &#160  &#160  %s </b></font>"
                     % (
                         label_settings["font_size_extra_large"],
                         routing.gateway,
@@ -295,18 +308,19 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ),
             ],
         ]
-
         t1 = Table(
             tbl_data1,
             colWidths=(
-                float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-                float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                90,
+                float(label_settings["label_image_size_length"]) *  mm - 90,
             ),
             rowHeights=(float(label_settings["line_height_small"]) * mm),
             style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -322,6 +336,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -392,12 +407,13 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
         hr = HRFlowable(
             width=(float(label_settings["label_image_size_length"]) * mm),
-            thickness=1,
+            thickness=0.2,
             lineCap="square",
             color=colors.black,
             spaceBefore=0,
@@ -410,13 +426,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
         Story.append(shell_table)
         Story.append(Spacer(1, 5))
         Story.append(hr)
-        Story.append(Spacer(1, 2))
 
         tbl_data1 = [
             [
                 Paragraph(
                     "<font size=%s><b>%s</b></font>"
-                    % (label_settings["font_size_extra_large"], "Road Express"),
+                    % (label_settings["font_size_extra_large"], booking.vx_serviceName),
                     style_left,
                 ),
                 Paragraph(
@@ -451,10 +466,11 @@ def build_label(booking, filepath, lines=[], label_index=0):
             data,
             colWidths=[t_w],
             style=[
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -476,7 +492,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     style_left,
                 ),
                 Paragraph(
-                    "<font size=%s><b>%s of %s</b></font>"
+                    "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
                     % (label_settings["font_size_medium"], j, totalQty),
                     style_left,
                 ),
@@ -487,7 +503,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         booking_line.e_Total_KG_weight
                         if booking_line.e_Total_KG_weight
                         else "",
-                        booking_line.e_weightUOM if booking_line.e_weightUOM else "",
+                        'Kg'
+                        # booking_line.e_weightUOM if booking_line.e_weightUOM else "",
                     ),
                     style_left,
                 ),
@@ -528,6 +545,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -539,7 +557,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         tbl_data1 = [
             [
                 Paragraph(
-                    "<font size=%s>%s</font>"
+                    "<font size=%s><b>%s</b></font>"
                     % (
                         label_settings["font_size_medium"],
                         "Does not Contain Dangerous Goods",
@@ -574,6 +592,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -613,7 +632,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         label_settings["font_size_large"],
                         booking.de_to_Contact_F_LName,
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
             [
@@ -623,7 +642,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         label_settings["font_size_large"],
                         booking.deToCompanyName if booking.deToCompanyName else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
             [
@@ -633,7 +652,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         label_settings["font_size_large"],
                         booking.de_To_Address_Street_1,
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
@@ -643,7 +662,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         label_settings["font_size_large"],
                         booking.de_To_Address_Street_2,
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
@@ -654,7 +673,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         booking.de_To_Address_Suburb,
                         booking.de_To_Address_PostalCode,
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
         ]
@@ -688,8 +707,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
         )
         Story.append(shell_table)
+        Story.append(Spacer(1, 2))
         Story.append(hr)
-        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
@@ -736,7 +755,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         if booking.pu_Address_State
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
         ]
@@ -800,7 +819,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
         )
         Story.append(t1)
-        Story.append(Spacer(1, 10))
+        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
@@ -827,13 +846,13 @@ def build_label(booking, filepath, lines=[], label_index=0):
         t1 = Table(
             tbl_data1,
             colWidths=(float(label_settings["label_image_size_length"]) * mm),
-            rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
+            # rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
             style=[
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
+                ("VALIGN", (0, 0), (0, -1), "TOP"),
             ],
         )
 
@@ -849,6 +868,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -916,18 +936,19 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
         Story.append(shell_table)
-        Story.append(Spacer(1, 2))
+        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
                 Paragraph(
                     "<font size=%s><b>CN: %s</b></font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         (booking.v_FPBookingNumber)
                         if (booking.v_FPBookingNumber)
                         else "",
@@ -938,87 +959,87 @@ def build_label(booking, filepath, lines=[], label_index=0):
             [
                 Paragraph(
                     "<font size=%s><b>Itm:%s</b></font>"
-                    % (label_settings["font_size_medium"], booking_line.sscc),
+                    % (label_settings["font_size_normal"], booking_line.sscc),
                     style_left,
                 )
             ],
             [
                 Paragraph(
-                    "<font size=%s><b>%s of %s</b></font>"
-                    % (label_settings["font_size_medium"], j, totalQty),
+                    "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
+                    % (label_settings["font_size_normal"], j, totalQty),
                     style_left,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s><b>%s</b></font>"
-                    % (label_settings["font_size_medium"], "TO:"),
-                    style_left,
+                    % (label_settings["font_size_normal"], "TO:"),
+                    style_uppercase,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.de_to_Contact_F_LName
                         if booking.de_to_Contact_F_LName
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.deToCompanyName if booking.deToCompanyName else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.de_To_Address_Street_1
                         if booking.de_To_Address_Street_1
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font> "
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.de_To_Address_Street_2
                         if booking.de_To_Address_Street_2
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font> "
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.de_To_Address_Suburb
                         if booking.de_To_Address_Suburb
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
                 Paragraph(
                     "<font size=%s>%s %s</font> "
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.de_To_Address_State
                         if booking.de_To_Address_State
                         else "",
@@ -1026,7 +1047,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         if booking.de_To_Address_PostalCode
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
         ]
@@ -1047,15 +1068,15 @@ def build_label(booking, filepath, lines=[], label_index=0):
             [
                 Paragraph(
                     "<font size=%s><b>%s</b></font>"
-                    % (label_settings["font_size_medium"], "Road Express"),
+                    % (label_settings["font_size_normal"], booking.vx_serviceName),
                     style_left,
                 )
             ],
             [
                 Paragraph(
-                    "<font size=%s><b>Con Note Wt.: :%s %s.</b></font>"
+                    "<font size=%s><b>Con Note Wt.: %s %s.</b></font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking_line.e_Total_KG_weight
                         if booking_line.e_Total_KG_weight
                         else "",
@@ -1067,14 +1088,14 @@ def build_label(booking, filepath, lines=[], label_index=0):
             [
                 Paragraph(
                     "<font size=%s>%s</font>"
-                    % (label_settings["font_size_medium"], ""),
+                    % (label_settings["font_size_normal"], ""),
                     style_left,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s><b>%s</b></font>"
-                    % (label_settings["font_size_medium"], "FROM:"),
+                    % (label_settings["font_size_normal"], "FROM:"),
                     style_left,
                 )
             ],
@@ -1082,69 +1103,69 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 Paragraph(
                     "<font size=%s>%s</font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.pu_Contact_F_L_Name
                         if booking.pu_Contact_F_L_Name
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.deToCompanyName if booking.deToCompanyName else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 )
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font>"
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.pu_Address_Street_1
                         if booking.pu_Address_Street_1
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font> "
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.pu_Address_street_2
                         if booking.pu_Address_street_2
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
                 Paragraph(
                     "<font size=%s>%s</font> "
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.pu_Address_Suburb if booking.pu_Address_Suburb else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
             [
                 Paragraph(
                     "<font size=%s>%s %s</font> "
                     % (
-                        label_settings["font_size_medium"],
+                        label_settings["font_size_normal"],
                         booking.pu_Address_State if booking.pu_Address_State else "",
                         booking.pu_Address_PostalCode
                         if booking.pu_Address_PostalCode
                         else "",
                     ),
-                    style_left,
+                    style_uppercase,
                 ),
             ],
         ]
@@ -1181,7 +1202,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
         Story.append(shell_table)
 
-        # barcode = booking.v_FPBookingNumber+'DESC'+str(k+1).zfill(10)+booking.de_To_Address_PostalCode
         barcode = gen_barcode(booking, lines, 0, label_index)
 
         tbl_data = [
@@ -1207,7 +1227,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(t1)
-        Story.append(Spacer(1, 5))
+        # Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [dme_im],
@@ -1223,6 +1243,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -1236,7 +1257,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         if (booking.vx_freight_provider)
                         else "",
                     ),
-                    style_left,
+                    style_center,
                 )
             ]
         ]
@@ -1251,6 +1272,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
         barcode = str(j).zfill(2)
@@ -1270,6 +1292,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
         Story.append(shell_table)
