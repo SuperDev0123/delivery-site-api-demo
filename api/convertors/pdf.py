@@ -44,5 +44,5 @@ def pdf_to_zpl(pdf_path, zpl_path):
             return True
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
-        send_mail("PDF covertion error", error_msg)
+        send_email_to_admins("PDF covertion error", error_msg)
         return False
