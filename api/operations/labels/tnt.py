@@ -285,7 +285,10 @@ def build_label(booking, filepath, lines=[], label_index=0):
         if not routing:
             routing = crecords.first()
 
+    logger.info(f"#113 [TNT LABEL] Found FPRouting: {FPRouting}")
+
     for booking_line in lines:
+        logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
         tbl_data1 = [
             [
                 Paragraph(
@@ -349,9 +352,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     "<font size=%s><b>%s</b></font>"
                     % (
                         label_settings["font_size_extra_large"],
-                        (booking.v_FPBookingNumber)
-                        if (booking.v_FPBookingNumber)
-                        else "",
+                        booking.v_FPBookingNumber or "",
                     ),
                     style_right,
                 ),
@@ -361,9 +362,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     "<font size=%s><b>%s</b></font>"
                     % (
                         label_settings["font_size_extra_large"],
-                        (booking.de_To_Address_Suburb)
-                        if (booking.de_To_Address_Suburb)
-                        else "",
+                        booking.de_To_Address_Suburb or "",
                     ),
                     style_left,
                 ),
@@ -779,12 +778,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     "<font size=%s><b>Senders Ref:</b> %s %s</font>"
                     % (
                         label_settings["font_size_medium"],
-                        str(booking.de_to_PickUp_Instructions_Address)
-                        if booking.de_to_PickUp_Instructions_Address
-                        else "",
-                        str(booking.de_to_Pick_Up_Instructions_Contact)
-                        if booking.de_to_Pick_Up_Instructions_Contact
-                        else "",
+                        booking.de_to_PickUp_Instructions_Address or "",
+                        booking.de_to_Pick_Up_Instructions_Contact or "",
                     ),
                     style_left,
                 )
@@ -1035,7 +1030,10 @@ def build_label(booking, filepath, lines=[], label_index=0):
             [
                 Paragraph(
                     "<font size=%s><b>%s</b></font>"
-                    % (label_settings["font_size_normal"], booking.vx_serviceName),
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.vx_serviceName or "",
+                    ),
                     style_left,
                 )
             ],
