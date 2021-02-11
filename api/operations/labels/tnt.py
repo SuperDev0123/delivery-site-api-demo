@@ -52,7 +52,7 @@ style_uppercase = ParagraphStyle(
     leading=9,
     spaceBefore=0,
     spaceAfter=0,
-    textTransform='uppercase'
+    textTransform="uppercase",
 )
 
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
@@ -182,7 +182,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             + ".pdf"
         )
 
-    file = open(filepath + filename, "w")
+    file = open(f"{filepath}/{filename}", "w")
     # end pdf file name using naming convention
 
     if not lines:
@@ -312,7 +312,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             tbl_data1,
             colWidths=(
                 90,
-                float(label_settings["label_image_size_length"]) *  mm - 90,
+                float(label_settings["label_image_size_length"]) * mm - 90,
             ),
             rowHeights=(float(label_settings["line_height_small"]) * mm),
             style=[
@@ -503,7 +503,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         booking_line.e_Total_KG_weight
                         if booking_line.e_Total_KG_weight
                         else "",
-                        'Kg'
+                        "Kg"
                         # booking_line.e_weightUOM if booking_line.e_weightUOM else "",
                     ),
                     style_left,
