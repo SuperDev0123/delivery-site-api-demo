@@ -758,7 +758,18 @@ def scanned(request):
                     booking.save()
 
         # If Hunter Order?
-        if fp_name == "hunter":
+        if fp_name == "hunter" && booking.b_status != 'Picking':
+            return Response(
+                {
+                    "success": False,
+                    "message": "This Order is already BOOKED.",
+                    "consignment_number": gen_consignment_num(
+                        booking.vx_freight_provider, booking.b_bookingID_Visual
+                    ),
+                    "labels": [],
+                }
+            )
+        elif fp_name == "hunter" && booking.b_status == 'Picking':
             booking.b_status = "Ready for Booking"
             booking.save()
 
