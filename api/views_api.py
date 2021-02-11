@@ -758,7 +758,7 @@ def scanned(request):
                     booking.save()
 
         # If Hunter Order?
-        if fp_name == "hunter" && booking.b_status != 'Picking':
+        if fp_name == "hunter" and booking.b_status != "Picking":
             return Response(
                 {
                     "success": False,
@@ -769,7 +769,7 @@ def scanned(request):
                     "labels": [],
                 }
             )
-        elif fp_name == "hunter" && booking.b_status == 'Picking':
+        elif fp_name == "hunter" and booking.b_status == "Picking":
             booking.b_status = "Ready for Booking"
             booking.save()
 
