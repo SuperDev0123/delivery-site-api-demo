@@ -703,7 +703,7 @@ def scanned(request):
 
                     # Convert label into ZPL format
                     logger.info(
-                        f"@369 - converting LABEL({file_path}/{file_name}) into ZPL format..."
+                        f"@369 [SCANNED] converting LABEL({file_path}/{file_name}) into ZPL format..."
                     )
                     label_url = f"{file_path}/{file_name}"
                     result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
