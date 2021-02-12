@@ -1409,78 +1409,87 @@ def push_boks(request):
 
             if not bok_1.get("b_071_b_del_sufficient_space"):
                 bok_1["b_071_b_del_sufficient_space"] = True
-        elif client_name == "BioPak":
+        elif client_name == "BioPak":  # BioPak
             bok_1["client_booking_id"] = bok_1["pk_header_id"]
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
-        if bok_1_serializer.is_valid():
-            # Save bok_2s
-            if "model_number" in bok_2s[0]:  # Product & Child items
-                ignore_product = False
 
-                if ("Plum" in client_name and "_sapb1" in username) or (
-                    "Jason" in client_name and "_bizsys" in username
-                ):
-                    ignore_product = True
+        if not bok_1_serializer.is_valid():
+            logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
+            return Response(
+                {"success": False, "message": bok_1_serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-                items = product_oper.get_product_items(bok_2s, client, ignore_product)
-                new_bok_2s = []
+        # Save bok_2s
+        if "model_number" in bok_2s[0]:  # Product & Child items
+            ignore_product = False
 
-                for index, item in enumerate(items):
-                    line = {}
-                    line["fk_header_id"] = bok_1["pk_header_id"]
-                    line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-                    line["pk_booking_lines_id"] = str(uuid.uuid1())
-                    line["success"] = bok_1["success"]
-                    line["l_001_type_of_packaging"] = "Carton"
-                    line["l_002_qty"] = item["qty"]
-                    line["l_003_item"] = item["description"]
-                    line["l_004_dim_UOM"] = item["e_dimUOM"]
-                    line["l_005_dim_length"] = item["e_dimLength"]
-                    line["l_006_dim_width"] = item["e_dimWidth"]
-                    line["l_007_dim_height"] = item["e_dimHeight"]
-                    line["l_009_weight_per_each"] = item["e_weightPerEach"]
-                    line["l_008_weight_UOM"] = item["e_weightUOM"]
-                    line["e_item_type"] = item["e_item_type"]
-                    new_bok_2s.append({"booking_line": line})
+            if ("Plum" in client_name and "_sapb1" in username) or (
+                "Jason" in client_name and "_bizsys" in username
+            ):
+                ignore_product = True
 
-                    bok_2_serializer = BOK_2_Serializer(data=line)
-                    if bok_2_serializer.is_valid():
-                        bok_2_serializer.save()
-                    else:
-                        logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
-                        return Response(
-                            {"success": False, "message": bok_2_serializer.errors},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
+            items = product_oper.get_product_items(bok_2s, client, ignore_product)
+            new_bok_2s = []
 
-                bok_2s = new_bok_2s
-            else:
-                for index, bok_2 in enumerate(bok_2s):
-                    bok_3s = bok_2["booking_lines_data"]
-                    bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
-                    bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
-                        "pk_header_id"
-                    ]
-                    bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
-                    bok_2["booking_line"]["success"] = bok_1["success"]
-                    bok_2["booking_line"]["l_001_type_of_packaging"] = (
-                        "Carton"
-                        if not bok_2["booking_line"].get("l_001_type_of_packaging")
-                        else bok_2["booking_line"]["l_001_type_of_packaging"]
+            for index, item in enumerate(items):
+                line = {}
+                line["fk_header_id"] = bok_1["pk_header_id"]
+                line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                line["pk_booking_lines_id"] = str(uuid.uuid1())
+                line["success"] = bok_1["success"]
+                line["l_001_type_of_packaging"] = "Carton"
+                line["l_002_qty"] = item["qty"]
+                line["l_003_item"] = item["description"]
+                line["l_004_dim_UOM"] = item["e_dimUOM"]
+                line["l_005_dim_length"] = item["e_dimLength"]
+                line["l_006_dim_width"] = item["e_dimWidth"]
+                line["l_007_dim_height"] = item["e_dimHeight"]
+                line["l_009_weight_per_each"] = item["e_weightPerEach"]
+                line["l_008_weight_UOM"] = item["e_weightUOM"]
+                line["e_item_type"] = item["e_item_type"]
+                new_bok_2s.append({"booking_line": line})
+
+                bok_2_serializer = BOK_2_Serializer(data=line)
+                if bok_2_serializer.is_valid():
+                    bok_2_serializer.save()
+                else:
+                    logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                    return Response(
+                        {"success": False, "message": bok_2_serializer.errors},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                    bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
-                    if bok_2_serializer.is_valid():
-                        bok_2_serializer.save()
-                    else:
-                        logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
-                        return Response(
-                            {"success": False, "message": bok_2_serializer.errors},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
+            bok_2s = new_bok_2s
+        else:
+            for index, bok_2 in enumerate(bok_2s):
+                bok_2["booking_line"]["fk_header_id"] = bok_1["pk_header_id"]
+                bok_2["booking_line"]["v_client_pk_consigment_num"] = bok_1[
+                    "pk_header_id"
+                ]
+                bok_2["booking_line"]["pk_booking_lines_id"] = str(uuid.uuid1())
+                bok_2["booking_line"]["success"] = bok_1["success"]
+                bok_2["booking_line"]["l_001_type_of_packaging"] = (
+                    "Carton"
+                    if not bok_2["booking_line"].get("l_001_type_of_packaging")
+                    else bok_2["booking_line"]["l_001_type_of_packaging"]
+                )
 
-                    # Save bok_3s
+                bok_2_serializer = BOK_2_Serializer(data=bok_2["booking_line"])
+                if bok_2_serializer.is_valid():
+                    bok_2_serializer.save()
+                else:
+                    logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                    return Response(
+                        {"success": False, "message": bok_2_serializer.errors},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Save bok_3s
+                if "booking_lines_data" in bok_2:
+                    bok_3s = bok_2["booking_lines_data"]
+
                     for bok_3 in bok_3s:
                         bok_3["fk_header_id"] = bok_1["pk_header_id"]
                         bok_3["fk_booking_lines_id"] = bok_2["booking_line"][
@@ -1497,187 +1506,176 @@ def push_boks(request):
                                 f"@8823 BOKS API Error - {bok_3_serializer.errors}"
                             )
                             return Response(
-                                {"success": False, "message": bok_3_serializer.errors},
+                                {
+                                    "success": False,
+                                    "message": bok_3_serializer.errors,
+                                },
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
 
-            bok_1_obj = bok_1_serializer.save()
+        bok_1_obj = bok_1_serializer.save()
 
+        if bok_1["success"] in [
+            dme_constants.BOK_SUCCESS_3,
+            dme_constants.BOK_SUCCESS_4,
+        ]:
             # create status history
             status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
-            if bok_1["success"] in [
-                dme_constants.BOK_SUCCESS_3,
-                dme_constants.BOK_SUCCESS_4,
-            ]:
-                booking = {}
-                booking_lines = []
+            booking = {
+                "pk_booking_id": bok_1["pk_header_id"],
+                "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+                "b_clientReference_RA_Numbers": bok_1[
+                    "b_000_1_b_clientreference_ra_numbers"
+                ],
+                "puCompany": bok_1["b_028_b_pu_company"],
+                "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
+                "pu_Email": bok_1["b_037_b_pu_email"],
+                "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"],
+                "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
+                "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
+                "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
+                "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
+                "pu_Address_State": bok_1["b_031_b_pu_address_state"],
+                "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+                "deToCompanyName": bok_1["b_054_b_del_company"],
+                "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
+                "de_Email": bok_1["b_063_b_del_email"],
+                "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"],
+                "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
+                "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
+                "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
+                "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
+                "de_To_Address_State": bok_1["b_057_b_del_address_state"],
+                "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+                "client_warehouse_code": bok_1["b_client_warehouse_code"],
+                "vx_serviceName": bok_1["b_003_b_service_name"],
+                "kf_client_id": bok_1["fk_client_id"],
+                "b_client_name": client.company_name,
+            }
 
-                booking = {
-                    "pk_booking_id": bok_1["pk_header_id"],
-                    "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
-                    "b_clientReference_RA_Numbers": bok_1[
-                        "b_000_1_b_clientreference_ra_numbers"
-                    ],
-                    "puCompany": bok_1["b_028_b_pu_company"],
-                    "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
-                    "pu_Email": bok_1["b_037_b_pu_email"],
-                    "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"],
-                    "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
-                    "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
-                    "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
-                    "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
-                    "pu_Address_State": bok_1["b_031_b_pu_address_state"],
-                    "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
-                    "deToCompanyName": bok_1["b_054_b_del_company"],
-                    "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
-                    "de_Email": bok_1["b_063_b_del_email"],
-                    "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"],
-                    "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
-                    "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
-                    "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
-                    "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
-                    "de_To_Address_State": bok_1["b_057_b_del_address_state"],
-                    "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
-                    "client_warehouse_code": bok_1["b_client_warehouse_code"],
-                    "vx_serviceName": bok_1["b_003_b_service_name"],
-                    "kf_client_id": bok_1["fk_client_id"],
-                    "b_client_name": client.company_name,
+            booking_lines = []
+            for bok_2 in bok_2s:
+                bok_2_line = {
+                    "fk_booking_id": bok_2["booking_line"]["fk_header_id"],
+                    "packagingType": bok_2["booking_line"]["l_001_type_of_packaging"],
+                    "e_qty": bok_2["booking_line"]["l_002_qty"],
+                    "e_item": bok_2["booking_line"]["l_003_item"],
+                    "e_dimUOM": bok_2["booking_line"]["l_004_dim_UOM"],
+                    "e_dimLength": bok_2["booking_line"]["l_005_dim_length"],
+                    "e_dimWidth": bok_2["booking_line"]["l_006_dim_width"],
+                    "e_dimHeight": bok_2["booking_line"]["l_007_dim_height"],
+                    "e_weightUOM": bok_2["booking_line"]["l_008_weight_UOM"],
+                    "e_weightPerEach": bok_2["booking_line"]["l_009_weight_per_each"],
                 }
+                booking_lines.append(bok_2_line)
 
-                for bok_2 in bok_2s:
-                    bok_2_line = {
-                        "fk_booking_id": bok_2["booking_line"]["fk_header_id"],
-                        "packagingType": bok_2["booking_line"][
-                            "l_001_type_of_packaging"
-                        ],
-                        "e_qty": bok_2["booking_line"]["l_002_qty"],
-                        "e_item": bok_2["booking_line"]["l_003_item"],
-                        "e_dimUOM": bok_2["booking_line"]["l_004_dim_UOM"],
-                        "e_dimLength": bok_2["booking_line"]["l_005_dim_length"],
-                        "e_dimWidth": bok_2["booking_line"]["l_006_dim_width"],
-                        "e_dimHeight": bok_2["booking_line"]["l_007_dim_height"],
-                        "e_weightUOM": bok_2["booking_line"]["l_008_weight_UOM"],
-                        "e_weightPerEach": bok_2["booking_line"][
-                            "l_009_weight_per_each"
-                        ],
-                    }
-                    booking_lines.append(bok_2_line)
+            fc_log, _ = FC_Log.objects.get_or_create(
+                client_booking_id=bok_1["client_booking_id"],
+                old_quote__isnull=True,
+                new_quote__isnull=True,
+            )
+            fc_log.old_quote = old_quote
+            body = {"booking": booking, "booking_lines": booking_lines}
+            _, success, message, quote_set = get_pricing(
+                body=body,
+                booking_id=None,
+                is_pricing_only=True,
+            )
+            logger.info(
+                f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+            )
 
-                fc_log, _ = FC_Log.objects.get_or_create(
-                    client_booking_id=bok_1["client_booking_id"],
-                    old_quote__isnull=True,
-                    new_quote__isnull=True,
-                )
-                fc_log.old_quote = old_quote
-                body = {"booking": booking, "booking_lines": booking_lines}
-                _, success, message, quote_set = get_pricing(
-                    body=body,
-                    booking_id=None,
-                    is_pricing_only=True,
-                )
-                logger.info(
-                    f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
-                )
+            # Select best quotes(fastest, lowest)
+            if quote_set.exists() and quote_set.count() > 1:
+                auto_select_pricing_4_bok(bok_1_obj, quote_set)
+                best_quotes = select_best_options(pricings=quote_set)
+                logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
 
-                # Select best quotes(fastest, lowest)
-                if quote_set.exists() and quote_set.count() > 1:
-                    auto_select_pricing_4_bok(bok_1_obj, quote_set)
-                    best_quotes = select_best_options(pricings=quote_set)
-                    logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+            # Set Express or Standard
+            if best_quotes:
+                json_results = SimpleQuoteSerializer(best_quotes, many=True).data
+                json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
 
-                # Set Express or Standard
-                if best_quotes:
-                    json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-                    json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
+                if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                    best_quote = best_quotes[0]
+                    bok_1_obj.b_003_b_service_name = best_quote.service_name
+                    bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+                    bok_1_obj.save()
+                    fc_log.new_quote = best_quotes[0]
+                    fc_log.save()
 
-                    if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                        best_quote = best_quotes[0]
-                        bok_1_obj.b_003_b_service_name = best_quote.service_name
-                        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
-                        bok_1_obj.save()
-                        fc_log.new_quote = best_quotes[0]
-                        fc_log.save()
-
-                    if len(json_results) == 1:
-                        json_results[0]["service_name"] = "Standard"
+                if len(json_results) == 1:
+                    json_results[0]["service_name"] = "Standard"
+                else:
+                    if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+                        json_results[0]["service_name"] = "Express"
+                        json_results[1]["service_name"] = "Standard"
+                        json_results = [json_results[1], json_results[0]]
                     else:
-                        if float(json_results[0]["cost"]) > float(
-                            json_results[1]["cost"]
-                        ):
-                            json_results[0]["service_name"] = "Express"
-                            json_results[1]["service_name"] = "Standard"
-                            json_results = [json_results[1], json_results[0]]
-                        else:
-                            json_results[1]["service_name"] = "Express"
-                            json_results[0]["service_name"] = "Standard"
-                else:
-                    message = f"#521 No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
-                    logger.error(message)
-                    send_email_to_admins("No FC result", message)
+                        json_results[1]["service_name"] = "Express"
+                        json_results[0]["service_name"] = "Standard"
+            else:
+                message = f"#521 No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
+                logger.error(message)
+                send_email_to_admins("No FC result", message)
 
-                if json_results:
-                    if ("Plum" in client_name and "_sapb1" in username) or (
-                        "Jason" in client_name and "_bizsys" in username
-                    ):
-                        for index, _ in enumerate(json_results):
-                            json_results[index]["cost"] = json_results[index][
-                                "cost"
-                            ] * (1 + client.client_customer_mark_up)
-                            json_results[index]["cost"] = round(
-                                json_results[index]["cost"], 2
-                            )
-
-                        result = {
-                            "success": True,
-                            "results": json_results,
-                        }
-
-                        if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
-                            result[
-                                "pricePageUrl"
-                            ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                        elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                            result[
-                                "pricePageUrl"
-                            ] = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
-
-                        logger.info(f"@8837 - success: True, 201_created")
-                        return JsonResponse(
-                            result,
-                            status=status.HTTP_201_CREATED,
+            if json_results:
+                if ("Plum" in client_name and "_sapb1" in username) or (
+                    "Jason" in client_name and "_bizsys" in username
+                ):
+                    for index, _ in enumerate(json_results):
+                        json_results[index]["cost"] = json_results[index]["cost"] * (
+                            1 + client.client_customer_mark_up
                         )
-                    elif ("Plum" in client_name and "_magento" in username) or (
-                        "Jason" in client_name and "_websys" in username
-                    ):
-                        logger.info(f"@8838 - success: True, 201_created")
-                        return JsonResponse(
-                            {
-                                "success": True,
-                                "results": json_results,
-                            },
-                            status=status.HTTP_201_CREATED,
+                        json_results[index]["cost"] = round(
+                            json_results[index]["cost"], 2
                         )
-                else:
-                    logger.info(
-                        f"@8839 - success: False, message: Didn't get pricings due to wrong suburb and state"
+
+                    result = {
+                        "success": True,
+                        "results": json_results,
+                    }
+
+                    if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+                        result[
+                            "pricePageUrl"
+                        ] = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+                    elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                        result[
+                            "pricePageUrl"
+                        ] = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+
+                    logger.info(f"@8837 - success: True, 201_created")
+                    return JsonResponse(
+                        result,
+                        status=status.HTTP_201_CREATED,
                     )
+                elif ("Plum" in client_name and "_magento" in username) or (
+                    "Jason" in client_name and "_websys" in username
+                ):
+                    logger.info(f"@8838 - success: True, 201_created")
                     return JsonResponse(
                         {
-                            "success": False,
+                            "success": True,
                             "results": json_results,
-                            "message": "Didn't get pricings due to wrong suburb and state",
                         },
                         status=status.HTTP_201_CREATED,
                     )
             else:
-                return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
+                logger.info(
+                    f"@8839 - success: False, message: Didn't get pricings due to wrong suburb and state"
+                )
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "results": json_results,
+                        "message": "Didn't get pricings due to wrong suburb and state",
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
         else:
-            logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
-            return Response(
-                {"success": False, "message": bok_1_serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
     except Exception as e:
         logger.info(f"@889 BOKS API Error - {e}")
         trace_error.print()
@@ -1947,43 +1945,20 @@ def reprint_label(request):
             {"success": False, "code": code, "description": description}
         )
 
-    if sscc and fp_name != "hunter":
-        filename = (
-            booking.pu_Address_State
-            + "_"
-            + str(booking.b_bookingID_Visual)
-            + "_"
-            + str(sscc_line.pk)
-            + ".pdf"
-        )
-
-        # Build label with Line
+    if sscc and fp_name != "hunter":  # Line label
+        filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.pk)}.pdf"
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
-
-        # Convert label into ZPL format
-        logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
-        result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-        if not result:
-            code = "unknown_status"
-            description = (
-                "Please contact DME support center. <bookings@deliver-me.com.au>"
-            )
-            raise Exception(
-                {"success": False, "code": code, "description": description}
-            )
-    else:
+    else:  # Order Label
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-        result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
-        if not result:
-            code = "unknown_status"
-            description = (
-                "Please contact DME support center. <bookings@deliver-me.com.au>"
-            )
-            raise Exception(
-                {"success": False, "code": code, "description": description}
-            )
+    # Convert label into ZPL format
+    logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
+    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+    if not result:
+        code = "unknown_status"
+        description = "Please contact DME support center. <bookings@deliver-me.com.au>"
+        raise Exception({"success": False, "code": code, "description": description})
 
     with open(label_url[:-4] + ".zpl", "rb") as zpl:
         zpl_data = str(b64encode(zpl.read()))[2:-1]
