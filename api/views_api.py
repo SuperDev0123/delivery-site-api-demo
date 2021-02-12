@@ -181,7 +181,7 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             )
 
         try:
-            bok_1 = BOK_1_headers.objects.prefetch_related("quote").get(
+            bok_1 = BOK_1_headers.objects.select_related("quote").get(
                 client_booking_id=identifier
             )
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
@@ -436,7 +436,7 @@ def scanned(request):
 
     # Check if Order exists on Bookings table
     booking = (
-        Bookings.objects.prefetch_related("api_booking_quote")
+        Bookings.objects.select_related("api_booking_quote")
         .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
         .first()
     )
@@ -865,7 +865,7 @@ def ready_boks(request):
 
     # Check if Order exists
     booking = (
-        Bookings.objects.prefetch_related("api_booking_quote")
+        Bookings.objects.select_related("api_booking_quote")
         .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
         .first()
     )
@@ -1096,7 +1096,7 @@ def push_boks(request):
 
         if bok_1["b_client_order_num"][:2] != "Q_":
             bok_1_obj = (
-                BOK_1_headers.objects.prefetch_related("quote")
+                BOK_1_headers.objects.select_related("quote")
                 .filter(
                     fk_client_id=client.dme_account_num,
                     # b_client_order_num=bok_1["b_client_order_num"],
@@ -1912,9 +1912,10 @@ def reprint_label(request):
         )
 
     try:
-        booking = Bookings.objects.get(
+        booking = Bookings.objects.select_related("api_booking_quote").get(
             b_client_order_num=b_client_order_num[5:], b_client_name=b_client_name
         )
+        fp_name = booking.api_booking_quote.freight_provider.lower()
     except:
         code = "not_found"
         description = "Order is not found."
@@ -1946,7 +1947,7 @@ def reprint_label(request):
             {"success": False, "code": code, "description": description}
         )
 
-    if sscc:
+    if sscc and fp_name != "hunter":
         filename = (
             booking.pu_Address_State
             + "_"
