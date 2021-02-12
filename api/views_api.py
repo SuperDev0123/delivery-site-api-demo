@@ -1032,7 +1032,7 @@ def push_boks(request):
         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
         client = client_employee.fk_id_dme_client
         client_name = client.company_name
-        logger.info(f"@810 - client: , {client_name}")
+        logger.info(f"@810 - client: {client_name}")
     except Exception as e:
         trace_error()
         logger.info(f"@811 - client_employee does not exist, {str(e)}")
@@ -1296,6 +1296,10 @@ def push_boks(request):
         # Save bok_1
         bok_1["fk_client_id"] = client.dme_account_num
         bok_1["x_booking_Created_With"] = "DME PUSH API"
+        bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
+        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1["b_clientPU_Warehouse"] = warehouse.name
+        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
         if client_name == "Seaway-Tempo-Aldi":  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
@@ -1305,10 +1309,6 @@ def push_boks(request):
                 bok_1["success"] = dme_constants.BOK_SUCCESS_4
             else:
                 bok_1["success"] = dme_constants.BOK_SUCCESS_3
-
-            bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-            bok_1["b_clientPU_Warehouse"] = warehouse.name
-            bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
             if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
                 bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
@@ -1384,8 +1384,6 @@ def push_boks(request):
             bok_1["b_031_b_pu_address_state"] = bok_1[
                 "b_031_b_pu_address_state"
             ].upper()
-        else:  # If not from Plum, then set success to be ready for mapping
-            bok_1["success"] = dme_constants.BOK_SUCCESS_2
 
         # Populate default values
         if client_name == "Plum Products Australia Ltd":  # Plum
