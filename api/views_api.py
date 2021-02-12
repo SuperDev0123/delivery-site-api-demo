@@ -1234,7 +1234,11 @@ def push_boks(request):
                 old_bok_2s.delete()
                 old_bok_3s.delete()
 
-    bok_1["pk_header_id"] = str(uuid.uuid4())
+    # Plum & Jason L
+    if client_name in ["Plum Products Australia Ltd", "Jason L"]:
+        bok_1["pk_header_id"] = str(uuid.uuid4())
+    # BioPak will use it's own
+
     # Check duplicated push with `b_client_order_num`
     if request.method == "POST":
         if client_name in ["Plum Products Australia Ltd", "Jason L"]:
@@ -1405,6 +1409,8 @@ def push_boks(request):
 
             if not bok_1.get("b_071_b_del_sufficient_space"):
                 bok_1["b_071_b_del_sufficient_space"] = True
+        elif client_name == "BioPak":
+            bok_1["client_booking_id"] = bok_1["pk_header_id"]
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if bok_1_serializer.is_valid():
@@ -1951,10 +1957,7 @@ def reprint_label(request):
         )
 
         # Build label with Line
-        if settings.ENV == "prod":
-            label_url = f"/opt/s3_public/pdfs/{filename}"
-        else:
-            label_url = f"./static/pdfs/{filename}"
+        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
 
         # Convert label into ZPL format
         logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
@@ -1969,11 +1972,7 @@ def reprint_label(request):
                 {"success": False, "code": code, "description": description}
             )
     else:
-        if settings.ENV == "prod":
-            label_url = f"/opt/s3_public/pdfs/{booking.z_label_url}"
-        else:
-            label_url = f"./static/pdfs/{booking.z_label_url}"
-
+        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
         result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
         if not result:
