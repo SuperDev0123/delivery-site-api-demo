@@ -1158,16 +1158,20 @@ def push_boks(request):
                     )
 
     # Find `Warehouse`
-    if client_name in ["Plum Products Australia Ltd", "Jason L"]:
-        try:
+    try:
+        if client_name in ["Plum Products Australia Ltd", "Jason L"]:
             warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
-        except Exception as e:
-            message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
-            logger.info(message)
-            return JsonResponse(
-                {"success": False, "message": message},
-                status=status.HTTP_400_BAD_REQUEST,
+        else:
+            warehouse = Client_warehouses.objects.get(
+                client_warehouse_code=bok_1["b_client_warehouse_code"]
             )
+    except Exception as e:
+        message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
+        logger.info(message)
+        return JsonResponse(
+            {"success": False, "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     # "Detect modified data" and "delete existing boks" if request method is PUT
     if request.method == "PUT":
