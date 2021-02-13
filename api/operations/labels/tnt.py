@@ -174,7 +174,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             + ".pdf"
         )
 
-    file = open(f"{filepath}/{filename}", "w")
+    file = open(f"{filepath}+{filename}", "w")
     logger.info(f"#111 [TNT LABEL] File full path: {filepath}/{filename}")
     # end pdf file name using naming convention
 

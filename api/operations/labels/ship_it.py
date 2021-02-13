@@ -213,6 +213,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
     j = 1
 
     for booking_line in lines:
+        logger.info(f"#114 [SHIP-IT LABEL] Adding: {booking_line}")
         tbl_data1 = [[dme_img]]
         t1 = Table(
             tbl_data1,
