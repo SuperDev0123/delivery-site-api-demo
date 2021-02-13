@@ -1414,6 +1414,7 @@ def push_boks(request):
         elif client_name == "BioPak":  # BioPak
             bok_1["client_booking_id"] = bok_1["pk_header_id"]
 
+        print("@1 - ", bok_1["b_clientPU_Warehouse"])
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
         if not bok_1_serializer.is_valid():
