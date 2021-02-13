@@ -795,7 +795,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
         )
         Story.append(t1)
-        Story.append(Spacer(1, 5))
+        Story.append(Spacer(1, 2))
 
         tbl_data1 = [
             [
@@ -915,7 +915,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(shell_table)
-        Story.append(Spacer(1, 5))
+        Story.append(Spacer(1, 2))
 
         tbl_data1 = [
             [
