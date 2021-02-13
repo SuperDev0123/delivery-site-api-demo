@@ -407,17 +407,17 @@ def build_label(booking, filepath, lines=[], label_index=0):
         #     ],
         # )
 
-        # hr = HRFlowable(
-        #     width=(float(label_settings["label_image_size_length"]) * mm),
-        #     thickness=0.2,
-        #     lineCap="square",
-        #     color=colors.black,
-        #     spaceBefore=0,
-        #     spaceAfter=0,
-        #     hAlign="CENTER",
-        #     vAlign="BOTTOM",
-        #     dash=None,
-        # )
+        hr = HRFlowable(
+            width=(float(label_settings["label_image_size_length"]) * mm),
+            thickness=0.2,
+            lineCap="square",
+            color=colors.black,
+            spaceBefore=0,
+            spaceAfter=0,
+            hAlign="CENTER",
+            vAlign="BOTTOM",
+            dash=None,
+        )
 
         # Story.append(shell_table)
         # Story.append(Spacer(1, 5))
