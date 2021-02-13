@@ -212,7 +212,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
     width = float(label_settings["label_dimension_length"]) * mm
     height = float(label_settings["label_dimension_width"]) * mm
     doc = SimpleDocTemplate(
-        filepath + filename,
+        f"{filepath}/{filename}",
         pagesize=(width, height),
         rightMargin=float(label_settings["margin_h"]) * mm,
         leftMargin=float(label_settings["margin_h"]) * mm,

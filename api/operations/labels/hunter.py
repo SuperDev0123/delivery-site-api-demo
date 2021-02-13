@@ -2472,7 +2472,7 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
             + ".pdf"
         )
 
-    file = open(filepath + filename, "w")
+    file = open(f"{filepath}/{filename}", "w")
     # end pdf file name using naming convention
 
     if not lines:
@@ -2505,7 +2505,7 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
     }
 
     doc = SimpleDocTemplate(
-        filepath + filename,
+        f"{filepath}/{filename}",
         pagesize=(
             float(label_settings["label_dimension_length"]) * mm,
             float(label_settings["label_dimension_width"]) * mm,
