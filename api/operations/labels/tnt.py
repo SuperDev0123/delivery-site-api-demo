@@ -317,7 +317,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -333,7 +332,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ],
         )
 
@@ -447,7 +445,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
             ],
         )
 
@@ -795,7 +792,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
         )
         Story.append(t1)
-        Story.append(Spacer(1, 2))
+        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
@@ -915,7 +912,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
 
         Story.append(shell_table)
-        Story.append(Spacer(1, 2))
+        Story.append(Spacer(1, 5))
 
         tbl_data1 = [
             [
