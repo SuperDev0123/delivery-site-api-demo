@@ -134,7 +134,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
 
 def build_label(booking, filepath, lines=[], label_index=0):
     logger.info(
-        f"#110 Started building label... (Booking ID:{booking.b_bookingID_Visual}, Format: Ship-it)"
+        f"#110 [SHIP-IT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
 
     # start check if pdfs folder exists
@@ -162,7 +162,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             + ".pdf"
         )
 
-    file = open(filepath + filename, "w")
+    file = open(f"{filepath}/{filename}", "w")
     # end pdf file name using naming convention
 
     if not lines:
@@ -761,6 +761,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
     logger.info(
-        f"#119 Finished building label... (Booking ID: {booking.b_bookingID_Visual}, Format: Ship-it)"
+        f"#119 [SHIP-IT LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
     return filepath, filename
