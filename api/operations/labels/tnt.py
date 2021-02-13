@@ -144,14 +144,6 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-import os.path
-
-
-def path_relative_to_file(base_file_path, relative_path):
-    base_dir = os.path.dirname(os.path.abspath(base_file_path))
-    return os.path.normpath(os.path.join(base_dir, relative_path))
-
-
 def build_label(booking, filepath, lines=[], label_index=0):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines}, Format: TNT)"
@@ -292,122 +284,122 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     for booking_line in lines:
         logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<p style='vertical-align: top; padding: 0px; line-height: 0px'><font size=%s><b> %s </b></font></p>"
-        #             % (35, booking.de_To_Address_PostalCode or ""),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s><b>via %s  &#160 &#160 to &#160  &#160  %s </b></font>"
-        #             % (
-        #                 label_settings["font_size_extra_large"],
-        #                 routing.gateway,
-        #                 routing.onfwd,
-        #             ),
-        #             style_right,
-        #         ),
-        #     ],
-        # ]
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(
-        #         90,
-        #         float(label_settings["label_image_size_length"]) * mm - 90,
-        #     ),
-        #     rowHeights=(float(label_settings["line_height_small"]) * mm),
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<p style='vertical-align: top; padding: 0px; line-height: 0px'><font size=%s><b> %s </b></font></p>"
+                    % (35, booking.de_To_Address_PostalCode or ""),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s><b>via %s  &#160 &#160 to &#160  &#160  %s </b></font>"
+                    % (
+                        label_settings["font_size_extra_large"],
+                        routing.gateway,
+                        routing.onfwd,
+                    ),
+                    style_right,
+                ),
+            ],
+        ]
+        t1 = Table(
+            tbl_data1,
+            colWidths=(
+                90,
+                float(label_settings["label_image_size_length"]) * mm - 90,
+            ),
+            rowHeights=(float(label_settings["line_height_small"]) * mm),
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
 
-        # data = [[t1]]
+        data = [[t1]]
 
-        # t_w = float(label_settings["label_image_size_length"]) * mm
+        t_w = float(label_settings["label_image_size_length"]) * mm
 
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
+        shell_table = Table(
+            data,
+            colWidths=[t_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
 
-        # Story.append(shell_table)
+        Story.append(shell_table)
 
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font> "
-        #             % (label_settings["font_size_medium"], ""),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_extra_large"],
-        #                 booking.v_FPBookingNumber or "",
-        #             ),
-        #             style_right,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_extra_large"],
-        #                 booking.de_To_Address_Suburb or "",
-        #             ),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s>Itm:%s</font> "
-        #             % (label_settings["font_size_small"], booking_line.sscc),
-        #             style_right,
-        #         ),
-        #     ],
-        # ]
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s>%s</font> "
+                    % (label_settings["font_size_medium"], ""),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_extra_large"],
+                        booking.v_FPBookingNumber or "",
+                    ),
+                    style_right,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_extra_large"],
+                        booking.de_To_Address_Suburb or "",
+                    ),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s>Itm:%s</font> "
+                    % (label_settings["font_size_small"], booking_line.sscc),
+                    style_right,
+                ),
+            ],
+        ]
 
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(
-        #         float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-        #         float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-        #     ),
-        #     rowHeights=(float(label_settings["line_height_medium"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
-        #     ],
-        # )
+        t1 = Table(
+            tbl_data1,
+            colWidths=(
+                float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+            ),
+            rowHeights=(float(label_settings["line_height_medium"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
+            ],
+        )
 
-        # data = [[t1]]
+        data = [[t1]]
 
-        # t_w = float(label_settings["label_image_size_length"]) * mm
+        t_w = float(label_settings["label_image_size_length"]) * mm
 
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
+        shell_table = Table(
+            data,
+            colWidths=[t_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
 
         hr = HRFlowable(
             width=(float(label_settings["label_image_size_length"]) * mm),
@@ -421,835 +413,835 @@ def build_label(booking, filepath, lines=[], label_index=0):
             dash=None,
         )
 
-        # Story.append(shell_table)
+        Story.append(shell_table)
         Story.append(Spacer(1, 5))
         Story.append(hr)
 
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_extra_large"], booking.vx_serviceName),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_extra_large"], routing.sort_bin),
-        #             style_right,
-        #         ),
-        #     ],
-        # ]
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_extra_large"], booking.vx_serviceName),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_extra_large"], routing.sort_bin),
+                    style_right,
+                ),
+            ],
+        ]
 
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(
-        #         float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-        #         float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-        #     ),
-        #     rowHeights=(float(label_settings["line_height_small"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
-        #     ],
-        # )
+        t1 = Table(
+            tbl_data1,
+            colWidths=(
+                float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+            ),
+            rowHeights=(float(label_settings["line_height_small"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
+            ],
+        )
 
-        # data = [[t1]]
+        data = [[t1]]
 
-        # t_w = float(label_settings["label_image_size_length"]) * mm
+        t_w = float(label_settings["label_image_size_length"]) * mm
 
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
+        shell_table = Table(
+            data,
+            colWidths=[t_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
 
-        # Story.append(shell_table)
+        Story.append(shell_table)
+        Story.append(Spacer(1, 5))
+        Story.append(hr)
+        Story.append(Spacer(1, 2))
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        booking.b_dateBookedDate.strftime("%d-%m-%Y")
+                        if booking.b_dateBookedDate
+                        else "N/A",
+                    ),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
+                    % (label_settings["font_size_medium"], j, totalQty),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s><b>Item Wt.: %s %s.</b></font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        booking_line.e_Total_KG_weight or "",
+                        booking_line.e_weightUOM or "KG",
+                    ),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_medium"], "Ex " + routing.gateway),
+                    style_right,
+                ),
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(
+                float(label_settings["label_image_size_length"]) * (1 / 4) * mm,
+                float(label_settings["label_image_size_length"]) * (1 / 4) * mm,
+                float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
+                float(label_settings["label_image_size_length"]) * (1 / 6) * mm,
+            ),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
+            ],
+        )
+
+        data = [[t1]]
+
+        t_w = float(label_settings["label_image_size_length"]) * mm
+
+        shell_table = Table(
+            data,
+            colWidths=[t_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        Story.append(shell_table)
+
+        Story.append(hr)
+        Story.append(Spacer(1, 2))
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        "Does not Contain Dangerous Goods",
+                    ),
+                    style_center,
+                ),
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(float(label_settings["label_image_size_length"]) * mm),
+            rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
+            ],
+        )
+
+        data = [[t1]]
+
+        t_w = float(label_settings["label_image_size_length"]) * mm
+
+        shell_table = Table(
+            data,
+            colWidths=[t_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        Story.append(shell_table)
+
+        Story.append(hr)
+        Story.append(Spacer(1, 2))
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_medium"], "To:"),
+                    style_left,
+                )
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(30),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        tbl_data2 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_to_Contact_F_LName or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.deToCompanyName or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_To_Address_Street_1 or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font> "
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_To_Address_Street_2 or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s %s</b></font> "
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_To_Address_Suburb or "",
+                        booking.de_To_Address_PostalCode or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+        ]
+
+        t2 = Table(
+            tbl_data2,
+            colWidths=(float(label_settings["label_image_size_length"]) * mm - 30),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        data = [[t1, t2]]
+
+        t1_w = 30
+        t2_w = float(label_settings["label_image_size_length"]) * mm - 30
+
+        shell_table = Table(
+            data,
+            colWidths=[t1_w, t2_w],
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+        Story.append(shell_table)
+        Story.append(Spacer(1, 2))
+        Story.append(hr)
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b> %s </b></font>"
+                    % (label_settings["font_size_medium"], "From:"),
+                    style_left,
+                )
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(30),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        tbl_data2 = [
+            [
+                Paragraph(
+                    "<font size=%s>%s, %s, %s, %s, %s</font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        booking.pu_Contact_F_L_Name or "",
+                        booking.pu_Address_Street_1 or "",
+                        booking.pu_Address_street_2 or "",
+                        booking.pu_Address_Suburb or "",
+                        booking.pu_Address_State or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+        ]
+
+        t2 = Table(
+            tbl_data2,
+            colWidths=(float(label_settings["label_image_size_length"]) * mm - 30),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        data = [[t1, t2]]
+
+        t1_w = 30
+        t2_w = float(label_settings["label_image_size_length"]) * mm - 30
+
+        shell_table = Table(
+            data,
+            colWidths=[t1_w, t2_w],
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+        Story.append(shell_table)
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>Senders Ref:</b> %s %s</font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        booking.de_to_PickUp_Instructions_Address or "",
+                        booking.de_to_Pick_Up_Instructions_Contact or "",
+                    ),
+                    style_left,
+                )
+            ]
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(float(label_settings["label_image_size_length"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ],
+        )
+        Story.append(t1)
+        Story.append(Spacer(1, 5))
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_medium"], "Special Instructions:"),
+                    style_center,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        booking.de_to_PickUp_Instructions_Address or "",
+                    ),
+                    style_center,
+                ),
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(float(label_settings["label_image_size_length"]) * mm),
+            # rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "TOP"),
+            ],
+        )
+
+        data = [[t1]]
+
+        t_w = float(label_settings["label_image_size_length"]) * mm
+
+        shell_table = Table(
+            data,
+            colWidths=[t_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        Story.append(shell_table)
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        "Please collect from warehouse",
+                    ),
+                    style_center,
+                )
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ],
+        )
+
+        tbl_data2 = [
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        "Deliver to Special Orders Desk",
+                    ),
+                    style_center,
+                )
+            ],
+        ]
+
+        t2 = Table(
+            tbl_data2,
+            colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ],
+        )
+
+        data = [[t1, t2]]
+
+        t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+        t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+
+        shell_table = Table(
+            data,
+            colWidths=[t1_w, t2_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+
+        Story.append(shell_table)
+        Story.append(Spacer(1, 5))
+
+        tbl_data1 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>CN: %s</b></font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.v_FPBookingNumber or "",
+                    ),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>Itm:%s</b></font>"
+                    % (label_settings["font_size_normal"], booking_line.sscc),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
+                    % (label_settings["font_size_normal"], j, totalQty),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_normal"], "TO:"),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.de_to_Contact_F_LName or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.deToCompanyName or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.de_To_Address_Street_1 or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font> "
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.de_To_Address_Street_2 or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font> "
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.de_To_Address_Suburb or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s %s</font> "
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.de_To_Address_State or "",
+                        booking.de_To_Address_PostalCode or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data1,
+            colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                # ('LEFTPADDING',(0,0),(-1,-1), 0),
+                # ('RIGHTPADDING',(0,0),(-1,-1), 0),
+                ("BOX", (0, 0), (-1, -1), 1, colors.black),
+            ],
+        )
+
+        tbl_data2 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.vx_serviceName or "",
+                    ),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>Con Note Wt.: %s %s.</b></font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking_line.e_Total_KG_weight or "",
+                        booking_line.e_weightUOM or "KG",
+                    ),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (label_settings["font_size_normal"], ""),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (label_settings["font_size_normal"], "FROM:"),
+                    style_left,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.pu_Contact_F_L_Name or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.deToCompanyName or "",
+                    ),
+                    style_uppercase,
+                )
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.pu_Address_Street_1 or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font> "
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.pu_Address_street_2 or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s</font> "
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.pu_Address_Suburb or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+            [
+                Paragraph(
+                    "<font size=%s>%s %s</font> "
+                    % (
+                        label_settings["font_size_normal"],
+                        booking.pu_Address_State or "",
+                        booking.pu_Address_PostalCode or "",
+                    ),
+                    style_uppercase,
+                ),
+            ],
+        ]
+
+        t2 = Table(
+            tbl_data2,
+            colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                # ('LEFTPADDING',(0,0),(-1,-1), 0),
+                # ('RIGHTPADDING',(0,0),(-1,-1), 0),
+            ],
+        )
+
+        data = [[t1, t2]]
+
+        t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+        t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+
+        shell_table = Table(
+            data,
+            colWidths=[t1_w, t2_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("SPAN", (0, 0), (0, -1)),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("BOX", (0, 0), (-1, -1), 1, colors.black),
+            ],
+        )
+
+        Story.append(shell_table)
+
+        barcode = gen_barcode(booking, lines, 0, label_index)
+
+        tbl_data = [
+            [
+                code128.Code128(
+                    barcode, barHeight=15 * mm, barWidth=0.7, humanReadable=False
+                )
+            ],
+        ]
+
+        t1 = Table(
+            tbl_data,
+            colWidths=((float(label_settings["label_image_size_length"])) * mm),
+            style=[
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (0, -1), 0),
+                ("RIGHTPADDING", (0, 0), (0, -1), 0),
+                # ('BOX', (0, 0), (-1, -1), 1, colors.black)
+            ],
+        )
+
+        Story.append(t1)
         # Story.append(Spacer(1, 5))
-        # Story.append(hr)
-        # Story.append(Spacer(1, 2))
 
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 booking.b_dateBookedDate.strftime("%d-%m-%Y")
-        #                 if booking.b_dateBookedDate
-        #                 else "N/A",
-        #             ),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
-        #             % (label_settings["font_size_medium"], j, totalQty),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s><b>Item Wt.: %s %s.</b></font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 booking_line.e_Total_KG_weight or "",
-        #                 booking_line.e_weightUOM or "KG",
-        #             ),
-        #             style_left,
-        #         ),
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_medium"], "Ex " + routing.gateway),
-        #             style_right,
-        #         ),
-        #     ],
-        # ]
+        tbl_data1 = [[dme_img]]
 
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(
-        #         float(label_settings["label_image_size_length"]) * (1 / 4) * mm,
-        #         float(label_settings["label_image_size_length"]) * (1 / 4) * mm,
-        #         float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-        #         float(label_settings["label_image_size_length"]) * (1 / 6) * mm,
-        #     ),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
-        #     ],
-        # )
+        t1 = Table(
+            tbl_data1,
+            colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
+            rowHeights=(float(label_settings["line_height_large"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
 
-        # data = [[t1]]
+        tbl_data2 = [
+            [
+                Paragraph(
+                    "<font size=%s><b>%s</b></font>"
+                    % (
+                        label_settings["font_size_extra_large"],
+                        booking.vx_freight_provider or "",
+                    ),
+                    style_center,
+                )
+            ]
+        ]
 
-        # t_w = float(label_settings["label_image_size_length"]) * mm
+        t2 = Table(
+            tbl_data2,
+            colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
+            rowHeights=(float(label_settings["line_height_medium"]) * mm),
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+        barcode = str(j).zfill(2)
 
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
+        data = [[t1, t2]]
 
-        # Story.append(shell_table)
+        t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+        t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
 
-        # Story.append(hr)
-        # Story.append(Spacer(1, 2))
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 "Does not Contain Dangerous Goods",
-        #             ),
-        #             style_center,
-        #         ),
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * mm),
-        #     rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "BOTTOM"),
-        #     ],
-        # )
-
-        # data = [[t1]]
-
-        # t_w = float(label_settings["label_image_size_length"]) * mm
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # Story.append(shell_table)
-
-        # Story.append(hr)
-        # Story.append(Spacer(1, 2))
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_medium"], "To:"),
-        #             style_left,
-        #         )
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(30),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # tbl_data2 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_large"],
-        #                 booking.de_to_Contact_F_LName or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_large"],
-        #                 booking.deToCompanyName or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_large"],
-        #                 booking.de_To_Address_Street_1 or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font> "
-        #             % (
-        #                 label_settings["font_size_large"],
-        #                 booking.de_To_Address_Street_2 or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s %s</b></font> "
-        #             % (
-        #                 label_settings["font_size_large"],
-        #                 booking.de_To_Address_Suburb or "",
-        #                 booking.de_To_Address_PostalCode or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        # ]
-
-        # t2 = Table(
-        #     tbl_data2,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * mm - 30),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # data = [[t1, t2]]
-
-        # t1_w = 30
-        # t2_w = float(label_settings["label_image_size_length"]) * mm - 30
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t1_w, t2_w],
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-        # Story.append(shell_table)
-        # Story.append(Spacer(1, 2))
-        # Story.append(hr)
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b> %s </b></font>"
-        #             % (label_settings["font_size_medium"], "From:"),
-        #             style_left,
-        #         )
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(30),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # tbl_data2 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s, %s, %s, %s, %s</font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 booking.pu_Contact_F_L_Name or "",
-        #                 booking.pu_Address_Street_1 or "",
-        #                 booking.pu_Address_street_2 or "",
-        #                 booking.pu_Address_Suburb or "",
-        #                 booking.pu_Address_State or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        # ]
-
-        # t2 = Table(
-        #     tbl_data2,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * mm - 30),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # data = [[t1, t2]]
-
-        # t1_w = 30
-        # t2_w = float(label_settings["label_image_size_length"]) * mm - 30
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t1_w, t2_w],
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-        # Story.append(shell_table)
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>Senders Ref:</b> %s %s</font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 booking.de_to_PickUp_Instructions_Address or "",
-        #                 booking.de_to_Pick_Up_Instructions_Contact or "",
-        #             ),
-        #             style_left,
-        #         )
-        #     ]
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #     ],
-        # )
-        # Story.append(t1)
-        # Story.append(Spacer(1, 5))
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_medium"], "Special Instructions:"),
-        #             style_center,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 booking.de_to_PickUp_Instructions_Address or "",
-        #             ),
-        #             style_center,
-        #         ),
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * mm),
-        #     # rowHeights=(float(label_settings["line_height_extra_small"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "TOP"),
-        #     ],
-        # )
-
-        # data = [[t1]]
-
-        # t_w = float(label_settings["label_image_size_length"]) * mm
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # Story.append(shell_table)
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 "Please collect from warehouse",
-        #             ),
-        #             style_center,
-        #         )
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #     ],
-        # )
-
-        # tbl_data2 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_medium"],
-        #                 "Deliver to Special Orders Desk",
-        #             ),
-        #             style_center,
-        #         )
-        #     ],
-        # ]
-
-        # t2 = Table(
-        #     tbl_data2,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #     ],
-        # )
-
-        # data = [[t1, t2]]
-
-        # t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-        # t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t1_w, t2_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # Story.append(shell_table)
-        # Story.append(Spacer(1, 5))
-
-        # tbl_data1 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>CN: %s</b></font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.v_FPBookingNumber or "",
-        #             ),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>Itm:%s</b></font>"
-        #             % (label_settings["font_size_normal"], booking_line.sscc),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
-        #             % (label_settings["font_size_normal"], j, totalQty),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_normal"], "TO:"),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.de_to_Contact_F_LName or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.deToCompanyName or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.de_To_Address_Street_1 or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font> "
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.de_To_Address_Street_2 or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font> "
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.de_To_Address_Suburb or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s %s</font> "
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.de_To_Address_State or "",
-        #                 booking.de_To_Address_PostalCode or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         # ('LEFTPADDING',(0,0),(-1,-1), 0),
-        #         # ('RIGHTPADDING',(0,0),(-1,-1), 0),
-        #         ("BOX", (0, 0), (-1, -1), 1, colors.black),
-        #     ],
-        # )
-
-        # tbl_data2 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.vx_serviceName or "",
-        #             ),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>Con Note Wt.: %s %s.</b></font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking_line.e_Total_KG_weight or "",
-        #                 booking_line.e_weightUOM or "KG",
-        #             ),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (label_settings["font_size_normal"], ""),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (label_settings["font_size_normal"], "FROM:"),
-        #             style_left,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.pu_Contact_F_L_Name or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.deToCompanyName or "",
-        #             ),
-        #             style_uppercase,
-        #         )
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font>"
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.pu_Address_Street_1 or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font> "
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.pu_Address_street_2 or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s</font> "
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.pu_Address_Suburb or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        #     [
-        #         Paragraph(
-        #             "<font size=%s>%s %s</font> "
-        #             % (
-        #                 label_settings["font_size_normal"],
-        #                 booking.pu_Address_State or "",
-        #                 booking.pu_Address_PostalCode or "",
-        #             ),
-        #             style_uppercase,
-        #         ),
-        #     ],
-        # ]
-
-        # t2 = Table(
-        #     tbl_data2,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         # ('LEFTPADDING',(0,0),(-1,-1), 0),
-        #         # ('RIGHTPADDING',(0,0),(-1,-1), 0),
-        #     ],
-        # )
-
-        # data = [[t1, t2]]
-
-        # t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-        # t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t1_w, t2_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("SPAN", (0, 0), (0, -1)),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOX", (0, 0), (-1, -1), 1, colors.black),
-        #     ],
-        # )
-
-        # Story.append(shell_table)
-
-        # barcode = gen_barcode(booking, lines, 0, label_index)
-
-        # tbl_data = [
-        #     [
-        #         code128.Code128(
-        #             barcode, barHeight=15 * mm, barWidth=0.7, humanReadable=False
-        #         )
-        #     ],
-        # ]
-
-        # t1 = Table(
-        #     tbl_data,
-        #     colWidths=((float(label_settings["label_image_size_length"])) * mm),
-        #     style=[
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #         ("VALIGN", (0, 0), (0, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 5),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        #         ("LEFTPADDING", (0, 0), (0, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (0, -1), 0),
-        #         # ('BOX', (0, 0), (-1, -1), 1, colors.black)
-        #     ],
-        # )
-
-        # Story.append(t1)
-        # # Story.append(Spacer(1, 5))
-
-        # tbl_data1 = [[dme_img]]
-
-        # t1 = Table(
-        #     tbl_data1,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
-        #     rowHeights=(float(label_settings["line_height_large"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-
-        # tbl_data2 = [
-        #     [
-        #         Paragraph(
-        #             "<font size=%s><b>%s</b></font>"
-        #             % (
-        #                 label_settings["font_size_extra_large"],
-        #                 booking.vx_freight_provider or "",
-        #             ),
-        #             style_center,
-        #         )
-        #     ]
-        # ]
-
-        # t2 = Table(
-        #     tbl_data2,
-        #     colWidths=(float(label_settings["label_image_size_length"]) * (1 / 2) * mm),
-        #     rowHeights=(float(label_settings["line_height_medium"]) * mm),
-        #     style=[
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("VALIGN", (0, 0), (0, -1), "TOP"),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-        # barcode = str(j).zfill(2)
-
-        # data = [[t1, t2]]
-
-        # t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-        # t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-
-        # shell_table = Table(
-        #     data,
-        #     colWidths=[t1_w, t2_w],
-        #     style=[
-        #         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        #         ("TOPPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        #         ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        #         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        #         ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-        #         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        #     ],
-        # )
-        # Story.append(shell_table)
+        shell_table = Table(
+            data,
+            colWidths=[t1_w, t2_w],
+            style=[
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ],
+        )
+        Story.append(shell_table)
 
         Story.append(PageBreak())
 
