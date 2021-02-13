@@ -286,7 +286,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
         if not routing:
             routing = crecords.first()
 
-    logger.info(f"#113 [TNT LABEL] Found FPRouting: {routing}")
+    logger.info(
+        f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
+    )
 
     for booking_line in lines:
         logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
