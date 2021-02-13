@@ -271,6 +271,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             FPRouting.objects.filter(
                 orig_postcode=booking.de_To_Address_PostalCode,
                 routing_group=routing_group,
+                orig_depot__isnull=False,
             )
             .only("orig_depot")
             .first()
