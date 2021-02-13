@@ -148,6 +148,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
+    v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
+    )
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
@@ -168,7 +171,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         filename = (
             booking.pu_Address_State
             + "_"
-            + str(booking.v_FPBookingNumber)
+            + v_FPBookingNumber
             + "_"
             + str(booking.b_bookingID_Visual)
             + ".pdf"
@@ -347,7 +350,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     "<font size=%s><b>%s</b></font>"
                     % (
                         label_settings["font_size_extra_large"],
-                        booking.v_FPBookingNumber or "",
+                        v_FPBookingNumber,
                     ),
                     style_right,
                 ),
@@ -920,7 +923,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     "<font size=%s><b>CN: %s</b></font>"
                     % (
                         label_settings["font_size_normal"],
-                        booking.v_FPBookingNumber or "",
+                        v_FPBookingNumber,
                     ),
                     style_left,
                 )
@@ -1250,6 +1253,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
     logger.info(
-        f"#119 [TNT LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual}, Format: TNT)"
+        f"#119 [TNT LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
     return filepath, filename

@@ -2449,7 +2449,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
 
 def build_label(booking, filepath=None, lines=[], label_index=0):
     logger.info(
-        f"#100 Started building label... (Booking ID:{booking.b_bookingID_Visual}, Format: Hunter)"
+        f"#110 [HUNTER LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
 
     # start pdf file name using naming convention
@@ -2466,7 +2466,9 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
         filename = (
             booking.pu_Address_State
             + "_"
-            + str(booking.v_FPBookingNumber)
+            + gen_consignment_num(
+                booking.vx_freight_provider, booking.b_bookingID_Visual
+            )
             + "_"
             + str(booking.b_bookingID_Visual)
             + ".pdf"
@@ -2572,6 +2574,6 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
     file.close()
 
     logger.info(
-        f"#109 Finished building HUNTER label... (Booking ID: {booking.b_bookingID_Visual}, Format: Hunter)"
+        f"#119 [HUNTER LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
     return filepath, filename
