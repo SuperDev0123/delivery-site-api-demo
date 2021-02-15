@@ -176,7 +176,7 @@ def book(fp_name, booking, booker):
                     booking.save()
 
             if booking.b_client_name.lower() == "biopak":
-                update_biopak_with_booked_booking(booking_id)
+                update_biopak_with_booked_booking(booking.pk)
 
             message = f"Successfully booked({booking.v_FPBookingNumber})"
             return True, message
