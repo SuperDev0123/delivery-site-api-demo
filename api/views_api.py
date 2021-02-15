@@ -27,8 +27,8 @@ from rest_framework.decorators import (
     action,
 )
 
-from api.fp_apis.apis import get_pricing
 from api.fp_apis.operations.book import book as book_oper
+from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.serializers_api import *
 from api.serializers import SimpleQuoteSerializer
 from api.models import *
@@ -734,7 +734,7 @@ def scanned(request):
             logger.info(
                 f"#371 - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
             )
-            _, success, message, quotes = get_pricing(body=None, booking_id=booking.pk)
+            _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
             logger.info(
                 f"#372 - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
             )
@@ -1351,7 +1351,7 @@ def push_boks(request):
 
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
-                    datetime.now() + timedelta(days=3)
+                    datetime.now() + timedelta(days=7)
                 )[:10]
 
             # Find `Suburb` and `State`
@@ -1579,7 +1579,7 @@ def push_boks(request):
             )
             fc_log.old_quote = old_quote
             body = {"booking": booking, "booking_lines": booking_lines}
-            _, success, message, quote_set = get_pricing(
+            _, success, message, quote_set = pricing_oper(
                 body=body,
                 booking_id=None,
                 is_pricing_only=True,
@@ -1835,7 +1835,7 @@ def partial_pricing(request):
             booking_lines.append(booking_line)
 
     body = {"booking": booking, "booking_lines": booking_lines}
-    _, success, message, quote_set = get_pricing(
+    _, success, message, quote_set = pricing_oper(
         body=body, booking_id=None, is_pricing_only=True
     )
     logger.info(

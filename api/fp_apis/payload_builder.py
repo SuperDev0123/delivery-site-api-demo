@@ -762,7 +762,13 @@ def get_reprint_payload(booking, fp_name):
         return None
 
 
-def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
+def get_pricing_payload(
+    booking,
+    fp_name,
+    account_detail,
+    booking_lines=None,
+    service_code=None,
+):
     payload = {}
 
     if hasattr(booking, "client_warehouse_code"):
@@ -909,7 +915,7 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
                 item["itemId"] = "EXP"
                 item["packagingType"] = "CTN"
             elif fp_name == "auspost":
-                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+                item["itemId"] = service_code
             elif fp_name == "hunter":
                 item["packagingType"] = "PAL"
             elif fp_name == "tnt":
