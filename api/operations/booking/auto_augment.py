@@ -30,7 +30,10 @@ def auto_augment(booking, client_aa, cl_proc=None):
                     if 26 - custRefLen > len(",".join(cl_ref_nums)):
                         cl_ref_nums.append(cl_ref_num)
 
-                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
+                if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
+                    custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
+                else:
+                    custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} Tempo Returns"
 
             cl_proc.origin_pu_Address_Street_1 = custRefNumVerbage
             cl_proc.origin_pu_pickup_instructions_address = (
@@ -61,7 +64,10 @@ def auto_augment(booking, client_aa, cl_proc=None):
                 if 26 - custRefLen > len(",".join(cl_ref_nums)):
                     cl_ref_nums.append(cl_ref_num)
 
-            custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
+            if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
+                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
+            else:
+                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} Tempo Returns"
 
         cl_proc.origin_pu_Address_Street_1 = custRefNumVerbage
         cl_proc.origin_pu_pickup_instructions_address = (
