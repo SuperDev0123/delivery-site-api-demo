@@ -17,12 +17,10 @@ def auto_augment(booking, client_aa, cl_proc=None):
         if not booking.pu_Address_street_2:
             cl_proc.origin_pu_Address_Street_2 = booking.pu_Address_Street_1
 
-            custRefNumVerbage = (
-                f"Ref: {str(booking.clientRefNumbers or '')} Tempo Returns"
-            )
+            custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns"
 
             if len(custRefNumVerbage) >= 26:
-                custRefLen = len("Ref:  Tempo Returns")
+                custRefLen = len("Ref:  Returns")
                 cl_ref_nums = []
                 clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
@@ -31,9 +29,9 @@ def auto_augment(booking, client_aa, cl_proc=None):
                         cl_ref_nums.append(cl_ref_num)
 
                 if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
-                    custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
+                    custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns"
                 else:
-                    custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} Tempo Returns"
+                    custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} Returns"
 
             cl_proc.origin_pu_Address_Street_1 = custRefNumVerbage
             cl_proc.origin_pu_pickup_instructions_address = (
@@ -47,16 +45,16 @@ def auto_augment(booking, client_aa, cl_proc=None):
 
     # create
     cl_proc = Client_Process_Mgr(fk_booking_id=booking.pk)
-    cl_proc.process_name = f"Auto Augment {str(booking.pk)}"
+    cl_proc.process_name = f"Auto Augment {str(booking.b_bookingID_Visual)}"
     cl_proc.origin_puCompany = booking.puCompany
 
     if not booking.pu_Address_street_2:
         cl_proc.origin_pu_Address_Street_2 = booking.pu_Address_Street_1
 
-        custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Tempo Returns"
+        custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns"
 
         if len(custRefNumVerbage) >= 26:
-            custRefLen = len("Ref:  Tempo Returns")
+            custRefLen = len("Ref:  Returns")
             cl_ref_nums = []
             clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
@@ -65,9 +63,9 @@ def auto_augment(booking, client_aa, cl_proc=None):
                     cl_ref_nums.append(cl_ref_num)
 
             if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
-                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Tempo Returns"
+                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} +{len(clientRefNumbers_arr) - len(cl_ref_nums)} Returns"
             else:
-                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} Tempo Returns"
+                custRefNumVerbage = f"Ref: {','.join(cl_ref_nums)} Returns"
 
         cl_proc.origin_pu_Address_Street_1 = custRefNumVerbage
         cl_proc.origin_pu_pickup_instructions_address = (

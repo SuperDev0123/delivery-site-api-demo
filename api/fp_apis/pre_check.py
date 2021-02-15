@@ -105,6 +105,8 @@ def pre_check_label(booking):
             _set_error(booking, error_msg)
             return error_msg
 
+        # Commented on 2021-02-15
+        # Handled on AA
         # if not booking.pu_pickup_instructions_address or (
         #     booking.pu_pickup_instructions_address
         #     and len(booking.pu_pickup_instructions_address) > 80
