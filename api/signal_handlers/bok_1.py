@@ -1,7 +1,8 @@
 import logging
 
 from api.models import BOK_1_headers, BOK_2_lines, BOK_3_lines_data
-from api.fp_apis.apis import get_pricing
+
+# from api.fp_apis.apis import get_pricing
 
 logger = logging.getLogger("dme_api")
 
