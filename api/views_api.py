@@ -1335,9 +1335,6 @@ def push_boks(request):
             if not bok_1.get("b_032_b_pu_address_suburb"):
                 bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
-            if not bok_1.get("b_054_b_del_company"):
-                bok_1["b_054_b_del_company"] = b_061
-
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
                     datetime.now() + timedelta(days=7)
