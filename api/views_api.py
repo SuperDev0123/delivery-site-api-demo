@@ -1526,7 +1526,7 @@ def push_boks(request):
 
             booking = {
                 "pk_booking_id": bok_1["pk_header_id"],
-                "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+                "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=7))[:10],
                 "b_clientReference_RA_Numbers": bok_1[
                     "b_000_1_b_clientreference_ra_numbers"
                 ],
