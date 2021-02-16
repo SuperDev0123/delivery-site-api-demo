@@ -1012,17 +1012,6 @@ def push_boks(request):
     if not bok_1.get("b_059_b_del_address_postalcode"):
         message = "'b_059_b_del_address_postalcode' is required."
 
-    b_054 = bok_1.get("b_054_b_del_company")
-    b_061 = bok_1.get("b_061_b_del_contact_full_name")
-    if not b_054 and not b_061:
-        message = "'b_061_b_del_contact_full_name' is required."
-
-    if not bok_1.get("b_063_b_del_email"):
-        message = "'b_063_b_del_email' is required."
-
-    if not bok_1.get("b_064_b_del_phone_main"):
-        message = "'b_064_b_del_phone_main' is required."
-
     if message:
         res_json = {"success": False, "code": "missing_param", "description": message}
         raise ValidationError(res_json)
@@ -1392,6 +1381,12 @@ def push_boks(request):
 
             if not bok_1.get("b_063_b_del_email"):
                 bok_1["b_063_b_del_email"] = "aushelpdesk@plumproducts.com"
+
+            if not bok_1.get("b_061_b_del_contact_full_name"):
+                bok_1["b_061_b_del_contact_full_name"] = "Ben Randall"
+
+            if not bok_1.get("b_054_b_del_company"):
+                bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
         elif client_name == "Jason L":  # Jason L
             if not bok_1.get("b_054_b_del_company"):
                 bok_1["b_064_b_del_phone_main"] = "0289682200"
