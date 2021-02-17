@@ -750,7 +750,6 @@ def scanned(request):
                 f"#372 [SCANNED] - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
             )
 
-        if fp_name != "hunter" and is_picked_all:
             # Select best quotes(fastest, lowest)
             if quotes.exists() and quotes.count() > 1:
                 quotes = quotes.filter(
