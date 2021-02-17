@@ -410,8 +410,8 @@ def scanned(request):
     should response LABEL if payload is correct
     """
     user = request.user
-    logger.info(f"@890 Picked by: {user.username}")
-    logger.info(f"@891 Picked info: {request.data}")
+    logger.info(f"@890 [SCANNED] Requester: {user.username}")
+    logger.info(f"@891 [SCANNED] Payload: {request.data}")
     b_client_order_num = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
     b_client_name = request.data.get("CustomerName")
@@ -461,12 +461,12 @@ def scanned(request):
     model_number_qtys = original_items.values_list("e_item_type", "e_qty")
     sscc_list = scanned_items.values_list("sscc", flat=True)
 
-    logger.info(f"@360 - Booking: {booking}")
-    logger.info(f"@361 - Lines: {lines}")
-    logger.info(f"@362 - original_items: {original_items}")
-    logger.info(f"@363 - scanned_items: {scanned_items}")
-    logger.info(f"@364 - model_number and qty(s): {model_number_qtys}")
-    logger.info(f"@365 - sscc(s): {sscc_list}")
+    logger.info(f"@360 [SCANNED] Booking: {booking}")
+    logger.info(f"@361 [SCANNED] Lines: {lines}")
+    logger.info(f"@362 [SCANNED] original_items: {original_items}")
+    logger.info(f"@363 [SCANNED] scanned_items: {scanned_items}")
+    logger.info(f"@364 [SCANNED] model_number and qty(s): {model_number_qtys}")
+    logger.info(f"@365 [SCANNED] sscc(s): {sscc_list}")
 
     # Validation
     missing_sscc_picked_items = []
@@ -603,7 +603,7 @@ def scanned(request):
                 estimated_picked[item["model_number"]] += item["qty"]
 
     logger.info(
-        f"@366 - over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
+        f"@366 [SCANNED] checking over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
     )
 
     for item in estimated_picked:
@@ -620,12 +620,22 @@ def scanned(request):
             ):
                 is_picked_all = False
 
+    # If found over picked items
     if over_picked_items:
         logger.error(
-            f"@367 - over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
+            f"@367 [SCANNED] over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
         )
         code = "over_picked"
         message = f"There are over picked items: {', '.join(over_picked_items)}"
+        raise ValidationError({"success": False, "code": code, "description": message})
+
+    # Hunter order should be scanned fully always(at first scan)
+    if fp_name == "hunter" and not is_picked_all:
+        logger.error(
+            f"@368 [SCANNED] HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
+        )
+        code = "invalid_request"
+        message = f"Hunter Order should be fully picked."
         raise ValidationError({"success": False, "code": code, "description": message})
 
     # Save
@@ -725,20 +735,22 @@ def scanned(request):
                             }
                         )
 
-        if fp_name != "hunter" and is_picked_all:
+        # Should get pricing again when if fully picked
+        if is_picked_all:
             new_fc_log = FC_Log.objects.create(
                 client_booking_id=booking.b_client_booking_ref_num,
                 old_quote=booking.api_booking_quote,
             )
             new_fc_log.save()
             logger.info(
-                f"#371 - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
+                f"#371 [SCANNED] - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
             )
             _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
             logger.info(
-                f"#372 - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+                f"#372 [SCANNED] - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
             )
 
+        if fp_name != "hunter" and is_picked_all:
             # Select best quotes(fastest, lowest)
             if quotes.exists() and quotes.count() > 1:
                 quotes = quotes.filter(
@@ -746,7 +758,7 @@ def scanned(request):
                     service_name=booking.vx_serviceName,
                 )
                 best_quotes = select_best_options(pricings=quotes)
-                logger.info(f"#373 - Selected Best Pricings: {best_quotes}")
+                logger.info(f"#373 [SCANNED] - Selected Best Pricings: {best_quotes}")
 
                 if best_quotes:
                     booking.api_booking_quote = best_quotes[0]
@@ -759,6 +771,9 @@ def scanned(request):
 
         # If Hunter Order?
         if fp_name == "hunter" and booking.b_status != "Picking":
+            logger.info(
+                f"#373 [SCANNED] - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
+            )
             return Response(
                 {
                     "success": False,
@@ -776,6 +791,9 @@ def scanned(request):
             success, message = book_oper(fp_name, booking, "DME_API")
 
             if not success:
+                logger.info(
+                    f"#374 [SCANNED] - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
+                )
                 code = "unknown_status"
                 description = (
                     "Please contact DME support center. <bookings@deliver-me.com.au>"
@@ -785,7 +803,6 @@ def scanned(request):
                 )
             else:
                 label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-
                 result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
                 if not result:
@@ -806,6 +823,9 @@ def scanned(request):
                     }
                 )
 
+        logger.info(
+            f"#379 [SCANNED] - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
+        )
         return Response(
             {
                 "success": True,
