@@ -451,10 +451,17 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.pk
 
     def get_cost(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", None)
+
         if obj.tax_value_1:
-            return dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
+            _cost = dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
         else:
-            return dme_math.ceil(obj.client_mu_1_minimum_values, 2)
+            _cost = dme_math.ceil(obj.client_mu_1_minimum_values, 2)
+
+        if client_customer_mark_up:
+            _cost = round(_cost * (1 + client_customer_mark_up), 2)
+
+        return _cost
 
     def get_eta(self, obj):
         return obj.etd

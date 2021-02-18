@@ -51,7 +51,6 @@ from api.operations.labels.index import build_label, get_barcode
 from api.operations.email_senders import send_email_to_admins
 from api.operations.manifests.index import build_manifest
 from api.convertors import pdf
-from api.serializers import SimpleQuoteSerializer
 
 
 logger = logging.getLogger("dme_api")
@@ -109,11 +108,14 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             t.sleep(2)
 
         client_booking_id = request.GET["identifier"]
+        logger.info(
+            f"#490 [get_boks_with_pricings] client_booking_id: {client_booking_id}"
+        )
 
         if not client_booking_id:
-            return Response(
-                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            logger.info(f"#491 [get_boks_with_pricings] Error: Wrong identifier.")
+            res_json = {"message": "Wrong identifier."}
+            return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
@@ -124,49 +126,30 @@ class BOK_1_ViewSet(viewsets.ViewSet):
             client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
             result = BOK_1_Serializer(bok_1).data
-            result["client_customer_mark_up"] = client.client_customer_mark_up
             result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
-
+            result["pricings"] = []
             best_quotes = quote_set
-            # Select best quotes(fastest, lowest)
-            # if quote_set.exists() and quote_set.count() > 1:
-            # best_quotes = select_best_options(pricings=quote_set)
-            # logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
 
-            # Set Express or Standard
             if best_quotes:
-                json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-                json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
-
-                # if len(json_results) == 1:
-                #     json_results[0]["service_name"] = "Standard"
-                # else:
-                #     if float(json_results[0]["cost"]) > float(
-                #         json_results[1]["cost"]
-                #     ):
-                #         json_results[0]["service_name"] = "Express"
-                #         json_results[1]["service_name"] = "Standard"
-                #         json_results = [json_results[1], json_results[0]]
-                #     else:
-                #         json_results[1]["service_name"] = "Express"
-                #         json_results[0]["service_name"] = "Standard"
-
+                context = {"client_customer_mark_up": client.client_customer_mark_up}
+                json_results = SimpleQuoteSerializer(
+                    best_quotes, many=True, context=context
+                ).data
+                json_results = dme_time_lib.beautify_eta(
+                    json_results, best_quotes, client
+                )
                 result["pricings"] = json_results
-            else:
-                result["pricings"] = []
 
+            res_json = {"message": "Succesfully get bok and pricings.", "data": result}
+            logger.info(f"#495 [get_boks_with_pricings] Success!")
+            return Response(res_json, status=status.HTTP_200_OK)
         except Exception as e:
-            logger.info(f"#490 Error: {e}")
+            logger.info(f"#499 [get_boks_with_pricings] Error: {e}")
             trace_error.print()
             return Response(
                 {"message": "Couldn't find matching Booking."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        return Response(
-            {"message": "Succesfully get bok and pricings.", "data": result},
-            status=status.HTTP_200_OK,
-        )
 
     @action(detail=False, methods=["patch"], permission_classes=[AllowAny])
     def book(self, request):
@@ -1607,8 +1590,13 @@ def push_boks(request):
 
             # Set Express or Standard
             if best_quotes:
-                json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-                json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
+                context = {"client_customer_mark_up": client.client_customer_mark_up}
+                json_results = SimpleQuoteSerializer(
+                    best_quotes, many=True, context=context
+                ).data
+                json_results = dme_time_lib.beautify_eta(
+                    json_results, best_quotes, client
+                )
 
                 if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
                     best_quote = best_quotes[0]
@@ -1624,10 +1612,21 @@ def push_boks(request):
                     if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
                         json_results[0]["service_name"] = "Express"
                         json_results[1]["service_name"] = "Standard"
+
+                        if json_results[0]["eta"] == json_results[1]["eta"]:
+                            json_results[1][
+                                "eta"
+                            ] = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+
                         json_results = [json_results[1], json_results[0]]
                     else:
                         json_results[1]["service_name"] = "Express"
                         json_results[0]["service_name"] = "Standard"
+
+                        if json_results[0]["eta"] == json_results[1]["eta"]:
+                            json_results[0][
+                                "eta"
+                            ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
             else:
                 message = f"#521 No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
                 logger.error(message)
@@ -1854,14 +1853,17 @@ def partial_pricing(request):
     )
 
     # Select best quotes(fastest, lowest)
-    if quote_set.exists() and quote_set.count() > 1:
+    if quote_set.count() > 1:
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
 
     # Set Express or Standard
     if quote_set:
-        json_results = SimpleQuoteSerializer(best_quotes, many=True).data
-        json_results = dme_time_lib.beautify_eta(json_results, best_quotes)
+        context = {"client_customer_mark_up": client.client_customer_mark_up}
+        json_results = SimpleQuoteSerializer(
+            best_quotes, many=True, context=context
+        ).data
+        json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
         # delete quote quotes
         quote_set.delete()
@@ -1872,10 +1874,21 @@ def partial_pricing(request):
             if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
                 json_results[0]["service_name"] = "Express"
                 json_results[1]["service_name"] = "Standard"
+
+                if json_results[0]["eta"] == json_results[1]["eta"]:
+                    json_results[1][
+                        "eta"
+                    ] = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+
                 json_results = [json_results[1], json_results[0]]
             else:
                 json_results[1]["service_name"] = "Express"
                 json_results[0]["service_name"] = "Standard"
+
+                if json_results[0]["eta"] == json_results[1]["eta"]:
+                    json_results[0][
+                        "eta"
+                    ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
 
     if json_results:
         for index, _ in enumerate(json_results):
@@ -2052,13 +2065,12 @@ def get_delivery_status(request):
             "b_client_order_num": booking.b_client_order_num,
             "b_client_sales_inv_num": booking.b_client_sales_inv_num,
         }
+        json_quote = None
 
         if quote:
-            quote_data = SimpleQuoteSerializer(quote).data
-            quote_data["cost"] = round(
-                quote_data["cost"] * (1 + client.client_customer_mark_up), 2
-            )
-            quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
+            context = {"client_customer_mark_up": client.client_customer_mark_up}
+            quote_data = SimpleQuoteSerializer(quote, context=context).data
+            json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
         if category == "Booked":
             step = 2
@@ -2076,31 +2088,29 @@ def get_delivery_status(request):
             {
                 "step": step,
                 "status": b_status,
-                "quote": quote_data,
+                "quote": json_quote,
                 "booking": booking,
             }
         )
 
     # 2. Try to find from Bok tables
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
-    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
     booking = {
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
     }
     quote = bok_1.quote
+    json_quote = None
 
     if quote:
-        quote_data = SimpleQuoteSerializer(quote).data
-        quote_data["cost"] = round(
-            quote_data["cost"] * (1 + client.client_customer_mark_up), 2
-        )
-        quote_data["eta_readable"] = round(get_etd_in_hour(quote) / 24, 2)
+        context = {"client_customer_mark_up": client.client_customer_mark_up}
+        quote_data = SimpleQuoteSerializer(quote, context=context).data
+        json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
     if bok_1:
         return Response(
-            {"step": 1, "status": None, "quote": quote_data, "booking": booking}
+            {"step": 1, "status": None, "quote": json_quote, "booking": booking}
         )
 
     return Response(

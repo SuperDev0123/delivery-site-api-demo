@@ -58,7 +58,7 @@ def convert_to_UTC_tz(time, type="datetime"):
     return sydney_time
 
 
-def beautify_eta(json_results, quotes):
+def beautify_eta(json_results, quotes, client):
     """
     beautify eta as Days,
     i.e:
@@ -83,16 +83,21 @@ def beautify_eta(json_results, quotes):
                 result["eta"] = etd_in_hour * 24
                 readable_eta = f"{math.ceil(etd_in_hour)} days"
             except Exception as e:
-                logger.info(f"@880 beautify_eta() error: {str(e)}")
+                logger.info(f"@880 [beautify_eta] error: {str(e)}")
                 readable_eta = f'{str(result["eta"])} days'
                 pass
 
         try:
             result["eta_in_hour"] = round(float(result["eta"]), 2)
             result["eta"] = readable_eta
+
+            if client.company_name == "Plum Products Australia Ltd":
+                result["eta_in_hour"] = result["eta_in_hour"] + 24
+                result["eta"] = f"{int(result['eta'].split(' ')[0]) + 1} days"
+
             _results.append(result)
         except:
-            logger.info(f"@881 beautify_eta() error: {result['eta']}")
+            logger.info(f"@881 [beautify_eta] error: {result['eta']}")
             pass
 
     return _results
