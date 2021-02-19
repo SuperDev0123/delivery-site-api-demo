@@ -202,6 +202,8 @@ def book(fp_name, booking, booker):
             fk_booking_id=booking.id,
         ).save()
 
+        logger.error(f"[BOOK] - {str(res_content)}")
+
         if "errors" in json_data:
             error_msg = json_data["errors"]
         elif "errorMessage" in json_data:  # Sendle, TNT Error
@@ -209,7 +211,7 @@ def book(fp_name, booking, booker):
         elif "errorMessage" in json_data[0]:
             error_msg = json_data[0]["errorMessage"]
         else:
-            error_msg = s0
+            error_msg = res_content
         _set_error(booking, error_msg)
         return False, error_msg
     elif response.status_code == 500:
