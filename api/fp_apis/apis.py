@@ -683,7 +683,7 @@ def get_label(request, fp_name):
             error_msg = s0
 
             if _fp_name in ["tnt"]:
-                error_msg = json_data["errorMessage"]
+                error_msg = json_data
 
             _set_error(booking, error_msg)
             return JsonResponse(
