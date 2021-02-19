@@ -1841,7 +1841,7 @@ class Bookings(models.Model):
             )
             return utl_dme_status.dme_delivery_status_category
         except Exception as e:
-            logger.error("#551 dme_delivery_status_category - ", str(e))
+            logger.error(f"#551 [dme_delivery_status_category] - {str(e)}")
             return ""
 
     def get_total_lines_qty(self):
@@ -1857,7 +1857,7 @@ class Bookings(models.Model):
 
             return qty
         except Exception as e:
-            logger.error("#552 get_total_lines_qty - ", str(e))
+            logger.error(f"#552 [get_total_lines_qty] - {str(e)}")
             return 0
 
     @property
@@ -1874,7 +1874,7 @@ class Bookings(models.Model):
 
             return ", ".join(client_item_references)
         except Exception as e:
-            logger.error("#553 client_item_references - ", str(e))
+            logger.error(f"#553 [client_item_references] - {str(e)}")
             return ""
 
     @property
@@ -1891,7 +1891,7 @@ class Bookings(models.Model):
 
             return ", ".join(clientRefNumbers)
         except Exception as e:
-            logger.error("#554 clientRefNumbers - ", str(e))
+            logger.error(f"#554 [clientRefNumbers] - {str(e)}")
             return ""
 
     @property
@@ -1908,7 +1908,7 @@ class Bookings(models.Model):
 
             return ", ".join(gap_ras)
         except Exception as e:
-            logger.error("#555 gap_ras - ", str(e))
+            logger.error(f"#555 [gap_ras] - {str(e)}")
             return ""
 
     def get_etd(self):
@@ -2081,7 +2081,7 @@ class Booking_lines(models.Model):
                 return True
             return False
         except Exception as e:
-            logger.error("#561 get_is_scanned - ", str(e))
+            logger.error(f"#561 get_is_scanned - {str(e)}")
             return False
 
     def gap_ras(self):
@@ -2097,7 +2097,7 @@ class Booking_lines(models.Model):
 
             return ", ".join(_gap_ras)
         except Exception as e:
-            logger.error("#562 gap_ras - ", str(e))
+            logger.error(f"#562 gap_ras - {str(e)}")
             return ""
 
     @transaction.atomic
