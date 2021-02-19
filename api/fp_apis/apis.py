@@ -681,7 +681,7 @@ def get_label(request, fp_name):
                 fk_booking_id=booking.id,
             ).save()
 
-            error_msg = s0
+            error_msg = res_content
 
             if _fp_name in ["tnt"]:
                 error_msg = res_content
