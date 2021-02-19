@@ -671,6 +671,7 @@ def get_label(request, fp_name):
                 status=status.HTTP_200_OK,
             )
         except KeyError as e:
+            logger.error(f"[GET LABEL] Error - {str(e)}")
             trace_error.print()
             Log(
                 request_payload=payload,
@@ -683,7 +684,7 @@ def get_label(request, fp_name):
             error_msg = s0
 
             if _fp_name in ["tnt"]:
-                error_msg = json_data
+                error_msg = res_content
 
             _set_error(booking, error_msg)
             return JsonResponse(
