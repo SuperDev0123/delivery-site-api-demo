@@ -541,6 +541,7 @@ def get_label(request, fp_name):
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
                 response = requests.post(url, params={}, json=payload)
+                logger.info("@@@1 - ", response.content)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
                 s0 = json.dumps(
