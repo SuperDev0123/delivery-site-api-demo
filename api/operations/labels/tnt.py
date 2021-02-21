@@ -208,7 +208,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "line_height_small": "5",
         "line_height_medium": "6",
         "line_height_large": "8",
-        "margin_v": "5",
+        "margin_v": "0",
         "margin_h": "0",
     }
 
@@ -363,7 +363,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     style_left,
                 ),
                 Paragraph(
-                    "<font size=%s>Itm:%s</font> "
+                    "<font size=%s>Itm: %s</font> "
                     % (label_settings["font_size_small"], booking_line.sscc),
                     style_right,
                 ),
@@ -720,22 +720,39 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
         )
 
-        tbl_data2 = [
-            [
-                Paragraph(
-                    "<font size=%s>%s, %s, %s, %s, %s</font>"
-                    % (
-                        label_settings["font_size_medium"],
-                        booking.pu_Contact_F_L_Name or "",
-                        booking.pu_Address_Street_1 or "",
-                        booking.pu_Address_street_2 or "",
-                        booking.pu_Address_Suburb or "",
-                        booking.pu_Address_State or "",
-                    ),
-                    style_uppercase,
-                )
-            ],
-        ]
+        if booking.pu_Address_street_2:
+            tbl_data2 = [
+                [
+                    Paragraph(
+                        "<font size=%s>%s, %s, %s, %s, %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            booking.pu_Contact_F_L_Name or "",
+                            booking.pu_Address_Street_1 or "",
+                            booking.pu_Address_street_2 or "",
+                            booking.pu_Address_Suburb or "",
+                            booking.pu_Address_State or "",
+                        ),
+                        style_uppercase,
+                    )
+                ],
+            ]
+        else:
+            tbl_data2 = [
+                [
+                    Paragraph(
+                        "<font size=%s>%s, %s, %s, %s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            booking.pu_Contact_F_L_Name or "",
+                            booking.pu_Address_Street_1 or "",
+                            booking.pu_Address_Suburb or "",
+                            booking.pu_Address_State or "",
+                        ),
+                        style_uppercase,
+                    )
+                ],
+            ]
 
         t2 = Table(
             tbl_data2,
@@ -927,7 +944,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             ],
             [
                 Paragraph(
-                    "<font size=%s><b>Itm:%s</b></font>"
+                    "<font size=%s><b>Itm: %s</b></font>"
                     % (label_settings["font_size_normal"], booking_line.sscc),
                     style_left,
                 )
