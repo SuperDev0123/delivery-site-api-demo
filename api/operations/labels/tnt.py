@@ -208,7 +208,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "line_height_small": "5",
         "line_height_medium": "6",
         "line_height_large": "8",
-        "margin_v": "0",
+        "margin_v": "2",
         "margin_h": "0",
     }
 
