@@ -1278,7 +1278,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             Story.append(PageBreak())
 
-        j += 1
+            j += 1
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
