@@ -1,12 +1,10 @@
 import time as t
 import json
 import requests
-import requests_async
 import datetime
 import base64
 import os
 import logging
-import asyncio
 from ast import literal_eval
 
 from rest_framework.decorators import (
@@ -23,46 +21,27 @@ from django.conf import settings
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
 from api.common import status_history, download_external, trace_error
-from api.common.build_object import Struct
-from api.file_operations.directory import create_dir_if_not_exist
+from api.file_operations.directory import create_dir
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
 from api.operations.email_senders import send_booking_status_email
+from api.operations.labels.index import build_label
 
-from .payload_builder import *
-from .self_pricing import get_pricing as get_self_pricing
-from .utils import (
+from api.fp_apis.payload_builder import *
+from api.fp_apis.response_parser import *
+from api.fp_apis.pre_check import *
+from api.fp_apis.operations.common import _set_error
+from api.fp_apis.operations.tracking import update_booking_with_tracking_result
+from api.fp_apis.operations.book import book as book_oper
+from api.fp_apis.operations.pricing import pricing as pricing_oper
+from api.fp_apis.utils import (
     get_dme_status_from_fp_status,
     auto_select_pricing,
 )
-from .response_parser import *
-from .pre_check import *
-from .update_by_json import update_biopak_with_booked_booking
-from api.operations.labels.index import build_label
-from .operations.tracking import update_booking_with_tracking_result
-from .constants import (
-    FP_CREDENTIALS,
-    BUILT_IN_PRICINGS,
-    PRICING_TIME,
-    AVAILABLE_FPS_4_FC,
-)
+from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
 
-if settings.ENV == "local":
-    DME_LEVEL_API_URL = "http://localhost:3000"
-    S3_URL = "./static"
-elif settings.ENV == "dev":
-    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
-    S3_URL = "/opt/s3_public"
-elif settings.ENV == "prod":
-    DME_LEVEL_API_URL = "http://52.62.102.72:3000"
-    S3_URL = "/opt/s3_public"
 
 logger = logging.getLogger("dme_api")
-
-
-def _set_error(booking, error_msg):
-    booking.b_error_Capture = str(error_msg)[:999]
-    booking.save()
 
 
 @api_view(["POST"])
@@ -87,7 +66,8 @@ def tracking(request, fp_name):
 
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-        logger.info(f"### Response ({fp_name} tracking): {s0}")
+        # Disabled on 2021-02-05
+        # logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
@@ -128,13 +108,13 @@ def tracking(request, fp_name):
             )
     except Bookings.DoesNotExist:
         trace_error.print()
-        logger.info(f"#511 ERROR: {e}")
+        logger.error(f"#511 ERROR: {e}")
         return JsonResponse(
             {"message": "Booking not found"}, status=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:
         trace_error.print()
-        logger.info(f"#512 ERROR: {e}")
+        logger.error(f"#512 ERROR: {e}")
         return JsonResponse(
             {"message": "Tracking failed"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -145,8 +125,10 @@ def tracking(request, fp_name):
 @permission_classes((AllowAny,))
 def book(request, fp_name):
     try:
+        username = request.user.username
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
+<<<<<<< HEAD
         _fp_name = fp_name.lower()
 
         try:
@@ -401,11 +383,30 @@ def book(request, fp_name):
             return JsonResponse(
                 {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
             )
+=======
+>>>>>>> develop
     except SyntaxError as e:
         trace_error.print()
+        logger.error(f"#514 BOOK error: {error_msg}")
         return JsonResponse(
             {"message": f"SyntaxError: {e}"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    try:
+        booking = Bookings.objects.get(id=booking_id)
+        success, message = book_oper(fp_name, booking, username)
+        res_json = {"success": success, "message": message}
+
+        if success:
+            return JsonResponse(res_json)
+        else:
+            return JsonResponse(res_json, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        trace_error.print()
+        error_msg = str(e)
+        logger.error(f"#513 BOOK error: {error_msg}")
+        _set_error(booking, error_msg)
+        return JsonResponse({"message": error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -977,6 +978,7 @@ def get_label(request, fp_name):
                 status=status.HTTP_200_OK,
             )
         except KeyError as e:
+            logger.error(f"[GET LABEL] Error - {str(e)}")
             trace_error.print()
             Log(
                 request_payload=payload,
@@ -986,10 +988,10 @@ def get_label(request, fp_name):
                 fk_booking_id=booking.id,
             ).save()
 
-            error_msg = s0
+            error_msg = res_content
 
             if _fp_name in ["tnt"]:
-                error_msg = json_data["errorMessage"]
+                error_msg = res_content
 
             _set_error(booking, error_msg)
             return JsonResponse(
@@ -1295,7 +1297,7 @@ def pricing(request):
     if not booking_id and "booking" in body:
         is_pricing_only = True
 
-    booking, success, message, results = get_pricing(body, booking_id, is_pricing_only)
+    booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
 
     if not success:
         return JsonResponse(
@@ -1319,6 +1321,7 @@ def pricing(request):
         )
 
 
+<<<<<<< HEAD
 def get_pricing(body, booking_id, is_pricing_only=False):
     """
     @params:
@@ -1461,83 +1464,53 @@ async def _api_pricing_worker_builder(
     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
     logger.info(f"### API url ({_fp_name.upper()} PRICING): {url}")
     logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
+=======
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
+def update_servce_code(request, fp_name):
+    _fp_name = fp_name.lower()
+>>>>>>> develop
 
     try:
-        response = await requests_async.post(url, params={}, json=payload)
-        logger.info(f"### Response ({_fp_name.upper()} PRICING): {response}")
-        res_content = response.content.decode("utf8").replace("'", '"')
+        payload = get_get_accounts_payload(_fp_name)
+        headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+        logger.info(f"### Payload ({fp_name.upper()} Get Accounts): {payload}")
+        url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
+        response = requests.post(url, json=payload, headers=headers)
+        res_content = response.content
         json_data = json.loads(res_content)
-        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-        logger.info(f"### Response Detail ({_fp_name.upper()} PRICING): {s0}")
+        # Just for visual
+        s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)
+        fp = Fp_freight_providers.objects.filter(
+            fp_company_name__iexact=_fp_name
+        ).first()
 
-        if not is_pricing_only:
-            Log.objects.create(
-                request_payload=payload,
-                request_status="SUCCESS",
-                request_type=f"{_fp_name.upper()} PRICING",
-                response=res_content,
-                fk_booking_id=booking.id,
+        for data in json_data["returns_products"]:
+            product_type = data["type"]
+            product_id = data["product_id"]
+
+            etd, is_created = FP_Service_ETDs.objects.update_or_create(
+                fp_delivery_service_code=product_id,
+                fp_delivery_time_description=product_type,
+                freight_provider=fp,
+                dme_service_code_id=1,
             )
 
-        # error = capture_errors(
-        #     response,
-        #     booking,
-        #     _fp_name,
-        #     payload["spAccountDetails"]["accountCode"],
-        # )
+        for data in json_data["postage_products"]:
+            product_type = data["type"]
+            product_id = data["product_id"]
 
-        parse_results = parse_pricing_response(response, _fp_name, booking)
+            etd, is_created = FP_Service_ETDs.objects.update_or_create(
+                fp_delivery_service_code=product_id,
+                fp_delivery_time_description=product_type,
+                freight_provider=fp,
+                dme_service_code_id=1,
+            )
 
-        if parse_results and not "error" in parse_results:
-            for parse_result in parse_results:
-                account_code = payload["spAccountDetails"]["accountCode"]
-                parse_result["account_code"] = account_code
-
-                ###########################
-                # Commented at 12/22/2020 #
-                ###########################
-
-                # quotes = API_booking_quotes.objects.filter(
-                #     fk_booking_id=booking.pk_booking_id,
-                #     freight_provider__iexact=parse_result["freight_provider"],
-                #     service_name=parse_result["service_name"],
-                #     account_code=payload["spAccountDetails"]["accountCode"],
-                # )
-
-                # if quotes.exists():
-                #     serializer = ApiBookingQuotesSerializer(
-                #         quotes[0], data=parse_result
-                #     )
-                # else:
-
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
-
-                if serializer.is_valid():
-                    serializer.save()
-                else:
-                    logger.info(f"@401 Serializer error: {serializer.errors}")
-    except Exception as e:
+        return JsonResponse({"message": "Updated service codes successfully."})
+    except IndexError as e:
         trace_error.print()
-        logger.info(f"@402 Exception: {e}")
-
-
-async def _built_in_pricing_worker_builder(_fp_name, booking):
-    results = get_pricing(_fp_name, booking)
-    parse_results = parse_pricing_response(results, _fp_name, booking, True)
-
-    for parse_result in parse_results:
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            freight_provider__iexact=parse_result["freight_provider"],
-            service_name=parse_result["service_name"],
-        )
-
-        if quotes.exists():
-            serializer = ApiBookingQuotesSerializer(quotes[0], data=parse_result)
-        else:
-            serializer = ApiBookingQuotesSerializer(data=parse_result)
-
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            logger.info(f"@404 Serializer error: {serializer.errors}")
+        error_msg = "GetAccounts is failed."
+        _set_error(booking, error_msg)
+        return JsonResponse({"message": error_msg})

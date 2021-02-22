@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Max
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.utils.translation import gettext as _
 from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
@@ -49,6 +49,9 @@ class DME_Roles(models.Model):
     class Meta:
         db_table = "dme_roles"
 
+    def __str__(self):
+        return self.role_code
+
 
 class DME_clients(models.Model):
     pk_id_dme_client = models.AutoField(primary_key=True)
@@ -81,6 +84,9 @@ class DME_clients(models.Model):
     class Meta:
         db_table = "dme_clients"
 
+    def __str__(self):
+        return self.company_name
+
 
 class DME_employees(models.Model):
     pk_id_dme_emp = models.AutoField(primary_key=True)
@@ -106,49 +112,58 @@ class DME_employees(models.Model):
 class Client_warehouses(models.Model):
     pk_id_client_warehouses = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
-    warehousename = models.CharField(
+    name = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_address1 = models.CharField(
+    address1 = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_address2 = models.CharField(
+    address2 = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_state = models.CharField(
+    state = models.CharField(
         max_length=64,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_suburb = models.CharField(
+    suburb = models.CharField(
         max_length=32,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_phone_main = models.CharField(
+    phone_main = models.CharField(
         max_length=16,
         blank=False,
         null=True,
         default=None,
     )
-    warehouse_postal_code = models.CharField(
+    postal_code = models.CharField(
         max_length=64,
-        blank=False,
         null=True,
         default=None,
     )
-    warehouse_hours = models.IntegerField(verbose_name=_("warehouse hours"))
+    contact_name = models.CharField(
+        max_length=64,
+        null=True,
+        default=None,
+    )
+    contact_email = models.CharField(
+        max_length=64,
+        null=True,
+        default=None,
+    )
+    hours = models.IntegerField(verbose_name=_("warehouse hours"))
     type = models.CharField(
         verbose_name=_("warehouse type"), max_length=30, blank=True, null=True
     )
@@ -160,6 +175,9 @@ class Client_warehouses(models.Model):
 
     class Meta:
         db_table = "dme_client_warehouses"
+
+    def __str__(self):
+        return self.name
 
 
 class Client_employees(models.Model):
@@ -331,6 +349,9 @@ class Fp_freight_providers(models.Model):
 
     class Meta:
         db_table = "fp_freight_providers"
+
+    def __str__(self):
+        return self.fp_company_name
 
 
 class DME_Service_Codes(models.Model):
@@ -560,6 +581,24 @@ class API_booking_quotes(models.Model):
 
 
 class Bookings(models.Model):
+    DDWD = "Drop at Door / Warehouse Dock"
+    DDW = "Drop in Door / Warehouse"
+    ROC = "Room of Choice"
+    DEL_LOCATION_CHOICES = (
+        (DDWD, "Drop at Door / Warehouse Dock"),
+        (DDW, "Drop in Door / Warehouse"),
+        (ROC, "Room of Choice"),
+    )
+
+    ELEVATOR = "Elevator"
+    ESCALATOR = "Escalator"
+    STAIRS = "Stairs"
+    FLOOR_ACCESS_BY_CHOICES = (
+        (ELEVATOR, "Elevator"),
+        (ESCALATOR, "Escalator"),
+        (STAIRS, "Stairs"),
+    )
+
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
         verbose_name=_("BookingID Visual"), blank=True, null=True, default=0
@@ -1739,6 +1778,15 @@ class Bookings(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     delivery_booking = models.DateField(default=None, blank=True, null=True)
+    de_to_assembly_required = models.BooleanField(default=False, null=True)
+    de_to_location = models.CharField(
+        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+    )
+    de_to_floor_number = models.IntegerField(default=0, null=True)
+    de_to_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
+    de_to_sufficient_space = models.BooleanField(default=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -1793,7 +1841,7 @@ class Bookings(models.Model):
             )
             return utl_dme_status.dme_delivery_status_category
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#551 [dme_delivery_status_category] - {str(e)}")
             return ""
 
     def get_total_lines_qty(self):
@@ -1809,8 +1857,7 @@ class Bookings(models.Model):
 
             return qty
         except Exception as e:
-            # print('Exception: ', e)
-            logger.info("#591 Error - ", str(e))
+            logger.error(f"#552 [get_total_lines_qty] - {str(e)}")
             return 0
 
     @property
@@ -1827,7 +1874,7 @@ class Bookings(models.Model):
 
             return ", ".join(client_item_references)
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#553 [client_item_references] - {str(e)}")
             return ""
 
     @property
@@ -1844,7 +1891,7 @@ class Bookings(models.Model):
 
             return ", ".join(clientRefNumbers)
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#554 [clientRefNumbers] - {str(e)}")
             return ""
 
     @property
@@ -1861,7 +1908,7 @@ class Bookings(models.Model):
 
             return ", ".join(gap_ras)
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#555 [gap_ras] - {str(e)}")
             return ""
 
     def get_etd(self):
@@ -1888,9 +1935,9 @@ class Bookings(models.Model):
 
 @receiver(pre_save, sender=Bookings)
 def pre_save_booking(sender, instance, **kwargs):
-    from api.signal_handlers.bookings import pre_save_booking_handler
+    from api.signal_handlers.booking import pre_save_handler
 
-    pre_save_booking_handler(instance)
+    pre_save_handler(instance)
 
 
 class Booking_lines(models.Model):
@@ -2029,11 +2076,12 @@ class Booking_lines(models.Model):
             api_bcl = Api_booking_confirmation_lines.objects.filter(
                 fk_booking_line_id=self.pk_lines_id
             ).first()
-            if api_bcl.tally is not 0:
+
+            if api_bcl and api_bcl.tally:
                 return True
             return False
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#561 get_is_scanned - {str(e)}")
             return False
 
     def gap_ras(self):
@@ -2049,6 +2097,7 @@ class Booking_lines(models.Model):
 
             return ", ".join(_gap_ras)
         except Exception as e:
+            logger.error(f"#562 gap_ras - {str(e)}")
             return ""
 
     @transaction.atomic
@@ -2074,6 +2123,13 @@ class Booking_lines(models.Model):
 
     class Meta:
         db_table = "dme_booking_lines"
+
+
+@receiver(post_delete, sender=Booking_lines)
+def post_delete_booking_line(sender, instance, **kwargs):
+    from api.signal_handlers.booking_line import post_delete_handler
+
+    post_delete_handler(instance)
 
 
 class Booking_lines_data(models.Model):
@@ -2147,6 +2203,13 @@ class Booking_lines_data(models.Model):
         db_table = "dme_booking_lines_data"
 
 
+@receiver(post_delete, sender=Booking_lines_data)
+def post_delete_booking_lines_data(sender, instance, **kwargs):
+    from api.signal_handlers.booking_line_data import post_delete_handler
+
+    post_delete_handler(instance)
+
+
 class Dme_attachments(models.Model):
     pk_id_attachment = models.AutoField(primary_key=True)
     fk_id_dme_client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
@@ -2198,6 +2261,24 @@ class BOK_0_BookingKeys(models.Model):
 
 
 class BOK_1_headers(models.Model):
+    DDWD = "Drop at Door / Warehouse Dock"
+    DDW = "Drop in Door / Warehouse"
+    ROC = "Room of Choice"
+    DEL_LOCATION_CHOICES = (
+        (DDWD, "Drop at Door / Warehouse Dock"),
+        (DDW, "Drop in Door / Warehouse"),
+        (ROC, "Room of Choice"),
+    )
+
+    ELEVATOR = "Elevator"
+    ESCALATOR = "Escalator"
+    STAIRS = "Stairs"
+    FLOOR_ACCESS_BY_CHOICES = (
+        (ELEVATOR, "Elevator"),
+        (ESCALATOR, "Escalator"),
+        (STAIRS, "Stairs"),
+    )
+
     pk_auto_id = models.AutoField(primary_key=True)
     quote = models.OneToOneField(
         API_booking_quotes, on_delete=models.CASCADE, null=True
@@ -2209,7 +2290,7 @@ class BOK_1_headers(models.Model):
         verbose_name=_("Available From"), default=None, blank=True
     )
     b_003_b_service_name = models.CharField(
-        verbose_name=_("Service Name"), max_length=31, blank=True, null=True
+        verbose_name=_("Service Name"), max_length=64, blank=True, null=True
     )
     b_500_b_client_cust_job_code = models.CharField(
         verbose_name=_("Client Job Code"), max_length=20, blank=True, null=True
@@ -2589,6 +2670,15 @@ class BOK_1_headers(models.Model):
         blank=True,
         null=True,
     )
+    b_067_assembly_required = models.BooleanField(default=False, null=True)
+    b_068_b_del_location = models.CharField(
+        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+    )
+    b_069_b_del_floor_number = models.IntegerField(default=0, null=True)
+    b_070_b_del_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
+    b_071_b_del_sufficient_space = models.BooleanField(default=True, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
@@ -2611,10 +2701,9 @@ class BOK_1_headers(models.Model):
     zb_144_date_4 = models.DateField(default=date.today, blank=True, null=True)
     zb_145_date_5 = models.DateField(default=date.today, blank=True, null=True)
 
-    @transaction.atomic
     def save(self, *args, **kwargs):
         if self._state.adding:
-            from api.signal_handlers.boks import on_create_bok_1_handler
+            from api.signal_handlers.bok_1 import on_create_bok_1_handler
 
             on_create_bok_1_handler(self)
 
@@ -4512,3 +4601,83 @@ class Client_FP(models.Model):
 
     class Meta:
         db_table = "client_fp"
+
+
+class CostOption(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=16, default=None, null=True)
+    description = models.CharField(max_length=64, default=None, null=True)
+    initial_markup_percentage = models.FloatField(default=0, null=True)
+    is_active = models.BooleanField(default=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_cost_options"
+
+
+class CostOptionMap(models.Model):
+    """
+    Mapping table from FP cost option to DME's
+    """
+
+    id = models.AutoField(primary_key=True)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    fp_cost_option = models.CharField(max_length=128, default=None, null=True)
+    dme_cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    amount = models.FloatField(default=0, null=True)
+    is_percentage = models.BooleanField(default=False)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_utl_map_fp_cost_options"
+
+
+class BookingCostOption(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    amount = models.FloatField(default=0, null=True)
+    is_percentage = models.BooleanField(default=False)
+    qty = models.FloatField(default=1, null=True)
+    markup_percentage = models.FloatField(default=0, null=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
+    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
+    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
+
+    class Meta:
+        db_table = "dme_booking_cost_options"
+        unique_together = (
+            "booking",
+            "cost_option",
+        )
+
+
+class FPRouting(models.Model):
+    """
+    This table is used only for TNT
+    zFpDpc_Label spec with Full Integration Doc.pdf - 33p
+    """
+
+    id = models.AutoField(primary_key=True)
+    suburb = models.CharField(max_length=45, default=None, null=True)
+    state = models.CharField(max_length=45, default=None, null=True)
+    dest_postcode = models.CharField(max_length=45, default=None, null=True)
+    orig_depot = models.CharField(max_length=10, default=None, null=True)
+    orig_depot_except = models.CharField(max_length=10, default=None, null=True)
+    gateway = models.CharField(max_length=10, default=None, null=True)
+    onfwd = models.CharField(max_length=10, default=None, null=True)
+    sort_bin = models.CharField(max_length=10, default=None, null=True)
+    orig_postcode = models.CharField(max_length=10, default=None, null=True)
+    routing_group = models.CharField(max_length=10, default=None, null=True)
+
+    class Meta:
+        db_table = "fp_routing"

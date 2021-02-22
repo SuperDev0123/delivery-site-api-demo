@@ -10,7 +10,9 @@ logger = logging.getLogger("dme_api")
 from api.models import *
 
 
-def parse_pricing_response(response, fp_name, booking, is_from_self=False):
+def parse_pricing_response(
+    response, fp_name, booking, is_from_self=False, service_name=None
+):
     try:
         if is_from_self:
             json_data = response
@@ -50,6 +52,7 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = price["serviceType"]
+                result["service_code"] = price["rateCode"]
                 results.append(result)
         elif fp_name == "sendle" and "price" in json_data:  # Sendle
             for price in json_data["price"]:
@@ -84,6 +87,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
             results.append(result)
         # Startrack | AUSPost
         elif fp_name in ["startrack", "auspost"] and "price" in json_data:
+            service_code = json_data["items"][0]["product_id"]
+
             for price in json_data["price"]:
                 result = {}
                 result["api_results_id"] = json_data["requestId"]
@@ -92,9 +97,8 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
                 result["freight_provider"] = get_service_provider(fp_name, False)
                 result["fee"] = price["netPrice"]
                 result["tax_value_1"] = price["totalTaxes"]
-                result["service_name"] = (
-                    price["serviceName"] if "serviceName" in price else None
-                )
+                result["service_code"] = service_code
+                result["service_name"] = service_name
                 results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
@@ -166,8 +170,10 @@ def parse_pricing_response(response, fp_name, booking, is_from_self=False):
         return results
     except Exception as e:
         trace_error.print()
-        error_msg = f"#580 Error while parse Pricing response: {e}"
-        logger.info(error_msg)
+        error_msg = f"#580 Parse pricing res: FP - {fp_name}, {json_data}"
+        logger.error(error_msg)
+        error_msg = f"#581 Parse pricing res: {e}"
+        logger.error(error_msg)
         return None
 
 

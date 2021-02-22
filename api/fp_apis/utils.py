@@ -19,10 +19,10 @@ def _convert_UOM(value, uom, type, fp_name):
         return round(converted_value, 2)
     except Exception as e:
         logger.info(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
         )
         raise Exception(
-            f"#408 Error: value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
         )
 
 
@@ -102,9 +102,9 @@ def get_etd_in_hour(pricing):
         return etd.fp_03_delivery_hours
     except Exception as e:
         logger.info(
-            f"#810 Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+            f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
         )
-        return None
+        return 0
 
 
 def _is_deliverable_price(pricing, booking):

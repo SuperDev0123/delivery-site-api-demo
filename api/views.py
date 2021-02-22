@@ -67,6 +67,7 @@ from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label
+from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
 from api.outputs.email import send_email
@@ -212,19 +213,15 @@ class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def username(self, request, format=None):
         user_id = self.request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
         if dme_employee is not None:
             return JsonResponse(
                 {"username": request.user.username, "clientname": "dme"}
             )
         else:
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client = DME_clients.objects.get(
                 pk_id_dme_client=client_employee.fk_id_dme_client_id
             )
@@ -239,22 +236,18 @@ class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_clients(self, request, format=None):
         user_id = self.request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
             dme_clients = DME_clients.objects.all()
         else:
             user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            dme_clients = DME_clients.objects.select_related().filter(
+            dme_clients = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             )
 
@@ -307,18 +300,14 @@ class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_user_date_filter_field(self, request, pk=None):
         user_id = self.request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             return JsonResponse({"user_date_filter_field": "z_CreatedTimestamp"})
         else:
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client = DME_clients.objects.get(
                 pk_id_dme_client=client_employee.fk_id_dme_client_id
             )
@@ -668,17 +657,13 @@ class BookingsViewSet(viewsets.ViewSet):
             user_type = "DME"
         else:
             user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            client = (
-                DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
-            )
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
 
         start_date = self.request.query_params.get("startDate", None)
 
@@ -1116,25 +1101,19 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def get_xls(self, request, format=None):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
         else:
             user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            client = (
-                DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
-            )
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
 
         vx_freight_provider = request.data["vx_freight_provider"]
         pk_id_dme_client = request.data["pk_id_dme_client"]
@@ -1337,25 +1316,19 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_bookings_4_manifest(self, request, format=None):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
         else:
             user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            client = (
-                DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
-            )
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
 
         puPickUpAvailFrom_Date = request.GET["puPickUpAvailFrom_Date"]
         vx_freight_provider = request.GET["vx_freight_provider"]
@@ -1469,25 +1442,19 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_status_info(self, request, format=None):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
         else:
             user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            client = (
-                DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
-            )
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
 
         start_date = self.request.query_params.get("startDate", None)
         end_date = self.request.query_params.get("endDate", None)
@@ -1583,9 +1550,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 first_booking = each_day_manifest_bookings.first()
                 result["count"] = each_day_manifest_bookings.count()
                 result["z_manifest_url"] = first_booking.z_manifest_url
-                result[
-                    "warehouse_name"
-                ] = first_booking.fk_client_warehouse.warehousename
+                result["warehouse_name"] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
                 results.append(result)
         else:
@@ -1599,25 +1564,19 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_project_names(self, request, format=None):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
         else:
             user_type = "CLIENT"
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
-            client = (
-                DME_clients.objects.select_related()
-                .filter(pk_id_dme_client=int(client_employee.fk_id_dme_client_id))
-                .first()
-            )
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
 
         # DME & Client filter
         if user_type == "DME":
@@ -1667,11 +1626,7 @@ class BookingViewSet(viewsets.ViewSet):
         user_id = request.user.id
 
         try:
-            dme_employee = (
-                DME_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
             if dme_employee is not None:
                 user_type = "DME"
@@ -1681,11 +1636,9 @@ class BookingViewSet(viewsets.ViewSet):
             if user_type == "DME":
                 queryset = Bookings.objects.all()
             else:
-                client_employee = (
-                    Client_employees.objects.select_related()
-                    .filter(fk_id_user=user_id)
-                    .first()
-                )
+                client_employee = Client_employees.objects.filter(
+                    fk_id_user=user_id
+                ).first()
 
                 if client_employee is None:
                     return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
@@ -1786,11 +1739,7 @@ class BookingViewSet(viewsets.ViewSet):
         user_id = request.user.id
 
         try:
-            dme_employee = (
-                DME_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
             if dme_employee is not None:
                 user_type = "DME"
@@ -1798,11 +1747,9 @@ class BookingViewSet(viewsets.ViewSet):
                 user_type = "CLIENT"
 
             if user_type == "CLIENT":
-                client_employee = (
-                    Client_employees.objects.select_related()
-                    .filter(fk_id_user=user_id)
-                    .first()
-                )
+                client_employee = Client_employees.objects.filter(
+                    fk_id_user=user_id
+                ).first()
                 client = DME_clients.objects.get(
                     pk_id_dme_client=client_employee.fk_id_dme_client_id
                 )
@@ -1811,15 +1758,11 @@ class BookingViewSet(viewsets.ViewSet):
                     return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
             try:
-                booking = (
-                    Bookings.objects.select_related()
-                    .filter(pk_booking_id=pk_booking_id)
-                    .values(
-                        "b_status",
-                        "v_FPBookingNumber",
-                        "vx_account_code",
-                        "kf_client_id",
-                    )
+                booking = Bookings.objects.filter(pk_booking_id=pk_booking_id).values(
+                    "b_status",
+                    "v_FPBookingNumber",
+                    "vx_account_code",
+                    "kf_client_id",
                 )
 
                 if (
@@ -2089,166 +2032,53 @@ class BookingViewSet(viewsets.ViewSet):
         bookingId = body["bookingId"]
         booking = Bookings.objects.get(pk=bookingId)
 
-        try:
-            client_process = (
-                Client_Process_Mgr.objects.select_related()
-                .filter(fk_booking_id=bookingId)
-                .first()
+        # Do now allow create new client_progress_mgr when already exist for this Booking.
+        client_process = Client_Process_Mgr.objects.filter(
+            fk_booking_id=bookingId
+        ).first()
+
+        if client_process:
+            return JsonResponse(
+                {"message": "Already Augmented!", "success": False},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-            # if client_process:
-            #     return JsonResponse(
-            #         {"message": "Already Augmented", "type": "Failure"},
-            #         status=status.HTTP_400_BAD_REQUEST,
-            #     )
-
-            client_process = Client_Process_Mgr(fk_booking_id=bookingId)
-            client_process.process_name = "Auto Augment " + str(bookingId)
-
-            if booking.b_booking_Category == "Salvage Expense":
-                pu_Contact_F_L_Name = booking.pu_Contact_F_L_Name
-                puCompany = booking.puCompany
-                deToCompanyName = booking.deToCompanyName
-
-                client_process.origin_puCompany = booking.puCompany
-
-                if (
-                    booking.pu_Address_street_2 == ""
-                    or booking.pu_Address_street_2 == None
-                ):
-                    client_process.origin_pu_Address_Street_2 = (
-                        booking.pu_Address_Street_1
-                    )
-
-                    custRefNumVerbage = (
-                        "Ref: "
-                        + str(booking.clientRefNumbers or "")
-                        + " Returns 4 "
-                        # + booking.b_client_name
-                        # + ". Fragile"
-                    )
-
-                    if len(custRefNumVerbage) >= 26:
-                        custRefLen = len(
-                            "Ref:  Returns 4 " + booking.b_client_name + ". Fragile"
-                        )
-                        clientRefNumbers = ""
-                        overflown = False
-                        count = 0
-                        clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
-                        for clientRefNumber in clientRefNumbers_arr:
-                            if overflown == False:
-                                count = count + 1
-                                if (
-                                    len(clientRefNumbers + clientRefNumber)
-                                    >= 26 - custRefLen
-                                ):
-                                    clientRefNumbers += clientRefNumber
-
-                                    if len(clientRefNumbers_arr) - count >= 0:
-                                        clientRefNumbers += ", +" + str(
-                                            len(clientRefNumbers_arr) - count
-                                        )
-                                    overflown = True
-                                else:
-                                    clientRefNumbers += clientRefNumber + ","
-
-                        if overflown == False:
-                            clientRefNumbers = clientRefNumbers[:-1]
-
-                        custRefNumVerbage = (
-                            "Ref: "
-                            + clientRefNumbers
-                            + " Returns 4 "
-                            # + booking.b_client_name
-                            # + ". Fragile"
-                        )
-
-                    client_process.origin_pu_Address_Street_1 = custRefNumVerbage
-
-                    client_process.origin_de_Email = str(
-                        booking.de_Email or ""
-                    ).replace(";", ",")
-                    client_process.origin_de_Email_Group_Emails = str(
-                        booking.de_Email_Group_Emails or ""
-                    ).replace(";", ",")
-                    client_process.origin_pu_pickup_instructions_address = (
-                        str(booking.pu_pickup_instructions_address or "")
-                        + " "
-                        + custRefNumVerbage
-                    )
-
-                dme_client = DME_clients.objects.filter(
-                    dme_account_num=booking.kf_client_id
-                ).first()
-
-                client_auto_augment = Client_Auto_Augment.objects.filter(
-                    fk_id_dme_client_id=dme_client.pk_id_dme_client,
-                    de_to_companyName__iexact=booking.deToCompanyName.strip().lower(),
-                ).first()
-
-                if client_auto_augment is not None:
-                    if client_auto_augment.de_Email is not None:
-                        client_process.origin_de_Email = client_auto_augment.de_Email
-
-                    if client_auto_augment.de_Email_Group_Emails is not None:
-                        client_process.origin_de_Email_Group_Emails = (
-                            client_auto_augment.de_Email_Group_Emails
-                        )
-
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        client_process.origin_de_To_Address_Street_1 = (
-                            client_auto_augment.de_To_Address_Street_1
-                        )
-
-                    if client_auto_augment.de_To_Address_Street_1 is not None:
-                        client_process.origin_de_To_Address_Street_2 = (
-                            client_auto_augment.de_To_Address_Street_2
-                        )
-
-                    if client_auto_augment.company_hours_info is not None:
-                        client_process.origin_deToCompanyName = f"{deToCompanyName} ({client_auto_augment.company_hours_info})"
-
-                client_process.origin_pu_Address_Street_1 = sanitize_address(
-                    client_process.origin_pu_Address_Street_1
-                )
-                client_process.origin_pu_Address_Street_2 = sanitize_address(
-                    client_process.origin_pu_Address_Street_2
-                )
-                client_process.origin_de_To_Address_Street_1 = sanitize_address(
-                    client_process.origin_de_To_Address_Street_1
-                )
-                client_process.origin_de_To_Address_Street_2 = sanitize_address(
-                    client_process.origin_de_To_Address_Street_2
-                )
-                client_process.origin_pu_pickup_instructions_address = sanitize_address(
-                    client_process.origin_pu_pickup_instructions_address
-                )
-
-                client_process.save()
-                serializer = BookingSerializer(booking)
-                return Response(serializer.data)
-            else:
-                if booking.b_booking_Category != "Salvage Expense":
-                    return JsonResponse(
-                        {
-                            "message": "Booking Category is not  Salvage Expense",
-                            "type": "Failure",
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                elif client_auto_augment is None:
-                    return JsonResponse(
-                        {
-                            "message": "This client is not set up for auto augment",
-                            "type": "Failure",
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-        except Exception as e:
+        # Apply only "Salvage Expense" category
+        if booking.b_booking_Category != "Salvage Expense":
             return JsonResponse(
-                {"type": "Failure", "message": str(e)},
+                {
+                    "message": "Booking Category is not Salvage Expense",
+                    "success": False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get client_auto_augment
+        dme_client = DME_clients.objects.filter(
+            dme_account_num=booking.kf_client_id
+        ).first()
+
+        client_auto_augment = Client_Auto_Augment.objects.filter(
+            fk_id_dme_client_id=dme_client.pk_id_dme_client,
+            de_to_companyName__icontains=booking.deToCompanyName.strip().split()[0],
+        ).first()
+
+        if not client_auto_augment:
+            return JsonResponse(
+                {
+                    "message": "This Client is not set up for auto augment",
+                    "success": False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            auto_augment_oper(booking, client_auto_augment)
+            return Response({"success": True})
+        except Exception as e:
+            logger.error(f"@207 Auto Augment - {str(e)}")
+            return JsonResponse(
+                {"success": False, "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -2338,11 +2168,9 @@ class BookingViewSet(viewsets.ViewSet):
         booking = Bookings.objects.get(pk=bookingId)
 
         try:
-            client_process = (
-                Client_Process_Mgr.objects.select_related()
-                .filter(fk_booking_id=bookingId)
-                .first()
-            )
+            client_process = Client_Process_Mgr.objects.filter(
+                fk_booking_id=bookingId
+            ).first()
             if client_process is not None:
                 booking.puCompany = client_process.origin_puCompany
                 booking.pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
@@ -2376,21 +2204,6 @@ class BookingViewSet(viewsets.ViewSet):
                 {"type": "Failure", "message": "Exception occurred"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-    @action(detail=False, methods=["get"])
-    def check_augmented(self, request, format=None):
-        bookingId = request.GET.get("bookingId")
-
-        client_process = (
-            Client_Process_Mgr.objects.select_related()
-            .filter(fk_booking_id=bookingId)
-            .first()
-        )
-
-        if client_process is not None:
-            return JsonResponse({"isAutoAugmented": True})
-        else:
-            return JsonResponse({"isAutoAugmented": False})
 
     @action(detail=False, methods=["get"])
     def get_email_logs(self, request, format=None):
@@ -2511,7 +2324,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             booking_line.delete()
             return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            # print("Exception: ", e)
+            logger.error(f"#330 - booking line delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLine"})
 
     @action(detail=False, methods=["post"])
@@ -2621,7 +2434,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             booking_line_detail.delete()
             return JsonResponse({"Deleted BookingLineDetail ": booking_line_detail})
         except Exception as e:
-            # print('Exception: ', e)
+            logger.error(f"#331 - booking lines data delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLineDetail"})
 
 
@@ -2630,9 +2443,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user_id = int(self.request.user.id)
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
@@ -2646,21 +2457,15 @@ class WarehouseViewSet(viewsets.ModelViewSet):
             queryset = clientWarehouseObject_list
             return queryset
         else:
-            client_employee = (
-                Client_employees.objects.select_related()
-                .filter(fk_id_user=user_id)
-                .first()
-            )
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
             client_employee_role = client_employee.get_role()
 
             if client_employee_role == "company":
-                clientWarehouseObject_list = (
-                    Client_warehouses.objects.select_related()
-                    .filter(
-                        fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
-                    )
-                    .order_by("client_warehouse_code")
-                )
+                clientWarehouseObject_list = Client_warehouses.objects.filter(
+                    fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
+                ).order_by("client_warehouse_code")
                 queryset = clientWarehouseObject_list
                 return queryset
             elif client_employee_role == "warehouse":
@@ -2696,9 +2501,7 @@ class BookingStatusViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_all_booking_status(self, request, pk=None):
         user_id = request.user.id
-        dme_employee = (
-            DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee is not None:
             user_type = "DME"
@@ -3393,11 +3196,7 @@ class FPStoreBookingLog(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
-        dme_employee = (
-            DME_employees.objects.select_related()
-            .filter(fk_id_user=request.user.id)
-            .first()
-        )
+        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id).first()
 
         if dme_employee is not None:
             user_type = "DME"
@@ -3774,9 +3573,7 @@ def getAttachmentsHistory(request):
 
     try:
         resultObjects = []
-        resultObjects = Dme_attachments.objects.select_related().filter(
-            fk_id_dme_booking=fk_booking_id
-        )
+        resultObjects = Dme_attachments.objects.filter(fk_id_dme_booking=fk_booking_id)
         for resultObject in resultObjects:
             # print('@bookingID', resultObject.fk_id_dme_booking.id)
             return_data.append(
@@ -3836,7 +3633,7 @@ def getSuburbs(request):
                     )
         elif requestType == "postalcode":
             stateName = request.GET.get("name")
-            resultObjects = Utl_suburbs.objects.select_related().filter(state=stateName)
+            resultObjects = Utl_suburbs.objects.filter(state=stateName)
 
             for resultObject in resultObjects:
                 if len(return_data) > 0:
@@ -3868,9 +3665,7 @@ def getSuburbs(request):
                     )
         elif requestType == "suburb":
             postalCode = request.GET.get("name")
-            resultObjects = Utl_suburbs.objects.select_related().filter(
-                postal_code=postalCode
-            )
+            resultObjects = Utl_suburbs.objects.filter(postal_code=postalCode)
 
             for resultObject in resultObjects:
                 if len(return_data) > 0:
@@ -4129,30 +3924,9 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
             return JsonResponse({"result": None}, status=400)
 
 
-class CostsViewSet(viewsets.ViewSet):
-    serializer_class = CostsSerializer
-
-    def list(self, request, pk=None):
-        queryset = FP_costs.objects.all()
-        serializer = CostsSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=["post"])
-    def add(self, request, pk=None):
-        try:
-            request.data.pop("id", None)
-            resultObject = FP_costs.objects.get_or_create(**request.data)
-
-            return JsonResponse(
-                {
-                    "result": CostsSerializer(resultObject[0]).data,
-                    "isCreated": resultObject[1],
-                },
-                status=200,
-            )
-        except Exception as e:
-            # print("@Exception", e, request.data["per_UOM_charge"])
-            return JsonResponse({"result": None}, status=400)
+class FPCostsViewSet(viewsets.ModelViewSet):
+    queryset = FP_costs.objects.all()
+    serializer_class = FPCostsSerializer
 
 
 class PricingRulesViewSet(viewsets.ViewSet):
@@ -4217,32 +3991,47 @@ class BookingSetsViewSet(viewsets.ModelViewSet):
 
 
 class ClientEmployeesViewSet(viewsets.ModelViewSet):
-    queryset = Client_employees.objects.all()
     serializer_class = ClientEmployeesSerializer
 
-    @action(detail=False, methods=["get"])
-    def get_client_employees(self, request, format=None):
-        pk_id_dme_client = self.request.query_params.get("client_id", None)
-        queryset = Client_employees.objects.filter(fk_id_dme_client=pk_id_dme_client)
-        serializer = ClientEmployeesSerializer(queryset, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        user_id = int(self.request.user.id)
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
+
+        if dme_employee:
+            client_employees = Client_employees.objects.filter(email__isnull=False)
+        else:
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
+            client_employees = Client_employees.objects.filter(
+                fk_id_dme_client_id=client.pk_id_dme_client, email__isnull=False
+            )
+
+        return client_employees.order_by("name_first")
 
 
 class ClientProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProductsSerializer
-    queryset = Client_Products.objects.all()
 
-    @action(detail=False, methods=["get"])
-    def get(self, request, format=None):
-        results = []
-        try:
-            pk_id_dme_client = self.request.query_params.get("client_id", None)
-            queryset = Client_Products.objects.filter(fk_id_dme_client=pk_id_dme_client)
-            serializer = ClientProductsSerializer(queryset, many=True)
-            return Response(serializer.data)
+    def get_queryset(self):
+        user_id = int(self.request.user.id)
+        dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
-        except Exception as e:
-            return JsonResponse({"results": ""})
+        if dme_employee:
+            client_employees = Client_employees.objects.filter(email__isnull=False)
+        else:
+            client_employee = Client_employees.objects.filter(
+                fk_id_user=user_id
+            ).first()
+            client = DME_clients.objects.filter(
+                pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
+            ).first()
+            client_products = Client_Products.objects.filter(fk_id_dme_client=client)
+
+        return client_products.order_by("id")
 
 
 class ClientRasViewSet(viewsets.ModelViewSet):
@@ -4268,7 +4057,16 @@ class ErrorViewSet(viewsets.ModelViewSet):
 
 class ClientProcessViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProcessSerializer
-    queryset = Client_Process_Mgr.objects.all()
+
+    def get_queryset(self):
+        booking_id = self.request.GET["bookingId"]
+
+        if booking_id:
+            queryset = Client_Process_Mgr.objects.filter(fk_booking_id=booking_id)
+        else:
+            queryset = Client_Process_Mgr.all()
+
+        return queryset.order_by("id")
 
 
 class AugmentAddressViewSet(viewsets.ModelViewSet):
@@ -4617,3 +4415,43 @@ class ChartsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
+
+
+class CostOptionViewSet(viewsets.ModelViewSet):
+    queryset = CostOption.objects.all().order_by("z_createdAt")
+    serializer_class = CostOptionSerializer
+
+
+class CostOptionMapViewSet(viewsets.ModelViewSet):
+    queryset = CostOptionMap.objects.all().order_by("z_createdAt")
+    serializer_class = CostOptionMapSerializer
+
+    def get_queryset(self):
+        fp_name = self.request.GET["fpName"]
+
+        if fp_name:
+            queryset = CostOptionMap.objects.prefetch_related("dme_cost_option").filter(
+                is_active=True, fp__fp_company_name__iexact=fp_name
+            )
+        else:
+            queryset = CostOptionMap.objects.prefetch_related("dme_cost_option").filter(
+                is_active=True
+            )
+
+        return queryset.order_by("z_createdAt")
+
+
+class BookingCostOptionViewSet(viewsets.ModelViewSet):
+    serializer_class = BookingCostOptionSerializer
+
+    def get_queryset(self):
+        booking_id = self.request.GET["bookingId"]
+
+        if booking_id:
+            queryset = BookingCostOption.objects.filter(
+                booking_id=booking_id, is_active=True
+            )
+        else:
+            queryset = BookingCostOption.objects.filter(is_active=True)
+
+        return queryset.order_by("z_createdAt")

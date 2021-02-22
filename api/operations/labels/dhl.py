@@ -43,6 +43,7 @@ from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import *
+from api.fp_apis.utils import gen_consignment_num
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -114,7 +115,13 @@ def get_barcode_rotated(
 
 
 def build_label(booking):
-    filename = ""
+    logger.info(
+        f"#110 [DHL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+    )
+    v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
+    )
+
     try:
         if not os.path.exists(filepath):
             os.makedirs(filepath)
@@ -709,5 +716,7 @@ def build_label(booking):
         # print("Error: unable to fecth data")
         print("Error1: " + str(e))
 
-    # print('#901 - Finished %s' % datetime.datetime.now())
+    logger.info(
+        f"#119 [DHL LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
+    )
     return filepath, filename

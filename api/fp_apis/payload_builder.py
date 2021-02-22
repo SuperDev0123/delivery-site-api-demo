@@ -232,7 +232,9 @@ def get_book_payload(booking, fp_name):
     maxHeight = 0
     maxWidth = 0
     maxLength = 0
+    first_sscc = None
     for line in booking_lines:
+        first_sscc = line.sscc
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
         length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
@@ -308,18 +310,23 @@ def get_book_payload(booking, fp_name):
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
 
-        # payload["reference1"] = (
-        #     ""
-        #     if booking.b_client_sales_inv_num is None
-        #     else booking.b_client_sales_inv_num
-        # )
         payload[
             "consignmentNoteNumber"
         ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
-        payload["reference1"] = booking.clientRefNumbers
+
+        if first_sscc:
+            payload["reference1"] = first_sscc
+        elif booking.clientRefNumbers:
+            payload["reference1"] = booking.clientRefNumbers
+        elif booking.b_client_sales_inv_num:
+            payload["reference1"] = booking.b_client_sales_inv_num
+        else:
+            payload["reference1"] = "reference1"
+
         payload["reference2"] = gen_consignment_num(
             "hunter", booking.b_bookingID_Visual
         )
+        payload["connoteFormat"] = "Thermal"  # For `Thermal` type printers
     elif fp_name == "tnt":
         payload["pickupAddressCopy"] = payload["pickupAddress"]
         payload["itemCount"] = len(items)
@@ -646,6 +653,11 @@ def get_create_label_payload(booking, fp_name):
             items.append(temp_item)
         payload["items"] = items
 
+        if fp_name == "startrack":
+            layout = "A4-1pp"
+        elif fp_name == "auspost":
+            layout = "A4-4pp"
+
         if fp_name in ["startrack", "auspost"]:
             payload["type"] = "PRINT"
             payload["labelType"] = "PRINT"
@@ -653,7 +665,7 @@ def get_create_label_payload(booking, fp_name):
                 {
                     "branded": "_CMK0E6mwiMAAAFoYvcg7Ha9",
                     "branded": False,
-                    "layout": "A4-1pp",
+                    "layout": layout,
                     "leftOffset": 0,
                     "topOffset": 0,
                     "typeOfPost": "Express Post",
@@ -701,6 +713,23 @@ def get_get_order_summary_payload(booking, fp_name):
         return None
 
 
+def get_get_accounts_payload(fp_name):
+    try:
+        payload = {}
+
+        for client_name in FP_CREDENTIALS[fp_name].keys():
+            for key in FP_CREDENTIALS[fp_name][client_name].keys():
+                detail = FP_CREDENTIALS[fp_name][client_name][key]
+                payload["spAccountDetails"] = detail
+
+        payload["serviceProvider"] = get_service_provider(fp_name)
+
+        return payload
+    except Exception as e:
+        # print(f"#405 - Error while build payload: {e}")
+        return None
+
+
 def get_pod_payload(booking, fp_name):
     try:
         payload = {}
@@ -737,7 +766,13 @@ def get_reprint_payload(booking, fp_name):
         return None
 
 
-def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
+def get_pricing_payload(
+    booking,
+    fp_name,
+    account_detail,
+    booking_lines=None,
+    service_code=None,
+):
     payload = {}
 
     if hasattr(booking, "client_warehouse_code"):
@@ -884,7 +919,7 @@ def get_pricing_payload(booking, fp_name, account_detail, booking_lines=None):
                 item["itemId"] = "EXP"
                 item["packagingType"] = "CTN"
             elif fp_name == "auspost":
-                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+                item["itemId"] = service_code
             elif fp_name == "hunter":
                 item["packagingType"] = "PAL"
             elif fp_name == "tnt":

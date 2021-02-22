@@ -7,7 +7,7 @@ from api.operations import product_operations as product_oper
 logger = logging.getLogger("dme_api")
 
 
-def _get_bok_1_modifications(old_bok_1, bok_1):
+def _get_bok_1_modifications(client, old_bok_1, bok_1):
     result = {}
 
     if (
@@ -239,7 +239,7 @@ def _get_bok_1_modifications(old_bok_1, bok_1):
     return result
 
 
-def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
+def _get_bok_2s_3s_modifications(client, old_bok_2s, old_bok_3s, bok_2s):
     result = {"added": [], "modified": [], "deleted": []}
 
     # Get New
@@ -439,9 +439,9 @@ def _get_bok_2s_3s_modifications(old_bok_2s, old_bok_3s, bok_2s):
     return result
 
 
-def _get_bok_2s_3s_modifications_4_plum(old_bok_2s, bok_2s):
+def _get_bok_2s_3s_modifications_4_plum(client, old_bok_2s, bok_2s):
     result = {"added": [], "modified": [], "deleted": []}
-    items = product_oper.get_product_items(bok_2s)
+    items = product_oper.get_product_items(bok_2s, client)
 
     _bok_2s = []
     for index, item in enumerate(items):
@@ -512,13 +512,13 @@ def _get_bok_2s_3s_modifications_4_plum(old_bok_2s, bok_2s):
     return result
 
 
-def detect_modified_data(client_name, old_bok_1, old_bok_2s, old_bok_3s, new_data):
+def detect_modified_data(client, old_bok_1, old_bok_2s, old_bok_3s, new_data):
     _modified_data = {}
     bok_1 = new_data["booking"]
     bok_2s = new_data["booking_lines"]
 
     # bok_1
-    _modified_data["booking"] = _get_bok_1_modifications(old_bok_1, bok_1)
+    _modified_data["booking"] = _get_bok_1_modifications(client, old_bok_1, bok_1)
 
     if not _modified_data["booking"]:
         del _modified_data["booking"]
@@ -526,11 +526,11 @@ def detect_modified_data(client_name, old_bok_1, old_bok_2s, old_bok_3s, new_dat
     # bok_2
     if "model_number" in bok_2s[0]:  # Product & Child items
         _modified_data["booking_lines"] = _get_bok_2s_3s_modifications_4_plum(
-            old_bok_2s, bok_2s
+            client, old_bok_2s, bok_2s
         )
     else:
         _modified_data["booking_lines"] = _get_bok_2s_3s_modifications(
-            old_bok_2s, old_bok_3s, bok_2s
+            client, old_bok_2s, old_bok_3s, bok_2s
         )
 
     if not _modified_data["booking_lines"]["added"]:

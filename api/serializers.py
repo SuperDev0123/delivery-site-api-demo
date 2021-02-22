@@ -34,6 +34,9 @@ from api.models import (
     DME_Augment_Address,
     DME_Roles,
     DME_clients,
+    CostOption,
+    CostOptionMap,
+    BookingCostOption,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -50,7 +53,7 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
         model = Client_warehouses
         fields = (
             "pk_id_client_warehouses",
-            "warehousename",
+            "name",
             "client_warehouse_code",
             "client_company_name",
         )
@@ -134,6 +137,7 @@ class BookingSerializer(serializers.ModelSerializer):
     pricing_cost = serializers.SerializerMethodField(read_only=True)
     pricing_service_name = serializers.SerializerMethodField(read_only=True)
     pricing_account_code = serializers.SerializerMethodField(read_only=True)
+    is_auto_augmented = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -162,6 +166,14 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return None
 
+    def get_is_auto_augmented(self, obj):
+        cl_proc = Client_Process_Mgr.objects.filter(fk_booking_id=obj.pk).first()
+
+        if cl_proc:
+            return True
+
+        return False
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -175,6 +187,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "client_item_references",  # property
             "clientRefNumbers",  # property
             "gap_ras",  # property
+            "is_auto_augmented",  # Auto Augmented
         )
         fields = read_only_fields + (
             "id",
@@ -438,10 +451,17 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.pk
 
     def get_cost(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", None)
+
         if obj.tax_value_1:
-            return dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
+            _cost = dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
         else:
-            return dme_math.ceil(obj.client_mu_1_minimum_values, 2)
+            _cost = dme_math.ceil(obj.client_mu_1_minimum_values, 2)
+
+        if client_customer_mark_up:
+            _cost = round(_cost * (1 + client_customer_mark_up), 2)
+
+        return _cost
 
     def get_eta(self, obj):
         return obj.etd
@@ -526,7 +546,7 @@ class AvailabilitiesSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CostsSerializer(serializers.ModelSerializer):
+class FPCostsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_costs
         fields = "__all__"
@@ -560,7 +580,7 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
             warehouse = Client_warehouses.objects.get(
                 pk_id_client_warehouses=instance.warehouse_id + 1
             )
-            return warehouse.warehousename
+            return warehouse.name
 
         return None
 
@@ -646,3 +666,38 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_clients
         fields = "__all__"
+
+
+class CostOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CostOption
+        fields = ("id", "code", "description", "initial_markup_percentage")
+
+
+class CostOptionMapSerializer(serializers.ModelSerializer):
+    cost_option = serializers.SerializerMethodField(read_only=True)
+
+    def get_cost_option(self, obj):
+        return CostOptionSerializer(obj.dme_cost_option).data
+
+    class Meta:
+        model = CostOptionMap
+        exclude = (
+            "z_createdBy",
+            "z_modifiedAt",
+            "z_modifiedBy",
+            "fp",
+            "dme_cost_option",
+            "is_active",
+        )
+
+
+class BookingCostOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingCostOption
+        exclude = (
+            "z_createdBy",
+            "z_modifiedAt",
+            "z_modifiedBy",
+            "is_active",
+        )

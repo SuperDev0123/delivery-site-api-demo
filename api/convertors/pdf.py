@@ -38,11 +38,11 @@ def pdf_to_zpl(pdf_path, zpl_path):
             f = open(zpl_path, "w")
 
             for grf in pages:
-                f.write(grf.to_zpl(compression=2, quantity=1))
+                f.write(grf.to_zpl(compression=2, quantity=1, print_mode="T"))
 
             f.close()
             return True
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
-        send_mail("PDF covertion error", error_msg)
+        send_email_to_admins("PDF covertion error", error_msg)
         return False

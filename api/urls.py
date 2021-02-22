@@ -30,7 +30,7 @@ router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
 router.register(r"vehicles", VehiclesViewSet, basename="vehicles")
 router.register(r"availabilities", AvailabilitiesViewSet, basename="availabilities")
-router.register(r"costs", CostsViewSet, basename="costs")
+router.register(r"fp-cost", FPCostsViewSet, basename="fp_cost")
 router.register(r"pricing_rules", PricingRulesViewSet, basename="pricing_rules")
 
 router.register(
@@ -53,6 +53,12 @@ router.register(
 )
 router.register(r"clients", ClientViewSet, basename="clients")
 router.register(r"roles", RoleViewSet, basename="roles")
+router.register(r"cost-option", CostOptionViewSet, basename="cost_option")
+router.register(r"cost-option-map", CostOptionMapViewSet, basename="cost_option_map")
+router.register(
+    r"booking-cost-option", BookingCostOptionViewSet, basename="booking_cost_option"
+)
+
 
 urlpatterns = router.urls
 
@@ -101,6 +107,7 @@ urlpatterns += [
     url(r"^fp-api/(?P<fp_name>[^/]+)/cancel-book/", fp_apis.cancel_book),
     url(r"^fp-api/(?P<fp_name>[^/]+)/create-order/", fp_apis.create_order),
     url(r"^fp-api/(?P<fp_name>[^/]+)/get-order-summary/", fp_apis.get_order_summary),
+    url(r"^fp-api/(?P<fp_name>[^/]+)/update-service-code/", fp_apis.update_servce_code),
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
