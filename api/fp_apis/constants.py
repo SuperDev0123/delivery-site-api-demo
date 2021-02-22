@@ -102,12 +102,12 @@ FP_CREDENTIALS = {
                 "accountCode": "APITEST",
                 "accountKey": "55010|XXLFNZRLPW",
                 "accountPassword": "",
-            }
+            },
             "test_bed_2": {
                 "accountCode": "DUMMY",
                 "accountKey": "aHh3czpoeHdz",
                 "accountPassword": "hxws",
-            }
+            },
         },
         "dme": {
             "live_1": {
