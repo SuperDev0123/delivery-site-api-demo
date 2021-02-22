@@ -85,7 +85,7 @@ def book(fp_name, booking, booker):
             elif booking.vx_freight_provider.lower() == "hunter":
                 booking.v_FPBookingNumber = json_data["consignmentNumber"]
                 booking.jobNumber = json_data["jobNumber"]
-                booking.jobDate = json_data["jobDate"]
+                # booking.jobDate = json_data["jobDate"]
             elif booking.vx_freight_provider.lower() == "tnt":
                 booking.v_FPBookingNumber = (
                     f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
@@ -114,28 +114,43 @@ def book(fp_name, booking, booker):
             # Create new statusHistory
             status_history.create(booking, "Booked", booker)
 
-            # Save Label for Hunter
+            # Save Label & POD for Hunter
             create_dir(f"{S3_URL}/pdfs/{_fp_name}_au")
             if _fp_name == "hunter":
-                json_label_data = json.loads(response.content)
-                file_name = (
-                    f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
-                )
+                json_data = json.loads(response.content)
+                file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
                 with open(full_path, "wb") as f:
-                    f.write(base64.b64decode(json_label_data["shippingLabel"]))
+                    f.write(base64.b64decode(json_data["shippingLabel"]))
                     f.close()
-                    booking.z_label_url = f"{_fp_name}_au/{file_name}"
-                    booking.save()
 
-                    # Send email when GET_LABEL
-                    email_template_name = "General Booking"
+                booking.z_label_url = f"{_fp_name}_au/{file_name}"
+                booking.save()
 
-                    if booking.b_booking_Category == "Salvage Expense":
-                        email_template_name = "Return Booking"
+                pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pod_file_name}"
 
-                    send_booking_status_email(booking.pk, email_template_name, booker)
+                with open(full_path, "wb") as f:
+                    f.write(base64.b64decode(json_data["podImage"]))
+                    f.close()
+
+                booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
+                booking.save()
+
+                # Send email when GET_LABEL
+                email_template_name = "General Booking"
+
+                if booking.b_booking_Category == "Salvage Expense":
+                    email_template_name = "Return Booking"
+
+                send_booking_status_email(booking.pk, email_template_name, booker)
+
+                # POD Email
+                if booking.b_send_POD_eMail:
+                    email_template_name = "POD"
+
+                send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Capital
             elif _fp_name == "capital":
                 json_label_data = json.loads(response.content)

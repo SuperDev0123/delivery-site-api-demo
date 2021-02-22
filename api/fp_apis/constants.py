@@ -97,26 +97,22 @@ FP_CREDENTIALS = {
         },
     },
     "hunter": {
-# <<<<<<< HEAD
-#         "test_bed_1": {"accountKey": "55010|XXLFNZRLPW", "accountPassword": ""},
-#         "live_0": {"accountKey": "55010|XXLFNZRLPW", "accountPassword": ""},
-# =======
         "test": {
             "test_bed_1": {
                 "accountCode": "APITEST",
-                "accountKey": "55010|XXLFNZRLPW", 
-                "accountPassword": ""
+                "accountKey": "55010|XXLFNZRLPW",
+                "accountPassword": "",
             }
         },
         "dme": {
             "live_0": {
                 "accountCode": "APITEST",
-               "accountKey": "55010|XXLFNZRLPW", 
-               "accountPassword": ""
+                "accountKey": "55010|XXLFNZRLPW",
+                "accountPassword": "",
             },
             "live_1": {
                 "accountCode": "DEMELP",
-                "accountKey": "55010|XXLFNZRLPW", 
+                "accountKey": "55010|XXLFNZRLPW",
                 "accountPassword": "deliver",
             },
             "live_3": {
@@ -126,7 +122,7 @@ FP_CREDENTIALS = {
             },
             "live_4": {
                 "accountCode": "DMEPAL",
-                "accountKey": "55010|XXLFNZRLPW", 
+                "accountKey": "55010|XXLFNZRLPW",
                 "accountPassword": "deliver",
             },
             "live_5": {
