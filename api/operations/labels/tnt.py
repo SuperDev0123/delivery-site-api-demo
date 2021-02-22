@@ -286,7 +286,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
     )
 
     for booking_line in lines:
-        for j_index in range(line.e_qty):
+        for j_index in range(booking_line.e_qty):
             logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
             tbl_data1 = [
                 [
