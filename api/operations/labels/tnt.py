@@ -1122,17 +1122,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             barcode = gen_barcode(booking, lines, 0, label_index)
 
-            tbl_data = [
-                [
-                    code128.Code128(
-                        barcode,
-                        barHeight=float(label_settings["barcode_dimension_height"])
-                        * mm,
-                        barWidth=float(label_settings["barcode_dimension_width"]) * mm,
-                        humanReadable=False,
-                    )
-                ],
-            ]
+            tbl_data = [[code128.Code128(barcode)]]
 
             t1 = Table(
                 tbl_data,
