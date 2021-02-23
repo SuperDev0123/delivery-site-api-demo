@@ -1126,8 +1126,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 [
                     code128.Code128(
                         barcode,
-                        barHeight=barcode_dimension_height * mm,
-                        barWidth=barcode_dimension_width * mm,
+                        barHeight=float(label_settings["barcode_dimension_height"])
+                        * mm,
+                        barWidth=float(label_settings["barcode_dimension_width"]) * mm,
                         humanReadable=False,
                     )
                 ],
