@@ -61,7 +61,7 @@ def _get_actual_timestamp(fp_name, consignmentStatuses, type):
 
 
 def update_booking_with_tracking_result(request, booking, fp_name, consignmentStatuses):
-    if not booking.z_lock_status:
+    if booking.z_lock_status:
         msg = f"#380 [TRACKING] Locked Booking: {booking.b_bookingID_Visual}({fp_name})"
         logger.info(msg)
         return True
