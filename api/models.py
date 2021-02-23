@@ -1778,15 +1778,15 @@ class Bookings(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     delivery_booking = models.DateField(default=None, blank=True, null=True)
-    de_to_assembly_required = models.BooleanField(default=False, null=True)
-    de_to_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
-    )
-    de_to_floor_number = models.IntegerField(default=0, null=True)
-    de_to_floor_access_by = models.CharField(
-        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
-    )
-    de_to_sufficient_space = models.BooleanField(default=True, null=True)
+    # de_to_assembly_required = models.BooleanField(default=False, null=True)
+    # de_to_location = models.CharField(
+    #     max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+    # )
+    # de_to_floor_number = models.IntegerField(default=0, null=True)
+    # de_to_floor_access_by = models.CharField(
+    #     max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    # )
+    # de_to_sufficient_space = models.BooleanField(default=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"

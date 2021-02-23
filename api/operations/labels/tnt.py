@@ -1226,44 +1226,15 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ],
             )
 
-            tbl_data2 = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_extra_large"],
-                            booking.vx_freight_provider or "",
-                        ),
-                        style_center,
-                    )
-                ]
-            ]
-
-            t2 = Table(
-                tbl_data2,
-                colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-                ),
-                rowHeights=(float(label_settings["line_height_medium"]) * mm),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
-            )
             barcode = str(j).zfill(2)
 
-            data = [[t1, t2]]
+            data = [[t1]]
 
-            t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+            t1_w = float(label_settings["label_image_size_length"]) * mm
 
             shell_table = Table(
                 data,
-                colWidths=[t1_w, t2_w],
+                colWidths=[t1_w],
                 style=[
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
