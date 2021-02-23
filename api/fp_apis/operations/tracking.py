@@ -64,10 +64,12 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     if not booking.z_lock_status:
         msg = f"#380 [TRACKING] Locked Booking: {booking.b_bookingID_Visual}({fp_name})"
         logger.info(msg)
+        return True
 
     if not consignmentStatuses:
         msg = f"#381 [TRACKING] No statuses: {booking.b_bookingID_Visual}({fp_name})"
         logger.info(msg)
+        return False
 
     # Get actual_pickup_timestamp
     if not booking.s_20_Actual_Pickup_TimeStamp:
