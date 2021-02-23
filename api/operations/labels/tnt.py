@@ -139,7 +139,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "label_image_size_length": "85",
         "label_image_size_width": "130",
         "barcode_dimension_height": "33",
-        "barcode_dimension_width": "75",
+        "barcode_dimension_width": "0.75",
         "barcode_font_size": "18",
         "line_height_extra_small": "3",
         "line_height_small": "5",
