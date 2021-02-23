@@ -1005,11 +1005,11 @@ def push_boks(request):
     logger.info(f"@880 [PUSH] payload - [{request.method}] {boks_json}")
 
     # Required fields
-    if not bok_1.get("b_057_b_del_address_state"):
-        message = "Delivery to state is required."
+    # if not bok_1.get("b_057_b_del_address_state"):
+    #     message = "Delivery to state is required."
 
-    if not bok_1.get("b_058_b_del_address_suburb"):
-        message = "Delivery to suburb is required."
+    # if not bok_1.get("b_058_b_del_address_suburb"):
+    #     message = "Delivery to suburb is required."
 
     if not bok_1.get("b_059_b_del_address_postalcode"):
         message = "Delivery to postal code is required."
@@ -1170,14 +1170,6 @@ def push_boks(request):
     if request.method == "PUT":
         if client_name in ["Plum Products Australia Ltd", "Jason L"]:
             pk_header_id = None
-
-            # if not bok_1.get("b_058_b_del_address_suburb"):
-            #     message = "'b_058_b_del_address_suburb' is required."
-            #     raise ValidationError({"code": "missing_param", "message": message})
-
-            # if not bok_1.get("b_057_b_del_address_state"):
-            #     message = "'b_057_b_del_address_state' is required."
-            #     raise ValidationError({"code": "missing_param", "message": message})
 
             if "_sapb1" in username or "_bizsys" in username:
                 old_bok_1s = BOK_1_headers.objects.filter(
@@ -1353,28 +1345,28 @@ def push_boks(request):
                 )[:10]
 
             # Find `Suburb` and `State`
-            # if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
-            #     "b_058_b_del_address_suburb"
-            # ):
-            #     logger.info(f"@870 PUSH API - auto populating state and subrub...")
-            #     de_postal_code = bok_1["b_059_b_del_address_postalcode"]
-            #     addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
+            if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
+                "b_058_b_del_address_suburb"
+            ):
+                logger.info(f"@870 [PUSH] - auto populating state and subrub...")
+                de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+                addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
-            #     if not addresses.exists():
-            #         message = "Delivery PostalCode is not valid."
-            #         return Response(
-            #             {"success": False, "message": message},
-            #             status=status.HTTP_400_BAD_REQUEST,
-            #         )
-            #     else:
-            #         de_suburb = addresses[0].suburb
-            #         de_state = addresses[0].state
+                if not addresses.exists():
+                    message = "Delivery PostalCode is not valid."
+                    return Response(
+                        {"success": False, "message": message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    de_suburb = addresses[0].suburb
+                    de_state = addresses[0].state
 
-            #     if not bok_1.get("b_057_b_del_address_state"):
-            #         bok_1["b_057_b_del_address_state"] = de_state
+                if not bok_1.get("b_057_b_del_address_state"):
+                    bok_1["b_057_b_del_address_state"] = de_state
 
-            #     if not bok_1.get("b_058_b_del_address_suburb"):
-            #         bok_1["b_058_b_del_address_suburb"] = de_suburb
+                if not bok_1.get("b_058_b_del_address_suburb"):
+                    bok_1["b_058_b_del_address_suburb"] = de_suburb
 
             bok_1["b_057_b_del_address_state"] = bok_1[
                 "b_057_b_del_address_state"
