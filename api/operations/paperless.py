@@ -204,7 +204,13 @@ def send_order_info(bok_1):
             "content-type": "text/xml",
             "soapaction": "http://www.paperless-warehousing.com/ACR/SalesOrderToWMS",
         }
-        url = "http://automation.acrsupplypartners.com.au:33380/SalesOrderToWMS"  # Should move to env
+
+        if settings.ENV == "prod":
+            port = "32380"
+        else:
+            port = "33380"
+
+        url = f"http://automation.acrsupplypartners.com.au:{port}/SalesOrderToWMS"
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
         subject = "Error on Paperless workflow"
         to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
