@@ -371,7 +371,10 @@ def get_book_payload(booking, fp_name):
             payload["serviceCode"] = "75"
         elif booking.api_booking_quote.service_name == "Road Express":
             payload["serviceCode"] = "76"
-        elif booking.api_booking_quote.service_name == "Technology - Sensitive Express":
+        elif (
+            booking.api_booking_quote.service_name
+            == "Technology Express - Sensitive Express"
+        ):
             payload["serviceCode"] = "717B"
         elif booking.api_booking_quote.service_name == "Fashion Express – Carton":
             payload["serviceCode"] = "718"
