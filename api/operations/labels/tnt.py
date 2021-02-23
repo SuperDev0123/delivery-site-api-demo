@@ -285,6 +285,10 @@ def build_label(booking, filepath, lines=[], label_index=0):
         f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
     )
 
+    e_Total_KG_weight = 0
+    for booking_line in lines:
+        e_Total_KG_weight += booking_line.e_Total_KG_weight
+
     for booking_line in lines:
         for j_index in range(booking_line.e_qty):
             logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
@@ -479,9 +483,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_dateBookedDate.strftime("%d-%m-%Y")
-                            if booking.b_dateBookedDate
-                            else "N/A",
+                            datetime.datetime.now().strftime("%d-%m-%Y")
                         ),
                         style_left,
                     ),
@@ -1064,7 +1066,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         "<font size=%s><b>Con Note Wt.: %s %s.</b></font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking_line.e_Total_KG_weight or "",
+                            e_Total_KG_weight or "",
                             booking_line.e_weightUOM or "KG",
                         ),
                         style_left,
