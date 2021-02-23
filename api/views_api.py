@@ -415,7 +415,7 @@ def scanned(request):
         message = "'CustomerName' is required."
 
     if message:
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     # Check if Order exists on Bookings table
     booking = (
@@ -429,7 +429,7 @@ def scanned(request):
         message = (
             "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
         )
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     # If Order exists
     pk_booking_id = booking.pk_booking_id
@@ -461,9 +461,7 @@ def scanned(request):
         if not "sscc" in picked_item:
             code = "missing_param"
             message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
-            raise ValidationError(
-                {"success": False, "code": code, "description": message}
-            )
+            raise ValidationError({"success": False, "code": code, "message": message})
 
         # Check if sscc is invalid (except Hunter Orders)
         if (
@@ -498,13 +496,13 @@ def scanned(request):
                         code = "missing_param"
                         message = f"Qty is required. Invalid item: {json.dumps(item)}"
                         raise ValidationError(
-                            {"success": False, "code": code, "description": message}
+                            {"success": False, "code": code, "message": message}
                         )
                     elif "qty" in item and not item["qty"]:
                         code = "invalid_param"
                         message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
                         raise ValidationError(
-                            {"success": False, "code": code, "description": message}
+                            {"success": False, "code": code, "message": message}
                         )
 
                 # Accumulate invalid_model_numbers
@@ -525,7 +523,7 @@ def scanned(request):
                     code = "invalid_repacked_item"
                     message = f"Can not repack 'model_number' and 'sscc'."
                     raise ValidationError(
-                        {"success": False, "code": code, "description": message}
+                        {"success": False, "code": code, "message": message}
                     )
 
                 # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
@@ -533,31 +531,29 @@ def scanned(request):
                     code = "invalid_repacked_item"
                     message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
                     raise ValidationError(
-                        {"success": False, "code": code, "description": message}
+                        {"success": False, "code": code, "message": message}
                     )
         else:
             code = "invalid_item"
             message = f"There is an invalid item: {json.dumps(picked_item)}"
-            raise ValidationError(
-                {"success": False, "code": code, "description": message}
-            )
+            raise ValidationError({"success": False, "code": code, "message": message})
 
     if duplicated_sscc_list:
         code = "duplicated_sscc"
         message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     if invalid_sscc_list:
         code = "invalid_sscc"
         message = (
             f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
         )
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     if invalid_model_numbers:
         code = "invalid_param"
         message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     # Check over picked items
     over_picked_items = []
@@ -610,7 +606,7 @@ def scanned(request):
         )
         code = "over_picked"
         message = f"There are over picked items: {', '.join(over_picked_items)}"
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     # Hunter order should be scanned fully always(at first scan)
     if fp_name == "hunter" and not is_picked_all:
@@ -619,7 +615,7 @@ def scanned(request):
         )
         code = "invalid_request"
         message = f"Hunter Order should be fully picked."
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     # Save
     try:
@@ -666,12 +662,12 @@ def scanned(request):
 
                     if repack_type == "model_number":
                         line_data.modelNumber = item["model_number"]
-                        line_data.itemDescription = "Picked at warehouse"
+                        line_data.itemmessage = "Picked at warehouse"
                         line_data.quantity = item["qty"]
                         line_data.clientRefNumber = picked_item["sscc"]
                     else:
                         line_data.modelNumber = item["sscc"]
-                        line_data.itemDescription = "Repacked at warehouse"
+                        line_data.itemmessage = "Repacked at warehouse"
                         line_data.clientRefNumber = picked_item["sscc"]
 
                     line_data.save()
@@ -703,9 +699,9 @@ def scanned(request):
 
                     if not result:
                         code = "unknown_status"
-                        description = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
                         raise Exception(
-                            {"success": False, "code": code, "description": description}
+                            {"success": False, "code": code, "message": message}
                         )
 
                     with open(label_url[:-4] + ".zpl", "rb") as zpl:
@@ -777,21 +773,19 @@ def scanned(request):
                     f"#374 [SCANNED] - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
                 )
                 code = "unknown_status"
-                description = (
+                message = (
                     "Please contact DME support center. <bookings@deliver-me.com.au>"
                 )
-                return Response(
-                    {"success": False, "code": code, "description": description}
-                )
+                return Response({"success": False, "code": code, "message": message})
             else:
                 label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
                 if not result:
                     code = "unknown_status"
-                    description = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                    message = "Please contact DME support center. <bookings@deliver-me.com.au>"
                     raise Exception(
-                        {"success": False, "code": code, "description": description}
+                        {"success": False, "code": code, "message": message}
                     )
 
                 with open(label_url[:-4] + ".zpl", "rb") as zpl:
@@ -863,7 +857,7 @@ def ready_boks(request):
         message = "'CustomerName' is required."
 
     if message:
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     # Check if Order exists
     booking = (
@@ -877,7 +871,7 @@ def ready_boks(request):
         message = (
             "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
         )
-        raise ValidationError({"success": False, "code": code, "description": message})
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     if not is_ready:
         return Response(
@@ -911,8 +905,8 @@ def ready_boks(request):
     # Check if already ready
     if booking.b_status not in ["Picking", "Ready for Booking"]:
         code = "invalid_request"
-        description = "Order is already Ready."
-        return Response({"success": False, "code": code, "description": description})
+        message = "Order is already Ready."
+        return Response({"success": False, "code": code, "message": message})
 
     # If NOT
     pk_booking_id = booking.pk_booking_id
@@ -999,7 +993,7 @@ def push_boks(request):
     """
     user = request.user
     username = user.username
-    logger.info(f"@879 Pusher: {username}")
+    logger.info(f"@879 [PUSH] Pusher: {username}")
     boks_json = request.data
     bok_1 = boks_json["booking"]
     bok_2s = boks_json["booking_lines"]
@@ -1008,14 +1002,20 @@ def push_boks(request):
     old_quote = None
     best_quotes = None
     json_results = []
-    logger.info(f"@880 Push request - [{request.method}] {boks_json}")
+    logger.info(f"@880 [PUSH] payload - [{request.method}] {boks_json}")
 
     # Required fields
+    if not bok_1.get("b_057_b_del_address_state"):
+        message = "Delivery to state is required."
+
+    if not bok_1.get("b_058_b_del_address_suburb"):
+        message = "Delivery to suburb is required."
+
     if not bok_1.get("b_059_b_del_address_postalcode"):
-        message = "'b_059_b_del_address_postalcode' is required."
+        message = "Delivery to postal code is required."
 
     if message:
-        res_json = {"success": False, "code": "missing_param", "description": message}
+        res_json = {"success": False, "code": "missing_param", "message": message}
         raise ValidationError(res_json)
 
     # Find `Client`
@@ -1023,11 +1023,11 @@ def push_boks(request):
         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
         client = client_employee.fk_id_dme_client
         client_name = client.company_name
-        logger.info(f"@810 - client: {client_name}")
+        logger.info(f"@810 [PUSH] client: {client_name}")
     except Exception as e:
         trace_error()
-        logger.info(f"@811 - client_employee does not exist, {str(e)}")
-        message = "You are not allowed to use this api-endpoint."
+        logger.info(f"@811 [PUSH] client_employee does not exist, {str(e)}")
+        message = "Permission denied."
         logger.info(message)
         res_json = {"success": False, "message": message}
         return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
@@ -1041,7 +1041,7 @@ def push_boks(request):
                 {
                     "success": False,
                     "results": [],
-                    "message": f"Wrong model numbers - {', '.join(missing_model_numbers)}",
+                    "message": f"System is missing model number - {', '.join(missing_model_numbers)}",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -1052,18 +1052,20 @@ def push_boks(request):
     ):
         if not bok_1.get("shipping_type"):
             message = "'shipping_type' is required."
+            logger.info(f"[PUSH] {message}")
             raise ValidationError(
-                {"success": False, "code": "missing_param", "description": message}
+                {"success": False, "code": "missing_param", "message": message}
             )
         elif len(bok_1.get("shipping_type")) != 4:
             message = "'shipping_type' is not valid."
+            logger.info(f"[PUSH] {message}")
             raise ValidationError(
-                {"success": False, "code": "invalid_param", "description": message}
+                {"success": False, "code": "invalid_param", "message": message}
             )
 
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
-            logger.info(message)
+            logger.info(f"[PUSH] {message}")
             return Response(
                 {"success": False, "code": "missing_param", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1073,7 +1075,7 @@ def push_boks(request):
     ):
         if not bok_1.get("client_booking_id"):
             message = "'client_booking_id' is required."
-            logger.info(message)
+            logger.info(f"@812 [PUSH] {message}")
             return Response(
                 {"success": False, "code": "missing_param", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1157,8 +1159,8 @@ def push_boks(request):
                 client_warehouse_code=bok_1["b_client_warehouse_code"]
             )
     except Exception as e:
-        message = f"@821 Client doesn't have Warehouse(s): {str(e)}"
-        logger.info(message)
+        logger.info(f"@812 [PUSH] Client doesn't have Warehouse(s): {client}")
+        message = "Issues with warehouse assignment."
         return JsonResponse(
             {"success": False, "message": message},
             status=status.HTTP_400_BAD_REQUEST,
@@ -1171,11 +1173,11 @@ def push_boks(request):
 
             # if not bok_1.get("b_058_b_del_address_suburb"):
             #     message = "'b_058_b_del_address_suburb' is required."
-            #     raise ValidationError({"code": "missing_param", "description": message})
+            #     raise ValidationError({"code": "missing_param", "message": message})
 
             # if not bok_1.get("b_057_b_del_address_state"):
             #     message = "'b_057_b_del_address_state' is required."
-            #     raise ValidationError({"code": "missing_param", "description": message})
+            #     raise ValidationError({"code": "missing_param", "message": message})
 
             if "_sapb1" in username or "_bizsys" in username:
                 old_bok_1s = BOK_1_headers.objects.filter(
@@ -1197,7 +1199,11 @@ def push_boks(request):
                             message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
                             logger.info(f"@870 {message}")
                             return JsonResponse(
-                                {"success": False, "message": message},
+                                {
+                                    "success": False,
+                                    "code": "invalid_request",
+                                    "message": message,
+                                },
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
                 else:
@@ -1211,7 +1217,11 @@ def push_boks(request):
                     message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does not exist."
                     logger.info(f"@884 {message}")
                     return JsonResponse(
-                        {"success": False, "message": message},
+                        {
+                            "success": False,
+                            "code": "invalid_request",
+                            "message": message,
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 else:
@@ -1269,7 +1279,7 @@ def push_boks(request):
                     message = f"BOKS API Error - Object(client_booking_id={bok_1['client_booking_id']}) does already exist."
 
         if message:
-            logger.info(f"@884 {message}")
+            logger.info(f"@884 [PUSH] {message}")
             return JsonResponse(
                 {"success": False, "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1343,28 +1353,28 @@ def push_boks(request):
                 )[:10]
 
             # Find `Suburb` and `State`
-            if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
-                "b_058_b_del_address_suburb"
-            ):
-                logger.info(f"@870 PUSH API - auto populating state and subrub...")
-                de_postal_code = bok_1["b_059_b_del_address_postalcode"]
-                addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
+            # if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
+            #     "b_058_b_del_address_suburb"
+            # ):
+            #     logger.info(f"@870 PUSH API - auto populating state and subrub...")
+            #     de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+            #     addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
-                if not addresses.exists():
-                    message = "Delivery PostalCode is not valid."
-                    return Response(
-                        {"success": False, "message": message},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                else:
-                    de_suburb = addresses[0].suburb
-                    de_state = addresses[0].state
+            #     if not addresses.exists():
+            #         message = "Delivery PostalCode is not valid."
+            #         return Response(
+            #             {"success": False, "message": message},
+            #             status=status.HTTP_400_BAD_REQUEST,
+            #         )
+            #     else:
+            #         de_suburb = addresses[0].suburb
+            #         de_state = addresses[0].state
 
-                if not bok_1.get("b_057_b_del_address_state"):
-                    bok_1["b_057_b_del_address_state"] = de_state
+            #     if not bok_1.get("b_057_b_del_address_state"):
+            #         bok_1["b_057_b_del_address_state"] = de_state
 
-                if not bok_1.get("b_058_b_del_address_suburb"):
-                    bok_1["b_058_b_del_address_suburb"] = de_suburb
+            #     if not bok_1.get("b_058_b_del_address_suburb"):
+            #         bok_1["b_058_b_del_address_suburb"] = de_suburb
 
             bok_1["b_057_b_del_address_state"] = bok_1[
                 "b_057_b_del_address_state"
@@ -1411,7 +1421,7 @@ def push_boks(request):
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
         if not bok_1_serializer.is_valid():
-            logger.info(f"@8821 BOKS API Error - {bok_1_serializer.errors}")
+            logger.info(f"@8821 [PUSH] BOKS API Error - {bok_1_serializer.errors}")
             return Response(
                 {"success": False, "message": bok_1_serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1451,7 +1461,9 @@ def push_boks(request):
                 if bok_2_serializer.is_valid():
                     bok_2_serializer.save()
                 else:
-                    logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                    logger.info(
+                        f"@8822 [PUSH] BOKS API Error - {bok_2_serializer.errors}"
+                    )
                     return Response(
                         {"success": False, "message": bok_2_serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -1476,7 +1488,9 @@ def push_boks(request):
                 if bok_2_serializer.is_valid():
                     bok_2_serializer.save()
                 else:
-                    logger.info(f"@8822 BOKS API Error - {bok_2_serializer.errors}")
+                    logger.info(
+                        f"@8822 [PUSH] BOKS API Error - {bok_2_serializer.errors}"
+                    )
                     return Response(
                         {"success": False, "message": bok_2_serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST,
@@ -1499,7 +1513,7 @@ def push_boks(request):
                             bok_3_serializer.save()
                         else:
                             logger.info(
-                                f"@8823 BOKS API Error - {bok_3_serializer.errors}"
+                                f"@8823 [PUSH] BOKS API Error - {bok_3_serializer.errors}"
                             )
                             return Response(
                                 {
@@ -1579,7 +1593,7 @@ def push_boks(request):
                 is_pricing_only=True,
             )
             logger.info(
-                f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+                f"#519 [PUSH] Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
             )
 
             # Select best quotes(fastest, lowest)
@@ -1628,7 +1642,7 @@ def push_boks(request):
                                 "eta"
                             ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
             else:
-                message = f"#521 No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
+                message = f"#521 [PUSH] No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
                 logger.error(message)
                 send_email_to_admins("No FC result", message)
 
@@ -1676,30 +1690,32 @@ def push_boks(request):
                     )
             else:
                 logger.info(
-                    f"@8839 - success: False, message: Didn't get pricings due to wrong suburb and state"
+                    f"@8839 [PUSH] success: False, message: Pricing cannot be returned due to incorrect address information."
                 )
                 return JsonResponse(
                     {
                         "success": False,
                         "results": json_results,
-                        "message": "Didn't get pricings due to wrong suburb and state",
+                        "message": "Pricing cannot be returned due to incorrect address information.",
                     },
                     status=status.HTTP_201_CREATED,
                 )
         else:
             return JsonResponse({"success": True}, status=status.HTTP_201_CREATED)
     except Exception as e:
-        logger.info(f"@889 BOKS API Error - {e}")
+        logger.info(f"@889 [PUSH] BOKS API Error - {e}")
         trace_error.print()
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
         return JsonResponse(
-            {"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
 
 @transaction.atomic
 @api_view(["POST"])
 def partial_pricing(request):
-    logger.info(f"@810 - pricing request payload: {request.data}")
+    logger.info(f"@81 [PARTIAL PRICING] Requester: {request.user.username}")
+    logger.info(f"@810 [PARTIAL PRICING] Payload: {request.data}")
     user = request.user
     boks_json = request.data
     bok_1 = boks_json["booking"]
@@ -1712,19 +1728,26 @@ def partial_pricing(request):
         client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
         client = client_employee.fk_id_dme_client
     except Exception as e:
-        logger.info(f"@811 - client_employee does not exist, {str(e)}")
-        message = "You are not allowed to use this api-endpoint."
+        logger.info(f"@811 [PARTIAL PRICING] client_employee does not exist, {str(e)}")
+        message = "Permission denied."
         return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+            {"success": False, "code": "permission_denied", "message": message},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     # Find `Warehouse`
     try:
         warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
     except Exception as e:
-        logger.info(f"@812 Client doesn't have Warehouse(s): {str(e)}")
+        logger.info(
+            f"@812 [PARTIAL PRICING] Client doesn't have Warehouse(s): {client}"
+        )
         return JsonResponse(
-            {"success": False, "message": "Client doesn't have Warehouse(s)."},
+            {
+                "success": False,
+                "code": "invalid_request",
+                "message": "Issues with warehouse assignment.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -1732,19 +1755,20 @@ def partial_pricing(request):
     de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
 
     if not de_postal_code:
-        message = "'b_059_b_del_address_postalcode' is required."
-        logger.info(f"@813 {message}")
+        message = "Delivery to postal code is required."
+        logger.info(f"@813 [PARTIAL PRICING] {message}")
         raise ValidationError(
-            {"success": False, "code": "missing_param", "description": message}
+            {"success": False, "code": "missing_param", "message": message}
         )
 
     addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
 
     if not addresses.exists():
-        message = "Delivery PostalCode is not valid"
-        logger.info(f"@814 {message}")
+        message = "Suburb and or postal code mismatch please check info and try again."
+        logger.info(f"@814 [PARTIAL PRICING] {message}")
         return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+            {"success": False, "code": "invalid_request", "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
         )
     else:
         de_suburb = addresses[0].suburb
@@ -1752,10 +1776,11 @@ def partial_pricing(request):
 
     # Check if has lines
     if len(bok_2s) == 0:
-        message = "No lines are provided"
-        logger.info(f"@815 {message}")
+        message = "Line items are required."
+        logger.info(f"@815 [PARTIAL PRICING] {message}")
         return Response(
-            {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
+            {"success": False, "code": "missing_param", "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     booking = {
@@ -1794,12 +1819,14 @@ def partial_pricing(request):
         missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s, client)
 
         if missing_model_numbers:
-            message = f"Missing model numbers - {', '.join(missing_model_numbers)}"
-            logger.info(f"@816 {message}")
+            message = (
+                f"System is missing model numbers - {', '.join(missing_model_numbers)}"
+            )
+            logger.info(f"@816 [PARTIAL PRICING] {message}")
             return Response(
                 {
                     "success": False,
-                    "results": [],
+                    "code": "invalid_model_numbers",
                     "message": message,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1849,13 +1876,13 @@ def partial_pricing(request):
         body=body, booking_id=None, is_pricing_only=True
     )
     logger.info(
-        f"#519 - Pricing result: success: {success}, message: {message}, results cnt: {quote_set}"
+        f"#519 [PARTIAL PRICING] Pricing result: success: {success}, message: {message}, results cnt: {quote_set}"
     )
 
     # Select best quotes(fastest, lowest)
     if quote_set.count() > 1:
         best_quotes = select_best_options(pricings=quote_set)
-        logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+        logger.info(f"#520 [PARTIAL PRICING] Selected Best Pricings: {best_quotes}")
 
     # Set Express or Standard
     if quote_set:
@@ -1876,9 +1903,8 @@ def partial_pricing(request):
                 json_results[1]["service_name"] = "Standard"
 
                 if json_results[0]["eta"] == json_results[1]["eta"]:
-                    json_results[1][
-                        "eta"
-                    ] = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+                    eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+                    json_results[1]["eta"] = eta
 
                 json_results = [json_results[1], json_results[0]]
             else:
@@ -1886,9 +1912,8 @@ def partial_pricing(request):
                 json_results[0]["service_name"] = "Standard"
 
                 if json_results[0]["eta"] == json_results[1]["eta"]:
-                    json_results[0][
-                        "eta"
-                    ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+                    eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+                    json_results[0]["eta"] = eta
 
     if json_results:
         for index, _ in enumerate(json_results):
@@ -1897,16 +1922,14 @@ def partial_pricing(request):
             )
             json_results[index]["cost"] = round(json_results[index]["cost"], 2)
 
+        logger.info(f"@819 [PARTIAL PRICING] Success!")
         return Response({"success": True, "results": json_results})
     else:
-        message = "Didn't get pricings due to wrong suburb and state"
-        logger.info(f"@818 {message}")
+        message = "Pricing cannot be returned due to incorrect address information."
+        logger.info(f"@819 [PARTIAL PRICING] {message}")
         return Response(
-            {
-                "success": False,
-                "results": json_results,
-                "message": message,
-            }
+            {"success": False, "code": "invalid_request", "message": message},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -1923,17 +1946,13 @@ def reprint_label(request):
 
     if not b_client_order_num:
         code = "missing_param"
-        description = "'HostOrderNumber' is required."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
+        message = "'HostOrderNumber' is required."
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     if not b_client_name:
         code = "missing_param"
-        description = "'CustomerName' is required."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
+        message = "'CustomerName' is required."
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     try:
         booking = Bookings.objects.select_related("api_booking_quote").get(
@@ -1942,10 +1961,8 @@ def reprint_label(request):
         fp_name = booking.api_booking_quote.freight_provider.lower()
     except:
         code = "not_found"
-        description = "Order is not found."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
+        message = "Order is not found."
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     if sscc:
         is_exist = False
@@ -1959,17 +1976,13 @@ def reprint_label(request):
 
         if not is_exist:
             code = "not_found"
-            description = "SSCC is not found."
-            raise ValidationError(
-                {"success": False, "code": code, "description": description}
-            )
+            message = "SSCC is not found."
+            raise ValidationError({"success": False, "code": code, "message": message})
 
     if not sscc and not booking.z_label_url:
         code = "not_ready"
-        description = "Label is not ready."
-        raise ValidationError(
-            {"success": False, "code": code, "description": description}
-        )
+        message = "Label is not ready."
+        raise ValidationError({"success": False, "code": code, "message": message})
 
     if sscc and fp_name != "hunter":  # Line label
         filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.pk)}.pdf"
@@ -1983,8 +1996,8 @@ def reprint_label(request):
 
     if not result:
         code = "unknown_status"
-        description = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        raise Exception({"success": False, "code": code, "description": description})
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+        raise Exception({"success": False, "code": code, "message": message})
 
     with open(label_url[:-4] + ".zpl", "rb") as zpl:
         zpl_data = str(b64encode(zpl.read()))[2:-1]
@@ -2012,7 +2025,7 @@ def manifest_boks(request):
     if not request_json.get("OrderNumbers"):
         message = "'OrderNumbers' is required."
         raise ValidationError(
-            {"success": False, "code": "missing_param", "description": message}
+            {"success": False, "code": "missing_param", "message": message}
         )
 
     booking_ids = request_json.get("OrderNumbers")
@@ -2053,7 +2066,7 @@ def get_delivery_status(request):
             return Response(
                 {
                     "code": "unknown_status",
-                    "message": "Please contact support center!",
+                    "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
                     "step": None,
                     "status": None,
                 },
