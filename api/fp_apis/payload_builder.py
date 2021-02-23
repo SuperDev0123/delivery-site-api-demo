@@ -395,7 +395,7 @@ def get_book_payload(booking, fp_name):
             "tnt", booking.b_bookingID_Visual
         )
         payload["customerReference"] = booking.clientRefNumbers
-        payload["isDangerousGoods"] = 0
+        payload["isDangerousGoods"] = False
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
     elif fp_name == "capital":
