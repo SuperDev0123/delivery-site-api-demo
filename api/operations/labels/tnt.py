@@ -201,8 +201,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "label_dimension_width": "145",
         "label_image_size_length": "85",
         "label_image_size_width": "130",
-        "barcode_dimension_length": "85",
-        "barcode_dimension_width": "30",
+        "barcode_dimension_height": "33",
+        "barcode_dimension_width": "75",
         "barcode_font_size": "18",
         "line_height_extra_small": "3",
         "line_height_small": "5",
@@ -1186,7 +1186,10 @@ def build_label(booking, filepath, lines=[], label_index=0):
             tbl_data = [
                 [
                     code128.Code128(
-                        barcode, barHeight=15 * mm, barWidth=0.7, humanReadable=False
+                        barcode,
+                        barHeight=barcode_dimension_height * mm,
+                        barWidth=barcode_dimension_width * mm,
+                        humanReadable=False,
                     )
                 ],
             ]
@@ -1254,7 +1257,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ],
             )
-            barcode = str(j).zfill(2)
 
             data = [[t1, t2]]
 
