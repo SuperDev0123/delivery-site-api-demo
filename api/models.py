@@ -1903,7 +1903,7 @@ class Bookings(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.gap_ra is not None:
+                if not booking_line_data.gap_ra:
                     gap_ras.append(booking_line_data.gap_ra)
 
             return ", ".join(gap_ras)
@@ -2084,6 +2084,7 @@ class Booking_lines(models.Model):
             logger.error(f"#561 get_is_scanned - {str(e)}")
             return False
 
+    @property
     def gap_ras(self):
         try:
             _gap_ras = []
@@ -2092,7 +2093,7 @@ class Booking_lines(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.gap_ra is not None:
+                if booking_line_data.gap_ra:
                     _gap_ras.append(booking_line_data.gap_ra)
 
             return ", ".join(_gap_ras)
