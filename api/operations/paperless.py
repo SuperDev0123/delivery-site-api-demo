@@ -199,6 +199,9 @@ def send_order_info(bok_1):
     if settings.ENV == "local":
         return True
 
+    if settings.ENV == "prod":
+        return True
+
     try:
         headers = {
             "content-type": "text/xml",

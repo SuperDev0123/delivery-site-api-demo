@@ -1592,7 +1592,7 @@ def push_boks(request):
             if quote_set.exists() and quote_set.count() > 1:
                 auto_select_pricing_4_bok(bok_1_obj, quote_set)
                 best_quotes = select_best_options(pricings=quote_set)
-                logger.info(f"#520 - Selected Best Pricings: {best_quotes}")
+                logger.info(f"#520 [PUSH] Selected Best Pricings: {best_quotes}")
 
             # Set Express or Standard
             if best_quotes:
@@ -1672,7 +1672,7 @@ def push_boks(request):
                 elif ("Plum" in client_name and "_magento" in username) or (
                     "Jason" in client_name and "_websys" in username
                 ):
-                    logger.info(f"@8838 - success: True, 201_created")
+                    logger.info(f"@8838 [PUSH] success: True, 201_created")
                     return JsonResponse(
                         {
                             "success": True,
