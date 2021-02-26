@@ -351,7 +351,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (16, routing.sort_bin),
+                        "<font size=%s><b>%s</b></font><font size=%s><b>%s</b></font>"
+                        % (8, "Sort bin:", 16, routing.sort_bin),
                         style_right,
                     ),
                 ],
@@ -360,8 +361,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 4) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 4) * mm,
                 ),
                 rowHeights=(float(label_settings["line_height_small"]) * mm),
                 style=[
@@ -381,11 +382,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 data,
                 colWidths=[t_w],
                 style=[
-                    ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
                 ],
             )
 
