@@ -158,6 +158,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
+    tnt_logo = "./static/assets/tnt_fedex_logo.png"
+    tnt_img = Image(tnt_logo, 30 * mm, 8 * mm)
+
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 30 * mm, 8 * mm)
 
@@ -1000,7 +1003,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
             Story.append(t1)
             # Story.append(Spacer(1, 5))
 
-            tbl_data1 = [[dme_img]]
+            tbl_data1 = [[tnt_img]]
 
             t1 = Table(
                 tbl_data1,
