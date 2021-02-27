@@ -1339,7 +1339,7 @@ def push_boks(request):
 
             if not bok_1.get("b_021_b_pu_avail_from_date"):
                 bok_1["b_021_b_pu_avail_from_date"] = str(
-                    datetime.now() + timedelta(days=7)
+                    datetime.now() + timedelta(days=3)
                 )[:10]
 
             # Find `Suburb` and `State`
@@ -1776,7 +1776,7 @@ def partial_pricing(request):
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=7))[:10],
+        "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=3))[:10],
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",
