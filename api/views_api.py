@@ -1552,7 +1552,6 @@ def push_boks(request):
                 "de_To_Address_State": bok_1["b_057_b_del_address_state"],
                 "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
                 "client_warehouse_code": bok_1["b_client_warehouse_code"],
-                "vx_serviceName": bok_1["b_003_b_service_name"],
                 "kf_client_id": bok_1["fk_client_id"],
                 "b_client_name": client.company_name,
             }
