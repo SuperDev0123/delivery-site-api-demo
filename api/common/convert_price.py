@@ -1,4 +1,3 @@
-import collections
 from api.models import DME_clients, Fp_freight_providers
 
 
@@ -14,16 +13,16 @@ def fp_price_2_dme_price(api_booking_quote):
         client = DME_clients.objects.get(company_name="Pricing-Only")
 
     fp_markupfuel_levy_percent = fp.fp_markupfuel_levy_percent
-    client_mark_up_percent = client.client_mark_up_percent
+    client_markup_percent = client.client_mark_up_percent
     client_min_markup_startingcostvalue = client.client_min_markup_startingcostvalue
     client_min_markup_value = client.client_min_markup_value
 
     cost_fl = float(api_booking_quote["fee"]) * (1 + fp_markupfuel_levy_percent)
 
     if cost_fl > float(client_min_markup_startingcostvalue):
-        quoted_dollar = cost_fl * (1 + client_mark_up_percent)
+        quoted_dollar = cost_fl * (1 + client_markup_percent)
     else:
-        cost_mu = cost_fl * client_mark_up_percent
+        cost_mu = cost_fl * client_markup_percent
 
         if cost_mu > client_min_markup_value:
             quoted_dollar = cost_fl + cost_mu

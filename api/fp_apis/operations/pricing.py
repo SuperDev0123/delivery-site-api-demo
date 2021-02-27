@@ -1,8 +1,6 @@
 import json
-import base64
 import logging
 import asyncio
-import requests
 import requests_async
 from datetime import datetime
 
@@ -200,16 +198,18 @@ async def _api_pricing_worker_builder(
         return None
 
     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
-    logger.info(f"### API url ({_fp_name.upper()} PRICING): {url}")
-    logger.info(f"### Payload ({_fp_name.upper()} PRICING): {payload}")
+    logger.info(f"### [PRICING] ({_fp_name.upper()}) API url: {url}")
+    logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
 
     try:
         response = await requests_async.post(url, params={}, json=payload)
-        logger.info(f"### Response ({_fp_name.upper()} PRICING): {response}")
+        logger.info(
+            f"### [PRICING] Response ({_fp_name.upper()}): {response.status_code}"
+        )
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-        logger.info(f"### Response Detail ({_fp_name.upper()} PRICING): {s0}")
+        logger.info(f"### [PRICING] Response Detail ({_fp_name.upper()}): {s0}")
 
         if not is_pricing_only:
             Log.objects.create(
@@ -220,13 +220,6 @@ async def _api_pricing_worker_builder(
                 fk_booking_id=booking.id,
             )
 
-        # error = capture_errors(
-        #     response,
-        #     booking,
-        #     _fp_name,
-        #     payload["spAccountDetails"]["accountCode"],
-        # )
-
         parse_results = parse_pricing_response(
             response, _fp_name, booking, False, service_name
         )
@@ -236,29 +229,12 @@ async def _api_pricing_worker_builder(
                 account_code = payload["spAccountDetails"]["accountCode"]
                 parse_result["account_code"] = account_code
 
-                ###########################
-                # Commented at 12/22/2020 #
-                ###########################
-
-                # quotes = API_booking_quotes.objects.filter(
-                #     fk_booking_id=booking.pk_booking_id,
-                #     freight_provider__iexact=parse_result["freight_provider"],
-                #     service_name=parse_result["service_name"],
-                #     account_code=payload["spAccountDetails"]["accountCode"],
-                # )
-
-                # if quotes.exists():
-                #     serializer = ApiBookingQuotesSerializer(
-                #         quotes[0], data=parse_result
-                #     )
-                # else:
-
                 serializer = ApiBookingQuotesSerializer(data=parse_result)
 
                 if serializer.is_valid():
                     serializer.save()
                 else:
-                    logger.info(f"@401 Serializer error: {serializer.errors}")
+                    logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
         trace_error.print()
         logger.info(f"@402 [PRICING] Exception: {e}")

@@ -731,7 +731,7 @@ def scanned(request):
             )
 
             # Select best quotes(fastest, lowest)
-            if quotes.exists() and quotes.count() > 1:
+            if quotes.exists() and quotes.count() > 0:
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
@@ -1590,7 +1590,7 @@ def push_boks(request):
             )
 
             # Select best quotes(fastest, lowest)
-            if quote_set.exists() and quote_set.count() > 1:
+            if quote_set.exists() and quote_set.count() > 0:
                 auto_select_pricing_4_bok(bok_1_obj, quote_set)
                 best_quotes = select_best_options(pricings=quote_set)
                 logger.info(f"#520 [PUSH] Selected Best Pricings: {best_quotes}")
@@ -1611,32 +1611,32 @@ def push_boks(request):
                     bok_1_obj.save()
                     fc_log.new_quote = best_quotes[0]
                     fc_log.save()
-
-                if len(json_results) == 1:
-                    json_results[0]["service_name"] = "Standard"
-                else:
-                    if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
-                        json_results[0]["service_name"] = "Express"
-                        json_results[1]["service_name"] = "Standard"
-
-                        if json_results[0]["eta"] == json_results[1]["eta"]:
-                            json_results[1][
-                                "eta"
-                            ] = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
-
-                        json_results = [json_results[1], json_results[0]]
-                    else:
-                        json_results[1]["service_name"] = "Express"
-                        json_results[0]["service_name"] = "Standard"
-
-                        if json_results[0]["eta"] == json_results[1]["eta"]:
-                            json_results[0][
-                                "eta"
-                            ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
             else:
                 message = f"#521 [PUSH] No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
                 logger.error(message)
                 send_email_to_admins("No FC result", message)
+
+            if len(json_results) == 1:
+                json_results[0]["service_name"] = "Standard"
+            else:
+                if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+                    json_results[0]["service_name"] = "Express"
+                    json_results[1]["service_name"] = "Standard"
+
+                    if json_results[0]["eta"] == json_results[1]["eta"]:
+                        json_results[1][
+                            "eta"
+                        ] = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+
+                    json_results = [json_results[1], json_results[0]]
+                else:
+                    json_results[1]["service_name"] = "Express"
+                    json_results[0]["service_name"] = "Standard"
+
+                    if json_results[0]["eta"] == json_results[1]["eta"]:
+                        json_results[0][
+                            "eta"
+                        ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
 
             if json_results:
                 if ("Plum" in client_name and "_sapb1" in username) or (
@@ -1872,7 +1872,7 @@ def partial_pricing(request):
     )
 
     # Select best quotes(fastest, lowest)
-    if quote_set.count() > 1:
+    if quote_set.count() > 0:
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 [PARTIAL PRICING] Selected Best Pricings: {best_quotes}")
 
@@ -1886,25 +1886,25 @@ def partial_pricing(request):
         # delete quote quotes
         quote_set.delete()
 
-        if len(json_results) == 1:
-            json_results[0]["service_name"] = "Standard"
+    if len(json_results) == 1:
+        json_results[0]["service_name"] = "Standard"
+    else:
+        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+            json_results[0]["service_name"] = "Express"
+            json_results[1]["service_name"] = "Standard"
+
+            if json_results[0]["eta"] == json_results[1]["eta"]:
+                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+                json_results[1]["eta"] = eta
+
+            json_results = [json_results[1], json_results[0]]
         else:
-            if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
-                json_results[0]["service_name"] = "Express"
-                json_results[1]["service_name"] = "Standard"
+            json_results[1]["service_name"] = "Express"
+            json_results[0]["service_name"] = "Standard"
 
-                if json_results[0]["eta"] == json_results[1]["eta"]:
-                    eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
-                    json_results[1]["eta"] = eta
-
-                json_results = [json_results[1], json_results[0]]
-            else:
-                json_results[1]["service_name"] = "Express"
-                json_results[0]["service_name"] = "Standard"
-
-                if json_results[0]["eta"] == json_results[1]["eta"]:
-                    eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
-                    json_results[0]["eta"] = eta
+            if json_results[0]["eta"] == json_results[1]["eta"]:
+                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+                json_results[0]["eta"] = eta
 
     if json_results:
         for index, _ in enumerate(json_results):
@@ -1917,7 +1917,7 @@ def partial_pricing(request):
         return Response({"success": True, "results": json_results})
     else:
         message = "Pricing cannot be returned due to incorrect address information."
-        logger.info(f"@819 [PARTIAL PRICING] {message}")
+        logger.info(f"@829 [PARTIAL PRICING] {message}")
         return Response(
             {"success": False, "code": "invalid_request", "message": message},
             status=status.HTTP_400_BAD_REQUEST,

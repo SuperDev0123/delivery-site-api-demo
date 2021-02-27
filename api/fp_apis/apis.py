@@ -525,7 +525,6 @@ def get_label(request, fp_name):
         _fp_name = fp_name.lower()
 
         error_msg = pre_check_label(booking)
-
         if error_msg:
             return JsonResponse(
                 {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
@@ -996,22 +995,18 @@ def pricing(request):
         return JsonResponse(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    json_results = ApiBookingQuotesSerializer(
+        results, many=True, context={"booking": booking}
+    ).data
+
+    if is_pricing_only:
+        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
     else:
-        json_results = ApiBookingQuotesSerializer(
-            results, many=True, context={"booking": booking}
-        ).data
+        auto_select_pricing(booking, results, auto_select_type)
 
-        if is_pricing_only:
-            API_booking_quotes.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            ).delete()
-        else:
-            auto_select_pricing(booking, results, auto_select_type)
-
-        return JsonResponse(
-            {"success": True, "message": message, "results": json_results},
-            status=status.HTTP_200_OK,
-        )
+    res_json = {"success": True, "message": message, "results": json_results}
+    return JsonResponse(res_json, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
