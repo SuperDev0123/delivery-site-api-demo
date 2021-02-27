@@ -7,7 +7,6 @@ from django.conf import settings
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
 from api.models import BOK_1_headers, BOK_2_lines, Log
-from api.common import constants
 
 logger = logging.getLogger("dme_api")
 

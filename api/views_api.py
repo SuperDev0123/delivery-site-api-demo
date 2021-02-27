@@ -50,6 +50,7 @@ from api.operations import push_operations, product_operations as product_oper
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.email_senders import send_email_to_admins
 from api.operations.manifests.index import build_manifest
+from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.convertors import pdf
 
 
@@ -1306,9 +1307,6 @@ def push_boks(request):
             if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
                 bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
 
-            if not bok_1.get("b_003_b_service_name"):
-                bok_1["b_003_b_service_name"] = "RF"
-
             if not bok_1.get("b_028_b_pu_company"):
                 bok_1["b_028_b_pu_company"] = warehouse.name
 
@@ -1389,6 +1387,9 @@ def push_boks(request):
             if not bok_1.get("b_054_b_del_company"):
                 bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
         elif client_name == "Jason L":  # Jason L
+            bok = get_bok_from_pronto_xi(bok)
+            return JsonResponse({"success": False, "message": "Work in progress"})
+
             if not bok_1.get("b_054_b_del_company"):
                 bok_1["b_064_b_del_phone_main"] = "0289682200"
 
@@ -1594,8 +1595,7 @@ def push_boks(request):
                 best_quotes = select_best_options(pricings=quote_set)
                 logger.info(f"#520 [PUSH] Selected Best Pricings: {best_quotes}")
 
-            # Set Express or Standard
-            if best_quotes:
+                # Set Express or Standard
                 context = {"client_customer_mark_up": client.client_customer_mark_up}
                 json_results = SimpleQuoteSerializer(
                     best_quotes, many=True, context=context
@@ -1876,8 +1876,7 @@ def partial_pricing(request):
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 [PARTIAL PRICING] Selected Best Pricings: {best_quotes}")
 
-    # Set Express or Standard
-    if quote_set:
+        # Set Express or Standard
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         json_results = SimpleQuoteSerializer(
             best_quotes, many=True, context=context
