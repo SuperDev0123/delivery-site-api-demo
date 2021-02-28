@@ -11,7 +11,12 @@ from api.models import *
 
 
 def parse_pricing_response(
-    response, fp_name, booking, is_from_self=False, service_name=None
+    response,
+    fp_name,
+    booking,
+    is_from_self=False,
+    service_name=None,
+    account_code="DME",
 ):
     try:
         if is_from_self:
@@ -159,9 +164,12 @@ def parse_pricing_response(
                 result["service_name"] = (
                     price["serviceName"] if "serviceName" in price else None
                 )
-                result["account_code"] = "DME"
                 results.append(result)
 
+        # Assign account_code
+        result["account_code"] = account_code
+
+        # Get "client_mu_1_minimum_values(Quote $)"
         for index, result in enumerate(results):
             (
                 results[index]["client_mu_1_minimum_values"],

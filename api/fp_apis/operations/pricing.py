@@ -227,14 +227,16 @@ async def _api_pricing_worker_builder(
             )
 
         parse_results = parse_pricing_response(
-            response, _fp_name, booking, False, service_name
+            response,
+            _fp_name,
+            booking,
+            False,
+            service_name,
+            payload["spAccountDetails"]["accountCode"],
         )
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                account_code = payload["spAccountDetails"]["accountCode"]
-                parse_result["account_code"] = account_code
-
                 serializer = ApiBookingQuotesSerializer(data=parse_result)
 
                 if serializer.is_valid():
