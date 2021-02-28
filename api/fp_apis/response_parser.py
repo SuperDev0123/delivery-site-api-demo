@@ -173,7 +173,7 @@ def parse_pricing_response(
         trace_error.print()
         error_msg = f"#580 Parse pricing res: FP - {fp_name}, {json_data}"
         logger.error(error_msg)
-        error_msg = f"#581 Parse pricing res: {e}"
+        error_msg = f"#581 Parse pricing error: {e}"
         logger.error(error_msg)
         return None
 

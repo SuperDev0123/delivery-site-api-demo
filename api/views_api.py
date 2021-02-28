@@ -1594,7 +1594,6 @@ def push_boks(request):
                 best_quotes = select_best_options(pricings=quote_set)
                 logger.info(f"#520 [PUSH] Selected Best Pricings: {best_quotes}")
 
-                # Set Express or Standard
                 context = {"client_customer_mark_up": client.client_customer_mark_up}
                 json_results = SimpleQuoteSerializer(
                     best_quotes, many=True, context=context
@@ -1615,6 +1614,7 @@ def push_boks(request):
                 logger.error(message)
                 send_email_to_admins("No FC result", message)
 
+            # Set Express or Standard
             if len(json_results) == 1:
                 json_results[0]["service_name"] = "Standard"
             else:
@@ -1875,7 +1875,6 @@ def partial_pricing(request):
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 [PARTIAL PRICING] Selected Best Pricings: {best_quotes}")
 
-        # Set Express or Standard
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         json_results = SimpleQuoteSerializer(
             best_quotes, many=True, context=context
@@ -1885,6 +1884,7 @@ def partial_pricing(request):
         # delete quote quotes
         quote_set.delete()
 
+    # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
     else:

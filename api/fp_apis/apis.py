@@ -88,7 +88,7 @@ def tracking(request, fp_name):
 
             return JsonResponse(
                 {
-                    "message": f"DME status: {booking.b_status},FP status: {booking.b_status_API}",
+                    "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
                     "b_status": booking.b_status,
                     "b_status_API": booking.b_status_API,
                 },

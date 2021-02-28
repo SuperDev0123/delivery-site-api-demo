@@ -7,6 +7,7 @@ from datetime import datetime
 from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
+from api.common.convert_price import interpolate_gaps
 from api.serializers import ApiBookingQuotesSerializer
 from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
 
@@ -22,6 +23,7 @@ from api.fp_apis.constants import (
     DME_LEVEL_API_URL,
     AVAILABLE_FPS_4_FC,
 )
+
 
 logger = logging.getLogger("dme_api")
 
@@ -76,6 +78,10 @@ def pricing(body, booking_id, is_pricing_only=False):
     results = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
     )
+
+    # Interpolate gaps (for Plum client now)
+    interpolate_gaps(quotes=results)
+
     return booking, True, "Retrieved all Pricing info", results
 
 
