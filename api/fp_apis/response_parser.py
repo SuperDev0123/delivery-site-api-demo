@@ -35,6 +35,7 @@ def parse_pricing_response(
                     continue
 
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -51,6 +52,7 @@ def parse_pricing_response(
         elif fp_name == "tnt" and "price" in json_data:  # TNT
             for price in json_data["price"]:
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -69,6 +71,7 @@ def parse_pricing_response(
                     continue
 
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -81,6 +84,7 @@ def parse_pricing_response(
         elif fp_name == "capital" and "price" in json_data:  # Capital
             price = json_data["price"]
             result = {}
+            result["account_code"] = account_code
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
@@ -97,6 +101,7 @@ def parse_pricing_response(
 
             for price in json_data["price"]:
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -109,6 +114,7 @@ def parse_pricing_response(
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
             result = {}
+            result["account_code"] = account_code
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
@@ -154,6 +160,7 @@ def parse_pricing_response(
         elif is_from_self and "price" in json_data:  # Built-in
             for price in json_data["price"]:
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -165,9 +172,6 @@ def parse_pricing_response(
                     price["serviceName"] if "serviceName" in price else None
                 )
                 results.append(result)
-
-        # Assign account_code
-        result["account_code"] = account_code
 
         # Get "client_mu_1_minimum_values(Quote $)"
         for index, result in enumerate(results):
