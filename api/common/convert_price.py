@@ -49,7 +49,10 @@ def _apply_mu(quote, fp, client):
     if quote.client_mu_1_minimum_values:
         cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
     else:
-        cost = float(quote.fee) * (1 + fp_mu)
+        if quote.tax_value_1:
+            cost = float(quote.fee + quote.tax_value_1) * (1 + fp_mu)
+        else:
+            cost = float(quote.fee) * (1 + fp_mu)
 
     # Client Markup
     client_mu = client.client_mark_up_percent
@@ -157,6 +160,9 @@ def interpolate_gaps(quotes):
     if not lowest_pricing:
         return quotes
 
+    logger.info(
+        f"[$ INTERPOLATE] Lowest Clinet quote: {lowest_pricing.pk}({lowest_pricing.fee})"
+    )
     for quote in quotes:
         fp_name = quote.freight_provider.lower()
         client_name = quote.fk_client_id.lower()
@@ -164,11 +170,17 @@ def interpolate_gaps(quotes):
 
         # Interpolate gaps for DME pricings only
         gap = lowest_pricing.fee - quote.fee
+
+        if lowest_pricing.tax_value_1:
+            gap += float(lowest_pricing.tax_value_1)
+
         if (
             not _is_used_client_credential(fp_name, client_name, account_code)
             and gap > 0
         ):
-            logger.info(f"[$ INTERPOLATE] process! Quote: {quote.pk}")
+            logger.info(
+                f"[$ INTERPOLATE] process! Quote: {quote.pk}({quote.fee}), Gap: {gap}"
+            )
             quote.fee += gap + client.gap_percent
             quote.save()
 
