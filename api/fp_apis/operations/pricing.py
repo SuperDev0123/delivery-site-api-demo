@@ -86,7 +86,7 @@ def pricing(body, booking_id, is_pricing_only=False):
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes)
 
-    return booking, True, "Retrieved all Pricing info", results
+    return booking, True, "Retrieved all Pricing info", quotes
 
 
 async def _pricing_process(booking, booking_lines, is_pricing_only):
