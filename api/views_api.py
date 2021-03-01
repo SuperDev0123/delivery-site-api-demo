@@ -1641,14 +1641,6 @@ def push_boks(request):
                 if ("Plum" in client_name and "_sapb1" in username) or (
                     "Jason" in client_name and "_bizsys" in username
                 ):
-                    for index, _ in enumerate(json_results):
-                        json_results[index]["cost"] = json_results[index]["cost"] * (
-                            1 + client.client_customer_mark_up
-                        )
-                        json_results[index]["cost"] = round(
-                            json_results[index]["cost"], 2
-                        )
-
                     result = {
                         "success": True,
                         "results": json_results,
@@ -1906,12 +1898,6 @@ def partial_pricing(request):
                 json_results[0]["eta"] = eta
 
     if json_results:
-        for index, _ in enumerate(json_results):
-            json_results[index]["cost"] = json_results[index]["cost"] * (
-                1 + client.client_customer_mark_up
-            )
-            json_results[index]["cost"] = round(json_results[index]["cost"], 2)
-
         logger.info(f"@819 [PARTIAL PRICING] Success!")
         return Response({"success": True, "results": json_results})
     else:
