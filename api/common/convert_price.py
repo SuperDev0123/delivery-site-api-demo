@@ -46,7 +46,7 @@ def fp_price_2_dme_price(quote, fp, client):
     else:  # FP Markup(Fuel Levy)
         fp_mu = fp.fp_markupfuel_levy_percent
 
-    cost = float(quote.fee) * (1 + fp_mu)
+    cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
 
     # Client Markup
     client_mu = client.client_mark_up_percent
@@ -74,7 +74,7 @@ def apply_markups(quotes):
         logger.info(f"[APPLY MU] No Quotes!")
         return quotes
 
-    logger.info(f"[$ INTERPOLATE] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
+    logger.info(f"[APPLY MU] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
     fp_name = quotes[0].freight_provider.lower()
     client_name = quotes[0].fk_client_id.lower()
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
