@@ -7,7 +7,7 @@ from datetime import datetime
 from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
-from api.common.convert_price import interpolate_gaps
+from api.common.convert_price import interpolate_gaps, apply_markups
 from api.serializers import ApiBookingQuotesSerializer
 from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
 
