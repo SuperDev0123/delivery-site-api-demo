@@ -46,7 +46,10 @@ def _apply_mu(quote, fp, client):
     else:  # FP Markup(Fuel Levy)
         fp_mu = fp.fp_markupfuel_levy_percent
 
-    cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
+    if quote.client_mu_1_minimum_values:
+        cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
+    else:
+        cost = float(quote.fee) * (1 + fp_mu)
 
     # Client Markup
     client_mu = client.client_mark_up_percent
