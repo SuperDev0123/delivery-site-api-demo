@@ -27,7 +27,7 @@ def _is_used_client_credential(fp_name, client_name, account_code):
     return False
 
 
-def fp_price_2_dme_price(quote, fp, client):
+def _apply_mu(quote, fp, client):
     """
     Convert FP price to DME price
 
@@ -87,7 +87,7 @@ def apply_markups(quotes):
         return quotes
 
     for quote in quotes:
-        client_mu_1_minimum_values, mu_percentage_fuel_levy = fp_price_2_dme_price(
+        client_mu_1_minimum_values, mu_percentage_fuel_levy = _apply_mu(
             quote, fp, client
         )
         quote.client_mu_1_minimum_values = client_mu_1_minimum_values
