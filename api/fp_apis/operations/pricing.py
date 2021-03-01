@@ -75,12 +75,16 @@ def pricing(body, booking_id, is_pricing_only=False):
     finally:
         loop.close()
 
-    results = API_booking_quotes.objects.filter(
+    quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
     )
 
-    # Interpolate gaps (for Plum client now)
-    interpolate_gaps(quotes=results)
+    if quotes.exists():
+        # Interpolate gaps (for Plum client now)
+        quotes = interpolate_gaps(quotes)
+
+        # Apply Markups (FP Markup and Client Markup)
+        quotes = apply_markups(quotes)
 
     return booking, True, "Retrieved all Pricing info", results
 

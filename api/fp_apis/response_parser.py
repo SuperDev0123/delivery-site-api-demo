@@ -3,11 +3,11 @@ import logging
 
 from django.conf import settings
 
-from .payload_builder import get_service_provider
-from api.common import convert_price, trace_error
+from api.fp_apis.payload_builder import get_service_provider
+from api.common import trace_error
+from api.models import DME_clients, Fp_freight_providers, DME_Error
 
 logger = logging.getLogger("dme_api")
-from api.models import *
 
 
 def parse_pricing_response(
@@ -172,13 +172,6 @@ def parse_pricing_response(
                     price["serviceName"] if "serviceName" in price else None
                 )
                 results.append(result)
-
-        # Get "client_mu_1_minimum_values(Quote $)"
-        for index, result in enumerate(results):
-            (
-                results[index]["client_mu_1_minimum_values"],
-                results[index]["mu_percentage_fuel_levy"],
-            ) = convert_price.fp_price_2_dme_price(result)
 
         return results
     except Exception as e:
