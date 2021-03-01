@@ -2105,7 +2105,9 @@ class Booking_lines(models.Model):
     @transaction.atomic
     def save(self, *args, **kwargs):
         # Check if all other lines are picked at Warehouse
-        if self.picked_up_timestamp:
+        creating = self._state.adding
+
+        if not creating and self.picked_up_timestamp:
             booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
 
             if "plum" in booking.b_client_name.lower():
