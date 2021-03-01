@@ -151,7 +151,7 @@ def _get_fastest_price(pricings):
                 etd
                 and fastest_pricing["etd_in_hour"]
                 and fastest_pricing["etd_in_hour"] == etd
-                and fastest_pricing["pricing"].fee > pricing.fee
+                and fastest_pricing["pricing"].fee < pricing.fee
             ):
                 fastest_pricing["pricing"] = pricing
 

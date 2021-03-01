@@ -162,15 +162,6 @@ def interpolate_gaps(quotes):
         client_name = quote.fk_client_id.lower()
         account_code = quote.account_code
 
-        # print(
-        #     "@1  ",
-        #     fp_name,
-        #     client_name,
-        #     account_code,
-        #     _is_used_client_credential(fp_name, client_name, account_code),
-        #     quote.client_mu_1_minimum_values,
-        #     lowest_pricing.client_mu_1_minimum_values,
-        # )
         # Interpolate gaps for DME pricings only
         gap = lowest_pricing.fee - quote.fee
         if (
