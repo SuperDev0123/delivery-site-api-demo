@@ -151,7 +151,8 @@ def _get_fastest_price(pricings):
                 etd
                 and fastest_pricing["etd_in_hour"]
                 and fastest_pricing["etd_in_hour"] == etd
-                and fastest_pricing["pricing"].fee < pricing.fee
+                and fastest_pricing["pricing"].client_mu_1_minimum_values
+                < pricing.client_mu_1_minimum_values
             ):
                 fastest_pricing["pricing"] = pricing
 
@@ -167,11 +168,15 @@ def _get_lowest_price(pricings):
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
             lowest_pricing["etd"] = get_etd_in_hour(pricing)
-        elif lowest_pricing and pricing.fee:
-            if float(lowest_pricing["pricing"].fee) > float(pricing.fee):
+        elif lowest_pricing and pricing.client_mu_1_minimum_values:
+            if float(lowest_pricing["pricing"].client_mu_1_minimum_values) > float(
+                pricing.client_mu_1_minimum_values
+            ):
                 lowest_pricing["pricing"] = pricing
                 lowest_pricing["etd"] = get_etd_in_hour(pricing)
-            elif float(lowest_pricing["pricing"].fee) == float(pricing.fee):
+            elif float(lowest_pricing["pricing"].client_mu_1_minimum_values) == float(
+                pricing.client_mu_1_minimum_values
+            ):
                 etd = get_etd_in_hour(pricing)
 
                 if lowest_pricing["etd"] and etd and lowest_pricing["etd"] > etd:
