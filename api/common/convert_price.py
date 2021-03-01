@@ -47,7 +47,12 @@ def _apply_mu(quote, fp, client):
         fp_mu = fp.fp_markupfuel_levy_percent
 
     if quote.client_mu_1_minimum_values:
-        cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
+        if quote.tax_value_1:
+            cost = float(quote.client_mu_1_minimum_values + quote.tax_value_1) * (
+                1 + fp_mu
+            )
+        else:
+            cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
     else:
         if quote.tax_value_1:
             cost = float(quote.fee + quote.tax_value_1) * (1 + fp_mu)
@@ -181,7 +186,7 @@ def interpolate_gaps(quotes):
             logger.info(
                 f"[$ INTERPOLATE] process! Quote: {quote.pk}({quote.fee}), Gap: {gap}"
             )
-            quote.fee += gap + client.gap_percent
+            quote.fee += gap * client.gap_percent
             quote.save()
 
     logger.info(f"[$ INTERPOLATE] Finished")
