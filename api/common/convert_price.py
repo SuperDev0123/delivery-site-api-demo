@@ -172,13 +172,13 @@ def interpolate_gaps(quotes):
         #     lowest_pricing.client_mu_1_minimum_values,
         # )
         # Interpolate gaps for DME pricings only
+        gap = lowest_pricing.fee - quote.fee
         if (
             not _is_used_client_credential(fp_name, client_name, account_code)
-            and quote.client_mu_1_minimum_values
-            < lowest_pricing.client_mu_1_minimum_values
+            and gap > 0
         ):
             logger.info(f"[$ INTERPOLATE] process! Quote: {quote.pk}")
-            quote.client_mu_1_minimum_values *= 1 + client.gap_percent
+            quote.fee += gap + client.gap_percent
             quote.save()
 
     logger.info(f"[$ INTERPOLATE] Finished")
