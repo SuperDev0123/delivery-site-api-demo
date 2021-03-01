@@ -1953,6 +1953,8 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_line.e_qty_adjusted_delivered = 0
                 booking_line.z_createdTimeStamp = datetime.now()
                 booking_line.z_modifiedTimeStamp = None
+                booking_line.picked_up_timestamp = None
+                booking_line.sscc = None
                 new_pk_booking_lines_id = str(uuid.uuid1())
 
                 if booking_line.pk_booking_lines_id:
