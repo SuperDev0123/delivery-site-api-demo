@@ -905,7 +905,7 @@ def ready_boks(request):
                 "message": "Order is already BOOKED.",
             }
         )
-    else:
+    elif fp_name == "hunter" and booking.b_status != "Booked":
         # DME don't get the ready api for Hunter Order
         return Response(
             {
