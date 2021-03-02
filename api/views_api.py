@@ -418,10 +418,16 @@ def scanned(request):
     if message:
         raise ValidationError({"success": False, "code": code, "message": message})
 
+    # Get Order Number
+    order_num = b_client_order_num
+
+    if b_client_name == "Plum Products Australia Ltd":
+        order_num = b_client_order_num[5:]
+
     # Check if Order exists on Bookings table
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
+        .filter(b_client_name=b_client_name, b_client_order_num=order_num)
         .first()
     )
 
@@ -860,10 +866,16 @@ def ready_boks(request):
     if message:
         raise ValidationError({"success": False, "code": code, "message": message})
 
+    # Get Order Number
+    order_num = b_client_order_num
+
+    if b_client_name == "Plum Products Australia Ltd":
+        order_num = b_client_order_num[5:]
+
     # Check if Order exists
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
+        .filter(b_client_name=b_client_name, b_client_order_num=order_num)
         .first()
     )
 
@@ -1912,9 +1924,15 @@ def reprint_label(request):
         message = "'CustomerName' is required."
         raise ValidationError({"success": False, "code": code, "message": message})
 
+    # Get Order Number
+    order_num = b_client_order_num
+
+    if b_client_name == "Plum Products Australia Ltd":
+        order_num = b_client_order_num[5:]
+
     try:
         booking = Bookings.objects.select_related("api_booking_quote").get(
-            b_client_order_num=b_client_order_num[5:], b_client_name=b_client_name
+            b_client_order_num=order_num, b_client_name=b_client_name
         )
         fp_name = booking.api_booking_quote.freight_provider.lower()
     except:
