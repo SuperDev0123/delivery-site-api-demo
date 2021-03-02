@@ -424,6 +424,11 @@ def scanned(request):
     if b_client_name == "Plum Products Australia Ltd":
         order_num = b_client_order_num[5:]
 
+    # Trim data
+    if "Jason" in client_name:
+        b_client_order_num = b_client_order_num.strip()
+        b_client_name = b_client_name.strip()
+
     # Check if Order exists on Bookings table
     booking = (
         Bookings.objects.select_related("api_booking_quote")
@@ -1036,6 +1041,11 @@ def push_boks(request):
     plum_web = "Plum" in client_name and "_magento" in username
     jason_l_biz = "Jason" in client_name and "_bizsys" in username
     jason_l_web = "Jason" in client_name and "_websys" in username
+
+    if "Jason" in client_name:
+        bok_1["b_client_order_num"] = bok_1["b_client_order_num"].strip()
+        bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
+        bok_1["shipping_type"] = bok_1["shipping_type"].strip()
 
     # Required fields
     # if not bok_1.get("b_057_b_del_address_state"):
