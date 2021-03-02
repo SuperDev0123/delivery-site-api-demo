@@ -997,27 +997,13 @@ def push_boks(request):
     logger.info(f"@879 [PUSH] Pusher: {username}")
     boks_json = request.data
     bok_1 = boks_json["booking"]
-    bok_2s = boks_json["booking_lines"]
+    bok_2s = boks_json.get("booking_lines")
     client_name = None
     message = None
     old_quote = None
     best_quotes = None
     json_results = []
     logger.info(f"@880 [PUSH] payload - [{request.method}] {boks_json}")
-
-    # Required fields
-    # if not bok_1.get("b_057_b_del_address_state"):
-    #     message = "Delivery to state is required."
-
-    # if not bok_1.get("b_058_b_del_address_suburb"):
-    #     message = "Delivery to suburb is required."
-
-    if not bok_1.get("b_059_b_del_address_postalcode"):
-        message = "Delivery to postal code is required."
-
-    if message:
-        res_json = {"success": False, "code": "missing_param", "message": message}
-        raise ValidationError(res_json)
 
     # Find `Client`
     try:
@@ -1032,6 +1018,26 @@ def push_boks(request):
         logger.info(message)
         res_json = {"success": False, "message": message}
         return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+
+    # Assign vars
+    plum_biz = "Plum" in client_name and "_sapb1" in username
+    plum_web = "Plum" in client_name and "_magento" in username
+    jason_l_biz = "Jason" in client_name and "_bizsys" in username
+    jason_l_web = "Jason" in client_name and "_websys" in username
+
+    # Required fields
+    # if not bok_1.get("b_057_b_del_address_state"):
+    #     message = "Delivery to state is required."
+
+    # if not bok_1.get("b_058_b_del_address_suburb"):
+    #     message = "Delivery to suburb is required."
+
+    if not jason_l_biz and not bok_1.get("b_059_b_del_address_postalcode"):
+        message = "Delivery to postal code is required."
+
+    if message:
+        res_json = {"success": False, "code": "missing_param", "message": message}
+        raise ValidationError(res_json)
 
     # Check missing model numbers
     if bok_2s and "model_number" in bok_2s[0]:
@@ -1048,9 +1054,7 @@ def push_boks(request):
             )
 
     # Check required fields
-    if ("Plum" in client_name and "_sapb1" in username) or (
-        "Jason" in client_name and "_bizsys" in username
-    ):
+    if plum_biz or jason_l_biz:
         if not bok_1.get("shipping_type"):
             message = "'shipping_type' is required."
             logger.info(f"[PUSH] {message}")
@@ -1071,9 +1075,7 @@ def push_boks(request):
                 {"success": False, "code": "missing_param", "message": message},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-    elif ("Plum" in client_name and "_magento" in username) or (
-        "Jason" in client_name and "_websys" in username
-    ):
+    elif plum_web or jason_l_web:
         if not bok_1.get("client_booking_id"):
             message = "'client_booking_id' is required."
             logger.info(f"@812 [PUSH] {message}")
@@ -1083,11 +1085,7 @@ def push_boks(request):
             )
 
     # Check if already pushed 'b_client_order_num', then return URL only
-    if request.method == "POST" and (
-        ("Plum" in client_name and "_sapb1" in username)
-        or ("Jason" in client_name and "_bizsys" in username)
-    ):
-
+    if request.method == "POST" and (plum_biz or jason_l_biz):
         if bok_1["b_client_order_num"][:2] != "Q_":
             bok_1_obj = (
                 BOK_1_headers.objects.select_related("quote")
@@ -1172,7 +1170,7 @@ def push_boks(request):
         if client_name in ["Plum Products Australia Ltd", "Jason L"]:
             pk_header_id = None
 
-            if "_sapb1" in username or "_bizsys" in username:
+            if plum_biz or jason_l_biz:
                 old_bok_1s = BOK_1_headers.objects.filter(
                     fk_client_id=client.dme_account_num,
                     b_client_order_num=bok_1["b_client_order_num"],
@@ -1201,7 +1199,7 @@ def push_boks(request):
                             )
                 else:
                     pk_header_id = old_bok_1s.first().pk_header_id
-            elif "_magento" in username or "_websys" in username:
+            elif plum_web or jason_l_web:
                 old_bok_1s = BOK_1_headers.objects.filter(
                     client_booking_id=bok_1["client_booking_id"],
                     fk_client_id=client.dme_account_num,
@@ -1240,7 +1238,7 @@ def push_boks(request):
     # Check duplicated push with `b_client_order_num`
     if request.method == "POST":
         if client_name in ["Plum Products Australia Ltd", "Jason L"]:
-            if "_sapb1" in username or "_bizsys" in username:
+            if plum_biz or jason_l_biz:
                 bok_1s = BOK_1_headers.objects.filter(
                     fk_client_id=client.dme_account_num,
                     b_client_order_num=bok_1["b_client_order_num"],
@@ -1263,7 +1261,7 @@ def push_boks(request):
                     else:
                         message = f"BOKS API Error - Object(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
 
-            elif "_magento" in username or "_websys" in username:
+            elif plum_web or jason_l_web:
                 bok_1s = BOK_1_headers.objects.filter(
                     fk_client_id=client.dme_account_num,
                     client_booking_id=bok_1["client_booking_id"],
@@ -1279,9 +1277,7 @@ def push_boks(request):
             )
 
     # Generate `client_booking_id` for SAPB1
-    if ("Plum" in client_name and "_sapb1" in username) or (
-        "Jason" in client_name and "_bizsys" in username
-    ):
+    if plum_biz or jason_l_biz:
         client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
         bok_1["client_booking_id"] = client_booking_id
 
@@ -1332,7 +1328,7 @@ def push_boks(request):
                 bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
 
             if not bok_1.get("b_031_b_pu_address_state"):
-                bok_1["b_031_b_pu_address_state"] = warehouse.state
+                bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
 
             if not bok_1.get("b_032_b_pu_address_suburb"):
                 bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
@@ -1342,40 +1338,9 @@ def push_boks(request):
                     datetime.now() + timedelta(days=3)
                 )[:10]
 
-            # Find `Suburb` and `State`
-            if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
-                "b_058_b_del_address_suburb"
-            ):
-                logger.info(f"@870 [PUSH] - auto populating state and subrub...")
-                de_postal_code = bok_1["b_059_b_del_address_postalcode"]
-                addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
-
-                if not addresses.exists():
-                    message = "Delivery PostalCode is not valid."
-                    return Response(
-                        {"success": False, "message": message},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                else:
-                    de_suburb = addresses[0].suburb
-                    de_state = addresses[0].state
-
-                if not bok_1.get("b_057_b_del_address_state"):
-                    bok_1["b_057_b_del_address_state"] = de_state
-
-                if not bok_1.get("b_058_b_del_address_suburb"):
-                    bok_1["b_058_b_del_address_suburb"] = de_suburb
-
-            bok_1["b_057_b_del_address_state"] = bok_1[
-                "b_057_b_del_address_state"
-            ].upper()
-            bok_1["b_031_b_pu_address_state"] = bok_1[
-                "b_031_b_pu_address_state"
-            ].upper()
-
         # Populate default values
         if client_name == "Plum Products Australia Ltd":  # Plum
-            if not bok_1.get("b_054_b_del_company"):
+            if not bok_1.get("b_064_b_del_phone_main"):
                 bok_1["b_064_b_del_phone_main"] = "0289682200"
 
             if not bok_1.get("b_063_b_del_email"):
@@ -1383,15 +1348,8 @@ def push_boks(request):
 
             if not bok_1.get("b_061_b_del_contact_full_name"):
                 bok_1["b_061_b_del_contact_full_name"] = "Ben Randall"
-
-            if not bok_1.get("b_054_b_del_company"):
-                bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
         elif client_name == "Jason L":  # Jason L
-            bok = get_bok_from_pronto_xi(bok)
-            return JsonResponse({"success": False, "message": "Work in progress"})
-
-            if not bok_1.get("b_054_b_del_company"):
-                bok_1["b_064_b_del_phone_main"] = "0289682200"
+            bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
             if not bok_1.get("b_067_assembly_required"):
                 bok_1["b_067_assembly_required"] = False
@@ -1411,6 +1369,36 @@ def push_boks(request):
         elif client_name == "BioPak":  # BioPak
             bok_1["client_booking_id"] = bok_1["pk_header_id"]
 
+        # Find `Suburb` and `State`
+        if not bok_1.get("b_057_b_del_address_state") or not bok_1.get(
+            "b_058_b_del_address_suburb"
+        ):
+            logger.info(f"@870 [PUSH] - auto populating state and subrub...")
+            de_postal_code = bok_1["b_059_b_del_address_postalcode"]
+            addresses = Utl_suburbs.objects.filter(postal_code=de_postal_code)
+
+            if not addresses.exists():
+                message = "Delivery PostalCode is not valid."
+                return Response(
+                    {"success": False, "message": message},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                de_suburb = addresses[0].suburb
+                de_state = addresses[0].state
+
+            if not bok_1.get("b_057_b_del_address_state"):
+                bok_1["b_057_b_del_address_state"] = de_state.upper()
+
+            if not bok_1.get("b_058_b_del_address_suburb"):
+                bok_1["b_058_b_del_address_suburb"] = de_suburb
+
+        if not bok_1.get("b_054_b_del_company"):
+            bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
+
+        bok_1["b_057_b_del_address_state"] = bok_1["b_057_b_del_address_state"].upper()
+        bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
         if not bok_1_serializer.is_valid():
@@ -1424,9 +1412,7 @@ def push_boks(request):
         if "model_number" in bok_2s[0]:  # Product & Child items
             ignore_product = False
 
-            if ("Plum" in client_name and "_sapb1" in username) or (
-                "Jason" in client_name and "_bizsys" in username
-            ):
+            if plum_biz or jason_l_biz:
                 ignore_product = True
 
             items = product_oper.get_product_items(bok_2s, client, ignore_product)
@@ -1638,9 +1624,7 @@ def push_boks(request):
                         ] = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
 
             if json_results:
-                if ("Plum" in client_name and "_sapb1" in username) or (
-                    "Jason" in client_name and "_bizsys" in username
-                ):
+                if plum_biz or jason_l_biz:
                     result = {
                         "success": True,
                         "results": json_results,
@@ -1660,9 +1644,7 @@ def push_boks(request):
                         result,
                         status=status.HTTP_201_CREATED,
                     )
-                elif ("Plum" in client_name and "_magento" in username) or (
-                    "Jason" in client_name and "_websys" in username
-                ):
+                elif plum_web or jason_l_web:
                     logger.info(f"@8838 [PUSH] success: True, 201_created")
                     return JsonResponse(
                         {
