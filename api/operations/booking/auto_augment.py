@@ -19,13 +19,21 @@ def auto_augment(booking, client_aa, cl_proc=None):
 
             custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns"
 
-            if len(custRefNumVerbage) >= 26:
-                custRefLen = len("Ref:  Returns")
+            if len(custRefNumVerbage) >= 30:
+                fixed_len = len("Ref:  Returns")
                 cl_ref_nums = []
                 clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
                 for cl_ref_num in clientRefNumbers_arr:
-                    if 26 - custRefLen > len(",".join(cl_ref_nums)):
+                    if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
+                        avail_len = 30 - fixed_len - len(cl_ref_num) - 1
+                        avail_len -= len(
+                            f"+{len(clientRefNumbers_arr) - len(cl_ref_nums)}"
+                        )
+                    else:
+                        avail_len = 30 - fixed_len - len(cl_ref_num) - 1
+
+                    if avail_len > len(",".join(cl_ref_nums)):
                         cl_ref_nums.append(cl_ref_num)
 
                 if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
@@ -53,13 +61,19 @@ def auto_augment(booking, client_aa, cl_proc=None):
 
         custRefNumVerbage = f"Ref: {str(booking.clientRefNumbers or '')} Returns"
 
-        if len(custRefNumVerbage) >= 26:
-            custRefLen = len("Ref:  Returns")
+        if len(custRefNumVerbage) >= 30:
+            fixed_len = len("Ref:  Returns")
             cl_ref_nums = []
             clientRefNumbers_arr = booking.clientRefNumbers.split(", ")
 
             for cl_ref_num in clientRefNumbers_arr:
-                if 26 - custRefLen > len(",".join(cl_ref_nums)):
+                if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
+                    avail_len = 30 - fixed_len - len(cl_ref_num) - 1
+                    avail_len -= len(f"+{len(clientRefNumbers_arr) - len(cl_ref_nums)}")
+                else:
+                    avail_len = 30 - fixed_len - len(cl_ref_num) - 1
+
+                if avail_len > len(",".join(cl_ref_nums)):
                     cl_ref_nums.append(cl_ref_num)
 
             if len(clientRefNumbers_arr) - len(cl_ref_nums) > 0:
