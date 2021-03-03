@@ -635,38 +635,55 @@ def scanned(request):
 
         with transaction.atomic():
             for picked_item in picked_items:
+                # Find source line
+                old_line = None
+
+                for original_item in original_items:
+                    if (
+                        repack_type == "model_number"
+                        and original_item.e_item_type == item["model_number"]
+                    ):
+                        old_line = original_item
+                    elif repack_type == "sscc" and original_item.sscc == item["sscc"]:
+                        old_line = original_item
+
                 # Create new Lines
                 new_line = Booking_lines()
                 new_line.fk_booking_id = pk_booking_id
                 new_line.pk_booking_lines_id = str(uuid.uuid4())
                 new_line.e_type_of_packaging = picked_item["package_type"]
                 new_line.e_qty = 1
+                new_line.e_item = (
+                    "Picked Item" if repack_type == "model_number" else "Repacked Item"
+                )
 
-                if repack_type == "model_number":
-                    new_line.e_item = "Picked Item"
+                if picked_item.get("dimensions"):
+                    new_line.e_dimUOM = picked_item["dimensions"]["unit"]
+                    new_line.e_dimLength = picked_item["dimensions"]["length"]
+                    new_line.e_dimWidth = picked_item["dimensions"]["width"]
+                    new_line.e_dimHeight = picked_item["dimensions"]["height"]
                 else:
-                    new_line.e_item = "Repacked Item"
+                    new_line.e_dimUOM = old_line.e_dimUOM
+                    new_line.e_dimLength = old_line.e_dimLength
+                    new_line.e_dimWidth = old_line.e_dimWidth
+                    new_line.e_dimHeight = old_line.e_dimHeight
 
-                new_line.e_dimUOM = picked_item["dimensions"]["unit"]
-                new_line.e_dimLength = picked_item["dimensions"]["length"]
-                new_line.e_dimWidth = picked_item["dimensions"]["width"]
-                new_line.e_dimHeight = picked_item["dimensions"]["height"]
-                new_line.e_weightUOM = picked_item["weight"]["unit"]
-                new_line.e_weightPerEach = picked_item["weight"]["weight"]
+                if picked_item.get("weight"):
+                    new_line.e_weightUOM = picked_item["weight"]["unit"]
+                    new_line.e_weightPerEach = picked_item["weight"]["weight"]
+                else:
+                    new_line.e_weightUOM = old_line.e_weightUOM
+                    new_line.e_weightPerEach = old_line.e_weightPerEach
+
                 new_line.sscc = picked_item["sscc"]
                 new_line.picked_up_timestamp = picked_item["timestamp"]
                 new_line.save()
 
+                # Soft delete source line
+                line.is_deleted = True
+                line.save()
+
                 for item in picked_item["items"]:
-                    # Soft delete original line
-                    if repack_type == "model_number":
-                        line = lines.get(e_item_type=item["model_number"])
-                    elif repack_type == "sscc":
-                        line = lines.get(sscc=item["sscc"])
-
-                    line.is_deleted = True
-                    line.save()
-
                     # Create new Line_Data
                     line_data = Booking_lines_data()
                     line_data.fk_booking_id = pk_booking_id
