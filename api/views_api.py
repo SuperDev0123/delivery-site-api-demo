@@ -685,8 +685,8 @@ def scanned(request):
                 new_line.save()
 
                 # Soft delete source line
-                line.is_deleted = True
-                line.save()
+                old_line.is_deleted = True
+                old_line.save()
 
                 for item in picked_item["items"]:
                     # Create new Line_Data
