@@ -655,7 +655,7 @@ def scanned(request):
                 new_line = Booking_lines()
                 new_line.fk_booking_id = pk_booking_id
                 new_line.pk_booking_lines_id = str(uuid.uuid4())
-                new_line.e_type_of_packaging = picked_item["package_type"]
+                new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
                 new_line.e_qty = 1
                 new_line.e_item = (
                     "Picked Item" if repack_type == "model_number" else "Repacked Item"
@@ -681,7 +681,9 @@ def scanned(request):
                     new_line.e_weightPerEach = old_line.e_weightPerEach
 
                 new_line.sscc = picked_item["sscc"]
-                new_line.picked_up_timestamp = picked_item["timestamp"]
+                new_line.picked_up_timestamp = (
+                    picked_item.get("timestamp") or datetime.now()
+                )
                 new_line.save()
 
                 # Soft delete source line
