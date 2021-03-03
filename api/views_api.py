@@ -641,10 +641,13 @@ def scanned(request):
                 for original_item in original_items:
                     if (
                         repack_type == "model_number"
-                        and original_item.e_item_type == item["model_number"]
+                        and original_item.e_item_type == picked_item["model_number"]
                     ):
                         old_line = original_item
-                    elif repack_type == "sscc" and original_item.sscc == item["sscc"]:
+                    elif (
+                        repack_type == "sscc"
+                        and original_item.sscc == picked_item["sscc"]
+                    ):
                         old_line = original_item
 
                 # Create new Lines
