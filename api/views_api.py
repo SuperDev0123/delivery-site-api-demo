@@ -637,16 +637,17 @@ def scanned(request):
             for picked_item in picked_items:
                 # Find source line
                 old_line = None
+                first_item = picked_item["items"][0]
 
                 for original_item in original_items:
                     if (
                         repack_type == "model_number"
-                        and original_item.e_item_type == picked_item["model_number"]
+                        and original_item.e_item_type == first_item["model_number"]
                     ):
                         old_line = original_item
                     elif (
                         repack_type == "sscc"
-                        and original_item.sscc == picked_item["sscc"]
+                        and original_item.sscc == first_item["sscc"]
                     ):
                         old_line = original_item
 
