@@ -667,6 +667,7 @@ def scanned(request):
                     new_line.e_dimLength = old_line.e_dimLength
                     new_line.e_dimWidth = old_line.e_dimWidth
                     new_line.e_dimHeight = old_line.e_dimHeight
+                    new_line.e_qty = old_line.e_qty
 
                 if picked_item.get("weight"):
                     new_line.e_weightUOM = picked_item["weight"]["unit"]
@@ -1463,7 +1464,7 @@ def push_boks(request):
                 line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
                 line["pk_booking_lines_id"] = str(uuid.uuid1())
                 line["success"] = bok_1["success"]
-                line["l_001_type_of_packaging"] = "Carton"
+                line["l_001_type_of_packaging"] = "CTN"
                 line["l_002_qty"] = item["qty"]
                 line["l_003_item"] = item["description"]
                 line["l_004_dim_UOM"] = item["e_dimUOM"]
