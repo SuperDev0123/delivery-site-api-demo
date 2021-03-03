@@ -425,7 +425,7 @@ def scanned(request):
         order_num = b_client_order_num[5:]
 
     # Trim data
-    if "Jason" in client_name:
+    if "Jason" in b_client_name:
         b_client_order_num = b_client_order_num.strip()
         b_client_name = b_client_name.strip()
 
