@@ -697,7 +697,9 @@ def scanned(request):
                     if repack_type == "model_number":
                         line_data.modelNumber = item["model_number"]
                         line_data.itemmessage = "Picked at warehouse"
-                        line_data.quantity = item["qty"]
+                        line_data.quantity = (
+                            old_line.e_qty if not item.get("qty") else item.get("qty")
+                        )
                         line_data.clientRefNumber = picked_item["sscc"]
                     else:
                         line_data.modelNumber = item["sscc"]
