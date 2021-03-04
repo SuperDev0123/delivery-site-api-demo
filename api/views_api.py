@@ -717,6 +717,10 @@ def scanned(request):
 
         # Should get pricing again when if fully picked
         if is_picked_all:
+            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+            booking.save()
+
             new_fc_log = FC_Log.objects.create(
                 client_booking_id=booking.b_client_booking_ref_num,
                 old_quote=booking.api_booking_quote,
@@ -764,6 +768,8 @@ def scanned(request):
                 }
             )
         elif fp_name == "hunter" and booking.b_status == "Picking":
+            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
             booking.b_status = "Ready for Booking"
             booking.save()
 
