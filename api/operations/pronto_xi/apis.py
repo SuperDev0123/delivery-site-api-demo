@@ -121,14 +121,6 @@ def get_order(order_num="20088"):
                     <Parameters> \
                         <SOOrderNo>{order_num}</SOOrderNo> \
                     </Parameters> \
-                    <Filters> \
-                        <SourceCode> \
-                            <Like>]</Like> \
-                        </SourceCode> \
-                        <CustomerCode> \
-                            <Like>{CUSTOMER_CODE}</Like> \
-                        </CustomerCode> \
-                    </Filters> \
                     <RequestFields> \
                         <SalesOrders> \
                             <SalesOrder> \
