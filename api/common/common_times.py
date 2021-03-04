@@ -1,8 +1,12 @@
-import pytz, math
+import pytz
+import math
 import logging
+import holidays
 from datetime import date, timedelta, datetime
 
+
 from api.fp_apis.utils import get_etd_in_hour
+from api.models import Fp_freight_providers
 
 logger = logging.getLogger("dme_api")
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
@@ -101,3 +105,30 @@ def beautify_eta(json_results, quotes, client):
             pass
 
     return _results
+
+
+def next_business_day(
+    start_day, business_days, fp_name=None, time=datetime.now().time()
+):
+    if not start_day:
+        return None
+
+    AU_HOLIDAYS = holidays.AU()
+    ONE_DAY = timedelta(days=1)
+    _next_day = start_day
+
+    if fp_name:
+        fp = Fp_freight_providers.objects.only("service_cutoff_time").get(
+            fp_company_name__iexact=fp_name
+        )
+
+        if fp.service_cutoff_time < time:
+            _next_day += ONE_DAY
+
+    for i in range(0, business_days):
+        _next_day += ONE_DAY
+
+        while _next_day.weekday() in [5, 6] or _next_day in AU_HOLIDAYS:
+            _next_day += ONE_DAY
+
+    return _next_day
