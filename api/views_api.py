@@ -5,7 +5,7 @@ import json
 import logging
 import requests
 import zipfile
-from datetime import datetime
+from datetime import datetime, date
 from base64 import b64decode, b64encode
 
 from django.conf import settings
@@ -754,6 +754,10 @@ def scanned(request):
 
         # Should get pricing again when if fully picked
         if is_picked_all:
+            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+            booking.save()
+
             new_fc_log = FC_Log.objects.create(
                 client_booking_id=booking.b_client_booking_ref_num,
                 old_quote=booking.api_booking_quote,
@@ -801,6 +805,8 @@ def scanned(request):
                 }
             )
         elif fp_name == "hunter" and booking.b_status == "Picking":
+            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
             booking.b_status = "Ready for Booking"
             booking.save()
 
@@ -1382,9 +1388,8 @@ def push_boks(request):
                 bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
             if not bok_1.get("b_021_b_pu_avail_from_date"):
-                bok_1["b_021_b_pu_avail_from_date"] = str(
-                    datetime.now() + timedelta(days=2)
-                )[:10]
+                next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+                bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
 
         # Populate default values
         if client_name == "Plum Products Australia Ltd":  # Plum
@@ -1796,9 +1801,12 @@ def partial_pricing(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
+
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": str(datetime.now() + timedelta(days=2))[:10],
+        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",

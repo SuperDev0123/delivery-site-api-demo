@@ -50,6 +50,7 @@ from reportlab.lib import colors
 from django.conf import settings
 from api.models import *
 from api.common import trace_error
+from api.common.common_times import next_business_day
 from api.operations.generate_xls_report import build_xls
 from api.outputs.email import send_email
 
@@ -2858,20 +2859,6 @@ def get_clientname(request):
         return client.company_name
 
 
-def next_business_day(start_day, business_days, HOLIDAYS):
-    if not start_day:
-        return None
-
-    ONE_DAY = timedelta(days=1)
-    temp_day = start_day
-    for i in range(0, business_days):
-        next_day = temp_day + ONE_DAY
-        while next_day.weekday() in [5, 6] or next_day in HOLIDAYS:
-            next_day += ONE_DAY
-        temp_day = next_day
-    return temp_day
-
-
 def get_pu_by(booking):
     if booking.pu_PickUp_By_Date:
         pu_by = datetime.combine(
@@ -2935,7 +2922,7 @@ def get_eta_de_by(booking, quote):
                     etd_de_by = next_business_day(
                         etd_de_by,
                         round(service_etd.fp_03_delivery_hours / 24),
-                        [],
+                        booking.vx_freight_provider,
                     )
 
                 if service_etd.fp_service_time_uom.lower() == "hours":
@@ -2948,7 +2935,9 @@ def get_eta_de_by(booking, quote):
             else:
                 if quote.freight_provider == "TNT":
                     days = round(float(quote.etd))
-                    etd_de_by = next_business_day(etd_de_by, days, [])
+                    etd_de_by = next_business_day(
+                        etd_de_by, days, booking.vx_freight_provider
+                    )
 
             return etd_de_by
         else:
