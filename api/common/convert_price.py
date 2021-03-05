@@ -86,11 +86,9 @@ def apply_markups(quotes):
         return quotes
 
     logger.info(f"[APPLY MU] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
-    fp_name = quotes[0].freight_provider.lower()
-    client_name = quotes[0].fk_client_id.lower()
-    fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
 
     try:
+        client_name = quotes[0].fk_client_id.lower()
         client = DME_clients.objects.get(company_name__iexact=client_name)
     except:
         # Do not apply MU(s) when doing "Pricing-Only"
@@ -98,6 +96,8 @@ def apply_markups(quotes):
         return quotes
 
     for quote in quotes:
+        fp_name = quotes[0].freight_provider.lower()
+        fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
         client_mu_1_minimum_values, mu_percentage_fuel_levy = _apply_mu(
             quote, fp, client
         )
