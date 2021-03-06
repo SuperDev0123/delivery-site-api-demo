@@ -1904,7 +1904,7 @@ class Bookings(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if not booking_line_data.gap_ra:
+                if booking_line_data.gap_ra:
                     gap_ras.append(booking_line_data.gap_ra)
 
             return ", ".join(gap_ras)
