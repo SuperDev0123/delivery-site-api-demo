@@ -64,22 +64,22 @@ def build_xml_with_bok(bok_1, bok_2s):
     OrderTypeCode.text = order_type_code
 
     CustomerStreet1 = ET.SubElement(Header, "CustomerStreet1")
-    CustomerStreet1.text = bok_1.b_029_b_pu_address_street_1
+    CustomerStreet1.text = bok_1.b_055_b_del_address_street_1
 
     CustomerStreet2 = ET.SubElement(Header, "CustomerStreet2")
-    CustomerStreet2.text = bok_1.b_030_b_pu_address_street_2
+    CustomerStreet2.text = bok_1.b_056_b_del_address_street_2
 
     CustomerStreet3 = ET.SubElement(Header, "CustomerStreet3")
     CustomerStreet3.text = ""
 
     CustomerSuburb = ET.SubElement(Header, "CustomerSuburb")
-    CustomerSuburb.text = bok_1.b_032_b_pu_address_suburb
+    CustomerSuburb.text = bok_1.b_058_b_del_address_suburb
 
     CustomerState = ET.SubElement(Header, "CustomerState")
-    CustomerState.text = bok_1.b_031_b_pu_address_state
+    CustomerState.text = bok_1.b_057_b_del_address_state
 
     CustomerPostCode = ET.SubElement(Header, "CustomerPostCode")
-    CustomerPostCode.text = bok_1.b_033_b_pu_address_postalcode
+    CustomerPostCode.text = bok_1.b_059_b_del_address_postalcode
 
     CustomerCountry = ET.SubElement(Header, "CustomerCountry")
     CustomerCountry.text = customer_country
