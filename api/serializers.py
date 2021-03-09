@@ -573,7 +573,7 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client_employees
-        fields = "__all__"
+        exclude = ("status_time",)
 
     def get_warehouse_name(self, instance):
         if instance.warehouse_id:
