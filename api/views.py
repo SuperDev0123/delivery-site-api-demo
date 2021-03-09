@@ -342,12 +342,6 @@ class UserViewSet(viewsets.ViewSet):
                     fk_id_user=resultObject.id
                 ).first()
 
-                if dme_employee is not None:
-                    status_time = dme_employee.status_time
-
-                if client_employee is not None:
-                    status_time = client_employee.status_time
-
                 return_data.append(
                     {
                         "id": resultObject.id,
@@ -358,7 +352,6 @@ class UserViewSet(viewsets.ViewSet):
                         "last_login": resultObject.last_login,
                         "is_staff": resultObject.is_staff,
                         "is_active": resultObject.is_active,
-                        "status_time": status_time,
                     }
                 )
             return JsonResponse({"results": return_data})
