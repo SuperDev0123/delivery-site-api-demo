@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 
 from rest_framework import serializers
-
+from django.contrib.auth.models import User
 from api.models import (
     Bookings,
     Client_warehouses,
@@ -42,6 +42,11 @@ from api import utils
 from api.fp_apis.utils import _is_deliverable_price
 from api.common import math as dme_math
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     client_company_name = serializers.SerializerMethodField(read_only=True)
