@@ -121,6 +121,8 @@ def password_reset_token_created(
 
 
 class UserViewSet(viewsets.ViewSet):
+    serializer_class = UserSerializer
+
     @action(detail=True, methods=["get"])
     def get(self, request, pk, format=None):
         return_data = []
@@ -169,46 +171,41 @@ class UserViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         user = User.objects.get(pk=pk)
+        serializer = self.serializer_class(user, data=request.data, partial=True)
 
         try:
-            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
-            dme_employee = DME_employees.objects.filter(fk_id_user=user.id).first()
-            client_employee = Client_employees.objects.filter(
-                fk_id_user=user.id
-            ).first()
+            if serializer.is_valid():
+                serializer.save()
 
-            if dme_employee is not None:
-                dme_employee.status_time = str(datetime.now())
-                dme_employee.save()
+                dme_employee = DME_employees.objects.filter(fk_id_user=user.id).first()
+                client_employee = Client_employees.objects.filter(
+                    fk_id_user=user.id
+                ).first()
 
-            if client_employee is not None:
-                client_employee.status_time = str(datetime.now())
-                client_employee.save()
+                if dme_employee is not None:
+                    dme_employee.status_time = str(datetime.now())
+                    dme_employee.save()
 
-            return JsonResponse({"results": request.data})
-            # if serializer.is_valid():
-            # try:
-            # serializer.save()
-            # return Response(serializer.data)
-            # except Exception as e:
-            # print('%s (%s)' % (e.message, type(e)))
-            # return Response({"results": e.message})
-            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if client_employee is not None:
+                    client_employee.status_time = str(datetime.now())
+                    client_employee.save()
+
+                return Response({"results": serializer.data})
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            # print('Exception: ', e)
-            return JsonResponse({"results": str(e)})
-            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
     def delete(self, request, pk, format=None):
         user = User.objects.get(pk=pk)
 
         try:
-            # user.delete()
-            return JsonResponse({"results": fp_freight_providers})
+            user.delete()
+            return JsonResponse({"results": user})
         except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
+            return JsonResponse({"results": e, status: status.HTTP_400_BAD_REQUEST})
 
     @action(detail=False, methods=["post"])
     def username(self, request, format=None):
