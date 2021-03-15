@@ -160,6 +160,8 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                     if "pricingOnly" in account_detail and not is_pricing_only:
                         continue
 
+                    logger.info(f"#906 [PRICING] - {_fp_name}, {client_name}")
+
                     if _fp_name == "auspost" and services:
                         for service in services:
                             _worker = _api_pricing_worker_builder(
@@ -205,6 +207,9 @@ async def _api_pricing_worker_builder(
     )
 
     if not payload:
+        logger.info(
+            f"#907 [PRICING] Failed to build payload - {booking.b_bookingID_Visual}, {_fp_name}"
+        )
         return None
 
     url = DME_LEVEL_API_URL + "/pricing/calculateprice"
