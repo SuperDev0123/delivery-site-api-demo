@@ -2245,7 +2245,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_count(self, request, format=None):
         booking_ids = request.GET["bookingIds"].split(",")
-        bookings = Bookings.objects.filter(id__in=booking_ids, is_deleted=False)
+        bookings = Bookings.objects.filter(id__in=booking_ids)
 
         count = 0
         for booking in bookings:
