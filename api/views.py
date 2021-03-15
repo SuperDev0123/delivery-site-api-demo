@@ -2233,7 +2233,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_booking_lines(self, request, format=None):
         pk_booking_id = request.GET["pk_booking_id"]
-        booking_lines = Booking_lines.objects.all()
+        booking_lines = Booking_lines.objects.filter(is_deleted=False)
 
         if pk_booking_id != "undefined":
             booking_lines = booking_lines.filter(fk_booking_id=pk_booking_id)
@@ -2245,7 +2245,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_count(self, request, format=None):
         booking_ids = request.GET["bookingIds"].split(",")
-        bookings = Bookings.objects.filter(id__in=booking_ids)
+        bookings = Bookings.objects.filter(id__in=booking_ids, is_deleted=False)
 
         count = 0
         for booking in bookings:
