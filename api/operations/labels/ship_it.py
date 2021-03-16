@@ -321,11 +321,11 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     ),
                     style_left,
                 ),
-                # Paragraph(
-                #     "<font size=%s><b>%s</b></font> "
-                #     % (label_settings["font_size_extra_large"], "SYD-EST"),
-                #     style_left,
-                # ),
+                Paragraph(
+                    "<font size=%s><b>%s</b></font> "
+                    % (label_settings["font_size_extra_large"], ""),
+                    style_left,
+                ),
             ],
             [
                 Paragraph(
