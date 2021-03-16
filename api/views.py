@@ -2223,7 +2223,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_booking_lines(self, request, format=None):
         pk_booking_id = request.GET["pk_booking_id"]
-        booking_lines = Booking_lines.objects.all()
+        booking_lines = Booking_lines.objects.filter(is_deleted=False)
 
         if pk_booking_id != "undefined":
             booking_lines = booking_lines.filter(fk_booking_id=pk_booking_id)

@@ -390,6 +390,8 @@ def order_boks(request):
 @api_view(["POST"])
 def scanned(request):
     """
+    called as get_label
+
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
     """
