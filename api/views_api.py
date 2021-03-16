@@ -1942,7 +1942,7 @@ def reprint_label(request):
 
     try:
         booking = Bookings.objects.select_related("api_booking_quote").get(
-            b_client_order_num=b_client_order_num[5:], b_client_name=b_client_name
+            b_client_order_num=b_client_order_num, b_client_name=b_client_name
         )
         fp_name = booking.api_booking_quote.freight_provider.lower()
     except:
