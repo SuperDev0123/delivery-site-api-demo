@@ -157,7 +157,6 @@ FP_CREDENTIALS = {
                 "accountCode": "PLUMPR",
                 "accountKey": "UExVTVBSOnBsdXBybw==",
                 "accountPassword": "plupro",
-                "pricingOnly": True,
             },
         },
     },

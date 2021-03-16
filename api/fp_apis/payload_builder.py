@@ -232,9 +232,7 @@ def get_book_payload(booking, fp_name):
     maxHeight = 0
     maxWidth = 0
     maxLength = 0
-    first_sscc = None
     for line in booking_lines:
-        first_sscc = line.sscc
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
         length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
@@ -249,8 +247,13 @@ def get_book_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": "{0:.3f}".format(width * height * length / 1000000),
                 "weight": 0 if not line.e_weightPerEach else weight,
-                "description": line.e_item,
             }
+
+            # Plum
+            if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
+                item["description"] = line.sscc
+            else:
+                item["description"] = line.e_item
 
             if fp_name == "startrack":
                 item["itemId"] = "EXP"
@@ -310,8 +313,8 @@ def get_book_payload(booking, fp_name):
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
 
-        if first_sscc:
-            payload["reference1"] = first_sscc
+        if booking.b_client_order_num:
+            payload["reference1"] = booking.b_client_order_num
         elif booking.clientRefNumbers:
             payload["reference1"] = booking.clientRefNumbers
         elif booking.b_client_sales_inv_num:
