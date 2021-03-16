@@ -398,7 +398,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         tbl_data1 = [
             [
                 Paragraph(
-                    "<font size=%s>  %s</font>"
+                    "<font size=%s><b>TO:</b> %s</font>"
                     % (
                         label_settings["font_size_medium"],
                         booking.de_to_Contact_F_LName,
