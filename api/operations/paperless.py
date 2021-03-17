@@ -88,7 +88,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     OrderPriority.text = order_priority
 
     DeliveryInstructions = ET.SubElement(Header, "DeliveryInstructions")
-    DeliveryInstructions.text = f"{bok_1.b_043_b_del_instructions_contact or ""} {bok_1.b_044_b_del_instructions_address or ""}"
+    DeliveryInstructions.text = f"{bok_1.b_043_b_del_instructions_contact or ''} {bok_1.b_044_b_del_instructions_address or ''}"
 
     # DeliveryDate = ET.SubElement(Header, "DeliveryDate")
     # DeliveryDate.text = str(bok_1.b_050_b_del_by_date)
