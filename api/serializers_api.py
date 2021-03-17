@@ -118,6 +118,8 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     )
     fk_header_id = serializers.CharField(validators=[should_have_value])
     success = serializers.CharField(validators=[should_have_value])
+    # Sequence
+    zbl_121_integer_1 = serializers.IntegerField(required=False)
 
     class Meta:
         model = BOK_2_lines
@@ -136,6 +138,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",
             "e_item_type",
+            "zbl_121_integer_1",  # Sequence
         )
 
 

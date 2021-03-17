@@ -31,6 +31,8 @@ def get_product_items(bok_2s, client, ignore_product=False):
     for bok_2 in bok_2s:
         model_number = bok_2.get("model_number")
         qty = bok_2.get("qty")
+        # "Jason L"
+        zbl_121_integer_1 = bok_2.get("sequence")
 
         if not model_number or not qty:
             raise ValidationError(
@@ -65,6 +67,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                 "e_dimWidth": product.e_dimWidth,
                 "e_dimHeight": product.e_dimHeight,
                 "e_weightPerEach": product.e_weightPerEach,
+                "zbl_121_integer_1": zbl_121_integer_1,
             }
 
             results = _append_line(results, line, qty)
@@ -84,6 +87,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                     "e_dimWidth": item.e_dimWidth,
                     "e_dimHeight": item.e_dimHeight,
                     "e_weightPerEach": item.e_weightPerEach,
+                    "zbl_121_integer_1": zbl_121_integer_1,
                 }
                 results = _append_line(results, line, qty)
 

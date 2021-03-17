@@ -1489,6 +1489,7 @@ def push_boks(request):
                 line["l_009_weight_per_each"] = item["e_weightPerEach"]
                 line["l_008_weight_UOM"] = item["e_weightUOM"]
                 line["e_item_type"] = item["e_item_type"]
+                line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
                 new_bok_2s.append({"booking_line": line})
 
                 bok_2_serializer = BOK_2_Serializer(data=line)

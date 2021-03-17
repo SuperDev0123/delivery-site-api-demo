@@ -101,7 +101,12 @@ def parse_order_xml(response):
     for SalesOrderLine in SalesOrderLines:
         ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode")
         OrderedQty = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}OrderedQty")
-        line = {"model_number": ItemCode.text, "qty": int(float(OrderedQty.text))}
+        SequenceNo = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}SequenceNo")
+        line = {
+            "model_number": ItemCode.text,
+            "qty": int(float(OrderedQty.text)),
+            "sequence": int(float(SequenceNo.text)),
+        }
         lines.append(line)
 
     return order, lines
@@ -143,6 +148,7 @@ def get_order(order_num="20088"):
                                             <SalesOrderLine> \
                                                 <ItemCode /> \
                                                 <OrderedQty /> \
+                                                <SequenceNo /> \
                                             </SalesOrderLine> \
                                         </SalesOrderLines> \
                                     </RequestFields> \
