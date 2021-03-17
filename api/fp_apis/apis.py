@@ -194,21 +194,6 @@ def rebook(request, fp_name):
 
             if response.status_code == 200:
                 try:
-                    request_payload = {
-                        "apiUrl": "",
-                        "accountCode": "",
-                        "authKey": "",
-                        "trackingId": "",
-                    }
-                    request_payload["apiUrl"] = url
-                    request_payload["accountCode"] = payload["spAccountDetails"][
-                        "accountCode"
-                    ]
-                    request_payload["authKey"] = payload["spAccountDetails"][
-                        "accountKey"
-                    ]
-                    request_payload["trackingId"] = json_data["consignmentNumber"]
-
                     if booking.vx_freight_provider.lower() == "tnt":
                         booking.v_FPBookingNumber = (
                             f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
@@ -233,7 +218,7 @@ def rebook(request, fp_name):
                     booking.save()
 
                     Log(
-                        request_payload=request_payload,
+                        request_payload=payload,
                         request_status="SUCCESS",
                         request_type=f"{fp_name.upper()} REBOOK",
                         response=res_content,
@@ -344,18 +329,6 @@ def edit_book(request, fp_name):
             logger.info(f"### Response ({fp_name} edit book): {s0}")
 
             try:
-                request_payload = {
-                    "apiUrl": "",
-                    "accountCode": "",
-                    "authKey": "",
-                    "trackingId": "",
-                }
-                request_payload["apiUrl"] = url
-                request_payload["accountCode"] = payload["spAccountDetails"][
-                    "accountCode"
-                ]
-                request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-                request_payload["trackingId"] = json_data["consignmentNumber"]
                 request_type = f"{fp_name.upper()} EDIT BOOK"
                 request_status = "SUCCESS"
 
@@ -369,7 +342,7 @@ def edit_book(request, fp_name):
                 booking.save()
 
                 Log(
-                    request_payload=request_payload,
+                    request_payload=payload,
                     request_status=request_status,
                     request_type=request_type,
                     response=res_content,
