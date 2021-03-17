@@ -42,6 +42,9 @@ def build_xml_with_bok(bok_1, bok_2s):
     # Build Header
     Header = ET.SubElement(SalesOrderToWMS, "Header")
 
+    if not bok_1.b_client_order_num:
+        raise Exception({"message": "Order number is null."})
+
     OrderNumber = ET.SubElement(Header, "OrderNumber")
     OrderNumber.text = f"{dme_account_num}{bok_1.b_client_order_num}"
 
