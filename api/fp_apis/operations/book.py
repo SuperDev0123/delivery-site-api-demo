@@ -72,12 +72,6 @@ def book(fp_name, booking, booker):
 
     if response.status_code == 200:
         try:
-            request_payload = {}
-            request_payload["apiUrl"] = url
-            request_payload["accountCode"] = payload["spAccountDetails"]["accountCode"]
-            request_payload["authKey"] = payload["spAccountDetails"]["accountKey"]
-            request_payload["trackingId"] = json_data["consignmentNumber"]
-
             if booking.vx_freight_provider.lower() in ["startrack", "auspost"]:
                 booking.v_FPBookingNumber = json_data["items"][0]["tracking_details"][
                     "consignment_id"
@@ -104,7 +98,7 @@ def book(fp_name, booking, booker):
             booking.save()
 
             Log(
-                request_payload=request_payload,
+                request_payload=payload,
                 request_status="SUCCESS",
                 request_type=f"{fp_name.upper()} BOOK",
                 response=res_content,
