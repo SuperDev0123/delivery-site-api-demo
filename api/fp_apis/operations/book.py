@@ -50,6 +50,14 @@ def book(fp_name, booking, booker):
     s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)  # Just for visual
     logger.info(f"### Response ({fp_name} book): {s0}")
 
+    log = Log(
+        request_payload=payload,
+        request_status="",
+        request_type=f"{fp_name.upper()} BOOK",
+        response=res_content,
+        fk_booking_id=booking.id,
+    )
+
     if (
         response.status_code == 500
         and _fp_name in ["startrack", "auspost"]
@@ -97,13 +105,8 @@ def book(fp_name, booking, booker):
             booking.b_error_Capture = None
             booking.save()
 
-            Log(
-                request_payload=payload,
-                request_status="SUCCESS",
-                request_type=f"{fp_name.upper()} BOOK",
-                response=res_content,
-                fk_booking_id=booking.id,
-            ).save()
+            log.request_status="SUCCESS",
+            log.save()
 
             # Create new statusHistory
             status_history.create(booking, "Booked", booker)
@@ -176,25 +179,16 @@ def book(fp_name, booking, booker):
             return True, message
         except KeyError as e:
             trace_error.print()
-            Log(
-                request_payload=payload,
-                request_status="ERROR",
-                request_type=f"{fp_name.upper()} BOOK",
-                response=res_content,
-                fk_booking_id=booking.id,
-            ).save()
+            
+            log.request_status="ERROR",
+            log.save()
 
             error_msg = s0
             _set_error(booking, error_msg)
             return False, error_msg
     elif response.status_code == 400:
-        Log(
-            request_payload=payload,
-            request_status="ERROR",
-            request_type=f"{fp_name.upper()} BOOK",
-            response=res_content,
-            fk_booking_id=booking.id,
-        ).save()
+        log.request_status="ERROR",
+        log.save()
 
         logger.error(f"[BOOK] - {str(res_content)}")
 
@@ -209,13 +203,8 @@ def book(fp_name, booking, booker):
         _set_error(booking, error_msg)
         return False, error_msg
     elif response.status_code == 500:
-        Log(
-            request_payload=payload,
-            request_status="ERROR",
-            request_type=f"{fp_name.upper()} BOOK",
-            response=res_content,
-            fk_booking_id=booking.id,
-        ).save()
+        log.request_status="ERROR",
+        log.save()
 
         error_msg = "DME bot: Tried booking 3-4 times seems to be an unknown issue. Please review and contact support if needed"
         _set_error(booking, error_msg)
