@@ -105,7 +105,7 @@ def book(fp_name, booking, booker):
             booking.b_error_Capture = None
             booking.save()
 
-            log.request_status="SUCCESS",
+            log.request_status="SUCCESS"
             log.save()
 
             # Create new statusHistory

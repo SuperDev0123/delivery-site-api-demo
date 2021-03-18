@@ -56,7 +56,7 @@ def pricing(body, booking_id, is_pricing_only=False):
             )
             # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
         else:
-            return False, "Booking does not exist", None
+            return booking, False, "Booking does not exist", None
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
@@ -64,7 +64,7 @@ def pricing(body, booking_id, is_pricing_only=False):
         if not is_pricing_only:
             _set_error(booking, error_msg)
 
-        return False, error_msg, None
+        return booking, False, error_msg, None
 
     try:
         loop = asyncio.new_event_loop()
