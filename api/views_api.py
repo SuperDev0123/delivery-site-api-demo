@@ -75,7 +75,9 @@ class BOK_0_ViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class BOK_1_ViewSet(viewsets.ViewSet):
+class BOK_1_ViewSet(viewsets.ModelViewSet):
+    queryset = CostOption.objects.all()
+    serializer_class = BOK_1_Serializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
@@ -84,6 +86,9 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
+        """
+        for BioPak
+        """
         logger.info(f"@871 User: {request.user.username}")
         logger.info(f"@872 request payload - {request.data}")
         bok_1_header = request.data
@@ -102,6 +107,63 @@ class BOK_1_ViewSet(viewsets.ViewSet):
         else:
             logger.info(f"@841 BOK_1 POST - {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["put"], permission_classes=[AllowAny])
+    def update_freight_options(self, request, pk=None):
+        """"""
+        identifier = request.data.get("client_booking_id", None)
+        logger.info(f"[UPDATE_FREIGHT_OPT]: {identifier}")
+
+        if not identifier:
+            return Response(
+                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            bok_1.b_027_b_pu_address_type = request.data.get("b_027_b_pu_address_type")
+            bok_1.b_053_b_del_address_type = request.data.get(
+                "b_053_b_del_address_type"
+            )
+            bok_1.b_019_b_pu_tail_lift = request.data.get("b_019_b_pu_tail_lift")
+            bok_1.b_041_b_del_tail_lift = request.data.get("b_041_b_del_tail_lift")
+            bok_1.b_072_b_pu_no_of_assists = request.data.get(
+                "b_072_b_pu_no_of_assists", 0
+            )
+            bok_1.b_073_b_del_no_of_assists = request.data.get(
+                "b_073_b_del_no_of_assists", 0
+            )
+            bok_1.b_078_b_pu_location = request.data.get("b_078_b_pu_location")
+            bok_1.b_068_b_del_location = request.data.get("b_068_b_del_location")
+            bok_1.b_074_b_pu_delivery_access = request.data.get(
+                "b_074_b_pu_delivery_access"
+            )
+            bok_1.b_075_b_del_delivery_access = request.data.get(
+                "b_075_b_del_delivery_access"
+            )
+            bok_1.b_079_b_pu_floor_number = request.data.get(
+                "b_079_b_pu_floor_number", 0
+            )
+            bok_1.b_069_b_del_floor_number = request.data.get(
+                "b_069_b_del_floor_number", 0
+            )
+            bok_1.b_080_b_pu_floor_access_by = request.data.get(
+                "b_080_b_pu_floor_access_by"
+            )
+            bok_1.b_070_b_del_floor_access_by = request.data.get(
+                "b_070_b_del_floor_access_by"
+            )
+            bok_1.b_076_b_pu_service = request.data.get("b_076_b_pu_service")
+            bok_1.b_077_b_del_service = request.data.get("b_077_b_del_service")
+            bok_1.save()
+            res_json = {"success": True, "message": "Freigth options are updated."}
+
+            return Response(res_json, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.info(
+                f"[UPDATE_FREIGHT_OPT] BOK Failure with identifier: {identifier}, reason: {str(e)}"
+            )
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_boks_with_pricings(self, request):
