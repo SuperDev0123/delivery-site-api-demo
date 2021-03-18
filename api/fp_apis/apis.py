@@ -55,14 +55,6 @@ def tracking(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         payload = get_tracking_payload(booking, fp_name)
 
-        log = Log(
-            request_payload=payload,
-            request_status="SUCCESS",
-            request_type=f"{fp_name.upper()} TRACKING",
-            response={},
-            fk_booking_id=booking.id,
-        )
-
         logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
@@ -72,7 +64,13 @@ def tracking(request, fp_name):
         else:
             res_content = response.content.decode("utf8").replace("'", '"')
 
-        log.response = res_content
+        log = Log(
+            request_payload=payload,
+            request_status="SUCCESS",
+            request_type=f"{fp_name.upper()} TRACKING",
+            response=res_content,
+            fk_booking_id=booking.id,
+        )
 
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
@@ -302,11 +300,11 @@ def edit_book(request, fp_name):
             elif booking.pu_Address_Suburb is None or not booking.pu_Address_Suburb:
                 error_msg = "Suburb name for pickup postal address is required."
                 _set_error(booking, error_msg)
-                return booking_id({"message": error_msg})
+                return JsonResponse({"message": error_msg})
             elif booking.z_manifest_url is not None or booking.z_manifest_url != "":
                 error_msg = "This booking is manifested."
                 _set_error(booking, error_msg)
-                return booking_id({"message": error_msg})
+                return JsonResponse({"message": error_msg})
 
             payload = get_book_payload(booking, fp_name)
 
