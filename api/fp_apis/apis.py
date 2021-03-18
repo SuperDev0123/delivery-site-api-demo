@@ -66,7 +66,7 @@ def tracking(request, fp_name):
 
         log = Log(
             request_payload=payload,
-            request_status="SUCCESS",
+            request_status="",
             request_type=f"{fp_name.upper()} TRACKING",
             response=res_content,
             fk_booking_id=booking.id,
@@ -77,37 +77,51 @@ def tracking(request, fp_name):
         # Disabled on 2021-02-05
         # logger.info(f"### Response ({fp_name} tracking): {s0}")
 
-        try:
+        if response.status_code == 200:
+            try:
+                log.request_status = "SUCCESS"
+                log.save()
+
+                consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
+                consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
+                update_booking_with_tracking_result(
+                    request, booking, fp_name, consignmentStatuses
+                )
+                booking.b_error_Capture = None
+                booking.save()
+
+                return JsonResponse(
+                    {
+                        "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
+                        "b_status": booking.b_status,
+                        "b_status_API": booking.b_status_API,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            except KeyError:
+                log.request_status = "ERROR"
+                log.save()
+
+                if "errorMessage" in json_data:
+                    error_msg = json_data["errorMessage"]
+                    _set_error(booking, error_msg)
+                    logger.info(f"#510 ERROR: {error_msg}")
+                else:
+                    error_msg = "Failed Tracking"
+
+                trace_error.print()
+                return JsonResponse(
+                    {"error": error_msg}, status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            log.request_status = "ERROR"
             log.save()
 
-            consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
-            consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            update_booking_with_tracking_result(
-                request, booking, fp_name, consignmentStatuses
-            )
-            booking.b_error_Capture = None
-            booking.save()
-
-            return JsonResponse(
-                {
-                    "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
-                    "b_status": booking.b_status,
-                    "b_status_API": booking.b_status_API,
-                },
-                status=status.HTTP_200_OK,
-            )
-        except KeyError:
-            if "errorMessage" in json_data:
-                error_msg = json_data["errorMessage"]
-                _set_error(booking, error_msg)
-                logger.info(f"#510 ERROR: {error_msg}")
-            else:
-                error_msg = "Failed Tracking"
-
-            trace_error.print()
+            error_msg = "Failed Tracking"
             return JsonResponse(
                 {"error": error_msg}, status=status.HTTP_400_BAD_REQUEST
             )
+
     except Bookings.DoesNotExist:
         trace_error.print()
         logger.error(f"#511 ERROR: {e}")
