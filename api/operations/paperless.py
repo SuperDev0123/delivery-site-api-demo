@@ -42,6 +42,9 @@ def build_xml_with_bok(bok_1, bok_2s):
     # Build Header
     Header = ET.SubElement(SalesOrderToWMS, "Header")
 
+    if not bok_1.b_client_order_num:
+        raise Exception({"message": "Order number is null."})
+
     OrderNumber = ET.SubElement(Header, "OrderNumber")
     OrderNumber.text = f"{dme_account_num}{bok_1.b_client_order_num}"
 
@@ -55,7 +58,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     CustomerNumber.text = f"{dme_account_num}testcust123"
 
     CustomerName = ET.SubElement(Header, "CustomerName")
-    CustomerName.text = "Plum Products Australia Ltd"  # hardcoded
+    CustomerName.text = bok_1.b_061_b_del_contact_full_name
 
     CustomerOrderNumber = ET.SubElement(Header, "CustomerOrderNumber")
     CustomerOrderNumber.text = customer_order_number
@@ -88,7 +91,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     OrderPriority.text = order_priority
 
     DeliveryInstructions = ET.SubElement(Header, "DeliveryInstructions")
-    DeliveryInstructions.text = f"{bok_1.b_043_b_del_instructions_contact} {bok_1.b_044_b_del_instructions_address}"
+    DeliveryInstructions.text = f"{bok_1.b_043_b_del_instructions_contact or ''} {bok_1.b_044_b_del_instructions_address or ''}"
 
     # DeliveryDate = ET.SubElement(Header, "DeliveryDate")
     # DeliveryDate.text = str(bok_1.b_050_b_del_by_date)
