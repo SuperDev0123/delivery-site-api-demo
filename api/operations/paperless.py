@@ -58,7 +58,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     CustomerNumber.text = f"{dme_account_num}testcust123"
 
     CustomerName = ET.SubElement(Header, "CustomerName")
-    CustomerName.text = "Plum Products Australia Ltd"  # hardcoded
+    CustomerName.text = bok_1.b_061_b_del_contact_full_name
 
     CustomerOrderNumber = ET.SubElement(Header, "CustomerOrderNumber")
     CustomerOrderNumber.text = customer_order_number
