@@ -38,6 +38,7 @@ from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.clients.operations.index import get_warehouse, get_suburb_state
+from api.clients.jason_l.operations import get_picked_items
 
 
 logger = logging.getLogger("dme_api")
