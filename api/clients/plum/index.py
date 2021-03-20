@@ -5,6 +5,7 @@ from base64 import b64decode, b64encode
 
 from django.conf import settings
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 from api.models import (
     Bookings,

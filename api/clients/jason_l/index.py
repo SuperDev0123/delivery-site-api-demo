@@ -5,6 +5,7 @@ from base64 import b64decode, b64encode
 
 from django.conf import settings
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 from api.models import FC_Log, BOK_1_headers, BOK_2_lines, BOK_3_lines_data
 from api.serializers import SimpleQuoteSerializer

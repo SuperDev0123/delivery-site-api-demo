@@ -694,7 +694,7 @@ def scanned(request):
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
     """
-    LOG_ID = "SCANNED"
+    LOG_ID = "[SCANNED]"
     user = request.user
     logger.info(f"@830 {LOG_ID} Requester: {user.username}")
     logger.info(f"@831 {LOG_ID} Payload: {request.data}")
