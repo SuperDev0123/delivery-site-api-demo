@@ -511,7 +511,7 @@ def push_boks(request):
         else:  # Standard Client
             result = standard.push_boks(request.data, client)
 
-        logger.info(f"@828 - Push BOKS success!, 201_created")
+        logger.info(f"@828 {LOG_ID} Push BOKS success!, 201_created")
         return JsonResponse(result, status=status.HTTP_201_CREATED)
     except Exception as e:
         logger.info(f"@829 {LOG_ID} Exception: {str(e)}")
@@ -543,7 +543,7 @@ def scanned(request):
             result = jason_l.scanned(payload=request.data, client=client)
 
         message = f"Successfully scanned."
-        logger.info(f"#838 {LOG_ID} - {message}")
+        logger.info(f"#838 {LOG_ID} {message}")
         return JsonResponse(result, status=status.HTTP_200_OK)
     except Exception as e:
         logger.info(f"@839 {LOG_ID} Exception: {str(e)}")
@@ -564,12 +564,14 @@ def ready_boks(request):
 
     try:
         client = get_client(user)
+        dme_account_num = client.dme_account_num
 
         if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
             result = plum.scanned(payload=request.data, client=client)
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
             result = jason_l.scanned(payload=request.data, client=client)
 
+        logger.info(f"#848 {LOG_ID} {message}")
         return Response({"success": True, "message": result})
     except Exception as e:
         logger.info(f"@849 {LOG_ID} Exception: {str(e)}")

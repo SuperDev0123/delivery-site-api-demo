@@ -157,6 +157,7 @@ def ready_boks(payload, client):
     booking.save()
 
     message = "Order will be BOOKED soon."
+    logger.info(f"@349 {LOG_ID} {message}")
     return message
 
 
