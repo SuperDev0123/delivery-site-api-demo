@@ -1,6 +1,7 @@
 import uuid
 import logging
 from datetime import datetime, date
+from base64 import b64decode, b64encode
 
 from django.conf import settings
 from django.db import transaction
