@@ -238,7 +238,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>via %s &#160 to &#160 %s</b></font>"
+                        "<font size=%s><b>via %s  to  %s</b></font>"
                         % (16, routing.gateway, routing.onfwd),
                         style_right,
                     ),
@@ -302,8 +302,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (3 / 5) * mm,
-                    float(label_settings["label_image_size_length"]) * (2 / 5) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
                 ),
                 rowHeights=(float(label_settings["line_height_medium"]) * mm),
                 style=[
