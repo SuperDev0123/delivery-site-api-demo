@@ -57,13 +57,12 @@ def ready_boks(payload, client):
         message = "'HostOrderNumber' is required."
         raise ValidationError(message)
 
-    # Get Order Number
-    order_num = b_client_order_num[5:]
-
     # Check if Order exists
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=client.company_name, b_client_order_num=order_num)
+        .filter(
+            b_client_name=client.company_name, b_client_order_num=b_client_order_num
+        )
         .first()
     )
 
