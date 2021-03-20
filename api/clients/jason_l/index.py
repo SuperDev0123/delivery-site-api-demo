@@ -23,6 +23,7 @@ from api.fp_apis.utils import (
     get_etd_in_hour,
     gen_consignment_num,
 )
+from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import push_operations, product_operations as product_oper
 from api.operations.email_senders import send_email_to_admins

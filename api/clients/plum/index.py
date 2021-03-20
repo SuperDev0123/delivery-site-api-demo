@@ -31,10 +31,11 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.fp_apis.operations.book import book as book_oper
+from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.email_senders import send_email_to_admins
 from api.operations import push_operations, product_operations as product_oper
-from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.clients.operations.index import get_warehouse, get_suburb_state
 
 
