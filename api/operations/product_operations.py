@@ -36,11 +36,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
 
         if not model_number or not qty:
             raise ValidationError(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": "'model_number' and 'qty' are required for each booking_line",
-                }
+                "'model_number' and 'qty' are required for each booking_line"
             )
 
         products = Client_Products.objects.filter(
@@ -49,12 +45,9 @@ def get_product_items(bok_2s, client, ignore_product=False):
 
         if products.count() == 0:
             raise ValidationError(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": f"Can't find Product with provided 'model_number'({model_number}).",
-                },
+                f"Can't find Product with provided 'model_number'({model_number})."
             )
+
         elif products.count() == 1:
             product = products.first()
             line = {

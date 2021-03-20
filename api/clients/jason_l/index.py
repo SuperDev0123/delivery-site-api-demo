@@ -60,8 +60,8 @@ def scanned(payload, client):
         raise ValidationError(message)
 
     # Trim data
-    if "Jason" in b_client_name:
-        b_client_order_num = b_client_order_num.strip()
+    b_client_order_num = b_client_order_num.strip()
+    sscc = None if not sscc else sscc.stripe()
 
     # Check if Order exists on Bookings table
     booking = (
@@ -907,7 +907,7 @@ def push_boks(payload, client, username, method):
             return result
         else:
             logger.info(f"@8838 {LOG_ID} success: True, 201_created")
-            return {"success": True, "results": json_results}
+            return json_results
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
