@@ -704,19 +704,9 @@ def scanned(request):
         dme_account_num = client.dme_account_num
 
         if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
-            result = plum.scanned(
-                payload=request.data,
-                client=client,
-                username=user.username,
-                method=request.method,
-            )
+            result = plum.scanned(payload=request.data, client=client)
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-            result = jason_l.scanned(
-                payload=request.data,
-                client=client,
-                username=user.username,
-                method=request.method,
-            )
+            result = jason_l.scanned(payload=request.data, client=client)
 
         message = f"Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         logger.info(f"#838 {LOG_ID} - {message}")
