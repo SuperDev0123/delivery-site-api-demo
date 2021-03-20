@@ -652,10 +652,8 @@ def push_boks(payload, client, username, method):
                     old_quote = old_bok_1.quote
                 else:
                     message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-
-        if message:
-            logger.info(f"@884 {LOG_ID} {message}")
-            raise Exception(message)
+                    logger.info(f"@884 {LOG_ID} {message}")
+                    raise Exception(message)
 
     # Generate `client_booking_id` for SAPB1
     if is_biz:
