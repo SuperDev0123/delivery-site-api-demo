@@ -9,10 +9,10 @@ logger = logging.getLogger("dme_api")
 def get_picked_items(order_num, sscc):
     LOG_ID = "[SSCC CSV READER]"
 
-    # Only on DEV or PROD
-    subprocess.run(
-        ["./home/ubuntu/jason_l/JasonL01_full_0.1/JasonL01_full/JasonL01_full_run.sh"]
-    )
+    if settings.ENV != "local":  # Only on DEV or PROD
+        cmd_dir = "/home/ubuntu/jason_l/JasonL01_full_0.1/JasonL01_full"
+        cmd_file = os.path.join(command_dir, "JasonL01_full_run.sh")
+        subprocess.call([cmd_file], cwd=cmd_dir)
 
     if settings.ENV == "local":
         file_path = "/Users/juli/Desktop/sscc.csv"
