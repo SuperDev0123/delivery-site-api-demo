@@ -26,9 +26,6 @@ from rest_framework.decorators import (
     permission_classes,
     action,
 )
-
-from api.fp_apis.operations.book import book as book_oper
-from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.serializers_client import *
 from api.serializers import SimpleQuoteSerializer
 from api.models import *

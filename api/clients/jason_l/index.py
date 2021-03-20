@@ -1,5 +1,6 @@
 import uuid
 import logging
+import subprocess
 from datetime import datetime, date
 from base64 import b64decode, b64encode
 
@@ -7,7 +8,15 @@ from django.conf import settings
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
-from api.models import FC_Log, BOK_1_headers, BOK_2_lines, BOK_3_lines_data
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Booking_lines_data,
+    FC_Log,
+    BOK_1_headers,
+    BOK_2_lines,
+    BOK_3_lines_data,
+)
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.convertors import pdf
@@ -35,62 +44,40 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 logger = logging.getLogger("dme_api")
 
 
-def scanned(request):
+def scanned(payload, client):
     """
     called as get_label
 
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
     """
-    user = request.user
-    logger.info(f"@890 {LOG_ID} Requester: {user.username}")
-    logger.info(f"@891 {LOG_ID} Payload: {request.data}")
-    b_client_order_num = request.data.get("HostOrderNumber")
-    picked_items = request.data.get("picked_items")
-    b_client_name = request.data.get("CustomerName")
-    code = None
-    message = None
+    LOG_ID = "[SCANNED Jason L]"
+    b_client_order_num = payload.get("HostOrderNumber")
+    sscc = payload.get("sscc")  # Optional for single SSCC get-label
 
     # Check required params are included
     if not b_client_order_num:
-        code = "missing_param"
         message = "'HostOrderNumber' is required."
-
-    if not picked_items:
-        code = "missing_param"
-        message = "'picked_items' is required."
-
-    if not b_client_name:
-        code = "missing_param"
-        message = "'CustomerName' is required."
-
-    if message:
-        raise ValidationError({"success": False, "code": code, "message": message})
-
-    # Get Order Number
-    order_num = b_client_order_num
-
-    if b_client_name == "Plum Products Australia Ltd":
-        order_num = b_client_order_num[5:]
+        raise ValidationError(message)
 
     # Trim data
     if "Jason" in b_client_name:
         b_client_order_num = b_client_order_num.strip()
-        b_client_name = b_client_name.strip()
 
     # Check if Order exists on Bookings table
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=b_client_name, b_client_order_num=order_num)
+        .filter(
+            b_client_name=client.company_name, b_client_order_num=b_client_order_num
+        )
         .first()
     )
 
     if not booking:
-        code = "not_found"
-        message = (
-            "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
-        )
-        raise ValidationError({"success": False, "code": code, "message": message})
+        message = "Order does not exist. 'HostOrderNumber' is invalid."
+        raise ValidationError(message)
+
+    picked_items = get_picked_items(b_client_order_num, sscc)
 
     # If Order exists
     pk_booking_id = booking.pk_booking_id
@@ -112,171 +99,174 @@ def scanned(request):
     logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
 
-    # Validation
-    missing_sscc_picked_items = []
-    invalid_model_numbers = []
-    invalid_sscc_list = []
-    duplicated_sscc_list = []
-    for picked_item in picked_items:
-        # Check `sscc` is provided
-        if not "sscc" in picked_item:
-            code = "missing_param"
-            message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
-            raise ValidationError({"success": False, "code": code, "message": message})
+    # # Validation
+    # missing_sscc_picked_items = []
+    # invalid_model_numbers = []
+    # invalid_sscc_list = []
+    # duplicated_sscc_list = []
+    # for picked_item in picked_items:
+    #     # Check `sscc` is provided
+    #     if not "sscc" in picked_item:
+    #         code = "missing_param"
+    #         message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
+    #         raise ValidationError({"success": False, "code": code, "message": message})
 
-        # Check if sscc is invalid (except Hunter Orders)
-        if (
-            fp_name != "hunter"
-            and Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists()
-        ):
-            duplicated_sscc_list.append(picked_item["sscc"])
+    #     # Check if sscc is invalid (except Hunter Orders)
+    #     if (
+    #         fp_name != "hunter"
+    #         and Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists()
+    #     ):
+    #         duplicated_sscc_list.append(picked_item["sscc"])
 
-        # Validate repacked items
-        if (
-            "is_repacked" in picked_item
-            and "items" in picked_item
-            and picked_item["items"]
-        ):
-            repack_type = None
+    #     # Validate repacked items
+    #     if (
+    #         "is_repacked" in picked_item
+    #         and "items" in picked_item
+    #         and picked_item["items"]
+    #     ):
+    #         repack_type = None
 
-            for item in picked_item["items"]:
-                # Get and check repack_type
-                if "model_number" in item and not repack_type:
-                    repack_type = "model_number"
+    #         for item in picked_item["items"]:
+    #             # Get and check repack_type
+    #             if "model_number" in item and not repack_type:
+    #                 repack_type = "model_number"
 
-                if "sscc" in item and not repack_type:
-                    repack_type = "sscc"
+    #             if "sscc" in item and not repack_type:
+    #                 repack_type = "sscc"
 
-                # Invalid sscc check
-                if repack_type == "sscc" and not item["sscc"] in sscc_list:
-                    invalid_sscc_list.append(item["sscc"])
+    #             # Invalid sscc check
+    #             if repack_type == "sscc" and not item["sscc"] in sscc_list:
+    #                 invalid_sscc_list.append(item["sscc"])
 
-                # Check qty
-                if repack_type == "model_number":
-                    if not "qty" in item:
-                        code = "missing_param"
-                        message = f"Qty is required. Invalid item: {json.dumps(item)}"
-                        raise ValidationError(
-                            {"success": False, "code": code, "message": message}
-                        )
-                    elif "qty" in item and not item["qty"]:
-                        code = "invalid_param"
-                        message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
-                        raise ValidationError(
-                            {"success": False, "code": code, "message": message}
-                        )
+    #             # Check qty
+    #             if repack_type == "model_number":
+    #                 if not "qty" in item:
+    #                     code = "missing_param"
+    #                     message = f"Qty is required. Invalid item: {json.dumps(item)}"
+    #                     raise ValidationError(
+    #                         {"success": False, "code": code, "message": message}
+    #                     )
+    #                 elif "qty" in item and not item["qty"]:
+    #                     code = "invalid_param"
+    #                     message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
+    #                     raise ValidationError(
+    #                         {"success": False, "code": code, "message": message}
+    #                     )
 
-                # Accumulate invalid_model_numbers
-                if "model_number" in item:
-                    is_valid = False
+    #             # Accumulate invalid_model_numbers
+    #             if "model_number" in item:
+    #                 is_valid = False
 
-                    for model_number_qty in model_number_qtys:
-                        if model_number_qty[0] == item["model_number"]:
-                            is_valid = True
+    #                 for model_number_qty in model_number_qtys:
+    #                     if model_number_qty[0] == item["model_number"]:
+    #                         is_valid = True
 
-                    if not is_valid:
-                        invalid_model_numbers.append(item["model_number"])
+    #                 if not is_valid:
+    #                     invalid_model_numbers.append(item["model_number"])
 
-                # Invalid repack_type (which has both 'sscc' and 'model_number')
-                if ("model_number" in item and repack_type == "sscc") or (
-                    "sscc" in item and repack_type == "model_number"
-                ):
-                    code = "invalid_repacked_item"
-                    message = f"Can not repack 'model_number' and 'sscc'."
-                    raise ValidationError(
-                        {"success": False, "code": code, "message": message}
-                    )
+    #             # Invalid repack_type (which has both 'sscc' and 'model_number')
+    #             if ("model_number" in item and repack_type == "sscc") or (
+    #                 "sscc" in item and repack_type == "model_number"
+    #             ):
+    #                 code = "invalid_repacked_item"
+    #                 message = f"Can not repack 'model_number' and 'sscc'."
+    #                 raise ValidationError(
+    #                     {"success": False, "code": code, "message": message}
+    #                 )
 
-                # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
-                if not "model_number" in item and not "sscc" in item:
-                    code = "invalid_repacked_item"
-                    message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
-                    raise ValidationError(
-                        {"success": False, "code": code, "message": message}
-                    )
-        else:
-            code = "invalid_item"
-            message = f"There is an invalid item: {json.dumps(picked_item)}"
-            raise ValidationError({"success": False, "code": code, "message": message})
+    #             # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
+    #             if not "model_number" in item and not "sscc" in item:
+    #                 code = "invalid_repacked_item"
+    #                 message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
+    #                 raise ValidationError(
+    #                     {"success": False, "code": code, "message": message}
+    #                 )
+    #     else:
+    #         code = "invalid_item"
+    #         message = f"There is an invalid item: {json.dumps(picked_item)}"
+    #         raise ValidationError({"success": False, "code": code, "message": message})
 
-    if duplicated_sscc_list:
-        code = "duplicated_sscc"
-        message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
-        raise ValidationError({"success": False, "code": code, "message": message})
+    # if duplicated_sscc_list:
+    #     code = "duplicated_sscc"
+    #     message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
+    #     raise ValidationError({"success": False, "code": code, "message": message})
 
-    if invalid_sscc_list:
-        code = "invalid_sscc"
-        message = (
-            f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
-        )
-        raise ValidationError({"success": False, "code": code, "message": message})
+    # if invalid_sscc_list:
+    #     code = "invalid_sscc"
+    #     message = (
+    #         f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
+    #     )
+    #     raise ValidationError({"success": False, "code": code, "message": message})
 
-    if invalid_model_numbers:
-        code = "invalid_param"
-        message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
-        raise ValidationError({"success": False, "code": code, "message": message})
+    # if invalid_model_numbers:
+    #     code = "invalid_param"
+    #     message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
+    #     raise ValidationError({"success": False, "code": code, "message": message})
 
-    # Check over picked items
-    over_picked_items = []
-    estimated_picked = {}
-    is_picked_all = True
-    scanned_items_count = 0
+    # # Check over picked items
+    # over_picked_items = []
+    # estimated_picked = {}
+    # is_picked_all = True
+    # scanned_items_count = 0
 
-    for model_number_qty in model_number_qtys:
-        estimated_picked[model_number_qty[0]] = 0
+    # for model_number_qty in model_number_qtys:
+    #     estimated_picked[model_number_qty[0]] = 0
 
-    for scanned_item in scanned_items:
-        if scanned_item.e_item_type:
-            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
-            scanned_items_count += scanned_item.e_qty
+    # for scanned_item in scanned_items:
+    #     if scanned_item.e_item_type:
+    #         estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
+    #         scanned_items_count += scanned_item.e_qty
 
-        for line_data in line_datas:
-            if (
-                line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-                and line_data.itemDescription != "Repacked at warehouse"
-            ):
-                estimated_picked[line_data.modelNumber] += line_data.quantity
+    #     for line_data in line_datas:
+    #         if (
+    #             line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+    #             and line_data.itemDescription != "Repacked at warehouse"
+    #         ):
+    #             estimated_picked[line_data.modelNumber] += line_data.quantity
 
-    if repack_type == "model_number":
-        for picked_item in picked_items:
-            for item in picked_item["items"]:
-                estimated_picked[item["model_number"]] += item["qty"]
+    # if repack_type == "model_number":
+    #     for picked_item in picked_items:
+    #         for item in picked_item["items"]:
+    #             estimated_picked[item["model_number"]] += item["qty"]
 
-    logger.info(
-        f"@366 {LOG_ID} checking over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
-    )
+    # logger.info(
+    #     f"@366 {LOG_ID} checking over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
+    # )
 
-    for item in estimated_picked:
-        for model_number_qty in model_number_qtys:
-            if (
-                item == model_number_qty[0]
-                and estimated_picked[item] > model_number_qty[1]
-            ):
-                over_picked_items.append(model_number_qty[0])
+    # for item in estimated_picked:
+    #     for model_number_qty in model_number_qtys:
+    #         if (
+    #             item == model_number_qty[0]
+    #             and estimated_picked[item] > model_number_qty[1]
+    #         ):
+    #             over_picked_items.append(model_number_qty[0])
 
-            if (
-                item == model_number_qty[0]
-                and estimated_picked[item] != model_number_qty[1]
-            ):
-                is_picked_all = False
+    #         if (
+    #             item == model_number_qty[0]
+    #             and estimated_picked[item] != model_number_qty[1]
+    #         ):
+    #             is_picked_all = False
 
-    # If found over picked items
-    if over_picked_items:
-        logger.error(
-            f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
-        )
-        code = "over_picked"
-        message = f"There are over picked items: {', '.join(over_picked_items)}"
-        raise ValidationError({"success": False, "code": code, "message": message})
+    # # If found over picked items
+    # if over_picked_items:
+    #     logger.error(
+    #         f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
+    #     )
+    #     code = "over_picked"
+    #     message = f"There are over picked items: {', '.join(over_picked_items)}"
+    #     raise ValidationError({"success": False, "code": code, "message": message})
 
-    # Hunter order should be scanned fully always(at first scan)
-    if fp_name == "hunter" and not is_picked_all:
-        logger.error(
-            f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
-        )
-        code = "invalid_request"
-        message = f"Hunter Order should be fully picked."
-        raise ValidationError({"success": False, "code": code, "message": message})
+    # # Hunter order should be scanned fully always(at first scan)
+    # if fp_name == "hunter" and not is_picked_all:
+    #     logger.error(
+    #         f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
+    #     )
+    #     code = "invalid_request"
+    #     message = f"Hunter Order should be fully picked."
+    #     raise ValidationError({"success": False, "code": code, "message": message})
+
+    # Test case
+    is_picked_all = False
 
     # Save
     try:
@@ -289,15 +279,7 @@ def scanned(request):
                 first_item = picked_item["items"][0]
 
                 for original_item in original_items:
-                    if (
-                        repack_type == "model_number"
-                        and original_item.e_item_type == first_item["model_number"]
-                    ):
-                        old_line = original_item
-                    elif (
-                        repack_type == "sscc"
-                        and original_item.sscc == first_item["sscc"]
-                    ):
+                    if original_item.zbl_121_integer_1 == first_item["sequence"]:
                         old_line = original_item
 
                 # Create new Lines
@@ -305,30 +287,14 @@ def scanned(request):
                 new_line.fk_booking_id = pk_booking_id
                 new_line.pk_booking_lines_id = str(uuid.uuid4())
                 new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
-                new_line.e_qty = 1
-                new_line.e_item = (
-                    "Picked Item" if repack_type == "model_number" else "Repacked Item"
-                )
-
-                if picked_item.get("dimensions"):
-                    new_line.e_dimUOM = picked_item["dimensions"]["unit"]
-                    new_line.e_dimLength = picked_item["dimensions"]["length"]
-                    new_line.e_dimWidth = picked_item["dimensions"]["width"]
-                    new_line.e_dimHeight = picked_item["dimensions"]["height"]
-                else:
-                    new_line.e_dimUOM = old_line.e_dimUOM
-                    new_line.e_dimLength = old_line.e_dimLength
-                    new_line.e_dimWidth = old_line.e_dimWidth
-                    new_line.e_dimHeight = old_line.e_dimHeight
-                    new_line.e_qty = old_line.e_qty
-
-                if picked_item.get("weight"):
-                    new_line.e_weightUOM = picked_item["weight"]["unit"]
-                    new_line.e_weightPerEach = picked_item["weight"]["weight"]
-                else:
-                    new_line.e_weightUOM = old_line.e_weightUOM
-                    new_line.e_weightPerEach = old_line.e_weightPerEach
-
+                new_line.e_qty = item.get("qty")
+                new_line.e_item = "Picked Item"
+                new_line.e_dimUOM = picked_item["dimensions"]["unit"]
+                new_line.e_dimLength = picked_item["dimensions"]["length"]
+                new_line.e_dimWidth = picked_item["dimensions"]["width"]
+                new_line.e_dimHeight = picked_item["dimensions"]["height"]
+                new_line.e_weightUOM = picked_item["weight"]["unit"]
+                new_line.e_weightPerEach = picked_item["weight"]["weight"]
                 new_line.sscc = picked_item["sscc"]
                 new_line.picked_up_timestamp = (
                     picked_item.get("timestamp") or datetime.now()
@@ -344,19 +310,10 @@ def scanned(request):
                     line_data = Booking_lines_data()
                     line_data.fk_booking_id = pk_booking_id
                     line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
-
-                    if repack_type == "model_number":
-                        line_data.modelNumber = item["model_number"]
-                        line_data.itemmessage = "Picked at warehouse"
-                        line_data.quantity = (
-                            old_line.e_qty if not item.get("qty") else item.get("qty")
-                        )
-                        line_data.clientRefNumber = picked_item["sscc"]
-                    else:
-                        line_data.modelNumber = item["sscc"]
-                        line_data.itemmessage = "Repacked at warehouse"
-                        line_data.clientRefNumber = picked_item["sscc"]
-
+                    line_data.modelNumber = item["model_number"]
+                    line_data.itemDescription = "Picked at warehouse"
+                    line_data.quantity = item.get("qty")
+                    line_data.clientRefNumber = picked_item["sscc"]
                     line_data.save()
 
                 # Build label with Line
@@ -385,11 +342,8 @@ def scanned(request):
                     result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
                     if not result:
-                        code = "unknown_status"
                         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                        raise Exception(
-                            {"success": False, "code": code, "message": message}
-                        )
+                        raise Exception(message)
 
                     with open(label_url[:-4] + ".zpl", "rb") as zpl:
                         zpl_data = str(b64encode(zpl.read()))[2:-1]
@@ -443,16 +397,9 @@ def scanned(request):
             logger.info(
                 f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
             )
-            return Response(
-                {
-                    "success": False,
-                    "message": "This Order is already BOOKED.",
-                    "consignment_number": gen_consignment_num(
-                        booking.vx_freight_provider, booking.b_bookingID_Visual
-                    ),
-                    "labels": [],
-                }
-            )
+            label_url = f"http://{settings.WEB_SITE_IP}/label/{booking.pk_booking_id}/"
+
+            return {"labelUrl": labelUrl}
         elif fp_name == "hunter" and booking.b_status == "Picking":
             next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
             booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
@@ -465,21 +412,17 @@ def scanned(request):
                 logger.info(
                     f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
                 )
-                code = "unknown_status"
                 message = (
                     "Please contact DME support center. <bookings@deliver-me.com.au>"
                 )
-                return Response({"success": False, "code": code, "message": message})
+                return Response(message)
             else:
                 label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
                 result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
                 if not result:
-                    code = "unknown_status"
                     message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                    raise Exception(
-                        {"success": False, "code": code, "message": message}
-                    )
+                    raise Exception(message)
 
                 with open(label_url[:-4] + ".zpl", "rb") as zpl:
                     zpl_data = str(b64encode(zpl.read()))[2:-1]
@@ -495,29 +438,16 @@ def scanned(request):
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
-        return Response(
-            {
-                "success": True,
-                "message": "Successfully updated picked info.",
-                "consignment_number": gen_consignment_num(
-                    booking.vx_freight_provider, booking.b_bookingID_Visual
-                ),
-                "labels": labels,
-            }
-        )
+        label_url = f"http://{settings.WEB_SITE_IP}/label/{booking.pk_booking_id}/"
+
+        return {"labelUrl": labelUrl}
     except Exception as e:
         trace_error.print()
-        error_msg = f"@370 Error on PICKED api: {str(e)}"
+        error_msg = f"@370 {LOG_ID} Exception: {str(e)}"
         logger.error(error_msg)
-        send_email_to_admins(
-            "Scanned api-endpoint error",
-            f"{error_msg}",
-        )
-        raise ValidationError(
-            {
-                "success": False,
-                "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
-            }
+        send_email_to_admins(f"Jason L {LOG_ID}", f"{error_msg}")
+        raise Exception(
+            "Please contact DME support center. <bookings@deliver-me.com.au>"
         )
 
 

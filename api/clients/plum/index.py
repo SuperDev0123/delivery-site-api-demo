@@ -42,430 +42,6 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 logger = logging.getLogger("dme_api")
 
 
-def scanned(payload, client):
-    """
-    called as get_label
-
-    request when item(s) is picked(scanned) at warehouse
-    should response LABEL if payload is correct
-    """
-    LOG_ID = "[SCANNED Plum]"
-    b_client_order_num = payload.get("HostOrderNumber")
-    picked_items = payload.get("picked_items")
-
-    # Check required params are included
-    if not b_client_order_num:
-        message = "'HostOrderNumber' is required."
-        raise ValidationError(message)
-
-    if not picked_items:
-        message = "'picked_items' is required."
-        raise ValidationError(message)
-
-    # Check if Order exists on Bookings table
-    booking = (
-        Bookings.objects.select_related("api_booking_quote")
-        .filter(
-            b_client_name=client.company_name, b_client_order_num=b_client_order_num[5:]
-        )
-        .first()
-    )
-
-    if not booking:
-        message = "Order does not exist. 'HostOrderNumber' is invalid."
-        raise ValidationError(message)
-
-    # If Order exists
-    pk_booking_id = booking.pk_booking_id
-    fp_name = booking.api_booking_quote.freight_provider.lower()
-    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-    original_items = lines.filter(sscc__isnull=True)
-    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
-    repacked_items_count = lines.filter(
-        sscc__isnull=False, e_item="Repacked Item"
-    ).count()
-    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
-    sscc_list = scanned_items.values_list("sscc", flat=True)
-
-    logger.info(f"@360 {LOG_ID} Booking: {booking}")
-    logger.info(f"@361 {LOG_ID} Lines: {lines}")
-    logger.info(f"@362 {LOG_ID} original_items: {original_items}")
-    logger.info(f"@363 {LOG_ID} scanned_items: {scanned_items}")
-    logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
-    logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
-
-    # Validation
-    missing_sscc_picked_items = []
-    invalid_model_numbers = []
-    invalid_sscc_list = []
-    duplicated_sscc_list = []
-    for picked_item in picked_items:
-        # Check `sscc` is provided
-        if not "sscc" in picked_item:
-            message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
-            raise ValidationError(message)
-
-        # Check if sscc is invalid (except Hunter Orders)
-        if (
-            fp_name != "hunter"
-            and Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists()
-        ):
-            duplicated_sscc_list.append(picked_item["sscc"])
-
-        # Validate repacked items
-        if (
-            "is_repacked" in picked_item
-            and "items" in picked_item
-            and picked_item["items"]
-        ):
-            repack_type = None
-
-            for item in picked_item["items"]:
-                # Get and check repack_type
-                if "model_number" in item and not repack_type:
-                    repack_type = "model_number"
-
-                if "sscc" in item and not repack_type:
-                    repack_type = "sscc"
-
-                # Invalid sscc check
-                if repack_type == "sscc" and not item["sscc"] in sscc_list:
-                    invalid_sscc_list.append(item["sscc"])
-
-                # Check qty
-                if repack_type == "model_number":
-                    if not "qty" in item:
-                        message = f"Qty is required. Invalid item: {json.dumps(item)}"
-                        raise ValidationError(message)
-                    elif "qty" in item and not item["qty"]:
-                        message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
-                        raise ValidationError(message)
-
-                # Accumulate invalid_model_numbers
-                if "model_number" in item:
-                    is_valid = False
-
-                    for model_number_qty in model_number_qtys:
-                        if model_number_qty[0] == item["model_number"]:
-                            is_valid = True
-
-                    if not is_valid:
-                        invalid_model_numbers.append(item["model_number"])
-
-                # Invalid repack_type (which has both 'sscc' and 'model_number')
-                if ("model_number" in item and repack_type == "sscc") or (
-                    "sscc" in item and repack_type == "model_number"
-                ):
-                    message = f"Can not repack 'model_number' and 'sscc'."
-                    raise ValidationError(message)
-
-                # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
-                if not "model_number" in item and not "sscc" in item:
-                    message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
-                    raise ValidationError(message)
-        else:
-            message = f"There is an invalid item: {json.dumps(picked_item)}"
-            raise ValidationError(message)
-
-    if duplicated_sscc_list:
-        message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
-        raise ValidationError(message)
-
-    if invalid_sscc_list:
-        message = (
-            f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
-        )
-        raise ValidationError(message)
-
-    if invalid_model_numbers:
-        message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
-        raise ValidationError(message)
-
-    # Check over picked items
-    over_picked_items = []
-    estimated_picked = {}
-    is_picked_all = True
-    scanned_items_count = 0
-
-    for model_number_qty in model_number_qtys:
-        estimated_picked[model_number_qty[0]] = 0
-
-    for scanned_item in scanned_items:
-        if scanned_item.e_item_type:
-            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
-            scanned_items_count += scanned_item.e_qty
-
-        for line_data in line_datas:
-            if (
-                line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-                and line_data.itemDescription != "Repacked at warehouse"
-            ):
-                estimated_picked[line_data.modelNumber] += line_data.quantity
-
-    if repack_type == "model_number":
-        for picked_item in picked_items:
-            for item in picked_item["items"]:
-                estimated_picked[item["model_number"]] += item["qty"]
-
-    logger.info(
-        f"@366 {LOG_ID} checking over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
-    )
-
-    for item in estimated_picked:
-        for model_number_qty in model_number_qtys:
-            if (
-                item == model_number_qty[0]
-                and estimated_picked[item] > model_number_qty[1]
-            ):
-                over_picked_items.append(model_number_qty[0])
-
-            if (
-                item == model_number_qty[0]
-                and estimated_picked[item] != model_number_qty[1]
-            ):
-                is_picked_all = False
-
-    # If found over picked items
-    if over_picked_items:
-        logger.error(
-            f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
-        )
-        message = f"There are over picked items: {', '.join(over_picked_items)}"
-        raise ValidationError(message)
-
-    # Hunter order should be scanned fully always(at first scan)
-    if fp_name == "hunter" and not is_picked_all:
-        logger.error(
-            f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
-        )
-        message = f"Hunter Order should be fully picked."
-        raise ValidationError(message)
-
-    # Save
-    try:
-        labels = []
-
-        with transaction.atomic():
-            for picked_item in picked_items:
-                # Find source line
-                old_line = None
-                first_item = picked_item["items"][0]
-
-                for original_item in original_items:
-                    if (
-                        repack_type == "model_number"
-                        and original_item.e_item_type == first_item["model_number"]
-                    ):
-                        old_line = original_item
-                    elif (
-                        repack_type == "sscc"
-                        and original_item.sscc == first_item["sscc"]
-                    ):
-                        old_line = original_item
-
-                # Create new Lines
-                new_line = Booking_lines()
-                new_line.fk_booking_id = pk_booking_id
-                new_line.pk_booking_lines_id = str(uuid.uuid4())
-                new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
-                new_line.e_qty = 1
-                new_line.e_item = (
-                    "Picked Item" if repack_type == "model_number" else "Repacked Item"
-                )
-
-                if picked_item.get("dimensions"):
-                    new_line.e_dimUOM = picked_item["dimensions"]["unit"]
-                    new_line.e_dimLength = picked_item["dimensions"]["length"]
-                    new_line.e_dimWidth = picked_item["dimensions"]["width"]
-                    new_line.e_dimHeight = picked_item["dimensions"]["height"]
-                else:
-                    new_line.e_dimUOM = old_line.e_dimUOM
-                    new_line.e_dimLength = old_line.e_dimLength
-                    new_line.e_dimWidth = old_line.e_dimWidth
-                    new_line.e_dimHeight = old_line.e_dimHeight
-                    new_line.e_qty = old_line.e_qty
-
-                if picked_item.get("weight"):
-                    new_line.e_weightUOM = picked_item["weight"]["unit"]
-                    new_line.e_weightPerEach = picked_item["weight"]["weight"]
-                else:
-                    new_line.e_weightUOM = old_line.e_weightUOM
-                    new_line.e_weightPerEach = old_line.e_weightPerEach
-
-                new_line.sscc = picked_item["sscc"]
-                new_line.picked_up_timestamp = (
-                    picked_item.get("timestamp") or datetime.now()
-                )
-                new_line.save()
-
-                # Soft delete source line
-                old_line.is_deleted = True
-                old_line.save()
-
-                for item in picked_item["items"]:
-                    # Create new Line_Data
-                    line_data = Booking_lines_data()
-                    line_data.fk_booking_id = pk_booking_id
-                    line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
-
-                    if repack_type == "model_number":
-                        line_data.modelNumber = item["model_number"]
-                        line_data.itemmessage = "Picked at warehouse"
-                        line_data.quantity = item.get("qty") or old_line.e_qty
-                        line_data.clientRefNumber = picked_item["sscc"]
-                    else:
-                        line_data.modelNumber = item["sscc"]
-                        line_data.itemmessage = "Repacked at warehouse"
-                        line_data.clientRefNumber = picked_item["sscc"]
-
-                    line_data.save()
-
-                # Build label with Line
-                if not booking.api_booking_quote:
-                    raise Exception("Booking doens't have quote.")
-
-                if not booking.vx_freight_provider and booking.api_booking_quote:
-                    _booking = migrate_quote_info_to_booking(
-                        booking, booking.api_booking_quote
-                    )
-
-                if fp_name != "hunter":
-                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-
-                    logger.info(f"@368 - building label...")
-                    label_index = scanned_items_count + repacked_items_count
-                    file_path, file_name = build_label(
-                        booking, file_path, [new_line], label_index
-                    )
-
-                    # Convert label into ZPL format
-                    logger.info(
-                        f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-                    )
-                    label_url = f"{file_path}/{file_name}"
-                    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-                    if not result:
-                        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                        raise Exception(message)
-
-                    with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                        zpl_data = str(b64encode(zpl.read()))[2:-1]
-                        labels.append(
-                            {
-                                "sscc": picked_item["sscc"],
-                                "label": zpl_data,
-                                "barcode": get_barcode(booking, [new_line]),
-                            }
-                        )
-
-        # Should get pricing again when if fully picked
-        if is_picked_all:
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-            booking.save()
-
-            new_fc_log = FC_Log.objects.create(
-                client_booking_id=booking.b_client_booking_ref_num,
-                old_quote=booking.api_booking_quote,
-            )
-            new_fc_log.save()
-            logger.info(
-                f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
-            )
-            _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
-            logger.info(
-                f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
-            )
-
-            # Select best quotes(fastest, lowest)
-            if quotes.exists() and quotes.count() > 0:
-                quotes = quotes.filter(
-                    freight_provider__iexact=booking.vx_freight_provider,
-                    service_name=booking.vx_serviceName,
-                )
-                best_quotes = select_best_options(pricings=quotes)
-                logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
-
-                if best_quotes:
-                    booking.api_booking_quote = best_quotes[0]
-                    booking.save()
-                    new_fc_log.new_quote = booking.api_booking_quote
-                    new_fc_log.save()
-                else:
-                    booking.api_booking_quote = None
-                    booking.save()
-
-        # If Hunter Order?
-        if fp_name == "hunter" and booking.b_status != "Picking":
-            logger.info(
-                f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
-            )
-            return {
-                "success": False,
-                "message": "This Order is already BOOKED.",
-                "consignment_number": gen_consignment_num(
-                    booking.vx_freight_provider, booking.b_bookingID_Visual
-                ),
-                "labels": [],
-            }
-
-        elif fp_name == "hunter" and booking.b_status == "Picking":
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-            booking.b_status = "Ready for Booking"
-            booking.save()
-
-            success, message = book_oper(fp_name, booking, "DME_API")
-
-            if not success:
-                logger.info(
-                    f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
-                )
-                message = (
-                    "Please contact DME support center. <bookings@deliver-me.com.au>"
-                )
-                raise Exception(message)
-            else:
-                label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-                if not result:
-                    message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                    raise Exception(message)
-
-                with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                    zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-                labels.append(
-                    {
-                        "sscc": picked_item["sscc"],
-                        "label": zpl_data,
-                        "barcode": get_barcode(booking, [new_line]),
-                    }
-                )
-
-        logger.info(
-            f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
-        )
-        return {
-            "success": True,
-            "message": "Successfully updated picked info.",
-            "consignment_number": gen_consignment_num(
-                booking.vx_freight_provider, booking.b_bookingID_Visual
-            ),
-            "labels": labels,
-        }
-    except Exception as e:
-        error_msg = f"@370 {LOG_ID} Exception: {str(e)}"
-        logger.error(error_msg)
-        send_email_to_admins("Scanned api-endpoint error", f"{error_msg}")
-        raise Exception(
-            "Please contact DME support center. <bookings@deliver-me.com.au>"
-        )
-
-
 def partial_pricing(payload, client, warehouse):
     LOG_ID = "[PP Plum]"
     bok_1 = payload["booking"]
@@ -1111,3 +687,427 @@ def push_boks(payload, client, username, method):
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
         return message
+
+
+def scanned(payload, client):
+    """
+    called as get_label
+
+    request when item(s) is picked(scanned) at warehouse
+    should response LABEL if payload is correct
+    """
+    LOG_ID = "[SCANNED Plum]"
+    b_client_order_num = payload.get("HostOrderNumber")
+    picked_items = payload.get("picked_items")
+
+    # Check required params are included
+    if not b_client_order_num:
+        message = "'HostOrderNumber' is required."
+        raise ValidationError(message)
+
+    if not picked_items:
+        message = "'picked_items' is required."
+        raise ValidationError(message)
+
+    # Check if Order exists on Bookings table
+    booking = (
+        Bookings.objects.select_related("api_booking_quote")
+        .filter(
+            b_client_name=client.company_name, b_client_order_num=b_client_order_num[5:]
+        )
+        .first()
+    )
+
+    if not booking:
+        message = "Order does not exist. 'HostOrderNumber' is invalid."
+        raise ValidationError(message)
+
+    # If Order exists
+    pk_booking_id = booking.pk_booking_id
+    fp_name = booking.api_booking_quote.freight_provider.lower()
+    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+    original_items = lines.filter(sscc__isnull=True)
+    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
+    repacked_items_count = lines.filter(
+        sscc__isnull=False, e_item="Repacked Item"
+    ).count()
+    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
+    sscc_list = scanned_items.values_list("sscc", flat=True)
+
+    logger.info(f"@360 {LOG_ID} Booking: {booking}")
+    logger.info(f"@361 {LOG_ID} Lines: {lines}")
+    logger.info(f"@362 {LOG_ID} original_items: {original_items}")
+    logger.info(f"@363 {LOG_ID} scanned_items: {scanned_items}")
+    logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
+    logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
+
+    # Validation
+    missing_sscc_picked_items = []
+    invalid_model_numbers = []
+    invalid_sscc_list = []
+    duplicated_sscc_list = []
+    for picked_item in picked_items:
+        # Check `sscc` is provided
+        if not "sscc" in picked_item:
+            message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
+            raise ValidationError(message)
+
+        # Check if sscc is invalid (except Hunter Orders)
+        if (
+            fp_name != "hunter"
+            and Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists()
+        ):
+            duplicated_sscc_list.append(picked_item["sscc"])
+
+        # Validate repacked items
+        if (
+            "is_repacked" in picked_item
+            and "items" in picked_item
+            and picked_item["items"]
+        ):
+            repack_type = None
+
+            for item in picked_item["items"]:
+                # Get and check repack_type
+                if "model_number" in item and not repack_type:
+                    repack_type = "model_number"
+
+                if "sscc" in item and not repack_type:
+                    repack_type = "sscc"
+
+                # Invalid sscc check
+                if repack_type == "sscc" and not item["sscc"] in sscc_list:
+                    invalid_sscc_list.append(item["sscc"])
+
+                # Check qty
+                if repack_type == "model_number":
+                    if not "qty" in item:
+                        message = f"Qty is required. Invalid item: {json.dumps(item)}"
+                        raise ValidationError(message)
+                    elif "qty" in item and not item["qty"]:
+                        message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
+                        raise ValidationError(message)
+
+                # Accumulate invalid_model_numbers
+                if "model_number" in item:
+                    is_valid = False
+
+                    for model_number_qty in model_number_qtys:
+                        if model_number_qty[0] == item["model_number"]:
+                            is_valid = True
+
+                    if not is_valid:
+                        invalid_model_numbers.append(item["model_number"])
+
+                # Invalid repack_type (which has both 'sscc' and 'model_number')
+                if ("model_number" in item and repack_type == "sscc") or (
+                    "sscc" in item and repack_type == "model_number"
+                ):
+                    message = f"Can not repack 'model_number' and 'sscc'."
+                    raise ValidationError(message)
+
+                # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
+                if not "model_number" in item and not "sscc" in item:
+                    message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
+                    raise ValidationError(message)
+        else:
+            message = f"There is an invalid item: {json.dumps(picked_item)}"
+            raise ValidationError(message)
+
+    if duplicated_sscc_list:
+        message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
+        raise ValidationError(message)
+
+    if invalid_sscc_list:
+        message = (
+            f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
+        )
+        raise ValidationError(message)
+
+    if invalid_model_numbers:
+        message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
+        raise ValidationError(message)
+
+    # Check over picked items
+    over_picked_items = []
+    estimated_picked = {}
+    is_picked_all = True
+    scanned_items_count = 0
+
+    for model_number_qty in model_number_qtys:
+        estimated_picked[model_number_qty[0]] = 0
+
+    for scanned_item in scanned_items:
+        if scanned_item.e_item_type:
+            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
+            scanned_items_count += scanned_item.e_qty
+
+        for line_data in line_datas:
+            if (
+                line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+                and line_data.itemDescription != "Repacked at warehouse"
+            ):
+                estimated_picked[line_data.modelNumber] += line_data.quantity
+
+    if repack_type == "model_number":
+        for picked_item in picked_items:
+            for item in picked_item["items"]:
+                estimated_picked[item["model_number"]] += item["qty"]
+
+    logger.info(
+        f"@366 {LOG_ID} checking over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
+    )
+
+    for item in estimated_picked:
+        for model_number_qty in model_number_qtys:
+            if (
+                item == model_number_qty[0]
+                and estimated_picked[item] > model_number_qty[1]
+            ):
+                over_picked_items.append(model_number_qty[0])
+
+            if (
+                item == model_number_qty[0]
+                and estimated_picked[item] != model_number_qty[1]
+            ):
+                is_picked_all = False
+
+    # If found over picked items
+    if over_picked_items:
+        logger.error(
+            f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
+        )
+        message = f"There are over picked items: {', '.join(over_picked_items)}"
+        raise ValidationError(message)
+
+    # Hunter order should be scanned fully always(at first scan)
+    if fp_name == "hunter" and not is_picked_all:
+        logger.error(
+            f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
+        )
+        message = f"Hunter Order should be fully picked."
+        raise ValidationError(message)
+
+    # Save
+    try:
+        labels = []
+
+        with transaction.atomic():
+            for picked_item in picked_items:
+                # Find source line
+                old_line = None
+                first_item = picked_item["items"][0]
+
+                for original_item in original_items:
+                    if (
+                        repack_type == "model_number"
+                        and original_item.e_item_type == first_item["model_number"]
+                    ):
+                        old_line = original_item
+                    elif (
+                        repack_type == "sscc"
+                        and original_item.sscc == first_item["sscc"]
+                    ):
+                        old_line = original_item
+
+                # Create new Lines
+                new_line = Booking_lines()
+                new_line.fk_booking_id = pk_booking_id
+                new_line.pk_booking_lines_id = str(uuid.uuid4())
+                new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
+                new_line.e_qty = 1
+                new_line.e_item = (
+                    "Picked Item" if repack_type == "model_number" else "Repacked Item"
+                )
+
+                if picked_item.get("dimensions"):
+                    new_line.e_dimUOM = picked_item["dimensions"]["unit"]
+                    new_line.e_dimLength = picked_item["dimensions"]["length"]
+                    new_line.e_dimWidth = picked_item["dimensions"]["width"]
+                    new_line.e_dimHeight = picked_item["dimensions"]["height"]
+                else:
+                    new_line.e_dimUOM = old_line.e_dimUOM
+                    new_line.e_dimLength = old_line.e_dimLength
+                    new_line.e_dimWidth = old_line.e_dimWidth
+                    new_line.e_dimHeight = old_line.e_dimHeight
+                    new_line.e_qty = old_line.e_qty
+
+                if picked_item.get("weight"):
+                    new_line.e_weightUOM = picked_item["weight"]["unit"]
+                    new_line.e_weightPerEach = picked_item["weight"]["weight"]
+                else:
+                    new_line.e_weightUOM = old_line.e_weightUOM
+                    new_line.e_weightPerEach = old_line.e_weightPerEach
+
+                new_line.sscc = picked_item["sscc"]
+                new_line.picked_up_timestamp = (
+                    picked_item.get("timestamp") or datetime.now()
+                )
+                new_line.save()
+
+                # Soft delete source line
+                old_line.is_deleted = True
+                old_line.save()
+
+                for item in picked_item["items"]:
+                    # Create new Line_Data
+                    line_data = Booking_lines_data()
+                    line_data.fk_booking_id = pk_booking_id
+                    line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
+
+                    if repack_type == "model_number":
+                        line_data.modelNumber = item["model_number"]
+                        line_data.itemDescription = "Picked at warehouse"
+                        line_data.quantity = item.get("qty") or old_line.e_qty
+                        line_data.clientRefNumber = picked_item["sscc"]
+                    else:
+                        line_data.modelNumber = item["sscc"]
+                        line_data.itemDescription = "Repacked at warehouse"
+                        line_data.clientRefNumber = picked_item["sscc"]
+
+                    line_data.save()
+
+                # Build label with Line
+                if not booking.api_booking_quote:
+                    raise Exception("Booking doens't have quote.")
+
+                if not booking.vx_freight_provider and booking.api_booking_quote:
+                    _booking = migrate_quote_info_to_booking(
+                        booking, booking.api_booking_quote
+                    )
+
+                if fp_name != "hunter":
+                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+
+                    logger.info(f"@368 - building label...")
+                    label_index = scanned_items_count + repacked_items_count
+                    file_path, file_name = build_label(
+                        booking, file_path, [new_line], label_index
+                    )
+
+                    # Convert label into ZPL format
+                    logger.info(
+                        f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
+                    )
+                    label_url = f"{file_path}/{file_name}"
+                    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+                    if not result:
+                        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                        raise Exception(message)
+
+                    with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                        zpl_data = str(b64encode(zpl.read()))[2:-1]
+                        labels.append(
+                            {
+                                "sscc": picked_item["sscc"],
+                                "label": zpl_data,
+                                "barcode": get_barcode(booking, [new_line]),
+                            }
+                        )
+
+        # Should get pricing again when if fully picked
+        if is_picked_all:
+            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+            booking.save()
+
+            new_fc_log = FC_Log.objects.create(
+                client_booking_id=booking.b_client_booking_ref_num,
+                old_quote=booking.api_booking_quote,
+            )
+            new_fc_log.save()
+            logger.info(
+                f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
+            )
+            _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
+            logger.info(
+                f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+            )
+
+            # Select best quotes(fastest, lowest)
+            if quotes.exists() and quotes.count() > 0:
+                quotes = quotes.filter(
+                    freight_provider__iexact=booking.vx_freight_provider,
+                    service_name=booking.vx_serviceName,
+                )
+                best_quotes = select_best_options(pricings=quotes)
+                logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
+
+                if best_quotes:
+                    booking.api_booking_quote = best_quotes[0]
+                    booking.save()
+                    new_fc_log.new_quote = booking.api_booking_quote
+                    new_fc_log.save()
+                else:
+                    booking.api_booking_quote = None
+                    booking.save()
+
+        # If Hunter Order?
+        if fp_name == "hunter" and booking.b_status != "Picking":
+            logger.info(
+                f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
+            )
+            return {
+                "success": False,
+                "message": "This Order is already BOOKED.",
+                "consignment_number": gen_consignment_num(
+                    booking.vx_freight_provider, booking.b_bookingID_Visual
+                ),
+                "labels": [],
+            }
+
+        elif fp_name == "hunter" and booking.b_status == "Picking":
+            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+            booking.b_status = "Ready for Booking"
+            booking.save()
+
+            success, message = book_oper(fp_name, booking, "DME_API")
+
+            if not success:
+                logger.info(
+                    f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
+                )
+                message = (
+                    "Please contact DME support center. <bookings@deliver-me.com.au>"
+                )
+                raise Exception(message)
+            else:
+                label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+                if not result:
+                    message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                    raise Exception(message)
+
+                with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                    zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+                labels.append(
+                    {
+                        "sscc": picked_item["sscc"],
+                        "label": zpl_data,
+                        "barcode": get_barcode(booking, [new_line]),
+                    }
+                )
+
+        logger.info(
+            f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
+        )
+        return {
+            "success": True,
+            "message": "Successfully updated picked info.",
+            "consignment_number": gen_consignment_num(
+                booking.vx_freight_provider, booking.b_bookingID_Visual
+            ),
+            "labels": labels,
+        }
+    except Exception as e:
+        error_msg = f"@370 {LOG_ID} Exception: {str(e)}"
+        logger.error(error_msg)
+        send_email_to_admins(f"Plum {LOG_ID}", f"{error_msg}")
+        raise Exception(
+            "Please contact DME support center. <bookings@deliver-me.com.au>"
+        )
