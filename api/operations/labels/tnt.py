@@ -715,12 +715,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
             Story.append(t1)
             Story.append(Spacer(1, 5))
 
-            special_instruction = booking.pu_pickup_instructions_address
+            special_instruction = booking.pu_pickup_instructions_address or ""
 
             if special_instruction:
-                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address}"
+                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address or ''}"
             else:
-                special_instruction = booking.de_to_PickUp_Instructions_Address
+                special_instruction = booking.de_to_PickUp_Instructions_Address or ""
 
             tbl_data1 = [
                 [
