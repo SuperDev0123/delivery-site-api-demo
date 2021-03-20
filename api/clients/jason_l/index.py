@@ -442,7 +442,6 @@ def scanned(payload, client):
 
         return {"labelUrl": labelUrl}
     except Exception as e:
-        trace_error.print()
         error_msg = f"@370 {LOG_ID} Exception: {str(e)}"
         logger.error(error_msg)
         send_email_to_admins(f"Jason L {LOG_ID}", f"{error_msg}")
