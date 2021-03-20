@@ -448,169 +448,6 @@ def order_boks(request):
     )
 
 
-@transaction.atomic
-@api_view(["POST"])
-def ready_boks(request):
-    """
-    When it is ready(picked all items) on Warehouse
-    """
-    user = request.user
-    logger.info(f"@840 Ready api-endpoint: {user.username}")
-    logger.info(f"@841 payload: {request.data}")
-    b_client_order_num = request.data.get("HostOrderNumber")
-    is_ready = request.data.get("is_ready")
-    b_client_name = request.data.get("CustomerName")
-    code = None
-    message = None
-
-    # Check required params are included
-    if not b_client_order_num:
-        code = "missing_param"
-        message = "'HostOrderNumber' is required."
-
-    if is_ready is None:
-        code = "missing_param"
-        message = "'is_ready' is required."
-
-    if not b_client_name:
-        code = "missing_param"
-        message = "'CustomerName' is required."
-
-    if message:
-        raise ValidationError({"success": False, "code": code, "message": message})
-
-    # Get Order Number
-    order_num = b_client_order_num
-
-    if b_client_name == "Plum Products Australia Ltd":
-        order_num = b_client_order_num[5:]
-
-    # Check if Order exists
-    booking = (
-        Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=b_client_name, b_client_order_num=order_num)
-        .first()
-    )
-
-    if not booking:
-        code = "not_found"
-        message = (
-            "Order does not exist. 'CustomerName' or 'HostOrderNumber' is invalid."
-        )
-        raise ValidationError({"success": False, "code": code, "message": message})
-
-    if not is_ready:
-        return Response(
-            {
-                "success": False,
-                "message": f"`is_ready` is false.",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # If Hunter Order
-    fp_name = booking.api_booking_quote.freight_provider.lower()
-
-    if fp_name == "hunter" and booking.b_status == "Booked":
-        return Response(
-            {
-                "success": True,
-                "message": "Order is already BOOKED.",
-            }
-        )
-    elif fp_name == "hunter" and booking.b_status != "Booked":
-        # DME don't get the ready api for Hunter Order
-        return Response(
-            {
-                "success": False,
-                "code": "not allowed",
-                "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
-            }
-        )
-
-    # Check if already ready
-    if booking.b_status not in ["Picking", "Ready for Booking"]:
-        code = "invalid_request"
-        message = "Order is already Ready."
-        return Response({"success": False, "code": code, "message": message})
-
-    # If NOT
-    pk_booking_id = booking.pk_booking_id
-    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-
-    # Check if Order items are all picked
-    original_items = lines.filter(sscc__isnull=True)
-    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
-    repacked_items_count = lines.filter(
-        sscc__isnull=False, e_item="Repacked Item"
-    ).count()
-    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
-    estimated_picked = {}
-    is_picked_all = True
-    not_picked_items = []
-
-    for model_number_qty in model_number_qtys:
-        estimated_picked[model_number_qty[0]] = 0
-
-    for scanned_item in scanned_items:
-        if scanned_item.e_item_type:
-            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
-
-        for line_data in line_datas:
-            if (
-                line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-                and line_data.itemDescription != "Repacked at warehouse"
-            ):
-                estimated_picked[line_data.modelNumber] += line_data.quantity
-
-    logger.info(f"@843 - limit: {model_number_qtys}, picked: {estimated_picked}")
-
-    for item in estimated_picked:
-        for model_number_qty in model_number_qtys:
-            if (
-                item == model_number_qty[0]
-                and estimated_picked[item] != model_number_qty[1]
-            ):
-                not_picked_items.append(
-                    {
-                        "all_items_count": model_number_qty[1],
-                        "picked_items_count": estimated_picked[item],
-                    }
-                )
-                is_picked_all = False
-
-    if not is_picked_all:
-        return Response(
-            {
-                "success": False,
-                "message": f"There are some items are not picked yet - {json.dumps(not_picked_items)}",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # Update DB so that Booking can be BOOKED
-    if booking.api_booking_quote:
-        booking.b_status = "Ready for Booking"
-    else:
-        booking.b_status = "On Hold"
-        send_email_to_admins(
-            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
-            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
-            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
-            + f" Please do FC manually again on DME portal.",
-        )
-
-    booking.save()
-
-    return Response(
-        {
-            "success": True,
-            "message": "Order will be BOOKED soon.",
-        }
-    )
-
-
 @api_view(["POST"])
 def partial_pricing(request):
     LOG_ID = "[PARTIAL PRICING]"
@@ -710,6 +547,32 @@ def scanned(request):
         return JsonResponse(result, status=status.HTTP_200_OK)
     except Exception as e:
         logger.info(f"@839 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def ready_boks(request):
+    """
+    When it is ready(picked all items) on Warehouse
+    """
+    LOG_ID = "[READY]"
+    user = request.user
+    logger.info(f"@840 {LOG_ID} Requester: {user.username}")
+    logger.info(f"@841 {LOG_ID} Payload: {request.data}")
+
+    try:
+        client = get_client(user)
+
+        if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+            result = plum.scanned(payload=request.data, client=client)
+        elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+            result = jason_l.scanned(payload=request.data, client=client)
+
+        return Response({"success": True, "message": result})
+    except Exception as e:
+        logger.info(f"@849 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
         return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
