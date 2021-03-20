@@ -454,8 +454,7 @@ def scanned(payload, client):
             "labels": labels,
         }
     except Exception as e:
-        trace_error.print()
-        error_msg = f"@370 Error on PICKED api: {str(e)}"
+        error_msg = f"@370 {LOG_ID} Exception: {str(e)}"
         logger.error(error_msg)
         send_email_to_admins("Scanned api-endpoint error", f"{error_msg}")
         raise Exception(
