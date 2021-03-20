@@ -287,7 +287,8 @@ def scanned(payload, client):
                 new_line.fk_booking_id = pk_booking_id
                 new_line.pk_booking_lines_id = str(uuid.uuid4())
                 new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
-                new_line.e_qty = item.get("qty")
+                new_line.e_qty = first_item["qty"]
+                new_line.zbl_121_integer_1 = first_item["sequence"]
                 new_line.e_item = "Picked Item"
                 new_line.e_dimUOM = picked_item["dimensions"]["unit"]
                 new_line.e_dimLength = picked_item["dimensions"]["length"]
