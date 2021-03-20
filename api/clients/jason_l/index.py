@@ -311,7 +311,6 @@ def scanned(payload, client):
                     line_data = Booking_lines_data()
                     line_data.fk_booking_id = pk_booking_id
                     line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
-                    line_data.modelNumber = item["model_number"]
                     line_data.itemDescription = "Picked at warehouse"
                     line_data.quantity = item.get("qty")
                     line_data.clientRefNumber = picked_item["sscc"]
