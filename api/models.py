@@ -2686,12 +2686,8 @@ class BOK_1_headers(models.Model):
     b_071_b_del_sufficient_space = models.BooleanField(default=True, null=True)
     b_072_b_pu_no_of_assists = models.IntegerField(default=0, null=True)
     b_073_b_del_no_of_assists = models.IntegerField(default=0, null=True)
-    b_074_b_pu_delivery_access = models.CharField(
-        max_length=32, default=None, null=True
-    )
-    b_075_b_del_delivery_access = models.CharField(
-        max_length=32, default=None, null=True
-    )
+    b_074_b_pu_access = models.CharField(max_length=32, default=None, null=True)
+    b_075_b_del_access = models.CharField(max_length=32, default=None, null=True)
     b_076_b_pu_service = models.CharField(max_length=32, default=None, null=True)
     b_077_b_del_service = models.CharField(max_length=32, default=None, null=True)
     b_078_b_pu_location = models.CharField(

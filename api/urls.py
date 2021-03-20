@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 
 from .views import *
-from .views_api import *
+from .views_client import *
 from .views_zoho import *
 from .views_external_apis import *
 from .fp_apis import apis as fp_apis

@@ -14,7 +14,7 @@ from rest_framework.decorators import (
 from rest_framework import views, serializers, status
 from rest_framework.permissions import IsAuthenticated
 
-from api.serializers_api import *
+from api.serializers_client import *
 from api.models import *
 from api.operations import paperless
 
