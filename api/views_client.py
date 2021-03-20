@@ -567,9 +567,9 @@ def ready_boks(request):
         dme_account_num = client.dme_account_num
 
         if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
-            result = plum.scanned(payload=request.data, client=client)
+            result = plum.ready_boks(payload=request.data, client=client)
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-            result = jason_l.scanned(payload=request.data, client=client)
+            result = jason_l.ready_boks(payload=request.data, client=client)
 
         logger.info(f"#848 {LOG_ID} {message}")
         return Response({"success": True, "message": result})
