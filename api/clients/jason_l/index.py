@@ -401,7 +401,7 @@ def scanned(payload, client):
             )
             label_url = f"http://{settings.WEB_SITE_IP}/label/{booking.pk_booking_id}/"
 
-            return {"labelUrl": labelUrl}
+            return {"labelUrl": label_url}
         elif fp_name == "hunter" and booking.b_status == "Picking":
             next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
             booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
@@ -442,7 +442,7 @@ def scanned(payload, client):
         )
         label_url = f"http://{settings.WEB_SITE_IP}/label/{booking.pk_booking_id}/"
 
-        return {"labelUrl": labelUrl}
+        return {"labelUrl": label_url}
     except Exception as e:
         error_msg = f"@370 {LOG_ID} Exception: {str(e)}"
         logger.error(error_msg)
