@@ -571,7 +571,7 @@ def ready_boks(request):
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
             result = jason_l.ready_boks(payload=request.data, client=client)
 
-        logger.info(f"#848 {LOG_ID} {message}")
+        logger.info(f"#848 {LOG_ID} {result}")
         return Response({"success": True, "message": result})
     except Exception as e:
         logger.info(f"@849 {LOG_ID} Exception: {str(e)}")
