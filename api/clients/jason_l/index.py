@@ -8,6 +8,12 @@ from django.db import transaction
 from api.models import FC_Log, BOK_1_headers, BOK_2_lines, BOK_3_lines_data
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
+from api.convertors import pdf
+from api.common import (
+    common_times as dme_time_lib,
+    constants as dme_constants,
+    status_history,
+)
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -17,13 +23,7 @@ from api.fp_apis.utils import (
 )
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import push_operations, product_operations as product_oper
-
 from api.operations.email_senders import send_email_to_admins
-from api.common import (
-    common_times as dme_time_lib,
-    constants as dme_constants,
-    status_history,
-)
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.clients.operations.index import get_warehouse, get_suburb_state
