@@ -267,6 +267,8 @@ def scanned(payload, client):
 
     # Test case
     is_picked_all = False
+    scanned_items_count = 0
+    repacked_items_count = 0
 
     # Save
     try:
