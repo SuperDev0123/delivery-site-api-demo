@@ -1,6 +1,5 @@
 import uuid
 import logging
-import subprocess
 from datetime import datetime, date
 from base64 import b64decode, b64encode
 
