@@ -585,76 +585,27 @@ def reprint_label(request):
     """
     get label(already built)
     """
-    logger.info(f"@871 User: {request.user.username}")
-    logger.info(f"@872 request payload - {request.data}")
-    b_client_order_num = request.GET.get("HostOrderNumber")
-    b_client_name = request.GET.get("CustomerName")
-    sscc = request.GET.get("sscc")
-
-    if not b_client_order_num:
-        code = "missing_param"
-        message = "'HostOrderNumber' is required."
-        raise ValidationError({"success": False, "code": code, "message": message})
-
-    if not b_client_name:
-        code = "missing_param"
-        message = "'CustomerName' is required."
-        raise ValidationError({"success": False, "code": code, "message": message})
+    LOG_ID = "[REPRINT]"
+    user = request.user
+    logger.info(f"@850 {LOG_ID} Requester: {user.username}")
+    logger.info(f"@851 {LOG_ID} Payload: {request.data}")
 
     try:
-        booking = Bookings.objects.select_related("api_booking_quote").get(
-            b_client_order_num=b_client_order_num, b_client_name=b_client_name
-        )
-        fp_name = booking.api_booking_quote.freight_provider.lower()
-    except:
-        code = "not_found"
-        message = "Order is not found."
-        raise ValidationError({"success": False, "code": code, "message": message})
+        client = get_client(user)
+        dme_account_num = client.dme_account_num
 
-    if sscc:
-        is_exist = False
-        sscc_line = None
-        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+        if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+            result = plum.reprint_label(payload=request.data, client=client)
+        elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+            result = jason_l.reprint_label(payload=request.data, client=client)
 
-        for line in lines:
-            if line.sscc == sscc:
-                is_exist = True
-                sscc_line = line
-
-        if not is_exist:
-            code = "not_found"
-            message = "SSCC is not found."
-            raise ValidationError({"success": False, "code": code, "message": message})
-
-    if not sscc and not booking.z_label_url:
-        code = "not_ready"
-        message = "Label is not ready."
-        raise ValidationError({"success": False, "code": code, "message": message})
-
-    if sscc and fp_name != "hunter":  # Line label
-        filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.pk)}.pdf"
-        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
-    else:  # Order Label
-        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-
-    # Convert label into ZPL format
-    logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
-    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-    if not result:
-        code = "unknown_status"
-        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        raise Exception({"success": False, "code": code, "message": message})
-
-    with open(label_url[:-4] + ".zpl", "rb") as zpl:
-        zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-    return Response(
-        {
-            "success": True,
-            "zpl": zpl_data,
-        }
-    )
+        logger.info(f"#858 {LOG_ID} {result}")
+        return result
+    except Exception as e:
+        logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
 
 
 @transaction.atomic

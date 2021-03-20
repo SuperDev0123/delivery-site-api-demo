@@ -45,120 +45,58 @@ from api.clients.jason_l.operations import get_picked_items
 logger = logging.getLogger("dme_api")
 
 
-def ready_boks(payload, client):
+def reprint_label(payload, client):
     """
-    When it is ready(picked all items) on Warehouse
+    get label(already built)
     """
-    LOG_ID = "[READY Jason L]"
+    LOG_ID = "[REPRINT Jason L]"
     b_client_order_num = payload.get("HostOrderNumber")
+    sscc = payload.get("sscc")
 
-    # Check required params are included
     if not b_client_order_num:
         message = "'HostOrderNumber' is required."
-        raise ValidationError(message)
+        raise ValidationError({"success": False, "code": code, "message": message})
 
-    # Check if Order exists
     booking = (
         Bookings.objects.select_related("api_booking_quote")
         .filter(
-            b_client_name=client.company_name, b_client_order_num=b_client_order_num
+            b_client_order_num=b_client_order_num, b_client_name=client.company_name
         )
         .first()
     )
 
     if not booking:
-        message = "Order does not exist. HostOrderNumber' is invalid."
+        message = "Order does not exist. 'HostOrderNumber' is invalid."
         raise ValidationError(message)
 
-    # If Hunter Order
     fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    if fp_name == "hunter" and booking.b_status == "Booked":
-        message = "Order is already BOOKED."
-        logger.info(f"@340 {LOG_ID} {message}")
-        return message
-    elif fp_name == "hunter" and booking.b_status != "Booked":
-        # DME don't get the ready api for Hunter Order
-        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        logger.info(f"@341 {LOG_ID} {message}")
-        raise Exception(message)
+    if sscc:
+        is_exist = False
+        sscc_line = None
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    # Check if already ready
-    if booking.b_status not in ["Picking", "Ready for Booking"]:
-        message = "Order is already Ready."
-        logger.info(f"@342 {LOG_ID} {message}")
-        return message
+        for line in lines:
+            if line.sscc == sscc:
+                is_exist = True
+                sscc_line = line
 
-    # If NOT
-    pk_booking_id = booking.pk_booking_id
-    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+        if not is_exist:
+            message = "SSCC is not found."
+            raise ValidationError(message)
 
-    # # Check if Order items are all picked
-    # original_items = lines.filter(sscc__isnull=True)
-    # scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
-    # repacked_items_count = lines.filter(
-    #     sscc__isnull=False, e_item="Repacked Item"
-    # ).count()
-    # model_number_qtys = original_items.values_list("e_item_type", "e_qty")
-    # estimated_picked = {}
-    # is_picked_all = True
-    # not_picked_items = []
+    if not sscc and not booking.z_label_url:
+        message = "Label is not ready."
+        raise ValidationError(message)
 
-    # for model_number_qty in model_number_qtys:
-    #     estimated_picked[model_number_qty[0]] = 0
+    label_url = (
+        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+    )
 
-    # for scanned_item in scanned_items:
-    #     if scanned_item.e_item_type:
-    #         estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
+    if sscc:
+        label_url += f"?sscc={sscc}"
 
-    #     for line_data in line_datas:
-    #         if (
-    #             line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-    #             and line_data.itemDescription != "Repacked at warehouse"
-    #         ):
-    #             estimated_picked[line_data.modelNumber] += line_data.quantity
-
-    # logger.info(f"@843 {LOG_ID} limit: {model_number_qtys}, picked: {estimated_picked}")
-
-    # for item in estimated_picked:
-    #     for model_number_qty in model_number_qtys:
-    #         if (
-    #             item == model_number_qty[0]
-    #             and estimated_picked[item] != model_number_qty[1]
-    #         ):
-    #             not_picked_items.append(
-    #                 {
-    #                     "all_items_count": model_number_qty[1],
-    #                     "picked_items_count": estimated_picked[item],
-    #                 }
-    #             )
-    #             is_picked_all = False
-
-    # if not is_picked_all:
-    #     message = (
-    #         f"There are some items are not picked yet - {json.dumps(not_picked_items)}"
-    #     )
-    #     logger.info(f"@343 {LOG_ID} {message}")
-    #     raise Exception(message)
-
-    # Update DB so that Booking can be BOOKED
-    if booking.api_booking_quote:
-        booking.b_status = "Ready for Booking"
-    else:
-        booking.b_status = "On Hold"
-        send_email_to_admins(
-            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
-            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
-            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
-            + f" Please do FC manually again on DME portal.",
-        )
-
-    booking.save()
-
-    message = "Order will be BOOKED soon."
-    logger.info(f"@349 {LOG_ID} {message}")
-    return message
+    return {labelUrl: label_url}
 
 
 def partial_pricing(payload, client, warehouse):
@@ -971,7 +909,9 @@ def scanned(payload, client):
         logger.info(
             f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
         )
-        label_url = f"http://{settings.WEB_SITE_IP}/label/{booking.pk_booking_id}/"
+        label_url = (
+            f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+        )
 
         return {"labelUrl": label_url}
     elif fp_name == "hunter" and booking.b_status == "Picking":
@@ -1012,6 +952,124 @@ def scanned(payload, client):
     logger.info(
         f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     )
-    label_url = f"http://{settings.WEB_SITE_IP}/label/{booking.pk_booking_id}/"
+    label_url = (
+        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+    )
 
     return {"labelUrl": label_url}
+
+
+def ready_boks(payload, client):
+    """
+    When it is ready(picked all items) on Warehouse
+    """
+    LOG_ID = "[READY Jason L]"
+    b_client_order_num = payload.get("HostOrderNumber")
+
+    # Check required params are included
+    if not b_client_order_num:
+        message = "'HostOrderNumber' is required."
+        raise ValidationError(message)
+
+    # Check if Order exists
+    booking = (
+        Bookings.objects.select_related("api_booking_quote")
+        .filter(
+            b_client_name=client.company_name, b_client_order_num=b_client_order_num
+        )
+        .first()
+    )
+
+    if not booking:
+        message = "Order does not exist. HostOrderNumber' is invalid."
+        raise ValidationError(message)
+
+    # If Hunter Order
+    fp_name = booking.api_booking_quote.freight_provider.lower()
+
+    if fp_name == "hunter" and booking.b_status == "Booked":
+        message = "Order is already BOOKED."
+        logger.info(f"@340 {LOG_ID} {message}")
+        return message
+    elif fp_name == "hunter" and booking.b_status != "Booked":
+        # DME don't get the ready api for Hunter Order
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+        logger.info(f"@341 {LOG_ID} {message}")
+        raise Exception(message)
+
+    # Check if already ready
+    if booking.b_status not in ["Picking", "Ready for Booking"]:
+        message = "Order is already Ready."
+        logger.info(f"@342 {LOG_ID} {message}")
+        return message
+
+    # If NOT
+    pk_booking_id = booking.pk_booking_id
+    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+
+    # # Check if Order items are all picked
+    # original_items = lines.filter(sscc__isnull=True)
+    # scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
+    # repacked_items_count = lines.filter(
+    #     sscc__isnull=False, e_item="Repacked Item"
+    # ).count()
+    # model_number_qtys = original_items.values_list("e_item_type", "e_qty")
+    # estimated_picked = {}
+    # is_picked_all = True
+    # not_picked_items = []
+
+    # for model_number_qty in model_number_qtys:
+    #     estimated_picked[model_number_qty[0]] = 0
+
+    # for scanned_item in scanned_items:
+    #     if scanned_item.e_item_type:
+    #         estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
+
+    #     for line_data in line_datas:
+    #         if (
+    #             line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
+    #             and line_data.itemDescription != "Repacked at warehouse"
+    #         ):
+    #             estimated_picked[line_data.modelNumber] += line_data.quantity
+
+    # logger.info(f"@843 {LOG_ID} limit: {model_number_qtys}, picked: {estimated_picked}")
+
+    # for item in estimated_picked:
+    #     for model_number_qty in model_number_qtys:
+    #         if (
+    #             item == model_number_qty[0]
+    #             and estimated_picked[item] != model_number_qty[1]
+    #         ):
+    #             not_picked_items.append(
+    #                 {
+    #                     "all_items_count": model_number_qty[1],
+    #                     "picked_items_count": estimated_picked[item],
+    #                 }
+    #             )
+    #             is_picked_all = False
+
+    # if not is_picked_all:
+    #     message = (
+    #         f"There are some items are not picked yet - {json.dumps(not_picked_items)}"
+    #     )
+    #     logger.info(f"@343 {LOG_ID} {message}")
+    #     raise Exception(message)
+
+    # Update DB so that Booking can be BOOKED
+    if booking.api_booking_quote:
+        booking.b_status = "Ready for Booking"
+    else:
+        booking.b_status = "On Hold"
+        send_email_to_admins(
+            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
+            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
+            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
+            + f" Please do FC manually again on DME portal.",
+        )
+
+    booking.save()
+
+    message = "Order will be BOOKED soon."
+    logger.info(f"@349 {LOG_ID} {message}")
+    return message
