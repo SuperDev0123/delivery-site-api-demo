@@ -248,7 +248,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 tbl_data1,
                 colWidths=(
                     85,
-                    float(label_settings["label_image_size_length"]) * mm - 85,
+                    float(label_settings["label_dimension_length"]) * mm - 85,
                 ),
                 rowHeights=(float(label_settings["line_height_small"]) * mm),
                 style=[
