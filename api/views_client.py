@@ -694,7 +694,7 @@ def scanned(request):
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
     """
-    LOG_ID = "{LOG_ID}"
+    LOG_ID = "SCANNED"
     user = request.user
     logger.info(f"@830 {LOG_ID} Requester: {user.username}")
     logger.info(f"@831 {LOG_ID} Payload: {request.data}")
@@ -708,7 +708,7 @@ def scanned(request):
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
             result = jason_l.scanned(payload=request.data, client=client)
 
-        message = f"Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
+        message = f"Successfully scanned."
         logger.info(f"#838 {LOG_ID} - {message}")
         return JsonResponse(result, status=status.HTTP_200_OK)
     except Exception as e:
