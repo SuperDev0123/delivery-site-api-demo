@@ -55,7 +55,7 @@ def reprint_label(payload, client):
 
     if not b_client_order_num:
         message = "'HostOrderNumber' is required."
-        raise ValidationError({"success": False, "code": code, "message": message})
+        raise ValidationError(message)
 
     booking = (
         Bookings.objects.select_related("api_booking_quote")
