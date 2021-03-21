@@ -525,7 +525,7 @@ def scanned(payload, client):
 
     # Trim data
     b_client_order_num = b_client_order_num.strip()
-    sscc = None if not sscc else sscc.stripe()
+    sscc = None if not sscc else sscc.strip()
 
     # Check if Order exists on Bookings table
     booking = (
