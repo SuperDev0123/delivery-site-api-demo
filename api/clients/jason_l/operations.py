@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import subprocess
 
@@ -51,5 +52,6 @@ def get_picked_items(order_num, sscc):
                 }
             )
 
-    logger.info(f"@329 {LOG_ID} Finish reading CSV! Count: {len(filtered_lines)}")
+    logger.info(f"@328 {LOG_ID} Finish reading CSV! Count: {len(filtered_lines)}")
+    logger.info(f"@329 {LOG_ID} {json.dumps(filtered_lines, indent=2, sort_keys=True)}")
     return filtered_lines
