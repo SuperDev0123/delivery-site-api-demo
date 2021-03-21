@@ -85,9 +85,9 @@ def reprint_label(params, client):
             message = "SSCC is not found."
             raise ValidationError(message)
 
-    if not sscc and not booking.z_label_url:
-        message = "Label is not ready."
-        raise ValidationError(message)
+    # if not sscc and not booking.z_label_url:
+    #     message = "Label is not ready."
+    #     raise ValidationError(message)
 
     label_url = (
         f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
