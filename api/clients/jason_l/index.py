@@ -72,7 +72,7 @@ def manifest(payload, client, username):
 
     Bookings.objects.filter(
         b_client_name=client.company_name, b_client_order_num__in=order_nums
-    ).udpate(z_manifest_url=manifest_url)
+    ).update(z_manifest_url=manifest_url)
 
     with open(manifest_url, "rb") as manifest:
         manifest_data = str(b64encode(manifest.read()))
