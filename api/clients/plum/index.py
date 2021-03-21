@@ -44,43 +44,6 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 logger = logging.getLogger("dme_api")
 
 
-def manifest(payload, client, username):
-    LOG_ID = "[MANIFEST Plum]"
-    order_nums = payload.get("OrderNumbers")
-
-    # Required fields
-    if not order_nums:
-        message = "'OrderNumbers' is required."
-        raise ValidationError(message)
-
-    bookings = Bookings.objects.filter(
-        b_client_name=client.company_name, b_client_order_num__in=order_nums
-    ).only("id", "b_client_order_num")
-
-    booking_ids = []
-    filtered_order_nums = []
-    for booking in bookings:
-        booking_ids.append(booking.id)
-        filtered_order_nums.append(booking.b_client_order_num)
-
-    missing_order_nums = list(set(order_nums) - set(filtered_order_nums))
-
-    if missing_order_nums:
-        _missing_order_nums = ", ".join(missing_order_nums)
-        raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
-
-    manifest_url = build_manifest(booking_ids, username)
-
-    with open(manifest_url, "rb") as manifest:
-        manifest_data = str(b64encode(manifest.read()))
-
-    Bookings.objects.filter(
-        b_client_name=client.company_name, b_client_order_num__in=order_nums
-    ).update(z_manifest_url=manifest_url)
-
-    return {"success": True, "manifest": manifest_data}
-
-
 def partial_pricing(payload, client, warehouse):
     LOG_ID = "[PP Plum]"
     bok_1 = payload["booking"]
@@ -1330,3 +1293,40 @@ def reprint_label(params, client):
         zpl_data = str(b64encode(zpl.read()))[2:-1]
 
     return {"success": True, "zpl": zpl_data}
+
+
+def manifest(payload, client, username):
+    LOG_ID = "[MANIFEST Plum]"
+    order_nums = payload.get("OrderNumbers")
+
+    # Required fields
+    if not order_nums:
+        message = "'OrderNumbers' is required."
+        raise ValidationError(message)
+
+    bookings = Bookings.objects.filter(
+        b_client_name=client.company_name, b_client_order_num__in=order_nums
+    ).only("id", "b_client_order_num")
+
+    booking_ids = []
+    filtered_order_nums = []
+    for booking in bookings:
+        booking_ids.append(booking.id)
+        filtered_order_nums.append(booking.b_client_order_num)
+
+    missing_order_nums = list(set(order_nums) - set(filtered_order_nums))
+
+    if missing_order_nums:
+        _missing_order_nums = ", ".join(missing_order_nums)
+        raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
+
+    manifest_url = build_manifest(booking_ids, username)
+
+    with open(manifest_url, "rb") as manifest:
+        manifest_data = str(b64encode(manifest.read()))
+
+    Bookings.objects.filter(
+        b_client_name=client.company_name, b_client_order_num__in=order_nums
+    ).update(z_manifest_url=manifest_url)
+
+    return {"success": True, "manifest": manifest_data}
