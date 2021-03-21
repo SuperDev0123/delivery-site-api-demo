@@ -42,6 +42,8 @@ from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_x
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
 
+logger = logging.getLogger("dme_api")
+
 
 def partial_pricing(payload, client, warehouse):
     LOG_ID = "[PP Jason L]"
