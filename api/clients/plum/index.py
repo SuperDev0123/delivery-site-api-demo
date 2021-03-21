@@ -45,7 +45,7 @@ logger = logging.getLogger("dme_api")
 
 def manifest(payload, client, username):
     LOG_ID = "[MANIFEST Plum]"
-    order_nums = request_json.get("OrderNumbers")
+    order_nums = payload.get("OrderNumbers")
 
     # Required fields
     if not order_nums:

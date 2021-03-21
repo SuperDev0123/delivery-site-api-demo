@@ -44,7 +44,7 @@ from api.clients.jason_l.operations import get_picked_items
 
 def manifest(payload, client, username):
     LOG_ID = "[MANIFEST Jason L]"
-    order_nums = request_json.get("OrderNumbers")
+    order_nums = payload.get("OrderNumbers")
 
     # Required fields
     if not order_nums:
