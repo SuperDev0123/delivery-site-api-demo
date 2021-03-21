@@ -68,7 +68,7 @@ def manifest(payload, client, username):
         _missing_order_nums = ", ".join(missing_order_nums)
         raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
 
-    manifest_url = build_manifest(booking_ids, user.username)
+    manifest_url = build_manifest(booking_ids, username)
 
     Bookings.objects.filter(
         b_client_name=client.company_name, b_client_order_num__in=order_nums
