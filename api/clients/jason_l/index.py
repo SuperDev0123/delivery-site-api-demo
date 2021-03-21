@@ -45,13 +45,13 @@ from api.clients.jason_l.operations import get_picked_items
 logger = logging.getLogger("dme_api")
 
 
-def reprint_label(payload, client):
+def reprint_label(params, client):
     """
     get label(already built)
     """
     LOG_ID = "[REPRINT Jason L]"
-    b_client_order_num = payload.get("HostOrderNumber")
-    sscc = payload.get("sscc")
+    b_client_order_num = params.get("HostOrderNumber")
+    sscc = params.get("sscc")
 
     if not b_client_order_num:
         message = "'HostOrderNumber' is required."

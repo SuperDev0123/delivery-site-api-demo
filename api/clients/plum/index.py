@@ -43,13 +43,13 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 logger = logging.getLogger("dme_api")
 
 
-def reprint_label(payload, client):
+def reprint_label(params, client):
     """
     get label(already built)
     """
     LOG_ID = "[REPRINT Plum]"
-    b_client_order_num = payload.get("HostOrderNumber")
-    sscc = payload.get("sscc")
+    b_client_order_num = params.get("HostOrderNumber")
+    sscc = params.get("sscc")
 
     if not b_client_order_num:
         message = "'HostOrderNumber' is required."

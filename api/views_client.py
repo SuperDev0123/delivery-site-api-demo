@@ -588,16 +588,16 @@ def reprint_label(request):
     LOG_ID = "[REPRINT]"
     user = request.user
     logger.info(f"@850 {LOG_ID} Requester: {user.username}")
-    logger.info(f"@851 {LOG_ID} Payload: {request.data}")
+    logger.info(f"@851 {LOG_ID} params: {request.GET}")
 
     try:
         client = get_client(user)
         dme_account_num = client.dme_account_num
 
         if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
-            result = plum.reprint_label(payload=request.data, client=client)
+            result = plum.reprint_label(params=request.GET, client=client)
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-            result = jason_l.reprint_label(payload=request.data, client=client)
+            result = jason_l.reprint_label(params=request.GET, client=client)
 
         logger.info(f"#858 {LOG_ID} {result}")
         return result
