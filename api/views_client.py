@@ -614,30 +614,35 @@ def manifest_boks(request):
     """
     MANIFEST api
     """
+    LOG_ID = "[MANIFEST]"
     user = request.user
-    request_json = request.data
-    logger.info(f"@879 Pusher: {user.username}")
-    logger.info(f"@880 Push request - [{request.method}] {request_json}")
+    logger.info(f"@860 {LOG_ID} Requester: {user.username}")
+    logger.info(f"@861 {LOG_ID} Payload: {request.data}")
 
-    # Required fields
-    if not request_json.get("OrderNumbers"):
-        message = "'OrderNumbers' is required."
-        raise ValidationError(
-            {"success": False, "code": "missing_param", "message": message}
-        )
+    try:
+        client = get_client(user)
+        dme_account_num = client.dme_account_num
 
-    booking_ids = request_json.get("OrderNumbers")
-    manifest_url = build_manifest(booking_ids, user.username)
+        if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+            result = plum.manifest(
+                params=request.GET,
+                client=client,
+                username=user.username,
+            )
+        elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+            result = jason_l.manifest(
+                params=request.GET,
+                client=client,
+                username=user.username,
+            )
 
-    with open(manifest_url, "rb") as manifest:
-        manifest_data = str(b64encode(manifest.read()))
-
-    return Response(
-        {
-            "success": True,
-            "manifest": manifest_data,
-        }
-    )
+        logger.info(f"#858 {LOG_ID} {result}")
+        return Response(result)
+    except Exception as e:
+        logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])

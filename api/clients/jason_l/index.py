@@ -42,61 +42,45 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
 
 
-logger = logging.getLogger("dme_api")
+def manifest(payload, client, username):
+    LOG_ID = "[MANIFEST Jason L]"
+    order_nums = request_json.get("OrderNumbers")
 
-
-def reprint_label(params, client):
-    """
-    get label(already built)
-    """
-    LOG_ID = "[REPRINT Jason L]"
-    b_client_order_num = params.get("HostOrderNumber")
-    sscc = params.get("sscc")
-
-    if not b_client_order_num:
-        message = "'HostOrderNumber' is required."
+    # Required fields
+    if not order_nums:
+        message = "'OrderNumbers' is required."
         raise ValidationError(message)
 
-    booking = (
-        Bookings.objects.select_related("api_booking_quote")
-        .filter(
-            b_client_order_num=b_client_order_num, b_client_name=client.company_name
-        )
-        .first()
-    )
+    bookings = Bookings.objects.filter(
+        b_client_name=client.company_name, b_client_order_num__in=order_nums
+    ).only("id", "b_client_booking_ref_num", "b_client_order_num")
 
-    if not booking:
-        message = "Order does not exist. 'HostOrderNumber' is invalid."
-        raise ValidationError(message)
+    booking_ids = []
+    filtered_order_nums = []
+    for booking in bookings:
+        booking_ids.append(booking.id)
+        filtered_order_nums.append(booking.b_client_order_num)
 
-    fp_name = booking.api_booking_quote.freight_provider.lower()
+    missing_order_nums = list(set(order_nums) - set(filtered_order_nums))
 
-    if sscc:
-        is_exist = False
-        sscc_line = None
-        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    if missing_order_nums:
+        _missing_order_nums = ", ".join(missing_order_nums)
+        raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
 
-        for line in lines:
-            if line.sscc == sscc:
-                is_exist = True
-                sscc_line = line
+    manifest_url = build_manifest(booking_ids, user.username)
 
-        if not is_exist:
-            message = "SSCC is not found."
-            raise ValidationError(message)
+    Bookings.objects.filter(
+        b_client_name=client.company_name, b_client_order_num__in=order_nums
+    ).udpate(z_manifest_url=manifest_url)
 
-    # if not sscc and not booking.z_label_url:
-    #     message = "Label is not ready."
-    #     raise ValidationError(message)
+    with open(manifest_url, "rb") as manifest:
+        manifest_data = str(b64encode(manifest.read()))
 
     label_url = (
-        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+        f"http://{settings.WEB_SITE_IP}/manifest/{booking[0].b_client_booking_ref_num}/"
     )
 
-    if sscc:
-        label_url += f"?sscc={sscc}"
-
-    return {"success": True, "labelUrl": label_url}
+    return {"success": True, "manifestUrl": manifest_url}
 
 
 def partial_pricing(payload, client, warehouse):
@@ -1073,3 +1057,57 @@ def ready_boks(payload, client):
     message = "Order will be BOOKED soon."
     logger.info(f"@349 {LOG_ID} {message}")
     return message
+
+
+def reprint_label(params, client):
+    """
+    get label(already built)
+    """
+    LOG_ID = "[REPRINT Jason L]"
+    b_client_order_num = params.get("HostOrderNumber")
+    sscc = params.get("sscc")
+
+    if not b_client_order_num:
+        message = "'HostOrderNumber' is required."
+        raise ValidationError(message)
+
+    booking = (
+        Bookings.objects.select_related("api_booking_quote")
+        .filter(
+            b_client_order_num=b_client_order_num, b_client_name=client.company_name
+        )
+        .first()
+    )
+
+    if not booking:
+        message = "Order does not exist. 'HostOrderNumber' is invalid."
+        raise ValidationError(message)
+
+    fp_name = booking.api_booking_quote.freight_provider.lower()
+
+    if sscc:
+        is_exist = False
+        sscc_line = None
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+        for line in lines:
+            if line.sscc == sscc:
+                is_exist = True
+                sscc_line = line
+
+        if not is_exist:
+            message = "SSCC is not found."
+            raise ValidationError(message)
+
+    # if not sscc and not booking.z_label_url:
+    #     message = "Label is not ready."
+    #     raise ValidationError(message)
+
+    label_url = (
+        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+    )
+
+    if sscc:
+        label_url += f"?sscc={sscc}"
+
+    return {"success": True, "labelUrl": label_url}

@@ -43,68 +43,41 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 logger = logging.getLogger("dme_api")
 
 
-def reprint_label(params, client):
-    """
-    get label(already built)
-    """
-    LOG_ID = "[REPRINT Plum]"
-    b_client_order_num = params.get("HostOrderNumber")
-    sscc = params.get("sscc")
+def manifest(payload, client, username):
+    LOG_ID = "[MANIFEST Plum]"
+    order_nums = request_json.get("OrderNumbers")
 
-    if not b_client_order_num:
-        message = "'HostOrderNumber' is required."
+    # Required fields
+    if not order_nums:
+        message = "'OrderNumbers' is required."
         raise ValidationError(message)
 
-    booking = (
-        Bookings.objects.select_related("api_booking_quote")
-        .filter(
-            b_client_order_num=b_client_order_num, b_client_name=client.company_name
-        )
-        .first()
-    )
+    bookings = Bookings.objects.filter(
+        b_client_name=client.company_name, b_client_order_num__in=order_nums
+    ).only("id", "b_client_order_num")
 
-    if not booking:
-        message = "Order does not exist. 'HostOrderNumber' is invalid."
-        raise ValidationError(message)
+    booking_ids = []
+    filtered_order_nums = []
+    for booking in bookings:
+        booking_ids.append(booking.id)
+        filtered_order_nums.append(booking.b_client_order_num)
 
-    fp_name = booking.api_booking_quote.freight_provider.lower()
+    missing_order_nums = list(set(order_nums) - set(filtered_order_nums))
 
-    if sscc:
-        is_exist = False
-        sscc_line = None
-        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+    if missing_order_nums:
+        _missing_order_nums = ", ".join(missing_order_nums)
+        raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
 
-        for line in lines:
-            if line.sscc == sscc:
-                is_exist = True
-                sscc_line = line
+    manifest_url = build_manifest(booking_ids, user.username)
 
-        if not is_exist:
-            message = "SSCC is not found."
-            raise ValidationError(message)
+    with open(manifest_url, "rb") as manifest:
+        manifest_data = str(b64encode(manifest.read()))
 
-    if not sscc and not booking.z_label_url:
-        message = "Label is not ready."
-        raise ValidationError(message)
+    Bookings.objects.filter(
+        b_client_name=client.company_name, b_client_order_num__in=order_nums
+    ).udpate(z_manifest_url=manifest_url)
 
-    if sscc and fp_name != "hunter":  # Line label
-        filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.pk)}.pdf"
-        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
-    else:  # Order Label
-        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-
-    # Convert label into ZPL format
-    logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
-    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-    if not result:
-        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        raise Exception(message)
-
-    with open(label_url[:-4] + ".zpl", "rb") as zpl:
-        zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-    return {"success": True, "zpl": zpl_data}
+    return {"success": True, "manifest": manifest_data}
 
 
 def partial_pricing(payload, client, warehouse):
@@ -1292,3 +1265,67 @@ def ready_boks(payload, client):
 
     message = "Order will be BOOKED soon."
     return message
+
+
+def reprint_label(params, client):
+    """
+    get label(already built)
+    """
+    LOG_ID = "[REPRINT Plum]"
+    b_client_order_num = params.get("HostOrderNumber")
+    sscc = params.get("sscc")
+
+    if not b_client_order_num:
+        message = "'HostOrderNumber' is required."
+        raise ValidationError(message)
+
+    booking = (
+        Bookings.objects.select_related("api_booking_quote")
+        .filter(
+            b_client_order_num=b_client_order_num, b_client_name=client.company_name
+        )
+        .first()
+    )
+
+    if not booking:
+        message = "Order does not exist. 'HostOrderNumber' is invalid."
+        raise ValidationError(message)
+
+    fp_name = booking.api_booking_quote.freight_provider.lower()
+
+    if sscc:
+        is_exist = False
+        sscc_line = None
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+
+        for line in lines:
+            if line.sscc == sscc:
+                is_exist = True
+                sscc_line = line
+
+        if not is_exist:
+            message = "SSCC is not found."
+            raise ValidationError(message)
+
+    if not sscc and not booking.z_label_url:
+        message = "Label is not ready."
+        raise ValidationError(message)
+
+    if sscc and fp_name != "hunter":  # Line label
+        filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.pk)}.pdf"
+        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
+    else:  # Order Label
+        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+
+    # Convert label into ZPL format
+    logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
+    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+    if not result:
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+        raise Exception(message)
+
+    with open(label_url[:-4] + ".zpl", "rb") as zpl:
+        zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+    return {"success": True, "zpl": zpl_data}
