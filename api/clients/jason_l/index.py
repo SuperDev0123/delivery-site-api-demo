@@ -77,9 +77,7 @@ def manifest(payload, client, username):
     with open(manifest_url, "rb") as manifest:
         manifest_data = str(b64encode(manifest.read()))
 
-    label_url = (
-        f"http://{settings.WEB_SITE_IP}/manifest/{booking[0].b_client_booking_ref_num}/"
-    )
+    label_url = f"http://{settings.WEB_SITE_IP}/manifest/{bookings[0].b_client_booking_ref_num}/"
 
     return {"success": True, "manifestUrl": manifest_url}
 
