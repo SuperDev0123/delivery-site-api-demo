@@ -12,9 +12,11 @@ def get_picked_items(order_num, sscc):
     LOG_ID = "[SSCC CSV READER]"
 
     if settings.ENV != "local":  # Only on DEV or PROD
+        logger.info(f"@300 {LOG_ID} Running .sh script...")
         cmd_dir = "/home/ubuntu/jason_l/JasonL01_full_0.1/JasonL01_full"
         cmd_file = os.path.join(cmd_dir, "JasonL01_full_run.sh")
         subprocess.call([cmd_file], cwd=cmd_dir)
+        logger.info(f"@301 {LOG_ID} Finish running .sh")
 
     if settings.ENV == "local":
         file_path = "/Users/juli/Desktop/sscc.csv"
