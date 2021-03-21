@@ -538,9 +538,19 @@ def scanned(payload, client):
 
     if not booking:
         message = "Order does not exist. 'HostOrderNumber' is invalid."
+        logger.info(f"@350 {LOG_ID} Booking: {booking}")
         raise ValidationError(message)
 
     picked_items = get_picked_items(b_client_order_num, sscc)
+
+    if sscc and not picked_items:
+        message = f"Wrong SSCC - {sscc}"
+        logger.info(f"@351 {LOG_ID} {message}")
+        raise ValidationError(message)
+    elif not sscc and not picked_items:
+        message = f"No SSCC found for the Order - {b_client_order_num}"
+        logger.info(f"@352 {LOG_ID} {message}")
+        raise ValidationError(message)
 
     # If Order exists
     pk_booking_id = booking.pk_booking_id
