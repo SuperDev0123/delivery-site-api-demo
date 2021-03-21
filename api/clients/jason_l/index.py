@@ -96,7 +96,7 @@ def reprint_label(params, client):
     if sscc:
         label_url += f"?sscc={sscc}"
 
-    return {labelUrl: label_url}
+    return {"success": True, "labelUrl": label_url}
 
 
 def partial_pricing(payload, client, warehouse):

@@ -600,7 +600,7 @@ def reprint_label(request):
             result = jason_l.reprint_label(params=request.GET, client=client)
 
         logger.info(f"#858 {LOG_ID} {result}")
-        return result
+        return Response(result)
     except Exception as e:
         logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
