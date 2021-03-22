@@ -621,11 +621,7 @@ def get_delivery_status(request):
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
-    if bok_1.success == dme_constants.BOK_SUCCESS_3:
-        status = "Waiting for approval..."
-    if bok_1.success == dme_constants.BOK_SUCCESS_4:
-        status = "Processing..."
-
+    status = "Processing"
     return Response(
         {"step": 1, "status": status, "quote": json_quote, "booking": booking}
     )
