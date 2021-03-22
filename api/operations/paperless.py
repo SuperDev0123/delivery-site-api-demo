@@ -103,7 +103,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     GeographicCode.text = geographic_code
 
     SpecialInstructions = ET.SubElement(Header, "SpecialInstructions")
-    SpecialInstructions.text = ""
+    SpecialInstructions.text = bok_1.b_016_b_pu_instructions_address
 
     Carrier = ET.SubElement(Header, "Carrier")
     _fp_name = bok_1.quote.freight_provider.lower()
