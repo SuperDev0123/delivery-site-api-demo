@@ -400,7 +400,6 @@ def scanned(request):
     logger.info(f"@891 [SCANNED] Payload: {request.data}")
     b_client_order_num = request.data.get("HostOrderNumber")
     picked_items = request.data.get("picked_items")
-    b_client_name = request.data.get("CustomerName")
     code = None
     message = None
 
@@ -413,17 +412,13 @@ def scanned(request):
         code = "missing_param"
         message = "'picked_items' is required."
 
-    if not b_client_name:
-        code = "missing_param"
-        message = "'CustomerName' is required."
-
     if message:
         raise ValidationError({"success": False, "code": code, "message": message})
 
     # Check if Order exists on Bookings table
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
+        .filter(b_client_order_num=b_client_order_num[5:])
         .first()
     )
 
@@ -848,7 +843,6 @@ def ready_boks(request):
     logger.info(f"@841 payload: {request.data}")
     b_client_order_num = request.data.get("HostOrderNumber")
     is_ready = request.data.get("is_ready")
-    b_client_name = request.data.get("CustomerName")
     code = None
     message = None
 
@@ -861,17 +855,13 @@ def ready_boks(request):
         code = "missing_param"
         message = "'is_ready' is required."
 
-    if not b_client_name:
-        code = "missing_param"
-        message = "'CustomerName' is required."
-
     if message:
         raise ValidationError({"success": False, "code": code, "message": message})
 
     # Check if Order exists
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=b_client_name, b_client_order_num=b_client_order_num[5:])
+        .filter(b_client_order_num=b_client_order_num[5:])
         .first()
     )
 
@@ -1927,7 +1917,6 @@ def reprint_label(request):
     logger.info(f"@871 User: {request.user.username}")
     logger.info(f"@872 request payload - {request.data}")
     b_client_order_num = request.GET.get("HostOrderNumber")
-    b_client_name = request.GET.get("CustomerName")
     sscc = request.GET.get("sscc")
 
     if not b_client_order_num:
@@ -1935,14 +1924,9 @@ def reprint_label(request):
         message = "'HostOrderNumber' is required."
         raise ValidationError({"success": False, "code": code, "message": message})
 
-    if not b_client_name:
-        code = "missing_param"
-        message = "'CustomerName' is required."
-        raise ValidationError({"success": False, "code": code, "message": message})
-
     try:
         booking = Bookings.objects.select_related("api_booking_quote").get(
-            b_client_order_num=b_client_order_num, b_client_name=b_client_name
+            b_client_order_num=b_client_order_num
         )
         fp_name = booking.api_booking_quote.freight_provider.lower()
     except:
