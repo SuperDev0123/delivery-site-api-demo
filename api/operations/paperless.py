@@ -55,10 +55,10 @@ def build_xml_with_bok(bok_1, bok_2s):
     HostOrderNumber.text = f"{dme_account_num}{bok_1.pk}"
 
     CustomerNumber = ET.SubElement(Header, "CustomerNumber")
-    CustomerNumber.text = f"{dme_account_num}testcust123"
+    CustomerNumber.text = f"{dme_account_num}{bok_1.b_client_order_num}"
 
     CustomerName = ET.SubElement(Header, "CustomerName")
-    CustomerName.text = bok_1.b_061_b_del_contact_full_name
+    CustomerName.text = bok_1.b_061_b_del_contact_full_name or ""
 
     CustomerOrderNumber = ET.SubElement(Header, "CustomerOrderNumber")
     CustomerOrderNumber.text = customer_order_number
@@ -67,10 +67,10 @@ def build_xml_with_bok(bok_1, bok_2s):
     OrderTypeCode.text = order_type_code
 
     CustomerStreet1 = ET.SubElement(Header, "CustomerStreet1")
-    CustomerStreet1.text = bok_1.b_055_b_del_address_street_1
+    CustomerStreet1.text = bok_1.b_055_b_del_address_street_1 or ""
 
     CustomerStreet2 = ET.SubElement(Header, "CustomerStreet2")
-    CustomerStreet2.text = bok_1.b_056_b_del_address_street_2
+    CustomerStreet2.text = bok_1.b_056_b_del_address_street_2 or ""
 
     CustomerStreet3 = ET.SubElement(Header, "CustomerStreet3")
     CustomerStreet3.text = ""
@@ -103,7 +103,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     GeographicCode.text = geographic_code
 
     SpecialInstructions = ET.SubElement(Header, "SpecialInstructions")
-    SpecialInstructions.text = ""
+    SpecialInstructions.text = bok_1.b_016_b_pu_instructions_address or ""
 
     Carrier = ET.SubElement(Header, "Carrier")
     _fp_name = bok_1.quote.freight_provider.lower()
