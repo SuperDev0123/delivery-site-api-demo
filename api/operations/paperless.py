@@ -55,7 +55,7 @@ def build_xml_with_bok(bok_1, bok_2s):
     HostOrderNumber.text = f"{dme_account_num}{bok_1.pk}"
 
     CustomerNumber = ET.SubElement(Header, "CustomerNumber")
-    CustomerNumber.text = f"{dme_account_num}testcust123"
+    CustomerNumber.text = f"{dme_account_num}{bok_1.b_client_order_num}"
 
     CustomerName = ET.SubElement(Header, "CustomerName")
     CustomerName.text = bok_1.b_061_b_del_contact_full_name or ""
