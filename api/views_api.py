@@ -2038,9 +2038,9 @@ def get_delivery_status(request):
     booking = Bookings.objects.filter(
         b_client_booking_ref_num=client_booking_id
     ).first()
-    client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
 
     if booking:
+        client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
         b_status = booking.b_status
         quote = booking.api_booking_quote
         category = get_status_category_from_status(b_status)
@@ -2095,6 +2095,18 @@ def get_delivery_status(request):
     # 2. Try to find from Bok tables
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
 
+    if not bok_1:
+        return Response(
+            {
+                "code": "does_not_exist",
+                "message": "Could not find Order!",
+                "step": None,
+                "status": None,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     booking = {
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
@@ -2107,17 +2119,11 @@ def get_delivery_status(request):
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
-    if bok_1:
-        return Response(
-            {"step": 1, "status": None, "quote": json_quote, "booking": booking}
-        )
+    if bok_1.success == dme_constants.BOK_SUCCESS_3:
+        status = "Waiting for approval..."
+    if bok_1.success == dme_constants.BOK_SUCCESS_4:
+        status = "Processing..."
 
     return Response(
-        {
-            "code": "does_not_exist",
-            "message": "Could not find Delivery!",
-            "step": None,
-            "status": None,
-        },
-        status=status.HTTP_400_BAD_REQUEST,
+        {"step": 1, "status": status, "quote": json_quote, "booking": booking}
     )
