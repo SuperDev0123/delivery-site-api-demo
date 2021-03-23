@@ -48,7 +48,8 @@ def book(fp_name, booking, booker):
     )
     json_data = json.loads(res_content)
     s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)  # Just for visual
-    logger.info(f"### Response ({fp_name} book): {s0}")
+    # logger.info(f"### Response ({fp_name} book): {s0}")
+    logger.info(f"### Response ({fp_name} book): {response.status_code}")
 
     if (
         response.status_code == 500
