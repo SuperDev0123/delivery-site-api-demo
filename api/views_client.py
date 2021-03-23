@@ -484,7 +484,7 @@ def reprint_label(request):
         elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
             result = jason_l.reprint_label(params=request.GET, client=client)
 
-        logger.info(f"#858 {LOG_ID} {result}")
+        logger.info(f"#858 {LOG_ID} {json.dumps(result, indent=4)[:64]}")
         return Response(result)
     except Exception as e:
         logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
