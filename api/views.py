@@ -2062,7 +2062,7 @@ class BookingViewSet(viewsets.ViewSet):
 
         client_auto_augment = Client_Auto_Augment.objects.filter(
             fk_id_dme_client_id=dme_client.pk_id_dme_client,
-            de_to_companyName__icontains=booking.deToCompanyName.strip().split()[0],
+            de_to_companyName__iexact=booking.deToCompanyName.strip(),
         ).first()
 
         if not client_auto_augment:
