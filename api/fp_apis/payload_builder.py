@@ -323,12 +323,9 @@ def get_book_payload(booking, fp_name):
             payload["reference1"] = "reference1"
 
         # Plum
-        if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
-            payload["reference2"] = booking.b_client_order_num
-        else:
-            payload["reference2"] = gen_consignment_num(
-                "hunter", booking.b_bookingID_Visual
-            )
+        payload["reference2"] = gen_consignment_num(
+            "hunter", booking.b_bookingID_Visual
+        )
 
         payload["connoteFormat"] = "Thermal"  # For `Thermal` type printers
     elif fp_name == "tnt":
