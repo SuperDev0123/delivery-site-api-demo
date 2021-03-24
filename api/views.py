@@ -2265,7 +2265,12 @@ class BookingViewSet(viewsets.ViewSet):
         logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
 
         booking_lines = booking.lines().only(
-            "pk_lines_id", "sscc", "e_item", "e_qty", "e_type_of_packaging"
+            "pk_lines_id",
+            "sscc",
+            "e_item",
+            "e_item_type",
+            "e_qty",
+            "e_type_of_packaging",
         )
         original_lines = booking_lines.filter(sscc__isnull=True)
         sscc_arr = []
@@ -2306,6 +2311,7 @@ class BookingViewSet(viewsets.ViewSet):
                             "pk_lines_id": booking_line.pk_lines_id,
                             "sscc": booking_line.sscc,
                             "e_item": booking_line.e_item,
+                            "e_item_type": booking_line.e_item_type,
                             "e_qty": booking_line.e_qty,
                             "e_type_of_packaging": booking_line.e_type_of_packaging,
                             "is_available": is_available,

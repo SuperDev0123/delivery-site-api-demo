@@ -766,9 +766,8 @@ def scanned(payload, client):
             new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
             new_line.e_qty = first_item["qty"]
             new_line.zbl_121_integer_1 = first_item["sequence"]
-            # new_line.e_item = first_item["e_item"]
-            # new_line.e_item_type = first_item["e_item_type"]
-            new_line.e_item = first_item["Picked Item"]
+            new_line.e_item = old_line["e_item"]
+            new_line.e_item_type = old_line["e_item_type"]
             new_line.e_dimUOM = picked_item["dimensions"]["unit"]
             new_line.e_dimLength = picked_item["dimensions"]["length"]
             new_line.e_dimWidth = picked_item["dimensions"]["width"]
