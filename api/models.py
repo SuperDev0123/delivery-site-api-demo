@@ -1845,6 +1845,9 @@ class Bookings(models.Model):
             logger.error(f"#551 [dme_delivery_status_category] - {str(e)}")
             return ""
 
+    def lines(self):
+        return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
+
     def get_total_lines_qty(self):
         try:
             qty = 0

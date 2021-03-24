@@ -560,11 +560,13 @@ def scanned(payload, client):
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
     original_items = lines.filter(sscc__isnull=True)
-    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
+    scanned_items = lines.filter(sscc__isnull=False)
     repacked_items_count = lines.filter(
         sscc__isnull=False, e_item="Repacked Item"
     ).count()
-    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
+    model_number_qtys = original_items.values_list(
+        "e_item", "e_item_type", "e_qty", "zbl_121_integer_1"
+    )
     sscc_list = scanned_items.values_list("sscc", flat=True)
 
     logger.info(f"@360 {LOG_ID} Booking: {booking}")
@@ -764,7 +766,9 @@ def scanned(payload, client):
             new_line.e_type_of_packaging = picked_item.get("package_type") or "CTN"
             new_line.e_qty = first_item["qty"]
             new_line.zbl_121_integer_1 = first_item["sequence"]
-            new_line.e_item = "Picked Item"
+            # new_line.e_item = first_item["e_item"]
+            # new_line.e_item_type = first_item["e_item_type"]
+            new_line.e_item = first_item["Picked Item"]
             new_line.e_dimUOM = picked_item["dimensions"]["unit"]
             new_line.e_dimLength = picked_item["dimensions"]["length"]
             new_line.e_dimWidth = picked_item["dimensions"]["width"]
