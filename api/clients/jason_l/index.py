@@ -248,7 +248,21 @@ def push_boks(payload, client, username, method):
                 else:
                     message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
                     logger.info(f"@884 {LOG_ID} {message}")
-                    raise Exception(message)
+
+                    json_res = {
+                        "status": False,
+                        "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
+                    }
+
+                    if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+                    elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                        url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+
+                    json_res["pricePageUrl"] = url
+                    logger.info(f"@885 {LOG_ID} Response: {json_res}")
+
+                    return json_res
 
     # Generate `client_booking_id` for SAPB1
     if is_biz:
