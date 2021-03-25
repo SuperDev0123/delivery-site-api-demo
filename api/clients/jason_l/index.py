@@ -255,9 +255,9 @@ def push_boks(payload, client, username, method):
                     }
 
                     if bok_1s.first().success == dme_constants.BOK_SUCCESS_3:
-                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1s.first().client_booking_id}/"
                     else:
-                        url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+                        url = f"http://{settings.WEB_SITE_IP}/status/{bok_1s.first().client_booking_id}/"
 
                     json_res["pricePageUrl"] = url
                     logger.info(f"@885 {LOG_ID} Response: {json_res}")
