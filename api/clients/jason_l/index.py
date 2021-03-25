@@ -254,9 +254,9 @@ def push_boks(payload, client, username, method):
                         "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
                     }
 
-                    if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+                    if bok_1s.first().success == dme_constants.BOK_SUCCESS_3:
                         url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                    elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                    elif bok_1s.first().success == dme_constants.BOK_SUCCESS_4:
                         url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
 
                     json_res["pricePageUrl"] = url
