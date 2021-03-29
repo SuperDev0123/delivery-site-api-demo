@@ -472,6 +472,7 @@ def push_boks(payload, client, username, method):
         if not bok_1.get("b_054_b_del_company"):
             bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
+        # State and Suburb
         de_state = bok_1.get("b_057_b_del_address_state")
         de_suburb = bok_1.get("b_058_b_del_address_suburb")
         de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
@@ -488,6 +489,13 @@ def push_boks(payload, client, username, method):
         else:
             bok_1["b_057_b_del_address_state"] = de_state.upper()
             bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
+
+        # Check prefix of email and phone - 'eml: ', 'tel: '
+        de_email = bok_1["b_063_b_del_email"]
+        bok_1["b_063_b_del_email"] = de_email[de_email.find(":") + 2 :]
+
+        de_phone = bok_1["b_064_b_del_phone_main"]
+        bok_1["b_064_b_del_phone_main"] = de_phone[de_phone.find(":") + 2 :]
 
         bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
