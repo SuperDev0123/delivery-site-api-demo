@@ -472,12 +472,24 @@ def push_boks(payload, client, username, method):
         if not bok_1.get("b_054_b_del_company"):
             bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
+        de_state = bok_1.get("b_057_b_del_address_state")
+        de_suburb = bok_1.get("b_058_b_del_address_suburb")
         de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
-        de_state, de_suburb = get_suburb_state(de_postal_code)
-        bok_1["b_057_b_del_address_state"] = de_state.upper()
-        bok_1["b_058_b_del_address_suburb"] = de_suburb
-        bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
 
+        if not de_postal_code:
+            message = f"Delivery postal code is required."
+            logger.info(f"@885 {LOG_ID} {message}")
+            raise Exception(message)
+
+        if not de_state or not de_suburb:
+            de_state, de_suburb = get_suburb_state(de_postal_code)
+            bok_1["b_057_b_del_address_state"] = de_state.upper()
+            bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
+        else:
+            bok_1["b_057_b_del_address_state"] = de_state.upper()
+            bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
+
+        bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
         if not bok_1_serializer.is_valid():
