@@ -492,10 +492,14 @@ def push_boks(payload, client, username, method):
 
         # Check prefix of email and phone - 'eml: ', 'tel: '
         de_email = bok_1["b_063_b_del_email"]
-        bok_1["b_063_b_del_email"] = de_email[de_email.find(":") + 2 :]
+
+        if ":" in de_email:
+            bok_1["b_063_b_del_email"] = de_email.split(":")[1].strip()
 
         de_phone = bok_1["b_064_b_del_phone_main"]
-        bok_1["b_064_b_del_phone_main"] = de_phone[de_phone.find(":") + 2 :]
+
+        if ":" in de_phone:
+            bok_1["b_063_b_del_email"] = de_phone.split(":")[1].strip()
 
         bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
