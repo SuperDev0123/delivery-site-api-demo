@@ -2305,7 +2305,7 @@ class BookingViewSet(viewsets.ViewSet):
                         )
 
                         with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
-                            zpl_data = zpl.read()
+                            zpl_data = str(b64encode(zpl.read()))[2:-1]
 
                     # For Hunter orders, DME builds label for entire Booking
                     # elif booking.vx_freight_provider == "Hunter":
