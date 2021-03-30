@@ -2288,7 +2288,7 @@ class BookingViewSet(viewsets.ViewSet):
                     label_url = None
                     is_available = False
 
-                    # For TNT orders, DME builds label for one Line
+                    # For TNT orders, DME builds label for each SSCC
                     if booking.vx_freight_provider == "TNT":
                         file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
                         file_name = (
@@ -2303,6 +2303,10 @@ class BookingViewSet(viewsets.ViewSet):
                         label_url = (
                             f"{booking.vx_freight_provider.lower()}_au/{file_name}"
                         )
+
+                        with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                            zpl_data = zpl.read()
+
                     # For Hunter orders, DME builds label for entire Booking
                     # elif booking.vx_freight_provider == "Hunter":
 
@@ -2316,6 +2320,7 @@ class BookingViewSet(viewsets.ViewSet):
                             "e_type_of_packaging": booking_line.e_type_of_packaging,
                             "is_available": is_available,
                             "url": label_url,
+                            "zpl": zpl_data,
                         }
                     )
 
