@@ -10,6 +10,7 @@ import operator
 import requests
 import tempfile
 import zipfile
+from base64 import b64encode
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 from time import gmtime, strftime
