@@ -2304,7 +2304,7 @@ class BookingViewSet(viewsets.ViewSet):
                             f"{booking.vx_freight_provider.lower()}_au/{file_name}"
                         )
 
-                        with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                        with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
                             zpl_data = zpl.read()
 
                     # For Hunter orders, DME builds label for entire Booking
