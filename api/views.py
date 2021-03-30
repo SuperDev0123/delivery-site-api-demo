@@ -2296,7 +2296,7 @@ class BookingViewSet(viewsets.ViewSet):
                             + "_"
                             + str(booking.b_bookingID_Visual)
                             + "_"
-                            + str(booking_line.pk)
+                            + str(booking_line.sscc)
                             + ".pdf"
                         )
                         is_available = doesFileExist(file_path, file_name)

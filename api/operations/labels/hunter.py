@@ -2447,7 +2447,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, filepath=None, lines=[], label_index=0):
+def build_label(booking, filepath=None, lines=[], label_index=0, sscc=None):
     logger.info(
         f"#110 [HUNTER LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
