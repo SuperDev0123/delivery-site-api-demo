@@ -2273,7 +2273,7 @@ class BookingViewSet(viewsets.ViewSet):
             "e_qty",
             "e_type_of_packaging",
         )
-        original_lines = booking_lines.filter(sscc__isnull=True)
+        original_lines = booking_lines.filter(sscc__isnull=True, is_deleted=False)
         sscc_arr = []
         result_with_sscc = {}
 
