@@ -764,6 +764,8 @@ def scanned(payload, client):
     # Save
     sscc_lines = {}
     with transaction.atomic():
+        scanned_items.update(is_deleted=True)
+
         for picked_item in picked_items:
             # Find source line
             old_line = None
