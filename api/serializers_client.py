@@ -111,6 +111,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_078_b_pu_location",
             "b_079_b_pu_floor_number",
             "b_080_b_pu_floor_access_by",
+            "b_081_b_pu_auto_pack",
             "b_000_3_consignment_number",
             "success",
             "x_booking_Created_With",

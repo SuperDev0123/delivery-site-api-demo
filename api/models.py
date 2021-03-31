@@ -2700,6 +2700,7 @@ class BOK_1_headers(models.Model):
     b_080_b_pu_floor_access_by = models.CharField(
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
+    b_081_b_pu_auto_pack = models.BooleanField(default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)

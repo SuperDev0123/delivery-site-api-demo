@@ -144,6 +144,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             )
             bok_1.b_076_b_pu_service = request.data.get("b_076_b_pu_service")
             bok_1.b_077_b_del_service = request.data.get("b_077_b_del_service")
+            bok_1.b_081_b_pu_auto_pack = request.data.get("b_081_b_pu_auto_pack")
             bok_1.save()
             res_json = {"success": True, "message": "Freigth options are updated."}
 
