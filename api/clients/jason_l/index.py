@@ -672,7 +672,7 @@ def auto_repack(payload, client):
         booking_lines.append(bok_2_line)
 
     fc_log, _ = FC_Log.objects.get_or_create(
-        client_booking_id=bok_1["client_booking_id"],
+        client_booking_id=bok_1.client_booking_id,
         old_quote__isnull=True,
         new_quote__isnull=True,
     )
@@ -739,12 +739,10 @@ def auto_repack(payload, client):
             result = {"success": True, "results": json_results}
             url = None
 
-            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
-                url = (
-                    f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                )
-            elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+            if bok_1.success == dme_constants.BOK_SUCCESS_3:
+                url = f"http://{settings.WEB_SITE_IP}/price/{bok_1.client_booking_id}/"
+            elif bok_1.success == dme_constants.BOK_SUCCESS_4:
+                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1.client_booking_id}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
