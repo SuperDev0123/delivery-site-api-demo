@@ -597,7 +597,7 @@ def push_boks(payload, client, username, method):
         return message
 
 
-def auto_repack(payload):
+def auto_repack(payload, client):
     LOG_ID = "[AR Jason L]"
     client_booking_id = payload.get("identifer")
     repack_status = payload.get("status")
@@ -652,7 +652,7 @@ def auto_repack(payload):
         "de_To_Address_Suburb": bok_1.b_058_b_del_address_suburb,
         "client_warehouse_code": bok_1.b_client_warehouse_code,
         "kf_client_id": bok_1.fk_client_id,
-        "b_client_name": "Jason L",  # client.company_name,
+        "b_client_name": client.company_name,
     }
 
     booking_lines = []

@@ -553,6 +553,9 @@ def auto_repack(request):
         # if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
         #     result = plum.ready_boks(payload=request.data, client=client)
         # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+        client = Client.objects.get(
+            dme_account_num="1af6bcd2-6148-11eb-ae93-0242ac130002"
+        )
         result = jason_l.auto_repack(payload=request.data, client=client)
 
         logger.info(f"#858 {LOG_ID} {result}")
