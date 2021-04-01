@@ -599,7 +599,7 @@ def push_boks(payload, client, username, method):
 
 def auto_repack(payload, client):
     LOG_ID = "[AR Jason L]"
-    client_booking_id = payload.get("identifer")
+    client_booking_id = payload.get("identifier")
     repack_status = payload.get("status")
 
     # Get Boks
