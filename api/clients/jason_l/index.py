@@ -622,7 +622,7 @@ def auto_repack(payload, client):
             new_bok_2s.append(bok_2)
 
     for bok_3 in bok_3s:
-        bok_3.is_deleted = False
+        bok_3.is_deleted = not bok_3.is_deleted
         bok_3.save()
 
     # Get Pricings
@@ -676,7 +676,7 @@ def auto_repack(payload, client):
         old_quote__isnull=True,
         new_quote__isnull=True,
     )
-    fc_log.old_quote = old_quote
+    fc_log.old_quote = bok_1.quote
     body = {"booking": booking, "booking_lines": booking_lines}
     _, success, message, quote_set = pricing_oper(
         body=body,
