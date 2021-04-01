@@ -392,7 +392,7 @@ def push_boks(payload, client, username, method):
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
-    # DEMO `auto_pack` logic
+    # `auto_pack` logic: DEMO
     carton_cnt = 0
     total_weight = 0
 
@@ -425,8 +425,7 @@ def push_boks(payload, client, username, method):
 
         bok_2_serializer = BOK_2_Serializer(data=line)
         if bok_2_serializer.is_valid():
-            bok_2_obj = bok_2_serializer.save()
-            bok_2s = new_bok_2s
+            bok_2_serializer.save()
         else:
             message = f"Serialiser Error - {bok_2_serializer.errors}"
             logger.info(f"@8131 {LOG_ID} {message}")
@@ -436,8 +435,7 @@ def push_boks(payload, client, username, method):
         for bok_2_obj in bok_2_objs:
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
-            bok_3["fk_booking_lines_id"] = bok_2_obj.pk_booking_lines_id
-            bok_3["v_client_pk_consigment_num"] = bok_1_obj.pk_header_id
+            bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1_obj.success
             bok_3["zbld_121_integer_1"] = bok_2_obj.zbl_121_integer_1  # Sequence
             bok_3["zbld_122_integer_2"] = bok_2_obj.l_002_qty
@@ -455,6 +453,8 @@ def push_boks(payload, client, username, method):
                 message = f"Serialiser Error - {bok_2_serializer.errors}"
                 logger.info(f"@8132 {LOG_ID} {message}")
                 raise Exception(message)
+
+            bok_2_obj.delete()
 
         # Set `auto_pack` flag
         bok_1_obj.b_081_b_pu_auto_pack = True
