@@ -456,7 +456,8 @@ def push_boks(payload, client, username, method):
                 logger.info(f"@8132 {LOG_ID} {message}")
                 raise Exception(message)
 
-            bok_2_obj.delete()
+            bok_2_obj.is_deleted = True
+            bok_2_obj.save()
 
         # Set `auto_pack` flag
         bok_1_obj.b_081_b_pu_auto_pack = True

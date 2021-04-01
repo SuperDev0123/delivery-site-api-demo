@@ -2836,6 +2836,7 @@ class BOK_2_lines(models.Model):
     client_item_reference = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
+    is_deleted = models.BooleanField(default=False, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
