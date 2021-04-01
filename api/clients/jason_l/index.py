@@ -392,18 +392,19 @@ def push_boks(payload, client, username, method):
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
-    # `auto_pack` logic: DEMO
+    # `auto_repack` logic: DEMO
     carton_cnt = 0
     total_weight = 0
 
-    for bok_2 in bok_2s:
-        _bok_2 = bok_2["booking_line"]
-        total_weight += _bok_2["l_009_weight_per_each"] * _bok_2["l_002_qty"]
+    for bok_2_obj in bok_2_objs:
+        total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
 
-        if _bok_2["l_001_type_of_packaging"].lower() == "CTN":
-            carton_cnt += _bok_2["l_002_qty"]
+        if bok_2_obj.l_001_type_of_packaging.lower() == "CTN":
+            carton_cnt += bok_2_obj.l_002_qty
 
     if carton_cnt > 2:
+        message = "Auto repacking..."
+        logger.info(f"@8130 {LOG_ID} {message}")
         new_bok_2s = []
 
         # Create one PAL bok_2
@@ -445,6 +446,7 @@ def push_boks(payload, client, username, method):
             bok_3["zbld_134_decimal_4"] = bok_2_obj.l_009_weight_per_each
             bok_3["zbld_101_text_1"] = bok_2_obj.l_004_dim_UOM
             bok_3["zbld_102_text_2"] = bok_2_obj.l_008_weight_UOM
+            bok_3["zbld_103_text_3"] = bok_2_obj.e_item_type
 
             bok_3_serializer = BOK_3_Serializer(data=bok_3)
             if bok_3_serializer.is_valid():
