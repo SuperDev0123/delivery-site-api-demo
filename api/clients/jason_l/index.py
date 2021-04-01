@@ -447,6 +447,7 @@ def push_boks(payload, client, username, method):
             bok_3["zbld_101_text_1"] = bok_2_obj.l_004_dim_UOM
             bok_3["zbld_102_text_2"] = bok_2_obj.l_008_weight_UOM
             bok_3["zbld_103_text_3"] = bok_2_obj.e_item_type
+            bok_3["zbld_104_text_4"] = bok_2_obj.l_001_type_of_packaging
 
             bok_3_serializer = BOK_3_Serializer(data=bok_3)
             if bok_3_serializer.is_valid():
