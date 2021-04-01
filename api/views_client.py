@@ -175,7 +175,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_2s = BOK_2_lines.objects.filter(
                 fk_header_id=bok_1.pk_header_id, is_deleted=False
             )
-            bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
+            bok_3s = BOK_3_lines_data.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
             quote_set = API_booking_quotes.objects.filter(
                 fk_booking_id=bok_1.pk_header_id, is_used=False
             )
