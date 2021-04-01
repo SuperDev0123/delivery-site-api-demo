@@ -351,47 +351,116 @@ def push_boks(payload, client, username, method):
             logger.info(f"@8821 {LOG_ID} {message}")
             raise Exception(message)
 
-        # Save bok_2s
-        if "model_number" in bok_2s[0]:  # Product & Child items
-            ignore_product = is_biz
+        # Save bok_2s (Product & Child items)
+        ignore_product = is_biz
 
-            items = product_oper.get_product_items(bok_2s, client, ignore_product)
-            new_bok_2s = []
+        items = product_oper.get_product_items(bok_2s, client, ignore_product)
+        new_bok_2s = []
+        bok_2_objs = []
 
-            for index, item in enumerate(items):
-                line = {}
-                line["fk_header_id"] = bok_1["pk_header_id"]
-                line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-                line["pk_booking_lines_id"] = str(uuid.uuid1())
-                line["success"] = bok_1["success"]
-                line["l_001_type_of_packaging"] = "CTN"
-                line["l_002_qty"] = item["qty"]
-                line["l_003_item"] = item["description"]
-                line["l_004_dim_UOM"] = item["e_dimUOM"]
-                line["l_005_dim_length"] = item["e_dimLength"]
-                line["l_006_dim_width"] = item["e_dimWidth"]
-                line["l_007_dim_height"] = item["e_dimHeight"]
-                line["l_009_weight_per_each"] = item["e_weightPerEach"]
-                line["l_008_weight_UOM"] = item["e_weightUOM"]
-                line["e_item_type"] = item["e_item_type"]
-                line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
-                new_bok_2s.append({"booking_line": line})
+        for index, item in enumerate(items):
+            line = {}
+            line["fk_header_id"] = bok_1["pk_header_id"]
+            line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+            line["pk_booking_lines_id"] = str(uuid.uuid1())
+            line["success"] = bok_1["success"]
+            line["l_001_type_of_packaging"] = "CTN"
+            line["l_002_qty"] = item["qty"]
+            line["l_003_item"] = item["description"]
+            line["l_004_dim_UOM"] = item["e_dimUOM"]
+            line["l_005_dim_length"] = item["e_dimLength"]
+            line["l_006_dim_width"] = item["e_dimWidth"]
+            line["l_007_dim_height"] = item["e_dimHeight"]
+            line["l_009_weight_per_each"] = item["e_weightPerEach"]
+            line["l_008_weight_UOM"] = item["e_weightUOM"]
+            line["e_item_type"] = item["e_item_type"]
+            line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
+            new_bok_2s.append({"booking_line": line})
 
-                bok_2_serializer = BOK_2_Serializer(data=line)
-                if bok_2_serializer.is_valid():
-                    bok_2_serializer.save()
-                else:
-                    message = f"Serialiser Error - {bok_2_serializer.errors}"
-                    logger.info(f"@8831 {LOG_ID} {message}")
-                    raise Exception(message)
+            bok_2_serializer = BOK_2_Serializer(data=line)
+            if bok_2_serializer.is_valid():
+                bok_2_obj = bok_2_serializer.save()
+                bok_2_objs.append(bok_2_obj)
+            else:
+                message = f"Serialiser Error - {bok_2_serializer.errors}"
+                logger.info(f"@8831 {LOG_ID} {message}")
+                raise Exception(message)
 
-            bok_2s = new_bok_2s
-
+        bok_2s = new_bok_2s
         bok_1_obj = bok_1_serializer.save()
 
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
+    # DEMO `auto_pack` logic
+    carton_cnt = 0
+    total_weight = 0
+
+    for bok_2 in bok_2s:
+        _bok_2 = bok_2["booking_line"]
+        total_weight += _bok_2["l_009_weight_per_each"] * _bok_2["l_002_qty"]
+
+        if _bok_2["l_001_type_of_packaging"].lower() == "CTN":
+            carton_cnt += _bok_2["l_002_qty"]
+
+    if carton_cnt > 2:
+        new_bok_2s = []
+
+        # Create one PAL bok_2
+        line = {}
+        line["fk_header_id"] = bok_1["pk_header_id"]
+        line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+        line["pk_booking_lines_id"] = str(uuid.uuid1())
+        line["success"] = bok_1["success"]
+        line["l_001_type_of_packaging"] = "PAL"
+        line["l_002_qty"] = 1
+        line["l_003_item"] = "Pallet Line"
+        line["l_004_dim_UOM"] = "M"
+        line["l_005_dim_length"] = 1.8
+        line["l_006_dim_width"] = 1.2
+        line["l_007_dim_height"] = 1.2
+        line["l_009_weight_per_each"] = total_weight
+        line["l_008_weight_UOM"] = "KG"
+        new_bok_2s.append({"booking_line": line})
+
+        bok_2_serializer = BOK_2_Serializer(data=line)
+        if bok_2_serializer.is_valid():
+            bok_2_obj = bok_2_serializer.save()
+            bok_2s = new_bok_2s
+        else:
+            message = f"Serialiser Error - {bok_2_serializer.errors}"
+            logger.info(f"@8131 {LOG_ID} {message}")
+            raise Exception(message)
+
+        # Create Bok_3s
+        for bok_2_obj in bok_2_objs:
+            bok_3 = {}
+            bok_3["fk_header_id"] = bok_1_obj.pk_header_id
+            bok_3["fk_booking_lines_id"] = bok_2_obj.pk_booking_lines_id
+            bok_3["v_client_pk_consigment_num"] = bok_1_obj.pk_header_id
+            bok_3["success"] = bok_1_obj.success
+            bok_3["zbld_121_integer_1"] = bok_2_obj.zbl_121_integer_1  # Sequence
+            bok_3["zbld_122_integer_2"] = bok_2_obj.l_002_qty
+            bok_3["zbld_131_decimal_1"] = bok_2_obj.l_005_dim_length
+            bok_3["zbld_132_decimal_2"] = bok_2_obj.l_006_dim_width
+            bok_3["zbld_133_decimal_3"] = bok_2_obj.l_007_dim_height
+            bok_3["zbld_134_decimal_4"] = bok_2_obj.l_009_weight_per_each
+            bok_3["zbld_101_text_1"] = bok_2_obj.l_004_dim_UOM
+            bok_3["zbld_102_text_2"] = bok_2_obj.l_008_weight_UOM
+
+            bok_3_serializer = BOK_3_Serializer(data=bok_3)
+            if bok_3_serializer.is_valid():
+                bok_3_serializer.save()
+            else:
+                message = f"Serialiser Error - {bok_2_serializer.errors}"
+                logger.info(f"@8132 {LOG_ID} {message}")
+                raise Exception(message)
+
+        # Set `auto_pack` flag
+        bok_1_obj.b_081_b_pu_auto_pack = True
+        bok_1_obj.save()
+
+    # Get Pricings
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
         "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
@@ -499,6 +568,7 @@ def push_boks(payload, client, username, method):
                 eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
                 json_results[0]["eta"] = eta
 
+    # Response
     if json_results:
         if is_biz:
             result = {"success": True, "results": json_results}
