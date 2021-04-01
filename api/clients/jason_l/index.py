@@ -735,21 +735,8 @@ def auto_repack(payload, client):
 
     # Response
     if json_results:
-        if is_biz:
-            result = {"success": True, "results": json_results}
-            url = None
-
-            if bok_1.success == dme_constants.BOK_SUCCESS_3:
-                url = f"http://{settings.WEB_SITE_IP}/price/{bok_1.client_booking_id}/"
-            elif bok_1.success == dme_constants.BOK_SUCCESS_4:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1.client_booking_id}/"
-
-            result["pricePageUrl"] = url
-            logger.info(f"@8837 {LOG_ID} success: True, 201_created")
-            return result
-        else:
-            logger.info(f"@8838 {LOG_ID} success: True, 201_created")
-            return json_results
+        logger.info(f"@8838 {LOG_ID} success: True, 201_created")
+        return json_results
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
