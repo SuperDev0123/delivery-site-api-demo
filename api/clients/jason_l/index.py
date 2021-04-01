@@ -367,12 +367,12 @@ def push_boks(payload, client, username, method):
             line["l_001_type_of_packaging"] = "CTN"
             line["l_002_qty"] = item["qty"]
             line["l_003_item"] = item["description"]
-            line["l_004_dim_UOM"] = item["e_dimUOM"]
+            line["l_004_dim_UOM"] = item["e_dimUOM"].upper()
             line["l_005_dim_length"] = item["e_dimLength"]
             line["l_006_dim_width"] = item["e_dimWidth"]
             line["l_007_dim_height"] = item["e_dimHeight"]
             line["l_009_weight_per_each"] = item["e_weightPerEach"]
-            line["l_008_weight_UOM"] = item["e_weightUOM"]
+            line["l_008_weight_UOM"] = item["e_weightUOM"].upper()
             line["e_item_type"] = item["e_item_type"]
             line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
             new_bok_2s.append({"booking_line": line})
@@ -459,7 +459,7 @@ def push_boks(payload, client, username, method):
             bok_2_obj.is_deleted = True
             bok_2_obj.save()
 
-        # Set `auto_pack` flag
+        # Set `auto_repack` flag
         bok_1_obj.b_081_b_pu_auto_pack = True
         bok_1_obj.save()
 

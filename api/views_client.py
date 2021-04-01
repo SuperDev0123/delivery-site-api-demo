@@ -172,7 +172,10 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
         try:
             bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
-            bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+            bok_2s = BOK_2_lines.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
+            bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
             quote_set = API_booking_quotes.objects.filter(
                 fk_booking_id=bok_1.pk_header_id, is_used=False
             )
@@ -180,6 +183,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
             result = BOK_1_Serializer(bok_1).data
             result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
+            result["bok_3s"] = BOK_3_Serializer(bok_3s, many=True).data
             result["pricings"] = []
             best_quotes = quote_set
 
