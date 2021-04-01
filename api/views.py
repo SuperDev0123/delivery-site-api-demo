@@ -3833,8 +3833,12 @@ class FileUploadView(views.APIView):
             file_name = upload_lib.upload_pricing_rule_file(
                 user_id, username, file, upload_option, rule_type
             )
+        elif upload_option == "client-products":
+            import_results = upload_lib.upload_client_products_file(
+                user_id, username, file
+            )
 
-        return Response(file_name)
+        return Response(import_results)
 
 
 class FilesViewSet(viewsets.ViewSet):
