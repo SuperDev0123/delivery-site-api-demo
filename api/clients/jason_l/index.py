@@ -625,6 +625,9 @@ def auto_repack(payload, client):
         bok_3.is_deleted = not bok_3.is_deleted
         bok_3.save()
 
+    bok_1.b_081_b_pu_auto_pack = repack_status
+    bok_1.save()
+
     # Get Pricings
     booking = {
         "pk_booking_id": bok_1.pk_header_id,
