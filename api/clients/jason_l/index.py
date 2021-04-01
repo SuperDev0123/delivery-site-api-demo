@@ -397,13 +397,10 @@ def push_boks(payload, client, username, method):
     total_weight = 0
 
     for bok_2_obj in bok_2_objs:
-        logger.info(f"@##### {LOG_ID} {bok_2_obj.l_002_qty}")
         total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
 
         if bok_2_obj.l_001_type_of_packaging.lower() == "CTN":
-            carton_cnt += bok_2_obj.l_002_qty
-
-        logger.info(f"@##### {LOG_ID} {carton_cnt}")
+            carton_cnt += int(bok_2_obj.l_002_qty)
 
     if carton_cnt > 2:
         message = "Auto repacking..."
