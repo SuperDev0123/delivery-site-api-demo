@@ -2922,6 +2922,7 @@ class BOK_3_lines_data(models.Model):
     success = models.CharField(
         verbose_name=_("Success"), max_length=1, default=2, blank=True, null=True
     )
+    is_deleted = models.BooleanField(default=False, null=True)
     zbld_101_text_1 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )

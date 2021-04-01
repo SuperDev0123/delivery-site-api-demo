@@ -597,6 +597,167 @@ def push_boks(payload, client, username, method):
         return message
 
 
+def auto_repack(payload):
+    LOG_ID = "[AR Jason L]"
+    client_booking_id = payload.get("identifer")
+    repack_status = payload.get("status")
+
+    # Get Boks
+    bok_1 = (
+        BOK_1_headers.objects.select_related("quote")
+        .filter(client_booking_id=client_booking_id)
+        .first()
+    )
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+    bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
+
+    # Update is_deleted status
+    new_bok_2s = []
+
+    for bok_2 in bok_2s:
+        bok_2.is_deleted = not bok_2.is_deleted
+        bok_2.save()
+
+        if not bok_2.is_deleted:
+            new_bok_2s.append(bok_2)
+
+    for bok_3 in bok_3s:
+        bok_3.is_deleted = False
+        bok_3.save()
+
+    # Get Pricings
+    booking = {
+        "pk_booking_id": bok_1.pk_header_id,
+        "puPickUpAvailFrom_Date": bok_1.b_021_b_pu_avail_from_date,
+        "b_clientReference_RA_Numbers": "",
+        "puCompany": bok_1.b_028_b_pu_company,
+        "pu_Contact_F_L_Name": bok_1.b_035_b_pu_contact_full_name,
+        "pu_Email": bok_1.b_037_b_pu_email,
+        "pu_Phone_Main": bok_1.b_038_b_pu_phone_main,
+        "pu_Address_Street_1": bok_1.b_029_b_pu_address_street_1,
+        "pu_Address_street_2": bok_1.b_030_b_pu_address_street_2,
+        "pu_Address_Country": bok_1.b_034_b_pu_address_country,
+        "pu_Address_PostalCode": bok_1.b_033_b_pu_address_postalcode,
+        "pu_Address_State": bok_1.b_031_b_pu_address_state,
+        "pu_Address_Suburb": bok_1.b_032_b_pu_address_suburb,
+        "deToCompanyName": bok_1.b_054_b_del_company,
+        "de_to_Contact_F_LName": bok_1.b_061_b_del_contact_full_name,
+        "de_Email": bok_1.b_063_b_del_email,
+        "de_to_Phone_Main": bok_1.b_064_b_del_phone_main,
+        "de_To_Address_Street_1": bok_1.b_055_b_del_address_street_1,
+        "de_To_Address_Street_2": bok_1.b_056_b_del_address_street_2,
+        "de_To_Address_Country": bok_1.b_060_b_del_address_country,
+        "de_To_Address_PostalCode": bok_1.b_059_b_del_address_postalcode,
+        "de_To_Address_State": bok_1.b_057_b_del_address_state,
+        "de_To_Address_Suburb": bok_1.b_058_b_del_address_suburb,
+        "client_warehouse_code": bok_1.b_client_warehouse_code,
+        "kf_client_id": bok_1.fk_client_id,
+        "b_client_name": "Jason L",  # client.company_name,
+    }
+
+    booking_lines = []
+    for _bok_2 in new_bok_2s:
+        bok_2_line = {
+            "fk_booking_id": _bok_2.fk_header_id,
+            "packagingType": _bok_2.l_001_type_of_packaging,
+            "e_qty": _bok_2.l_002_qty,
+            "e_item": _bok_2.l_003_item,
+            "e_dimUOM": _bok_2.l_004_dim_UOM,
+            "e_dimLength": _bok_2.l_005_dim_length,
+            "e_dimWidth": _bok_2.l_006_dim_width,
+            "e_dimHeight": _bok_2.l_007_dim_height,
+            "e_weightUOM": _bok_2.l_008_weight_UOM,
+            "e_weightPerEach": _bok_2.l_009_weight_per_each,
+        }
+        booking_lines.append(bok_2_line)
+
+    fc_log, _ = FC_Log.objects.get_or_create(
+        client_booking_id=bok_1["client_booking_id"],
+        old_quote__isnull=True,
+        new_quote__isnull=True,
+    )
+    fc_log.old_quote = old_quote
+    body = {"booking": booking, "booking_lines": booking_lines}
+    _, success, message, quote_set = pricing_oper(
+        body=body,
+        booking_id=None,
+        is_pricing_only=True,
+    )
+    logger.info(
+        f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quote_set.exists() and quote_set.count() > 0:
+        bok_1_obj = bok_1
+        auto_select_pricing_4_bok(bok_1_obj, quote_set)
+        best_quotes = select_best_options(pricings=quote_set)
+        logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
+
+        context = {"client_customer_mark_up": client.client_customer_mark_up}
+        json_results = SimpleQuoteSerializer(
+            best_quotes, many=True, context=context
+        ).data
+        json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
+
+        if bok_1.success == dme_constants.BOK_SUCCESS_4:
+            best_quote = best_quotes[0]
+            bok_1_obj.b_003_b_service_name = best_quote.service_name
+            bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+            bok_1_obj.save()
+            fc_log.new_quote = best_quotes[0]
+            fc_log.save()
+    else:
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1.pk_header_id}"
+        logger.error(message)
+        send_email_to_admins("No FC result", message)
+
+    # Set Express or Standard
+    if len(json_results) == 1:
+        json_results[0]["service_name"] = "Standard"
+    else:
+        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+            json_results[0]["service_name"] = "Express"
+            json_results[1]["service_name"] = "Standard"
+
+            if json_results[0]["eta"] == json_results[1]["eta"]:
+                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+                json_results[1]["eta"] = eta
+
+            json_results = [json_results[1], json_results[0]]
+        else:
+            json_results[1]["service_name"] = "Express"
+            json_results[0]["service_name"] = "Standard"
+
+            if json_results[0]["eta"] == json_results[1]["eta"]:
+                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+                json_results[0]["eta"] = eta
+
+    # Response
+    if json_results:
+        if is_biz:
+            result = {"success": True, "results": json_results}
+            url = None
+
+            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+                url = (
+                    f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+                )
+            elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+
+            result["pricePageUrl"] = url
+            logger.info(f"@8837 {LOG_ID} success: True, 201_created")
+            return result
+        else:
+            logger.info(f"@8838 {LOG_ID} success: True, 201_created")
+            return json_results
+    else:
+        message = "Pricing cannot be returned due to incorrect address information."
+        logger.info(f"@8839 {LOG_ID} {message}")
+        return message
+
+
 def scanned(payload, client):
     """
     called as get_label

@@ -535,6 +535,35 @@ def manifest_boks(request):
         return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["POST"])
+@permission_classes((AllowAny,))  # SECURITY WARNNING
+def auto_repack(request):
+    """
+    When User try to tick/untick auto_repack freight option on Pricing page
+    """
+    LOG_ID = "[AUTO REPACK]"
+    user = request.user
+    logger.info(f"@850 {LOG_ID} Requester: {user.username}")
+    logger.info(f"@851 {LOG_ID} Payload: {request.data}")
+
+    try:
+        # client = get_client(user)
+        # dme_account_num = client.dme_account_num
+
+        # if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+        #     result = plum.ready_boks(payload=request.data, client=client)
+        # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+        result = jason_l.auto_repack(payload=request.data, client=client)
+
+        logger.info(f"#858 {LOG_ID} {result}")
+        return Response({"success": True, "message": result})
+    except Exception as e:
+        logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def get_delivery_status(request):
