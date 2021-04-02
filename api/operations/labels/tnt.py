@@ -238,7 +238,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>via %s  &#160 &#160 to &#160  &#160  %s </b></font>"
+                        "<font size=%s><b>via %s  to  %s</b></font>"
                         % (16, routing.gateway, routing.onfwd),
                         style_right,
                     ),
@@ -302,8 +302,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm,
+                    float(label_settings["label_image_size_length"]) * (3 / 5) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 5) * mm,
                 ),
                 rowHeights=(float(label_settings["line_height_medium"]) * mm),
                 style=[
@@ -715,6 +715,13 @@ def build_label(booking, filepath, lines=[], label_index=0):
             Story.append(t1)
             Story.append(Spacer(1, 5))
 
+            special_instruction = booking.pu_pickup_instructions_address or ""
+
+            if special_instruction:
+                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address or ''}"
+            else:
+                special_instruction = booking.de_to_PickUp_Instructions_Address or ""
+
             tbl_data1 = [
                 [
                     Paragraph(
@@ -724,12 +731,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s><b>%s, %s</b></font>"
-                        % (
-                            7,
-                            booking.pu_pickup_instructions_address or "",
-                            booking.de_to_PickUp_Instructions_Address or "",
-                        ),
+                        "<font size=%s><b>%s</b></font>" % (7, special_instruction),
                         style_center,
                     ),
                 ],

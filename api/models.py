@@ -2049,6 +2049,7 @@ class Booking_lines(models.Model):
         blank=True,
         default=None,
     )
+    zbl_121_integer_1 = models.IntegerField(blank=True, null=True, default=None)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2683,6 +2684,19 @@ class BOK_1_headers(models.Model):
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     b_071_b_del_sufficient_space = models.BooleanField(default=True, null=True)
+    b_072_b_pu_no_of_assists = models.IntegerField(default=0, null=True)
+    b_073_b_del_no_of_assists = models.IntegerField(default=0, null=True)
+    b_074_b_pu_access = models.CharField(max_length=32, default=None, null=True)
+    b_075_b_del_access = models.CharField(max_length=32, default=None, null=True)
+    b_076_b_pu_service = models.CharField(max_length=32, default=None, null=True)
+    b_077_b_del_service = models.CharField(max_length=32, default=None, null=True)
+    b_078_b_pu_location = models.CharField(
+        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+    )
+    b_079_b_pu_floor_number = models.IntegerField(default=0, null=True)
+    b_080_b_pu_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
@@ -2711,7 +2725,7 @@ class BOK_1_headers(models.Model):
 
             on_create_bok_1_handler(self)
 
-            if self.success == dme_constants.BOK_SUCCESS_4:
+            if self.success == dme_constants.BOK_SUCCESS_4 and self.fk_client_id == 7:
                 from api.operations.paperless import send_order_info
 
                 send_order_info(self)
@@ -2720,6 +2734,7 @@ class BOK_1_headers(models.Model):
 
             if (
                 self.success != old_obj.success
+                and self.fk_client_id == 7
                 and self.success == dme_constants.BOK_SUCCESS_4
             ):
                 from api.operations.paperless import send_order_info

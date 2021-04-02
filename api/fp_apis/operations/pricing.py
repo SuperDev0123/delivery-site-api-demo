@@ -207,9 +207,12 @@ async def _api_pricing_worker_builder(
     )
 
     if not payload:
-        logger.info(
-            f"#907 [PRICING] Failed to build payload - {booking.b_bookingID_Visual}, {_fp_name}"
-        )
+        if is_pricing_only:
+            message = f"#907 [PRICING] Failed to build payload - {booking.pk_booking_id}, {_fp_name}"
+        else:
+            message = f"#907 [PRICING] Failed to build payload - {booking.b_bookingID_Visual}, {_fp_name}"
+
+        logger.info(message)
         return None
 
     url = DME_LEVEL_API_URL + "/pricing/calculateprice"

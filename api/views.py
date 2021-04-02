@@ -2019,6 +2019,18 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
+    def update_augment(self, request, format=None):
+        Client_Process_Mgr.objects.filter(id=request.data["id"]).update(
+                origin_puCompany=request.data["origin_puCompany"],
+                origin_pu_Address_Street_1=request.data["origin_pu_Address_Street_1"],
+                origin_pu_Address_Street_2=request.data["origin_pu_Address_Street_2"],
+                origin_deToCompanyName=request.data["origin_deToCompanyName"],
+                origin_pu_pickup_instructions_address=request.data["origin_pu_pickup_instructions_address"],
+                origin_de_Email_Group_Emails=request.data["origin_de_Email_Group_Emails"],
+            )
+        return JsonResponse({"message": "Updated client successfully."})
+
+    @action(detail=False, methods=["post"])
     def auto_augment(self, request, format=None):
         body = literal_eval(request.body.decode("utf8"))
         bookingId = body["bookingId"]
@@ -2049,10 +2061,9 @@ class BookingViewSet(viewsets.ViewSet):
         dme_client = DME_clients.objects.filter(
             dme_account_num=booking.kf_client_id
         ).first()
-
         client_auto_augment = Client_Auto_Augment.objects.filter(
             fk_id_dme_client_id=dme_client.pk_id_dme_client,
-            de_to_companyName__icontains=booking.deToCompanyName.strip().split()[0],
+            de_to_companyName__iexact=booking.deToCompanyName.strip(),
         ).first()
 
         if not client_auto_augment:

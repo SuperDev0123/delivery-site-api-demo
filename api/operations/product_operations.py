@@ -31,14 +31,12 @@ def get_product_items(bok_2s, client, ignore_product=False):
     for bok_2 in bok_2s:
         model_number = bok_2.get("model_number")
         qty = bok_2.get("qty")
+        # "Jason L"
+        zbl_121_integer_1 = bok_2.get("sequence")
 
         if not model_number or not qty:
             raise ValidationError(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": "'model_number' and 'qty' are required for each booking_line",
-                }
+                "'model_number' and 'qty' are required for each booking_line"
             )
 
         products = Client_Products.objects.filter(
@@ -47,12 +45,9 @@ def get_product_items(bok_2s, client, ignore_product=False):
 
         if products.count() == 0:
             raise ValidationError(
-                {
-                    "success": False,
-                    "results": [],
-                    "message": f"Can't find Product with provided 'model_number'({model_number}).",
-                },
+                f"Can't find Product with provided 'model_number'({model_number})."
             )
+
         elif products.count() == 1:
             product = products.first()
             line = {
@@ -65,6 +60,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                 "e_dimWidth": product.e_dimWidth,
                 "e_dimHeight": product.e_dimHeight,
                 "e_weightPerEach": product.e_weightPerEach,
+                "zbl_121_integer_1": zbl_121_integer_1,
             }
 
             results = _append_line(results, line, qty)
@@ -84,6 +80,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                     "e_dimWidth": item.e_dimWidth,
                     "e_dimHeight": item.e_dimHeight,
                     "e_weightPerEach": item.e_weightPerEach,
+                    "zbl_121_integer_1": zbl_121_integer_1,
                 }
                 results = _append_line(results, line, qty)
 
