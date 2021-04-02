@@ -2751,17 +2751,6 @@ class FPViewSet(viewsets.ViewSet):
             # print('Exception: ', e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["delete"])
-    def delete(self, request, pk, format=None):
-        fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
-
-        try:
-            fp_freight_providers.delete()
-            return JsonResponse({"results": fp_freight_providers})
-        except Exception as e:
-            # print('@Exception', e)
-            return JsonResponse({"results": ""})
-
     @action(detail=False, methods=["get"])
     def get_carriers(self, request, pk=None):
         fp_id = request.GET["fp_id"]

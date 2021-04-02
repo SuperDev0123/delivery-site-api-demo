@@ -46,7 +46,13 @@ from api.common import math as dme_math
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "__all__"
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "username",
+            "is_active"
+        )
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     client_company_name = serializers.SerializerMethodField(read_only=True)
