@@ -185,7 +185,12 @@ if ENV == "prod":
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
-        "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
+        "formatters": {
+            "verbose": {
+                "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+                "datefmt": "%d/%b/%Y %H:%M:%S",
+            }
+        },
         "root": {
             "level": "ERROR",
             "handlers": ["bugsnag"],
@@ -194,14 +199,14 @@ if ENV == "prod":
             "console": {
                 "level": "INFO",
                 "class": "logging.StreamHandler",
-                "formatter": "simple",
+                "formatter": "verbose",
             },
             "file": {
                 "level": "INFO",
                 "class": "logging.handlers.RotatingFileHandler",
                 "filename": os.path.join(BASE_DIR, "logs/debug.log"),
-                "backupCount": 10,  # keep at most 10 log files
-                "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
+                "backupCount": 30,  # keep at most 30 log files
+                "maxBytes": 1024 * 1024 * 10,  # 10 MB
             },
             "bugsnag": {
                 "level": "ERROR",
@@ -216,18 +221,23 @@ else:
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
-        "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
+        "formatters": {
+            "verbose": {
+                "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+                "datefmt": "%d/%b/%Y %H:%M:%S",
+            }
+        },
         "handlers": {
             "console": {
                 "level": "INFO",
                 "class": "logging.StreamHandler",
-                "formatter": "simple",
+                "formatter": "verbose",
             },
             "file": {
                 "level": "INFO",
                 "class": "logging.FileHandler",
                 "filename": "./logs/debug.log",
-                "formatter": "simple",
+                "formatter": "verbose",
             },
         },
         "loggers": {
