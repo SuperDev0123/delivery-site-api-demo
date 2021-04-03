@@ -12,7 +12,10 @@ def _is_used_client_credential(fp_name, client_name, account_code):
     Check if used client's credential
     """
 
-    credentials = FP_CREDENTIALS[fp_name]
+    credentials = FP_CREDENTIALS.get(fp_name)
+
+    if not credentials:
+        return False
 
     for _client_name in credentials:
         client_credentials = credentials[_client_name]

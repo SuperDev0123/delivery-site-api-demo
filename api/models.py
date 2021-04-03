@@ -3830,6 +3830,9 @@ class FP_zones(models.Model):
     class Meta:
         db_table = "fp_zones"
 
+    def __str__(self):
+        return f"Zone #{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
+
 
 class FP_carriers(models.Model):
     id = models.AutoField(primary_key=True)
