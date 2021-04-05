@@ -2031,13 +2031,15 @@ class BookingViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def update_augment(self, request, format=None):
         Client_Process_Mgr.objects.filter(id=request.data["id"]).update(
-                origin_puCompany=request.data["origin_puCompany"],
-                origin_pu_Address_Street_1=request.data["origin_pu_Address_Street_1"],
-                origin_pu_Address_Street_2=request.data["origin_pu_Address_Street_2"],
-                origin_deToCompanyName=request.data["origin_deToCompanyName"],
-                origin_pu_pickup_instructions_address=request.data["origin_pu_pickup_instructions_address"],
-                origin_de_Email_Group_Emails=request.data["origin_de_Email_Group_Emails"],
-            )
+            origin_puCompany=request.data["origin_puCompany"],
+            origin_pu_Address_Street_1=request.data["origin_pu_Address_Street_1"],
+            origin_pu_Address_Street_2=request.data["origin_pu_Address_Street_2"],
+            origin_deToCompanyName=request.data["origin_deToCompanyName"],
+            origin_pu_pickup_instructions_address=request.data[
+                "origin_pu_pickup_instructions_address"
+            ],
+            origin_de_Email_Group_Emails=request.data["origin_de_Email_Group_Emails"],
+        )
         return JsonResponse({"message": "Updated client successfully."})
 
     @action(detail=False, methods=["post"])
@@ -3940,6 +3942,23 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
 class FPCostsViewSet(viewsets.ModelViewSet):
     queryset = FP_costs.objects.all()
     serializer_class = FPCostsSerializer
+
+    @action(detail=False, methods=["post"])
+    def add(self, request, pk=None):
+        try:
+            request.data.pop("id", None)
+            resultObject = FP_costs.objects.get_or_create(**request.data)
+
+            return JsonResponse(
+                {
+                    "result": FPCostsSerializer(resultObject[0]).data,
+                    "isCreated": resultObject[1],
+                },
+                status=200,
+            )
+        except Exception as e:
+            # print("@Exception", e)
+            return JsonResponse({"result": None}, status=400)
 
 
 class PricingRulesViewSet(viewsets.ViewSet):
