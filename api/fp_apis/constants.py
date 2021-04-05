@@ -23,6 +23,9 @@ AVAILABLE_FPS_4_FC = [
     "Hunter",
     "Sendle",
     "Allied",
+    "Camerons",
+    "Toll",
+    "Century",
 ]
 
 BUILT_IN_PRICINGS = {

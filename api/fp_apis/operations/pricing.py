@@ -187,9 +187,9 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                         )
                         _workers.add(_worker)
 
-        # elif _fp_name in BUILT_IN_PRICINGS:
-        #     _worker = _built_in_pricing_worker_builder(_fp_name, booking)
-        #     _workers.add(_worker)
+        elif _fp_name in BUILT_IN_PRICINGS:
+            _worker = _built_in_pricing_worker_builder(_fp_name, booking)
+            _workers.add(_worker)
 
     logger.info("#911 [PRICING] - Pricing workers will start soon")
     await asyncio.gather(*_workers)
@@ -268,18 +268,10 @@ async def _built_in_pricing_worker_builder(_fp_name, booking):
     parse_results = parse_pricing_response(results, _fp_name, booking, True)
 
     for parse_result in parse_results:
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            freight_provider__iexact=parse_result["freight_provider"],
-            service_name=parse_result["service_name"],
-        )
-
-        if quotes.exists():
-            serializer = ApiBookingQuotesSerializer(quotes[0], data=parse_result)
-        else:
+        if parse_results and not "error" in parse_results:
             serializer = ApiBookingQuotesSerializer(data=parse_result)
 
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            logger.info(f"@404 [PRICING] Serializer error: {serializer.errors}")
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                logger.info(f"@402 [PRICING] Serializer error: {serializer.errors}")
