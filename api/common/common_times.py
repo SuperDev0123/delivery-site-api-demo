@@ -11,12 +11,13 @@ from api.models import Fp_freight_providers
 logger = logging.getLogger("dme_api")
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 UTC_TZ = pytz.timezone("UTC")
+TIME_DIFFERENCE = 10  # Difference between UTC and AU(Sydney) time
 
 
 def get_sydney_now_time(return_type="char"):
     sydney_tz = pytz.timezone("Australia/Sydney")
     sydney_now = sydney_tz.localize(datetime.utcnow())
-    sydney_now = sydney_now + timedelta(hours=11)
+    sydney_now = sydney_now + timedelta(hours=TIME_DIFFERENCE)
 
     if return_type == "char":
         return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
@@ -27,7 +28,7 @@ def get_sydney_now_time(return_type="char"):
 
 
 def convert_to_AU_SYDNEY_tz(time, type="datetime"):
-    delta = timedelta(hours=11)
+    delta = timedelta(hours=TIME_DIFFERENCE)
 
     if not time:
         return None
@@ -45,7 +46,7 @@ def convert_to_AU_SYDNEY_tz(time, type="datetime"):
 
 
 def convert_to_UTC_tz(time, type="datetime"):
-    delta = timedelta(hours=11)
+    delta = timedelta(hours=TIME_DIFFERENCE)
 
     if not time:
         return None
