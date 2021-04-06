@@ -3828,6 +3828,7 @@ class FileUploadView(views.APIView):
         username = request.user.username
         file = request.FILES["file"]
         upload_option = request.POST.get("uploadOption", None)
+        client_id = request.POST.get("clientId", None)
 
         if upload_option == "import":
             uploader = request.POST["uploader"]
@@ -3848,7 +3849,7 @@ class FileUploadView(views.APIView):
             )
         elif upload_option == "client-products":
             import_results = upload_lib.upload_client_products_file(
-                user_id, username, file
+                user_id, username, client_id, file
             )
 
         return Response(import_results)
@@ -4054,10 +4055,11 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user_id = int(self.request.user.id)
+        print(user_id)
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee:
-            client_employees = Client_employees.objects.filter(email__isnull=False)
+            client = self.request.GET.get('clientId')
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -4065,9 +4067,9 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
             client = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             ).first()
-            client_products = Client_Products.objects.filter(fk_id_dme_client=client)
+        client_products = Client_Products.objects.filter(fk_id_dme_client=client).order_by("id")
 
-        return client_products.order_by("id")
+        return client_products
 
 
 class ClientRasViewSet(viewsets.ModelViewSet):

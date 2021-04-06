@@ -14,6 +14,7 @@ from api.models import (
     DME_Files,
     Dme_attachments,
 )
+from django.forms.models import model_to_dict
 from api.utils import (
     clearFileCheckHistory,
     getFileCheckHistory,
@@ -214,16 +215,19 @@ def upload_pricing_rule_file(user_id, username, file, upload_option, rule_type):
     }
 
 
-def upload_client_products_file(user_id, username, file):
+def upload_client_products_file(user_id, username, client_id, file):
     wb = openpyxl.load_workbook(file)
     ws = wb['Product Import']
 
-    client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
-    dme_client = DME_clients.objects.get(
-        pk_id_dme_client=client_employee.fk_id_dme_client_id
-    )
-
-    print(client_employee.fk_id_dme_client_id)
+    if client_id is None:
+        client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
+        dme_client = DME_clients.objects.get(
+            pk_id_dme_client=client_employee.fk_id_dme_client_id
+        )
+    else:
+        dme_client = DME_clients.objects.get(
+            pk_id_dme_client=client_id
+        )
 
     def check_data(data):
         not_empty_cols = [
@@ -235,16 +239,18 @@ def upload_client_products_file(user_id, username, file):
         return True
 
     import_success_results = []
-    import_failure_results = []
+    empty_field_rows = []
+    wrong_type_rows = []
     try:
         Client_Products.objects.filter(fk_id_dme_client=dme_client).delete()
-        delete_status = 'Delete: success'
+        delete_status = 'success'
     except Exception as e:
         print(f"{e}")
-        delete_status = 'Delete: failed'
+        delete_status = 'failed'
 
     success_count = 0
     failure_count = 0
+    created_products = []
     for r in range(2, ws.max_row + 1):
         data = {
             'fk_id_dme_client': dme_client,
@@ -268,14 +274,15 @@ def upload_client_products_file(user_id, username, file):
                 )
                 created.save()
                 success_count = success_count + 1
+                created_products.append(model_to_dict(created))
                 import_success_results.append(r)
             except Exception as e:
                 print(f"{e}")
                 failure_count = failure_count + 1
-                import_failure_results.append(r)
+                wrong_type_rows.append(r)
         else:
             failure_count = failure_count + 1
-            import_failure_results.append(r)
+            empty_field_rows.append(r)
     
     return {
         'file_name': file.name,
@@ -284,8 +291,12 @@ def upload_client_products_file(user_id, username, file):
             'success_count': success_count,
             'failure_count': failure_count,
             'success_rows': import_success_results,
-            'failure_rows': import_failure_results
-        }
+            'failure_rows': {
+                'empty_field_error': empty_field_rows,
+                'wrong_type_error': wrong_type_rows
+            }
+        },
+        'created_products': created_products
     }
         
 
