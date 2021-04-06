@@ -499,7 +499,7 @@ def push_boks(payload, client, username, method):
         de_phone = bok_1["b_064_b_del_phone_main"]
 
         if ":" in de_phone:
-            bok_1["b_063_b_del_email"] = de_phone.split(":")[1].strip()
+            bok_1["b_064_b_del_phone_main"] = de_phone.split(":")[1].strip()
 
         bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
