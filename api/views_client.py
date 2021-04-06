@@ -575,7 +575,7 @@ def get_delivery_status(request):
             "b_035_b_pu_contact_full_name": booking.de_to_Contact_F_LName,
             "b_037_b_pu_email": booking.pu_Email,
             "b_038_b_pu_phone_main": booking.pu_Phone_Main,
-            "b_054_b_del_company": booking.b_054_b_del_company,
+            "b_054_b_del_company": booking.deToCompanyName,
             "b_055_b_del_address_street_1": booking.de_To_Address_Street_1,
             "b_056_b_del_address_street_2": booking.de_To_Address_Street_2,
             "b_058_b_del_address_suburb": booking.de_To_Address_Suburb,
