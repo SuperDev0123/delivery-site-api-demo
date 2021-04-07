@@ -4052,14 +4052,14 @@ class ClientEmployeesViewSet(viewsets.ModelViewSet):
 
 class ClientProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProductsSerializer
+    queryset = Client_Products.objects.all()
 
-    def get_queryset(self):
+    def get_client_id(self):
         user_id = int(self.request.user.id)
-        print(user_id)
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee:
-            client = self.request.GET.get('clientId')
+            client = self.request.query_params.get('clientId')
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -4067,9 +4067,25 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
             client = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             ).first()
-        client_products = Client_Products.objects.filter(fk_id_dme_client=client).order_by("id")
 
-        return client_products
+        return client
+
+
+    def list(self, request, *args, **kwargs):
+        client = self.get_client_id()
+        client_products = Client_Products.objects.filter(fk_id_dme_client=client).order_by("id")
+        serializer = ClientProductsSerializer(client_products, many=True)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        id = self.kwargs['pk']
+        try:
+            Client_Products.objects.filter(id=id).delete()
+        except Exception as e:
+            return Response({'msg': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({id})
 
 
 class ClientRasViewSet(viewsets.ModelViewSet):
