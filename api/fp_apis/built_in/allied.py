@@ -96,12 +96,9 @@ def select_service_type(fp_name, booking_lines):
             return service_types[2]  # "Oversized Pallet Rate"
 
 
-def get_pricing(fp_name, booking):
+def get_pricing(fp_name, booking, booking_lines):
     LOG_ID = "[BIP ALLIED]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-    booking_lines = Booking_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_deleted=False
-    )
 
     # Select service_type
     service_type = select_service_type(fp_name, booking_lines)

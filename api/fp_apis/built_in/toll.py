@@ -9,13 +9,10 @@ from api.fp_apis.built_in.operations import *
 logger = logging.getLogger("dme_api")
 
 
-def get_pricing(fp_name, booking):
+def get_pricing(fp_name, booking, booking_lines):
     LOG_ID = "[BIP TOLL]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-    booking_lines = Booking_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_deleted=False
-    )
 
     pricies = []
     for service_type in service_types:

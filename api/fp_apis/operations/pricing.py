@@ -185,7 +185,12 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                         _workers.add(_worker)
 
         elif _fp_name in BUILT_IN_PRICINGS:
-            _worker = _built_in_pricing_worker_builder(_fp_name, booking)
+            _worker = _built_in_pricing_worker_builder(
+                _fp_name,
+                booking,
+                booking_lines,
+                is_pricing_only,
+            )
             _workers.add(_worker)
 
     logger.info("#911 [PRICING] - Pricing workers will start soon")
