@@ -13,7 +13,7 @@ def build_label(booking, file_path, lines=[], label_index=0):
         )
     elif fp_name == "tnt":
         file_path, file_name = tnt.build_label(booking, file_path, lines, label_index)
-    else:  # "auspost", "startrack", "TNT", "State Transport", "ship-it"
+    else:  # "auspost", "startrack", "TNT", "State Transport", "ship-it", "Allied"
         file_path, file_name = ship_it.build_label(
             booking, file_path, lines, label_index
         )
