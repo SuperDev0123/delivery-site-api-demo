@@ -123,9 +123,7 @@ def partial_pricing(payload, client, warehouse):
             booking_lines.append(booking_line)
     else:  # If lines have dimentions
         for bok_2 in bok_2s:
-            e_type_of_packaging = "Carton" or bok_2["booking_line"].get(
-                "l_001_type_of_packaging"
-            )
+            e_type_of_packaging = "Carton"
             booking_line = {
                 "e_type_of_packaging": e_type_of_packaging,
                 "fk_booking_id": bok_1["pk_header_id"],
