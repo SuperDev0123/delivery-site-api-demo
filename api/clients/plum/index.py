@@ -123,9 +123,7 @@ def partial_pricing(payload, client, warehouse):
             booking_lines.append(booking_line)
     else:  # If lines have dimentions
         for bok_2 in bok_2s:
-            e_type_of_packaging = "Carton" or bok_2["booking_line"].get(
-                "l_001_type_of_packaging"
-            )
+            e_type_of_packaging = "Carton"
             booking_line = {
                 "e_type_of_packaging": e_type_of_packaging,
                 "fk_booking_id": bok_1["pk_header_id"],
@@ -499,7 +497,7 @@ def push_boks(payload, client, username, method):
         de_phone = bok_1["b_064_b_del_phone_main"]
 
         if ":" in de_phone:
-            bok_1["b_063_b_del_email"] = de_phone.split(":")[1].strip()
+            bok_1["b_064_b_del_phone_main"] = de_phone.split(":")[1].strip()
 
         bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
         bok_1_serializer = BOK_1_Serializer(data=bok_1)

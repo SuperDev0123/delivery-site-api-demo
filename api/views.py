@@ -4073,7 +4073,7 @@ class FPCostsViewSet(viewsets.ModelViewSet):
                 status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
+            logger.error(f"[FP_COST ADD] {str(e)}")
             return JsonResponse({"result": None}, status=400)
 
 

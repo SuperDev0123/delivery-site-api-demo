@@ -12,7 +12,7 @@ from api.serializers import ApiBookingQuotesSerializer
 from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
 
 from api.fp_apis.operations.common import _set_error
-from api.fp_apis.self_pricing import get_pricing as get_self_pricing
+from api.fp_apis.built_in.index import get_pricing as get_self_pricing
 from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
 from api.fp_apis.constants import (
@@ -188,7 +188,13 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                         _workers.add(_worker)
 
         elif _fp_name in BUILT_IN_PRICINGS:
-            _worker = _built_in_pricing_worker_builder(_fp_name, booking)
+            logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
+            _worker = _built_in_pricing_worker_builder(
+                _fp_name,
+                booking,
+                booking_lines,
+                is_pricing_only,
+            )
             _workers.add(_worker)
 
     logger.info("#911 [PRICING] - Pricing workers will start soon")
@@ -263,8 +269,11 @@ async def _api_pricing_worker_builder(
         logger.info(f"@402 [PRICING] Exception: {e}")
 
 
-async def _built_in_pricing_worker_builder(_fp_name, booking):
-    results = get_self_pricing(_fp_name, booking)
+async def _built_in_pricing_worker_builder(
+    _fp_name, booking, booking_lines, is_pricing_only
+):
+    results = get_self_pricing(_fp_name, booking, booking_lines, is_pricing_only)
+    logger.info(f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results)}")
     parse_results = parse_pricing_response(results, _fp_name, booking, True)
 
     for parse_result in parse_results:
