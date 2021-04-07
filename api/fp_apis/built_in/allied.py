@@ -9,7 +9,50 @@ from api.fp_apis.built_in.operations import *
 logger = logging.getLogger("dme_api")
 
 
-def has_oversize_pallet(fp_name, booking_lines):
+def _get_metro_abbr(postal_code):
+    _metro_abbr = None
+
+    if (
+        (postal_code >= 4000 and postal_code <= 4207)
+        or (postal_code >= 4300 and postal_code < 4305)
+        or (postal_code >= 4500 and postal_code <= 4519)
+    ):
+        _metro_abbr = "BNE"  # "Brisbane Metro"
+    elif postal_code >= 5000 and postal_code <= 5199:
+        _metro_abbr = "ADL"  # "Adelaide Metro"
+    elif postal_code >= 6000 and postal_code <= 6199:
+        _metro_abbr = "PER"  # "Perth Metro"
+    elif postal_code >= 2000 and postal_code <= 2234:
+        _metro_abbr = "SYD"  # "Sydney Metro"
+    elif postal_code >= 3000 and postal_code <= 3207:
+        _metro_abbr = "MEL"  # "Melbourne Metro"
+
+    return _metro_abbr
+
+
+def _get_etd(postal_code):
+    """
+    Current logic is working for only PLUM/ACR warehouse
+    TODO: need to implement full logic of getting ETD
+    """
+    LOG_ID = "[_get_etd]"
+
+    metro_abbr = _get_metro_abbr(int(postal_code))
+
+    if not metro_abbr:
+        message = f"@735 {LOG_ID} Metro not found with PostalCode({postal_code})."
+        logger.info(message)
+        raise Exception(message)
+
+    if metro_abbr == "ADL":
+        return 3
+    elif metro_abbr == "PER":
+        return 6
+    else:
+        return 1
+
+
+def _has_oversize_pallet(fp_name, booking_lines):
     """
     standard pallet
         size: 1.2 x 1.2 x 1.4 meter
@@ -20,7 +63,7 @@ def has_oversize_pallet(fp_name, booking_lines):
         weight: 1000 kg
     """
 
-    LOG_ID = "[has_oversize_pallet]"
+    LOG_ID = "[_has_oversize_pallet]"
 
     standard_width = 1.2
     standard_length = 1.2
@@ -67,8 +110,8 @@ def has_oversize_pallet(fp_name, booking_lines):
         return False
 
 
-def select_service_type(fp_name, booking_lines):
-    LOG_ID = "[select_service_type]"
+def _select_service_type(fp_name, booking_lines):
+    LOG_ID = "[_select_service_type]"
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
 
     # Check if Booking has only `Carton`s or `Pallet`s
@@ -90,7 +133,7 @@ def select_service_type(fp_name, booking_lines):
     if e_type_of_packagings[0] == "carton":
         return service_types[0]  # "Road Express"
     else:
-        if not has_oversize_pallet(fp_name, booking_lines):
+        if not _has_oversize_pallet(fp_name, booking_lines):
             return service_types[1]  # "Standard Pallet Rate"
         else:
             return service_types[2]  # "Oversized Pallet Rate"
@@ -101,7 +144,7 @@ def get_pricing(fp_name, booking, booking_lines):
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
 
     # Select service_type
-    service_type = select_service_type(fp_name, booking_lines)
+    service_type = _select_service_type(fp_name, booking_lines)
     logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
     # Get pu_zone and de_zone
@@ -158,7 +201,7 @@ def get_pricing(fp_name, booking, booking_lines):
         "netPrice": net_price,
         "totalTaxes": 0,
         "serviceName": service_type,
-        "etd": 3,
+        "etd": _get_etd(booking.pu_Address_PostalCode),
     }
 
     message = f"@835 {LOG_ID} result: {price}"
