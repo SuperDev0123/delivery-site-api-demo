@@ -12,7 +12,7 @@ from api.serializers import ApiBookingQuotesSerializer
 from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
 
 from api.fp_apis.operations.common import _set_error
-from api.fp_apis.self_pricing import get_pricing as get_self_pricing
+from api.fp_apis.built_in.index import get_pricing as get_self_pricing
 from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
 from api.fp_apis.constants import (
