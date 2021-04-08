@@ -90,7 +90,7 @@ def get_etd_in_hour(pricing):
         fp_company_name__iexact=pricing.freight_provider
     )
 
-    if fp.fp_company_name.lower() == "tnt":
+    if fp.fp_company_name.lower() in ["tnt", "allied"]:
         return float(pricing.etd) * 24
 
     try:

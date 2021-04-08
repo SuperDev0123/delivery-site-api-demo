@@ -90,7 +90,6 @@ def beautify_eta(json_results, quotes, client):
             except Exception as e:
                 logger.info(f"@880 [beautify_eta] error: {str(e)}")
                 readable_eta = f'{str(result["eta"])} days'
-                pass
 
         try:
             result["eta_in_hour"] = round(float(result["eta"]), 2)
