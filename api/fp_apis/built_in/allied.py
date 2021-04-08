@@ -1,7 +1,13 @@
 import logging
 import traceback
 
-from api.models import Fp_freight_providers, Booking_lines, FP_pricing_rules, FP_costs
+from api.models import (
+    Fp_freight_providers,
+    Booking_lines,
+    FP_pricing_rules,
+    FP_costs,
+    AlliedETD,
+)
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
@@ -30,26 +36,38 @@ def _get_metro_abbr(postal_code):
     return _metro_abbr
 
 
-def _get_etd(postal_code):
+def _get_etd(pu_postal_code, de_zone):
     """
-    Current logic is working for only PLUM/ACR warehouse
-    TODO: need to implement full logic of getting ETD
+    Get ETD
     """
     LOG_ID = "[_get_etd]"
 
-    metro_abbr = _get_metro_abbr(int(postal_code))
+    metro_abbr = _get_metro_abbr(int(pu_postal_code))
 
     if not metro_abbr:
-        message = f"@735 {LOG_ID} Metro not found with PostalCode({postal_code})."
+        message = f"@735 {LOG_ID} Allied can't support this PU address. PU postal_code: {pu_postal_code}"
         logger.info(message)
         raise Exception(message)
 
-    if metro_abbr == "ADL":
-        return 3
+    allied_etds = AlliedETD.objects.filter(zone=de_zone)
+
+    if not metro_abbr:
+        message = (
+            f"@736 {LOG_ID} ETD not found from 'AlliedETD' table. DE Zone: {de_zone}"
+        )
+        logger.info(message)
+        raise Exception(message)
+
+    if metro_abbr == "SYD":
+        return allied_etds.first().syd
+    elif metro_abbr == "BEN":
+        return allied_etds.first().ben
+    elif metro_abbr == "MEL":
+        return allied_etds.first().mel
+    elif metro_abbr == "ADL":
+        return allied_etds.first().adl
     elif metro_abbr == "PER":
-        return 6
-    else:
-        return 1
+        return allied_etds.first().per
 
 
 def _has_oversize_pallet(fp_name, booking_lines):
@@ -202,7 +220,10 @@ def get_pricing(fp_name, booking, booking_lines):
         "netPrice": net_price,
         "totalTaxes": 0,
         "serviceName": service_type,
-        "etd": _get_etd(booking.de_To_Address_PostalCode),
+        "etd": _get_etd(
+            pu_postal_code=booking.pu_Address_PostalCode,
+            de_zone=de_zone,
+        ),
     }
 
     message = f"@836 {LOG_ID} result: {price}"
