@@ -148,22 +148,23 @@ def get_pricing(fp_name, booking, booking_lines):
     logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
     # Get pu_zone and de_zone
-    pu_zone = get_zone(
-        fp=fp,
-        state=booking.pu_Address_State,
-        postal_code=booking.pu_Address_PostalCode,
-        suburb=booking.pu_Address_Suburb,
-    )
+    # pu_zone = get_zone(
+    #     fp=fp,
+    #     state=booking.pu_Address_State,
+    #     postal_code=booking.pu_Address_PostalCode,
+    #     suburb=booking.pu_Address_Suburb,
+    # )
+    # logger.info(f"@831 {LOG_ID} PU Zone: {pu_zone}")
     de_zone = get_zone(
         fp=fp,
         state=booking.de_To_Address_State,
         postal_code=booking.de_To_Address_PostalCode,
         suburb=booking.de_To_Address_Suburb,
     )
-    logger.info(f"@831 {LOG_ID} PU Zone: {pu_zone}, DE Zone: {de_zone}")
+    logger.info(f"@832 {LOG_ID} DE Zone: {de_zone}")
 
-    if not pu_zone or not de_zone:
-        message = f"@832 {LOG_ID} PU/DE address is not supported."
+    if not de_zone:
+        message = f"@833 {LOG_ID} DE address is not supported."
         logger.info(message)
         raise Exception(message)
 
@@ -175,12 +176,12 @@ def get_pricing(fp_name, booking, booking_lines):
     )
 
     if not rules:
-        message = f"@833 {LOG_ID} Does not found matching Rule."
+        message = f"@834 {LOG_ID} Does not found matching Rule."
         logger.info(message)
         raise Exception(message)
 
     cost = rules.first().cost
-    message = f"@834 {LOG_ID} RuleID: {rules.first()}, CostID: {cost}"
+    message = f"@835 {LOG_ID} RuleID: {rules.first()}, CostID: {cost}"
     logger.info(message)
 
     if service_type == "Road Express":
@@ -204,6 +205,6 @@ def get_pricing(fp_name, booking, booking_lines):
         "etd": _get_etd(booking.pu_Address_PostalCode),
     }
 
-    message = f"@835 {LOG_ID} result: {price}"
+    message = f"@836 {LOG_ID} result: {price}"
     logger.info(message)
     return [price]
