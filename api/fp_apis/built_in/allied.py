@@ -16,7 +16,7 @@ logger = logging.getLogger("dme_api")
 
 
 def _get_metro_abbr(postal_code):
-    _metro_abbr = None
+    _metro_abbr = "SYD"
 
     if (
         (postal_code >= 4000 and postal_code <= 4207)
