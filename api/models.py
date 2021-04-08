@@ -4703,3 +4703,20 @@ class FPRouting(models.Model):
 
     class Meta:
         db_table = "fp_routing"
+
+
+class AlliedETD(models.Model):
+    """
+    This table is used only for ALLIED Built-in pricing
+    """
+
+    id = models.AutoField(primary_key=True)
+    zone = models.ForeignKey(FP_zones, on_delete=models.CASCADE, null=True)
+    syd = models.FloatField(null=True, default=None)
+    mel = models.FloatField(null=True, default=None)
+    bne = models.FloatField(null=True, default=None)
+    adl = models.FloatField(null=True, default=None)
+    per = models.FloatField(null=True, default=None)
+
+    class Meta:
+        db_table = "allied_etd"
