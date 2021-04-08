@@ -148,13 +148,13 @@ def get_pricing(fp_name, booking, booking_lines):
     logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
     # Get pu_zone and de_zone
-    # pu_zone = get_zone(
-    #     fp=fp,
-    #     state=booking.pu_Address_State,
-    #     postal_code=booking.pu_Address_PostalCode,
-    #     suburb=booking.pu_Address_Suburb,
-    # )
-    # logger.info(f"@831 {LOG_ID} PU Zone: {pu_zone}")
+    pu_zone = get_zone(
+        fp=fp,
+        state=booking.pu_Address_State,
+        postal_code=booking.pu_Address_PostalCode,
+        suburb=booking.pu_Address_Suburb,
+    )
+    logger.info(f"@831 {LOG_ID} PU Zone: {pu_zone}")
     de_zone = get_zone(
         fp=fp,
         state=booking.de_To_Address_State,
@@ -202,7 +202,7 @@ def get_pricing(fp_name, booking, booking_lines):
         "netPrice": net_price,
         "totalTaxes": 0,
         "serviceName": service_type,
-        "etd": _get_etd(booking.pu_Address_PostalCode),
+        "etd": _get_etd(booking.de_To_Address_PostalCode),
     }
 
     message = f"@836 {LOG_ID} result: {price}"
