@@ -103,7 +103,8 @@ def get_etd_in_hour(pricing):
     except Exception as e:
         message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
         logger.info(message)
-        raise Exception(message)
+        # raise Exception(message)
+        return 0
 
 
 def _is_deliverable_price(pricing, booking):
