@@ -36,7 +36,7 @@ from api.common import (
     common_times as dme_time_lib,
 )
 from api.common.booking_quote import migrate_quote_info_to_booking
-from api.fp_apis.utils import get_status_category_from_status, get_etd_in_hour
+from api.fp_apis.utils import get_status_category_from_status
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.standard import index as standard
