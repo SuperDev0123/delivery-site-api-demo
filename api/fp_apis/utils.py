@@ -101,10 +101,9 @@ def get_etd_in_hour(pricing):
         )
         return etd.fp_03_delivery_hours
     except Exception as e:
-        logger.info(
-            f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
-        )
-        return 0
+        message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+        logger.info(message)
+        raise Exception(message)
 
 
 def _is_deliverable_price(pricing, booking):
@@ -122,11 +121,11 @@ def _is_deliverable_price(pricing, booking):
             delta_min -= booking.pu_PickUp_By_Time_Minutes
 
         delta_min = timeDelta.total_seconds() / 60 + delta_min
-        eta = get_etd_in_hour(pricing)
+        etd = get_etd_in_hour(pricing)
 
-        if not eta:
+        if not etd:
             return False
-        elif delta_min > eta * 60:
+        elif delta_min > etd * 60:
             return True
     else:
         return False

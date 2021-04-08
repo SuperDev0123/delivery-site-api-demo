@@ -29,7 +29,6 @@ from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
     auto_select_pricing_4_bok,
-    get_etd_in_hour,
     gen_consignment_num,
 )
 from api.fp_apis.operations.book import book as book_oper
