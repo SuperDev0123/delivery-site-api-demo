@@ -25,8 +25,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
-
-# from api.fp_apis.utils import gen_consignment_num
+from api.fp_apis.utils import gen_consignment_num
 
 logger = logging.getLogger("dme_api")
 

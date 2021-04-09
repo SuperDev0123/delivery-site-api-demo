@@ -31,6 +31,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
