@@ -292,9 +292,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     "<font size=%s>Connote:%s </font>"
                     % (
                         label_settings["font_size_medium"],
-                        (booking.v_FPBookingNumber)
-                        if (booking.v_FPBookingNumber)
-                        else "",
+                        v_FPBookingNumber or "",
                     ),
                     style_left,
                 ),
