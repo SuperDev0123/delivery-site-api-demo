@@ -46,8 +46,6 @@ def gen_consignment_num(fp_name, booking_visual_id):
         return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
     elif _fp_name == "tnt":
         return f"DME{str(booking_visual_id).zfill(9)}"
-    elif _fp_name == "dhl":
-        return f"DME{str(booking_visual_id)}"
     else:
         return f"DME{str(booking_visual_id)}"
 

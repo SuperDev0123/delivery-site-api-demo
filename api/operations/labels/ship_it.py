@@ -30,11 +30,7 @@ from api.fp_apis.utils import gen_consignment_num
 logger = logging.getLogger("dme_api")
 
 styles = getSampleStyleSheet()
-style_right = ParagraphStyle(
-    name="right", 
-    parent=styles["Normal"], 
-    alignment=TA_RIGHT
-)
+style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
 style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
@@ -139,6 +135,9 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
 def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
     logger.info(
         f"#110 [SHIP-IT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+    )
+    v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
     )
 
     # start check if pdfs folder exists
@@ -308,7 +307,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
             [
                 Paragraph(
                     "<font size=%s>Order: %s</font>"
-                    % (label_settings["font_size_medium"], ""),
+                    % (label_settings["font_size_medium"], booking.b_client_order_num),
                     style_left,
                 )
             ],
@@ -518,7 +517,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
                     "<font size=%s>Reference: %s</font>"
                     % (
                         label_settings["font_size_small"],
-                        booking_line.sscc if booking_line.sscc else "N/A",
+                        booking_line.sscc or "N/A",
                     ),
                     style_left,
                 )
@@ -528,9 +527,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
                     "<font size=%s>Weight: %s KG</font>"
                     % (
                         label_settings["font_size_small"],
-                        booking_line.e_Total_KG_weight
-                        if booking_line.e_Total_KG_weight
-                        else "N/A",
+                        booking_line.e_Total_KG_weight or "N/A",
                     ),
                     style_left,
                 )
@@ -540,9 +537,12 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
                     "<font size=%s>Cube: %s M<super rise=4 size=4>3</super></font>"
                     % (
                         label_settings["font_size_small"],
-                        booking_line.e_1_Total_dimCubicMeter
-                        if booking_line.e_1_Total_dimCubicMeter
-                        else "N/A",
+                        get_cubic_meter(
+                            booking_line.e_dimLength,
+                            booking_line.e_dimWidth,
+                            booking_line.e_dimHeight,
+                            booking_line.e_dimUOM,
+                        ),
                     ),
                     style_left,
                 )
@@ -552,9 +552,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
                     "<font size=%s>Ref: %s</font>"
                     % (
                         label_settings["font_size_small"],
-                        booking_line.sscc
-                        if booking_line.sscc
-                        else "N/A",
+                        booking_line.gap_ras or "N/A",
                     ),
                     style_left,
                 )
@@ -658,7 +656,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
 
         if totalQty > 1:
             data = [[t1], [t2]]
-        else: 
+        else:
             data = [[t2]]
 
         t_w = float(label_settings["label_image_size_length"]) * mm
@@ -693,7 +691,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
             [Spacer(1, 5)],
             [hr],
             [Spacer(1, 5)],
-            [instructions_row]
+            [instructions_row],
         ]
 
         content = Table(
@@ -707,18 +705,17 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
             ],
         )
 
-        page_data = [
-            [content],
-            [footer_row]
-        ]
+        page_data = [[content], [footer_row]]
 
         page = Table(
             page_data,
             colWidths=(float(label_settings["label_image_size_length"]) * mm),
-            rowHeights=([
-                float(label_settings["label_image_size_height"]) * (14/15) * mm, 
-                float(label_settings["label_image_size_height"]) * (1/15) * mm
-            ]),
+            rowHeights=(
+                [
+                    float(label_settings["label_image_size_height"]) * (14 / 15) * mm,
+                    float(label_settings["label_image_size_height"]) * (1 / 15) * mm,
+                ]
+            ),
             style=[
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),

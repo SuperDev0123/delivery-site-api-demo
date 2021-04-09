@@ -960,9 +960,17 @@ def scanned(payload, client):
                 if picked_item.get("weight"):
                     new_line.e_weightUOM = picked_item["weight"]["unit"]
                     new_line.e_weightPerEach = picked_item["weight"]["weight"]
+                    new_line.e_Total_KG_weight = (
+                        picked_item["weight"]["weight"] * new_line.e_qty
+                    )
+                    new_line.e_1_Total_dimCubicMeter = 
                 else:
                     new_line.e_weightUOM = old_line.e_weightUOM
                     new_line.e_weightPerEach = old_line.e_weightPerEach
+                    new_line.e_Total_KG_weight = (
+                        old_line.e_weightPerEach * new_line.e_qty
+                    )
+                    new_line.e_1_Total_dimCubicMeter = 
 
                 new_line.sscc = picked_item["sscc"]
                 new_line.picked_up_timestamp = (
