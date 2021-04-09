@@ -25,7 +25,8 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
+
+# from api.fp_apis.utils import gen_consignment_num
 
 logger = logging.getLogger("dme_api")
 
@@ -537,12 +538,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
                     "<font size=%s>Cube: %s M<super rise=4 size=4>3</super></font>"
                     % (
                         label_settings["font_size_small"],
-                        get_cubic_meter(
-                            booking_line.e_dimLength,
-                            booking_line.e_dimWidth,
-                            booking_line.e_dimHeight,
-                            booking_line.e_dimUOM,
-                        ),
+                        booking_line.e_1_Total_dimCubicMeter,
                     ),
                     style_left,
                 )
