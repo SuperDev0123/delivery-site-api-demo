@@ -206,7 +206,7 @@ def get_pricing(fp_name, booking, booking_lines):
         net_price = cost.basic_charge
 
         for item in booking_lines:
-            net_price += float(cost.per_UOM_charge) * item.e_qty
+            net_price += float(cost.per_UOM_charge) * item.e_weightPerEach * item.e_qty
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge
