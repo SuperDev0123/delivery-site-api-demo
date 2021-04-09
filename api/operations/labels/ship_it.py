@@ -289,7 +289,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
         tbl_data1 = [
             [
                 Paragraph(
-                    "<font size=%s>Connote:%s </font>"
+                    "<font size=%s>Connote: %s </font>"
                     % (
                         label_settings["font_size_medium"],
                         v_FPBookingNumber or "",
