@@ -509,9 +509,7 @@ def buildSenderSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_type_of_packaging
-                    if booking_line.e_type_of_packaging
-                    else "N/A",
+                    booking_line.e_type_of_packaging or "N/A",
                 ),
                 style_left,
             ),
@@ -526,7 +524,7 @@ def buildSenderSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_item if booking_line.e_item else "N/A",
+                    booking_line.e_item or "N/A",
                 ),
                 style_left,
             ),
