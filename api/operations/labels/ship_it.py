@@ -153,6 +153,8 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
             + str(booking.b_bookingID_Visual)
             + "_"
             + str(lines[0].pk)
+            + "_"
+            + str(len(lines))
             + ".pdf"
         )
     else:
