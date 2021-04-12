@@ -348,7 +348,7 @@ def build_label(booking, filepath, lines=[], label_index=0, sscc=None):
                 ],
             )
 
-            barcode = gen_barcode(booking, lines, 0, label_index)
+            barcode = gen_barcode(booking, lines, j - 1, label_index)
 
             tbl_data1 = [
                 [
