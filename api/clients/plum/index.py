@@ -918,6 +918,7 @@ def scanned(payload, client):
     # Save
     try:
         labels = []
+        new_lines = []
 
         with transaction.atomic():
             for picked_item in picked_items:
@@ -989,6 +990,7 @@ def scanned(payload, client):
                     picked_item.get("timestamp") or datetime.now()
                 )
                 new_line.save()
+                new_lines.append(new_line)
 
                 # Soft delete source line
                 old_line.is_deleted = True
@@ -1039,6 +1041,7 @@ def scanned(payload, client):
 
                     if not result:
                         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                        logger.info(f"@370 {LOG_ID} {message}")
                         raise Exception(message)
 
                     with open(label_url[:-4] + ".zpl", "rb") as zpl:
@@ -1050,6 +1053,25 @@ def scanned(payload, client):
                                 "barcode": get_barcode(booking, [new_line]),
                             }
                         )
+
+            # Build label with Lines
+            if fp_name != "hunter":
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+
+                logger.info(f"@368 - building label...")
+                file_path, file_name = build_label(booking, file_path, new_lines, 0)
+
+                # Convert label into ZPL format
+                logger.info(
+                    f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
+                )
+                label_url = f"{file_path}/{file_name}"
+                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+                if not result:
+                    message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+                    logger.info(f"@371 {LOG_ID} {message}")
+                    raise Exception(message)
 
         # Should get pricing again when if fully picked
         if is_picked_all:
