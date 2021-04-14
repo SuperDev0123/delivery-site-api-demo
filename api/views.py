@@ -1631,6 +1631,7 @@ class BookingViewSet(viewsets.ViewSet):
 
         try:
             dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
+            client_customer_mark_up = None
 
             if dme_employee is not None:
                 user_type = "DME"
@@ -1654,6 +1655,8 @@ class BookingViewSet(viewsets.ViewSet):
 
                 if client is None:
                     return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
+
+                client_customer_mark_up = client.client_customer_mark_up
 
                 if client_employee_role == "company":
                     queryset = Bookings.objects.filter(
@@ -1692,25 +1695,27 @@ class BookingViewSet(viewsets.ViewSet):
                 booking_lines = Booking_lines.objects.filter(
                     fk_booking_id=booking.pk_booking_id
                 )
+
                 e_qty_total = 0
                 for booking_line in booking_lines:
-                    e_qty_total += (
-                        booking_line.e_qty if booking_line.e_qty is not None else 0
-                    )
+                    e_qty_total += booking_line.e_qty or 0
 
-                # Get count for `Communication Log`
-                # comms = Dme_comm_and_task.objects.filter(
-                #     fk_booking_id=booking.pk_booking_id
-                # )
+                if not client_customer_mark_up:
+                    client = DME_clients.objects.get(
+                        dme_account_num=booking.kf_client_id
+                    )
+                    client_customer_mark_up = client.client_customer_mark_up
 
                 # Get count for 'Attachments'
                 attachments = Dme_attachments.objects.filter(
                     fk_id_dme_booking=booking.pk_booking_id
                 )
 
+                context = {"client_customer_mark_up": client_customer_mark_up}
+
                 return JsonResponse(
                     {
-                        "booking": BookingSerializer(booking).data,
+                        "booking": BookingSerializer(booking, context=context).data,
                         "nextid": nextBookingId,
                         "previd": prevBookingId,
                         "e_qty_total": e_qty_total,
@@ -1726,7 +1731,8 @@ class BookingViewSet(viewsets.ViewSet):
                     "cnt_attachments": 0,
                 }
             )
-        except Bookings.DoesNotExist:
+        except Exception as e:
+            logger.info(f"#104 - Get booking exception: {str(e)}")
             return JsonResponse(
                 {
                     "booking": {},

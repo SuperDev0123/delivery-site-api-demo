@@ -138,6 +138,7 @@ class BookingSerializer(serializers.ModelSerializer):
     pricing_service_name = serializers.SerializerMethodField(read_only=True)
     pricing_account_code = serializers.SerializerMethodField(read_only=True)
     is_auto_augmented = serializers.SerializerMethodField(read_only=True)
+    customer_cost = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -174,6 +175,14 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return False
 
+    def get_customer_cost(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", None)
+
+        if client_customer_mark_up and obj.inv_sell_quoted:
+            return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
+
+        return None
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -188,6 +197,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "clientRefNumbers",  # property
             "gap_ras",  # property
             "is_auto_augmented",  # Auto Augmented
+            "customer_cost",  # Customer cost (Client: Plum)
         )
         fields = read_only_fields + (
             "id",
