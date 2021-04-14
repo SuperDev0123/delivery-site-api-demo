@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from django.conf import settings
+import openpyxl
 
 from api.common import trace_error
 from api.models import (
@@ -8,10 +9,12 @@ from api.models import (
     DME_employees,
     DME_clients,
     Client_employees,
+    Client_Products,
     Fp_freight_providers,
     DME_Files,
     Dme_attachments,
 )
+from django.forms.models import model_to_dict
 from api.utils import (
     clearFileCheckHistory,
     getFileCheckHistory,
@@ -210,3 +213,94 @@ def upload_pricing_rule_file(user_id, username, file, upload_option, rule_type):
         "file_name": dme_file.file_name,
         "type": upload_option,
     }
+
+
+def upload_client_products_file(user_id, username, client_id, file):
+    wb = openpyxl.load_workbook(file)
+    ws = wb['Product Import']
+
+    if client_id is None:
+        client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
+        dme_client = DME_clients.objects.get(
+            pk_id_dme_client=client_employee.fk_id_dme_client_id
+        )
+    else:
+        dme_client = DME_clients.objects.get(
+            pk_id_dme_client=client_id
+        )
+
+    def check_data(data):
+        not_empty_cols = [
+            'parent_model_number', 'child_model_number', 'description', 'qty'
+        ]
+        for key in data:
+            if key in not_empty_cols and data[key] == None:
+                return False
+        return True
+
+    import_success_results = []
+    empty_field_rows = []
+    wrong_type_rows = []
+    try:
+        Client_Products.objects.filter(fk_id_dme_client=dme_client).delete()
+        delete_status = 'success'
+    except Exception as e:
+        print(f"{e}")
+        delete_status = 'failed'
+
+    success_count = 0
+    failure_count = 0
+    created_products = []
+    for r in range(2, ws.max_row + 1):
+        data = {
+            'fk_id_dme_client': dme_client,
+            'parent_model_number': ws.cell(row = r, column = 1).value,
+            'child_model_number': ws.cell(row = r, column = 2).value,
+            'description': ws.cell(row = r, column = 3).value,
+            'qty': ws.cell(row = r, column = 4).value,
+            'e_dimUOM': ws.cell(row = r, column = 5).value,
+            'e_weightUOM': ws.cell(row = r, column = 6).value,
+            'e_dimLength': ws.cell(row = r, column = 7).value,
+            'e_dimWidth': ws.cell(row = r, column = 8).value,
+            'e_dimHeight': ws.cell(row = r, column = 9).value,
+            'e_weightPerEach': ws.cell(row = r, column = 10).value,
+            'z_createdByAccount': username,
+        }
+
+        if (check_data(data)):
+            try:
+                created = Client_Products.objects.create(
+                    **data
+                )
+                created.save()
+                success_count = success_count + 1
+                created_products.append(model_to_dict(created))
+                import_success_results.append(r)
+            except Exception as e:
+                print(f"{e}")
+                failure_count = failure_count + 1
+                wrong_type_rows.append(r)
+        else:
+            failure_count = failure_count + 1
+            empty_field_rows.append(r)
+    
+    return {
+        'file_name': file.name,
+        'delete_status': delete_status,
+        'import_status': {
+            'success_count': success_count,
+            'failure_count': failure_count,
+            'success_rows': import_success_results,
+            'failure_rows': {
+                'empty_field_error': empty_field_rows,
+                'wrong_type_error': wrong_type_rows
+            }
+        },
+        'created_products': created_products
+    }
+        
+
+        
+        
+
+    

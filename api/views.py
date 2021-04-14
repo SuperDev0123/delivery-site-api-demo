@@ -3843,6 +3843,7 @@ class FileUploadView(views.APIView):
         username = request.user.username
         file = request.FILES["file"]
         upload_option = request.POST.get("uploadOption", None)
+        client_id = request.POST.get("clientId", None)
 
         if upload_option == "import":
             uploader = request.POST["uploader"]
@@ -3861,8 +3862,12 @@ class FileUploadView(views.APIView):
             file_name = upload_lib.upload_pricing_rule_file(
                 user_id, username, file, upload_option, rule_type
             )
+        elif upload_option == "client-products":
+            import_results = upload_lib.upload_client_products_file(
+                user_id, username, client_id, file
+            )
 
-        return Response(file_name)
+        return Response(import_results)
 
 
 class FilesViewSet(viewsets.ViewSet):
@@ -4062,13 +4067,14 @@ class ClientEmployeesViewSet(viewsets.ModelViewSet):
 
 class ClientProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProductsSerializer
+    queryset = Client_Products.objects.all()
 
-    def get_queryset(self):
+    def get_client_id(self):
         user_id = int(self.request.user.id)
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee:
-            client_employees = Client_employees.objects.filter(email__isnull=False)
+            client = self.request.query_params.get('clientId')
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -4076,9 +4082,25 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
             client = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             ).first()
-            client_products = Client_Products.objects.filter(fk_id_dme_client=client)
 
-        return client_products.order_by("id")
+        return client
+
+
+    def list(self, request, *args, **kwargs):
+        client = self.get_client_id()
+        client_products = Client_Products.objects.filter(fk_id_dme_client=client).order_by("id")
+        serializer = ClientProductsSerializer(client_products, many=True)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        id = self.kwargs['pk']
+        try:
+            Client_Products.objects.filter(id=id).delete()
+        except Exception as e:
+            return Response({'msg': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({id})
 
 
 class ClientRasViewSet(viewsets.ModelViewSet):
