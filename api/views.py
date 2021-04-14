@@ -584,6 +584,12 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["b_client_order_num"]
+            queryset = queryset.filter(b_client_order_num__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["b_client_sales_inv_num"]
             queryset = queryset.filter(b_client_sales_inv_num__icontains=column_filter)
         except KeyError:
@@ -975,7 +981,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 if booking.b_status == "Closed":
                     closed += 1
 
-            # active_tab_index 0 -> all, 1 -> errors_to_correct
+            # active_tab_index filter
+            # 0 -> all
+            # 1 -> errors_to_correct
+            # 6 -> 'Delivery Management'
             if active_tab_index == 1:
                 queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
                     b_error_Capture__exact=""
@@ -990,7 +999,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(b_status__icontains="Ready to booking")
             elif active_tab_index == 5:
                 queryset = queryset.filter(b_status__icontains="Closed")
-            elif active_tab_index == 6:
+            elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
 
         # Sort

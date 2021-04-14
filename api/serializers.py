@@ -1,4 +1,5 @@
 import re
+import time
 from datetime import datetime
 
 from rest_framework import serializers
@@ -60,11 +61,41 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SimpleBookingSerializer(serializers.ModelSerializer):
+    de_Deliver_By_Time = serializers.SerializerMethodField(read_only=True)
+    remaining_time = serializers.SerializerMethodField(read_only=True)
+
+    def get_de_Deliver_By_Time(self, obj):
+        if not obj.de_Deliver_By_Minutes:
+            minute = "00"
+
+        if obj.de_Deliver_By_Hours != None:
+            return f"{str(obj.de_Deliver_By_Hours).zfill(2)}:{minute}"
+
+        return None
+
+    def get_remaining_time(self, obj):
+        if obj.de_Deliver_By_Date:
+            return (
+                datetime.now()
+                - datetime(
+                    year=obj.de_Deliver_By_Date.year,
+                    month=obj.de_Deliver_By_Date.month,
+                    day=obj.de_Deliver_By_Date.day,
+                    hour=obj.de_Deliver_By_Hours or 0,
+                    minute=obj.de_Deliver_By_Hours or 0,
+                )
+            ).seconds / 60
+
+        return None
+
     class Meta:
         model = Bookings
         read_only_fields = (
             "clientRefNumbers",  # property
             "gap_ras",  # property
+            "de_Deliver_By_Time",
+            "remaining_time",
+            "dme_delivery_status_category",  # property
         )
         fields = read_only_fields + (
             "id",
@@ -108,6 +139,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "pu_PickUp_By_Date",
             "de_Deliver_From_Date",
             "de_Deliver_By_Date",
+            "b_client_order_num",
             "b_client_sales_inv_num",
             "b_client_name_sub",
             "x_manual_booked_flag",
@@ -128,6 +160,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "b_error_Capture",
             "kf_client_id",
             "z_locked_status_time",
+            "b_booking_Priority",
         )
 
 
