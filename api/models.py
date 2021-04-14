@@ -1836,14 +1836,9 @@ class Bookings(models.Model):
 
     @property
     def dme_delivery_status_category(self):
-        try:
-            utl_dme_status = Utl_dme_status.objects.get(
-                dme_delivery_status=self.b_status
-            )
-            return utl_dme_status.dme_delivery_status_category
-        except Exception as e:
-            logger.error(f"#551 [dme_delivery_status_category] - {str(e)}")
-            return ""
+        from api.fp_apis.utils import get_status_category_from_status
+
+        return get_status_category_from_status(self.b_status)
 
     def lines(self):
         return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
