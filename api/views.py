@@ -984,7 +984,6 @@ class BookingsViewSet(viewsets.ViewSet):
             # active_tab_index filter
             # 0 -> all
             # 1 -> errors_to_correct
-            # 6 -> 'Delivery Management'
             if active_tab_index == 1:
                 queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
                     b_error_Capture__exact=""
@@ -994,11 +993,13 @@ class BookingsViewSet(viewsets.ViewSet):
                     Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
                 )
             elif active_tab_index == 3:
-                queryset = queryset.filter(b_status__icontains="Booked")
+                queryset = queryset.filter(b_status__iexact="Booked")
             elif active_tab_index == 4:
-                queryset = queryset.filter(b_status__icontains="Ready to booking")
+                queryset = queryset.filter(b_status__iexact="Ready to booking")
             elif active_tab_index == 5:
-                queryset = queryset.filter(b_status__icontains="Closed")
+                queryset = queryset.filter(b_status__iexact="Closed")
+            elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
+                queryset = queryset.exclude(b_client_name="BioPak")
             elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
 
