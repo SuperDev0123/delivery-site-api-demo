@@ -22,6 +22,11 @@ def pre_save_handler(instance):
             instance.dme_status_detail_updated_at = datetime.now()
 
         if previous.b_status != instance.b_status:
+            # Set Booking's status category
+            instance.b_booking_Category = get_status_category_from_status(
+                instance.b_status
+            )
+
             try:
                 if instance.b_status == "In Transit":
                     booking_Lines_cnt = Booking_lines.objects.filter(
@@ -55,9 +60,3 @@ def pre_save_handler(instance):
             except Exception as e:
                 logger.info(f"Error 515 {e}")
                 pass
-
-        # Set Booking's status category
-        if instance.b_status:
-            instance.b_booking_Category = get_status_category_from_status(
-                instance.b_status
-            )
