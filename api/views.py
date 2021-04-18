@@ -545,11 +545,12 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
-        try:
-            column_filter = column_filters["b_booking_Category"]
+        column_filter = column_filters.get("b_booking_Category")
+
+        if column_filter:
             queryset = queryset.filter(b_booking_Category__icontains=column_filter)
-        except KeyError:
-            column_filter = ""
+        else:
+            queryset = queryset.filter(b_booking_Category__in=["Booked", "Transit"])
 
         try:
             column_filter = column_filters["b_status_API"]
