@@ -546,6 +546,12 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
+            column_filter = column_filters["b_booking_Category"]
+            queryset = queryset.filter(b_booking_Category__icontains=column_filter)
+        except KeyError:
+            column_filter = ""
+
+        try:
             column_filter = column_filters["b_status_API"]
             queryset = queryset.filter(b_status_API__icontains=column_filter)
         except KeyError:
@@ -914,6 +920,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(v_FPBookingNumber__icontains=simple_search_keyword)
                             | Q(b_status__icontains=simple_search_keyword)
                             | Q(b_status_API__icontains=simple_search_keyword)
+                            | Q(b_booking_Category__icontains=simple_search_keyword)
                             | Q(
                                 s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
                             )
