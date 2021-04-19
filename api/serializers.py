@@ -122,6 +122,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "pu_Address_State",
             "de_To_Address_State",
             "b_status",
+            "b_status_category",
             "b_dateBookedDate",
             "s_20_Actual_Pickup_TimeStamp",
             "s_21_Actual_Delivery_TimeStamp",
@@ -227,7 +228,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "pricing_account_code",  # serializer method
             "pricing_service_name",  # serializer method
             "business_group",  # property
-            "dme_delivery_status_category",  # property
             "client_item_references",  # property
             "clientRefNumbers",  # property
             "gap_ras",  # property

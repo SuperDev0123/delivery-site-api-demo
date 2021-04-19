@@ -411,7 +411,7 @@ class UserViewSet(viewsets.ViewSet):
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
-    def _column_filter_4_get_bookings(self, queryset, column_filters):
+    def _column_filter_4_get_bookings(self, queryset, column_filters, active_tab_index):
         # Column filter
         try:
             column_filter = column_filters["b_bookingID_Visual"]
@@ -545,12 +545,13 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
-        column_filter = column_filters.get("b_status_category")
+        if active_tab_index == 6:
+            column_filter = column_filters.get("b_status_category")
 
-        if column_filter:
-            queryset = queryset.filter(b_status_category__icontains=column_filter)
-        else:
-            queryset = queryset.filter(b_status_category__in=["Booked", "Transit"])
+            if column_filter:
+                queryset = queryset.filter(b_status_category__icontains=column_filter)
+            else:
+                queryset = queryset.filter(b_status_category__in=["Booked", "Transit"])
 
         try:
             column_filter = column_filters["b_status_API"]
@@ -763,7 +764,9 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(pk__in=booking_ids)
 
             # Column fitler
-            queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+            queryset = self._column_filter_4_get_bookings(
+                queryset, column_filters, active_tab_index
+            )
 
         else:
             # Client filter
@@ -824,7 +827,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
                 if column_filters:
                     queryset = self._column_filter_4_get_bookings(
-                        queryset, column_filters
+                        queryset, column_filters, active_tab_index
                     )
 
             else:
@@ -972,7 +975,9 @@ class BookingsViewSet(viewsets.ViewSet):
                             ]
                             queryset = queryset.filter(reduce(operator.or_, list_of_Q))
                 # Column fitler
-                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+                queryset = self._column_filter_4_get_bookings(
+                    queryset, column_filters, active_tab_index
+                )
 
             # active_tab_index count
             for booking in queryset:
