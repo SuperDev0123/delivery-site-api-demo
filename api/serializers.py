@@ -106,7 +106,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
                 minute=obj.de_Deliver_By_Hours or 0,
             )
             time_delta = future - now
-            days = future - now.days
+            days = time_delta.days
             return days * 24 * 3600 + time_delta.seconds
 
         return 0
