@@ -67,6 +67,8 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
     def get_de_Deliver_By_Time(self, obj):
         if not obj.de_Deliver_By_Minutes:
             minute = "00"
+        else:
+            minute = str(obj.de_Deliver_By_Minutes).zfill(2)
 
         if obj.de_Deliver_By_Hours != None:
             return f"{str(obj.de_Deliver_By_Hours).zfill(2)}:{minute}"
@@ -95,7 +97,6 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "gap_ras",  # property
             "de_Deliver_By_Time",
             "remaining_time",
-            "dme_delivery_status_category",  # property
         )
         fields = read_only_fields + (
             "id",
@@ -161,6 +162,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "kf_client_id",
             "z_locked_status_time",
             "b_booking_Priority",
+            "b_booking_Category",
         )
 
 

@@ -620,6 +620,9 @@ class Bookings(models.Model):
     b_status = models.CharField(
         verbose_name=_("Status"), max_length=40, blank=True, null=True, default=None
     )
+    b_status_category = models.CharField(
+        max_length=32, blank=True, null=True, default=None
+    )
     vx_freight_provider = models.CharField(
         verbose_name=_("Freight Provider"),
         max_length=100,

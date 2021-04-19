@@ -549,6 +549,13 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
+        column_filter = column_filters.get("b_booking_Category")
+
+        if column_filter:
+            queryset = queryset.filter(b_booking_Category__icontains=column_filter)
+        else:
+            queryset = queryset.filter(b_booking_Category__in=["Booked", "Transit"])
+
         try:
             column_filter = column_filters["b_status_API"]
             queryset = queryset.filter(b_status_API__icontains=column_filter)
@@ -918,6 +925,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(v_FPBookingNumber__icontains=simple_search_keyword)
                             | Q(b_status__icontains=simple_search_keyword)
                             | Q(b_status_API__icontains=simple_search_keyword)
+                            | Q(b_booking_Category__icontains=simple_search_keyword)
                             | Q(
                                 s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
                             )
@@ -988,7 +996,6 @@ class BookingsViewSet(viewsets.ViewSet):
             # active_tab_index filter
             # 0 -> all
             # 1 -> errors_to_correct
-            # 6 -> 'Delivery Management'
             if active_tab_index == 1:
                 queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
                     b_error_Capture__exact=""
@@ -998,11 +1005,13 @@ class BookingsViewSet(viewsets.ViewSet):
                     Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
                 )
             elif active_tab_index == 3:
-                queryset = queryset.filter(b_status__icontains="Booked")
+                queryset = queryset.filter(b_status__iexact="Booked")
             elif active_tab_index == 4:
-                queryset = queryset.filter(b_status__icontains="Ready to booking")
+                queryset = queryset.filter(b_status__iexact="Ready to booking")
             elif active_tab_index == 5:
-                queryset = queryset.filter(b_status__icontains="Closed")
+                queryset = queryset.filter(b_status__iexact="Closed")
+            elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
+                queryset = queryset.exclude(b_client_name="BioPak")
             elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
 
