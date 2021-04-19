@@ -230,6 +230,7 @@ class UserViewSet(viewsets.ViewSet):
                     "username": request.user.username,
                     "clientname": client.company_name,
                     "clientId": client.dme_account_num,
+                    "clientPK": client.pk_id_dme_client
                 }
             )
 
