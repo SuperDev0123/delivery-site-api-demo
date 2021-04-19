@@ -79,17 +79,17 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
     def get_remaining_time(self, obj):
         if obj.de_Deliver_By_Date:
             now = datetime.now()
-            past = datetime(
+            future = datetime(
                 year=obj.de_Deliver_By_Date.year,
                 month=obj.de_Deliver_By_Date.month,
                 day=obj.de_Deliver_By_Date.day,
                 hour=obj.de_Deliver_By_Hours or 0,
                 minute=obj.de_Deliver_By_Hours or 0,
             )
-
-            days = (now - past).days
-            hours = int((now - past).seconds / 60 / 60)
-            mins = int((now - past).seconds / 60 % 60)
+            time_delta = future - now
+            days = time_delta.days
+            hours = int(time_delta.seconds / 60 / 60)
+            mins = int(time_delta.seconds / 60 % 60)
 
             return f"{str(days).zfill(2)}:{str(hours).zfill(2)}:{str(mins).zfill(2)}"
 
@@ -98,19 +98,16 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
     def get_remaining_time_in_seconds(self, obj):
         if obj.de_Deliver_By_Date:
             now = datetime.now()
-            past = datetime(
+            future = datetime(
                 year=obj.de_Deliver_By_Date.year,
                 month=obj.de_Deliver_By_Date.month,
                 day=obj.de_Deliver_By_Date.day,
                 hour=obj.de_Deliver_By_Hours or 0,
                 minute=obj.de_Deliver_By_Hours or 0,
             )
-
-            days = (now - past).days
-            hours = int((now - past).seconds / 60 / 60)
-            mins = int((now - past).seconds / 60 % 60)
-
-            return days * 24 * 3600 + (now - past).seconds
+            time_delta = future - now
+            days = future - now.days
+            return days * 24 * 3600 + time_delta.seconds
 
         return 0
 
