@@ -1050,9 +1050,15 @@ class BookingsViewSet(viewsets.ViewSet):
             * (int(page_ind) + 1)
         ]
 
+        bookings = SimpleBookingSerializer(queryset, many=True).data
+
+        # Sort on `remaining time` on 'Delivery Management' tab
+        if active_tab_index == 6:
+            bookings = sorted(bookings, key=lambda k: k["remaining_time_in_seconds"])
+
         return JsonResponse(
             {
-                "bookings": SimpleBookingSerializer(queryset, many=True).data,
+                "bookings": bookings,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,

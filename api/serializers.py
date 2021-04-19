@@ -63,6 +63,7 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 class SimpleBookingSerializer(serializers.ModelSerializer):
     de_Deliver_By_Time = serializers.SerializerMethodField(read_only=True)
     remaining_time = serializers.SerializerMethodField(read_only=True)
+    remaining_time_in_seconds = serializers.SerializerMethodField(read_only=True)
 
     def get_de_Deliver_By_Time(self, obj):
         if not obj.de_Deliver_By_Minutes:
@@ -77,18 +78,41 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
 
     def get_remaining_time(self, obj):
         if obj.de_Deliver_By_Date:
-            return (
-                datetime.now()
-                - datetime(
-                    year=obj.de_Deliver_By_Date.year,
-                    month=obj.de_Deliver_By_Date.month,
-                    day=obj.de_Deliver_By_Date.day,
-                    hour=obj.de_Deliver_By_Hours or 0,
-                    minute=obj.de_Deliver_By_Hours or 0,
-                )
-            ).seconds / 60
+            now = datetime.now()
+            past = datetime(
+                year=obj.de_Deliver_By_Date.year,
+                month=obj.de_Deliver_By_Date.month,
+                day=obj.de_Deliver_By_Date.day,
+                hour=obj.de_Deliver_By_Hours or 0,
+                minute=obj.de_Deliver_By_Hours or 0,
+            )
+
+            days = (now - past).days
+            hours = int((now - past).seconds / 60 / 60)
+            mins = int((now - past).seconds / 60 % 60)
+
+            return f"{str(days).zfill(2)}:{str(hours).zfill(2)}:{str(mins).zfill(2)}"
 
         return None
+
+    def get_remaining_time_in_seconds(self, obj):
+        if obj.de_Deliver_By_Date:
+            now = datetime.now()
+            past = datetime(
+                year=obj.de_Deliver_By_Date.year,
+                month=obj.de_Deliver_By_Date.month,
+                day=obj.de_Deliver_By_Date.day,
+                hour=obj.de_Deliver_By_Hours or 0,
+                minute=obj.de_Deliver_By_Hours or 0,
+            )
+
+            days = (now - past).days
+            hours = int((now - past).seconds / 60 / 60)
+            mins = int((now - past).seconds / 60 % 60)
+
+            return days * 24 * 3600 + (now - past).seconds
+
+        return 0
 
     class Meta:
         model = Bookings
@@ -97,6 +121,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "gap_ras",  # property
             "de_Deliver_By_Time",
             "remaining_time",
+            "remaining_time_in_seconds",
         )
         fields = read_only_fields + (
             "id",
