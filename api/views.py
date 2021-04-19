@@ -545,13 +545,12 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
-        if active_tab_index == 6:
-            column_filter = column_filters.get("b_status_category")
+        column_filter = column_filters.get("b_status_category")
+        if column_filter:
+            queryset = queryset.filter(b_status_category__icontains=column_filter)
 
-            if column_filter:
-                queryset = queryset.filter(b_status_category__icontains=column_filter)
-            else:
-                queryset = queryset.filter(b_status_category__in=["Booked", "Transit"])
+        if not column_filter and active_tab_index == 6:
+            queryset = queryset.filter(b_status_category__in=["Booked", "Transit"])
 
         try:
             column_filter = column_filters["b_status_API"]
