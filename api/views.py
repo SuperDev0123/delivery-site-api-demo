@@ -944,6 +944,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                             | Q(b_client_name__icontains=simple_search_keyword)
                             | Q(b_client_name_sub__icontains=simple_search_keyword)
+                            | Q(b_client_order_num__icontains=simple_search_keyword)
                         )
                     else:
                         if "&" in simple_search_keyword:
