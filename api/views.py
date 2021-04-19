@@ -549,12 +549,12 @@ class BookingsViewSet(viewsets.ViewSet):
         except KeyError:
             column_filter = ""
 
-        column_filter = column_filters.get("b_booking_Category")
+        column_filter = column_filters.get("b_status_category")
 
         if column_filter:
-            queryset = queryset.filter(b_booking_Category__icontains=column_filter)
+            queryset = queryset.filter(b_status_category__icontains=column_filter)
         else:
-            queryset = queryset.filter(b_booking_Category__in=["Booked", "Transit"])
+            queryset = queryset.filter(b_status_category__in=["Booked", "Transit"])
 
         try:
             column_filter = column_filters["b_status_API"]
@@ -926,6 +926,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(b_status__icontains=simple_search_keyword)
                             | Q(b_status_API__icontains=simple_search_keyword)
                             | Q(b_booking_Category__icontains=simple_search_keyword)
+                            | Q(b_status_category__icontains=simple_search_keyword)
                             | Q(
                                 s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
                             )

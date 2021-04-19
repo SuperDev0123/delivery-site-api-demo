@@ -23,7 +23,7 @@ def pre_save_handler(instance):
 
         if previous.b_status != instance.b_status:
             # Set Booking's status category
-            instance.b_booking_Category = get_status_category_from_status(
+            instance.b_status_category = get_status_category_from_status(
                 instance.b_status
             )
 
