@@ -84,7 +84,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
                 month=obj.de_Deliver_By_Date.month,
                 day=obj.de_Deliver_By_Date.day,
                 hour=obj.de_Deliver_By_Hours or 0,
-                minute=obj.de_Deliver_By_Hours or 0,
+                minute=obj.de_Deliver_By_Minutes or 0,
             )
             time_delta = future - now
             days = time_delta.days
@@ -103,7 +103,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
                 month=obj.de_Deliver_By_Date.month,
                 day=obj.de_Deliver_By_Date.day,
                 hour=obj.de_Deliver_By_Hours or 0,
-                minute=obj.de_Deliver_By_Hours or 0,
+                minute=obj.de_Deliver_By_Minutes or 0,
             )
             time_delta = future - now
             days = time_delta.days
