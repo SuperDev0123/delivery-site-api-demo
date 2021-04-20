@@ -7,6 +7,7 @@ from api.models import *
 from api.common import ratio
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
+from api.helpers.etd import get_etd
 
 logger = logging.getLogger("dme_api")
 
@@ -84,24 +85,29 @@ def get_status_category_from_status(status):
 
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
-    fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=pricing.freight_provider
-    )
-
-    if fp.fp_company_name.lower() == "tnt":
-        return float(pricing.etd) * 24
-
     try:
-        etd = FP_Service_ETDs.objects.get(
-            freight_provider_id=fp.id,
-            fp_delivery_time_description=pricing.etd,
-            fp_delivery_service_code=pricing.service_name,
+        etd, unit = get_etd(pricing.etd)
+
+        if unit == "Days":
+            etd *= 24
+
+        return etd
+    except:
+        fp = Fp_freight_providers.objects.get(
+            fp_company_name__iexact=pricing.freight_provider
         )
-        return etd.fp_03_delivery_hours
-    except Exception as e:
-        message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
-        logger.info(message)
-        raise Exception(message)
+
+        try:
+            etd = FP_Service_ETDs.objects.get(
+                freight_provider_id=fp.id,
+                fp_delivery_time_description=pricing.etd,
+                fp_delivery_service_code=pricing.service_name,
+            )
+            return etd.fp_03_delivery_hours
+        except Exception as e:
+            message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+            logger.info(message)
+            raise Exception(message)
 
 
 def _is_deliverable_price(pricing, booking):
