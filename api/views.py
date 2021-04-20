@@ -415,7 +415,7 @@ class UserViewSet(viewsets.ViewSet):
 class BookingsViewSet(viewsets.ViewSet):
     serializer_class = BookingSerializer
 
-    def _column_filter_4_get_bookings(self, queryset, column_filters):
+    def _column_filter_4_get_bookings(self, queryset, column_filters, active_tab_index):
         # Column filter
         try:
             column_filter = column_filters["b_bookingID_Visual"]
@@ -550,10 +550,10 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         column_filter = column_filters.get("b_status_category")
-
         if column_filter:
             queryset = queryset.filter(b_status_category__icontains=column_filter)
-        else:
+
+        if not column_filter and active_tab_index == 6:
             queryset = queryset.filter(b_status_category__in=["Booked", "Transit"])
 
         try:
@@ -767,7 +767,9 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(pk__in=booking_ids)
 
             # Column fitler
-            queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+            queryset = self._column_filter_4_get_bookings(
+                queryset, column_filters, active_tab_index
+            )
 
         else:
             # Client filter
@@ -828,7 +830,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
                 if column_filters:
                     queryset = self._column_filter_4_get_bookings(
-                        queryset, column_filters
+                        queryset, column_filters, active_tab_index
                     )
 
             else:
@@ -946,6 +948,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                             | Q(b_client_name__icontains=simple_search_keyword)
                             | Q(b_client_name_sub__icontains=simple_search_keyword)
+                            | Q(b_client_order_num__icontains=simple_search_keyword)
                         )
                     else:
                         if "&" in simple_search_keyword:
@@ -976,7 +979,9 @@ class BookingsViewSet(viewsets.ViewSet):
                             ]
                             queryset = queryset.filter(reduce(operator.or_, list_of_Q))
                 # Column fitler
-                queryset = self._column_filter_4_get_bookings(queryset, column_filters)
+                queryset = self._column_filter_4_get_bookings(
+                    queryset, column_filters, active_tab_index
+                )
 
             # active_tab_index count
             for booking in queryset:
@@ -1050,9 +1055,15 @@ class BookingsViewSet(viewsets.ViewSet):
             * (int(page_ind) + 1)
         ]
 
+        bookings = SimpleBookingSerializer(queryset, many=True).data
+
+        # Sort on `remaining time` on 'Delivery Management' tab
+        if active_tab_index == 6:
+            bookings = sorted(bookings, key=lambda k: k["remaining_time_in_seconds"])
+
         return JsonResponse(
             {
-                "bookings": SimpleBookingSerializer(queryset, many=True).data,
+                "bookings": bookings,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,

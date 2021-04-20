@@ -1,5 +1,5 @@
 from api.models import Bookings, Fp_freight_providers
-from api.operations.labels import ship_it, dhl, hunter, tnt
+from api.operations.labels import ship_it, dhl, hunter, tnt, allied
 
 
 def build_label(booking, file_path, lines=[], label_index=0, sscc=None):
@@ -23,11 +23,11 @@ def build_label(booking, file_path, lines=[], label_index=0, sscc=None):
         )
     elif fp_name == "tnt":
         file_path, file_name = tnt.build_label(
-            booking,
-            file_path,
-            lines,
-            label_index,
-            sscc,
+            booking, file_path, lines, label_index, sscc
+        )
+    elif fp_name == "allied":
+        file_path, file_name = allied.build_label(
+            booking, file_path, lines, label_index, sscc
         )
     else:  # "auspost", "startrack", "TNT", "State Transport", "ship-it", "Allied"
         file_path, file_name = ship_it.build_label(
