@@ -4072,6 +4072,21 @@ class FP_vehicles(models.Model):
         db_table = "fp_vehicles"
 
 
+class Pallet(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=64, null=True, default=None)
+    type = models.CharField(max_length=64, null=True, default=None)
+    desc = models.CharField(max_length=254, null=True, default=None)
+    length = models.FloatField(null=True, default=None)
+    width = models.FloatField(null=True, default=None)
+    height = models.FloatField(null=True, default=None)
+    weight = models.FloatField(null=True, default=None)  # UOM: kg
+    max_weight = models.FloatField(null=True, default=None)  # UOM: kg
+
+    class Meta:
+        db_table = "utl_pallet"
+
+
 class FP_availabilities(models.Model):
     id = models.AutoField(primary_key=True)
     freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
