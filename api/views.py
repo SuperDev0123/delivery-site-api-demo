@@ -52,6 +52,7 @@ from rest_framework.exceptions import ValidationError
 
 from api.serializers import *
 from api.models import *
+from api.base.viewsets import *
 from api.utils import (
     build_xml,
     build_pdf,
@@ -4638,3 +4639,8 @@ class BookingCostOptionViewSet(viewsets.ModelViewSet):
             queryset = BookingCostOption.objects.filter(is_active=True)
 
         return queryset.order_by("z_createdAt")
+
+
+class PalletViewSet(NoUpdateMixin, NoDestroyMixin, viewsets.ModelViewSet):
+    queryset = Pallet.objects.all()
+    serializer_class = PalletSerializer

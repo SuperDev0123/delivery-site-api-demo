@@ -38,6 +38,7 @@ from api.models import (
     CostOption,
     CostOptionMap,
     BookingCostOption,
+    Pallet,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -768,3 +769,9 @@ class BookingCostOptionSerializer(serializers.ModelSerializer):
             "z_modifiedBy",
             "is_active",
         )
+
+
+class PalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pallet
+        fields = "__all__"
