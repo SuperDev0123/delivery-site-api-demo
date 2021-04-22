@@ -39,6 +39,7 @@ from api.operations.labels.index import build_label, get_barcode
 from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
 from api.operations import push_operations, product_operations as product_oper
+from api.operations import paperless
 from api.clients.operations.index import get_warehouse, get_suburb_state
 
 
@@ -288,7 +289,11 @@ def push_boks(payload, client, username, method):
                 bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
                 bok_1_obj.save()
 
-                if bok_1.get("shipping_type") == "DMEA":
+                # Just set the order
+                if (
+                    bok_1.get("shipping_type") == "DMEA"
+                    and bok_1_obj.success != dme_constants.BOK_SUCCESS_4
+                ):
                     pk_header_id = bok_1_obj.pk_header_id
                     bok_2_objs = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                     bok_3_objs = BOK_3_lines_data.objects.filter(
@@ -312,6 +317,8 @@ def push_boks(payload, client, username, method):
                         service_name = bok_1_obj.quote.service_name
                         bok_1_obj.b_003_b_service_name = service_name
                         bok_1_obj.save()
+
+                    paperless.send_order_info(bok_1_obj)
 
             if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
                 url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_obj.client_booking_id}/"
@@ -693,6 +700,9 @@ def push_boks(payload, client, username, method):
 
     if json_results:
         if is_biz:
+            if bok_1.get("shipping_type") == "DMEA":  # Direct push from Sapb1
+                paperless.send_order_info(bok_1_obj)
+
             result = {"success": True, "results": json_results}
             url = None
 
