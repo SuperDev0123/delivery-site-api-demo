@@ -13,6 +13,8 @@ logger = logging.getLogger("dme_api")
 
 def build_xml_with_bok(bok_1, bok_2s):
     # Validations
+    message = None
+
     if not bok_1.b_client_order_num:
         message = "'b_client_order_num' is missing"
 
