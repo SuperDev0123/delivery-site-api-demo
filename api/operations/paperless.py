@@ -34,7 +34,8 @@ def build_xml_with_bok(bok_1, bok_2s):
     if not bok_1.b_059_b_del_address_postalcode:
         message = "'b_059_b_del_address_postalcode' is missing"
 
-    raise Exception(message)
+    if message:
+        raise Exception(message)
 
     # Constants
     dme_account_num = "50365"
