@@ -2860,26 +2860,28 @@ def get_clientname(request):
 
 
 def get_pu_by(booking):
+    pu_by = None
+
     if booking.pu_PickUp_By_Date:
         pu_by = datetime.combine(
             booking.pu_PickUp_By_Date,
             time(
-                int(
-                    booking.pu_PickUp_By_Time_Hours
-                    if booking.pu_PickUp_By_Time_Hours
-                    else 0
-                ),
-                int(
-                    booking.pu_PickUp_By_Time_Minutes
-                    if booking.pu_PickUp_By_Time_Minutes
-                    else 0
-                ),
+                int(booking.pu_PickUp_By_Time_Hours or 0),
+                int(booking.pu_PickUp_By_Time_Minutes or 0),
                 0,
             ),
         )
-        return pu_by
-    else:
-        return None
+    elif booking.puPickUpAvailFrom_Date:
+        pu_by = datetime.combine(
+            booking.puPickUpAvailFrom_Date,
+            time(
+                int(booking.pu_PickUp_By_Time_Hours or 0),
+                int(booking.pu_PickUp_By_Time_Minutes or 0),
+                0,
+            ),
+        )
+
+    return pu_by
 
 
 def get_eta_pu_by(booking):
@@ -2907,41 +2909,24 @@ def get_eta_pu_by(booking):
 def get_eta_de_by(booking, quote):
     try:
         etd_de_by = get_eta_pu_by(booking)
-        freight_provider = Fp_freight_providers.objects.get(
-            fp_company_name=booking.vx_freight_provider
-        )
 
-        if freight_provider and quote:
-            service_etd = FP_Service_ETDs.objects.filter(
-                freight_provider_id=freight_provider.id,
-                fp_delivery_time_description=quote.etd,
-            ).first()
+        if etd_de_by and quote:
+            from api.fp_apis.utils import get_etd_in_hour
 
-            if service_etd is not None:
-                if service_etd.fp_service_time_uom.lower() == "days":
-                    etd_de_by = next_business_day(
-                        etd_de_by,
-                        round(service_etd.fp_03_delivery_hours / 24),
-                        booking.vx_freight_provider,
-                    )
+            freight_provider = Fp_freight_providers.objects.get(
+                fp_company_name=booking.vx_freight_provider
+            )
+            etd_in_hour = get_etd_in_hour(quote)
 
-                if service_etd.fp_service_time_uom.lower() == "hours":
-                    etd_de_by = etd_de_by + timedelta(
-                        hours=service_etd.fp_03_delivery_hours
-                    )
-                    weekno = etd_de_by.weekday()
-                    if weekno > 4:
-                        etd_de_by = etd_de_by + timedelta(days=7 - weekno)
-            else:
-                if quote.freight_provider == "TNT":
-                    days = round(float(quote.etd))
-                    etd_de_by = next_business_day(
-                        etd_de_by, days, booking.vx_freight_provider
-                    )
+            if etd_de_by and etd_in_hour:
+                etd_de_by = etd_de_by + timedelta(hours=etd_in_hour)
+                weekno = etd_de_by.weekday()
 
-            return etd_de_by
-        else:
-            return None
+                if weekno > 4:
+                    etd_de_by = etd_de_by + timedelta(days=7 - weekno)
+
+                return etd_de_by
+        return None
     except Exception as e:
         trace_error.print()
         logger.info(f"Error #1002: {e}")

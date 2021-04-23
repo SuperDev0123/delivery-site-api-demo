@@ -93,21 +93,22 @@ def get_etd_in_hour(pricing):
 
         return etd
     except:
-        fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=pricing.freight_provider
-        )
-
         try:
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name__iexact=pricing.freight_provider
+            )
             etd = FP_Service_ETDs.objects.get(
                 freight_provider_id=fp.id,
                 fp_delivery_time_description=pricing.etd,
                 fp_delivery_service_code=pricing.service_name,
             )
+
             return etd.fp_03_delivery_hours
         except Exception as e:
             message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
             logger.info(message)
-            raise Exception(message)
+            # raise Exception(message)
+            return None
 
 
 def _is_deliverable_price(pricing, booking):

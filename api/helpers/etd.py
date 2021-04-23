@@ -2,6 +2,9 @@ from api.helpers.number import is_float
 
 
 def get_etd(etd_str):
+    if not etd_str:
+        raise Exception("etd_str is null")
+
     etd = 1
     unit = "Days"
 
