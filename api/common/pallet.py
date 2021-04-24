@@ -1,4 +1,4 @@
-import numpy
+import math
 import logging
 
 from api.common.ratio import _get_dim_amount
@@ -17,7 +17,7 @@ def get_number_of_pallets(booking_lines, pallet):
     pallet_height = 2.438
     pallet_dimensions = [pallet.length / 1000, pallet.width / 1000, pallet_height]
     pallet_dimensions.sort()
-    pallet_cube = numpy.prod(pallet_dimensions) * 0.8
+    pallet_cube = pallet_dimensions[0] * pallet_dimensions[1] * pallet_dimensions[2] * 0.8
 
     palletized_lines, unpalletized_lines, line_dimensions, sum_cube = [], [], [], 0
 
@@ -34,13 +34,8 @@ def get_number_of_pallets(booking_lines, pallet):
         else:
             unpalletized_lines.append(item)
 
-    number_of_pallets = sum_cube / pallet_cube
+    number_of_pallets = math.ceil(sum_cube / pallet_cube)
 
-    if number_of_pallets < 1:
-        number_of_pallets = 1
-    else:
-        number_of_pallets = round(number_of_pallets)
-            
     return {
         'unpalletized_lines': unpalletized_lines,
         'number_of_pallets': number_of_pallets
