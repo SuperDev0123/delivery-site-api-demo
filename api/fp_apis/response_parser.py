@@ -31,7 +31,10 @@ def parse_pricing_response(
         if fp_name == "hunter" and "price" in json_data:  # Hunter
             for price in json_data["price"]:
                 # Exclude "Air Freight" service on PROD
-                if settings.ENV == "prod" and price["serviceName"] == "Air Freight":
+                if (
+                    settings.ENV in ["prod", "dev"]
+                    and price["serviceName"] == "Air Freight"
+                ):
                     continue
 
                 result = {}
