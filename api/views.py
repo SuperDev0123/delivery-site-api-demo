@@ -4644,3 +4644,4 @@ class BookingCostOptionViewSet(viewsets.ModelViewSet):
 class PalletViewSet(NoUpdateMixin, NoDestroyMixin, viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer
+    permission_classes = (AllowAny,)

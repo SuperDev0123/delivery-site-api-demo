@@ -16,6 +16,7 @@ from api.models import (
     BOK_1_headers,
     BOK_2_lines,
     BOK_3_lines_data,
+    Pallet,
 )
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
@@ -40,8 +41,9 @@ from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
+from api.common.pallet import get_number_of_pallets
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger("JASON")
 
 
 def partial_pricing(payload, client, warehouse):
@@ -391,9 +393,17 @@ def push_boks(payload, client, username, method):
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
-    # `auto_repack` logic: DEMO
+    # `auto_repack` logic
     carton_cnt = 0
     total_weight = 0
+    pallet = Pallet.objects.all().first()
+
+    number_of_pallets, unpalletized_lines = get_number_of_pallets(bok_2_objs, pallet)
+
+    if not number_of_pallets:
+        message = "0 number of Pallets."
+        logger.info(f"@801 {LOG_ID} {message}")
+        return message
 
     for bok_2_obj in bok_2_objs:
         total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
@@ -413,12 +423,12 @@ def push_boks(payload, client, username, method):
         line["pk_booking_lines_id"] = str(uuid.uuid1())
         line["success"] = bok_1["success"]
         line["l_001_type_of_packaging"] = "PAL"
-        line["l_002_qty"] = 1
+        line["l_002_qty"] = number_of_pallets
         line["l_003_item"] = "Pallet Line"
-        line["l_004_dim_UOM"] = "M"
-        line["l_005_dim_length"] = 1.8
-        line["l_006_dim_width"] = 1.2
-        line["l_007_dim_height"] = 1.2
+        line["l_004_dim_UOM"] = "mm"
+        line["l_005_dim_length"] = pallet.length
+        line["l_006_dim_width"] = pallet.width
+        line["l_007_dim_height"] = pallet.height
         line["l_009_weight_per_each"] = total_weight
         line["l_008_weight_UOM"] = "KG"
         new_bok_2s.append({"booking_line": line})
@@ -433,6 +443,9 @@ def push_boks(payload, client, username, method):
 
         # Create Bok_3s
         for bok_2_obj in bok_2_objs:
+            if bok_2 in unpalletized_lines:
+                continue
+
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
@@ -597,9 +610,11 @@ def push_boks(payload, client, username, method):
 
 
 def auto_repack(payload, client):
-    LOG_ID = "[AR Jason L]"
+    LOG_ID = "[AR Jason L]"  # Auto Repack
     client_booking_id = payload.get("identifier")
     repack_status = payload.get("status")
+    pallet_id = payload.get("palletId")
+    new_bok_2s = []
 
     # Get Boks
     bok_1 = (
@@ -610,19 +625,103 @@ def auto_repack(payload, client):
     bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
-    # Update is_deleted status
-    new_bok_2s = []
+    if repack_status:
+        # Get Pallet
+        pallet = Pallet.objects.get(pk=pallet_id)
+        number_of_pallets, unpalletized_lines = get_number_of_pallets(bok_2s, pallet)
 
-    for bok_2 in bok_2s:
-        bok_2.is_deleted = not bok_2.is_deleted
-        bok_2.save()
+        if not number_of_pallets:
+            message = "0 number of Pallets."
+            logger.info(f"@801 {LOG_ID} {message}")
+            return message
 
-        if not bok_2.is_deleted:
-            new_bok_2s.append(bok_2)
+        total_weight = 0
+        for bok_2 in bok_2s:
+            total_weight += bok_2.l_009_weight_per_each * bok_2.l_002_qty
 
-    for bok_3 in bok_3s:
-        bok_3.is_deleted = not bok_3.is_deleted
-        bok_3.save()
+        # Delete existing Pallet Bok_2
+        for bok_2 in bok_2s:
+            if bok_2.l_001_type_of_packaging == "PAL":
+                bok_2.delete()
+
+        # Delete existing Bok_3s
+        for bok_3 in bok_3s:
+            bok_3.delete()
+
+        # Create new *1* Pallet Bok_2
+        line = {}
+        line["fk_header_id"] = bok_1.pk_header_id
+        line["v_client_pk_consigment_num"] = bok_1.pk_header_id
+        line["pk_booking_lines_id"] = str(uuid.uuid1())
+        line["success"] = bok_1.success
+        line["l_001_type_of_packaging"] = "PAL"
+        line["l_002_qty"] = number_of_pallets
+        line["l_003_item"] = "Pallet Line"
+        line["l_004_dim_UOM"] = "mm"
+        line["l_005_dim_length"] = pallet.length
+        line["l_006_dim_width"] = pallet.width
+        line["l_007_dim_height"] = pallet.height
+        line["l_009_weight_per_each"] = total_weight
+        line["l_008_weight_UOM"] = "KG"
+
+        bok_2_serializer = BOK_2_Serializer(data=line)
+        if bok_2_serializer.is_valid():
+            new_bok_2 = bok_2_serializer.save()
+            new_bok_2s.append(new_bok_2)
+        else:
+            message = f"Serialiser Error - {bok_2_serializer.errors}"
+            logger.info(f"@8131 {LOG_ID} {message}")
+            raise Exception(message)
+
+        # Create Bok_3 and soft delete existing CTN Bok_2
+        for bok_2 in bok_2s:
+            if bok_2.l_001_type_of_packaging == "PAL":
+                continue
+            elif bok_2 in unpalletized_lines:
+                new_bok_2s.append(bok_2)
+            else:
+                bok_3 = {}
+                bok_3["fk_header_id"] = bok_1.pk_header_id
+                bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
+                bok_3["success"] = bok_1.success
+                bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
+                bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
+                bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
+                bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
+                bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
+                bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
+                bok_3["zbld_101_text_1"] = bok_2.l_004_dim_UOM
+                bok_3["zbld_102_text_2"] = bok_2.l_008_weight_UOM
+                bok_3["zbld_103_text_3"] = bok_2.e_item_type
+                bok_3["zbld_104_text_4"] = bok_2.l_001_type_of_packaging
+
+                bok_3_serializer = BOK_3_Serializer(data=bok_3)
+                if bok_3_serializer.is_valid():
+                    bok_3_serializer.save()
+                else:
+                    message = f"Serialiser Error - {bok_2_serializer.errors}"
+                    logger.info(f"@8132 {LOG_ID} {message}")
+                    raise Exception(message)
+
+                bok_2.is_deleted = not bok_2.is_deleted
+                bok_2.save()
+    else:
+        for bok_2 in bok_2s:
+            # Delete existing Pallet
+            if bok_2.l_001_type_of_packaging == "PAL":
+                bok_2.delete()
+
+            # Rollback deleted original Bok_2
+            if bok_2.is_deleted:
+                bok_2.is_deleted = not bok_2.is_deleted
+                bok_2.save()
+
+            if not bok_2.is_deleted:
+                new_bok_2s.append(bok_2)
+
+        for bok_3 in bok_3s:
+            bok_3.is_deleted = not bok_3.is_deleted
+            bok_3.save()
 
     bok_1.b_081_b_pu_auto_pack = repack_status
     bok_1.save()
@@ -660,9 +759,9 @@ def auto_repack(payload, client):
     booking_lines = []
     for _bok_2 in new_bok_2s:
         bok_2_line = {
-            "fk_booking_id": _bok_2.fk_header_id,
+            # "fk_booking_id": _bok_2.fk_header_id,
             "packagingType": _bok_2.l_001_type_of_packaging,
-            "e_qty": _bok_2.l_002_qty,
+            "e_qty": int(_bok_2.l_002_qty),
             "e_item": _bok_2.l_003_item,
             "e_dimUOM": _bok_2.l_004_dim_UOM,
             "e_dimLength": _bok_2.l_005_dim_length,
@@ -811,172 +910,6 @@ def scanned(payload, client):
     logger.info(f"@363 {LOG_ID} scanned_items: {scanned_items}")
     logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
-
-    # # Validation
-    # missing_sscc_picked_items = []
-    # invalid_model_numbers = []
-    # invalid_sscc_list = []
-    # duplicated_sscc_list = []
-    # for picked_item in picked_items:
-    #     # Check `sscc` is provided
-    #     if not "sscc" in picked_item:
-    #         code = "missing_param"
-    #         message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
-    #         raise ValidationError({"success": False, "code": code, "message": message})
-
-    #     # Check if sscc is invalid (except Hunter Orders)
-    #     if (
-    #         fp_name != "hunter"
-    #         and Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists()
-    #     ):
-    #         duplicated_sscc_list.append(picked_item["sscc"])
-
-    #     # Validate repacked items
-    #     if (
-    #         "is_repacked" in picked_item
-    #         and "items" in picked_item
-    #         and picked_item["items"]
-    #     ):
-    #         repack_type = None
-
-    #         for item in picked_item["items"]:
-    #             # Get and check repack_type
-    #             if "model_number" in item and not repack_type:
-    #                 repack_type = "model_number"
-
-    #             if "sscc" in item and not repack_type:
-    #                 repack_type = "sscc"
-
-    #             # Invalid sscc check
-    #             if repack_type == "sscc" and not item["sscc"] in sscc_list:
-    #                 invalid_sscc_list.append(item["sscc"])
-
-    #             # Check qty
-    #             if repack_type == "model_number":
-    #                 if not "qty" in item:
-    #                     code = "missing_param"
-    #                     message = f"Qty is required. Invalid item: {json.dumps(item)}"
-    #                     raise ValidationError(
-    #                         {"success": False, "code": code, "message": message}
-    #                     )
-    #                 elif "qty" in item and not item["qty"]:
-    #                     code = "invalid_param"
-    #                     message = f"Qty should bigger than 0. Invalid item: {json.dumps(item)}"
-    #                     raise ValidationError(
-    #                         {"success": False, "code": code, "message": message}
-    #                     )
-
-    #             # Accumulate invalid_model_numbers
-    #             if "model_number" in item:
-    #                 is_valid = False
-
-    #                 for model_number_qty in model_number_qtys:
-    #                     if model_number_qty[0] == item["model_number"]:
-    #                         is_valid = True
-
-    #                 if not is_valid:
-    #                     invalid_model_numbers.append(item["model_number"])
-
-    #             # Invalid repack_type (which has both 'sscc' and 'model_number')
-    #             if ("model_number" in item and repack_type == "sscc") or (
-    #                 "sscc" in item and repack_type == "model_number"
-    #             ):
-    #                 code = "invalid_repacked_item"
-    #                 message = f"Can not repack 'model_number' and 'sscc'."
-    #                 raise ValidationError(
-    #                     {"success": False, "code": code, "message": message}
-    #                 )
-
-    #             # Invalid repack_type (which doesn't have both 'sscc' and 'model_number')
-    #             if not "model_number" in item and not "sscc" in item:
-    #                 code = "invalid_repacked_item"
-    #                 message = f"There is an item which does not have 'model_number' information. Invalid item: {json.dumps(item)}"
-    #                 raise ValidationError(
-    #                     {"success": False, "code": code, "message": message}
-    #                 )
-    #     else:
-    #         code = "invalid_item"
-    #         message = f"There is an invalid item: {json.dumps(picked_item)}"
-    #         raise ValidationError({"success": False, "code": code, "message": message})
-
-    # if duplicated_sscc_list:
-    #     code = "duplicated_sscc"
-    #     message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
-    #     raise ValidationError({"success": False, "code": code, "message": message})
-
-    # if invalid_sscc_list:
-    #     code = "invalid_sscc"
-    #     message = (
-    #         f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
-    #     )
-    #     raise ValidationError({"success": False, "code": code, "message": message})
-
-    # if invalid_model_numbers:
-    #     code = "invalid_param"
-    #     message = f"'{', '.join(invalid_model_numbers)}' are invalid model_numbers for this order."
-    #     raise ValidationError({"success": False, "code": code, "message": message})
-
-    # # Check over picked items
-    # over_picked_items = []
-    # estimated_picked = {}
-    # is_picked_all = True
-    # scanned_items_count = 0
-
-    # for model_number_qty in model_number_qtys:
-    #     estimated_picked[model_number_qty[0]] = 0
-
-    # for scanned_item in scanned_items:
-    #     if scanned_item.e_item_type:
-    #         estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
-    #         scanned_items_count += scanned_item.e_qty
-
-    #     for line_data in line_datas:
-    #         if (
-    #             line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
-    #             and line_data.itemDescription != "Repacked at warehouse"
-    #         ):
-    #             estimated_picked[line_data.modelNumber] += line_data.quantity
-
-    # if repack_type == "model_number":
-    #     for picked_item in picked_items:
-    #         for item in picked_item["items"]:
-    #             estimated_picked[item["model_number"]] += item["qty"]
-
-    # logger.info(
-    #     f"@366 {LOG_ID} checking over picked - limit: {model_number_qtys}, estimated: {estimated_picked}"
-    # )
-
-    # for item in estimated_picked:
-    #     for model_number_qty in model_number_qtys:
-    #         if (
-    #             item == model_number_qty[0]
-    #             and estimated_picked[item] > model_number_qty[1]
-    #         ):
-    #             over_picked_items.append(model_number_qty[0])
-
-    #         if (
-    #             item == model_number_qty[0]
-    #             and estimated_picked[item] != model_number_qty[1]
-    #         ):
-    #             is_picked_all = False
-
-    # # If found over picked items
-    # if over_picked_items:
-    #     logger.error(
-    #         f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
-    #     )
-    #     code = "over_picked"
-    #     message = f"There are over picked items: {', '.join(over_picked_items)}"
-    #     raise ValidationError({"success": False, "code": code, "message": message})
-
-    # # Hunter order should be scanned fully always(at first scan)
-    # if fp_name == "hunter" and not is_picked_all:
-    #     logger.error(
-    #         f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
-    #     )
-    #     code = "invalid_request"
-    #     message = f"Hunter Order should be fully picked."
-    #     raise ValidationError({"success": False, "code": code, "message": message})
 
     # Test case
     is_picked_all = False

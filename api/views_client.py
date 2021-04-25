@@ -43,7 +43,7 @@ from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger("CLIENT")
 
 
 class BOK_0_ViewSet(viewsets.ViewSet):
@@ -415,7 +415,7 @@ def push_boks(request):
 @api_view(["POST"])
 def scanned(request):
     """
-    called as get_label
+    called as `get_label`
 
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
@@ -488,8 +488,8 @@ def reprint_label(request):
 
         if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
             result = plum.reprint_label(params=request.GET, client=client)
-        elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-            result = jason_l.reprint_label(params=request.GET, client=client)
+        # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+        #     result = jason_l.reprint_label(params=request.GET, client=client)
 
         logger.info(f"#858 {LOG_ID} {json.dumps(result, indent=4)[:64]}")
         return Response(result)
