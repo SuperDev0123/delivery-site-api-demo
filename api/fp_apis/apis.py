@@ -1058,3 +1058,29 @@ def update_servce_code(request, fp_name):
         error_msg = "GetAccounts is failed."
         _set_error(booking, error_msg)
         return JsonResponse({"message": error_msg})
+
+
+def get_etd(booking):
+    """
+    Avalilable FPs: TNT
+    """
+    LOG_ID = "GET_ETD"
+    fp_name = booking.vx_freight_provider
+    _fp_name = booking.vx_freight_provider.lower()
+
+    try:
+        payload = get_etd_payload(booking, _fp_name)
+
+        logger.info(f"### Payload ({fp_name} ETD): {payload}")
+        url = DME_LEVEL_API_URL + "/pricing/getetd"
+        response = requests.post(url, params={}, json=payload)
+
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        print("@Get_etd", json_data)
+    except IndexError as e:
+        trace_error.print()
+        error_msg = "GETETD is failed."
+        # _set_error(booking, error_msg)
+        logger.error(f"{LOG_ID} {error_msg}, error: {str(e)}")
+        # return JsonResponse({"message": error_msg})

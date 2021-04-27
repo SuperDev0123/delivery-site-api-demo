@@ -20,7 +20,7 @@ def get_account_detail(booking, fp_name):
     account_code = None
     account_detail = None
 
-    if fp_name.lower() not in FP_CREDENTIALS:
+    if _fp_name not in FP_CREDENTIALS:
         booking.b_errorCapture = f"Not supported FP"
         booking.save()
         raise ValidationError(booking.b_errorCapture)
@@ -730,10 +730,8 @@ def get_pricing_payload(
 
     payload["spAccountDetails"] = account_detail
     payload["serviceProvider"] = get_service_provider(fp_name)
-
     payload["readyDate"] = "" or str(booking.puPickUpAvailFrom_Date)[:10]
     payload["referenceNumber"] = "" or booking.b_clientReference_RA_Numbers
-    payload["bookedBy"] = "DME"
 
     client_process = None
     if hasattr(booking, "id"):
@@ -852,5 +850,122 @@ def get_pricing_payload(
         payload["serviceType"] = "EC"
     elif fp_name == "allied":
         payload["serviceType"] = "R"
+
+    return payload
+
+
+def get_etd_payload(booking, fp_name):
+    payload = {}
+
+    if hasattr(booking, "client_warehouse_code"):
+        client_warehouse_code = booking.client_warehouse_code
+    else:
+        client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
+
+    payload["spAccountDetails"] = {
+        "accountCode": "3006871123",  # Same Day Services (Stephen)
+        "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
+        "accountPassword": "x06503301e1ddfb58a7a",
+    }
+    payload["serviceProvider"] = get_service_provider(fp_name)
+    payload["readyDate"] = "" or str(booking.puPickUpAvailFrom_Date)[:10]
+
+    client_process = None
+    if hasattr(booking, "id"):
+        client_process = (
+            Client_Process_Mgr.objects.select_related()
+            .filter(fk_booking_id=booking.id)
+            .first()
+        )
+
+    if client_process:
+        puCompany = client_process.origin_puCompany
+        pu_Address_Street_1 = client_process.origin_pu_Address_Street_1
+        pu_Address_street_2 = client_process.origin_pu_Address_Street_2
+        deToCompanyName = client_process.origin_deToCompanyName
+        de_Email = client_process.origin_de_Email
+        de_To_Address_Street_1 = client_process.origin_de_To_Address_Street_1
+        de_To_Address_Street_2 = client_process.origin_de_To_Address_Street_2
+    else:
+        puCompany = booking.puCompany
+        pu_Address_Street_1 = booking.pu_Address_Street_1
+        pu_Address_street_2 = booking.pu_Address_street_2
+        deToCompanyName = booking.deToCompanyName
+        de_Email = booking.de_Email
+        de_To_Address_Street_1 = booking.de_To_Address_Street_1
+        de_To_Address_Street_2 = booking.de_To_Address_Street_2
+
+    payload["pickupAddress"] = {
+        "companyName": "" or puCompany,
+        "contact": "  " or booking.pu_Contact_F_L_Name,
+        "emailAddress": "" or booking.pu_Email,
+        "instruction": "",
+        "phoneNumber": "0267651109" or booking.pu_Phone_Main,
+    }
+
+    payload["pickupAddress"]["postalAddress"] = {
+        "address1": "" or pu_Address_Street_1,
+        "address2": "" or pu_Address_street_2,
+        "country": "" or booking.pu_Address_Country,
+        "postCode": "" or booking.pu_Address_PostalCode,
+        "state": "" or booking.pu_Address_State,
+        "suburb": "" or booking.pu_Address_Suburb,
+        "sortCode": "" or booking.pu_Address_PostalCode,
+    }
+    payload["dropAddress"] = {
+        "companyName": "" or deToCompanyName,
+        "contact": "  " or booking.de_to_Contact_F_LName,
+        "emailAddress": "" or de_Email,
+        "instruction": "",
+        "phoneNumber": "" or booking.de_to_Phone_Main,
+    }
+
+    payload["dropAddress"]["postalAddress"] = {
+        "address1": "" or de_To_Address_Street_1,
+        "address2": "" or de_To_Address_Street_2,
+        "country": "" or booking.de_To_Address_Country,
+        "postCode": "" or booking.de_To_Address_PostalCode,
+        "state": "" or booking.de_To_Address_State,
+        "suburb": "" or booking.de_To_Address_Suburb,
+        "sortCode": "" or booking.de_To_Address_PostalCode,
+    }
+
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_deleted=False
+    )
+
+    items = []
+    for line in booking_lines:
+        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
+        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
+        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
+        weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
+
+        for i in range(line.e_qty):
+            item = {
+                "dangerous": 0,
+                "width": 0 or width,
+                "height": 0 or height,
+                "length": 0 or length,
+                "quantity": 1,
+                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "weight": 0 or weight,
+                "description": line.e_item,
+            }
+
+            if fp_name == "startrack":
+                item["itemId"] = "EXP"
+                item["packagingType"] = "CTN"
+
+            items.append(item)
+
+    payload["items"] = items
+
+    # Detail for each FP
+    if fp_name == "startrack":
+        etd = FP_Service_ETDs.objects.get(
+            fp_delivery_time_description="PARCEL POST + SIGNATURE"
+        )
+        payload["product_ids"] = [etd.fp_delivery_service_code]
 
     return payload
