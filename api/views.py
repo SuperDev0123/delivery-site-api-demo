@@ -864,38 +864,55 @@ class BookingsViewSet(viewsets.ViewSet):
                 # Mulitple search | Simple search | Project Name Search
                 if project_name and project_name.exists():
                     queryset = queryset.filter(b_booking_project=project_name)
-                elif multi_find_values and len(multi_find_values) > 0:
-                    preserved = Case(
-                        *[
-                            When(
-                                **{f"{multi_find_field}": multi_find_value, "then": pos}
-                            )
-                            for pos, multi_find_value in enumerate(multi_find_values)
-                        ]
-                    )
-                    filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
-
-                    if not multi_find_field in ["gap_ra", "clientRefNumber"]:
-                        queryset = queryset.filter(**filter_kwargs).order_by(preserved)
+                elif (
+                    multi_find_field
+                    and multi_find_values
+                    and len(multi_find_values) > 0
+                ):
+                    if multi_find_field == "postal_code":
+                        queryset = queryset.filter(
+                            de_To_Address_PostalCode__gte=multi_find_values[0],
+                            de_To_Address_PostalCode__lte=multi_find_values[1],
+                        )
                     else:
-                        line_datas = Booking_lines_data.objects.filter(
-                            **filter_kwargs
-                        ).order_by(preserved)
-
-                        booking_ids = []
-                        for line_data in line_datas:
-                            if line_data.booking():
-                                booking_ids.append(line_data.booking().id)
-
                         preserved = Case(
                             *[
-                                When(pk=pk, then=pos)
-                                for pos, pk in enumerate(booking_ids)
+                                When(
+                                    **{
+                                        f"{multi_find_field}": multi_find_value,
+                                        "then": pos,
+                                    }
+                                )
+                                for pos, multi_find_value in enumerate(
+                                    multi_find_values
+                                )
                             ]
                         )
-                        queryset = queryset.filter(pk__in=booking_ids).order_by(
-                            preserved
-                        )
+                        filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
+
+                        if not multi_find_field in ["gap_ra", "clientRefNumber"]:
+                            queryset = queryset.filter(**filter_kwargs).order_by(
+                                preserved
+                            )
+                        else:
+                            line_datas = Booking_lines_data.objects.filter(
+                                **filter_kwargs
+                            ).order_by(preserved)
+
+                            booking_ids = []
+                            for line_data in line_datas:
+                                if line_data.booking():
+                                    booking_ids.append(line_data.booking().id)
+
+                            preserved = Case(
+                                *[
+                                    When(pk=pk, then=pos)
+                                    for pos, pk in enumerate(booking_ids)
+                                ]
+                            )
+                            queryset = queryset.filter(pk__in=booking_ids).order_by(
+                                preserved
+                            )
                 elif simple_search_keyword and len(simple_search_keyword) > 0:
                     if (
                         not "&" in simple_search_keyword

@@ -4074,6 +4074,7 @@ class FP_vehicles(models.Model):
         null=True,
         default=None,
     )
+    category = models.CharField(max_length=16, null=True, default=None)
 
     class Meta:
         db_table = "fp_vehicles"
@@ -4389,6 +4390,10 @@ class BookingSets(models.Model):
     auto_select_type = models.BooleanField(
         max_length=255, blank=True, null=True, default=True
     )  # True: lowest | False: Fastest
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    line_haul_date = models.DateField(null=True, blank=True, default=timezone.now)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
