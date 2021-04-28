@@ -168,6 +168,6 @@ def get_order(order_num="20088"):
         return False
 
     order, lines = parse_order_xml(response)
-    logger.info(f"@649 [PRONTO_XI GET ORDER] Finish order: {order}")
+    logger.info(f"@649 [PRONTO_XI GET ORDER] Finish \norder: {order}\nlines: {lines}")
 
     return order, lines
