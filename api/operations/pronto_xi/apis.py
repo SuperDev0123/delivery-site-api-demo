@@ -107,7 +107,7 @@ def parse_order_xml(response):
             "model_number": ItemCode.text,
             "qty": int(float(OrderedQty.text)),
             "sequence": int(float(SequenceNo.text)),
-            "UOMCode": UOMCode,
+            "UOMCode": UOMCode.text,
         }
         lines.append(line)
 
