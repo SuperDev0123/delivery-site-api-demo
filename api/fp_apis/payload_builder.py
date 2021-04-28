@@ -9,7 +9,7 @@ from api.common import common_times
 from api.common import common_times
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
-
+from api.helpers.line import is_pallet
 
 logger = logging.getLogger("PB")  # Payload Builder
 
@@ -223,18 +223,23 @@ def get_book_payload(booking, fp_name):
 
             if fp_name == "startrack":
                 item["itemId"] = "EXP"
-                item["packagingType"] = "CTN"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
             elif fp_name == "auspost":
                 item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
             elif fp_name == "hunter":
-                if line.e_type_of_packaging == "PALLET":
-                    item["packagingType"] = "PLT"
-                else:
-                    item["packagingType"] = "CTN"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
             elif fp_name == "tnt":
-                item["packagingType"] = "D"
+                item["packagingType"] = (
+                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
+                )
             elif fp_name == "dhl":
-                item["packagingType"] = "PLT"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
                 fp_carrier = FP_carriers.objects.get(carrier="DHLPFM")
                 consignmentNoteNumber = gen_consignment_num(
                     "dhl", booking.b_bookingID_Visual
@@ -545,12 +550,25 @@ def get_getlabel_payload(booking, fp_name):
 
             items.append(item)
 
-            if fp_name.lower() == "startrack":
-                item["packagingType"] = "CTN"
-            elif fp_name.lower() == "hunter":
-                item["packagingType"] = "PAL"
-            elif fp_name.lower() == "tnt":
-                item["packagingType"] = "D"
+            if fp_name == "startrack":
+                item["itemId"] = "EXP"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
+            elif fp_name == "auspost":
+                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+            elif fp_name == "hunter":
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
+            elif fp_name == "tnt":
+                item["packagingType"] = (
+                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
+                )
+            elif fp_name == "dhl":
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
 
     payload["items"] = items
 
@@ -829,13 +847,23 @@ def get_pricing_payload(
 
             if fp_name == "startrack":
                 item["itemId"] = "EXP"
-                item["packagingType"] = "CTN"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
             elif fp_name == "auspost":
-                item["itemId"] = service_code
+                item["itemId"] = service_code  # PARCEL POST + SIGNATURE
             elif fp_name == "hunter":
-                item["packagingType"] = "PAL"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
             elif fp_name == "tnt":
-                item["packagingType"] = "D"
+                item["packagingType"] = (
+                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
+                )
+            elif fp_name == "dhl":
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
 
             items.append(item)
 
@@ -955,7 +983,23 @@ def get_etd_payload(booking, fp_name):
 
             if fp_name == "startrack":
                 item["itemId"] = "EXP"
-                item["packagingType"] = "CTN"
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
+            elif fp_name == "auspost":
+                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
+            elif fp_name == "hunter":
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
+            elif fp_name == "tnt":
+                item["packagingType"] = (
+                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
+                )
+            elif fp_name == "dhl":
+                item["packagingType"] = (
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
+                )
 
             items.append(item)
 

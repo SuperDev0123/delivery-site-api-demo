@@ -365,7 +365,7 @@ def push_boks(payload, client, username, method):
             line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
             line["pk_booking_lines_id"] = str(uuid.uuid1())
             line["success"] = bok_1["success"]
-            line["l_001_type_of_packaging"] = "CTN"
+            line["l_001_type_of_packaging"] = item["e_type_of_packaging"]
             line["l_002_qty"] = item["qty"]
             line["l_003_item"] = item["description"]
             line["l_004_dim_UOM"] = item["e_dimUOM"].upper()

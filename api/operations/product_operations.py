@@ -33,6 +33,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
         qty = bok_2.get("qty")
         # "Jason L"
         zbl_121_integer_1 = bok_2.get("sequence")
+        e_type_of_packaging = bok_2.get("UOMCode")
 
         if not model_number or not qty:
             raise ValidationError(
@@ -61,6 +62,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                 "e_dimHeight": product.e_dimHeight,
                 "e_weightPerEach": product.e_weightPerEach,
                 "zbl_121_integer_1": zbl_121_integer_1,
+                "e_type_of_packaging": e_type_of_packaging or "Carton",
             }
 
             results = _append_line(results, line, qty)
@@ -81,6 +83,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                     "e_dimHeight": item.e_dimHeight,
                     "e_weightPerEach": item.e_weightPerEach,
                     "zbl_121_integer_1": zbl_121_integer_1,
+                    "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
                 results = _append_line(results, line, qty)
 
