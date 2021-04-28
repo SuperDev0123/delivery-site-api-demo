@@ -443,7 +443,7 @@ def push_boks(payload, client, username, method):
 
         # Create Bok_3s
         for bok_2_obj in bok_2_objs:
-            if bok_2 in unpalletized_lines:
+            if bok_2_obj in unpalletized_lines:
                 continue
 
             bok_3 = {}
