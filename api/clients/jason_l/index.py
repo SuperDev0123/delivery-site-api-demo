@@ -208,7 +208,7 @@ def push_boks(payload, client, username, method):
     bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
     bok_1["shipping_type"] = bok_1["shipping_type"].strip()
     bok_1["b_053_b_del_address_type"] = bok_1["b_053_b_del_delivery_type"].strip()
-    del bok_1.b_053_b_del_delivery_type
+    del bok_1["b_053_b_del_delivery_type"]
 
     # Check required fields
     if is_biz:
