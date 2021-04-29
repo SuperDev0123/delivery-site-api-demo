@@ -87,7 +87,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
-def build_label(booking, filepath, lines=[], label_index=0):
+def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -185,6 +185,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
+            if one_page_label and k > 0:
+                continue
+
             tbl_data = [
                 [
                     Paragraph(

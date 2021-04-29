@@ -971,7 +971,12 @@ def scanned(payload, client):
                 sscc_lines[picked_item["sscc"]].append(new_line)
 
     # Build label with SSCC
+    # One sscc should have one page label
+    labeled_ssccs = []
     for sscc in sscc_lines:
+        if sscc in labeled_ssccs:
+            continue
+
         if not booking.api_booking_quote:
             raise Exception("Booking doens't have quote.")
 
@@ -989,6 +994,7 @@ def scanned(payload, client):
                 lines=sscc_lines[sscc],
                 label_index=label_index,
                 sscc=sscc,
+                one_page_label=True,
             )
 
             # Convert label into ZPL format
@@ -1006,6 +1012,8 @@ def scanned(payload, client):
 
             with open(label_url[:-4] + ".zpl", "rb") as zpl:
                 zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+            labeled_ssccs.append(labeled_ssccs)
 
     # Should get pricing again when if fully picked
     if is_picked_all:
