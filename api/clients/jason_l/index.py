@@ -429,7 +429,7 @@ def push_boks(payload, client, username, method):
         line["l_005_dim_length"] = pallet.length
         line["l_006_dim_width"] = pallet.width
         line["l_007_dim_height"] = pallet.height
-        line["l_009_weight_per_each"] = total_weight
+        line["l_009_weight_per_each"] = total_weight / number_of_pallets
         line["l_008_weight_UOM"] = "KG"
         new_bok_2s.append({"booking_line": line})
 
@@ -661,7 +661,7 @@ def auto_repack(payload, client):
         line["l_005_dim_length"] = pallet.length
         line["l_006_dim_width"] = pallet.width
         line["l_007_dim_height"] = pallet.height
-        line["l_009_weight_per_each"] = total_weight
+        line["l_009_weight_per_each"] = total_weight / number_of_pallets
         line["l_008_weight_UOM"] = "KG"
 
         bok_2_serializer = BOK_2_Serializer(data=line)
