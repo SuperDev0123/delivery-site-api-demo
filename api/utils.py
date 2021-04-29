@@ -53,6 +53,7 @@ from api.common import trace_error
 from api.common.common_times import next_business_day
 from api.operations.generate_xls_report import build_xls
 from api.outputs.email import send_email
+from api.fp_apis.utils import gen_consignment_num
 
 if settings.ENV == "local":
     production = False  # Local
@@ -72,7 +73,7 @@ if production:
 else:
     DB_HOST = "localhost"
     DB_USER = "root"
-    DB_PASS = "root"
+    DB_PASS = "password"
     DB_PORT = 3306
     DB_NAME = "deliver_me"
 
@@ -383,7 +384,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 ConsignmentNumber = xml.SubElement(
                     consignmentShipment, "ConsignmentNumber"
                 )
-                ConsignmentNumber.text = booking["pk_booking_id"]
+                ConsignmentNumber.text = gen_consignment_num(vx_freight_provider, booking['b_bookingID_Visual'])
                 DespatchDate = xml.SubElement(consignmentShipment, "DespatchDate")
                 DespatchDate.text = str(booking["puPickUpAvailFrom_Date"])
                 CarrierService = xml.SubElement(consignmentShipment, "CarrierService")
@@ -1221,7 +1222,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Account.text = ACCOUNT_CODE
 
                 ConsignmentNumber = xml.SubElement(Consignment, "CONSIGNMENTNUMBER")
-                ConsignmentNumber.text = booking["pk_booking_id"]
+                ConsignmentNumber.text = gen_consignment_num(vx_freight_provider, booking['b_bookingID_Visual'])
 
                 Service = xml.SubElement(Consignment, "SERVICE")
                 Service.text = booking["vx_serviceName"]
@@ -1465,7 +1466,7 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Account.text = ACCOUNT_CODE
 
                 ConsignmentNumber = xml.SubElement(Consignment, "CONSIGNMENTNUMBER")
-                ConsignmentNumber.text = booking["pk_booking_id"]
+                ConsignmentNumber.text = gen_consignment_num(vx_freight_provider, booking['b_bookingID_Visual'])
 
                 Service = xml.SubElement(Consignment, "SERVICE")
                 Service.text = booking["vx_serviceName"]
