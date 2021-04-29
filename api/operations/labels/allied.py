@@ -127,9 +127,12 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 0
-    for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
+    totalQty = 1
+    if one_page_label:
+        lines = [lines[0]]
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
