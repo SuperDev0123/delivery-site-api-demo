@@ -233,9 +233,7 @@ def get_book_payload(booking, fp_name):
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
             elif fp_name == "tnt":
-                item["packagingType"] = (
-                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
-                )
+                item["packagingType"] = "D"
             elif fp_name == "dhl":
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
@@ -562,9 +560,7 @@ def get_getlabel_payload(booking, fp_name):
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
             elif fp_name == "tnt":
-                item["packagingType"] = (
-                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
-                )
+                item["packagingType"] = "D"
             elif fp_name == "dhl":
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
@@ -857,7 +853,7 @@ def get_pricing_payload(
                     "PLT" if is_pallet(line.packagingType) else "CTN"
                 )
             elif fp_name == "tnt":
-                item["packagingType"] = "PA" if is_pallet(line.packagingType) else "CT"
+                item["packagingType"] = "D"
             elif fp_name == "dhl":
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.packagingType) else "CTN"
@@ -991,9 +987,7 @@ def get_etd_payload(booking, fp_name):
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
             elif fp_name == "tnt":
-                item["packagingType"] = (
-                    "PA" if is_pallet(line.e_type_of_packaging) else "CT"
-                )
+                item["packagingType"] = "D"
             elif fp_name == "dhl":
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
