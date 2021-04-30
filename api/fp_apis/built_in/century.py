@@ -60,6 +60,4 @@ def get_pricing(fp_name, booking, booking_lines):
         }
         pricies.append(price)
 
-    print("@1 0 ", pricies)
-
     return pricies
