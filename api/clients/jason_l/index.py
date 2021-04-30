@@ -207,7 +207,9 @@ def push_boks(payload, client, username, method):
     bok_1["b_client_order_num"] = bok_1["b_client_order_num"].strip()
     bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
     bok_1["shipping_type"] = bok_1["shipping_type"].strip()
-    bok_1["b_053_b_del_address_type"] = bok_1["b_053_b_del_delivery_type"].strip()
+    bok_1["b_053_b_del_address_type"] = (
+        bok_1["b_053_b_del_delivery_type"].strip().lower()
+    )
     del bok_1["b_053_b_del_delivery_type"]
 
     # Check required fields
@@ -223,6 +225,13 @@ def push_boks(payload, client, username, method):
 
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
+            logger.info(f"{LOG_ID} {message}")
+            raise ValidationError(message)
+
+        if not bok_1["b_053_b_del_address_type"] in ["business", "residential"]:
+            message = (
+                "'b_053_b_del_address_type' should be `business` or `residential`."
+            )
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 
