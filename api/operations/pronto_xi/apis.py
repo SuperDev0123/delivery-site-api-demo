@@ -152,6 +152,7 @@ def get_order(order_num):
                                                 <OrderedQty /> \
                                                 <SequenceNo /> \
                                                 <UOMCode /> \
+                                                <TypeCode /> \
                                             </SalesOrderLine> \
                                         </SalesOrderLines> \
                                     </RequestFields> \
