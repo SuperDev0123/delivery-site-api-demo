@@ -56,7 +56,7 @@ def on_create_bok_1_handler(bok_1):
     #         for bok_2_line in bok_2_lines:
     #             bok_2 = {
     #                 "fk_booking_id": bok_2_line.fk_header_id,
-    #                 "packagingType": bok_2_line.l_001_type_of_packaging,
+    #                 "e_type_of_packaging": bok_2_line.l_001_type_of_packaging,
     #                 "e_qty": bok_2_line.l_002_qty,
     #                 "e_item": bok_2_line.l_003_item,
     #                 "e_dimUOM": bok_2_line.l_004_dim_UOM,

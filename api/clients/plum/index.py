@@ -624,7 +624,6 @@ def push_boks(payload, client, username, method):
         _bok_2 = bok_2["booking_line"]
         bok_2_line = {
             "fk_booking_id": _bok_2["fk_header_id"],
-            "packagingType": _bok_2["l_001_type_of_packaging"],
             "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
             "e_qty": _bok_2["l_002_qty"],
             "e_item": _bok_2["l_003_item"],

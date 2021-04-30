@@ -844,19 +844,19 @@ def get_pricing_payload(
             if fp_name == "startrack":
                 item["itemId"] = "EXP"
                 item["packagingType"] = (
-                    "PLT" if is_pallet(line.packagingType) else "CTN"
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
             elif fp_name == "auspost":
                 item["itemId"] = service_code  # PARCEL POST + SIGNATURE
             elif fp_name == "hunter":
                 item["packagingType"] = (
-                    "PLT" if is_pallet(line.packagingType) else "CTN"
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
             elif fp_name == "tnt":
                 item["packagingType"] = "D"
             elif fp_name == "dhl":
                 item["packagingType"] = (
-                    "PLT" if is_pallet(line.packagingType) else "CTN"
+                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
 
             items.append(item)
