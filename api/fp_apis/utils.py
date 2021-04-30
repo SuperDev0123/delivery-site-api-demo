@@ -86,6 +86,7 @@ def get_status_category_from_status(status):
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
     try:
+        logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
         etd, unit = get_etd(pricing.etd)
 
         if unit == "Days":
