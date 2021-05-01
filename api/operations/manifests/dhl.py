@@ -50,7 +50,7 @@ styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 ROWS_PER_PAGE = 20
 #####################
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def filter_booking_lines(booking, booking_lines):

@@ -76,7 +76,7 @@ else:
     DB_PORT = 3306
     DB_NAME = "deliver_me"
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 redis_host = "localhost"
 redis_port = 6379

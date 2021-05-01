@@ -7,7 +7,7 @@ from django.conf import settings
 
 from api.models import *
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 TEMPO_CREDENTIALS = {
     "host_url": "https://globalconnect.tempo.org/",

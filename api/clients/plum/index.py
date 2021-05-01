@@ -43,7 +43,7 @@ from api.operations import paperless
 from api.clients.operations.index import get_warehouse, get_suburb_state
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):

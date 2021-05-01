@@ -7,7 +7,7 @@ from api.fp_apis.payload_builder import get_service_provider
 from api.common import trace_error
 from api.models import DME_clients, Fp_freight_providers, DME_Error
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def parse_pricing_response(

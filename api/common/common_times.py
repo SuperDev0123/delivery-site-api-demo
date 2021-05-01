@@ -8,7 +8,7 @@ from datetime import date, timedelta, datetime
 from api.fp_apis.utils import get_etd_in_hour
 from api.models import Fp_freight_providers
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 UTC_TZ = pytz.timezone("UTC")
 TIME_DIFFERENCE = 10  # Difference between UTC and AU(Sydney) time

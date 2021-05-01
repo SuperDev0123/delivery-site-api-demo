@@ -9,7 +9,7 @@ from django.conf import settings
 from api.models import *
 from api.common.common_times import convert_to_AU_SYDNEY_tz
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def build_xls(bookings, xls_type, username, start_date, end_date, show_field_name):

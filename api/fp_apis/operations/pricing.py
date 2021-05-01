@@ -25,7 +25,7 @@ from api.fp_apis.constants import (
 )
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def pricing(body, booking_id, is_pricing_only=False):

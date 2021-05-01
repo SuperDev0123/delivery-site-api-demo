@@ -6,7 +6,7 @@ from api.common.ratio import _m3_to_kg
 from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_pricing(fp_name, booking, booking_lines):

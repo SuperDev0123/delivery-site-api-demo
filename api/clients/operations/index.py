@@ -2,7 +2,7 @@ import logging
 
 from api.models import Client_employees, Client_warehouses, Utl_suburbs
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_client(user):

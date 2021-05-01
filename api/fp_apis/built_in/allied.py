@@ -12,7 +12,7 @@ from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _get_metro_abbr(postal_code):

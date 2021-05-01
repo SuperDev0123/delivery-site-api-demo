@@ -3,7 +3,7 @@ import logging
 
 from api.common.ratio import _get_dim_amount
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_number_of_pallets(booking_lines, pallet):

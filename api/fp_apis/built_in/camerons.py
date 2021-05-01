@@ -5,7 +5,7 @@ from api.models import Fp_freight_providers, Booking_lines, FP_pricing_rules, FP
 from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_pricing(fp_name, booking, booking_lines):

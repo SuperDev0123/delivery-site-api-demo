@@ -9,7 +9,7 @@ from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _convert_UOM(value, uom, type, fp_name):

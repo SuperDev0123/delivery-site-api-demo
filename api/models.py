@@ -23,7 +23,7 @@ elif settings.ENV == "dev":
 elif settings.ENV == "prod":
     S3_URL = "/opt/s3_public"
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 class UserPermissions(models.Model):

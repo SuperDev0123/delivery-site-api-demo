@@ -41,7 +41,7 @@ from api.fp_apis.utils import (
 from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 @api_view(["POST"])
