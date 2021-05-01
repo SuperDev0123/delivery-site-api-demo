@@ -1065,46 +1065,6 @@ def scanned(payload, client):
     #             booking.api_booking_quote = None
     #             booking.save()
 
-    """
-        DME will build label for Hunter orders
-    """
-    # # If Hunter Order?
-    # if fp_name == "hunter" and booking.b_status != "Picking":
-    #     logger.info(
-    #         f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
-    #     )
-    #     label_url = (
-    #         f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
-    #     )
-
-    #     return {"labelUrl": label_url}
-    # elif fp_name == "hunter" and booking.b_status == "Picking":
-    #     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    #     booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-    #     booking.b_status = "Ready for Booking"
-    #     booking.save()
-
-    #     success, message = book_oper(fp_name, booking, "DME_API")
-
-    #     if not success:
-    #         logger.info(
-    #             f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
-    #         )
-    #         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-    #         return Response(message)
-    #     else:
-    #         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-    #         result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-    #         if not result:
-    #             message = (
-    #                 "Please contact DME support center. <bookings@deliver-me.com.au>"
-    #             )
-    #             raise Exception(message)
-
-    #         with open(label_url[:-4] + ".zpl", "rb") as zpl:
-    #             zpl_data = str(b64encode(zpl.read()))[2:-1]
-
     logger.info(
         f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     )
