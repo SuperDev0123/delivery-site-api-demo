@@ -43,7 +43,7 @@ from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
 
 
-logger = logging.getLogger("CLIENT")
+logger = logging.getLogger(__name__)
 
 
 class BOK_0_ViewSet(viewsets.ViewSet):
