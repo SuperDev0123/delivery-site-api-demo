@@ -912,7 +912,7 @@ def scanned(payload, client):
     fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-    original_items = lines.exclude(e_item == "Auto repacked item").filter(
+    original_items = lines.exclude(e_item="Auto repacked item").filter(
         sscc__isnull=True
     )
 
