@@ -1002,12 +1002,11 @@ def scanned(payload, client):
         )
 
         logger.info(f"@368 - building label with SSCC...")
-        label_index = scanned_items_count + repacked_items_count
         file_path, file_name = build_label(
             booking=booking,
             file_path=file_path,
             lines=sscc_lines[sscc],
-            label_index=label_index,
+            label_index=0,
             sscc=sscc,
             one_page_label=True,
         )
