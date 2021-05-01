@@ -923,7 +923,10 @@ def scanned(payload, client):
     with transaction.atomic():
         # Rollback `auto repack` | `already packed` operation
         for line in lines:
-            if line.e_item == "Auto repacked item" and e_type_of_packaging == "PAL":
+            if (
+                line.e_item == "Auto repacked item"
+                and line.e_type_of_packaging == "PAL"
+            ):
                 line.is_deleted = True
                 line.save()
 
