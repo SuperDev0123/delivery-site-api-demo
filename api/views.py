@@ -1,5 +1,6 @@
 import re
 import os
+import io
 import pytz
 import json
 import uuid
@@ -3701,7 +3702,7 @@ def get_manifest(request):
     user_name = body["username"]
 
     try:
-        filenames = build_manifest(booking_ids, vx_freight_provider, user_name)
+        filenames = build_manifest(booking_ids, user_name)
         file_paths = []
 
         if vx_freight_provider.upper() == "TASFR":
@@ -3710,6 +3711,9 @@ def get_manifest(request):
         elif vx_freight_provider.upper() == "DHL":
             for filename in filenames:
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
+        else:
+            for filename in filenames:
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
@@ -3726,8 +3730,10 @@ def get_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
-        # print("get_mainifest error: ", e)
-        return JsonResponse({"error": "error"})
+        logger.error(f"get_mainifest error: {str(e)}")
+        return JsonResponse(
+            {"success": False, "message": "Please contact support center."}
+        )
 
 
 @api_view(["POST"])
