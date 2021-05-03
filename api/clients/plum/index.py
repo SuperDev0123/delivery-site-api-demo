@@ -367,7 +367,7 @@ def push_boks(payload, client, username, method):
             old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
             old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
             push_operations.detect_modified_data(
-                client, old_bok_1, old_bok_2s, old_bok_3s, boks_json
+                client, old_bok_1, old_bok_2s, old_bok_3s, payload
             )
 
             old_bok_1.delete()
