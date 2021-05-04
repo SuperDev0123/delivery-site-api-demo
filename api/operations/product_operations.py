@@ -55,7 +55,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
             raise ValidationError(
                 f"Can't find Product with provided 'model_number'({model_number})."
             )
-        elif has_parent_product:
+        elif has_parent_product:  # Magento
             for product in products:
                 if product.child_model_number != product.parent_model_number:
                     line = {
@@ -72,7 +72,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                         "e_type_of_packaging": e_type_of_packaging or "Carton",
                     }
                     results = _append_line(results, line, qty)
-        else:
+        else:  # Sap/b1
             product = products.first()
             line = {
                 "e_item_type": product.child_model_number,
