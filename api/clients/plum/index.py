@@ -107,7 +107,7 @@ def partial_pricing(payload, client, warehouse):
             logger.info(f"@816 {LOG_ID} {message}")
             raise Exception(message)
 
-        items = product_oper.get_product_items(bok_2s, client)
+        items = product_oper.get_product_items(bok_2s, client, True)
 
         for item in items:
             booking_line = {
