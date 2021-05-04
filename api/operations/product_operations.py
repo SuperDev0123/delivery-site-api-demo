@@ -33,6 +33,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
         qty = bok_2.get("qty")
         # "Jason L"
         zbl_121_integer_1 = bok_2.get("sequence")
+        e_type_of_packaging = bok_2.get("UOMCode")
 
         if not model_number or not qty:
             raise ValidationError(
@@ -54,12 +55,25 @@ def get_product_items(bok_2s, client, has_parent_product=False):
             raise ValidationError(
                 f"Can't find Product with provided 'model_number'({model_number})."
             )
+        elif has_parent_product:
+            for product in products:
+                if product.child_model_number != product.parent_model_number:
+                    line = {
+                        "e_item_type": product.child_model_number,
+                        "description": product.description,
+                        "qty": product.qty * qty,
+                        "e_dimUOM": product.e_dimUOM,
+                        "e_weightUOM": product.e_weightUOM,
+                        "e_dimLength": product.e_dimLength,
+                        "e_dimWidth": product.e_dimWidth,
+                        "e_dimHeight": product.e_dimHeight,
+                        "e_weightPerEach": product.e_weightPerEach,
+                        "zbl_121_integer_1": zbl_121_integer_1,
+                        "e_type_of_packaging": e_type_of_packaging or "Carton",
+                    }
+                    results = _append_line(results, line, qty)
         else:
             product = products.first()
-
-            if product.child_model_number == product.parent_model_number:
-                continue  # Skip parent Product
-
             line = {
                 "e_item_type": product.child_model_number,
                 "description": product.description,
@@ -71,6 +85,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                 "e_dimHeight": product.e_dimHeight,
                 "e_weightPerEach": product.e_weightPerEach,
                 "zbl_121_integer_1": zbl_121_integer_1,
+                "e_type_of_packaging": e_type_of_packaging or "Carton",
             }
             results = _append_line(results, line, qty)
 
