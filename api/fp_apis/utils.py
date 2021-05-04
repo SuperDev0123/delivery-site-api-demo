@@ -19,12 +19,9 @@ def _convert_UOM(value, uom, type, fp_name):
         converted_value = value * ratio.get_ratio(uom, FP_UOM[_fp_name][type], type)
         return round(converted_value, 2)
     except Exception as e:
-        logger.info(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
-        raise Exception(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
+        message = f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+        logger.info(message)
+        raise Exception(message)
 
 
 def gen_consignment_num(fp_name, booking_visual_id):
