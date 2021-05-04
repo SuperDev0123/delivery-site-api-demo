@@ -22,7 +22,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s, client, has_parent_product):
+def get_product_items(bok_2s, client, has_parent_product=False):
     """
     get all items from array of "model_number" and "qty"
     """
