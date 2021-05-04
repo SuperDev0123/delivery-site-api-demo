@@ -57,6 +57,10 @@ def get_product_items(bok_2s, client, has_parent_product=False):
             )
         else:
             product = products.first()
+
+            if product.child_model_number == product.parent_model_number:
+                continue  # Skip parent Product
+
             line = {
                 "e_item_type": product.child_model_number,
                 "description": product.description,
