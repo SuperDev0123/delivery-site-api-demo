@@ -22,7 +22,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s, client):
+def get_product_items(bok_2s, client, has_parent_product):
     """
     get all items from array of "model_number" and "qty"
     """
@@ -44,7 +44,7 @@ def get_product_items(bok_2s, client):
             child_model_number=model_number, parent_model_number=model_number
         )
 
-        if products:  # Ignore parent Product
+        if products and not has_parent_product:  # Ignore parent Product
             continue
 
         products = Client_Products.objects.filter(
