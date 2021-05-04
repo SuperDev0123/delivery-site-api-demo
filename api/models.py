@@ -2935,7 +2935,7 @@ class BOK_3_lines_data(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     zbld_105_text_5 = models.CharField(
-        max_length=64, blank=True, null=True, default=None
+        max_length=255, blank=True, null=True, default=None
     )
     zbld_121_integer_1 = models.IntegerField(blank=True, default=0, null=True)
     zbld_122_integer_2 = models.IntegerField(blank=True, default=0, null=True)

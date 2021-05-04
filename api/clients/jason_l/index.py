@@ -468,12 +468,13 @@ def push_boks(payload, client, username, method):
             bok_3["zbld_102_text_2"] = bok_2_obj.l_008_weight_UOM
             bok_3["zbld_103_text_3"] = bok_2_obj.e_item_type
             bok_3["zbld_104_text_4"] = bok_2_obj.l_001_type_of_packaging
+            bok_3["zbld_105_text_5"] = bok_2_obj.l_003_item
 
             bok_3_serializer = BOK_3_Serializer(data=bok_3)
             if bok_3_serializer.is_valid():
                 bok_3_serializer.save()
             else:
-                message = f"Serialiser Error - {bok_2_serializer.errors}"
+                message = f"Serialiser Error - {bok_3_serializer.errors}"
                 logger.info(f"@8132 {LOG_ID} {message}")
                 raise Exception(message)
 
@@ -702,13 +703,14 @@ def auto_repack(payload, client):
                 bok_3["zbld_102_text_2"] = bok_2.l_008_weight_UOM
                 bok_3["zbld_103_text_3"] = bok_2.e_item_type
                 bok_3["zbld_104_text_4"] = bok_2.l_001_type_of_packaging
+                bok_3["zbld_105_text_5"] = bok_2.l_003_item
 
                 bok_3_serializer = BOK_3_Serializer(data=bok_3)
                 if bok_3_serializer.is_valid():
                     bok_3_serializer.save()
                 else:
-                    message = f"Serialiser Error - {bok_2_serializer.errors}"
-                    logger.info(f"@8132 {LOG_ID} {message}")
+                    message = f"Serialiser Error - {bok_3_serializer.errors}"
+                    logger.info(f"@8132 {LOG_ID} {message}, {bok_3}")
                     raise Exception(message)
 
                 bok_2.is_deleted = not bok_2.is_deleted
