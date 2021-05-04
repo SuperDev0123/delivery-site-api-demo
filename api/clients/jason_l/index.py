@@ -364,9 +364,7 @@ def push_boks(payload, client, username, method):
             raise Exception(message)
 
         # Save bok_2s (Product & Child items)
-        ignore_product = is_biz
-
-        items = product_oper.get_product_items(bok_2s, client, ignore_product)
+        items = product_oper.get_product_items(bok_2s, client)
         new_bok_2s = []
         bok_2_objs = []
 

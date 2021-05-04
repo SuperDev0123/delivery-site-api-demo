@@ -22,7 +22,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s, client, ignore_product=False):
+def get_product_items(bok_2s, client):
     """
     get all items from array of "model_number" and "qty"
     """
@@ -41,6 +41,13 @@ def get_product_items(bok_2s, client, ignore_product=False):
             )
 
         products = Client_Products.objects.filter(
+            child_model_number=model_number, parent_model_number=model_number
+        )
+
+        if products:  # Ignore parent Product
+            continue
+
+        products = Client_Products.objects.filter(
             Q(parent_model_number=model_number) | Q(child_model_number=model_number)
         ).filter(fk_id_dme_client=client)
 
@@ -48,8 +55,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
             raise ValidationError(
                 f"Can't find Product with provided 'model_number'({model_number})."
             )
-
-        elif products.count() == 1:
+        else:
             product = products.first()
             line = {
                 "e_item_type": product.child_model_number,
@@ -64,28 +70,7 @@ def get_product_items(bok_2s, client, ignore_product=False):
                 "zbl_121_integer_1": zbl_121_integer_1,
                 "e_type_of_packaging": e_type_of_packaging or "Carton",
             }
-
             results = _append_line(results, line, qty)
-        elif products.count() > 1 and not ignore_product:
-            child_items = products.exclude(
-                child_model_number=model_number, parent_model_number=model_number
-            )
-
-            for item in child_items:
-                line = {
-                    "e_item_type": item.child_model_number,
-                    "description": item.description,
-                    "qty": item.qty * qty,
-                    "e_dimUOM": item.e_dimUOM,
-                    "e_weightUOM": item.e_weightUOM,
-                    "e_dimLength": item.e_dimLength,
-                    "e_dimWidth": item.e_dimWidth,
-                    "e_dimHeight": item.e_dimHeight,
-                    "e_weightPerEach": item.e_weightPerEach,
-                    "zbl_121_integer_1": zbl_121_integer_1,
-                    "e_type_of_packaging": e_type_of_packaging or "Carton",
-                }
-                results = _append_line(results, line, qty)
 
     return results
 

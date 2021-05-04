@@ -865,7 +865,7 @@ def get_pricing_payload(
 
     # Detail for each FP
     if fp_name == "startrack":
-        payload["serviceType"] = "R" or booking.vx_serviceName
+        payload["serviceType"] = "R"
     elif fp_name == "hunter":
         payload["serviceType"] = "RF"
     elif fp_name == "capital":
