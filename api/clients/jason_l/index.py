@@ -338,9 +338,7 @@ def push_boks(payload, client, username, method):
 
         # Save bok_2s
         if "model_number" in bok_2s[0]:  # Product & Child items
-            ignore_product = is_biz
-
-            items = product_oper.get_product_items(bok_2s, client, ignore_product)
+            items = product_oper.get_product_items(bok_2s, client)
             new_bok_2s = []
 
             for index, item in enumerate(items):
