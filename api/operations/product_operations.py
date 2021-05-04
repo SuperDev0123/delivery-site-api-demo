@@ -40,12 +40,13 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                 "'model_number' and 'qty' are required for each booking_line"
             )
 
-        products = Client_Products.objects.filter(
-            child_model_number=model_number, parent_model_number=model_number
-        )
+        if not has_parent_product:  # Ignore parent Product
+            products = Client_Products.objects.filter(
+                child_model_number=model_number, parent_model_number=model_number
+            )
 
-        if products and not has_parent_product:  # Ignore parent Product
-            continue
+            if products:
+                continue
 
         products = Client_Products.objects.filter(
             Q(parent_model_number=model_number) | Q(child_model_number=model_number)
