@@ -61,7 +61,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                 if (
                     products.count() > 1
                     and product.child_model_number != product.parent_model_number
-                )
+                ):
                 continue
 
                 line = {
