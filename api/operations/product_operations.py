@@ -62,7 +62,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                     products.count() > 1
                     and product.child_model_number != product.parent_model_number
                 ):
-                continue
+                    continue
 
                 line = {
                     "e_item_type": product.child_model_number,
