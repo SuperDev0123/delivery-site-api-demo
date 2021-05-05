@@ -885,9 +885,9 @@ def get_etd_payload(booking, fp_name):
         client_warehouse_code = booking.fk_client_warehouse.client_warehouse_code
 
     payload["spAccountDetails"] = {
-        "accountCode": "3006871123",  # Same Day Services (Stephen)
-        "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
-        "accountPassword": "x06503301e1ddfb58a7a",
+        "accountCode": "00956684",  # Original
+        "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+        "accountPassword": "xab801a41e663b5cb889",
     }
     payload["serviceProvider"] = get_service_provider(fp_name)
     payload["readyDate"] = "" or str(booking.puPickUpAvailFrom_Date)[:10]
@@ -952,56 +952,12 @@ def get_etd_payload(booking, fp_name):
         "sortCode": "" or booking.de_To_Address_PostalCode,
     }
 
-    booking_lines = Booking_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_deleted=False
-    )
-
-    items = []
-    for line in booking_lines:
-        width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
-        height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
-        length = _convert_UOM(line.e_dimLength, line.e_dimUOM, "dim", fp_name)
-        weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
-
-        for i in range(line.e_qty):
-            item = {
-                "dangerous": 0,
-                "width": 0 or width,
-                "height": 0 or height,
-                "length": 0 or length,
-                "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
-                "weight": 0 or weight,
-                "description": line.e_item,
-            }
-
-            if fp_name == "startrack":
-                item["itemId"] = "EXP"
-                item["packagingType"] = (
-                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
-                )
-            elif fp_name == "auspost":
-                item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
-            elif fp_name == "hunter":
-                item["packagingType"] = (
-                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
-                )
-            elif fp_name == "tnt":
-                item["packagingType"] = "D"
-            elif fp_name == "dhl":
-                item["packagingType"] = (
-                    "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
-                )
-
-            items.append(item)
-
-    payload["items"] = items
-
     # Detail for each FP
     if fp_name == "startrack":
-        etd = FP_Service_ETDs.objects.get(
-            fp_delivery_time_description="PARCEL POST + SIGNATURE"
-        )
-        payload["product_ids"] = [etd.fp_delivery_service_code]
+        # etd = FP_Service_ETDs.objects.get(
+        #     fp_delivery_time_description="PARCEL POST + SIGNATURE"
+        # )
+        # payload["product_ids"] = [etd.fp_delivery_service_code]
+        payload["product_ids"] = "EXP"
 
     return payload

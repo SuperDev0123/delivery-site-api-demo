@@ -1062,7 +1062,7 @@ def update_servce_code(request, fp_name):
 
 def get_etd(booking):
     """
-    Avalilable FPs: TNT
+    Avalilable FPs: Startrack
     """
     LOG_ID = "GET_ETD"
     fp_name = booking.vx_freight_provider
@@ -1077,10 +1077,20 @@ def get_etd(booking):
 
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
-        print("@Get_etd", json_data)
-    except IndexError as e:
+        logger.info(f"{LOG_ID} {json_data}")
+
+        business_days_min = json_data["estimated_delivery_dates"][0][
+            "business_days_min"
+        ]
+        business_days_max = json_data["estimated_delivery_dates"][0][
+            "business_days_max"
+        ]
+
+        logger.info(f"{LOG_ID} min: {business_days_min}, max: {business_days_max}")
+
+        return business_days_max
+    except Exception as e:
         trace_error.print()
         error_msg = "GETETD is failed."
-        # _set_error(booking, error_msg)
         logger.error(f"{LOG_ID} {error_msg}, error: {str(e)}")
-        # return JsonResponse({"message": error_msg})
+        return None
