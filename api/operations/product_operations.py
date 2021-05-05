@@ -58,7 +58,10 @@ def get_product_items(bok_2s, client, has_parent_product=False):
             )
         elif has_parent_product:  # Magento
             for product in products:
-                if product.child_model_number != product.parent_model_number:
+                if (
+                    products.count() > 1
+                    and product.child_model_number != product.parent_model_number
+                ):
                     line = {
                         "e_item_type": product.child_model_number,
                         "description": product.description,
