@@ -61,21 +61,23 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                 if (
                     products.count() > 1
                     and product.child_model_number != product.parent_model_number
-                ):
-                    line = {
-                        "e_item_type": product.child_model_number,
-                        "description": product.description,
-                        "qty": product.qty * qty,
-                        "e_dimUOM": product.e_dimUOM,
-                        "e_weightUOM": product.e_weightUOM,
-                        "e_dimLength": product.e_dimLength,
-                        "e_dimWidth": product.e_dimWidth,
-                        "e_dimHeight": product.e_dimHeight,
-                        "e_weightPerEach": product.e_weightPerEach,
-                        "zbl_121_integer_1": zbl_121_integer_1,
-                        "e_type_of_packaging": e_type_of_packaging or "Carton",
-                    }
-                    results = _append_line(results, line, qty)
+                )
+                continue
+
+                line = {
+                    "e_item_type": product.child_model_number,
+                    "description": product.description,
+                    "qty": product.qty * qty,
+                    "e_dimUOM": product.e_dimUOM,
+                    "e_weightUOM": product.e_weightUOM,
+                    "e_dimLength": product.e_dimLength,
+                    "e_dimWidth": product.e_dimWidth,
+                    "e_dimHeight": product.e_dimHeight,
+                    "e_weightPerEach": product.e_weightPerEach,
+                    "zbl_121_integer_1": zbl_121_integer_1,
+                    "e_type_of_packaging": e_type_of_packaging or "Carton",
+                }
+                results = _append_line(results, line, qty)
         else:  # Sap/b1
             product = products.first()
             line = {
