@@ -22,7 +22,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s, client, has_parent_product=False):
+def get_product_items(bok_2s, client, is_web=False):
     """
     get all items from array of "model_number" and "qty"
     """
@@ -40,14 +40,6 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                 "'model_number' and 'qty' are required for each booking_line"
             )
 
-        if not has_parent_product:  # Ignore parent Product
-            products = Client_Products.objects.filter(
-                child_model_number=model_number, parent_model_number=model_number
-            )
-
-            if products:
-                continue
-
         products = Client_Products.objects.filter(
             Q(parent_model_number=model_number) | Q(child_model_number=model_number)
         ).filter(fk_id_dme_client=client)
@@ -56,7 +48,7 @@ def get_product_items(bok_2s, client, has_parent_product=False):
             raise ValidationError(
                 f"Can't find Product with provided 'model_number'({model_number})."
             )
-        elif has_parent_product:  # Magento
+        elif is_web:  # Web - Magento, Shopify
             for product in products:
                 if (
                     products.count() > 1
@@ -78,22 +70,30 @@ def get_product_items(bok_2s, client, has_parent_product=False):
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
                 results = _append_line(results, line, qty)
-        else:  # Sap/b1
-            product = products.first()
-            line = {
-                "e_item_type": product.child_model_number,
-                "description": product.description,
-                "qty": product.qty * qty,
-                "e_dimUOM": product.e_dimUOM,
-                "e_weightUOM": product.e_weightUOM,
-                "e_dimLength": product.e_dimLength,
-                "e_dimWidth": product.e_dimWidth,
-                "e_dimHeight": product.e_dimHeight,
-                "e_weightPerEach": product.e_weightPerEach,
-                "zbl_121_integer_1": zbl_121_integer_1,
-                "e_type_of_packaging": e_type_of_packaging or "Carton",
-            }
-            results = _append_line(results, line, qty)
+        else:  # Biz - Sap/b1, Pronto
+            has_product = False
+            for product in products:
+                if product.child_model_number == product.parent_model_number:
+                    has_product = True
+
+            if has_product and products.count() > 1:
+                continue
+            else:
+                product = products.first()
+                line = {
+                    "e_item_type": product.child_model_number,
+                    "description": product.description,
+                    "qty": product.qty * qty,
+                    "e_dimUOM": product.e_dimUOM,
+                    "e_weightUOM": product.e_weightUOM,
+                    "e_dimLength": product.e_dimLength,
+                    "e_dimWidth": product.e_dimWidth,
+                    "e_dimHeight": product.e_dimHeight,
+                    "e_weightPerEach": product.e_weightPerEach,
+                    "zbl_121_integer_1": zbl_121_integer_1,
+                    "e_type_of_packaging": e_type_of_packaging or "Carton",
+                }
+                results = _append_line(results, line, qty)
 
     return results
 
