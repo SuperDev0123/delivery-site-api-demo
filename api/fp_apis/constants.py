@@ -32,13 +32,13 @@ BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
-    "allied": {
-        "service_types": [
-            "Road Express",
-            "Standard Pallet Rate",
-            "Oversized Pallet Rate",
-        ]
-    },
+    # "allied": {
+    #     "service_types": [
+    #         "Road Express",
+    #         "Standard Pallet Rate",
+    #         "Oversized Pallet Rate",
+    #     ]
+    # },
 }
 
 FP_CREDENTIALS = {
@@ -223,22 +223,22 @@ FP_CREDENTIALS = {
             }
         }
     },
-    # "allied": {
-    #     "test": {
-    #         "test_bed_1": {
-    #             "accountCode": "DELVME",
-    #             "accountKey": "11e328f646051c3decc4b2bb4584530b",
-    #             "accountState": "NSW",
-    #         },
-    #     },
-    #     "dme": {
-    #         "live_0": {
-    #             "accountCode": "DELVME",
-    #             "accountKey": "ce0d58fd22ae8619974958e65302a715",
-    #             "accountState": "NSW",
-    #         }
-    #     },
-    # },
+    "allied": {
+        "test": {
+            "test_bed_1": {
+                "accountCode": "DELVME",
+                "accountKey": "11e328f646051c3decc4b2bb4584530b",
+                "accountState": "NSW",
+            },
+        },
+        "dme": {
+            "live_0": {
+                "accountCode": "DELVME",
+                "accountKey": "ce0d58fd22ae8619974958e65302a715",
+                "accountState": "NSW",
+            }
+        },
+    },
     "dhl": {
         "dme": {
             "live_0": {
