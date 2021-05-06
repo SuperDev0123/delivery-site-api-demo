@@ -583,19 +583,23 @@ class API_booking_quotes(models.Model):
 
 
 class Bookings(models.Model):
+    PDWD = "Pickup at Door / Warehouse Dock"
     DDWD = "Drop at Door / Warehouse Dock"
     DDW = "Drop in Door / Warehouse"
     ROC = "Room of Choice"
-    DEL_LOCATION_CHOICES = (
+    LOCATION_CHOICES = (
+        (PDWD, "Pickup at Door / Warehouse Dock"),
         (DDWD, "Drop at Door / Warehouse Dock"),
         (DDW, "Drop in Door / Warehouse"),
         (ROC, "Room of Choice"),
     )
 
+    NONE = "NONE"
     ELEVATOR = "Elevator"
     ESCALATOR = "Escalator"
     STAIRS = "Stairs"
     FLOOR_ACCESS_BY_CHOICES = (
+        (NONE, "NONE"),
         (ELEVATOR, "Elevator"),
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
@@ -1785,7 +1789,7 @@ class Bookings(models.Model):
     delivery_booking = models.DateField(default=None, blank=True, null=True)
     de_to_assembly_required = models.BooleanField(default=False, null=True)
     de_to_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     de_to_floor_number = models.IntegerField(default=0, null=True)
     de_to_floor_access_by = models.CharField(
@@ -2268,19 +2272,23 @@ class BOK_0_BookingKeys(models.Model):
 
 
 class BOK_1_headers(models.Model):
+    PDWD = "Pickup at Door / Warehouse Dock"
     DDWD = "Drop at Door / Warehouse Dock"
     DDW = "Drop in Door / Warehouse"
     ROC = "Room of Choice"
-    DEL_LOCATION_CHOICES = (
+    LOCATION_CHOICES = (
+        (PDWD, "Pickup at Door / Warehouse Dock"),
         (DDWD, "Drop at Door / Warehouse Dock"),
         (DDW, "Drop in Door / Warehouse"),
         (ROC, "Room of Choice"),
     )
 
+    NONE = "NONE"
     ELEVATOR = "Elevator"
     ESCALATOR = "Escalator"
     STAIRS = "Stairs"
     FLOOR_ACCESS_BY_CHOICES = (
+        (NONE, "NONE"),
         (ELEVATOR, "Elevator"),
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
@@ -2679,7 +2687,7 @@ class BOK_1_headers(models.Model):
     )
     b_067_assembly_required = models.BooleanField(default=False, null=True)
     b_068_b_del_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     b_069_b_del_floor_number = models.IntegerField(default=0, null=True)
     b_070_b_del_floor_access_by = models.CharField(
@@ -2693,7 +2701,7 @@ class BOK_1_headers(models.Model):
     b_076_b_pu_service = models.CharField(max_length=32, default=None, null=True)
     b_077_b_del_service = models.CharField(max_length=32, default=None, null=True)
     b_078_b_pu_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     b_079_b_pu_floor_number = models.IntegerField(default=0, null=True)
     b_080_b_pu_floor_access_by = models.CharField(

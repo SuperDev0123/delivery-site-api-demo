@@ -331,21 +331,45 @@ def push_boks(payload, client, username, method):
 
         bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
-        if not bok_1.get("b_067_assembly_required"):
-            bok_1["b_067_assembly_required"] = False
+        if not bok_1.get("b_027_b_pu_address_type"):
+            bok_1["b_027_b_pu_address_type"] = "business"
+        if not bok_1.get("b_053_b_del_address_type"):
+            bok_1["b_053_b_del_address_type"] = "business"
 
+        if not bok_1.get("b_019_b_pu_tail_lift"):
+            bok_1["b_019_b_pu_tail_lift"] = False
+        if not bok_1.get("b_041_b_del_tail_lift"):
+            bok_1["b_041_b_del_tail_lift"] = 0
+
+        if not bok_1.get("b_072_b_pu_no_of_assists"):
+            bok_1["b_072_b_pu_no_of_assists"] = 0
+        if not bok_1.get("b_073_b_del_no_of_assists"):
+            bok_1["b_073_b_del_no_of_assists"] = 0
+
+        if not bok_1.get("b_078_b_pu_location"):
+            bok_1["b_078_b_pu_location"] = BOK_1_headers.PDWD
         if not bok_1.get("b_068_b_del_location"):
-            # "Drop at Door / Warehouse Dock"
             bok_1["b_068_b_del_location"] = BOK_1_headers.DDWD
 
+        if not bok_1.get("b_074_b_pu_access"):
+            bok_1["b_074_b_pu_access"] = "Level Driveway"
+        if not bok_1.get("b_075_b_del_access"):
+            bok_1["b_075_b_del_access"] = "Level Driveway"
+
+        if not bok_1.get("b_079_b_pu_floor_number"):
+            bok_1["b_079_b_pu_floor_number"] = 0  # Ground
         if not bok_1.get("b_069_b_del_floor_number"):
-            bok_1["b_069_b_del_floor_number"] = 0
+            bok_1["b_069_b_del_floor_number"] = 0  # Ground
 
+        if not bok_1.get("b_080_b_pu_floor_access_by"):
+            bok_1["b_080_b_pu_floor_access_by"] = BOK_1_headers.NONE
         if not bok_1.get("b_070_b_del_floor_access_by"):
-            bok_1["b_070_b_del_floor_access_by"] = BOK_1_headers.ELEVATOR
+            bok_1["b_070_b_del_floor_access_by"] = BOK_1_headers.NONE
 
-        if not bok_1.get("b_071_b_del_sufficient_space"):
-            bok_1["b_071_b_del_sufficient_space"] = True
+        if not bok_1.get("b_076_b_pu_service"):
+            bok_1["b_076_b_pu_service"] = BOK_1_headers.NONE
+        if not bok_1.get("b_077_b_pu_service"):
+            bok_1["b_077_b_pu_service"] = BOK_1_headers.NONE
 
         if not bok_1.get("b_054_b_del_company"):
             bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
