@@ -1,7 +1,11 @@
+import logging
+
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
 from api.models import Client_Products
+
+logger = logging.getLogger("dme_api")
 
 
 def _append_line(results, line, qty):
@@ -52,7 +56,7 @@ def get_product_items(bok_2s, client, is_web=False):
             for product in products:
                 if (
                     products.count() > 1
-                    and product.child_model_number != product.parent_model_number
+                    and product.child_model_number == product.parent_model_number
                 ):
                     continue
 
@@ -95,6 +99,7 @@ def get_product_items(bok_2s, client, is_web=False):
                 }
                 results = _append_line(results, line, qty)
 
+    logger.info(f"[GET PRODUCT ITEMS] {results}")
     return results
 
 
