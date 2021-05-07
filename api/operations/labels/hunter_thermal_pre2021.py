@@ -35,7 +35,7 @@ style_left = ParagraphStyle(name='left', parent=styles['Normal'], alignment=TA_L
 style_center = ParagraphStyle(name='center', parent=styles['Normal'], alignment=TA_CENTER, leading=10)
 styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
 
-style_border = ParagraphStyle(name='center', parent=styles['Normal'], alignment=TA_CENTER, leading=20, borderWidth=1, borderColor='black')
+style_border = ParagraphStyle(name='center', parent=styles['Normal'], alignment=TA_CENTER, leading=14, borderWidth=1, borderColor='black')
 
 def myFirstPage(canvas, doc):
     canvas.saveState()
@@ -113,7 +113,7 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
         'label_dimension_length': '160', 
         'label_dimension_width': '110', 
         'label_image_size_length': '150', 
-        'label_image_size_width': '100', 
+        'label_image_size_width': '102', 
         'barcode_dimension_length': '65', 
         'barcode_dimension_width': '30', 
         'barcode_font_size': '18', 
@@ -123,7 +123,7 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
         'line_height_large':'8'
     }
 
-    doc = SimpleDocTemplate(filepath+filename, pagesize = ( float(label_settings['label_dimension_length']) * mm, float(label_settings['label_dimension_width']) * mm ), rightMargin = float(float(label_settings['label_dimension_width']) - float(label_settings['label_image_size_width'])) * mm, leftMargin = float(float(label_settings['label_dimension_width']) - float(label_settings['label_image_size_width'])) * mm, topMargin = float(float(label_settings['label_dimension_length']) - float(label_settings['label_image_size_length'])) * mm, bottomMargin = float(float(label_settings['label_dimension_length']) - float(label_settings['label_image_size_length'])) * mm)
+    doc = SimpleDocTemplate(filepath+filename, pagesize = ( float(label_settings['label_dimension_length']) * mm, float(label_settings['label_dimension_width']) * mm ), topMargin = float(float(label_settings['label_dimension_width']) - float(label_settings['label_image_size_width'])) * mm, bottomMargin = float(float(label_settings['label_dimension_width']) - float(label_settings['label_image_size_width'])) * mm, rightMargin = float(float(label_settings['label_dimension_length']) - float(label_settings['label_image_size_length'])) * mm, leftMargin = float(float(label_settings['label_dimension_length']) - float(label_settings['label_image_size_length'])) * mm)
     document = []
 
     totalQty = get_total_qty(lines)
@@ -174,9 +174,11 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
 
             tbl_data2 = [
                 [
-                    Paragraph('<font size=%s><b>%s</b></font>' % ( label_settings['font_size_extra_large'], 'S 0 9' ), style_border)
+                    Paragraph('<font size=%s><b>%s</b></font>' % ( label_settings['font_size_large'], 'WA' ), style_border)
                 ],
-
+                [
+                    Paragraph('<font size=%s><b>%s</b></font>' % ( label_settings['font_size_large'], 'WAC' ), style_border)
+                ],
                 [
                     Paragraph('<font size=%s>%s</font>' % ( label_settings['font_size_medium'], 'Print:' ), style_left)
                 ],

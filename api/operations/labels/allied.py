@@ -210,7 +210,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             data = [
                 [
-                dme_img, 
+                    dme_img, 
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (

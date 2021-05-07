@@ -347,6 +347,7 @@ class Fp_freight_providers(models.Model):
         blank=True,
         default=timezone.now,
     )
+    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
 
     class Meta:
         db_table = "fp_freight_providers"
@@ -4705,14 +4706,11 @@ class FPRouting(models.Model):
     id = models.AutoField(primary_key=True)
     suburb = models.CharField(max_length=45, default=None, null=True)
     state = models.CharField(max_length=45, default=None, null=True)
-    dest_postcode = models.CharField(max_length=45, default=None, null=True)
-    orig_depot = models.CharField(max_length=10, default=None, null=True)
-    orig_depot_except = models.CharField(max_length=10, default=None, null=True)
-    gateway = models.CharField(max_length=10, default=None, null=True)
-    onfwd = models.CharField(max_length=10, default=None, null=True)
-    sort_bin = models.CharField(max_length=10, default=None, null=True)
-    orig_postcode = models.CharField(max_length=10, default=None, null=True)
-    routing_group = models.CharField(max_length=10, default=None, null=True)
+    post_code = models.CharField(max_length=45, default=None, null=True)
+    head_port = models.CharField(max_length=45, default=None, null=True)
+    port_code = models.CharField(max_length=45, default=None, null=True)
+    charge_zone = models.CharField(max_length=45, default=None, null=True)
+
 
     class Meta:
         db_table = "fp_routing"
