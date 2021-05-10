@@ -23,7 +23,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines
+from api.models import Booking_lines, API_booking_quotes, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
@@ -72,7 +72,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
+def build_label(booking, file_path, lines, label_index, one_page_label):
     logger.info(
         f"#110 [HUNTER THERMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -195,8 +195,8 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>To: %s</font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.de_to_Contact_F_LName
-                            if booking.de_to_Contact_F_LName
+                            booking.deToCompanyName
+                            if booking.deToCompanyName
                             else "",
                         ),
                         style_left,
@@ -204,7 +204,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>"
+                        "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_large"],
                             booking.de_To_Address_Street_1
@@ -249,7 +249,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>%s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            "0289682200",
+                            booking.de_to_Phone_Main or "",
                             booking.de_to_Contact_F_LName
                             if booking.de_to_Contact_F_LName
                             else "",
@@ -263,7 +263,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "Ref:",
-                            "3932555220003820",
+                            line.sscc or "",
                         ),
                         style_left,
                     )
@@ -284,10 +284,11 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>%s %s<br/></font>"
                         % (
                             label_settings["font_size_large"],
-                            "CONSIGNMENT",
-                            booking.v_FPBookingNumber
-                            if booking.v_FPBookingNumber
-                            else "",
+                            "CONSIGNMENT:",
+                            gen_consignment_num(
+                                booking.vx_freight_provider, 
+                                booking.b_bookingID_Visual
+                            ),
                         ),
                         style_left,
                     )
@@ -305,18 +306,36 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 ],
             )
 
+            try:
+                account_code = API_booking_quotes.objects.get(id=booking.api_booking_quote_id).account_code
+            except Exception as e:
+                account_code = ""
+
+            de_suburb = booking.de_To_Address_Suburb
+            de_postcode = booking.de_To_Address_PostalCode
+            de_state = booking.de_To_Address_State
+            fp_routing = FPRouting.objects.filter(
+                suburb=de_suburb, dest_postcode=de_postcode, state=de_state
+            )
+            if fp_routing[0]:
+                head_port = fp_routing[0].orig_depot
+                port_code = fp_routing[0].gateway
+            else:
+                head_port = ""
+                port_code = ""
+
             tbl_data2 = [
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (label_settings["font_size_large"], "WA"),
+                        % (label_settings["font_size_large"], head_port),
                         style_border,
                     )
                 ],
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (label_settings["font_size_large"], "WAC"),
+                        % (label_settings["font_size_large"], port_code),
                         style_border,
                     )
                 ],
@@ -347,7 +366,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s>%s %s</font>"
-                        % (label_settings["font_size_medium"], "Account:", "DUMMY"),
+                        % (label_settings["font_size_medium"], "Account:",  account_code),
                         style_center,
                     )
                 ],
@@ -489,7 +508,6 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         style_left,
                     ),
                 ],
-                [hr],
                 [
                     Paragraph(
                         "<font size=%s><b>%s %s %s</b></font> "
@@ -513,7 +531,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>%s %s</font> "
                         % (
                             label_settings["font_size_medium"],
-                            "288854000",
+                            booking.pu_Phone_Main or "",
                             booking.pu_Contact_F_L_Name
                             if booking.pu_Contact_F_L_Name
                             else "",
@@ -563,8 +581,8 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>To: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_Contact_F_LName
-                            if booking.de_to_Contact_F_LName
+                            booking.deToCompanyName
+                            if booking.deToCompanyName
                             else "",
                         ),
                         style_left,
@@ -617,7 +635,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>%s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            "0289682200",
+                            booking.de_to_Phone_Main or "",
                             booking.de_to_Contact_F_LName
                             if booking.de_to_Contact_F_LName
                             else "",
