@@ -116,7 +116,7 @@ def get_barcode_rotated(
 
 def build_label(booking):
     logger.info(
-        f"#110 [DHL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+        f"#110 [DHL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
     v_FPBookingNumber = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual

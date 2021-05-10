@@ -27,10 +27,14 @@ from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dme_api")
 
 styles = getSampleStyleSheet()
-style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
+style_right = ParagraphStyle(
+    name="right", 
+    parent=styles["Normal"], 
+    alignment=TA_RIGHT
+)
 style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
@@ -45,11 +49,11 @@ style_center = ParagraphStyle(
     leading=10,
 )
 style_center_bg = ParagraphStyle(
-    name="right",
-    parent=styles["Normal"],
+    name="right", 
+    parent=styles["Normal"], 
     alignment=TA_CENTER,
     leading=16,
-    backColor="#64a1fc",
+    backColor="#64a1fc"
 )
 style_uppercase = ParagraphStyle(
     name="uppercase",
@@ -87,10 +91,10 @@ def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
 
-    return f"AEO{visual_id}{item_index}"
+    return f"AA{visual_id}{item_index}"
 
 
-def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
+def build_label(booking, filepath, lines=[], label_index=0):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -102,19 +106,6 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     if not os.path.exists(filepath):
         os.makedirs(filepath)
     # end check if pdfs folder exists
-
-    fp_id = Fp_freight_providers.objects.get(fp_company_name="Allied").id
-    try:
-        carrier = FP_zones.objects.get(
-            state=booking.de_To_Address_State,
-            suburb=booking.de_To_Address_Suburb,
-            postal_code=booking.de_To_Address_PostalCode,
-            fk_fp=fp_id,
-        ).carrier
-    except FP_zones.DoesNotExist:
-        carrier = ""
-    except Exception as e:
-        logger.info(f"#110 [ALLIED LABEL] Error: {str(e)}")
 
     # start pdf file name using naming convention
     if lines:
@@ -143,12 +134,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 1
-    if one_page_label:
-        lines = [lines[0]]
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
+    totalQty = 0
+    for booking_line in lines:
+        totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -185,11 +173,11 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
+    # tnt_logo = "./static/assets/tnt_fedex_logo.png"
+    # tnt_img = Image(tnt_logo, 30 * mm, 6.6 * mm)
+
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
-
-    allied_logo = "./static/assets/allied_logo.png"
-    allied_img = Image(allied_logo, 30 * mm, 7.7 * mm)
 
     Story = []
     j = 1
@@ -204,12 +192,26 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
-            if one_page_label and k > 0:
-                continue
 
-            data = [
+
+            tbl_data1 = [[dme_img]]
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (1 / 4) * mm
+                ),
+                rowHeights=(float(label_settings["line_height_large"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ],
+            )
+
+            tbl_data2 = [
                 [
-                    dme_img,
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
@@ -219,20 +221,33 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                             else "",
                         ),
                         style_center_bg,
-                    ),
-                    allied_img,
+                    )
                 ]
             ]
 
+            t2 = Table(
+                tbl_data2,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (3 / 4) * mm
+                ),
+                rowHeights=(float(label_settings["line_height_medium"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                ],
+            )
+
+            data = [[t1, t2]]
+
             t1_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (2 / 4) * mm
-            t3_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (3 / 4) * mm
 
             header = Table(
                 data,
-                colWidths=[t1_w, t2_w, t3_w],
+                colWidths=[t1_w, t2_w],
                 style=[
-                    ("VALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
@@ -253,7 +268,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(hr)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -276,8 +291,8 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     Paragraph(
                         "<font size=%s>Date: %s</font>"
                         % (
-                            label_settings["font_size_medium"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
+                            label_settings["font_size_medium"], 
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or ""
                         ),
                         style_left,
                     ),
@@ -299,12 +314,20 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
                     Paragraph(
-                        "<font size=%s>%s %s, %s %s %s %s %s</font>"
+                        "<font size=%s>%s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            ''
+                        ),
+                        style_left,
+                    ),
+                    Paragraph(
+                        "<font size=%s>%s %s %s %s %s %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
                             booking.pu_Contact_F_L_Name or "",
@@ -322,7 +345,10 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
 
             shell_table = Table(
                 tbl_data,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm,),
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * 0.06 * mm,
+                    float(label_settings["label_image_size_length"]) * 0.94 * mm,
+                ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -331,7 +357,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -362,9 +388,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             shell_table = Table(
                 tbl_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 4) * mm,
+                    float(label_settings["label_image_size_length"]) * (1 / 4) * mm,
+                    float(label_settings["label_image_size_length"]) * (1 / 4) * mm,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -373,7 +399,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 ],
             )
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -381,16 +407,15 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            "AEO" + str(booking.b_bookingID_Visual) + str(j).zfill(3)
-                            or "",
+                            "AA" + str(booking.b_bookingID_Visual) + str(j).zfill(3) or "",
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Order Ref: %s</font>"
                         % (
-                            label_settings["font_size_medium"],
-                            booking_line.sscc or "N/A",
+                            label_settings["font_size_medium"], 
+                            booking_line.sscc or "N/A"
                         ),
                         style_left,
                     ),
@@ -411,7 +436,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
             Story.append(shell_table)
 
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             barcode = gen_barcode(booking, j)
 
@@ -420,7 +445,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     code128.Code128(
                         barcode,
                         barHeight=15 * mm,
-                        barWidth=2.5,
+                        barWidth=0.7,
                         humanReadable=False,
                     )
                 ],
@@ -444,11 +469,11 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_parcelId = [
                 [
                     Paragraph(
-                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AEO%s%s</b></font>"
+                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AA%s%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
                             booking.b_bookingID_Visual or "",
-                            str(j).zfill(3),
+                            str(j).zfill(3)
                         ),
                         style_left,
                     ),
@@ -477,8 +502,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 tbl_data2,
                 colWidths=(
                     45,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
-                    - 45,
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm - 45,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -547,12 +571,12 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s %s, %s</font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
                             booking.de_to_Contact_F_LName or "",
@@ -576,7 +600,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -597,7 +621,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
-                            carrier,
+                            '',
                         ),
                         style_left,
                     ),
@@ -683,7 +707,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -710,7 +734,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -719,7 +743,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             booking.de_to_PickUp_Instructions_Address,
-                            booking.de_to_Pick_Up_Instructions_Contact,
+                            booking.de_to_Pick_Up_Instructions_Contact
                         ),
                         style_left,
                     )
@@ -738,7 +762,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -747,15 +771,15 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             # booking.vx_account_code or "", //test
-                            "DELVME",
+                            "Test Account"
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Date: %s</font>"
                         % (
-                            label_settings["font_size_medium"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
+                            label_settings["font_size_medium"], 
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or ""
                         ),
                         style_left,
                     ),
@@ -785,7 +809,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(signature_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -831,7 +855,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(signature_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             hr = HRFlowable(
                 width=(float(label_settings["label_image_size_length"]) * mm),
@@ -844,7 +868,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 dash=None,
             )
             Story.append(hr)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
