@@ -32,6 +32,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
     class Meta:
         model = BOK_1_headers
         fields = (
+            "pk_auto_id",
             "pk_header_id",
             "client_booking_id",
             "b_client_name",
@@ -52,6 +53,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_010_b_notes",
             "b_012_b_driver_bring_connote",
             "b_013_b_package_job",
+            "b_014_b_pu_handling_instructions",
             "b_016_b_pu_instructions_address",
             "b_019_b_pu_tail_lift",
             "b_021_b_pu_avail_from_date",
@@ -82,6 +84,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_050_b_del_by_date",
             "b_051_b_del_by_time_hour",
             "b_052_b_del_by_time_minute",
+            "b_053_b_del_address_type",
             "b_054_b_del_company",
             "b_055_b_del_address_street_1",
             "b_056_b_del_address_street_2",
@@ -99,6 +102,16 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_069_b_del_floor_number",
             "b_070_b_del_floor_access_by",
             "b_071_b_del_sufficient_space",
+            "b_072_b_pu_no_of_assists",
+            "b_073_b_del_no_of_assists",
+            "b_074_b_pu_access",
+            "b_075_b_del_access",
+            "b_076_b_pu_service",
+            "b_077_b_del_service",
+            "b_078_b_pu_location",
+            "b_079_b_pu_floor_number",
+            "b_080_b_pu_floor_access_by",
+            "b_081_b_pu_auto_pack",
             "b_000_3_consignment_number",
             "success",
             "x_booking_Created_With",
@@ -118,6 +131,8 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     )
     fk_header_id = serializers.CharField(validators=[should_have_value])
     success = serializers.CharField(validators=[should_have_value])
+    # Sequence
+    zbl_121_integer_1 = serializers.IntegerField(required=False)
 
     class Meta:
         model = BOK_2_lines
@@ -136,6 +151,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",
             "e_item_type",
+            "zbl_121_integer_1",  # Sequence
         )
 
 

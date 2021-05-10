@@ -15,13 +15,30 @@ elif settings.ENV == "prod":
 PRICING_TIME = 10  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost"
-AVAILABLE_FPS_4_FC = ["Startrack", "AUSPost", "TNT", "Capital", "Hunter"]
+AVAILABLE_FPS_4_FC = [
+    "Startrack",
+    "AUSPost",
+    "TNT",
+    "Capital",
+    "Hunter",
+    "Sendle",
+    "Allied",
+    "Camerons",
+    "Toll",
+    "Century",
+]
 
 BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
-    "demo": {"service_types": ["standard", "vip", "premium"]},
+    # "allied": {
+    #     "service_types": [
+    #         "Road Express",
+    #         "Standard Pallet Rate",
+    #         "Oversized Pallet Rate",
+    #     ]
+    # },
 }
 
 
@@ -153,7 +170,6 @@ FP_CREDENTIALS = {
                 "accountCode": "PLUMPR",
                 "accountKey": "UExVTVBSOnBsdXBybw==",
                 "accountPassword": "plupro",
-                "pricingOnly": True,
             },
         },
     },

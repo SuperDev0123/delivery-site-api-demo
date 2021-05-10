@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 
 from .views import *
-from .views_api import *
+from .views_client import *
 from .views_zoho import *
 from .views_external_apis import *
 from .fp_apis import apis as fp_apis
@@ -29,6 +29,7 @@ router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
 router.register(r"vehicles", VehiclesViewSet, basename="vehicles")
+router.register(r"pallet", PalletViewSet, basename="pallet")
 router.register(r"availabilities", AvailabilitiesViewSet, basename="availabilities")
 router.register(r"fp-cost", FPCostsViewSet, basename="fp_cost")
 router.register(r"pricing_rules", PricingRulesViewSet, basename="pricing_rules")
@@ -88,10 +89,10 @@ urlpatterns += [
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
+    url(r"^boks/auto_repack/", auto_repack),
     url(r"^reprint_label/", reprint_label),
     url(r"^manifest/", manifest_boks),
     # BOK apis
-    url(r"^boks/order/", order_boks),
     url(r"^boks/", push_boks),
     url(r"^price/partial/", partial_pricing),
     # External apis

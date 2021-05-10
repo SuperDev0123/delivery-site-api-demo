@@ -41,7 +41,7 @@ from api.fp_apis.utils import (
 from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 @api_view(["POST"])
@@ -55,7 +55,7 @@ def tracking(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         payload = get_tracking_payload(booking, fp_name)
 
-        logger.info(f"### Payload ({fp_name} tracking): {payload}")
+        # logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
 
@@ -88,7 +88,7 @@ def tracking(request, fp_name):
 
             return JsonResponse(
                 {
-                    "message": f"DME status: {booking.b_status},FP status: {booking.b_status_API}",
+                    "message": f"DME status: {booking.b_status}, FP status: {booking.b_status_API}",
                     "b_status": booking.b_status,
                     "b_status_API": booking.b_status_API,
                 },
@@ -190,7 +190,8 @@ def rebook(request, fp_name):
             s0 = json.dumps(
                 json_data, indent=2, sort_keys=True, default=str
             )  # Just for visual
-            logger.info(f"### Response ({fp_name} rebook): {s0}")
+            # logger.info(f"### Response ({fp_name} rebook): {s0}")
+            logger.info(f"### Response ({fp_name} rebook): {response.status_code}")
 
             if response.status_code == 200:
                 try:
@@ -576,7 +577,6 @@ def get_label(request, fp_name):
         _fp_name = fp_name.lower()
 
         error_msg = pre_check_label(booking)
-
         if error_msg:
             return JsonResponse(
                 {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
@@ -1047,22 +1047,18 @@ def pricing(request):
         return JsonResponse(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    json_results = ApiBookingQuotesSerializer(
+        results, many=True, context={"booking": booking}
+    ).data
+
+    if is_pricing_only:
+        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
     else:
-        json_results = ApiBookingQuotesSerializer(
-            results, many=True, context={"booking": booking}
-        ).data
+        auto_select_pricing(booking, results, auto_select_type)
 
-        if is_pricing_only:
-            API_booking_quotes.objects.filter(
-                fk_booking_id=booking.pk_booking_id
-            ).delete()
-        else:
-            auto_select_pricing(booking, results, auto_select_type)
-
-        return JsonResponse(
-            {"success": True, "message": message, "results": json_results},
-            status=status.HTTP_200_OK,
-        )
+    res_json = {"success": True, "message": message, "results": json_results}
+    return JsonResponse(res_json, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -1113,3 +1109,39 @@ def update_servce_code(request, fp_name):
         error_msg = "GetAccounts is failed."
         _set_error(booking, error_msg)
         return JsonResponse({"message": error_msg})
+
+
+def get_etd(booking):
+    """
+    Avalilable FPs: Startrack
+    """
+    LOG_ID = "GET_ETD"
+    fp_name = booking.vx_freight_provider
+    _fp_name = booking.vx_freight_provider.lower()
+
+    try:
+        payload = get_etd_payload(booking, _fp_name)
+
+        logger.info(f"### Payload ({fp_name} ETD): {payload}")
+        url = DME_LEVEL_API_URL + "/pricing/getetd"
+        response = requests.post(url, params={}, json=payload)
+
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        logger.info(f"{LOG_ID} {json_data}")
+
+        business_days_min = json_data["estimated_delivery_dates"][0][
+            "business_days_min"
+        ]
+        business_days_max = json_data["estimated_delivery_dates"][0][
+            "business_days_max"
+        ]
+
+        logger.info(f"{LOG_ID} min: {business_days_min}, max: {business_days_max}")
+
+        return business_days_max
+    except Exception as e:
+        trace_error.print()
+        error_msg = "GETETD is failed."
+        logger.error(f"{LOG_ID} {error_msg}, error: {str(e)}")
+        return None

@@ -27,7 +27,7 @@ from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -509,9 +509,7 @@ def buildSenderSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_type_of_packaging
-                    if booking_line.e_type_of_packaging
-                    else "N/A",
+                    booking_line.e_type_of_packaging or "N/A",
                 ),
                 style_left,
             ),
@@ -526,7 +524,7 @@ def buildSenderSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_item if booking_line.e_item else "N/A",
+                    booking_line.e_item or "N/A",
                 ),
                 style_left,
             ),
@@ -2447,7 +2445,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, filepath=None, lines=[], label_index=0):
+def build_label(booking, filepath=None, lines=[], label_index=0, sscc=None):
     logger.info(
         f"#110 [HUNTER LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )

@@ -23,7 +23,7 @@ elif settings.ENV == "dev":
 elif settings.ENV == "prod":
     S3_URL = "/opt/s3_public"
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 class UserPermissions(models.Model):
@@ -80,6 +80,7 @@ class DME_clients(models.Model):
     augment_pu_by_time = models.TimeField(blank=True, null=True, default=None)
     augment_pu_available_time = models.TimeField(blank=True, null=True, default=None)
     client_customer_mark_up = models.FloatField(default=0, null=True, blank=True)
+    gap_percent = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "dme_clients"
@@ -331,6 +332,7 @@ class Fp_freight_providers(models.Model):
     prices_count = models.IntegerField(default=1, blank=True, null=True)
     service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
+    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -581,19 +583,23 @@ class API_booking_quotes(models.Model):
 
 
 class Bookings(models.Model):
+    PDWD = "Pickup at Door / Warehouse Dock"
     DDWD = "Drop at Door / Warehouse Dock"
     DDW = "Drop in Door / Warehouse"
     ROC = "Room of Choice"
-    DEL_LOCATION_CHOICES = (
+    LOCATION_CHOICES = (
+        (PDWD, "Pickup at Door / Warehouse Dock"),
         (DDWD, "Drop at Door / Warehouse Dock"),
         (DDW, "Drop in Door / Warehouse"),
         (ROC, "Room of Choice"),
     )
 
+    NONE = "NONE"
     ELEVATOR = "Elevator"
     ESCALATOR = "Escalator"
     STAIRS = "Stairs"
     FLOOR_ACCESS_BY_CHOICES = (
+        (NONE, "NONE"),
         (ELEVATOR, "Elevator"),
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
@@ -618,6 +624,9 @@ class Bookings(models.Model):
     )
     b_status = models.CharField(
         verbose_name=_("Status"), max_length=40, blank=True, null=True, default=None
+    )
+    b_status_category = models.CharField(
+        max_length=32, blank=True, null=True, default=None
     )
     vx_freight_provider = models.CharField(
         verbose_name=_("Freight Provider"),
@@ -1780,7 +1789,7 @@ class Bookings(models.Model):
     delivery_booking = models.DateField(default=None, blank=True, null=True)
     de_to_assembly_required = models.BooleanField(default=False, null=True)
     de_to_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     de_to_floor_number = models.IntegerField(default=0, null=True)
     de_to_floor_access_by = models.CharField(
@@ -1835,14 +1844,12 @@ class Bookings(models.Model):
 
     @property
     def dme_delivery_status_category(self):
-        try:
-            utl_dme_status = Utl_dme_status.objects.get(
-                dme_delivery_status=self.b_status
-            )
-            return utl_dme_status.dme_delivery_status_category
-        except Exception as e:
-            logger.error(f"#551 [dme_delivery_status_category] - {str(e)}")
-            return ""
+        from api.fp_apis.utils import get_status_category_from_status
+
+        return get_status_category_from_status(self.b_status)
+
+    def lines(self):
+        return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
 
     def get_total_lines_qty(self):
         try:
@@ -1903,7 +1910,7 @@ class Bookings(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.gap_ra is not None:
+                if booking_line_data.gap_ra:
                     gap_ras.append(booking_line_data.gap_ra)
 
             return ", ".join(gap_ras)
@@ -2048,6 +2055,7 @@ class Booking_lines(models.Model):
         blank=True,
         default=None,
     )
+    zbl_121_integer_1 = models.IntegerField(blank=True, null=True, default=None)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2084,6 +2092,7 @@ class Booking_lines(models.Model):
             logger.error(f"#561 get_is_scanned - {str(e)}")
             return False
 
+    @property
     def gap_ras(self):
         try:
             _gap_ras = []
@@ -2092,7 +2101,7 @@ class Booking_lines(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.gap_ra is not None:
+                if booking_line_data.gap_ra:
                     _gap_ras.append(booking_line_data.gap_ra)
 
             return ", ".join(_gap_ras)
@@ -2103,7 +2112,9 @@ class Booking_lines(models.Model):
     @transaction.atomic
     def save(self, *args, **kwargs):
         # Check if all other lines are picked at Warehouse
-        if self.picked_up_timestamp:
+        creating = self._state.adding
+
+        if not creating and self.picked_up_timestamp:
             booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
 
             if "plum" in booking.b_client_name.lower():
@@ -2261,19 +2272,23 @@ class BOK_0_BookingKeys(models.Model):
 
 
 class BOK_1_headers(models.Model):
+    PDWD = "Pickup at Door / Warehouse Dock"
     DDWD = "Drop at Door / Warehouse Dock"
     DDW = "Drop in Door / Warehouse"
     ROC = "Room of Choice"
-    DEL_LOCATION_CHOICES = (
+    LOCATION_CHOICES = (
+        (PDWD, "Pickup at Door / Warehouse Dock"),
         (DDWD, "Drop at Door / Warehouse Dock"),
         (DDW, "Drop in Door / Warehouse"),
         (ROC, "Room of Choice"),
     )
 
+    NONE = "NONE"
     ELEVATOR = "Elevator"
     ESCALATOR = "Escalator"
     STAIRS = "Stairs"
     FLOOR_ACCESS_BY_CHOICES = (
+        (NONE, "NONE"),
         (ELEVATOR, "Elevator"),
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
@@ -2672,13 +2687,27 @@ class BOK_1_headers(models.Model):
     )
     b_067_assembly_required = models.BooleanField(default=False, null=True)
     b_068_b_del_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     b_069_b_del_floor_number = models.IntegerField(default=0, null=True)
     b_070_b_del_floor_access_by = models.CharField(
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     b_071_b_del_sufficient_space = models.BooleanField(default=True, null=True)
+    b_072_b_pu_no_of_assists = models.IntegerField(default=0, null=True)
+    b_073_b_del_no_of_assists = models.IntegerField(default=0, null=True)
+    b_074_b_pu_access = models.CharField(max_length=32, default=None, null=True)
+    b_075_b_del_access = models.CharField(max_length=32, default=None, null=True)
+    b_076_b_pu_service = models.CharField(max_length=32, default=None, null=True)
+    b_077_b_del_service = models.CharField(max_length=32, default=None, null=True)
+    b_078_b_pu_location = models.CharField(
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
+    )
+    b_079_b_pu_floor_number = models.IntegerField(default=0, null=True)
+    b_080_b_pu_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
+    b_081_b_pu_auto_pack = models.BooleanField(default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
@@ -2707,7 +2736,7 @@ class BOK_1_headers(models.Model):
 
             on_create_bok_1_handler(self)
 
-            if self.success == dme_constants.BOK_SUCCESS_4:
+            if self.success == dme_constants.BOK_SUCCESS_4 and self.fk_client_id == 7:
                 from api.operations.paperless import send_order_info
 
                 send_order_info(self)
@@ -2716,6 +2745,7 @@ class BOK_1_headers(models.Model):
 
             if (
                 self.success != old_obj.success
+                and self.fk_client_id == 7
                 and self.success == dme_constants.BOK_SUCCESS_4
             ):
                 from api.operations.paperless import send_order_info
@@ -2813,6 +2843,7 @@ class BOK_2_lines(models.Model):
     client_item_reference = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
+    is_deleted = models.BooleanField(default=False, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2898,6 +2929,7 @@ class BOK_3_lines_data(models.Model):
     success = models.CharField(
         verbose_name=_("Success"), max_length=1, default=2, blank=True, null=True
     )
+    is_deleted = models.BooleanField(default=False, null=True)
     zbld_101_text_1 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
@@ -2911,7 +2943,7 @@ class BOK_3_lines_data(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     zbld_105_text_5 = models.CharField(
-        max_length=64, blank=True, null=True, default=None
+        max_length=255, blank=True, null=True, default=None
     )
     zbld_121_integer_1 = models.IntegerField(blank=True, default=0, null=True)
     zbld_122_integer_2 = models.IntegerField(blank=True, default=0, null=True)
@@ -3811,6 +3843,9 @@ class FP_zones(models.Model):
     class Meta:
         db_table = "fp_zones"
 
+    def __str__(self):
+        return f"Zone #{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
+
 
 class FP_carriers(models.Model):
     id = models.AutoField(primary_key=True)
@@ -4047,9 +4082,25 @@ class FP_vehicles(models.Model):
         null=True,
         default=None,
     )
+    category = models.CharField(max_length=16, null=True, default=None)
 
     class Meta:
         db_table = "fp_vehicles"
+
+
+class Pallet(models.Model):
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=64, null=True, default=None)
+    type = models.CharField(max_length=64, null=True, default=None)
+    desc = models.CharField(max_length=254, null=True, default=None)
+    length = models.FloatField(null=True, default=None)
+    width = models.FloatField(null=True, default=None)
+    height = models.FloatField(null=True, default=None)
+    weight = models.FloatField(null=True, default=None)  # UOM: kg
+    max_weight = models.FloatField(null=True, default=None)  # UOM: kg
+
+    class Meta:
+        db_table = "utl_pallet"
 
 
 class FP_availabilities(models.Model):
@@ -4347,6 +4398,10 @@ class BookingSets(models.Model):
     auto_select_type = models.BooleanField(
         max_length=255, blank=True, null=True, default=True
     )  # True: lowest | False: Fastest
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    line_haul_date = models.DateField(null=True, blank=True, default=timezone.now)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -4681,3 +4736,20 @@ class FPRouting(models.Model):
 
     class Meta:
         db_table = "fp_routing"
+
+
+class AlliedETD(models.Model):
+    """
+    This table is used only for ALLIED Built-in pricing
+    """
+
+    id = models.AutoField(primary_key=True)
+    zone = models.ForeignKey(FP_zones, on_delete=models.CASCADE, null=True)
+    syd = models.FloatField(null=True, default=None)
+    mel = models.FloatField(null=True, default=None)
+    bne = models.FloatField(null=True, default=None)
+    adl = models.FloatField(null=True, default=None)
+    per = models.FloatField(null=True, default=None)
+
+    class Meta:
+        db_table = "allied_etd"

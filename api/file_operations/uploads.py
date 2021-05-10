@@ -34,18 +34,18 @@ def get_upload_status(request):
 
 def _save_import_file(dme_account_num, file, client_company_name):
     if settings.ENV in ["prod", "dev"]:  # PROD & DEV
-        file_path = (
-            f"/var/www/html/dme_api/media/onedrive/{str(dme_account_num)}_{file.name}"
-            if client_company_name != "Tempo"
-            else f"/dme_sftp/tempo_au/pickup_ext/{file.name}"
-        )
+        file_path = "/var/www/html/dme_api/media/onedrive"
+        file_name = f"{str(dme_account_num)}_{file.name}"
     else:  # LOCAL
-        file_path = f"./static/uploaded/{file.name}"
+        file_path = "./static/uploaded"
+        file_name = file.name
 
     if not os.path.isdir(file_path):
         os.makedirs(file_path)
 
-    with open(file_path, "wb+") as destination:
+    full_path = f"{file_path}/{file_name}"
+
+    with open(full_path, "wb+") as destination:
         for chunk in file.chunks():
             destination.write(chunk)
 

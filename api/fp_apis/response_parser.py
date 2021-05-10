@@ -3,15 +3,20 @@ import logging
 
 from django.conf import settings
 
-from .payload_builder import get_service_provider
-from api.common import convert_price, trace_error
+from api.fp_apis.payload_builder import get_service_provider
+from api.common import trace_error
+from api.models import DME_clients, Fp_freight_providers, DME_Error
 
-logger = logging.getLogger("dme_api")
-from api.models import *
+logger = logging.getLogger(__name__)
 
 
 def parse_pricing_response(
-    response, fp_name, booking, is_from_self=False, service_name=None
+    response,
+    fp_name,
+    booking,
+    is_from_self=False,
+    service_name=None,
+    account_code="DME",
 ):
     try:
         if is_from_self:
@@ -26,10 +31,14 @@ def parse_pricing_response(
         if fp_name == "hunter" and "price" in json_data:  # Hunter
             for price in json_data["price"]:
                 # Exclude "Air Freight" service on PROD
-                if settings.ENV == "prod" and price["serviceName"] == "Air Freight":
+                if (
+                    settings.ENV in ["prod", "dev"]
+                    and price["serviceName"] == "Air Freight"
+                ):
                     continue
 
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -45,6 +54,7 @@ def parse_pricing_response(
         elif fp_name == "tnt" and "price" in json_data:  # TNT
             for price in json_data["price"]:
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -63,6 +73,7 @@ def parse_pricing_response(
                     continue
 
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -75,6 +86,7 @@ def parse_pricing_response(
         elif fp_name == "capital" and "price" in json_data:  # Capital
             price = json_data["price"]
             result = {}
+            result["account_code"] = account_code
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
@@ -91,6 +103,7 @@ def parse_pricing_response(
 
             for price in json_data["price"]:
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -103,6 +116,7 @@ def parse_pricing_response(
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
             result = {}
+            result["account_code"] = account_code
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
@@ -148,6 +162,7 @@ def parse_pricing_response(
         elif is_from_self and "price" in json_data:  # Built-in
             for price in json_data["price"]:
                 result = {}
+                result["account_code"] = account_code
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
@@ -158,21 +173,14 @@ def parse_pricing_response(
                 result["service_name"] = (
                     price["serviceName"] if "serviceName" in price else None
                 )
-                result["account_code"] = "DME"
                 results.append(result)
-
-        for index, result in enumerate(results):
-            (
-                results[index]["client_mu_1_minimum_values"],
-                results[index]["mu_percentage_fuel_levy"],
-            ) = convert_price.fp_price_2_dme_price(result)
 
         return results
     except Exception as e:
         trace_error.print()
         error_msg = f"#580 Parse pricing res: FP - {fp_name}, {json_data}"
         logger.error(error_msg)
-        error_msg = f"#581 Parse pricing res: {e}"
+        error_msg = f"#581 Parse pricing error: {e}"
         logger.error(error_msg)
         return None
 

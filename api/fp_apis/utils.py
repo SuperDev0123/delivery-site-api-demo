@@ -7,8 +7,9 @@ from api.models import *
 from api.common import ratio
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
+from api.helpers.etd import get_etd
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _convert_UOM(value, uom, type, fp_name):
@@ -18,12 +19,9 @@ def _convert_UOM(value, uom, type, fp_name):
         converted_value = value * ratio.get_ratio(uom, FP_UOM[_fp_name][type], type)
         return round(converted_value, 2)
     except Exception as e:
-        logger.info(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
-        raise Exception(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
+        message = f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+        logger.info(message)
+        raise Exception(message)
 
 
 def gen_consignment_num(fp_name, booking_visual_id):
@@ -46,8 +44,6 @@ def gen_consignment_num(fp_name, booking_visual_id):
         return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
     elif _fp_name == "tnt":
         return f"DME{str(booking_visual_id).zfill(9)}"
-    elif _fp_name == "dhl":
-        return f"DME{str(booking_visual_id)}"
     else:
         return f"DME{str(booking_visual_id)}"
 
@@ -86,25 +82,31 @@ def get_status_category_from_status(status):
 
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
-    fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=pricing.freight_provider
-    )
-
-    if fp.fp_company_name.lower() == "tnt":
-        return float(pricing.etd) * 24
-
     try:
-        etd = FP_Service_ETDs.objects.get(
-            freight_provider_id=fp.id,
-            fp_delivery_time_description=pricing.etd,
-            fp_delivery_service_code=pricing.service_name,
-        )
-        return etd.fp_03_delivery_hours
-    except Exception as e:
-        logger.info(
-            f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
-        )
-        return 0
+        logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
+        etd, unit = get_etd(pricing.etd)
+
+        if unit == "Days":
+            etd *= 24
+
+        return etd
+    except:
+        try:
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name__iexact=pricing.freight_provider
+            )
+            etd = FP_Service_ETDs.objects.get(
+                freight_provider_id=fp.id,
+                fp_delivery_time_description=pricing.etd,
+                fp_delivery_service_code=pricing.service_name,
+            )
+
+            return etd.fp_03_delivery_hours
+        except Exception as e:
+            message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+            logger.info(message)
+            # raise Exception(message)
+            return None
 
 
 def _is_deliverable_price(pricing, booking):
@@ -122,11 +124,11 @@ def _is_deliverable_price(pricing, booking):
             delta_min -= booking.pu_PickUp_By_Time_Minutes
 
         delta_min = timeDelta.total_seconds() / 60 + delta_min
-        eta = get_etd_in_hour(pricing)
+        etd = get_etd_in_hour(pricing)
 
-        if not eta:
+        if not etd:
             return False
-        elif delta_min > eta * 60:
+        elif delta_min > etd * 60:
             return True
     else:
         return False
@@ -151,7 +153,8 @@ def _get_fastest_price(pricings):
                 etd
                 and fastest_pricing["etd_in_hour"]
                 and fastest_pricing["etd_in_hour"] == etd
-                and fastest_pricing["pricing"].fee > pricing.fee
+                and fastest_pricing["pricing"].client_mu_1_minimum_values
+                < pricing.client_mu_1_minimum_values
             ):
                 fastest_pricing["pricing"] = pricing
 
@@ -167,11 +170,15 @@ def _get_lowest_price(pricings):
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
             lowest_pricing["etd"] = get_etd_in_hour(pricing)
-        elif lowest_pricing and pricing.fee:
-            if float(lowest_pricing["pricing"].fee) > float(pricing.fee):
+        elif lowest_pricing and pricing.client_mu_1_minimum_values:
+            if float(lowest_pricing["pricing"].client_mu_1_minimum_values) > float(
+                pricing.client_mu_1_minimum_values
+            ):
                 lowest_pricing["pricing"] = pricing
                 lowest_pricing["etd"] = get_etd_in_hour(pricing)
-            elif float(lowest_pricing["pricing"].fee) == float(pricing.fee):
+            elif float(lowest_pricing["pricing"].client_mu_1_minimum_values) == float(
+                pricing.client_mu_1_minimum_values
+            ):
                 etd = get_etd_in_hour(pricing)
 
                 if lowest_pricing["etd"] and etd and lowest_pricing["etd"] > etd:

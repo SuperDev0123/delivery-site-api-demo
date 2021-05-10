@@ -1,4 +1,5 @@
 import re
+import time
 from datetime import datetime
 
 from rest_framework import serializers
@@ -37,6 +38,7 @@ from api.models import (
     CostOption,
     CostOptionMap,
     BookingCostOption,
+    Pallet,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -60,11 +62,64 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SimpleBookingSerializer(serializers.ModelSerializer):
+    de_Deliver_By_Time = serializers.SerializerMethodField(read_only=True)
+    remaining_time = serializers.SerializerMethodField(read_only=True)
+    remaining_time_in_seconds = serializers.SerializerMethodField(read_only=True)
+
+    def get_de_Deliver_By_Time(self, obj):
+        if not obj.de_Deliver_By_Minutes:
+            minute = "00"
+        else:
+            minute = str(obj.de_Deliver_By_Minutes).zfill(2)
+
+        if obj.de_Deliver_By_Hours != None:
+            return f"{str(obj.de_Deliver_By_Hours).zfill(2)}:{minute}"
+
+        return None
+
+    def get_remaining_time(self, obj):
+        if obj.de_Deliver_By_Date:
+            now = datetime.now()
+            future = datetime(
+                year=obj.de_Deliver_By_Date.year,
+                month=obj.de_Deliver_By_Date.month,
+                day=obj.de_Deliver_By_Date.day,
+                hour=obj.de_Deliver_By_Hours or 0,
+                minute=obj.de_Deliver_By_Minutes or 0,
+            )
+            time_delta = future - now
+            days = time_delta.days
+            hours = int(time_delta.seconds / 60 / 60)
+            mins = int(time_delta.seconds / 60 % 60)
+
+            return f"{str(days).zfill(2)}:{str(hours).zfill(2)}:{str(mins).zfill(2)}"
+
+        return None
+
+    def get_remaining_time_in_seconds(self, obj):
+        if obj.de_Deliver_By_Date:
+            now = datetime.now()
+            future = datetime(
+                year=obj.de_Deliver_By_Date.year,
+                month=obj.de_Deliver_By_Date.month,
+                day=obj.de_Deliver_By_Date.day,
+                hour=obj.de_Deliver_By_Hours or 0,
+                minute=obj.de_Deliver_By_Minutes or 0,
+            )
+            time_delta = future - now
+            days = time_delta.days
+            return days * 24 * 3600 + time_delta.seconds
+
+        return 0
+
     class Meta:
         model = Bookings
         read_only_fields = (
             "clientRefNumbers",  # property
             "gap_ras",  # property
+            "de_Deliver_By_Time",
+            "remaining_time",
+            "remaining_time_in_seconds",
         )
         fields = read_only_fields + (
             "id",
@@ -90,6 +145,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "pu_Address_State",
             "de_To_Address_State",
             "b_status",
+            "b_status_category",
             "b_dateBookedDate",
             "s_20_Actual_Pickup_TimeStamp",
             "s_21_Actual_Delivery_TimeStamp",
@@ -108,6 +164,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "pu_PickUp_By_Date",
             "de_Deliver_From_Date",
             "de_Deliver_By_Date",
+            "b_client_order_num",
             "b_client_sales_inv_num",
             "b_client_name_sub",
             "x_manual_booked_flag",
@@ -128,6 +185,8 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "b_error_Capture",
             "kf_client_id",
             "z_locked_status_time",
+            "b_booking_Priority",
+            "b_booking_Category",
         )
 
 
@@ -138,6 +197,7 @@ class BookingSerializer(serializers.ModelSerializer):
     pricing_service_name = serializers.SerializerMethodField(read_only=True)
     pricing_account_code = serializers.SerializerMethodField(read_only=True)
     is_auto_augmented = serializers.SerializerMethodField(read_only=True)
+    customer_cost = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -174,6 +234,14 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return False
 
+    def get_customer_cost(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", None)
+
+        if client_customer_mark_up and obj.inv_sell_quoted:
+            return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
+
+        return None
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -183,11 +251,11 @@ class BookingSerializer(serializers.ModelSerializer):
             "pricing_account_code",  # serializer method
             "pricing_service_name",  # serializer method
             "business_group",  # property
-            "dme_delivery_status_category",  # property
             "client_item_references",  # property
             "clientRefNumbers",  # property
             "gap_ras",  # property
             "is_auto_augmented",  # Auto Augmented
+            "customer_cost",  # Customer cost (Client: Plum)
         )
         fields = read_only_fields + (
             "id",
@@ -573,7 +641,7 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client_employees
-        fields = "__all__"
+        exclude = ("status_time",)
 
     def get_warehouse_name(self, instance):
         if instance.warehouse_id:
@@ -701,3 +769,9 @@ class BookingCostOptionSerializer(serializers.ModelSerializer):
             "z_modifiedBy",
             "is_active",
         )
+
+
+class PalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pallet
+        fields = "__all__"

@@ -3,7 +3,7 @@ import logging
 from api.models import DME_clients, Client_Auto_Augment, Client_Process_Mgr
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def post_delete_handler(instance):

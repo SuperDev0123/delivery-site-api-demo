@@ -21,6 +21,14 @@ def send_booking_status_email(bookingId, emailName, sender):
 
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
+
+    # Works for only `Tempo Pty Ltd`
+    if not booking.kf_client_id in [
+        "37C19636-C5F9-424D-AD17-05A056A8FBDB",
+        "feb8c98f-3156-4241-8413-86c7af99bf4e",
+    ]:
+        return
+
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")

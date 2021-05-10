@@ -4,7 +4,7 @@ import logging
 from api.models import Client_Products
 from api.operations import product_operations as product_oper
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _get_bok_1_modifications(client, old_bok_1, bok_1):
