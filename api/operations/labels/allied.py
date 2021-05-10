@@ -94,7 +94,7 @@ def gen_barcode(booking, item_no=0):
     return f"AEO{visual_id}{item_index}"
 
 
-def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
+def build_label(booking, filepath, lines, label_index, one_page_label):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
