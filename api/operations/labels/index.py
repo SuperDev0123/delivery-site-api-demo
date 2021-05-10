@@ -1,5 +1,5 @@
 from api.models import Bookings, Fp_freight_providers
-from api.operations.labels import ship_it, dhl, hunter, tnt, allied
+from api.operations.labels import ship_it, dhl, hunter, hunter_thermal, tnt, allied
 
 
 def build_label(
@@ -12,7 +12,7 @@ def build_label(
             booking, file_path, lines, label_index, sscc, one_page_label
         )
     elif fp_name == "hunter":
-        file_path, file_name = hunter.build_label(
+        file_path, file_name = hunter_thermal.build_label(
             booking, file_path, lines, label_index, sscc, one_page_label
         )
     elif fp_name == "tnt":
@@ -23,8 +23,8 @@ def build_label(
         file_path, file_name = allied.build_label(
             booking, file_path, lines, label_index, sscc, one_page_label
         )
-    else:  # "auspost", "startrack", "TNT", "State Transport", "ship-it", "Allied"
-        file_path, file_name = ship_it.build_label(
+    else:  # "auspost", "startrack", "State Transport"
+        file_path, file_name = allied.build_label(
             booking, file_path, lines, label_index, sscc, one_page_label
         )
 
@@ -33,7 +33,7 @@ def build_label(
 
 def get_barcode(booking, booking_lines):
     """
-    Build barcode for label
+    Get barcode for label
     """
     result = None
     fp_name = booking.vx_freight_provider.lower()

@@ -143,9 +143,10 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 1
+    totalQty = 0
     if one_page_label:
         lines = [lines[0]]
+        totalQty = 1
     else:
         for booking_line in lines:
             totalQty = totalQty + booking_line.e_qty
