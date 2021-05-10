@@ -40,8 +40,8 @@ def _save_import_file(dme_account_num, file, client_company_name):
         file_path = "./static/uploaded"
         file_name = file.name
 
-    # if not os.path.isdir(file_path):
-    #     os.makedirs(file_path)
+    if not os.path.isdir(file_path):
+        os.makedirs(file_path)
 
     full_path = f"{file_path}/{file_name}"
 
