@@ -43,7 +43,7 @@ from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 class BOK_0_ViewSet(viewsets.ViewSet):
@@ -144,6 +144,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             )
             bok_1.b_076_b_pu_service = request.data.get("b_076_b_pu_service")
             bok_1.b_077_b_del_service = request.data.get("b_077_b_del_service")
+            bok_1.b_081_b_pu_auto_pack = request.data.get("b_081_b_pu_auto_pack")
             bok_1.save()
             res_json = {"success": True, "message": "Freigth options are updated."}
 
@@ -171,7 +172,12 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
         try:
             bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
-            bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+            bok_2s = BOK_2_lines.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
+            bok_3s = BOK_3_lines_data.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
             quote_set = API_booking_quotes.objects.filter(
                 fk_booking_id=bok_1.pk_header_id, is_used=False
             )
@@ -179,6 +185,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
             result = BOK_1_Serializer(bok_1).data
             result["bok_2s"] = BOK_2_Serializer(bok_2s, many=True).data
+            result["bok_3s"] = BOK_3_Serializer(bok_3s, many=True).data
             result["pricings"] = []
             best_quotes = quote_set
 
@@ -408,7 +415,7 @@ def push_boks(request):
 @api_view(["POST"])
 def scanned(request):
     """
-    called as get_label
+    called as `get_label`
 
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
@@ -481,8 +488,8 @@ def reprint_label(request):
 
         if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
             result = plum.reprint_label(params=request.GET, client=client)
-        elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-            result = jason_l.reprint_label(params=request.GET, client=client)
+        # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+        #     result = jason_l.reprint_label(params=request.GET, client=client)
 
         logger.info(f"#858 {LOG_ID} {json.dumps(result, indent=4)[:64]}")
         return Response(result)
@@ -514,15 +521,41 @@ def manifest_boks(request):
                 client=client,
                 username=user.username,
             )
-        elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-            result = jason_l.manifest(
-                payload=request.data,
-                client=client,
-                username=user.username,
-            )
 
         logger.info(f"#858 {LOG_ID} {result}")
         return Response(result)
+    except Exception as e:
+        logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))  # SECURITY WARNNING
+def auto_repack(request):
+    """
+    When User try to tick/untick auto_repack freight option on Pricing page
+    """
+    LOG_ID = "[AUTO REPACK]"
+    user = request.user
+    logger.info(f"@850 {LOG_ID} Requester: {user.username}")
+    logger.info(f"@851 {LOG_ID} Payload: {request.data}")
+
+    try:
+        # client = get_client(user)
+        # dme_account_num = client.dme_account_num
+
+        # if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
+        #     result = plum.ready_boks(payload=request.data, client=client)
+        # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+        client = DME_clients.objects.get(
+            dme_account_num="1af6bcd2-6148-11eb-ae93-0242ac130002"
+        )
+        result = jason_l.auto_repack(payload=request.data, client=client)
+
+        logger.info(f"#858 {LOG_ID} {result}")
+        return Response({"success": True, "message": result})
     except Exception as e:
         logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
         trace_error.print()

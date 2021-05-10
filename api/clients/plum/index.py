@@ -43,7 +43,7 @@ from api.operations import paperless
 from api.clients.operations.index import get_warehouse, get_suburb_state
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):
@@ -107,7 +107,7 @@ def partial_pricing(payload, client, warehouse):
             logger.info(f"@816 {LOG_ID} {message}")
             raise Exception(message)
 
-        items = product_oper.get_product_items(bok_2s, client)
+        items = product_oper.get_product_items(bok_2s, client, True)
 
         for item in items:
             booking_line = {
@@ -367,7 +367,7 @@ def push_boks(payload, client, username, method):
             old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
             old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
             push_operations.detect_modified_data(
-                client, old_bok_1, old_bok_2s, old_bok_3s, boks_json
+                client, old_bok_1, old_bok_2s, old_bok_3s, payload
             )
 
             old_bok_1.delete()
@@ -517,8 +517,7 @@ def push_boks(payload, client, username, method):
 
         # Save bok_2s
         if "model_number" in bok_2s[0]:  # Product & Child items
-            ignore_product = is_biz
-            items = product_oper.get_product_items(bok_2s, client, ignore_product)
+            items = product_oper.get_product_items(bok_2s, client, is_web)
             new_bok_2s = []
 
             for index, item in enumerate(items):
@@ -624,7 +623,6 @@ def push_boks(payload, client, username, method):
         _bok_2 = bok_2["booking_line"]
         bok_2_line = {
             "fk_booking_id": _bok_2["fk_header_id"],
-            "packagingType": _bok_2["l_001_type_of_packaging"],
             "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
             "e_qty": _bok_2["l_002_qty"],
             "e_item": _bok_2["l_003_item"],

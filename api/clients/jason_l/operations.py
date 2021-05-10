@@ -5,7 +5,7 @@ import subprocess
 
 from django.conf import settings
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_picked_items(order_num, sscc):

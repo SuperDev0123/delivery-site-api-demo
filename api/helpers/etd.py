@@ -11,6 +11,9 @@ def get_etd(etd_str):
     if etd_str == "Overnight":
         return etd, unit
 
+    if is_float(etd_str):
+        return float(etd_str), unit
+
     temp1 = etd_str.split(",")
     temp2, temp3 = [], []
 

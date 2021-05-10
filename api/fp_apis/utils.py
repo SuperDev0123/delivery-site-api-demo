@@ -9,7 +9,7 @@ from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _convert_UOM(value, uom, type, fp_name):
@@ -19,12 +19,9 @@ def _convert_UOM(value, uom, type, fp_name):
         converted_value = value * ratio.get_ratio(uom, FP_UOM[_fp_name][type], type)
         return round(converted_value, 2)
     except Exception as e:
-        logger.info(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
-        raise Exception(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
+        message = f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+        logger.info(message)
+        raise Exception(message)
 
 
 def gen_consignment_num(fp_name, booking_visual_id):
@@ -86,6 +83,7 @@ def get_status_category_from_status(status):
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
     try:
+        logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
         etd, unit = get_etd(pricing.etd)
 
         if unit == "Days":

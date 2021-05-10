@@ -22,7 +22,7 @@ from api.fp_apis.constants import (
 )
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def book(fp_name, booking, booker):

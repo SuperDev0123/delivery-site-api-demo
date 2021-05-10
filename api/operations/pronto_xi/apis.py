@@ -7,7 +7,7 @@ from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
 from api.models import BOK_1_headers, BOK_2_lines, Log
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 # Constants
@@ -28,7 +28,7 @@ def parse_token_xml(response):
 
 
 def get_token():
-    logger.info("@630 [PRONTO_XI TOKEN] Start")
+    logger.info("@630 [PRONTO TOKEN] Start")
     url = f"{API_URL}/login"
     headers = {
         "X-Pronto-Username": USERNAME,
@@ -37,15 +37,15 @@ def get_token():
 
     response = send_soap_request(url, "", headers)
     # logger.info(
-    #     f"@631 [PRONTO_XI TOKEN] response status_code: {response.status_code}, content: {response.content}"
+    #     f"@631 [PRONTO TOKEN] response status_code: {response.status_code}, content: {response.content}"
     # )
 
     if response.status_code != 200:
-        logger.error(f"@632 [PRONTO_XI TOKEN] Failed")
+        logger.error(f"@632 [PRONTO TOKEN] Failed")
         return False
 
     token = parse_token_xml(response)["token"]
-    logger.info(f"@631 [PRONTO_XI TOKEN] Finish - {token}")
+    logger.info(f"@631 [PRONTO TOKEN] Finish - {token}")
     return token
 
 
@@ -102,18 +102,20 @@ def parse_order_xml(response):
         ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode")
         OrderedQty = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}OrderedQty")
         SequenceNo = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}SequenceNo")
+        UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
         line = {
             "model_number": ItemCode.text,
             "qty": int(float(OrderedQty.text)),
             "sequence": int(float(SequenceNo.text)),
+            "UOMCode": UOMCode.text,
         }
         lines.append(line)
 
     return order, lines
 
 
-def get_order(order_num="20088"):
-    logger.info("@640 [PRONTO_XI GET ORDER] Start")
+def get_order(order_num):
+    logger.info(f"@640 [PRONTO GET ORDER] Start! Order: {order_num}")
 
     token = get_token()
     url = f"{API_URL}/api/SalesOrderGetSalesOrders"
@@ -149,6 +151,8 @@ def get_order(order_num="20088"):
                                                 <ItemCode /> \
                                                 <OrderedQty /> \
                                                 <SequenceNo /> \
+                                                <UOMCode /> \
+                                                <TypeCode /> \
                                             </SalesOrderLine> \
                                         </SalesOrderLines> \
                                     </RequestFields> \
@@ -160,14 +164,53 @@ def get_order(order_num="20088"):
 
     response = send_soap_request(url, body, headers)
     logger.info(
-        f"@631 [PRONTO_XI GET ORDER] response status_code: {response.status_code}, content: {response.content}"
+        f"@631 [PRONTO GET ORDER] response status_code: {response.status_code}, content: {response.content}"
     )
 
     if response.status_code != 200:
-        logger.error(f"@632 [PRONTO_XI GET ORDER] Failed")
+        logger.error(f"@632 [PRONTO GET ORDER] Failed")
         return False
 
     order, lines = parse_order_xml(response)
-    logger.info(f"@649 [PRONTO_XI GET ORDER] Finish order: {order}")
+    logger.info(f"@649 [PRONTO GET ORDER] Finish \norder: {order}\nlines: {lines}")
 
     return order, lines
+
+
+def send_info_back_to_pronto(booking, booking_lines):
+    LOG_ID = "[PRONTO SEND ORDER BACK]"
+    # logger.info(f"@640 {LOG_ID} Start! Order: {order_num}")
+
+    # token = get_token()
+    # url = f"{API_URL}/api/SalesOrderInsertSalesOrderLines"
+    # headers = {
+    #     "Content-Type": "application/x-www-form-urlencoded",
+    #     "X-Pronto-Token": token,
+    # }
+
+    # body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?>\
+    #             <SalesOrderInsertSalesOrderLinesRequest>\
+    #                 <SalesOrderLines>\
+    #                     <SalesOrderLine SOOrderNo="{booking.b_client_order_num}">\
+    #                         <TypeCode>SN</TypeCode>\
+    #                         <OrderedQty>{booking_line.e_qty}</OrderedQty>\
+    #                         <PriceOverrideFlag>Y</PriceOverrideFlag>\
+    #                         <ItemCode>{booking_line.e_item_type}</ItemCode>\
+    #                         <LineDescription>{booking_line.e_item}</LineDescription>\
+    #                         <ItemPrice></ItemPrice>\
+    #                         <SolUserOnlyDate1>01/01/2021</SolUserOnlyDate1>\
+    #                     </SalesOrderLine>\
+    #                 </SalesOrderLines>\
+    #             </SalesOrderInsertSalesOrderLinesRequest>'
+
+    # # response = send_soap_request(url, body, headers)
+    # logger.info(
+    #     f"@631 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+    # )
+
+    # if response.status_code != 200:
+    #     logger.error(f"@632 {LOG_ID} Failed")
+    #     return False
+    # else:
+    #     logger.error(f"@632 {LOG_ID} Success")
+    #     return True

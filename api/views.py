@@ -1,5 +1,6 @@
 import re
 import os
+import io
 import pytz
 import json
 import uuid
@@ -10,12 +11,18 @@ import operator
 import requests
 import tempfile
 import zipfile
+from base64 import b64encode
 from wsgiref.util import FileWrapper
 from datetime import datetime, date, timedelta
 from time import gmtime, strftime
 from ast import literal_eval
 from functools import reduce
 from pydash import _
+from django_rest_passwordreset.signals import (
+    reset_password_token_created,
+    post_password_reset,
+    pre_password_reset,
+)
 
 from django.shortcuts import render
 from django.core import serializers, files
@@ -29,10 +36,11 @@ from django.core.mail import EmailMultiAlternatives
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets, views, status, authentication, permissions
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from rest_framework.decorators import (
     api_view,
@@ -41,11 +49,7 @@ from rest_framework.decorators import (
     action,
 )
 from rest_framework.parsers import MultiPartParser
-from django_rest_passwordreset.signals import (
-    reset_password_token_created,
-    post_password_reset,
-    pre_password_reset,
-)
+from rest_framework.exceptions import ValidationError
 
 from api.serializers import *
 from api.models import *
@@ -80,6 +84,7 @@ from api.file_operations import (
     delete as delete_lib,
     downloads as download_libs,
 )
+from api.file_operations.operations import doesFileExist
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -88,7 +93,7 @@ elif settings.ENV == "dev":
 elif settings.ENV == "prod":
     S3_URL = "/opt/s3_public"
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 @receiver(reset_password_token_created)
@@ -860,38 +865,55 @@ class BookingsViewSet(viewsets.ViewSet):
                 # Mulitple search | Simple search | Project Name Search
                 if project_name and project_name.exists():
                     queryset = queryset.filter(b_booking_project=project_name)
-                elif multi_find_values and len(multi_find_values) > 0:
-                    preserved = Case(
-                        *[
-                            When(
-                                **{f"{multi_find_field}": multi_find_value, "then": pos}
-                            )
-                            for pos, multi_find_value in enumerate(multi_find_values)
-                        ]
-                    )
-                    filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
-
-                    if not multi_find_field in ["gap_ra", "clientRefNumber"]:
-                        queryset = queryset.filter(**filter_kwargs).order_by(preserved)
+                elif (
+                    multi_find_field
+                    and multi_find_values
+                    and len(multi_find_values) > 0
+                ):
+                    if multi_find_field == "postal_code":
+                        queryset = queryset.filter(
+                            de_To_Address_PostalCode__gte=multi_find_values[0],
+                            de_To_Address_PostalCode__lte=multi_find_values[1],
+                        )
                     else:
-                        line_datas = Booking_lines_data.objects.filter(
-                            **filter_kwargs
-                        ).order_by(preserved)
-
-                        booking_ids = []
-                        for line_data in line_datas:
-                            if line_data.booking():
-                                booking_ids.append(line_data.booking().id)
-
                         preserved = Case(
                             *[
-                                When(pk=pk, then=pos)
-                                for pos, pk in enumerate(booking_ids)
+                                When(
+                                    **{
+                                        f"{multi_find_field}": multi_find_value,
+                                        "then": pos,
+                                    }
+                                )
+                                for pos, multi_find_value in enumerate(
+                                    multi_find_values
+                                )
                             ]
                         )
-                        queryset = queryset.filter(pk__in=booking_ids).order_by(
-                            preserved
-                        )
+                        filter_kwargs = {f"{multi_find_field}__in": multi_find_values}
+
+                        if not multi_find_field in ["gap_ra", "clientRefNumber"]:
+                            queryset = queryset.filter(**filter_kwargs).order_by(
+                                preserved
+                            )
+                        else:
+                            line_datas = Booking_lines_data.objects.filter(
+                                **filter_kwargs
+                            ).order_by(preserved)
+
+                            booking_ids = []
+                            for line_data in line_datas:
+                                if line_data.booking():
+                                    booking_ids.append(line_data.booking().id)
+
+                            preserved = Case(
+                                *[
+                                    When(pk=pk, then=pos)
+                                    for pos, pk in enumerate(booking_ids)
+                                ]
+                            )
+                            queryset = queryset.filter(pk__in=booking_ids).order_by(
+                                preserved
+                            )
                 elif simple_search_keyword and len(simple_search_keyword) > 0:
                     if (
                         not "&" in simple_search_keyword
@@ -2276,6 +2298,119 @@ class BookingViewSet(viewsets.ViewSet):
             }
         )
 
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def get_labels(self, request):
+        LOG_ID = "[LABELS]"
+        b_client_booking_ref_num = request.GET.get("b_client_booking_ref_num", None)
+        message = f"#100 {LOG_ID}: b_client_booking_ref_num: {b_client_booking_ref_num}"
+        logger.info(message)
+
+        if not b_client_booking_ref_num:
+            message = "Wrong identifier."
+            logger.info(f"#101 {LOG_ID} {message}")
+            raise ValidationError({"message": message})
+
+        booking = (
+            Bookings.objects.filter(b_client_booking_ref_num=b_client_booking_ref_num)
+            .only(
+                "id",
+                "b_bookingID_Visual",
+                "b_client_name",
+                "b_client_order_num",
+                "b_client_sales_inv_num",
+                "v_FPBookingNumber",
+                "vx_freight_provider",
+                "z_label_url",
+                "pu_Address_State",
+            )
+            .first()
+        )
+
+        if not booking:
+            message = "Order does not exist!"
+            logger.info(f"#102 {LOG_ID} {message}")
+            raise ValidationError({"message": message})
+
+        logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
+
+        booking_lines = (
+            booking.lines()
+            .filter(is_deleted=False)
+            .only(
+                "pk_lines_id",
+                "sscc",
+                "e_item",
+                "e_item_type",
+                "e_qty",
+                "e_type_of_packaging",
+            )
+        )
+        sscc_arr = []
+        result_with_sscc = {}
+
+        for booking_line in booking_lines:
+            if booking_line.sscc and not booking_line.sscc in sscc_arr:
+                sscc_arr.append(booking_line.sscc)
+
+        for sscc in sscc_arr:
+            result_with_sscc[str(sscc)] = []
+
+            for booking_line in booking_lines:
+                if booking_line.sscc == sscc:
+                    label_url = None
+                    is_available = False
+
+                    # For TNT orders, DME builds label for each SSCC
+                    if booking.vx_freight_provider == "TNT":
+                        file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
+                        file_name = (
+                            booking.pu_Address_State
+                            + "_"
+                            + str(booking.b_bookingID_Visual)
+                            + "_"
+                            + str(booking_line.sscc)
+                            + ".pdf"
+                        )
+                        is_available = doesFileExist(file_path, file_name)
+                        label_url = (
+                            f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+                        )
+
+                        with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
+                            zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+                    # For Hunter orders, DME builds label for entire Booking
+                    # elif booking.vx_freight_provider == "Hunter":
+
+                    result_with_sscc[str(sscc)].append(
+                        {
+                            "pk_lines_id": booking_line.pk_lines_id,
+                            "sscc": booking_line.sscc,
+                            "e_item": booking_line.e_item,
+                            "e_item_type": booking_line.e_item_type,
+                            "e_qty": booking_line.e_qty,
+                            "e_type_of_packaging": booking_line.e_type_of_packaging,
+                            "is_available": is_available,
+                            "url": label_url,
+                            "zpl": zpl_data,
+                        }
+                    )
+
+        result = {
+            "id": booking.pk,
+            "b_bookingID_Visual": booking.b_bookingID_Visual,
+            "b_client_name": booking.b_client_name,
+            "b_client_order_num": booking.b_client_order_num,
+            "b_client_sales_inv_num": booking.b_client_sales_inv_num,
+            "v_FPBookingNumber": booking.v_FPBookingNumber,
+            "vx_freight_provider": booking.vx_freight_provider,
+            "no_of_sscc": len(result_with_sscc),
+            "url": booking.z_label_url,
+            "sscc_obj": result_with_sscc,
+        }
+
+        return JsonResponse({"success": True, "result": result})
+
 
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
@@ -3567,7 +3702,7 @@ def get_manifest(request):
     user_name = body["username"]
 
     try:
-        filenames = build_manifest(booking_ids, vx_freight_provider, user_name)
+        filenames = build_manifest(booking_ids, user_name)
         file_paths = []
 
         if vx_freight_provider.upper() == "TASFR":
@@ -3576,6 +3711,9 @@ def get_manifest(request):
         elif vx_freight_provider.upper() == "DHL":
             for filename in filenames:
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
+        else:
+            for filename in filenames:
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
@@ -3592,8 +3730,10 @@ def get_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
-        # print("get_mainifest error: ", e)
-        return JsonResponse({"error": "error"})
+        logger.error(f"get_mainifest error: {str(e)}")
+        return JsonResponse(
+            {"success": False, "message": "Please contact support center."}
+        )
 
 
 @api_view(["POST"])
@@ -3887,9 +4027,8 @@ class FileUploadView(views.APIView):
         return Response(file_name)
 
 
+@permission_classes((IsAuthenticated,))
 class FilesViewSet(viewsets.ViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
     def list(self, request):
         file_type = request.GET["fileType"]
         dme_files = DME_Files.objects.filter(file_type=file_type)
@@ -4153,9 +4292,8 @@ class RoleViewSet(viewsets.ModelViewSet):
     queryset = DME_Roles.objects.all()
 
 
+@permission_classes((IsAuthenticated,))
 class ChartsViewSet(viewsets.ViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-
     @action(detail=False, methods=["get"])
     def get_num_bookings_per_fp(self, request):
         try:
@@ -4529,3 +4667,4 @@ class BookingCostOptionViewSet(viewsets.ModelViewSet):
 class PalletViewSet(NoUpdateMixin, NoDestroyMixin, viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer
+    permission_classes = (AllowAny,)

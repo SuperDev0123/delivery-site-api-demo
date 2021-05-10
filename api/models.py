@@ -23,7 +23,7 @@ elif settings.ENV == "dev":
 elif settings.ENV == "prod":
     S3_URL = "/opt/s3_public"
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 class UserPermissions(models.Model):
@@ -332,6 +332,7 @@ class Fp_freight_providers(models.Model):
     prices_count = models.IntegerField(default=1, blank=True, null=True)
     service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
+    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -583,19 +584,23 @@ class API_booking_quotes(models.Model):
 
 
 class Bookings(models.Model):
+    PDWD = "Pickup at Door / Warehouse Dock"
     DDWD = "Drop at Door / Warehouse Dock"
     DDW = "Drop in Door / Warehouse"
     ROC = "Room of Choice"
-    DEL_LOCATION_CHOICES = (
+    LOCATION_CHOICES = (
+        (PDWD, "Pickup at Door / Warehouse Dock"),
         (DDWD, "Drop at Door / Warehouse Dock"),
         (DDW, "Drop in Door / Warehouse"),
         (ROC, "Room of Choice"),
     )
 
+    NONE = "NONE"
     ELEVATOR = "Elevator"
     ESCALATOR = "Escalator"
     STAIRS = "Stairs"
     FLOOR_ACCESS_BY_CHOICES = (
+        (NONE, "NONE"),
         (ELEVATOR, "Elevator"),
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
@@ -1785,7 +1790,7 @@ class Bookings(models.Model):
     delivery_booking = models.DateField(default=None, blank=True, null=True)
     de_to_assembly_required = models.BooleanField(default=False, null=True)
     de_to_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     de_to_floor_number = models.IntegerField(default=0, null=True)
     de_to_floor_access_by = models.CharField(
@@ -1843,6 +1848,9 @@ class Bookings(models.Model):
         from api.fp_apis.utils import get_status_category_from_status
 
         return get_status_category_from_status(self.b_status)
+
+    def lines(self):
+        return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
 
     def get_total_lines_qty(self):
         try:
@@ -2265,19 +2273,23 @@ class BOK_0_BookingKeys(models.Model):
 
 
 class BOK_1_headers(models.Model):
+    PDWD = "Pickup at Door / Warehouse Dock"
     DDWD = "Drop at Door / Warehouse Dock"
     DDW = "Drop in Door / Warehouse"
     ROC = "Room of Choice"
-    DEL_LOCATION_CHOICES = (
+    LOCATION_CHOICES = (
+        (PDWD, "Pickup at Door / Warehouse Dock"),
         (DDWD, "Drop at Door / Warehouse Dock"),
         (DDW, "Drop in Door / Warehouse"),
         (ROC, "Room of Choice"),
     )
 
+    NONE = "NONE"
     ELEVATOR = "Elevator"
     ESCALATOR = "Escalator"
     STAIRS = "Stairs"
     FLOOR_ACCESS_BY_CHOICES = (
+        (NONE, "NONE"),
         (ELEVATOR, "Elevator"),
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
@@ -2676,7 +2688,7 @@ class BOK_1_headers(models.Model):
     )
     b_067_assembly_required = models.BooleanField(default=False, null=True)
     b_068_b_del_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     b_069_b_del_floor_number = models.IntegerField(default=0, null=True)
     b_070_b_del_floor_access_by = models.CharField(
@@ -2690,12 +2702,13 @@ class BOK_1_headers(models.Model):
     b_076_b_pu_service = models.CharField(max_length=32, default=None, null=True)
     b_077_b_del_service = models.CharField(max_length=32, default=None, null=True)
     b_078_b_pu_location = models.CharField(
-        max_length=64, default=None, null=True, choices=DEL_LOCATION_CHOICES
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
     b_079_b_pu_floor_number = models.IntegerField(default=0, null=True)
     b_080_b_pu_floor_access_by = models.CharField(
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
+    b_081_b_pu_auto_pack = models.BooleanField(default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
@@ -2831,6 +2844,7 @@ class BOK_2_lines(models.Model):
     client_item_reference = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
+    is_deleted = models.BooleanField(default=False, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2916,6 +2930,7 @@ class BOK_3_lines_data(models.Model):
     success = models.CharField(
         verbose_name=_("Success"), max_length=1, default=2, blank=True, null=True
     )
+    is_deleted = models.BooleanField(default=False, null=True)
     zbld_101_text_1 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
@@ -2929,7 +2944,7 @@ class BOK_3_lines_data(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     zbld_105_text_5 = models.CharField(
-        max_length=64, blank=True, null=True, default=None
+        max_length=255, blank=True, null=True, default=None
     )
     zbld_121_integer_1 = models.IntegerField(blank=True, default=0, null=True)
     zbld_122_integer_2 = models.IntegerField(blank=True, default=0, null=True)
@@ -4068,6 +4083,7 @@ class FP_vehicles(models.Model):
         null=True,
         default=None,
     )
+    category = models.CharField(max_length=16, null=True, default=None)
 
     class Meta:
         db_table = "fp_vehicles"
@@ -4383,6 +4399,10 @@ class BookingSets(models.Model):
     auto_select_type = models.BooleanField(
         max_length=255, blank=True, null=True, default=True
     )  # True: lowest | False: Fastest
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    line_haul_date = models.DateField(null=True, blank=True, default=timezone.now)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

@@ -27,7 +27,7 @@ from api.models import Booking_lines, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -79,7 +79,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
-def build_label(booking, filepath, lines=[], label_index=0):
+def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -94,14 +94,24 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     # start pdf file name using naming convention
     if lines:
-        filename = (
-            booking.pu_Address_State
-            + "_"
-            + str(booking.b_bookingID_Visual)
-            + "_"
-            + str(lines[0].pk)
-            + ".pdf"
-        )
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
+            )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
     else:
         filename = (
             booking.pu_Address_State
@@ -119,9 +129,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 0
-    for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
+    totalQty = 1
+    if one_page_label:
+        lines = [lines[0]]
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -229,6 +242,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     for booking_line in lines:
         for j_index in range(booking_line.e_qty):
+            if one_page_label and j_index > 0:
+                continue
+
             logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
             tbl_data1 = [
                 [

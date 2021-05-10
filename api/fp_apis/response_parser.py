@@ -7,7 +7,7 @@ from api.fp_apis.payload_builder import get_service_provider
 from api.common import trace_error
 from api.models import DME_clients, Fp_freight_providers, DME_Error
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def parse_pricing_response(
@@ -31,7 +31,10 @@ def parse_pricing_response(
         if fp_name == "hunter" and "price" in json_data:  # Hunter
             for price in json_data["price"]:
                 # Exclude "Air Freight" service on PROD
-                if settings.ENV == "prod" and price["serviceName"] == "Air Freight":
+                if (
+                    settings.ENV in ["prod", "dev"]
+                    and price["serviceName"] == "Air Freight"
+                ):
                     continue
 
                 result = {}

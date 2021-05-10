@@ -214,9 +214,7 @@ if ENV == "prod":
                 "class": "bugsnag.handlers.BugsnagHandler",
             },
         },
-        "loggers": {
-            "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}
-        },
+        "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
     }
 else:
     LOGGING = {
@@ -241,9 +239,7 @@ else:
                 "formatter": "verbose",
             },
         },
-        "loggers": {
-            "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}
-        },
+        "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
     }
 
 # S3 url

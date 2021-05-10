@@ -27,7 +27,7 @@ from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(
@@ -49,11 +49,11 @@ style_center = ParagraphStyle(
     leading=10,
 )
 style_center_bg = ParagraphStyle(
-    name="right", 
-    parent=styles["Normal"], 
+    name="right",
+    parent=styles["Normal"],
     alignment=TA_CENTER,
     leading=16,
-    backColor="#64a1fc"
+    backColor="#64a1fc",
 )
 style_uppercase = ParagraphStyle(
     name="uppercase",
@@ -94,7 +94,7 @@ def gen_barcode(booking, item_no=0):
     return f"AEO{visual_id}{item_index}"
 
 
-def build_label(booking, filepath, lines=[], label_index=0):
+def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -107,20 +107,18 @@ def build_label(booking, filepath, lines=[], label_index=0):
         os.makedirs(filepath)
     # end check if pdfs folder exists
 
-    fp_id = Fp_freight_providers.objects.get(fp_company_name="Allied").id   
+    fp_id = Fp_freight_providers.objects.get(fp_company_name="Allied").id
     try:
         carrier = FP_zones.objects.get(
             state=booking.de_To_Address_State,
             suburb=booking.de_To_Address_Suburb,
             postal_code=booking.de_To_Address_PostalCode,
-            fk_fp=fp_id
+            fk_fp=fp_id,
         ).carrier
     except FP_zones.DoesNotExist:
-        carrier = ''
+        carrier = ""
     except Exception as e:
-        logger.info(
-            f"#110 [ALLIED LABEL] Error: {str(e)}"
-        )
+        logger.info(f"#110 [ALLIED LABEL] Error: {str(e)}")
 
     # start pdf file name using naming convention
     if lines:
@@ -150,8 +148,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     totalQty = 0
-    for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -207,10 +209,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
+            if one_page_label and k > 0:
+                continue
 
             data = [
                 [
-                    dme_img, 
+                    dme_img,
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
@@ -220,8 +224,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                             else "",
                         ),
                         style_center_bg,
-                    ), 
-                    allied_img
+                    ),
+                    allied_img,
                 ]
             ]
 
@@ -277,8 +281,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     Paragraph(
                         "<font size=%s>Date: %s</font>"
                         % (
-                            label_settings["font_size_medium"], 
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or ""
+                            label_settings["font_size_medium"],
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
                         ),
                         style_left,
                     ),
@@ -323,9 +327,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
             shell_table = Table(
                 tbl_data,
-                colWidths=(
-                    float(label_settings["label_image_size_length"]) * mm,
-                ),
+                colWidths=(float(label_settings["label_image_size_length"]) * mm,),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -384,15 +386,16 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            "AEO" + str(booking.b_bookingID_Visual) + str(j).zfill(3) or "",
+                            "AEO" + str(booking.b_bookingID_Visual) + str(j).zfill(3)
+                            or "",
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Order Ref: %s</font>"
                         % (
-                            label_settings["font_size_medium"], 
-                            booking_line.sscc or "N/A"
+                            label_settings["font_size_medium"],
+                            booking_line.sscc or "N/A",
                         ),
                         style_left,
                     ),
@@ -450,7 +453,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         % (
                             label_settings["font_size_medium"],
                             booking.b_bookingID_Visual or "",
-                            str(j).zfill(3)
+                            str(j).zfill(3),
                         ),
                         style_left,
                     ),
@@ -720,7 +723,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         % (
                             label_settings["font_size_medium"],
                             booking.de_to_PickUp_Instructions_Address,
-                            booking.de_to_Pick_Up_Instructions_Contact
+                            booking.de_to_Pick_Up_Instructions_Contact,
                         ),
                         style_left,
                     )
@@ -748,15 +751,15 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         % (
                             label_settings["font_size_medium"],
                             # booking.vx_account_code or "", //test
-                            "DELVME"
+                            "DELVME",
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Date: %s</font>"
                         % (
-                            label_settings["font_size_medium"], 
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or ""
+                            label_settings["font_size_medium"],
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
                         ),
                         style_left,
                     ),

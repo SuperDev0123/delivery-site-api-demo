@@ -89,6 +89,7 @@ urlpatterns += [
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
+    url(r"^boks/auto_repack/", auto_repack),
     url(r"^reprint_label/", reprint_label),
     url(r"^manifest/", manifest_boks),
     # BOK apis

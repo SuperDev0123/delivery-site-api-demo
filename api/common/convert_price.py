@@ -4,7 +4,7 @@ from api.models import DME_clients, Fp_freight_providers
 from api.fp_apis.constants import FP_CREDENTIALS
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _is_used_client_credential(fp_name, client_name, account_code):

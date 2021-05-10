@@ -25,7 +25,7 @@ from api.fp_apis.constants import (
 )
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def pricing(body, booking_id, is_pricing_only=False):
@@ -51,12 +51,15 @@ def pricing(body, booking_id, is_pricing_only=False):
             pk_booking_id = booking.pk_booking_id
             booking.api_booking_quote = None  # Reset pricing relation
             booking.save()
-            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).update(
-                is_used=True
-            )
             # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
         else:
             return False, "Booking does not exist", None
+
+    # Set is_used flag for existing old pricings
+    if booking.pk_booking_id:
+        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).update(
+            is_used=True
+        )
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
