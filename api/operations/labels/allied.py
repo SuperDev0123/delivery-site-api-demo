@@ -30,7 +30,11 @@ from api.fp_apis.utils import gen_consignment_num
 logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
-style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
+style_right = ParagraphStyle(
+    name="right", 
+    parent=styles["Normal"], 
+    alignment=TA_RIGHT
+)
 style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
@@ -90,7 +94,7 @@ def gen_barcode(booking, item_no=0):
     return f"AEO{visual_id}{item_index}"
 
 
-def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
+def build_label(booking, filepath, lines, label_index, one_page_label):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -478,8 +482,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 tbl_data2,
                 colWidths=(
                     45,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
-                    - 45,
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm - 45,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),

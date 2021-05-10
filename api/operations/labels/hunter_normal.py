@@ -119,7 +119,7 @@ class RotatedImage(Image):
         Image.draw(self)
 
 
-def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
+def build_label(booking, file_path, lines, label_index, one_page_label):
     logger.info(
         f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )

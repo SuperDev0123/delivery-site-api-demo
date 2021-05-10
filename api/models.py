@@ -348,6 +348,7 @@ class Fp_freight_providers(models.Model):
         blank=True,
         default=timezone.now,
     )
+    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
 
     class Meta:
         db_table = "fp_freight_providers"
