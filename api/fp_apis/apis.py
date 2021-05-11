@@ -55,7 +55,7 @@ def tracking(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         payload = get_tracking_payload(booking, fp_name)
 
-        # logger.info(f"### Payload ({fp_name} tracking): {payload}")
+        logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
         response = requests.post(url, params={}, json=payload)
 
@@ -67,7 +67,7 @@ def tracking(request, fp_name):
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         # Disabled on 2021-02-05
-        # logger.info(f"### Response ({fp_name} tracking): {s0}")
+        logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
@@ -80,6 +80,7 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
+            logger.info(f"@1 - {consignmentStatuses}")
             update_booking_with_tracking_result(
                 request, booking, fp_name, consignmentStatuses
             )

@@ -29,10 +29,13 @@ def _extract(fp_name, consignmentStatus):
         b_status_API = consignmentStatus["status"]
         status_desc = consignmentStatus["description"]
         event_time = consignmentStatus["statusUpdate"]
-        event_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
-        event_time = str(convert_to_UTC_tz(event_time))
-    elif fp_name.lower() == "sendle":
 
+        if event_time:
+            event_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
+            event_time = str(convert_to_UTC_tz(event_time))
+        else:
+            event_time = None
+    elif fp_name.lower() == "sendle":
         b_status_API = consignmentStatus["status"]
         status_desc = consignmentStatus["statusDescription"]
         event_time = consignmentStatus["statusUpdate"]

@@ -28,7 +28,7 @@ def parse_pricing_response(
         dme_client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
 
         results = []
-        if fp_name == "hunter" and "price" in json_data:  # Hunter
+        if fp_name in ["hunter", "hunter_v2"] and "price" in json_data:  # Hunter
             for price in json_data["price"]:
                 # Exclude "Air Freight" service on PROD
                 if (
@@ -42,7 +42,8 @@ def parse_pricing_response(
                 result["api_results_id"] = json_data["requestId"]
                 result["fk_booking_id"] = booking.pk_booking_id
                 result["fk_client_id"] = dme_client.company_name
-                result["freight_provider"] = get_service_provider(fp_name, False)
+                # result["freight_provider"] = get_service_provider(fp_name, False)
+                result["freight_provider"] = "Hunter"
                 result["etd"] = price["etd"] if "etd" in price else None
                 result["fee"] = price["netPrice"]
                 result["service_name"] = (

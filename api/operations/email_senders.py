@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from email.utils import COMMASPACE, formatdate
 
@@ -13,11 +14,17 @@ from api.models import (
 )
 from api.outputs.email import send_email
 
+logger = logging.getLogger(__name__)
+
 
 def send_booking_status_email(bookingId, emailName, sender):
     """
     When 'Tempo Pty Ltd' bookings status is updated
     """
+
+    if settings.ENV in ["local", "dev"]:
+        logger.info("Email trigger is ignored on LOCAL & DEV.")
+        return
 
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
     booking = Bookings.objects.get(pk=int(bookingId))
@@ -437,6 +444,10 @@ def send_status_update_email(booking, status, sender, status_url):
     When 'Plum Products Australia Ltd' bookings status is updated
     """
 
+    if settings.ENV in ["local", "dev"]:
+        logger.info("Email trigger is ignored on LOCAL & DEV.")
+        return
+
     cc_emails = []
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
@@ -511,6 +522,10 @@ def send_status_update_email(booking, status, sender, status_url):
 
 
 def send_email_to_admins(subject, message):
+    if settings.ENV in ["local", "dev"]:
+        logger.info("Email trigger is ignored on LOCAL & DEV.")
+        return
+
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"
     ).first()

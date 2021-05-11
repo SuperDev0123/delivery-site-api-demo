@@ -59,17 +59,13 @@ def get_service_provider(fp_name, upper=True):
         fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
 
         if fp_name.lower() == "startrack":
-            if upper:
-                return "ST"
-            else:
-                return fp.fp_company_name
+            return "ST" if upper else fp.fp_company_name
+        elif fp_name.lower() == "hunter":
+            return "HUNTER_V2"
         else:
-            if upper:
-                return fp_name.upper()
-            else:
-                return fp.fp_company_name
+            return fp_name.upper() if upper else fp.fp_company_name
     except Fp_freight_providers.DoesNotExist:
-        logger.info("#810 - Not supported FP!")
+        logger.error("#810 - Not supported FP!")
         return None
 
 
@@ -81,15 +77,13 @@ def _set_error(booking, error_msg):
 def get_tracking_payload(booking, fp_name):
     try:
         payload = {}
-        consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+        consignmentDetails = [{"consignmentNumber": booking.v_FPBookingNumber}]
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
-
         return payload
     except Exception as e:
-        # print(f"#400 - Error while build payload: {e}")
+        logger.error(f"#400 - Error while build payload: {e}")
         return None
 
 
