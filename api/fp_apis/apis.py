@@ -80,7 +80,6 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            logger.info(f"@1 - {consignmentStatuses}")
             update_booking_with_tracking_result(
                 request, booking, fp_name, consignmentStatuses
             )
