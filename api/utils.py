@@ -384,7 +384,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 ConsignmentNumber = xml.SubElement(
                     consignmentShipment, "ConsignmentNumber"
                 )
-                ConsignmentNumber.text = gen_consignment_num(vx_freight_provider, booking['b_bookingID_Visual'])
+                ConsignmentNumber.text = gen_consignment_num(
+                    vx_freight_provider, booking["b_bookingID_Visual"]
+                )
                 DespatchDate = xml.SubElement(consignmentShipment, "DespatchDate")
                 DespatchDate.text = str(booking["puPickUpAvailFrom_Date"])
                 CarrierService = xml.SubElement(consignmentShipment, "CarrierService")
@@ -504,10 +506,10 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 # end copying xml files to sftp server
 
                 # start update booking status in dme_booking table
-                sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
-                adr2 = ("Booked", get_sydney_now_time(), booking["pk_booking_id"])
-                mycursor.execute(sql2, adr2)
-                mysqlcon.commit()
+                # sql2 = "UPDATE dme_bookings set b_status = %s, b_dateBookedDate = %s WHERE pk_booking_id = %s"
+                # adr2 = ("Booked", get_sydney_now_time(), booking["pk_booking_id"])
+                # mycursor.execute(sql2, adr2)
+                # mysqlcon.commit()
             except Exception as e:
                 # print('@300 Allied XML - ', e)
                 return e
@@ -1222,7 +1224,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Account.text = ACCOUNT_CODE
 
                 ConsignmentNumber = xml.SubElement(Consignment, "CONSIGNMENTNUMBER")
-                ConsignmentNumber.text = gen_consignment_num(vx_freight_provider, booking['b_bookingID_Visual'])
+                ConsignmentNumber.text = gen_consignment_num(
+                    vx_freight_provider, booking["b_bookingID_Visual"]
+                )
 
                 Service = xml.SubElement(Consignment, "SERVICE")
                 Service.text = booking["vx_serviceName"]
@@ -1466,7 +1470,9 @@ def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
                 Account.text = ACCOUNT_CODE
 
                 ConsignmentNumber = xml.SubElement(Consignment, "CONSIGNMENTNUMBER")
-                ConsignmentNumber.text = gen_consignment_num(vx_freight_provider, booking['b_bookingID_Visual'])
+                ConsignmentNumber.text = gen_consignment_num(
+                    vx_freight_provider, booking["b_bookingID_Visual"]
+                )
 
                 Service = xml.SubElement(Consignment, "SERVICE")
                 Service.text = booking["vx_serviceName"]
