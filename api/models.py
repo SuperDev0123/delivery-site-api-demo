@@ -4754,3 +4754,18 @@ class AlliedETD(models.Model):
 
     class Meta:
         db_table = "allied_etd"
+
+
+class PostalCode(models.Model):
+    """
+    "QLD", "State", "Townsville", "4806-4824, 4835-4850, 9960-9979"
+    """
+
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=16, default=None, null=True)
+    state = models.CharField(max_length=16, default=None, null=True)
+    name = models.CharField(max_length=128, default=None, null=True)
+    range = models.CharField(max_length=255, default=None, null=True)
+
+    class Meta:
+        db_table = "postal_code"

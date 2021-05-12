@@ -78,6 +78,7 @@ from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
 from api.common.common_times import convert_to_UTC_tz
+from api.common.postal_code import get_postal_codes
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -870,11 +871,30 @@ class BookingsViewSet(viewsets.ViewSet):
                     and multi_find_values
                     and len(multi_find_values) > 0
                 ):
-                    if multi_find_field == "postal_code":
+                    if multi_find_field == "postal_code_pair":
                         queryset = queryset.filter(
                             de_To_Address_PostalCode__gte=multi_find_values[0],
                             de_To_Address_PostalCode__lte=multi_find_values[1],
                         )
+                    elif multi_find_field == "postal_code_type":
+                        postal_code_ranges = get_postal_codes(name=multi_find_values[0])
+                        or_filters = Q()
+                        or_filters.connector = Q.OR
+
+                        for one_or_range in postal_code_ranges:
+                            if "-" in one_or_range:
+                                _from = one_or_range.split("-")[0]
+                                _to = one_or_range.split("-")[1]
+                                or_filters.add(
+                                    Q(de_To_Address_PostalCode__gte=_from)
+                                    & Q(de_To_Address_PostalCode__lte=_to),
+                                    Q.OR,
+                                )
+                            else:
+                                _one = one_or_range
+                                or_filters.add(Q(de_To_Address_PostalCode=_one), Q.OR)
+
+                        queryset = queryset.filter(or_filters)
                     else:
                         preserved = Case(
                             *[
