@@ -19,22 +19,26 @@ def build_xml_with_bok(bok_1, bok_2s):
         message = "'b_client_order_num' is missing"
 
     if not bok_1.b_061_b_del_contact_full_name:
-        message = "'b_061_b_del_contact_full_name' is missing"
+        message = "{bok_1.b_client_order_num} issue: 'b_061_b_del_contact_full_name' is missing"
 
     if not bok_1.b_055_b_del_address_street_1:
-        message = "'b_055_b_del_address_street_1' is missing"
+        message = "{bok_1.b_client_order_num} issue: 'b_055_b_del_address_street_1' is missing"
 
     if not bok_1.b_058_b_del_address_suburb:
-        message = "'b_058_b_del_address_suburb' is missing"
+        message = (
+            "{bok_1.b_client_order_num} issue: 'b_058_b_del_address_suburb' is missing"
+        )
 
     if not bok_1.b_057_b_del_address_state:
-        message = "'b_057_b_del_address_state' is missing"
+        message = (
+            "{bok_1.b_client_order_num} issue: 'b_057_b_del_address_state' is missing"
+        )
 
     if not bok_1.quote:
-        message = "'quote' is missing"
+        message = "{bok_1.b_client_order_num} issue: no quotes"
 
     if not bok_1.b_059_b_del_address_postalcode:
-        message = "'b_059_b_del_address_postalcode' is missing"
+        message = "{bok_1.b_client_order_num} issue: 'b_059_b_del_address_postalcode' is missing"
 
     if message:
         raise Exception(message)
@@ -163,6 +167,10 @@ def build_xml_with_bok(bok_1, bok_2s):
     CustomerEmailAddress = ET.SubElement(Header, "CustomerEmailAddress")
     CustomerEmailAddress.text = bok_1.b_063_b_del_email
 
+    if len(bok_2s) == 0:
+        message = f"{bok_1.b_client_order_num} issue: 0 lines"
+        raise Exception(message)
+
     # Build Detail(s)
     for index, bok_2 in enumerate(bok_2s):
         Detail = ET.SubElement(SalesOrderToWMS, "Detail")
@@ -234,8 +242,8 @@ def send_order_info(bok_1):
     if settings.ENV == "local":
         return True
 
-    if settings.ENV == "prod":
-        return True
+    # if settings.ENV == "prod":
+    #     return True
 
     try:
         headers = {
