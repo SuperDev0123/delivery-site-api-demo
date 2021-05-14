@@ -443,7 +443,7 @@ def push_boks(payload, client, username, method):
         total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
         carton_cnt += bok_2_obj.l_002_qty
 
-    if number_of_pallets and carton_cnt > 1:
+    if number_of_pallets and carton_cnt > 2:
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
         new_bok_2s = []
