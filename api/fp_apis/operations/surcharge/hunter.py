@@ -1,4 +1,4 @@
-    def el0(param):
+def el0(param):
     if param['max_dimension'] >= 2.5 and param['max_dimension'] < 4:
         return {
             'name': 'Excess Lengths: 2.5m up to/not incl. 4.0m13 ',
@@ -18,13 +18,13 @@ def el1(param):
     else:
         return None
 
-
+# dummy value for below two
 def el2(param):
     if param['max_dimension'] >= 6:
         return {
             'name': 'Excess Lengths: 6.0m and greater13 ',
             'description': '',
-            'value': 'P.A.A'
+            'value': 150
         }
     else:
         return None
@@ -34,7 +34,7 @@ def rsd(param):
         return {
             'name': 'Deliveries to Private Addresses',
             'description': '',
-            'value': 'Refer Home Direct Plus Schedule'
+            'value': 10 
         }
     else:
         return None

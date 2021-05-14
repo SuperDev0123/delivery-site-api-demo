@@ -160,6 +160,7 @@
 #     else:
 #         return None
 
+# dummy values for below 3
 def op(param):
     if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
         return {
@@ -167,51 +168,51 @@ def op(param):
             'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
                 'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
                 'pallets. An additional pallet charge will apply.',
-            'value': 'unknown'
+            'value': 0.1 * param['dead_weight']
         }
     else:
         return None
 
 def bbs(param):
-    if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
+    if param['max_dimension'] >= 1.4:
         return {
             'name': 'Big Bulky Surcharge',
             'description': 'Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double ' + 
                 'the chargeable weight (the greater of either the cubic or dead weight) of the item travelling is charged.',
-            'value': '0.1 unknown'
+            'value': 0.1 * param['dead_weight']
         }
     else:
         return None
 
 def mcsp(param):
-    if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
+    if param['max_weight'] > 175:
         return {
             'name': 'Minimum Charge-Skids/ Pallets',
             'description': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your ' +
                 'freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.',
-            'value': '0.11 unknown'
+            'value': 0.11 * param['dead_weight']
         }
     else:
         return None
 
-def pd(param):
-    if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
-        return {
-            'name': 'Pallet Deliveries',
-            'description': 'If items are loaded onto a pallet, and the pallet is to be delivered intact, a full pallet charges will be charged. ' +
-                'A pallet charge will be made when it takes up a lift space, eg. nothing can be loaded on top of the pallet.',
-            'value': '0.12 unknown'
-        }
-    else:
-        return None
+# def pd(param):
+#     if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
+#         return {
+#             'name': 'Pallet Deliveries',
+#             'description': 'If items are loaded onto a pallet, and the pallet is to be delivered intact, a full pallet charges will be charged. ' +
+#                 'A pallet charge will be made when it takes up a lift space, eg. nothing can be loaded on top of the pallet.',
+#             'value': '0.12 unknown'
+#         }
+#     else:
+#         return None
 
    
-def tnt():
+def allied():
     return [
         op,
         bbs,
         mcsp,
-        pd
+        # pd
     ]
 
 

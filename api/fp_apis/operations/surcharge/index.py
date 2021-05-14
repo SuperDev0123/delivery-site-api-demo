@@ -7,6 +7,8 @@ from api.helpers.cubic import get_cubic_meter
 from api.models import Booking_lines
 
 from api.fp_apis.operations.surcharge.tnt import tnt
+from api.fp_apis.operations.surcharge.allied import allied
+from api.fp_apis.operations.surcharge.hunter import hunter
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,7 @@ def get_available_surcharge_opts(booking):
         if item.e_dangerousGoods:
             has_dangerous_item = True
         
-        max_dimension = max(lengths + widths + heights)
+    max_dimension = max(lengths + widths + heights)
 
     to_be_considered = {
         'pu_address_type': booking.pu_Address_Type,
@@ -63,10 +65,13 @@ def get_available_surcharge_opts(booking):
 
     print(to_be_considered)
 
-
     applicable_surcharges, get_surcharges = [], []
     if booking.vx_freight_provider.lower() == 'tnt':
         get_surcharges = tnt()
+    elif booking.vx_freight_provider.lower() == 'allied':
+        get_surcharges = allied()
+    elif booking.vx_freight_provider.lower() == 'hunter':
+        get_surcharges = hunter()
 
     for func in get_surcharges:
         item = func(to_be_considered)
