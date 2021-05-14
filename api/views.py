@@ -1031,8 +1031,16 @@ class BookingsViewSet(viewsets.ViewSet):
                     errors_to_correct += 1
                 if booking.z_label_url is None or len(booking.z_label_url) == 0:
                     missing_labels += 1
-                if booking.b_status == "Booked" and not booking.z_manifest_url:
-                    to_manifest += 1
+                if not booking.z_manifest_url:
+                    if (  # Jason L
+                        client_employee_role == "company"
+                        and client.dme_account_num
+                        == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+                    ):
+                        to_manifest += 1
+                    else:
+                        if booking.b_status == "Booked":
+                            to_manifest += 1
                 if booking.b_status == "Ready to booking":
                     to_process += 1
                 if booking.b_status == "Closed":
@@ -1049,8 +1057,18 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(
                     Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
                 )
-            elif active_tab_index == 3:
-                queryset = queryset.filter(b_status__iexact="Booked")
+            elif active_tab_index == 3:  # To manifest
+                if (  # Jason L
+                    client_employee_role == "company"
+                    and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+                ):
+                    queryset = queryset.filter(
+                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                    )
+                else:
+                    queryset = queryset.filter(b_status__iexact="Booked").filter(
+                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                    )
             elif active_tab_index == 4:
                 queryset = queryset.filter(b_status__iexact="Ready to booking")
             elif active_tab_index == 5:
@@ -1597,31 +1615,34 @@ class BookingsViewSet(viewsets.ViewSet):
     def get_manifest_report(self, request, format=None):
         clientname = get_client_name(self.request)
 
-        if clientname in ["BioPak", "dme"]:
+        if clientname in ["Jason L", "BioPak", "dme"]:
             sydney_now = get_sydney_now_time("datetime")
-            last_date = sydney_now.date()
+            last_date = datetime.now()
             first_date = (sydney_now - timedelta(days=10)).date()
-            st_bookings_has_manifest = (
-                Bookings.objects.exclude(manifest_timestamp__isnull=True)
-                .filter(
-                    vx_freight_provider__iexact="startrack",
-                    puPickUpAvailFrom_Date__range=(first_date, last_date),
-                )
-                .order_by("-manifest_timestamp")
-            )
-            manifest_dates = st_bookings_has_manifest.values_list(
+            bookings_with_manifest = Bookings.objects.exclude(
+                manifest_timestamp__isnull=True
+            ).filter(manifest_timestamp__range=(first_date, last_date))
+
+            if clientname != "dme":
+                bookings_with_manifest.filter(b_client_name=clientname)
+
+            bookings_with_manifest.order_by("-manifest_timestamp")
+            manifest_dates = bookings_with_manifest.values_list(
                 "manifest_timestamp", flat=True
             ).distinct()
 
             results = []
             for manifest_date in manifest_dates:
                 result = {}
+                daily_count = 0
+                first_booking = None
 
-                each_day_manifest_bookings = st_bookings_has_manifest.filter(
-                    manifest_timestamp=manifest_date
-                )
-                first_booking = each_day_manifest_bookings.first()
-                result["count"] = each_day_manifest_bookings.count()
+                for booking in bookings_with_manifest:
+                    if booking.manifest_timestamp == manifest_date:
+                        first_booking = booking
+                        daily_count += 1
+
+                result["count"] = daily_count
                 result["z_manifest_url"] = first_booking.z_manifest_url
                 result["warehouse_name"] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
@@ -3722,7 +3743,7 @@ def get_manifest(request):
     user_name = body["username"]
 
     try:
-        filenames = build_manifest(booking_ids, user_name)
+        bookings, filenames = build_manifest(booking_ids, user_name)
         file_paths = []
 
         if vx_freight_provider.upper() == "TASFR":
@@ -3734,6 +3755,16 @@ def get_manifest(request):
         else:
             for filename in filenames:
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
+
+        now = datetime.now()
+        for booking in bookings:
+            booking.z_manifest_url = f"tas_au/{filenames[0]}"
+            booking.manifest_timestamp = now
+
+            if "jason" in request.user.username:  # Jason L
+                booking.b_status = "Booked"
+
+            booking.save()
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir

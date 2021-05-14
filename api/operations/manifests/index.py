@@ -33,4 +33,4 @@ def build_manifest(booking_ids, username=""):
     else:
         file_name = build_TAS_manifest(bookings, booking_lines, username)
 
-    return [file_name]
+    return bookings, [file_name]
