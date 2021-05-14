@@ -431,10 +431,10 @@ def push_boks(payload, client, username, method):
     total_weight = 0
 
     pallet = Pallet.objects.all().first()
-    number_of_pallets, unpalletized_lines = get_number_of_pallets(bok_2_objs, pallet)
+    number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
 
-    if not number_of_pallets and not unpalletized_lines:
-        message = "0 number of Pallets and 0 `unpalletized_lines`."
+    if not number_of_pallets:
+        message = "0 number of Pallets."
         logger.info(f"@801 {LOG_ID} {message}")
         return message
 
@@ -475,9 +475,6 @@ def push_boks(payload, client, username, method):
 
         # Create Bok_3s
         for bok_2_obj in bok_2_objs:
-            if bok_2_obj in unpalletized_lines:
-                continue
-
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
@@ -661,7 +658,7 @@ def auto_repack(payload, client):
     if repack_status:  # repack
         # Get Pallet
         pallet = Pallet.objects.get(pk=pallet_id)
-        number_of_pallets, unpalletized_lines = get_number_of_pallets(bok_2s, pallet)
+        number_of_pallets = get_number_of_pallets(bok_2s, pallet)
 
         if not number_of_pallets:
             message = "0 number of Pallets."
@@ -710,8 +707,6 @@ def auto_repack(payload, client):
         for bok_2 in bok_2s:
             if bok_2.l_001_type_of_packaging == "PAL":
                 continue
-            elif bok_2 in unpalletized_lines:
-                new_bok_2s.append(bok_2)
             else:
                 bok_3 = {}
                 bok_3["fk_header_id"] = bok_1.pk_header_id
