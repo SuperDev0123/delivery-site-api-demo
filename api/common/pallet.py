@@ -18,11 +18,9 @@ def get_number_of_pallets(booking_lines, pallet):
     pallet_height = 2.1
     pallet_weight = 500
     m3_to_kg_factor = 250
-    pallet_dimensions = [pallet.length / 1000, pallet.width / 1000, pallet_height]
-    pallet_dimensions.sort()
-    pallet_cube = (
-        pallet_dimensions[0] * pallet_dimensions[1] * pallet_dimensions[2] * 0.8
-    )
+    pallet_dims = [pallet.length / 1000, pallet.width / 1000, pallet_height]
+    pallet_dims.sort()
+    pallet_cube = pallet_dims[0] * pallet_dims[1] * pallet_dims[2] * 0.8
 
     (
         palletized_lines,
@@ -41,9 +39,9 @@ def get_number_of_pallets(booking_lines, pallet):
         line_dimensions.sort()
 
         if (
-            line_dimensions[0] <= pallet_dimensions[0]
-            and line_dimensions[1] <= pallet_dimensions[1]
-            and line_dimensions[2] <= pallet_dimensions[2]
+            line_dimensions[0] <= pallet_dims[0]
+            and line_dimensions[1] <= pallet_dims[1]
+            and line_dimensions[2] <= pallet_dims[2]
         ):
             palletized_lines.append(item)
             sum_cube += width * height * length * item.l_002_qty
