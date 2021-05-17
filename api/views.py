@@ -672,6 +672,8 @@ class BookingsViewSet(viewsets.ViewSet):
         to_manifest = 0
         to_process = 0
         closed = 0
+        client = None
+        client_employee_role = None
 
         if dme_employee.exists():
             user_type = "DME"
