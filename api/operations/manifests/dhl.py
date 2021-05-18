@@ -90,7 +90,7 @@ def build_manifest(bookings, booking_lines, username):
 
     # start loop through data fetched from dme_bookings table
     date = datetime.now().strftime("%Y%m%d") + "_" + datetime.now().strftime("%H%M%S")
-    filename = "DHL_MANIFEST_" + date + "_m.pdf"
+    filename = "MANIFEST_" + date + "_m.pdf"
     file = open(local_filepath + filename, "a")
     doc = SimpleDocTemplate(
         local_filepath + filename,

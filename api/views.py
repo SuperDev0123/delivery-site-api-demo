@@ -3756,11 +3756,11 @@ def get_manifest(request):
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
         else:
             for filename in filenames:
-                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
 
         now = datetime.now()
         for booking in bookings:
-            booking.z_manifest_url = f"tas_au/{filenames[0]}"
+            booking.z_manifest_url = f"dhl_au/{filenames[0]}"
             booking.manifest_timestamp = now
 
             if "jason" in request.user.username:  # Jason L
