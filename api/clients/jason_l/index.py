@@ -325,10 +325,6 @@ def push_boks(payload, client, username, method):
         if not bok_1.get("b_032_b_pu_address_suburb"):
             bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
-        if not bok_1.get("b_021_b_pu_avail_from_date"):
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
-
         bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
         if not bok_1.get("b_027_b_pu_address_type"):
