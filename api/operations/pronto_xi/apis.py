@@ -60,6 +60,7 @@ def parse_order_xml(response):
 
     SalesOrder = SalesOrders[0]
     order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
+    b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
     b_055 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address2").text
     b_056 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address3").text
     b_057 = ""  # SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text
@@ -78,6 +79,7 @@ def parse_order_xml(response):
 
     order = {
         "b_client_order_num": order_num,
+        "b_021_b_pu_avail_from_date": b_021,
         "b_055_b_del_address_street_1": b_055,
         "b_056_b_del_address_street_2": b_056,
         "b_057_b_del_address_state": b_057,
