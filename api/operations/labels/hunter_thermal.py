@@ -72,28 +72,36 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, file_path, lines, label_index, one_page_label):
+def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     logger.info(
         f"#110 [HUNTER THERMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
 
     # start pdf file name using naming convention
     if lines:
-        file_name = (
-            booking.pu_Address_State
-            + "_"
-            + str(booking.b_bookingID_Visual)
-            + "_"
-            + str(lines[0].pk)
-            + ".pdf"
-        )
-    else:
-        file_name = (
-            booking.pu_Address_State
-            + "_"
-            + gen_consignment_num(
-                booking.vx_freight_provider, booking.b_bookingID_Visual
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
             )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
+    else:
+        filename = (
+            booking.pu_Address_State
+            + "_"
+            + v_FPBookingNumber
             + "_"
             + str(booking.b_bookingID_Visual)
             + ".pdf"
@@ -195,9 +203,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>To: %s</font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.deToCompanyName
-                            if booking.deToCompanyName
-                            else "",
+                            booking.deToCompanyName if booking.deToCompanyName else "",
                         ),
                         style_left,
                     )
@@ -286,8 +292,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                             label_settings["font_size_large"],
                             "CONSIGNMENT:",
                             gen_consignment_num(
-                                booking.vx_freight_provider, 
-                                booking.b_bookingID_Visual
+                                booking.vx_freight_provider, booking.b_bookingID_Visual
                             ),
                         ),
                         style_left,
@@ -307,7 +312,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
             )
 
             try:
-                account_code = API_booking_quotes.objects.get(id=booking.api_booking_quote_id).account_code
+                account_code = API_booking_quotes.objects.get(
+                    id=booking.api_booking_quote_id
+                ).account_code
             except Exception as e:
                 account_code = ""
 
@@ -366,7 +373,11 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s>%s %s</font>"
-                        % (label_settings["font_size_medium"], "Account:",  account_code),
+                        % (
+                            label_settings["font_size_medium"],
+                            "Account:",
+                            account_code,
+                        ),
                         style_center,
                     )
                 ],
@@ -581,9 +592,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>To: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.deToCompanyName
-                            if booking.deToCompanyName
-                            else "",
+                            booking.deToCompanyName if booking.deToCompanyName else "",
                         ),
                         style_left,
                     )

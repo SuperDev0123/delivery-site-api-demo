@@ -119,7 +119,7 @@ class RotatedImage(Image):
         Image.draw(self)
 
 
-def build_label(booking, file_path, lines, label_index, one_page_label):
+def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     logger.info(
         f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -130,14 +130,34 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
     if not os.path.exists(file_path):
         os.makedirs(file_path)
 
-    file_name = (
-        booking.pu_Address_State
-        + "_"
-        + str(booking.v_FPBookingNumber)
-        + "_"
-        + str(booking.b_bookingID_Visual)
-        + ".pdf"
-    )
+    if lines:
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
+            )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
+    else:
+        filename = (
+            booking.pu_Address_State
+            + "_"
+            + v_FPBookingNumber
+            + "_"
+            + str(booking.b_bookingID_Visual)
+            + ".pdf"
+        )
 
     fp_color_code = (
         Fp_freight_providers.objects.get(fp_company_name="Hunter").hex_color_code
