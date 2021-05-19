@@ -672,6 +672,7 @@ class BookingsViewSet(viewsets.ViewSet):
         to_manifest = 0
         to_process = 0
         closed = 0
+        unprinted_labels = 0
         client = None
         client_employee_role = None
 
@@ -1047,6 +1048,11 @@ class BookingsViewSet(viewsets.ViewSet):
                     to_process += 1
                 if booking.b_status == "Closed":
                     closed += 1
+                if (
+                    booking.z_label_url
+                    and not booking.z_downloaded_shipping_label_timestamp
+                ):
+                    unprinted_labels += 1
                 # if booking.b_status_category == "Pre Booking":
                 #     prebookings_cnt += 1
 
@@ -1081,6 +1087,11 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.exclude(b_client_name="BioPak")
             elif active_tab_index == 8:  # 'PreBooking'
                 queryset = queryset.filter(b_status_category="Pre Booking")
+            elif active_tab_index == 9:  # 'Unprinted Labels'
+                queryset = queryset.filter(
+                    z_label_url__isnull=False,
+                    z_downloaded_shipping_label_timestamp__isnull=True,
+                )
             elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
 
@@ -1137,6 +1148,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 "missing_labels": missing_labels,
                 "to_process": to_process,
                 "closed": closed,
+                "unprinted_labels": unprinted_labels,
             }
         )
 
@@ -2408,23 +2420,21 @@ class BookingViewSet(viewsets.ViewSet):
                     is_available = False
 
                     # For TNT orders, DME builds label for each SSCC
-                    if booking.vx_freight_provider == "TNT":
-                        file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
-                        file_name = (
-                            booking.pu_Address_State
-                            + "_"
-                            + str(booking.b_bookingID_Visual)
-                            + "_"
-                            + str(booking_line.sscc)
-                            + ".pdf"
-                        )
-                        is_available = doesFileExist(file_path, file_name)
-                        label_url = (
-                            f"{booking.vx_freight_provider.lower()}_au/{file_name}"
-                        )
+                    # if booking.vx_freight_provider == "TNT":
+                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
+                    file_name = (
+                        booking.pu_Address_State
+                        + "_"
+                        + str(booking.b_bookingID_Visual)
+                        + "_"
+                        + str(booking_line.sscc)
+                        + ".pdf"
+                    )
+                    is_available = doesFileExist(file_path, file_name)
+                    label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                        with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
-                            zpl_data = str(b64encode(zpl.read()))[2:-1]
+                    with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
+                        zpl_data = str(b64encode(zpl.read()))[2:-1]
 
                     # For Hunter orders, DME builds label for entire Booking
                     # elif booking.vx_freight_provider == "Hunter":

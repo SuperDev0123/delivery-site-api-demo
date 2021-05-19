@@ -1948,6 +1948,13 @@ def pre_save_booking(sender, instance, **kwargs):
     pre_save_handler(instance)
 
 
+@receiver(post_save, sender=Bookings)
+def post_save_booking(sender, instance, **kwargs):
+    from api.signal_handlers.booking import post_save_handler
+
+    post_save_handler(instance)
+
+
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(

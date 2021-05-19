@@ -1,10 +1,20 @@
 import logging
 from datetime import datetime
 
+from django.conf import settings
+
 from api.models import Bookings, Booking_lines, Api_booking_confirmation_lines
 from api.fp_apis.utils import get_status_category_from_status
+from api.operations.labels.index import build_label
 
 logger = logging.getLogger(__name__)
+
+if settings.ENV == "local":
+    S3_URL = "./static"
+elif settings.ENV == "dev":
+    S3_URL = "/opt/s3_public"
+elif settings.ENV == "prod":
+    S3_URL = "/opt/s3_public"
 
 
 def pre_save_handler(instance):
@@ -12,16 +22,15 @@ def pre_save_handler(instance):
         pass
 
     else:
-        previous = Bookings.objects.get(id=instance.id)
+        logger.info(f"Booking pre_save: {instance.id}")
+        old = Bookings.objects.get(id=instance.id)
 
-        if (
-            previous.dme_status_detail != instance.dme_status_detail
-        ):  # field will be updated
+        if old.dme_status_detail != instance.dme_status_detail:  # field will be updated
             instance.dme_status_detail_updated_by = "user"
-            instance.prev_dme_status_detail = previous.dme_status_detail
+            instance.prev_dme_status_detail = old.dme_status_detail
             instance.dme_status_detail_updated_at = datetime.now()
 
-        if previous.b_status != instance.b_status:
+        if old.b_status != instance.b_status:
             # Set Booking's status category
             instance.b_status_category = get_status_category_from_status(
                 instance.b_status
@@ -50,13 +59,71 @@ def pre_save_handler(instance):
 
                     instance.dme_status_detail = dme_status_detail
                     instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = previous.dme_status_detail
+                    instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
                 elif instance.b_status == "Delivered":
                     instance.dme_status_detail = ""
                     instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = previous.dme_status_detail
+                    instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
             except Exception as e:
                 logger.info(f"Error 515 {e}")
                 pass
+
+        if (
+            old.vx_freight_provider
+            and old.vx_freight_provider != instance.vx_freight_provider
+        ):
+            logger.info(f"REBUILD_REQUIRED")
+            instance.z_label_url = "REBUILD_REQUIRED"
+            instance.z_downloaded_shipping_label_timestamp = None
+
+
+def post_save_handler(instance):
+    logger.info(f"Booking pre_save: {instance.id}")
+
+    if instance.vx_freight_provider and instance.z_label_url == "REBUILD_REQUIRED":
+        # Build Label
+        _fp_name = instance.vx_freight_provider.lower()
+        file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+
+        if instance.b_client_name == "Jason L":
+            lines = Booking_lines.objects.filter(
+                fk_booking_id=instance.pk_booking_id,
+                is_deleted=False,
+                sscc__isnull=False,
+            )
+            sscc_lines = {}
+
+            for line in lines:
+                if line.sscc not in sscc_lines:
+                    sscc_lines[line.sscc] = [line]
+                else:
+                    sscc_lines[line.sscc].append(line)
+
+            labeled_ssccs = []
+            for sscc in sscc_lines:
+                if sscc in labeled_ssccs:
+                    continue
+
+                file_path, file_name = build_label(
+                    booking=instance,
+                    file_path=file_path,
+                    lines=sscc_lines[sscc],
+                    label_index=0,
+                    sscc=sscc,
+                    one_page_label=True,
+                )
+
+                # Convert label into ZPL format
+                logger.info(
+                    f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
+                )
+                label_url = f"{file_path}/{file_name}"
+        else:
+            _fp_name = instance.vx_freight_provider.lower()
+            file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+            file_path, file_name = build_label(booking=instance, file_path=file_path)
+
+        instance.z_label_url = f"{_fp_name}_au/{file_name}"
+        instance.save()
