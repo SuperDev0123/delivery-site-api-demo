@@ -132,7 +132,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
 
     if lines:
         if sscc:
-            filename = (
+            file_name = (
                 booking.pu_Address_State
                 + "_"
                 + str(booking.b_bookingID_Visual)
@@ -141,7 +141,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 + ".pdf"
             )
         else:
-            filename = (
+            file_name = (
                 booking.pu_Address_State
                 + "_"
                 + str(booking.b_bookingID_Visual)
@@ -150,7 +150,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 + ".pdf"
             )
     else:
-        filename = (
+        file_name = (
             booking.pu_Address_State
             + "_"
             + v_FPBookingNumber
