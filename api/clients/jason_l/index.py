@@ -1095,65 +1095,68 @@ def ready_boks(payload, client):
     """
     When it is ready(picked all items) on Warehouse
     """
-    LOG_ID = "[READY Jason L]"
-    b_client_order_num = payload.get("HostOrderNumber")
+    pass
 
-    # Check required params are included
-    if not b_client_order_num:
-        message = "'HostOrderNumber' is required."
-        raise ValidationError(message)
 
-    # Check if Order exists
-    booking = (
-        Bookings.objects.select_related("api_booking_quote")
-        .filter(
-            b_client_name=client.company_name, b_client_order_num=b_client_order_num
-        )
-        .first()
-    )
+#     LOG_ID = "[READY Jason L]"
+#     b_client_order_num = payload.get("HostOrderNumber")
 
-    if not booking:
-        message = "Order does not exist. HostOrderNumber' is invalid."
-        raise ValidationError(message)
+#     # Check required params are included
+#     if not b_client_order_num:
+#         message = "'HostOrderNumber' is required."
+#         raise ValidationError(message)
 
-    # If Hunter Order
-    fp_name = booking.api_booking_quote.freight_provider.lower()
+#     # Check if Order exists
+#     booking = (
+#         Bookings.objects.select_related("api_booking_quote")
+#         .filter(
+#             b_client_name=client.company_name, b_client_order_num=b_client_order_num
+#         )
+#         .first()
+#     )
 
-    if fp_name == "hunter" and booking.b_status == "Booked":
-        message = "Order is already BOOKED."
-        logger.info(f"@340 {LOG_ID} {message}")
-        return message
-    elif fp_name == "hunter" and booking.b_status != "Booked":
-        # DME don't get the ready api for Hunter Order
-        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        logger.info(f"@341 {LOG_ID} {message}")
-        raise Exception(message)
+#     if not booking:
+#         message = "Order does not exist. HostOrderNumber' is invalid."
+#         raise ValidationError(message)
 
-    # Check if already ready
-    if booking.b_status not in ["Picking", "Ready for Booking"]:
-        message = "Order is already Ready."
-        logger.info(f"@342 {LOG_ID} {message}")
-        return message
+#     # If Hunter Order
+#     fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    # If NOT
-    pk_booking_id = booking.pk_booking_id
-    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+#     if fp_name == "hunter" and booking.b_status == "Booked":
+#         message = "Order is already BOOKED."
+#         logger.info(f"@340 {LOG_ID} {message}")
+#         return message
+#     elif fp_name == "hunter" and booking.b_status != "Booked":
+#         # DME don't get the ready api for Hunter Order
+#         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+#         logger.info(f"@341 {LOG_ID} {message}")
+#         raise Exception(message)
 
-    # Update DB so that Booking can be BOOKED
-    if booking.api_booking_quote:
-        booking.b_status = "Ready for Booking"
-    else:
-        booking.b_status = "On Hold"
-        send_email_to_admins(
-            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
-            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
-            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
-            + f" Please do FC manually again on DME portal.",
-        )
+#     # Check if already ready
+#     if booking.b_status not in ["Picking", "Ready for Booking"]:
+#         message = "Order is already Ready."
+#         logger.info(f"@342 {LOG_ID} {message}")
+#         return message
 
-    booking.save()
+#     # If NOT
+#     pk_booking_id = booking.pk_booking_id
+#     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+#     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
 
-    message = "Order will be BOOKED soon."
-    logger.info(f"@349 {LOG_ID} {message}")
-    return message
+#     # Update DB so that Booking can be BOOKED
+#     if booking.api_booking_quote:
+#         booking.b_status = "Ready for Booking"
+#     else:
+#         booking.b_status = "On Hold"
+#         send_email_to_admins(
+#             f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
+#             f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
+#             + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
+#             + f" Please do FC manually again on DME portal.",
+#         )
+
+#     booking.save()
+
+#     message = "Order will be BOOKED soon."
+#     logger.info(f"@349 {LOG_ID} {message}")
+#     return message

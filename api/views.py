@@ -1047,6 +1047,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     to_process += 1
                 if booking.b_status == "Closed":
                     closed += 1
+                # if booking.b_status_category == "Pre Booking":
+                #     prebookings_cnt += 1
 
             # active_tab_index filter
             # 0 -> all
@@ -1077,6 +1079,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(b_status__iexact="Closed")
             elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
                 queryset = queryset.exclude(b_client_name="BioPak")
+            elif active_tab_index == 8:  # 'PreBooking'
+                queryset = queryset.filter(b_status_category="Pre Booking")
             elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
 
@@ -3742,10 +3746,10 @@ def get_manifest(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
-    user_name = body["username"]
+    username = body["username"]
 
     try:
-        bookings, filenames = build_manifest(booking_ids, user_name)
+        bookings, filenames = build_manifest(booking_ids, username)
         file_paths = []
 
         if vx_freight_provider.upper() == "TASFR":
@@ -3764,7 +3768,9 @@ def get_manifest(request):
             booking.manifest_timestamp = now
 
             if "jason" in request.user.username:  # Jason L
-                booking.b_status = "Booked"
+                # Create new statusHistory
+                status_history.create(booking, "Ready for Despatch", username)
+                booking.b_status = "Ready for Despatch"
 
             booking.save()
 
