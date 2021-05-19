@@ -224,10 +224,11 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
         )
         routing = None
 
-        for crecord in crecords:
-            if crecord.orig_depot_except == drecord.orig_depot:
-                routing = crecord
-                break
+        if drecord:
+            for crecord in crecords:
+                if crecord.orig_depot_except == drecord.orig_depot:
+                    routing = crecord
+                    break
 
         if not routing:
             routing = crecords.first()
