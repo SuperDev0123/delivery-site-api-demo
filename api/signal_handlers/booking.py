@@ -93,6 +93,12 @@ def post_save_handler(instance):
                 is_deleted=False,
                 sscc__isnull=False,
             )
+
+            if lines.count() == 0:
+                instance.z_label_url = None
+                instance.save()
+                return
+
             sscc_lines = {}
 
             for line in lines:
