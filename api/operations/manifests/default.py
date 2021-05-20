@@ -38,7 +38,6 @@ else:
     production = True  # Dev
 
 ### DHL constants ###
-ACCOUNT_CODE = "SEAWAPO"
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(
     name="right", 
@@ -65,13 +64,6 @@ style_center_title = ParagraphStyle(
     alignment=TA_CENTER,
     leading=24,
     backColor="black",
-)
-style_center_fp = ParagraphStyle(
-    name="right",
-    parent=styles["Normal"],
-    alignment=TA_CENTER,
-    leading=24,
-    backColor="#64a1fc",
 )
 style_uppercase = ParagraphStyle(
     name="uppercase",
@@ -148,9 +140,22 @@ def filter_booking_lines(booking, booking_lines):
 
 
 def build_manifest(bookings, booking_lines, username):
-    fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
-    new_manifest_index = fp_info.fp_manifest_cnt
-    new_connot_index = fp_info.new_connot_index
+    fp_name = bookings[0].vx_freight_provider
+    fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
+    if fp_info and fp_info.hex_color_code:
+        fp_bg_color = fp_info.hex_color_code
+    else:
+        fp_bg_color = '808080'
+    # new_manifest_index = fp_info.fp_manifest_cnt
+    # new_connot_index = fp_info.new_connot_index
+
+    style_center_fp = ParagraphStyle(
+        name="right",
+        parent=styles["Normal"],
+        alignment=TA_CENTER,
+        leading=24,
+        backColor="#{}".format(fp_bg_color),
+    )
 
     # start check if pdfs folder exists
     if production:
@@ -232,7 +237,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s><b>%s</b></font>"
                 % (
                     label_settings["font_size_large"],
-                    "Allied",
+                    fp_name,
                 ),
                 style_center_fp,
             ),
@@ -297,7 +302,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "BIOPAK C/O CTI LOGISTICS",
+                    "Deliver-ME PTY LTD",
                 ),
                 style_left,
             ),
@@ -305,7 +310,8 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s><b>%s</b></font>"
                 % (
                     label_settings["font_size_extra_large"],
-                    "EXP",
+                    # "EXP",
+                    ""
                 ),
                 style_right,
             ),
@@ -323,7 +329,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "10145596",
+                    "DELVME",
                 ),
                 style_left,
             ),
@@ -359,47 +365,48 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "27-31 SHARP COURT CAVAN SA 5094",
+                    # "27-31 SHARP COURT CAVAN SA 5094",
+                    ""
                 ),
                 style_left,
             ),
         ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Despatch/Merchant Location ID:",
-                ),
-                style_left,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "9WCZ",
-                ),
-                style_left,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Order ID:",
-                ),
-                style_left,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "AP47236140",
-                ),
-                style_left,
-            ),
-        ],
+        # [
+        #     Paragraph(
+        #         "<font size=%s>%s</font>"
+        #         % (
+        #             label_settings["font_size_medium"],
+        #             "Despatch/Merchant Location ID:",
+        #         ),
+        #         style_left,
+        #     ),
+        #     Paragraph(
+        #         "<font size=%s>%s</font>"
+        #         % (
+        #             label_settings["font_size_medium"],
+        #             "9WCZ",
+        #         ),
+        #         style_left,
+        #     ),
+        # ],
+        # [
+        #     Paragraph(
+        #         "<font size=%s>%s</font>"
+        #         % (
+        #             label_settings["font_size_medium"],
+        #             "Order ID:",
+        #         ),
+        #         style_left,
+        #     ),
+        #     Paragraph(
+        #         "<font size=%s>%s</font>"
+        #         % (
+        #             label_settings["font_size_medium"],
+        #             "AP47236140",
+        #         ),
+        #         style_left,
+        #     ),
+        # ],
         [
             Paragraph(
                 "<font size=%s>%s</font>"
@@ -418,24 +425,24 @@ def build_manifest(bookings, booking_lines, username):
                 style_left,
             ),
         ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Lodgement Facility (AP only):",
-                ),
-                style_left,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_left,
-            ),
-        ],
+        # [
+        #     Paragraph(
+        #         "<font size=%s>%s</font>"
+        #         % (
+        #             label_settings["font_size_medium"],
+        #             "Lodgement Facility (AP only):",
+        #         ),
+        #         style_left,
+        #     ),
+        #     Paragraph(
+        #         "<font size=%s>%s</font>"
+        #         % (
+        #             label_settings["font_size_medium"],
+        #             "",
+        #         ),
+        #         style_left,
+        #     ),
+        # ],
     ]
 
     t1_w = float(label_settings["label_image_size_width"]) * (2 / 6) * mm
@@ -1005,7 +1012,7 @@ def build_manifest(bookings, booking_lines, username):
     #     ],
     # )
     # Story.append(table)
-    Story.append(Spacer(1, 36))
+    Story.append(Spacer(1, 70))
 
     data = [
         [
