@@ -188,6 +188,8 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
             if one_page_label and k > 0:
                 continue
 
+            logger.info(f"#114 [HUNTER THERMAL LABEL] Adding: {line}")
+
             hr = HRFlowable(
                 width=(float(label_settings["label_image_size_length"]) * mm),
                 thickness=1,
@@ -284,9 +286,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_large"],
                             "CONSIGNMENT:",
-                            gen_consignment_num(
-                                booking.vx_freight_provider, booking.b_bookingID_Visual
-                            ),
+                            v_FPBookingNumber,
                         ),
                         style_left,
                     )
@@ -392,7 +392,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>%s</b><br/></font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.api_booking_quote_id.vx_serviceName,
+                            "Road Express",
                         ),
                         style_center,
                     )
