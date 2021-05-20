@@ -275,6 +275,8 @@ def get_book_payload(booking, fp_name):
     payload["items"] = items
 
     # Detail for each FP
+    if fp_name == "allied":
+        payload["serviceType"] = "C"
     if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"
