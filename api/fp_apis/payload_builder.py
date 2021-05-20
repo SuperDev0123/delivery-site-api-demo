@@ -46,6 +46,9 @@ def get_account_detail(booking, fp_name):
                 if key == _warehouse_code:
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
+    if _fp_name in ["allied"]:
+        account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+
     if not account_detail:
         booking.b_errorCapture = f"Couldn't find Account Detail"
         booking.save()
