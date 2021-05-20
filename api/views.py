@@ -3862,22 +3862,18 @@ def get_manifest(request):
     username = body["username"]
 
     try:
-        bookings, filenames = build_manifest(booking_ids, username)
-        file_paths = []
+        bookings, filename = build_manifest(booking_ids, username)
 
         if vx_freight_provider.upper() == "TASFR":
-            for filename in filenames:
-                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}")
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
         elif vx_freight_provider.upper() == "DHL":
-            for filename in filenames:
-                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}"
         else:
-            for filename in filenames:
-                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}")
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/startrack_au/{filename}"
 
         now = datetime.now()
         for booking in bookings:
-            booking.z_manifest_url = f"dhl_au/{filenames[0]}"
+            booking.z_manifest_url = f"startrack_au/{filename}"
             booking.manifest_timestamp = now
 
             if "jason" in request.user.username:  # Jason L
@@ -3892,10 +3888,8 @@ def get_manifest(request):
 
         s = io.BytesIO()
         zf = zipfile.ZipFile(s, "w")
-
-        for index, filename in enumerate(filenames):
-            zip_path = os.path.join(zip_subdir, file_paths[index])
-            zf.write(file_paths[index], "manifest_files/" + filename)
+        zip_path = os.path.join(zip_subdir, file_path)
+        zf.write(file_path, "manifest_files/" + filename)
         zf.close()
 
         response = HttpResponse(s.getvalue(), "application/x-zip-compressed")

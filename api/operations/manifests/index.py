@@ -36,4 +36,4 @@ def build_manifest(booking_ids, username=""):
     else:
         file_name = build_ST_manifest(bookings, booking_lines, username)
 
-    return bookings, [file_name]
+    return bookings, file_name

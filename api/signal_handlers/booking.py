@@ -18,6 +18,7 @@ elif settings.ENV == "prod":
 
 
 def pre_save_handler(instance):
+    LOG_ID = "[BOOKING PRE SAVE]"
     if instance.id is None:  # new object will be created
         pass
 
@@ -80,6 +81,7 @@ def pre_save_handler(instance):
 
 
 def post_save_handler(instance):
+    LOG_ID = "[BOOKING POST SAVE]"
     logger.info(f"Booking pre_save: {instance.id}")
 
     if instance.vx_freight_provider and instance.z_label_url == "REBUILD_REQUIRED":

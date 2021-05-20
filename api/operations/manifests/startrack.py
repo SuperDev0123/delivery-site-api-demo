@@ -155,16 +155,16 @@ def build_manifest(bookings, booking_lines, username):
 
     # start check if pdfs folder exists
     if production:
-        local_filepath = "/opt/s3_public/pdfs/default/"
+        local_filepath = "/opt/s3_public/pdfs/startrack_au/"
         local_filepath_dup = (
-            "/opt/s3_public/pdfs/default/archive/"
+            "/opt/s3_public/pdfs/startrack_au/archive/"
             + str(datetime.now().strftime("%Y_%m_%d"))
             + "/"
         )
     else:
-        local_filepath = "./static/pdfs/default/"
+        local_filepath = "./static/pdfs/startrack_au/"
         local_filepath_dup = (
-            "./static/pdfs/default/archive/"
+            "./static/pdfs/startrack_au/archive/"
             + str(datetime.now().strftime("%Y_%m_%d"))
             + "/"
         )
@@ -175,7 +175,7 @@ def build_manifest(bookings, booking_lines, username):
 
     # start loop through data fetched from dme_bookings table
     date = datetime.now().strftime("%Y%m%d") + "_" + datetime.now().strftime("%H%M%S")
-    filename = "DME_MANIFEST_" + date + "_m.pdf"
+    filename = "MANIFEST_" + date + "_m.pdf"
     file = open(local_filepath + filename, "a")
     logger.info(f"#111 [MANIFEST] File full path: {local_filepath}/{filename}")
     # end pdf file name using naming convention
@@ -1270,4 +1270,4 @@ def build_manifest(bookings, booking_lines, username):
     # fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
     # fp_info.save()
 
-    return local_filepath + filename
+    return filename

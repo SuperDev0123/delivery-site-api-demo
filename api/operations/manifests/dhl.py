@@ -720,4 +720,4 @@ def build_manifest(bookings, booking_lines, username):
     fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
     fp_info.save()
 
-    return local_filepath + filename
+    return filename
