@@ -40,8 +40,8 @@ else:
 ### DHL constants ###
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(
-    name="right", 
-    parent=styles["Normal"], 
+    name="right",
+    parent=styles["Normal"],
     alignment=TA_RIGHT,
     leading=12,
 )
@@ -88,6 +88,7 @@ ROWS_PER_PAGE = 20
 
 logger = logging.getLogger(__name__)
 
+
 class VerticalText(Flowable):
 
     """Rotates a text in a table cell."""
@@ -108,8 +109,9 @@ class VerticalText(Flowable):
         fn, fs = canv._fontname, canv._fontsize
         return canv._leading, 1 + canv.stringWidth(self.text, fn, fs)
 
+
 class InteractiveCheckBox(Flowable):
-    def __init__(self, text=''):
+    def __init__(self, text=""):
         Flowable.__init__(self)
         self.text = text
         self.boxsize = 12
@@ -117,26 +119,20 @@ class InteractiveCheckBox(Flowable):
     def draw(self):
         self.canv.saveState()
         form = self.canv.acroForm
-        form.checkbox(checked=False,
-                      buttonStyle='check',
-                      name=self.text,
-                      tooltip=self.text,
-                      relative=True,
-                      fillColor=colors.white,
-                      size=self.boxsize)
+        form.checkbox(
+            checked=False,
+            buttonStyle="check",
+            name=self.text,
+            tooltip=self.text,
+            relative=True,
+            fillColor=colors.white,
+            size=self.boxsize,
+        )
         self.canv.restoreState()
         return
 
-checkbox = InteractiveCheckBox('')
 
-def filter_booking_lines(booking, booking_lines):
-    _booking_lines = []
-
-    for booking_line in booking_lines:
-        if booking.pk_booking_id == booking_line.fk_booking_id:
-            _booking_lines.append(booking_line)
-
-    return _booking_lines
+checkbox = InteractiveCheckBox("")
 
 
 def build_manifest(bookings, booking_lines, username):
@@ -145,7 +141,7 @@ def build_manifest(bookings, booking_lines, username):
     if fp_info and fp_info.hex_color_code:
         fp_bg_color = fp_info.hex_color_code
     else:
-        fp_bg_color = '808080'
+        fp_bg_color = "808080"
     # new_manifest_index = fp_info.fp_manifest_cnt
     # new_connot_index = fp_info.new_connot_index
 
@@ -177,7 +173,7 @@ def build_manifest(bookings, booking_lines, username):
         os.makedirs(local_filepath)
     # end check if pdfs folder exists
 
-     # start loop through data fetched from dme_bookings table
+    # start loop through data fetched from dme_bookings table
     date = datetime.now().strftime("%Y%m%d") + "_" + datetime.now().strftime("%H%M%S")
     filename = "DME_MANIFEST_" + date + "_m.pdf"
     file = open(local_filepath + filename, "a")
@@ -228,7 +224,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s color=%s><b>%s</b></font>"
                 % (
                     label_settings["font_size_large"],
-                    'white',
+                    "white",
                     "Order Summary Report",
                 ),
                 style_center_title,
@@ -251,7 +247,7 @@ def build_manifest(bookings, booking_lines, username):
                 ),
                 style_right,
             ),
-        ]
+        ],
     ]
 
     t1_w = float(label_settings["label_image_size_width"]) * (1 / 4) * mm
@@ -262,7 +258,7 @@ def build_manifest(bookings, booking_lines, username):
         data,
         colWidths=[t1_w, t2_w, t3_w],
         style=[
-            ('SPAN', (0, 1), (-1, 1)),
+            ("SPAN", (0, 1), (-1, 1)),
             ("VALIGN", (0, 0), (-1, -1), "CENTER"),
             ("TOPPADDING", (0, -1), (-1, -1), 2),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
@@ -287,7 +283,7 @@ def build_manifest(bookings, booking_lines, username):
 
     Story.append(hr)
     Story.append(Spacer(1, 3))
-    
+
     data = [
         [
             Paragraph(
@@ -311,7 +307,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_extra_large"],
                     # "EXP",
-                    ""
+                    "",
                 ),
                 style_right,
             ),
@@ -366,7 +362,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     # "27-31 SHARP COURT CAVAN SA 5094",
-                    ""
+                    "",
                 ),
                 style_left,
             ),
@@ -453,7 +449,7 @@ def build_manifest(bookings, booking_lines, username):
         data,
         colWidths=[t1_w, t2_w, t3_w],
         style=[
-            ('SPAN', (-1, 0), (-1, -1)),
+            ("SPAN", (-1, 0), (-1, -1)),
             ("VALIGN", (0, 0), (1, -1), "CENTER"),
             ("VALIGN", (-1, 0), (-1, -1), "TOP"),
             ("TOPPADDING", (0, 0), (2, -1), 0),
@@ -474,17 +470,13 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Consignments: ",
-                    '12'
+                    "12",
                 ),
                 style_left,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b> %s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Number of Articles: ",
-                    '66'
-                ),
+                % (label_settings["font_size_medium"], "Number of Articles: ", "66"),
                 style_left,
             ),
             Paragraph(
@@ -492,7 +484,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Actual Weight (kg): ",
-                    '500.230'
+                    "500.230",
                 ),
                 style_left,
             ),
@@ -500,11 +492,7 @@ def build_manifest(bookings, booking_lines, username):
         [
             Paragraph(
                 "<font size=%s><b>%s (m<super rise=4 size=6>3</super>): </b> %s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Cube",
-                    "3.861"
-                ),
+                % (label_settings["font_size_medium"], "Cube", "3.861"),
                 style_left,
             ),
             Paragraph(
@@ -512,11 +500,11 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Consignments with Dangerous Goods: ",
-                    '0'
+                    "0",
                 ),
                 style_left,
             ),
-        ]
+        ],
     ]
 
     t1_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
@@ -527,7 +515,7 @@ def build_manifest(bookings, booking_lines, username):
         data,
         colWidths=[t1_w, t2_w, t3_w],
         style=[
-            ('SPAN', (1, 1), (-1, 1)),
+            ("SPAN", (1, 1), (-1, 1)),
             ("VALIGN", (0, 0), (-1, -1), "CENTER"),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -555,8 +543,8 @@ def build_manifest(bookings, booking_lines, username):
                 ),
                 style_center,
             ),
-            '',
-            '',
+            "",
+            "",
             Paragraph(
                 "<font size=%s><b>%s (m<super rise=4 size=6>3</super>)</b></font>"
                 % (
@@ -567,7 +555,7 @@ def build_manifest(bookings, booking_lines, username):
             ),
         ],
         [
-            '',
+            "",
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
@@ -592,7 +580,7 @@ def build_manifest(bookings, booking_lines, username):
                 ),
                 style_center,
             ),
-            ''
+            "",
         ],
         [
             Paragraph(
@@ -795,7 +783,7 @@ def build_manifest(bookings, booking_lines, username):
                 ),
                 style_center,
             ),
-            VerticalText("Office use only")
+            VerticalText("Office use only"),
         ],
         [
             Paragraph(
@@ -976,21 +964,30 @@ def build_manifest(bookings, booking_lines, username):
         colWidths=[t_w, t_w, t_w, t_w, t_w],
         rowHeights=[t1_h, t1_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h],
         style=[
-            ('SPAN', (0, 0), (0, 1)),
-            ('SPAN', (1, 0), (3, 0)),
-            ('SPAN', (-1, 0), (-1, 1)),
+            ("SPAN", (0, 0), (0, 1)),
+            ("SPAN", (1, 0), (3, 0)),
+            ("SPAN", (-1, 0), (-1, 1)),
             ("VALIGN", (0, 0), (-1, -1), "CENTER"),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("LEFTPADDING", (-1, 6), (-1, 6), 42),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-            ('BACKGROUND',(0, 0),(-1, 1), colors.Color(red=237/255, green=237/255, blue=237/255)),
-            ('BACKGROUND',(-1, 2),(-1,-1),colors.Color(red=221/255, green=221/255, blue=221/255)),
-            ("GRID", (0, 0), (-1, -1), 0.5, 'black')
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 1),
+                colors.Color(red=237 / 255, green=237 / 255, blue=237 / 255),
+            ),
+            (
+                "BACKGROUND",
+                (-1, 2),
+                (-1, -1),
+                colors.Color(red=221 / 255, green=221 / 255, blue=221 / 255),
+            ),
+            ("GRID", (0, 0), (-1, -1), 0.5, "black"),
         ],
     )
     Story.append(table)
-
 
     # data = [
     #     [
@@ -1096,7 +1093,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_small"],
                     "NO: ",
-                    "I, the sender, declare that THIS CARGO DOES NOT CONTAIN DANGEROUS GOODS that legally require declaration"
+                    "I, the sender, declare that THIS CARGO DOES NOT CONTAIN DANGEROUS GOODS that legally require declaration",
                 ),
                 style_left,
             ),
@@ -1108,7 +1105,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_small"],
                     "YES, ",
-                    "and a completed and signed Dangerous Goods Declaration or other documentation required by law is attached for every consignment that contains dangerous goods."
+                    "and a completed and signed Dangerous Goods Declaration or other documentation required by law is attached for every consignment that contains dangerous goods.",
                 ),
                 style_left,
             ),
@@ -1119,7 +1116,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_small"],
-                    "I, the sender, acknowledge that this cargo may be carried by air and will be subject to aviation security and clearing procedures and I further acknowledge that it is illegal to consign as cargo any unauthorised explosives or explosive devices."
+                    "I, the sender, acknowledge that this cargo may be carried by air and will be subject to aviation security and clearing procedures and I further acknowledge that it is illegal to consign as cargo any unauthorised explosives or explosive devices.",
                 ),
                 style_left,
             ),
@@ -1130,7 +1127,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_small"],
-                    "I further accept that the weights and cubic dimensions set out on this form are correct and are a true representation of the volume of freight shipped under this despatch summary."
+                    "I further accept that the weights and cubic dimensions set out on this form are correct and are a true representation of the volume of freight shipped under this despatch summary.",
                 ),
                 style_left,
             ),
@@ -1223,26 +1220,19 @@ def build_manifest(bookings, booking_lines, username):
     Story.append(table)
     Story.append(Spacer(1, 8))
 
-    data =[
+    data = [
         [
-            '',
+            "",
             Paragraph(
                 "<font size=%s color=%s>%s</font>"
-                % (
-                    label_settings["font_size_large"],
-                    'white',
-                    "D"
-                ),
+                % (label_settings["font_size_large"], "white", "D"),
                 style_center_bg,
-            )
+            ),
         ],
         [
             Paragraph(
                 "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Page 1 of 1"
-                ),
+                % (label_settings["font_size_medium"], "Page 1 of 1"),
                 style_right,
             )
         ],
@@ -1263,7 +1253,6 @@ def build_manifest(bookings, booking_lines, username):
     Story.append(table)
     Story.append(Spacer(1, 8))
 
-    
     doc.build(Story)
     file.close()
 
