@@ -105,7 +105,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
         file_name = (
             booking.pu_Address_State
             + "_"
-            + v_FPBookingNumber
+            + booking.v_FPBookingNumber
             + "_"
             + str(booking.b_bookingID_Visual)
             + ".pdf"
@@ -262,7 +262,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "Ref:",
-                            line.sscc or "",
+                            line.sscc if line.sscc else "",
                         ),
                         style_left,
                     )
