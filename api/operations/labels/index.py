@@ -3,7 +3,7 @@ import logging
 from api.models import Bookings, Fp_freight_providers
 from api.operations.labels import ship_it, dhl, hunter, hunter_thermal, tnt, allied
 
-logger = logging.getLogger("LABEL")
+logger = logging.getLogger(__name__)
 
 
 def build_label(

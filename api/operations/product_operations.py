@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from api.models import Client_Products
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _append_line(results, line, qty):

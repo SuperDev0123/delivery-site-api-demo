@@ -43,7 +43,7 @@ from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
 from api.common.pallet import get_number_of_pallets
 
-logger = logging.getLogger("JASON")
+logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):

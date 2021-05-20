@@ -11,7 +11,7 @@ from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
 
-logger = logging.getLogger("PB")  # Payload Builder
+logger = logging.getLogger(__name__)  # Payload Builder
 
 
 def get_account_detail(booking, fp_name):
