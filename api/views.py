@@ -1879,10 +1879,13 @@ class BookingsViewSet(viewsets.ViewSet):
         for booking in bookings:
             if not booking.vx_freight_provider in result:
                 result[booking.vx_freight_provider] = {
+                    "orderCnt": 0,
                     "totalQty": 0,
                     "totalKgs": 0,
                     "totalCubicMeter": 0,
                 }
+
+            result[booking.vx_freight_provider]["orderCnt"] += 1
 
             for booking_line in booking_lines:
                 if booking.pk_booking_id == booking_line.fk_booking_id:
