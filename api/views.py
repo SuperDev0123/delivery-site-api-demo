@@ -3937,7 +3937,7 @@ def get_manifest(request):
 
         for fp in fps:
             bookings, filename = build_manifest(fps[fp], username)
-            logger.info(f"@0 - {fileName}")
+            logger.info(f"@0 - {filename}")
             if vx_freight_provider.upper() == "TASFR":
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
             elif vx_freight_provider.upper() == "DHL":
