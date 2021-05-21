@@ -3937,7 +3937,7 @@ def get_manifest(request):
 
         for fp in fps:
             bookings, filename = build_manifest(fps[fp], username)
-
+            console.log("@0 - ", fileName)
             if vx_freight_provider.upper() == "TASFR":
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
             elif vx_freight_provider.upper() == "DHL":
@@ -3964,9 +3964,11 @@ def get_manifest(request):
         s = io.BytesIO()
         zf = zipfile.ZipFile(s, "w")
         for index, file_path in enumerate(file_paths):
+            console.log("@1 - ", file_path)
             if os.path.isfile(file_path):
                 file_name = file_path.split("/")[-1]
                 file_name = file_name.split("\\")[-1]
+                console.log("@2 - ", file_name)
                 zf.write(file_path, f"manifest_files/{file_name}")
         zf.close()
 
