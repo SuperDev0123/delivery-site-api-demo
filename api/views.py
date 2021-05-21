@@ -86,6 +86,7 @@ from api.file_operations import (
     downloads as download_libs,
 )
 from api.file_operations.operations import doesFileExist
+from api.helpers.cubic import get_cubic_meter
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -1137,7 +1138,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     errors_to_correct += 1
                 if booking.z_label_url is None or len(booking.z_label_url) == 0:
                     missing_labels += 1
-                if not booking.z_manifest_url:
+                if not booking.z_manifest_url and not booking.b_status in [
+                    "Closed",
+                    "Cancelled",
+                ]:
                     if (  # Jason L
                         client_employee_role == "company"
                         and client.dme_account_num
@@ -1179,8 +1183,12 @@ class BookingsViewSet(viewsets.ViewSet):
                         Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
                     )
                 else:
-                    queryset = queryset.filter(b_status__iexact="Booked").filter(
-                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                    queryset = (
+                        queryset.filter(b_status__iexact="Booked")
+                        .filter(
+                            Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                        )
+                        .exclude(b_status__in=["Closed", "Cancelled"])
                     )
             elif active_tab_index == 4:
                 queryset = queryset.filter(b_status__iexact="Ready to booking")
@@ -1829,6 +1837,58 @@ class BookingsViewSet(viewsets.ViewSet):
         bookingIds = request.data["bookingIds"]
         results = analyse_booking_quotes_table(bookingIds)
         return JsonResponse({"message": "success", "results": results}, status=200)
+
+    @action(detail=False, methods=["post"])
+    def get_manifest_summary(self, request, format=None):
+        bookingIds = request.data["bookingIds"]
+        bookings = Bookings.objects.filter(pk__in=bookingIds).only(
+            "pk_booking_id", "vx_freight_provider"
+        )
+        pk_booking_ids = []
+
+        for booking in bookings:
+            pk_booking_ids.append(booking.pk_booking_id)
+
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id__in=pk_booking_ids
+        ).only(
+            "e_qty",
+            "e_dimUOM",
+            "e_dimLength",
+            "e_dimHeight",
+            "e_dimWidth",
+            "e_Total_KG_weight",
+            "e_weightPerEach",
+        )
+        result = {}
+
+        for booking in bookings:
+            if not booking.vx_freight_provider in result:
+                result[booking.vx_freight_provider] = {
+                    "totalQty": 0,
+                    "totalKgs": 0,
+                    "totalCubicMeter": 0,
+                }
+
+            for booking_line in booking_lines:
+                if booking.pk_booking_id == booking_line.fk_booking_id:
+                    result[booking.vx_freight_provider][
+                        "totalQty"
+                    ] += booking_line.e_qty
+                    result[booking.vx_freight_provider]["totalKgs"] += (
+                        booking_line.e_qty * booking_line.e_weightPerEach
+                    )
+                    result[booking.vx_freight_provider][
+                        "totalCubicMeter"
+                    ] += get_cubic_meter(
+                        booking_line.e_dimLength,
+                        booking_line.e_dimWidth,
+                        booking_line.e_dimHeight,
+                        booking_line.e_dimUOM,
+                        booking_line.e_qty,
+                    )
+
+        return JsonResponse(result, status=200)
 
 
 class BookingViewSet(viewsets.ViewSet):
@@ -3861,35 +3921,53 @@ def get_manifest(request):
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
 
+    bookings = Bookings.objects.filter(pk__in=booking_ids).only(
+        "id", "vx_freight_provider"
+    )
+    fps = {}
+
+    for booking in bookings:
+        if not booking.vx_freight_provider in fps:
+            fps[booking.vx_freight_provider] = []
+
+        fps[booking.vx_freight_provider].append(booking.id)
+
     try:
-        bookings, filename = build_manifest(booking_ids, username)
+        file_paths = []
 
-        if vx_freight_provider.upper() == "TASFR":
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
-        elif vx_freight_provider.upper() == "DHL":
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}"
-        else:
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/startrack_au/{filename}"
+        for fp in fps:
+            bookings, filename = build_manifest(fps[fp], username)
 
-        now = datetime.now()
-        for booking in bookings:
-            booking.z_manifest_url = f"startrack_au/{filename}"
-            booking.manifest_timestamp = now
+            if vx_freight_provider.upper() == "TASFR":
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
+            elif vx_freight_provider.upper() == "DHL":
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/dhl_au/{filename}"
+            else:
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/startrack_au/{filename}"
 
-            if "jason" in request.user.username:  # Jason L
-                # Create new statusHistory
-                status_history.create(booking, "Ready for Despatch", username)
-                booking.b_status = "Ready for Despatch"
+            file_paths.append(file_path)
+            now = datetime.now()
+            for booking in bookings:
+                booking.z_manifest_url = f"startrack_au/{filename}"
+                booking.manifest_timestamp = now
 
-            booking.save()
+                if "jason" in request.user.username:  # Jason L
+                    # Create new statusHistory
+                    status_history.create(booking, "Ready for Despatch", username)
+                    booking.b_status = "Ready for Despatch"
+
+                booking.save()
 
         zip_subdir = "manifest_files"
         zip_filename = "%s.zip" % zip_subdir
 
         s = io.BytesIO()
         zf = zipfile.ZipFile(s, "w")
-        zip_path = os.path.join(zip_subdir, file_path)
-        zf.write(file_path, "manifest_files/" + filename)
+        for index, file_path in enumerate(file_paths):
+            if os.path.isfile(file_path):
+                file_name = file_path.split("/")[-1]
+                file_name = file_name.split("\\")[-1]
+                zf.write(file_path, f"manifest_files/{file_name}")
         zf.close()
 
         response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
