@@ -456,7 +456,7 @@ class BookingsViewSet(viewsets.ViewSet):
         try:
             column_filter = column_filters["b_dateBookedDate"]  # MMDDYY-MMDDYY
 
-            if column_filter:
+            if column_filter and "-" in column_filter:
                 start_date_str = column_filter.split("-")[0]
                 end_date_str = column_filter.split("-")[1]
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
@@ -467,13 +467,16 @@ class BookingsViewSet(viewsets.ViewSet):
                         convert_to_UTC_tz(end_date),
                     )
                 )
+            elif column_filter and not "-" in column_filter:
+                date = datetime.strptime(column_filter, "%d/%m/%y")
+                queryset = queryset.filter(b_dateBookedDate=date)
         except KeyError:
             column_filter = ""
 
         try:
             column_filter = column_filters["puPickUpAvailFrom_Date"]  # MMDDYY-MMDDYY
 
-            if column_filter:
+            if column_filter and "-" in column_filter:
                 start_date_str = column_filter.split("-")[0]
                 end_date_str = column_filter.split("-")[1]
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
@@ -484,6 +487,9 @@ class BookingsViewSet(viewsets.ViewSet):
                         convert_to_UTC_tz(end_date),
                     )
                 )
+            elif column_filter and not "-" in column_filter:
+                date = datetime.strptime(column_filter, "%d/%m/%y")
+                queryset = queryset.filter(puPickUpAvailFrom_Date=date)
         except KeyError:
             column_filter = ""
 
@@ -514,12 +520,16 @@ class BookingsViewSet(viewsets.ViewSet):
         try:
             column_filter = column_filters["pu_Address_PostalCode"]
 
-            if column_filter:
+            if column_filter and "-" in column_filter:
                 start_postal_code = column_filter.split("-")[0]
                 end_postal_code = column_filter.split("-")[1]
                 queryset = queryset.filter(
                     pu_Address_PostalCode__gte=start_postal_code,
                     pu_Address_PostalCode__lt=end_postal_code,
+                )
+            elif column_filter and not "-" in column_filter:
+                queryset = queryset.filter(
+                    pu_Address_PostalCode__icontains=column_filter
                 )
         except KeyError:
             column_filter = ""
@@ -562,12 +572,16 @@ class BookingsViewSet(viewsets.ViewSet):
         try:
             column_filter = column_filters["de_To_Address_PostalCode"]
 
-            if column_filter:
+            if column_filter and "-" in column_filter:
                 start_postal_code = column_filter.split("-")[0]
                 end_postal_code = column_filter.split("-")[1]
                 queryset = queryset.filter(
                     de_To_Address_PostalCode__gte=start_postal_code,
                     de_To_Address_PostalCode__lt=end_postal_code,
+                )
+            elif column_filter and not "-" in column_filter:
+                queryset = queryset.filter(
+                    de_To_Address_PostalCode__icontains=column_filter
                 )
         except KeyError:
             column_filter = ""
@@ -3937,7 +3951,7 @@ def get_manifest(request):
 
         for fp in fps:
             bookings, filename = build_manifest(fps[fp], username)
-            logger.info(f"@0 - {filename}")
+
             if vx_freight_provider.upper() == "TASFR":
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
             elif vx_freight_provider.upper() == "DHL":
@@ -3964,11 +3978,9 @@ def get_manifest(request):
         s = io.BytesIO()
         zf = zipfile.ZipFile(s, "w")
         for index, file_path in enumerate(file_paths):
-            logger.info(f"@1 - {file_path}")
             if os.path.isfile(file_path):
                 file_name = file_path.split("/")[-1]
                 file_name = file_name.split("\\")[-1]
-                logger.info(f"@2 - {file_name}")
                 zf.write(file_path, f"manifest_files/{file_name}")
         zf.close()
 
