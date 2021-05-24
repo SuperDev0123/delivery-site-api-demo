@@ -309,6 +309,7 @@ def send_order_info(bok_1):
 
         if settings.ENV == "prod":
             to_emails.append(settings.SUPPORT_CENTER_EMAIL)
+            to_emails.append("randerson@plumproducts.com")  # Plum agent
 
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
         logger.error(f"@905 {LOG_ID} Sent email notification!")
