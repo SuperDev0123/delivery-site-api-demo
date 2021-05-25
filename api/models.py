@@ -3893,6 +3893,20 @@ class FP_label_scans(models.Model):
         db_table = "fp_label_scans"
 
 
+class FP_onforwarding(models.Model):
+    id = models.AutoField(primary_key=True)
+    fp_id = models.IntegerField()
+    fp_company_name = models.CharField(max_length=64)
+    state = models.CharField(max_length=64)
+    postcode = models.CharField(max_length=6)
+    suburb = models.CharField(max_length=64)
+    base_price = models.FloatField()
+    price_per_kg = models.FloatField()
+
+    class Meta:
+        db_table = "fp_onforwarding"
+
+
 class DME_reports(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

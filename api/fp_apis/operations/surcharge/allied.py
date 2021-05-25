@@ -1,3 +1,4 @@
+from api.models import FP_onforwarding
 # def cw(param):
 #     if :
 #         return {
@@ -162,40 +163,43 @@
 
 # dummy values for below 3
 def op(param):
-    if param["max_dimension"] >= 1.4 or param["max_weight"] > 500:
+    dimensions = [param['max_length'], param['max_width'], param['max_height']]
+    dimensions.sort()
+    limits = [1.4, 1.2, 1.2]
+    pallet_cube = 1.4 * 1.2 * 1.2
+    limits.sort()
+    if dimensions[0] > limits[0] or dimensions[1] > limits[1] or dimensions[2] > limits[2] or param['max_weight'] > 500:
         return {
-            "name": "Oversize Pallets",
-            "description": "Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. "
-            + "Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full "
-            + "pallets. An additional pallet charge will apply.",
-            "value": 0.1 * param["dead_weight"],
+            'name': 'Oversize Pallets',
+            'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
+                'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
+                'pallets. An additional pallet charge will apply.',
+            'value': (max(math.ceil(param['total_cubic'] / pallet_cube), math.ceil(param['max_weight'] / 500)) - 1) * 'base_charge'
         }
     else:
         return None
 
+# def bbs(param):
+#     if param['max_dimension'] >= 1.4:
+#         return {
+#             'name': 'Big Bulky Surcharge',
+#             'description': 'Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double ' + 
+#                 'the chargeable weight (the greater of either the cubic or dead weight) of the item travelling is charged.',
+#             'value': 0.1 * param['dead_weight']
+#         }
+#     else:
+#         return None
 
-def bbs(param):
-    if param["max_dimension"] >= 1.4:
-        return {
-            "name": "Big Bulky Surcharge",
-            "description": "Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double "
-            + "the chargeable weight (the greater of either the cubic or dead weight) of the item travelling is charged.",
-            "value": 0.1 * param["dead_weight"],
-        }
-    else:
-        return None
-
-
-def mcsp(param):
-    if param["max_weight"] > 175:
-        return {
-            "name": "Minimum Charge-Skids/ Pallets",
-            "description": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your "
-            + "freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.",
-            "value": 0.11 * param["dead_weight"],
-        }
-    else:
-        return None
+# def mcsp(param):
+#     if param['max_weight'] > 175:
+#         return {
+#             'name': 'Minimum Charge-Skids/ Pallets',
+#             'description': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your ' +
+#                 'freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.',
+#             'value': 0.11 * param['dead_weight']
+#         }
+#     else:
+#         return None
 
 
 # def pd(param):
@@ -209,11 +213,36 @@ def mcsp(param):
 #     else:
 #         return None
 
+def ofpu(param):
+    try:
+        pu_onforwarding = FP_onforwarding.objects.get(fp_company_name='Allied', state=param['pu_address_state'], postcode=param['pu_address_postcode'], suburb=param['pu_address_suburb'])
+        return {
+            'name': 'Onforwarding(Pickup)',
+            'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
+                'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
+            'value': pu_onforwarding.price_per_kg
+        }
+    except Exception as e:
+        return None
 
+def ofde(param):
+    try:
+        de_to_onforwarding = FP_onforwarding.objects.get(fp_company_name='Allied', state=param['de_to_address_state'], postcode=param['de_to_address_postcode'], suburb=param['de_to_address_suburb'])
+        return {
+            'name': 'Onforwarding(Delivery)',
+            'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
+                'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
+            'value': de_onforwarding.price_per_kg
+        }
+    except Exception as e:
+        return None
+   
 def allied():
     return [
-        op,
-        bbs,
-        mcsp,
+        # op,
+        ofpu,
+        ofde
+        # bbs,
+        # mcsp,
         # pd
     ]
