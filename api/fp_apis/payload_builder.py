@@ -11,7 +11,7 @@ from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
 
-logger = logging.getLogger("PB")  # Payload Builder
+logger = logging.getLogger(__name__)  # Payload Builder
 
 
 def get_account_detail(booking, fp_name):
@@ -45,6 +45,9 @@ def get_account_detail(booking, fp_name):
             for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                 if key == _warehouse_code:
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+
+    if _fp_name in ["allied"]:
+        account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
 
     if not account_detail:
         booking.b_errorCapture = f"Couldn't find Account Detail"
@@ -272,6 +275,8 @@ def get_book_payload(booking, fp_name):
     payload["items"] = items
 
     # Detail for each FP
+    if fp_name == "allied":
+        payload["serviceType"] = "C"
     if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"

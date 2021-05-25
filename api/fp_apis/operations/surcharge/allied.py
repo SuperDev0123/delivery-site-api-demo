@@ -2,11 +2,11 @@
 #     if :
 #         return {
 #             'name': 'Cubic Weight',
-#             'description': 'All Allied Overnight Express rates are charged on the greater of either the dead weight or the cubic weight of the consignment. ' + 
+#             'description': 'All Allied Overnight Express rates are charged on the greater of either the dead weight or the cubic weight of the consignment. ' +
 #                 'The cubic conversion factor is 250 kilograms per cubic metre of space.',
 #             'value': 60 * param['total_qty']
 #         }
-#     else: 
+#     else:
 #         return None
 
 # def lsc0(param):
@@ -162,38 +162,41 @@
 
 # dummy values for below 3
 def op(param):
-    if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
+    if param["max_dimension"] >= 1.4 or param["max_weight"] > 500:
         return {
-            'name': 'Oversize Pallets',
-            'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
-                'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
-                'pallets. An additional pallet charge will apply.',
-            'value': 0.1 * param['dead_weight']
+            "name": "Oversize Pallets",
+            "description": "Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. "
+            + "Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full "
+            + "pallets. An additional pallet charge will apply.",
+            "value": 0.1 * param["dead_weight"],
         }
     else:
         return None
+
 
 def bbs(param):
-    if param['max_dimension'] >= 1.4:
+    if param["max_dimension"] >= 1.4:
         return {
-            'name': 'Big Bulky Surcharge',
-            'description': 'Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double ' + 
-                'the chargeable weight (the greater of either the cubic or dead weight) of the item travelling is charged.',
-            'value': 0.1 * param['dead_weight']
+            "name": "Big Bulky Surcharge",
+            "description": "Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double "
+            + "the chargeable weight (the greater of either the cubic or dead weight) of the item travelling is charged.",
+            "value": 0.1 * param["dead_weight"],
         }
     else:
         return None
 
+
 def mcsp(param):
-    if param['max_weight'] > 175:
+    if param["max_weight"] > 175:
         return {
-            'name': 'Minimum Charge-Skids/ Pallets',
-            'description': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your ' +
-                'freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.',
-            'value': 0.11 * param['dead_weight']
+            "name": "Minimum Charge-Skids/ Pallets",
+            "description": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your "
+            + "freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.",
+            "value": 0.11 * param["dead_weight"],
         }
     else:
         return None
+
 
 # def pd(param):
 #     if param['max_dimension'] >= 1.4 or param['max_weight'] > 500:
@@ -206,7 +209,7 @@ def mcsp(param):
 #     else:
 #         return None
 
-   
+
 def allied():
     return [
         op,
@@ -214,7 +217,3 @@ def allied():
         mcsp,
         # pd
     ]
-
-
-
-

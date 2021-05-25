@@ -37,6 +37,7 @@ from api.common import (
 )
 from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import get_status_category_from_status
+from api.fp_apis.operations.surcharge.index import get_available_surcharge_opts
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.standard import index as standard
@@ -189,6 +190,32 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             result["pricings"] = []
             best_quotes = quote_set
 
+            # Build `Booking` and `Lines` for Surcharge
+            booking = {
+                "pu_Address_Type": bok_1.b_027_b_pu_address_type,
+                "de_To_AddressType": bok_1.b_053_b_del_address_type,
+                "de_To_Address_State": bok_1.b_057_b_del_address_state,
+                "de_To_Address_City": bok_1.b_058_b_del_address_suburb,
+                "pu_tail_lift": bok_1.b_019_b_pu_tail_lift,
+                "del_tail_lift": bok_1.b_041_b_del_tail_lift,
+            }
+
+            lines = []
+            for bok_2 in bok_2s:
+                bok_2_line = {
+                    "e_type_of_packaging": bok_2.l_001_type_of_packaging,
+                    "e_qty": int(bok_2.l_002_qty),
+                    "e_item": bok_2.l_003_item,
+                    "e_dimUOM": bok_2.l_004_dim_UOM,
+                    "e_dimLength": bok_2.l_005_dim_length,
+                    "e_dimWidth": bok_2.l_006_dim_width,
+                    "e_dimHeight": bok_2.l_007_dim_height,
+                    "e_weightUOM": bok_2.l_008_weight_UOM,
+                    "e_weightPerEach": bok_2.l_009_weight_per_each,
+                    "e_dangerousGoods": False,
+                }
+                lines.append(bok_2_line)
+
             if best_quotes:
                 context = {"client_customer_mark_up": client.client_customer_mark_up}
                 json_results = SimpleQuoteSerializer(
@@ -197,6 +224,21 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 json_results = dme_time_lib.beautify_eta(
                     json_results, best_quotes, client
                 )
+
+                # Surcharge point
+                for json_result in json_results:
+                    quote = None
+
+                    for _quote in best_quotes:
+                        if _quote.pk == json_result["cost_id"]:
+                            quote = _quote
+
+                    booking["vx_serviceName"] = quote.service_name
+                    booking["vx_freight_provider"] = quote.freight_provider
+                    json_result["surcharges"] = get_available_surcharge_opts(
+                        booking, lines
+                    )
+
                 result["pricings"] = json_results
 
             res_json = {"message": "Succesfully get bok and pricings.", "data": result}

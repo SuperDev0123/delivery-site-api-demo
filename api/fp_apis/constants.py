@@ -186,7 +186,16 @@ FP_CREDENTIALS = {
                 "accountPassword": "Deliver123",
                 "accountUsername": "CIT00000000000098839",
             }
-        }
+        },
+        "jason l": {
+            "live_jasonl_0": {
+                "accountCode": "21879211",
+                "accountKey": "21879211",
+                "accountState": "JSONL",
+                "accountPassword": "prodTNT123",
+                "accountUsername": "CIT00000000000136454",
+            },
+        },
     },
     "capital": {
         "dme": {
@@ -227,7 +236,7 @@ FP_CREDENTIALS = {
         "test": {
             "test_bed_1": {
                 "accountCode": "DELVME",
-                "accountKey": "11e328f646051c3decc4b2bb4584530b",
+                "accountKey": "ce0d58fd22ae8619974958e65302a715",  # 11e328f646051c3decc4b2bb4584530b
                 "accountState": "NSW",
             },
         },

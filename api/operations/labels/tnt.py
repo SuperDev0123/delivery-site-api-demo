@@ -224,17 +224,22 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
         )
         routing = None
 
-        for crecord in crecords:
-            if crecord.orig_depot_except == drecord.orig_depot:
-                routing = crecord
-                break
+        if drecord:
+            for crecord in crecords:
+                if crecord.orig_depot_except == drecord.orig_depot:
+                    routing = crecord
+                    break
 
         if not routing:
             routing = crecords.first()
 
-    logger.info(
-        f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
-    )
+        logger.info(
+            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
+        )
+    else:
+        logger.info(
+            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
+        )
 
     e_Total_KG_weight = 0
     for booking_line in lines:

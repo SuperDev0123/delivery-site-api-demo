@@ -8,6 +8,7 @@ def el0(param):
     else:
         return None
 
+
 def el1(param):
     if param['max_dimension'] >= 2.5 and param['max_dimension'] < 6:
         return {
@@ -18,9 +19,10 @@ def el1(param):
     else:
         return None
 
+
 # dummy value for below two
 def el2(param):
-    if param['max_dimension'] >= 6:
+    if param["max_dimension"] >= 6:
         return {
             'name': 'Excess Lengths: 6.0m and greater13 ',
             'description': '',
