@@ -322,7 +322,7 @@ def build_manifest(bookings, booking_lines, username):
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_extra_large"],
+                    label_settings["font_size_large"],
                     bookings[0].vx_serviceName or "",
                 ),
                 style_right,
@@ -456,9 +456,9 @@ def build_manifest(bookings, booking_lines, username):
         # ],
     ]
 
-    t1_w = float(label_settings["label_image_size_width"]) * (2 / 6) * mm
-    t2_w = float(label_settings["label_image_size_width"]) * (3 / 6) * mm
-    t3_w = float(label_settings["label_image_size_width"]) * (1 / 6) * mm
+    t1_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
+    t2_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
+    t3_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
 
     table = Table(
         data,
@@ -466,10 +466,10 @@ def build_manifest(bookings, booking_lines, username):
         style=[
             ('SPAN', (-1, 0), (-1, -1)),
             ("VALIGN", (0, 0), (1, -1), "CENTER"),
-            ("VALIGN", (-1, 0), (-1, -1), "TOP"),
+            # ("VALIGN", (-1, 0), (-1, -1), "TOP"),
             ("TOPPADDING", (0, 0), (2, -1), 0),
-            ("TOPPADDING", (-1, 0), (-1, -1), 30),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("VALIGN", (-1, 0), (-1, -1), "CENTER"),
+            # ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
         ],
     )
