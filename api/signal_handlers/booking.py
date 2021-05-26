@@ -73,7 +73,7 @@ def pre_save_handler(instance):
                     instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
             except Exception as e:
-                logger.info(f"Error 515 {e}")
+                logger.info(f"#505 {LOG_ID} Error {e}")
                 pass
 
 
@@ -106,9 +106,9 @@ def post_save_handler(instance):
             instance.vx_account_code = quote.account_code
             instance.vx_serviceName = quote.service_name
             instance.v_service_Type = quote.service_code
-            booking.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
-            booking.inv_sell_quoted = quote.client_mu_1_minimum_values
-            booking.api_booking_quote = quote
+            instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+            instance.inv_sell_quoted = quote.client_mu_1_minimum_values
+            instance.api_booking_quote = quote
 
             # Build Label
             _fp_name = instance.vx_freight_provider.lower()
@@ -163,4 +163,4 @@ def post_save_handler(instance):
             instance.z_label_url = f"{_fp_name}_au/{file_name}"
             instance.save()
     except Exception as e:
-        logger.info(f"Booking pre_save Error: {str(e)}")
+        logger.info(f"{LOG_ID} Error: {str(e)}")
