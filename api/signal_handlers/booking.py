@@ -87,7 +87,7 @@ def post_save_handler(instance):
             and "[REBUILD_REQUIRED]" in instance.z_label_url
         ):
             # Check if pricings exist for selected FP
-            quotes = API_booking_quotes.filter(
+            quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=instance.pk_booking_id,
                 freight_provider__iexact=instance.vx_freight_provider,
             ).order_by("-fee")
