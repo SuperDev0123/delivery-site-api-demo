@@ -39,6 +39,8 @@ def get_available_surcharge_opts(booking):
             has_dangerous_item = True
         
     max_dimension = max(lengths + widths + heights)
+    dead_weight = math.ceil(dead_weight)
+    cubic_weight = math.ceil(cubic_weight)
 
     required_params = {
         'pu_address_type': booking.pu_Address_Type,
@@ -50,8 +52,8 @@ def get_available_surcharge_opts(booking):
         'de_to_address_suburb': booking.de_To_Address_Suburb,
         'de_to_address_postcode': booking.de_To_Address_PostalCode,
         'de_to_address_city': booking.de_To_Address_City,
-        'dead_weight': math.ceil(dead_weight),
-        'cubic_weight': math.ceil(cubic_weight),
+        'dead_weight': dead_weight,
+        'cubic_weight': cubic_weight,
         'total_cubic': total_cubic,
         'max_weight': max(dead_weight, cubic_weight),
         'min_weight': min(dead_weight, cubic_weight),
