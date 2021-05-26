@@ -1288,7 +1288,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print("Exception: ", e)
+            logger.error(f"update_booking Error: {str(e)}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"])
