@@ -28,7 +28,7 @@ def pre_save_handler(instance):
         pass
 
     else:
-        logger.info(f"Booking pre_save: {instance.id}")
+        logger.info(f"{LOG_ID} Booking PK: {instance.id}")
         old = Bookings.objects.get(id=instance.id)
 
         if old.dme_status_detail != instance.dme_status_detail:  # field will be updated
@@ -79,7 +79,7 @@ def pre_save_handler(instance):
 
 def post_save_handler(instance):
     LOG_ID = "[BOOKING POST SAVE]"
-    logger.info(f"Booking pre_save: {instance.id}")
+    logger.info(f"{LOG_ID} Booking PK: {instance.id}")
 
     try:
         if (
