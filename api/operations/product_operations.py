@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from api.models import Client_Products
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _append_line(results, line, qty):
@@ -38,6 +38,7 @@ def get_product_items(bok_2s, client, is_web=False):
         # "Jason L"
         zbl_121_integer_1 = bok_2.get("sequence")
         e_type_of_packaging = bok_2.get("UOMCode")
+        zbl_102_text_2 = bok_2.get("ProductGroupCode")
 
         if not model_number or not qty:
             raise ValidationError(
@@ -71,6 +72,7 @@ def get_product_items(bok_2s, client, is_web=False):
                     "e_dimHeight": product.e_dimHeight,
                     "e_weightPerEach": product.e_weightPerEach,
                     "zbl_121_integer_1": zbl_121_integer_1,
+                    "zbl_102_text_2": zbl_102_text_2,
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
                 results = _append_line(results, line, qty)
@@ -95,6 +97,7 @@ def get_product_items(bok_2s, client, is_web=False):
                     "e_dimHeight": product.e_dimHeight,
                     "e_weightPerEach": product.e_weightPerEach,
                     "zbl_121_integer_1": zbl_121_integer_1,
+                    "zbl_102_text_2": zbl_102_text_2,
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
                 results = _append_line(results, line, qty)

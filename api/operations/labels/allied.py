@@ -288,7 +288,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Date: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                            if booking.b_dateBookedDate
+                            else booking.puPickUpAvailFrom_Date.strftime("%d/%m/%Y"),
                         ),
                         style_left,
                     ),
@@ -766,7 +768,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Date: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                            if booking.b_dateBookedDate
+                            else booking.puPickUpAvailFrom_Date.strftime("%d/%m/%Y"),
                         ),
                         style_left,
                     ),

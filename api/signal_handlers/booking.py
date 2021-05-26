@@ -3,7 +3,12 @@ from datetime import datetime
 
 from django.conf import settings
 
-from api.models import Bookings, Booking_lines, Api_booking_confirmation_lines
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Api_booking_confirmation_lines,
+    API_booking_quotes,
+)
 from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 
@@ -18,6 +23,7 @@ elif settings.ENV == "prod":
 
 
 def pre_save_handler(instance):
+    LOG_ID = "[BOOKING PRE SAVE]"
     if instance.id is None:  # new object will be created
         pass
 
@@ -74,15 +80,42 @@ def pre_save_handler(instance):
             old.vx_freight_provider
             and old.vx_freight_provider != instance.vx_freight_provider
         ):
-            logger.info(f"REBUILD_REQUIRED")
-            instance.z_label_url = "REBUILD_REQUIRED"
+            logger.info(f"Rebuild label required")
             instance.z_downloaded_shipping_label_timestamp = None
+
+            if instance.z_label_url:
+                instance.z_label_url = "[REBUILD_REQUIRED]" + instance.z_label_url
 
 
 def post_save_handler(instance):
+    LOG_ID = "[BOOKING POST SAVE]"
     logger.info(f"Booking pre_save: {instance.id}")
 
-    if instance.vx_freight_provider and instance.z_label_url == "REBUILD_REQUIRED":
+    # Check if pricings exist for selected FP
+    quotes = API_booking_quotes.filter(
+        fk_booking_id=instance.pk_booking_id,
+        freight_provider__iexact=instance.vx_freight_provider,
+    ).order_by("-fee")
+
+    if not quotes:
+        instance.b_error_Capture = "Quote doen't exist"
+
+        if instance.z_label_url:
+            instance.z_label_url = instance.z_label_url[18:]
+
+        instance.save()
+        return
+
+    # Mapping Pircing info to Booking
+    quote = quotes.first()
+    instance.vx_account_code = quote.account_code
+    instance.vx_serviceName = quote.service_name
+    instance.v_service_Type = quote.service_code
+    booking.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+    booking.inv_sell_quoted = quote.client_mu_1_minimum_values
+    booking.api_booking_quote = quote
+
+    if instance.vx_freight_provider and "[REBUILD_REQUIRED]" in instance.z_label_url:
         # Build Label
         _fp_name = instance.vx_freight_provider.lower()
         file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"

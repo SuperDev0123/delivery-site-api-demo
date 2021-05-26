@@ -142,6 +142,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "z_label_url",
             "z_pod_url",
             "z_pod_signed_url",
+            "z_manifest_url",
             "pu_Address_State",
             "de_To_Address_State",
             "b_status",

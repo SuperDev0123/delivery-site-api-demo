@@ -26,6 +26,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.pallet import get_number_of_pallets
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -35,15 +36,14 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import push_operations, product_operations as product_oper
-from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
-from api.common.pallet import get_number_of_pallets
+from api.clients.jason_l.constants import SPECIAL_GROUP_NO
 
-logger = logging.getLogger("JASON")
+logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):
@@ -405,6 +405,7 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = item["e_weightUOM"].upper()
             line["e_item_type"] = item["e_item_type"]
             line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
+            line["zbl_102_text_2"] = item["zbl_102_text_2"]
             new_bok_2s.append({"booking_line": line})
 
             bok_2_serializer = BOK_2_Serializer(data=line)
@@ -439,7 +440,13 @@ def push_boks(payload, client, username, method):
         total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
         carton_cnt += bok_2_obj.l_002_qty
 
-    if number_of_pallets and carton_cnt > 2:
+    need_palletize = False
+    for bok_2_obj in bok_2_objs:
+        if bok_2_obj.zbl_102_text_2 in SPECIAL_GROUP_NO:
+            need_palletize = True
+            break
+
+    if number_of_pallets and (carton_cnt > 2 or need_palletize):
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
         new_bok_2s = []

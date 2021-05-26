@@ -27,7 +27,7 @@ from api.models import Booking_lines, API_booking_quotes, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -81,6 +81,11 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
         f"#110 [HUNTER THERMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines}, Con: {v_FPBookingNumber})"
     )
 
+    # start check if pdfs folder exists
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
+    # end check if pdfs folder exists
+
     # start pdf file name using naming convention
     if lines:
         if sscc:
@@ -126,11 +131,6 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
         for booking_line in lines:
             totalQty = totalQty + booking_line.e_qty
 
-    # start check if pdfs folder exists
-    if not os.path.exists(file_path):
-        os.makedirs(file_path)
-    # end check if pdfs folder exists
-
     label_settings = {
         "font_family": "Verdana",
         "font_size_extra_small": "5",
@@ -152,7 +152,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     }
 
     doc = SimpleDocTemplate(
-        file_path + file_name,
+        f"{file_path}/{file_name}",
         pagesize=(
             float(label_settings["label_dimension_length"]) * mm,
             float(label_settings["label_dimension_width"]) * mm,

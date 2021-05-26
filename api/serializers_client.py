@@ -152,6 +152,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "pk_booking_lines_id",
             "e_item_type",
             "zbl_121_integer_1",  # Sequence
+            "zbl_102_text_2",  # ProductGroupCode
         )
 
 
