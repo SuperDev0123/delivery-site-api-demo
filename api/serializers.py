@@ -470,6 +470,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     eta_pu_by = serializers.SerializerMethodField(read_only=True)
     eta_de_by = serializers.SerializerMethodField(read_only=True)
     is_deliverable = serializers.SerializerMethodField(read_only=True)
+    inv_cost_quoted = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -495,6 +496,13 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         try:
             booking = self.context.get("booking")
             return utils.get_eta_de_by(booking, obj)
+        except Exception as e:
+            return None
+
+    def get_inv_cost_quoted(self, obj):
+        try:
+            booking = self.context.get("booking")
+            return round(obj.fee * (1 + obj.mu_percentage_fuel_levy), 3)
         except Exception as e:
             return None
 
