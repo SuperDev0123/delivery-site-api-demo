@@ -1668,6 +1668,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
                     if booking.z_label_url:
                         booking.z_label_url = "[REBUILD_REQUIRED]" + booking.z_label_url
+                    else:
+                        booking.z_label_url = "[REBUILD_REQUIRED]"
 
                 booking.save()
             return JsonResponse(
