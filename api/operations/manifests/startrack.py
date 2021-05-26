@@ -31,6 +31,8 @@ from reportlab.lib import colors
 from django.conf import settings
 
 from api.models import Fp_freight_providers, Dme_manifest_log
+from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.helpers.cubic import get_cubic_meter
 
 if settings.ENV == "local":
     production = False  # Local
@@ -143,7 +145,28 @@ def build_manifest(bookings, booking_lines, username):
     else:
         fp_bg_color = "808080"
     # new_manifest_index = fp_info.fp_manifest_cnt
-    # new_connot_index = fp_info.new_connot_index
+    # new_connot_index = fp_info.
+
+    m3_to_kg_factor = 250
+    dead_weight, total_cubic, total_qty = 0, 0, 0
+
+    for line in booking_lines:
+        total_qty += line.e_qty
+        dead_weight += (
+            line.e_weightPerEach
+            * _get_weight_amount(line.e_weightUOM)
+            * line.e_qty
+        )
+        total_cubic += get_cubic_meter(
+            line.e_dimLength,
+            line.e_dimWidth,
+            line.e_dimHeight,
+            line.e_dimUOM,
+            line.e_qty,
+        )
+
+    cubic_weight = total_cubic * m3_to_kg_factor
+    number_of_consignments = len(bookings)
 
     style_center_fp = ParagraphStyle(
         name="right",
@@ -305,9 +328,8 @@ def build_manifest(bookings, booking_lines, username):
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_extra_large"],
-                    # "EXP",
-                    "",
+                    label_settings["font_size_large"],
+                    bookings[0].vx_serviceName or "",
                 ),
                 style_right,
             ),
@@ -361,8 +383,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    # "27-31 SHARP COURT CAVAN SA 5094",
-                    "",
+                    ""
                 ),
                 style_left,
             ),
@@ -416,7 +437,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "18/05/2021 3:34 PM",
+                    "",
                 ),
                 style_left,
             ),
@@ -441,9 +462,9 @@ def build_manifest(bookings, booking_lines, username):
         # ],
     ]
 
-    t1_w = float(label_settings["label_image_size_width"]) * (2 / 6) * mm
-    t2_w = float(label_settings["label_image_size_width"]) * (3 / 6) * mm
-    t3_w = float(label_settings["label_image_size_width"]) * (1 / 6) * mm
+    t1_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
+    t2_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
+    t3_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
 
     table = Table(
         data,
@@ -451,10 +472,10 @@ def build_manifest(bookings, booking_lines, username):
         style=[
             ("SPAN", (-1, 0), (-1, -1)),
             ("VALIGN", (0, 0), (1, -1), "CENTER"),
-            ("VALIGN", (-1, 0), (-1, -1), "TOP"),
+            # ("VALIGN", (-1, 0), (-1, -1), "TOP"),
             ("TOPPADDING", (0, 0), (2, -1), 0),
-            ("TOPPADDING", (-1, 0), (-1, -1), 30),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("VALIGN", (-1, 0), (-1, -1), "CENTER"),
+            # ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
         ],
     )
@@ -470,13 +491,17 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Consignments: ",
-                    "12",
+                    number_of_consignments
                 ),
                 style_left,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b> %s</font>"
-                % (label_settings["font_size_medium"], "Number of Articles: ", "66"),
+                % (
+                    label_settings["font_size_medium"],
+                    "Number of Articles: ",
+                    total_qty
+                ),
                 style_left,
             ),
             Paragraph(
@@ -484,7 +509,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Actual Weight (kg): ",
-                    "500.230",
+                    dead_weight
                 ),
                 style_left,
             ),
@@ -492,7 +517,11 @@ def build_manifest(bookings, booking_lines, username):
         [
             Paragraph(
                 "<font size=%s><b>%s (m<super rise=4 size=6>3</super>): </b> %s</font>"
-                % (label_settings["font_size_medium"], "Cube", "3.861"),
+                % (
+                    label_settings["font_size_medium"],
+                    "Cube",
+                    round(total_cubic, 3)
+                ),
                 style_left,
             ),
             Paragraph(
