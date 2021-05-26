@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def get_available_surcharge_opts(booking, lines):
     m3_to_kg_factor = 250
-    dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0
+    dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
     lengths, widths, heights, diagonals = [], [], [], []
     has_dangerous_item = False
 
