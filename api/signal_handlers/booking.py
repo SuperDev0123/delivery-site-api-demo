@@ -90,7 +90,7 @@ def post_save_handler(instance):
             quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=instance.pk_booking_id,
                 freight_provider__iexact=instance.vx_freight_provider,
-            ).order_by("-fee")
+            ).order_by("fee")
 
             if not quotes:
                 instance.b_error_Capture = "Quote doen't exist"
