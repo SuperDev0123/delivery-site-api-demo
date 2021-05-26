@@ -509,7 +509,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Actual Weight (kg): ",
-                    dead_weight
+                    round(dead_weight, 3)
                 ),
                 style_left,
             ),
