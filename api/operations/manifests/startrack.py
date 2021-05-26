@@ -1280,7 +1280,6 @@ def build_manifest(bookings, booking_lines, username):
         ],
     )
     Story.append(table)
-    Story.append(Spacer(1, 8))
 
     doc.build(Story)
     file.close()
