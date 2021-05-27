@@ -41,7 +41,7 @@ from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
-from api.clients.jason_l.constants import SPECIAL_GROUP_NO
+from api.clients.jason_l.constants import SPECIAL_GROUP_NO, IGNORE_GROUP_CODES
 
 logger = logging.getLogger(__name__)
 
@@ -406,6 +406,10 @@ def push_boks(payload, client, username, method):
             line["e_item_type"] = item["e_item_type"]
             line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
             line["zbl_102_text_2"] = item["zbl_102_text_2"]
+
+            # if item["zbl_102_text_2"] in IGNORE_GROUP_CODES:
+            #     line["is_deleted"] = True
+
             new_bok_2s.append({"booking_line": line})
 
             bok_2_serializer = BOK_2_Serializer(data=line)

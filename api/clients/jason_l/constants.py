@@ -14,3 +14,5 @@ SPECIAL_GROUP_NO = [
     "3001",
     "3002",
 ]
+
+IGNORE_GROUP_CODES = ["FR01", "AS01", "AS02"]
