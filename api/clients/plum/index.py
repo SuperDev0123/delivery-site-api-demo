@@ -1392,7 +1392,7 @@ def manifest(payload, client, username):
         _missing_order_nums = ", ".join(missing_order_nums)
         raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
 
-    manifest_url = build_manifest(booking_ids, username)
+    bookings, manifest_url = build_manifest(booking_ids, username)
 
     with open(manifest_url, "rb") as manifest:
         manifest_data = str(b64encode(manifest.read()))

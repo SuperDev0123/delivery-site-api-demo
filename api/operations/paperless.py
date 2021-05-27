@@ -250,13 +250,8 @@ def send_order_info(bok_1):
 
         url = f"http://automation.acrsupplypartners.com.au:{port}/SalesOrderToWMS"
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
-        subject = "Error on Paperless workflow"
-        to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
         log = Log(fk_booking_id=bok_1.pk_header_id, request_type="PAPERLESS_ORDER")
         log.save()
-
-        if settings.ENV == "prod":
-            to_emails.append(settings.SUPPORT_CENTER_EMAIL)
 
         try:
             logger.info(f"@9000 {LOG_ID} url - {url}")
@@ -301,6 +296,12 @@ def send_order_info(bok_1):
         )
         return json_res
     except Exception as e:
+        to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
+        subject = "Error on Paperless workflow"
+
+        if settings.ENV == "prod":
+            to_emails.append(settings.SUPPORT_CENTER_EMAIL)
+
         send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
         logger.error(f"@905 {LOG_ID} Sent email notification!")
         return None

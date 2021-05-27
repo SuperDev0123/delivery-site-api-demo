@@ -1948,6 +1948,13 @@ def pre_save_booking(sender, instance, **kwargs):
     pre_save_handler(instance)
 
 
+@receiver(post_save, sender=Bookings)
+def post_save_booking(sender, instance, **kwargs):
+    from api.signal_handlers.booking import post_save_handler
+
+    post_save_handler(instance)
+
+
 class Booking_lines(models.Model):
     pk_lines_id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(
@@ -3886,6 +3893,20 @@ class FP_label_scans(models.Model):
         db_table = "fp_label_scans"
 
 
+class FP_onforwarding(models.Model):
+    id = models.AutoField(primary_key=True)
+    fp_id = models.IntegerField()
+    fp_company_name = models.CharField(max_length=64)
+    state = models.CharField(max_length=64)
+    postcode = models.CharField(max_length=6)
+    suburb = models.CharField(max_length=64)
+    base_price = models.FloatField()
+    price_per_kg = models.FloatField()
+
+    class Meta:
+        db_table = "fp_onforwarding"
+
+
 class DME_reports(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -4754,3 +4775,18 @@ class AlliedETD(models.Model):
 
     class Meta:
         db_table = "allied_etd"
+
+
+class PostalCode(models.Model):
+    """
+    "QLD", "State", "Townsville", "4806-4824, 4835-4850, 9960-9979"
+    """
+
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=16, default=None, null=True)
+    state = models.CharField(max_length=16, default=None, null=True)
+    name = models.CharField(max_length=128, default=None, null=True)
+    range = models.CharField(max_length=255, default=None, null=True)
+
+    class Meta:
+        db_table = "postal_code"

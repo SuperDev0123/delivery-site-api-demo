@@ -1,6 +1,9 @@
 from api.models import Bookings, Booking_lines
-from api.operations.manifests.dhl import build_manifest as build_DHL_manifest
-from api.operations.manifests.tas import build_manifest as build_TAS_manifest
+from api.operations.manifests.dhl import build_manifest as build_DHL_manifest  # DHL
+from api.operations.manifests.tas import build_manifest as build_TAS_manifest  # TAS
+from api.operations.manifests.startrack import (
+    build_manifest as build_ST_manifest,
+)  # ST
 
 
 # def get_manifested_list(bookings):
@@ -31,6 +34,6 @@ def build_manifest(booking_ids, username=""):
     elif vx_freight_provider == "TAS":
         file_name = build_TAS_manifest(bookings, booking_lines, username)
     else:
-        file_name = build_TAS_manifest(bookings, booking_lines, username)
+        file_name = build_ST_manifest(bookings, booking_lines, username)
 
-    return [file_name]
+    return bookings, file_name

@@ -27,14 +27,10 @@ from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
-style_right = ParagraphStyle(
-    name="right", 
-    parent=styles["Normal"], 
-    alignment=TA_RIGHT
-)
+style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
 style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
@@ -49,11 +45,11 @@ style_center = ParagraphStyle(
     leading=10,
 )
 style_center_bg = ParagraphStyle(
-    name="right", 
-    parent=styles["Normal"], 
+    name="right",
+    parent=styles["Normal"],
     alignment=TA_CENTER,
     leading=16,
-    backColor="#64a1fc"
+    backColor="#64a1fc",
 )
 style_uppercase = ParagraphStyle(
     name="uppercase",
@@ -193,7 +189,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
     for booking_line in lines:
         for k in range(booking_line.e_qty):
 
-
             tbl_data1 = [[dme_img]]
             t1 = Table(
                 tbl_data1,
@@ -291,8 +286,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                     Paragraph(
                         "<font size=%s>Date: %s</font>"
                         % (
-                            label_settings["font_size_medium"], 
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or ""
+                            label_settings["font_size_medium"],
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
                         ),
                         style_left,
                     ),
@@ -320,10 +315,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 [
                     Paragraph(
                         "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            ''
-                        ),
+                        % (label_settings["font_size_medium"], ""),
                         style_left,
                     ),
                     Paragraph(
@@ -339,7 +331,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                             booking.pu_Address_Country,
                         ),
                         style_left,
-                    )
+                    ),
                 ]
             ]
 
@@ -407,15 +399,16 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            "AA" + str(booking.b_bookingID_Visual) + str(j).zfill(3) or "",
+                            "AA" + str(booking.b_bookingID_Visual) + str(j).zfill(3)
+                            or "",
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Order Ref: %s</font>"
                         % (
-                            label_settings["font_size_medium"], 
-                            booking_line.sscc or "N/A"
+                            label_settings["font_size_medium"],
+                            booking_line.sscc or "N/A",
                         ),
                         style_left,
                     ),
@@ -473,7 +466,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         % (
                             label_settings["font_size_medium"],
                             booking.b_bookingID_Visual or "",
-                            str(j).zfill(3)
+                            str(j).zfill(3),
                         ),
                         style_left,
                     ),
@@ -502,7 +495,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 tbl_data2,
                 colWidths=(
                     45,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm - 45,
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                    - 45,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -621,7 +615,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
-                            '',
+                            "",
                         ),
                         style_left,
                     ),
@@ -743,7 +737,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         % (
                             label_settings["font_size_medium"],
                             booking.de_to_PickUp_Instructions_Address,
-                            booking.de_to_Pick_Up_Instructions_Contact
+                            booking.de_to_Pick_Up_Instructions_Contact,
                         ),
                         style_left,
                     )
@@ -771,15 +765,15 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         % (
                             label_settings["font_size_medium"],
                             # booking.vx_account_code or "", //test
-                            "Test Account"
+                            "Test Account",
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Date: %s</font>"
                         % (
-                            label_settings["font_size_medium"], 
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or ""
+                            label_settings["font_size_medium"],
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y") or "",
                         ),
                         style_left,
                     ),

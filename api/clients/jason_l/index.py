@@ -26,6 +26,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.pallet import get_number_of_pallets
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -35,15 +36,14 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import push_operations, product_operations as product_oper
-from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.jason_l.operations import get_picked_items
-from api.common.pallet import get_number_of_pallets
+from api.clients.jason_l.constants import SPECIAL_GROUP_NO
 
-logger = logging.getLogger("JASON")
+logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):
@@ -325,10 +325,6 @@ def push_boks(payload, client, username, method):
         if not bok_1.get("b_032_b_pu_address_suburb"):
             bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
-        if not bok_1.get("b_021_b_pu_avail_from_date"):
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
-
         bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
         if not bok_1.get("b_027_b_pu_address_type"):
@@ -409,6 +405,7 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = item["e_weightUOM"].upper()
             line["e_item_type"] = item["e_item_type"]
             line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
+            line["zbl_102_text_2"] = item["zbl_102_text_2"]
             new_bok_2s.append({"booking_line": line})
 
             bok_2_serializer = BOK_2_Serializer(data=line)
@@ -431,10 +428,10 @@ def push_boks(payload, client, username, method):
     total_weight = 0
 
     pallet = Pallet.objects.all().first()
-    number_of_pallets, unpalletized_lines = get_number_of_pallets(bok_2_objs, pallet)
+    number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
 
-    if not number_of_pallets and not unpalletized_lines:
-        message = "0 number of Pallets and 0 `unpalletized_lines`."
+    if not number_of_pallets:
+        message = "0 number of Pallets."
         logger.info(f"@801 {LOG_ID} {message}")
         return message
 
@@ -443,7 +440,13 @@ def push_boks(payload, client, username, method):
         total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
         carton_cnt += bok_2_obj.l_002_qty
 
-    if number_of_pallets and carton_cnt > 2:
+    need_palletize = False
+    for bok_2_obj in bok_2_objs:
+        if bok_2_obj.zbl_102_text_2 in SPECIAL_GROUP_NO:
+            need_palletize = True
+            break
+
+    if number_of_pallets and (carton_cnt > 2 or need_palletize):
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
         new_bok_2s = []
@@ -475,9 +478,6 @@ def push_boks(payload, client, username, method):
 
         # Create Bok_3s
         for bok_2_obj in bok_2_objs:
-            if bok_2_obj in unpalletized_lines:
-                continue
-
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
@@ -661,7 +661,7 @@ def auto_repack(payload, client):
     if repack_status:  # repack
         # Get Pallet
         pallet = Pallet.objects.get(pk=pallet_id)
-        number_of_pallets, unpalletized_lines = get_number_of_pallets(bok_2s, pallet)
+        number_of_pallets = get_number_of_pallets(bok_2s, pallet)
 
         if not number_of_pallets:
             message = "0 number of Pallets."
@@ -710,8 +710,6 @@ def auto_repack(payload, client):
         for bok_2 in bok_2s:
             if bok_2.l_001_type_of_packaging == "PAL":
                 continue
-            elif bok_2 in unpalletized_lines:
-                new_bok_2s.append(bok_2)
             else:
                 bok_3 = {}
                 bok_3["fk_header_id"] = bok_1.pk_header_id
@@ -1104,65 +1102,68 @@ def ready_boks(payload, client):
     """
     When it is ready(picked all items) on Warehouse
     """
-    LOG_ID = "[READY Jason L]"
-    b_client_order_num = payload.get("HostOrderNumber")
+    pass
 
-    # Check required params are included
-    if not b_client_order_num:
-        message = "'HostOrderNumber' is required."
-        raise ValidationError(message)
 
-    # Check if Order exists
-    booking = (
-        Bookings.objects.select_related("api_booking_quote")
-        .filter(
-            b_client_name=client.company_name, b_client_order_num=b_client_order_num
-        )
-        .first()
-    )
+#     LOG_ID = "[READY Jason L]"
+#     b_client_order_num = payload.get("HostOrderNumber")
 
-    if not booking:
-        message = "Order does not exist. HostOrderNumber' is invalid."
-        raise ValidationError(message)
+#     # Check required params are included
+#     if not b_client_order_num:
+#         message = "'HostOrderNumber' is required."
+#         raise ValidationError(message)
 
-    # If Hunter Order
-    fp_name = booking.api_booking_quote.freight_provider.lower()
+#     # Check if Order exists
+#     booking = (
+#         Bookings.objects.select_related("api_booking_quote")
+#         .filter(
+#             b_client_name=client.company_name, b_client_order_num=b_client_order_num
+#         )
+#         .first()
+#     )
 
-    if fp_name == "hunter" and booking.b_status == "Booked":
-        message = "Order is already BOOKED."
-        logger.info(f"@340 {LOG_ID} {message}")
-        return message
-    elif fp_name == "hunter" and booking.b_status != "Booked":
-        # DME don't get the ready api for Hunter Order
-        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-        logger.info(f"@341 {LOG_ID} {message}")
-        raise Exception(message)
+#     if not booking:
+#         message = "Order does not exist. HostOrderNumber' is invalid."
+#         raise ValidationError(message)
 
-    # Check if already ready
-    if booking.b_status not in ["Picking", "Ready for Booking"]:
-        message = "Order is already Ready."
-        logger.info(f"@342 {LOG_ID} {message}")
-        return message
+#     # If Hunter Order
+#     fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    # If NOT
-    pk_booking_id = booking.pk_booking_id
-    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-    line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
+#     if fp_name == "hunter" and booking.b_status == "Booked":
+#         message = "Order is already BOOKED."
+#         logger.info(f"@340 {LOG_ID} {message}")
+#         return message
+#     elif fp_name == "hunter" and booking.b_status != "Booked":
+#         # DME don't get the ready api for Hunter Order
+#         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+#         logger.info(f"@341 {LOG_ID} {message}")
+#         raise Exception(message)
 
-    # Update DB so that Booking can be BOOKED
-    if booking.api_booking_quote:
-        booking.b_status = "Ready for Booking"
-    else:
-        booking.b_status = "On Hold"
-        send_email_to_admins(
-            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
-            f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
-            + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
-            + f" Please do FC manually again on DME portal.",
-        )
+#     # Check if already ready
+#     if booking.b_status not in ["Picking", "Ready for Booking"]:
+#         message = "Order is already Ready."
+#         logger.info(f"@342 {LOG_ID} {message}")
+#         return message
 
-    booking.save()
+#     # If NOT
+#     pk_booking_id = booking.pk_booking_id
+#     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+#     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
 
-    message = "Order will be BOOKED soon."
-    logger.info(f"@349 {LOG_ID} {message}")
-    return message
+#     # Update DB so that Booking can be BOOKED
+#     if booking.api_booking_quote:
+#         booking.b_status = "Ready for Booking"
+#     else:
+#         booking.b_status = "On Hold"
+#         send_email_to_admins(
+#             f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
+#             f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
+#             + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
+#             + f" Please do FC manually again on DME portal.",
+#         )
+
+#     booking.save()
+
+#     message = "Order will be BOOKED soon."
+#     logger.info(f"@349 {LOG_ID} {message}")
+#     return message

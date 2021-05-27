@@ -2,7 +2,7 @@ import logging
 
 from api.operations.pronto_xi.apis import get_order, send_info_back_to_pronto
 
-logger = logging.getLogger("__name__")
+logger = logging.getLogger(__name__)
 
 
 def populate_bok(bok_1):
