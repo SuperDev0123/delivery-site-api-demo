@@ -242,37 +242,25 @@ def push_boks(payload, client, username, method):
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
             )
+
             if bok_1s.exists():
-                # If "sales quote" request, then clear all existing information
-                if bok_1["b_client_order_num"][:2] == "Q_":
-                    pk_header_id = bok_1s.first().pk_header_id
-                    old_bok_1 = bok_1s.first()
-                    old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-                    old_bok_3s = BOK_3_lines_data.objects.filter(
-                        fk_header_id=pk_header_id
-                    )
-                    old_bok_1.delete()
-                    old_bok_2s.delete()
-                    old_bok_3s.delete()
-                    old_quote = old_bok_1.quote
+                message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                logger.info(f"@884 {LOG_ID} {message}")
+
+                json_res = {
+                    "status": False,
+                    "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
+                }
+
+                if int(bok_1s.first().success) == dme_constants.BOK_SUCCESS_3:
+                    url = f"http://{settings.WEB_SITE_IP}/price/{bok_1s.first().client_booking_id}/"
                 else:
-                    message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-                    logger.info(f"@884 {LOG_ID} {message}")
+                    url = f"http://{settings.WEB_SITE_IP}/status/{bok_1s.first().client_booking_id}/"
 
-                    json_res = {
-                        "status": False,
-                        "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
-                    }
+                json_res["pricePageUrl"] = url
+                logger.info(f"@885 {LOG_ID} Response: {json_res}")
 
-                    if bok_1s.first().success == dme_constants.BOK_SUCCESS_3:
-                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1s.first().client_booking_id}/"
-                    else:
-                        url = f"http://{settings.WEB_SITE_IP}/status/{bok_1s.first().client_booking_id}/"
-
-                    json_res["pricePageUrl"] = url
-                    logger.info(f"@885 {LOG_ID} Response: {json_res}")
-
-                    return json_res
+                return json_res
 
     # Generate `client_booking_id` for SAPB1
     if is_biz:
