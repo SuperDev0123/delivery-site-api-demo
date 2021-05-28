@@ -134,6 +134,9 @@ def parse_order_xml(response, token):
     b_069 = 1  # Not provided
     b_070 = "Escalator"  # Not provided
     b_071 = 1  # Not provided
+    warehouse_code = SalesOrder.find(
+        "{http://www.pronto.net/so/1.0.0}WarehouseCode"
+    ).text
 
     order = {
         "b_client_order_num": order_num,
@@ -153,6 +156,7 @@ def parse_order_xml(response, token):
         "b_069_b_del_floor_number": b_069,
         "b_070_b_del_floor_access_by": b_070,
         "b_071_b_del_sufficient_space": b_071,
+        "warehouse_code": warehouse_code,
     }
 
     lines = []
@@ -198,7 +202,7 @@ def get_order(order_num):
                                 <AddressName/> \
                                 <DeliveryDate/> \
                                 <Packages/> \
-                                <Warehouse/> \
+                                <WarehouseCode/> \
                                 <CustomerEmail /> \
                                 <Address1/> \
                                 <Address2/> \
@@ -268,11 +272,10 @@ def send_info_back_to_pronto(bok_1, quote):
                     <SalesOrderLines> \
                         <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}"> \
                             <TypeCode>SN</TypeCode> \
-                            <OrderedQty>1</OrderedQty> \
+                            <OrderedQty>{quote.client_mu_1_minimum_values}</OrderedQty> \
                             <PriceOverrideFlag>Y</PriceOverrideFlag> \
                             <ItemCode>{bok_2.e_item_type}</ItemCode> \
                             <LineDescription>Qutoe from DME</LineDescription> \
-                            <ItemPrice>{quote.client_mu_1_minimum_values}</ItemPrice> \
                         </SalesOrderLine> \
                     </SalesOrderLines> \
                 </SalesOrderInsertSalesOrderLinesRequest>'

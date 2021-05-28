@@ -22,14 +22,18 @@ def get_client(user):
         raise Exception(message)
 
 
-def get_warehouse(client):
+def get_warehouse(client, code=None):
     """
     get Client's Warehouse
     """
     LOG_ID = "[GET WHSE]"
 
     try:
-        warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+        if code:
+            warehouse = Client_warehouses.objects.get(client_warehouse_code=code)
+        else:
+            warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+
         logger.info(f"{LOG_ID} Warehouse: {warehouse}")
         return warehouse
     except Exception as e:

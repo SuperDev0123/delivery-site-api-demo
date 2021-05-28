@@ -197,8 +197,6 @@ def push_boks(payload, client, username, method):
     best_quotes = None
     json_results = []
 
-    warehouse = get_warehouse(client)
-
     # Assign vars
     is_biz = "_bizsys" in username
     is_web = "_websys" in username
@@ -286,14 +284,19 @@ def push_boks(payload, client, username, method):
         bok_1["fk_client_id"] = client.dme_account_num
         bok_1["x_booking_Created_With"] = "DME PUSH API"
         bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
-        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-        bok_1["b_clientPU_Warehouse"] = warehouse.name
-        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
         if bok_1.get("shipping_type") == "DMEA":
             bok_1["success"] = dme_constants.BOK_SUCCESS_4
         else:
             bok_1["success"] = dme_constants.BOK_SUCCESS_3
+
+        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+
+        warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
+        del bok_1["warehouse_code"]
+        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1["b_clientPU_Warehouse"] = warehouse.name
+        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
         if not bok_1.get("b_028_b_pu_company"):
             bok_1["b_028_b_pu_company"] = warehouse.name
@@ -324,8 +327,6 @@ def push_boks(payload, client, username, method):
 
         if not bok_1.get("b_032_b_pu_address_suburb"):
             bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
-
-        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
         if not bok_1.get("b_027_b_pu_address_type"):
             bok_1["b_027_b_pu_address_type"] = "business"
