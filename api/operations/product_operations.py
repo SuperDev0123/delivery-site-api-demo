@@ -71,8 +71,8 @@ def get_product_items(bok_2s, client, is_web=False):
                     "e_dimWidth": product.e_dimWidth,
                     "e_dimHeight": product.e_dimHeight,
                     "e_weightPerEach": product.e_weightPerEach,
-                    "zbl_121_integer_1": zbl_121_integer_1,
-                    "zbl_102_text_2": zbl_102_text_2,
+                    "zbl_121_integer_1": zbl_121_integer_1,  # Sequence
+                    "zbl_102_text_2": zbl_102_text_2,  # ProductGroupCode
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
                 results = _append_line(results, line, qty)

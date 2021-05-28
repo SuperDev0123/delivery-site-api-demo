@@ -49,7 +49,65 @@ def get_token():
     return token
 
 
-def parse_order_xml(response):
+def parse_product_group_code(response):
+    xml_str = response.content.decode("utf-8")
+    # xml_str = '<?xml version="1.0" encoding="UTF-8"?><InvGetItemsResponse xmlns="http://www.pronto.net/inv/1.0.0"><APIResponseStatus><Code>OK</Code></APIResponseStatus><Items><Item><GroupCode>FR01</GroupCode><ItemCode>S068</ItemCode><ItemDescription>JL Shipping</ItemDescription><UOMCode>EACH</UOMCode></Item></Items></InvGetItemsResponse>'
+    root = ET.fromstring(xml_str)
+    Items = root.find("{http://www.pronto.net/inv/1.0.0}Items")
+
+    if not len(Items):
+        return ""
+
+    Item = Items[0]
+    GroupCode = Item.find("{http://www.pronto.net/inv/1.0.0}GroupCode").text
+
+    return GroupCode
+
+
+def get_product_group_code(ItemCode, token):
+    logger.info(f"@640 [PRONTO GET ITEM INFO] Start! ItemCode: {ItemCode}")
+
+    url = f"{API_URL}/api/InvGetItems"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Pronto-Token": token,
+    }
+    body = f'<InvGetItemsRequest \
+                xmlns="http://www.pronto.net/inv/1.0.0"> \
+                <Parameters> \
+                    <ItemCode>{ItemCode}</ItemCode> \
+                </Parameters> \
+                <OrderBy /> \
+                <RequestFields> \
+                    <Items> \
+                        <Item> \
+                            <GroupCode /> \
+                            <ItemCode /> \
+                            <ItemDescription /> \
+                            <UOMCode /> \
+                        </Item> \
+                    </Items> \
+                </RequestFields> \
+            </InvGetItemsRequest>'
+
+    response = send_soap_request(url, body, headers)
+    logger.info(
+        f"@631 [PRONTO GET ITEM INFO] response status_code: {response.status_code}, content: {response.content}"
+    )
+
+    if response.status_code != 200:
+        logger.error(f"@632 [PRONTO GET ITEM INFO] Failed")
+        return False
+
+    GroupCode = parse_product_group_code(response)
+    logger.info(
+        f"@649 [PRONTO GET ITEM INFO] Finished! ItemCode: {ItemCode}, GroupCode: {GroupCode}"
+    )
+
+    return GroupCode
+
+
+def parse_order_xml(response, token):
     xml_str = response.content.decode("utf-8")
     # xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n<SalesOrderGetSalesOrdersResponse xmlns="http://www.pronto.net/so/1.0.0"><APIResponseStatus><Code>OK</Code></APIResponseStatus><SalesOrders><SalesOrder><Address1></Address1><Address2>690 Ann Street</Address2><Address3>Fortitude Valley</Address3><Address4>QLD</Address4><Address5></Address5><Address6></Address6><AddressName>Roman Shrestha</AddressName><AddressPostcode>4006</AddressPostcode><CustomerEmail>dark23shadow@gmail.com</CustomerEmail><DeliveryDate>2020-01-29</DeliveryDate><Packages>1</Packages><SOOrderNo>20176</SOOrderNo><SalesOrderLines><SalesOrderLine><ItemCode>HC028</ItemCode><OrderedQty>3.0000</OrderedQty></SalesOrderLine><SalesOrderLine><ItemCode>MY-M-06.LHS</ItemCode><OrderedQty>1.0000</OrderedQty></SalesOrderLine></SalesOrderLines><Warehouse>Botany</Warehouse></SalesOrder></SalesOrders></SalesOrderGetSalesOrdersResponse>\n'
     root = ET.fromstring(xml_str)
@@ -105,15 +163,14 @@ def parse_order_xml(response):
         OrderedQty = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}OrderedQty")
         SequenceNo = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}SequenceNo")
         UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
-        ProductGroupCode = SalesOrderLine.find(
-            "{http://www.pronto.net/so/1.0.0}ProductGroupCode"
-        )
+        ProductGroupCode = get_product_group_code(ItemCode.text, token)
+
         line = {
             "model_number": ItemCode.text,
             "qty": int(float(OrderedQty.text)),
             "sequence": int(float(SequenceNo.text)),
             "UOMCode": UOMCode.text,
-            "ProductGroupCode": ProductGroupCode.text,
+            "ProductGroupCode": ProductGroupCode,
         }
         lines.append(line)
 
@@ -178,7 +235,7 @@ def get_order(order_num):
         logger.error(f"@632 [PRONTO GET ORDER] Failed")
         return False
 
-    order, lines = parse_order_xml(response)
+    order, lines = parse_order_xml(response, token)
     logger.info(f"@649 [PRONTO GET ORDER] Finish \norder: {order}\nlines: {lines}")
 
     return order, lines
