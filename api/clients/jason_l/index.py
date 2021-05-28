@@ -753,7 +753,7 @@ def auto_repack(payload, client):
                 bok_2.delete()
 
             # Rollback deleted original Bok_2
-            if bok_2.is_deleted:
+            if bok_2.is_deleted and not bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES:
                 bok_2.is_deleted = not bok_2.is_deleted
                 bok_2.save()
 
