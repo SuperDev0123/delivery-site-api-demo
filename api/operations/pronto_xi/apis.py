@@ -241,40 +241,50 @@ def get_order(order_num):
     return order, lines
 
 
-def send_info_back_to_pronto(booking, booking_lines):
+def send_info_back_to_pronto(bok_1, quote):
     LOG_ID = "[PRONTO SEND ORDER BACK]"
-    # logger.info(f"@640 {LOG_ID} Start! Order: {order_num}")
+    logger.info(f"@650 {LOG_ID} Start! bok_1 ID: {bok_1.pk}")
 
-    # token = get_token()
-    # url = f"{API_URL}/api/SalesOrderInsertSalesOrderLines"
-    # headers = {
-    #     "Content-Type": "application/x-www-form-urlencoded",
-    #     "X-Pronto-Token": token,
-    # }
+    # Get service line
+    bok_2s = BOK_2_lines.objects.filter(
+        fk_header_id=bok_1.pk_header_id, is_deleted=True, zbl_102_text_2="FR01"
+    )
 
-    # body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?>\
-    #             <SalesOrderInsertSalesOrderLinesRequest>\
-    #                 <SalesOrderLines>\
-    #                     <SalesOrderLine SOOrderNo="{booking.b_client_order_num}">\
-    #                         <TypeCode>SN</TypeCode>\
-    #                         <OrderedQty>{booking_line.e_qty}</OrderedQty>\
-    #                         <PriceOverrideFlag>Y</PriceOverrideFlag>\
-    #                         <ItemCode>{booking_line.e_item_type}</ItemCode>\
-    #                         <LineDescription>{booking_line.e_item}</LineDescription>\
-    #                         <ItemPrice></ItemPrice>\
-    #                         <SolUserOnlyDate1>01/01/2021</SolUserOnlyDate1>\
-    #                     </SalesOrderLine>\
-    #                 </SalesOrderLines>\
-    #             </SalesOrderInsertSalesOrderLinesRequest>'
+    if not bok_2s:
+        logger.info(f"@651 {LOG_ID} No service(FR01) bok_2 found")
+        return None
 
-    # # response = send_soap_request(url, body, headers)
-    # logger.info(
-    #     f"@631 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
-    # )
+    bok_2 = bok_2s.first()
 
-    # if response.status_code != 200:
-    #     logger.error(f"@632 {LOG_ID} Failed")
-    #     return False
-    # else:
-    #     logger.error(f"@632 {LOG_ID} Success")
-    #     return True
+    token = get_token()
+    url = f"{API_URL}/api/SalesOrderInsertSalesOrderLines"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Pronto-Token": token,
+    }
+
+    body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?> \
+                <SalesOrderInsertSalesOrderLinesRequest> \
+                    <SalesOrderLines> \
+                        <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}"> \
+                            <TypeCode>SN</TypeCode> \
+                            <OrderedQty>1</OrderedQty> \
+                            <PriceOverrideFlag>Y</PriceOverrideFlag> \
+                            <ItemCode>{bok_2.e_item_type}</ItemCode> \
+                            <LineDescription>Qutoe from DME</LineDescription> \
+                            <ItemPrice>{quote.client_mu_1_minimum_values}</ItemPrice> \
+                        </SalesOrderLine> \
+                    </SalesOrderLines> \
+                </SalesOrderInsertSalesOrderLinesRequest>'
+
+    response = send_soap_request(url, body, headers)
+    logger.info(
+        f"@652 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+    )
+
+    if response.status_code != 200:
+        logger.error(f"@653 {LOG_ID} Failed")
+        return False
+    else:
+        logger.error(f"@654 {LOG_ID} Success")
+        return True

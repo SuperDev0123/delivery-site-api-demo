@@ -42,6 +42,7 @@ from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
+from api.operations.pronto_xi.index import send_info_back
 
 
 logger = logging.getLogger(__name__)
@@ -332,6 +333,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             bok_1.quote_id = cost_id
             bok_1.save()
+
+            # Send quote info back to Pronto
+            send_info_back(bok_1, bok_1.quote)
 
             fc_log = (
                 FC_Log.objects.filter(client_booking_id=bok_1.client_booking_id)
