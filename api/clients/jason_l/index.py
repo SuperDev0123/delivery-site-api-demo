@@ -601,6 +601,7 @@ def push_boks(payload, client, username, method):
             bok_1_obj.save()
             fc_log.new_quote = best_quotes[0]
             fc_log.save()
+            result = send_info_back_to_pronto(bok_1_obj, best_quote)
     else:
         message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
         logger.error(message)
