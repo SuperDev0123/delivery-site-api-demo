@@ -7,6 +7,7 @@ from api.models import Bookings, Booking_lines
 from api.operations.csv.cope import build_csv as build_COPE_csv
 from api.operations.csv.dhl import build_csv as build_DHL_csv
 from api.operations.csv.state_transport import build_csv as build_STATE_TRANSPORT_csv
+from api.operations.csv.century import build_csv as build_CENTURY_csv
 
 
 def get_booking_lines(bookings):
@@ -30,6 +31,8 @@ def build_csv(booking_ids):
         csv_name = f"Seaway-Tempo-Aldi__{str(len(booking_ids))}__{now_str}.csv"
     elif vx_freight_provider == "state transport":
         csv_name = f"State-Transport__{str(len(booking_ids))}__{now_str}.csv"
+    elif vx_freight_provider == "century":
+        csv_name = f"Century__{str(len(booking_ids))}__{now_str}.csv"
 
     # Open CSV file
     if settings.ENV == "prod":
@@ -39,6 +42,8 @@ def build_csv(booking_ids):
             f = open(f"/dme_sftp/cope_au/pickup_ext/dhl_au/{csv_name}", "w")
         elif vx_freight_provider == "state transport":
             f = open(f"/dme_sftp/state_transport_au/csv/{csv_name}", "w")
+        elif vx_freight_provider == "century":
+            f = open(f"/dme_sftp/century_au/csv/{csv_name}", "w")
     else:
         local_path = f"{settings.STATIC_PUBLIC}/csvs/"
         if not os.path.exists(local_path):
@@ -52,6 +57,8 @@ def build_csv(booking_ids):
         has_error = build_DHL_csv(f, bookings, booking_lines)
     elif vx_freight_provider == "state transport":
         has_error = build_STATE_TRANSPORT_csv(f, bookings, booking_lines)
+    elif vx_freight_provider == "century":
+        has_error = build_CENTURY_csv(f, bookings, booking_lines)
 
     f.close()
 
