@@ -26,7 +26,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
-from api.common.pallet import get_number_of_pallets
+from api.common.pallet import get_number_of_pallets, get_suitable_pallet
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -433,8 +433,11 @@ def push_boks(payload, client, username, method):
     carton_cnt = 0
     total_weight = 0
 
-    pallet = Pallet.objects.all().first()
-    number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
+    # Select suitable pallet and get required pallets count
+    pallets = Pallet.objects.all()
+    pallet_index = get_suitable_pallet(bok_2_objs, pallets)
+    logger.info(f"@8125 {LOG_ID} Selected pallet: {pallets[pallet_index]}")
+    number_of_pallets = get_number_of_pallets(bok_2_objs, pallets[pallet_index])
 
     if not number_of_pallets:
         message = "0 number of Pallets."

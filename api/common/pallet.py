@@ -61,16 +61,13 @@ def get_number_of_pallets(booking_lines, pallet):
 
     return number_of_pallets_for_palletized + number_of_pallets_for_unpalletized
 
-def get_pallet_index(booking, pallets):
-    booking_lines = Booking_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id
-    )
 
+def get_suitable_pallet(bok_2s, pallets):
     first_lengths, second_lengths, third_lengths = [], [], []
-    for item in booking_lines:
-        length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
-        width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
-        height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+    for item in bok_2s:
+        length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+        width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
         line_dimensions = [length, width, height]
         line_dimensions.sort()
 
@@ -78,43 +75,48 @@ def get_pallet_index(booking, pallets):
         second_lengths.append(line_dimensions[1])
         third_lengths.append(line_dimensions[2])
 
-    max_dimensions = [
-        max(first_lengths),
-        max(second_lengths),
-        max(third_lengths)
-    ]
+    max_dimensions = [max(first_lengths), max(second_lengths), max(third_lengths)]
 
     available_pallets, non_available_pallets = [], []
-    index = 0
-    for pallet in pallets:
+    for index, pallet in enumerate(pallets):
         dimensions = [pallet.length / 1000, pallet.width / 1000, pallet.height / 1000]
         dimensions.sort()
-        if dimensions[0] >= max_dimensions[0] and dimensions[1] >= max_dimensions[1] and dimensions[2] >= max_dimensions[2]:
-            available_pallets.append({
-                'index': index,
-                'cubic_meter': pallet.length * pallet.width * pallet.height / 1000000
-            })
+        if (
+            dimensions[0] >= max_dimensions[0]
+            and dimensions[1] >= max_dimensions[1]
+            and dimensions[2] >= max_dimensions[2]
+        ):
+            available_pallets.append(
+                {
+                    "index": index,
+                    "cubic_meter": pallet.length
+                    * pallet.width
+                    * pallet.height
+                    / 1000000,
+                }
+            )
         else:
-            non_available_pallets.append({
-                'index': index,
-                'cubic_meter': pallet.length * pallet.width * pallet.height / 1000000
-            })
-        index += 1
+            non_available_pallets.append(
+                {
+                    "index": index,
+                    "cubic_meter": pallet.length
+                    * pallet.width
+                    * pallet.height
+                    / 1000000,
+                }
+            )
 
-    print('available', available_pallets)
-    print('non_available', non_available_pallets)
     min_cubic, max_cubic, pallet_index = 10000, 0, 0
     if available_pallets:
-        for item in available_pallets:
-            if item['cubic_meter'] < min_cubic:
-                min_cubic = item['cubic_meter']
-                pallet_index = item['index']
+        for pallet in available_pallets:
+            if pallet["cubic_meter"] < min_cubic:
+                min_cubic = pallet["cubic_meter"]
+                pallet_index = pallet["index"]
         return pallet_index
 
     else:
-        for item in non_available_pallets:
-            if item['cubic_meter'] > max_cubic:
-                max_cubic = item['cubic_meter']
-                pallet_index = item['index']
+        for pallet in non_available_pallets:
+            if pallet["cubic_meter"] > max_cubic:
+                max_cubic = pallet["cubic_meter"]
+                pallet_index = pallet["index"]
         return pallet_index
-
