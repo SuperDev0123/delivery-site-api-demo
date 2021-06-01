@@ -594,14 +594,14 @@ def push_boks(payload, client, username, method):
         ).data
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
-        if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-            best_quote = best_quotes[0]
-            bok_1_obj.b_003_b_service_name = best_quote.service_name
-            bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
-            bok_1_obj.save()
-            fc_log.new_quote = best_quotes[0]
-            fc_log.save()
-            result = send_info_back_to_pronto(bok_1_obj, best_quote)
+        # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+        best_quote = best_quotes[0]
+        bok_1_obj.b_003_b_service_name = best_quote.service_name
+        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+        bok_1_obj.save()
+        fc_log.new_quote = best_quotes[0]
+        fc_log.save()
+        result = send_info_back(bok_1_obj, best_quote)
     else:
         message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
         logger.error(message)
