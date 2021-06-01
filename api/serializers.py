@@ -528,6 +528,9 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.pk
 
     def get_cost(self, obj):
+        """
+        Cost with client.client_mu_1_minimum_values
+        """
         client_customer_mark_up = self.context.get("client_customer_mark_up", None)
 
         if obj.tax_value_1:
@@ -548,7 +551,14 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = API_booking_quotes
-        fields = ("cost_id", "cost", "eta", "service_name", "fp_name")
+        fields = (
+            "cost_id",
+            "client_mu_1_minimum_values",
+            "cost",
+            "eta",
+            "service_name",
+            "fp_name",
+        )
 
 
 class EmailTemplatesSerializer(serializers.ModelSerializer):

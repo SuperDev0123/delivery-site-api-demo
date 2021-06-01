@@ -323,15 +323,17 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
-        if settings.ENV == "local":
-            t.sleep(2)
-
         try:
             cost_id = request.data["costId"]
             identifier = request.data["identifier"]
+            b_090_client_overrided_quote = request.data["client_overrided_quote"]
+
+            if b_090_client_overrided_quote == "NaN":
+                b_090_client_overrided_quote = None
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             bok_1.quote_id = cost_id
+            bok_1.b_090_client_overrided_quote = b_090_client_overrided_quote
             bok_1.save()
 
             # Send quote info back to Pronto

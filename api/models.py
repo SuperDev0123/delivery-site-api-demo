@@ -1598,9 +1598,7 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
-    DME_price_from_client = models.IntegerField(
-        verbose_name=_("DME Price From Client"), blank=True, default=0, null=True
-    )
+    client_overrided_quote = models.FloatField(blank=True, default=None, null=True)
     z_label_url = models.CharField(
         verbose_name=_("PDF Url"), max_length=255, blank=True, null=True, default=None
     )
@@ -2716,6 +2714,7 @@ class BOK_1_headers(models.Model):
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     b_081_b_pu_auto_pack = models.BooleanField(default=None, null=True)
+    b_090_client_overrided_quote = models.FloatField(default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)

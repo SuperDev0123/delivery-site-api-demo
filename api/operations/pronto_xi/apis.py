@@ -5,7 +5,7 @@ from django.conf import settings
 
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
-from api.models import BOK_1_headers, BOK_2_lines, Log
+from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
 
 logger = logging.getLogger(__name__)
 
@@ -260,34 +260,81 @@ def send_info_back_to_pronto(bok_1, quote):
 
     bok_2 = bok_2s.first()
 
+    # Calc `ordered_qty` & `item_price`
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+    client_overrided_quote = bok_1.b_090_client_overrided_quote
+    tax_value_1 = bok_1.quote.tax_value_1 or 0
+    ordered_qty = "{0:.2f}".format(
+        (bok_1.quote.client_mu_1_minimum_values + tax_value_1)
+        * (1 + client.client_customer_mark_up)
+    )
+    item_price = 1 + client.client_customer_mark_up
+
+    if bok_1.b_090_client_overrided_quote != None:
+        if bok_1.b_090_client_overrided_quote == 0:
+            ordered_qty = 0
+            item_price = 0
+        else:
+            ordered_qty = float(bok_1.b_090_client_overrided_quote)
+            item_price = "{0:.4f}".format(
+                float(bok_1.b_090_client_overrided_quote)
+                / (
+                    (bok_1.quote.client_mu_1_minimum_values + tax_value_1)
+                    * (1 + client.client_customer_mark_up)
+                )
+            )
+
+    logger.info(
+        f"@652 {LOG_ID} Info to back - ordered_qty: {ordered_qty}, item_price: {item_price}"
+    )
+
+    # Get token
     token = get_token()
-    url = f"{API_URL}/api/SalesOrderInsertSalesOrderLines"
+
+    # Update LineQty
+    url = f"{API_URL}/api/SalesOrderPostLineQtyOverride"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "X-Pronto-Token": token,
     }
-
-    body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?> \
-                <SalesOrderInsertSalesOrderLinesRequest> \
-                    <SalesOrderLines> \
-                        <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}"> \
-                            <TypeCode>SN</TypeCode> \
-                            <OrderedQty>{quote.client_mu_1_minimum_values}</OrderedQty> \
-                            <PriceOverrideFlag>Y</PriceOverrideFlag> \
-                            <ItemCode>{bok_2.e_item_type}</ItemCode> \
-                            <LineDescription>Qutoe from DME</LineDescription> \
-                        </SalesOrderLine> \
-                    </SalesOrderLines> \
-                </SalesOrderInsertSalesOrderLinesRequest>'
+    body = f'<SalesOrderPostLineQtyOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
+                <SalesOrderLines> \
+                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
+                        <OrderedQty>{ordered_qty}</OrderedQty> \
+                    </SalesOrderLine> \
+                </SalesOrderLines> \
+            </SalesOrderPostLineQtyOverrideRequest>'
 
     response = send_soap_request(url, body, headers)
     logger.info(
-        f"@652 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+        f"@653 {LOG_ID} SalesOrderPostLineQtyOverride response status_code: {response.status_code}"
     )
 
     if response.status_code != 200:
-        logger.error(f"@653 {LOG_ID} Failed")
-        return False
-    else:
-        logger.error(f"@654 {LOG_ID} Success")
-        return True
+        logger.info(
+            f"@654 {LOG_ID} SalesOrderPostLinePriceOverride response content: {response.content}"
+        )
+
+    # Update LinePrice
+    url = f"{API_URL}/api/SalesOrderPostLinePriceOverride"
+    body = f'<SalesOrderPostLinePriceOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
+                <SalesOrderLines> \
+                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
+                        <ItemPrice>{item_price}</ItemPrice> \
+                        <PriceOverrideFlag>Y</PriceOverrideFlag> \
+                    </SalesOrderLine> \
+                </SalesOrderLines> \
+            </SalesOrderPostLinePriceOverrideRequest>'
+
+    response = send_soap_request(url, body, headers)
+    logger.info(
+        f"@655 {LOG_ID} SalesOrderPostLinePriceOverride response status_code: {response.status_code}"
+    )
+
+    if response.status_code != 200:
+        logger.info(
+            f"@656 {LOG_ID} SalesOrderPostLinePriceOverride response content: {response.content}"
+        )
+
+    logger.info(f"@659 {LOG_ID} Finish! bok_1 ID: {bok_1.pk}")
+    return True
