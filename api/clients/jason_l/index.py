@@ -436,8 +436,9 @@ def push_boks(payload, client, username, method):
     # Select suitable pallet and get required pallets count
     pallets = Pallet.objects.all()
     pallet_index = get_suitable_pallet(bok_2_objs, pallets)
-    logger.info(f"@8125 {LOG_ID} Selected pallet: {pallets[pallet_index]}")
-    number_of_pallets = get_number_of_pallets(bok_2_objs, pallets[pallet_index])
+    pallet = pallets[pallet_index]
+    logger.info(f"@8125 {LOG_ID} Selected pallet: {pallet}")
+    number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
 
     if not number_of_pallets:
         message = "0 number of Pallets."
