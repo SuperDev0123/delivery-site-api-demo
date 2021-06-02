@@ -808,6 +808,9 @@ def auto_repack(payload, client):
 
     booking_lines = []
     for _bok_2 in new_bok_2s:
+        if _bok_2["is_deleted"]:
+            continue
+
         bok_2_line = {
             # "fk_booking_id": _bok_2.fk_header_id,
             "e_type_of_packaging": _bok_2.l_001_type_of_packaging,
