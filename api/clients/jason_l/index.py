@@ -1007,6 +1007,10 @@ def scanned(payload, client):
             new_line.picked_up_timestamp = (
                 picked_item.get("timestamp") or datetime.now()
             )
+
+            if old_line.e_item_type in SERVICE_GROUP_CODES:
+                new_line.is_deleted = True
+
             new_line.save()
 
             # Soft delete source line
