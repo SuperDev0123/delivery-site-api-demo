@@ -264,10 +264,7 @@ def send_info_back_to_pronto(bok_1, quote):
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     client_overrided_quote = bok_1.b_090_client_overrided_quote
     tax_value_1 = bok_1.quote.tax_value_1 or 0
-    ordered_qty = "{0:.2f}".format(
-        (bok_1.quote.client_mu_1_minimum_values + tax_value_1)
-        * (1 + client.client_customer_mark_up)
-    )
+    ordered_qty = "{0:.2f}".format(bok_1.quote.client_mu_1_minimum_values + tax_value_1)
     item_price = 1 + client.client_customer_mark_up
 
     if bok_1.b_090_client_overrided_quote != None:
