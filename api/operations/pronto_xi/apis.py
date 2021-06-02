@@ -322,6 +322,7 @@ def send_info_back_to_pronto(bok_1, quote):
                     <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
                         <ItemPrice>{item_price}</ItemPrice> \
                         <PriceOverrideFlag>Y</PriceOverrideFlag> \
+                        <PriceRule>D</PriceRule> \
                     </SalesOrderLine> \
                 </SalesOrderLines> \
             </SalesOrderPostLinePriceOverrideRequest>'
