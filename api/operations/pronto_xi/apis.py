@@ -3,9 +3,10 @@ import xml.etree.ElementTree as ET
 
 from django.conf import settings
 
+from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
-from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
+from api.fp_apis.operations.surcharge.index import get_surcharges
 
 logger = logging.getLogger(__name__)
 
@@ -247,39 +248,44 @@ def get_order(order_num):
 
 def send_info_back_to_pronto(bok_1, quote):
     LOG_ID = "[PRONTO SEND ORDER BACK]"
+
+    if not bok_1.b_091_send_quote_to_pronto:
+        logger.info(
+            f"@650 {LOG_ID} Flag is OFF! Do not need to send. bok_1 ID: {bok_1.pk}"
+        )
+        return True
+
     logger.info(f"@650 {LOG_ID} Start! bok_1 ID: {bok_1.pk}")
 
-    # Get service line
+    # Query data
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     bok_2s = BOK_2_lines.objects.filter(
+        fk_header_id=bok_1.pk_header_id, is_deleted=False
+    )
+    service_bok_2s = BOK_2_lines.objects.filter(
         fk_header_id=bok_1.pk_header_id, is_deleted=True, zbl_102_text_2="FR01"
     )
 
-    if not bok_2s:
+    if not service_bok_2s:
         logger.info(f"@651 {LOG_ID} No service(FR01) bok_2 found")
         return None
 
-    bok_2 = bok_2s.first()
+    bok_2 = service_bok_2s.first()
 
     # Calc `ordered_qty` & `item_price`
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
-    client_overrided_quote = bok_1.b_090_client_overrided_quote
     tax_value_1 = bok_1.quote.tax_value_1 or 0
-    ordered_qty = "{0:.2f}".format(bok_1.quote.client_mu_1_minimum_values + tax_value_1)
-    item_price = 1 + client.client_customer_mark_up
+    ordered_qty = 1
+    surcharges = get_surcharges(bok_1, bok_2s, bok_1.quote)
+    surcharge_total = 0
 
-    if bok_1.b_090_client_overrided_quote != None:
-        if bok_1.b_090_client_overrided_quote == 0:
-            ordered_qty = 0
-            item_price = 0
-        else:
-            ordered_qty = float(bok_1.b_090_client_overrided_quote)
-            item_price = "{0:.4f}".format(
-                float(bok_1.b_090_client_overrided_quote)
-                / (
-                    (bok_1.quote.client_mu_1_minimum_values + tax_value_1)
-                    * (1 + client.client_customer_mark_up)
-                )
-            )
+    for surcharge in surcharges:
+        surcharge_total += float(surcharge["value"])
+
+    item_price = "{0:.2f}".format(
+        (bok_1.quote.client_mu_1_minimum_values + surcharge_total)
+        * (client.client_customer_mark_up + 1)
+    )
 
     logger.info(
         f"@652 {LOG_ID} Info to back - ordered_qty: {ordered_qty}, item_price: {item_price}"
@@ -297,7 +303,7 @@ def send_info_back_to_pronto(bok_1, quote):
     body = f'<SalesOrderPostLineQtyOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
                 <SalesOrderLines> \
                     <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
-                        <OrderedQty>{ordered_qty}</OrderedQty> \
+                        <OrderedQty>1</OrderedQty> \
                     </SalesOrderLine> \
                 </SalesOrderLines> \
             </SalesOrderPostLineQtyOverrideRequest>'

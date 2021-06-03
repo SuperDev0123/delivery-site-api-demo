@@ -38,9 +38,10 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
-from api.operations import push_operations, product_operations as product_oper
+from api.operations import product_operations as product_oper
 from api.operations import paperless
 from api.clients.operations.index import get_warehouse, get_suburb_state
+from api.clients.plum.operations import detect_modified_data
 
 
 logger = logging.getLogger(__name__)
@@ -366,9 +367,7 @@ def push_boks(payload, client, username, method):
             old_bok_1 = old_bok_1s.first()
             old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
             old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
-            push_operations.detect_modified_data(
-                client, old_bok_1, old_bok_2s, old_bok_3s, payload
-            )
+            detect_modified_data(client, old_bok_1, old_bok_2s, old_bok_3s, payload)
 
             old_bok_1.delete()
             old_bok_2s.delete()

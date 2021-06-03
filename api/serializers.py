@@ -521,27 +521,15 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_id = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
-    cost = serializers.SerializerMethodField(read_only=True)
     fp_name = serializers.SerializerMethodField(read_only=True)
+    client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
 
-    def get_cost(self, obj):
-        """
-        Cost with client.client_mu_1_minimum_values
-        """
-        client_customer_mark_up = self.context.get("client_customer_mark_up", None)
-
-        if obj.tax_value_1:
-            _cost = dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
-        else:
-            _cost = dme_math.ceil(obj.client_mu_1_minimum_values, 2)
-
-        if client_customer_mark_up:
-            _cost = round(_cost * (1 + client_customer_mark_up), 2)
-
-        return _cost
+    def get_client_customer_mark_up(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
+        return client_customer_mark_up
 
     def get_eta(self, obj):
         return obj.etd
@@ -554,7 +542,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         fields = (
             "cost_id",
             "client_mu_1_minimum_values",
-            "cost",
+            "client_customer_mark_up",
             "eta",
             "service_name",
             "fp_name",

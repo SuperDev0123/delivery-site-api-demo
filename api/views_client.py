@@ -37,7 +37,7 @@ from api.common import (
 )
 from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import get_status_category_from_status
-from api.fp_apis.operations.surcharge.index import get_available_surcharge_opts
+from api.fp_apis.operations.surcharge.index import get_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.standard import index as standard
@@ -147,6 +147,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_1.b_076_b_pu_service = request.data.get("b_076_b_pu_service")
             bok_1.b_077_b_del_service = request.data.get("b_077_b_del_service")
             bok_1.b_081_b_pu_auto_pack = request.data.get("b_081_b_pu_auto_pack")
+            bok_1.b_091_send_quote_to_pronto = request.data.get(
+                "b_091_send_quote_to_pronto", False
+            )
             bok_1.save()
             res_json = {"success": True, "message": "Freigth options are updated."}
 
@@ -191,32 +194,6 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             result["pricings"] = []
             best_quotes = quote_set
 
-            # Build `Booking` and `Lines` for Surcharge
-            booking = {
-                "pu_Address_Type": bok_1.b_027_b_pu_address_type,
-                "de_To_AddressType": bok_1.b_053_b_del_address_type,
-                "de_To_Address_State": bok_1.b_057_b_del_address_state,
-                "de_To_Address_City": bok_1.b_058_b_del_address_suburb,
-                "pu_tail_lift": bok_1.b_019_b_pu_tail_lift,
-                "del_tail_lift": bok_1.b_041_b_del_tail_lift,
-            }
-
-            lines = []
-            for bok_2 in bok_2s:
-                bok_2_line = {
-                    "e_type_of_packaging": bok_2.l_001_type_of_packaging,
-                    "e_qty": int(bok_2.l_002_qty),
-                    "e_item": bok_2.l_003_item,
-                    "e_dimUOM": bok_2.l_004_dim_UOM,
-                    "e_dimLength": bok_2.l_005_dim_length,
-                    "e_dimWidth": bok_2.l_006_dim_width,
-                    "e_dimHeight": bok_2.l_007_dim_height,
-                    "e_weightUOM": bok_2.l_008_weight_UOM,
-                    "e_weightPerEach": bok_2.l_009_weight_per_each,
-                    "e_dangerousGoods": False,
-                }
-                lines.append(bok_2_line)
-
             if best_quotes:
                 context = {"client_customer_mark_up": client.client_customer_mark_up}
                 json_results = SimpleQuoteSerializer(
@@ -234,11 +211,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                         if _quote.pk == json_result["cost_id"]:
                             quote = _quote
 
-                    booking["vx_serviceName"] = quote.service_name
-                    booking["vx_freight_provider"] = quote.freight_provider
-                    json_result["surcharges"] = get_available_surcharge_opts(
-                        booking, lines
-                    )
+                    json_result["surcharges"] = get_surcharges(bok_1, bok_2s, quote)
 
                 result["pricings"] = json_results
 
@@ -326,14 +299,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         try:
             cost_id = request.data["costId"]
             identifier = request.data["identifier"]
-            b_090_client_overrided_quote = request.data["client_overrided_quote"]
-
-            if b_090_client_overrided_quote == "NaN":
-                b_090_client_overrided_quote = None
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             bok_1.quote_id = cost_id
-            bok_1.b_090_client_overrided_quote = b_090_client_overrided_quote
             bok_1.save()
 
             # Send quote info back to Pronto

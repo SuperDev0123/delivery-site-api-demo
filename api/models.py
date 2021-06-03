@@ -2714,7 +2714,7 @@ class BOK_1_headers(models.Model):
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     b_081_b_pu_auto_pack = models.BooleanField(default=None, null=True)
-    b_090_client_overrided_quote = models.FloatField(default=None, null=True)
+    b_091_send_quote_to_pronto = models.BooleanField(default=False, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)

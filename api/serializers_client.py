@@ -118,7 +118,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "quote_id",
             "b_client_order_num",
             "b_client_sales_inv_num",
-            "b_090_client_overrided_quote",
+            "b_091_send_quote_to_pronto",
         )
 
 

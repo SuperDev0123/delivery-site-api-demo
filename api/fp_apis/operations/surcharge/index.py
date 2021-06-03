@@ -11,7 +11,44 @@ from api.fp_apis.operations.surcharge.hunter import hunter
 logger = logging.getLogger(__name__)
 
 
-def get_available_surcharge_opts(booking, lines):
+def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
+    booking = {}
+    lines = []
+
+    if data_type == "bok_1":
+        # Build `Booking` and `Lines` for Surcharge
+        booking = {
+            "pu_Address_Type": booking_obj.b_027_b_pu_address_type,
+            "de_To_AddressType": booking_obj.b_053_b_del_address_type,
+            "de_To_Address_State": booking_obj.b_057_b_del_address_state,
+            "de_To_Address_City": booking_obj.b_058_b_del_address_suburb,
+            "pu_tail_lift": booking_obj.b_019_b_pu_tail_lift,
+            "del_tail_lift": booking_obj.b_041_b_del_tail_lift,
+            "vx_serviceName": quote_obj.service_name,
+            "vx_freight_provider": quote_obj.freight_provider,
+        }
+
+        for line_obj in line_objs:
+            line = {
+                "e_type_of_packaging": line_obj.l_001_type_of_packaging,
+                "e_qty": int(line_obj.l_002_qty),
+                "e_item": line_obj.l_003_item,
+                "e_dimUOM": line_obj.l_004_dim_UOM,
+                "e_dimLength": line_obj.l_005_dim_length,
+                "e_dimWidth": line_obj.l_006_dim_width,
+                "e_dimHeight": line_obj.l_007_dim_height,
+                "e_weightUOM": line_obj.l_008_weight_UOM,
+                "e_weightPerEach": line_obj.l_009_weight_per_each,
+                "e_dangerousGoods": False,
+            }
+            lines.append(line)
+
+    return booking, lines
+
+
+def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+    booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
+
     m3_to_kg_factor = 250
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
     lengths, widths, heights, diagonals = [], [], [], []

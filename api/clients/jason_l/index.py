@@ -17,6 +17,7 @@ from api.models import (
     BOK_2_lines,
     BOK_3_lines_data,
     Pallet,
+    API_booking_quotes,
 )
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
@@ -35,13 +36,16 @@ from api.fp_apis.utils import (
 )
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
-from api.operations import push_operations, product_operations as product_oper
+from api.operations import product_operations as product_oper
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 from api.operations.pronto_xi.index import send_info_back
 from api.clients.operations.index import get_warehouse, get_suburb_state
-from api.clients.jason_l.operations import get_picked_items
+from api.clients.jason_l.operations import (
+    get_picked_items,
+    update_when_no_quote_required,
+)
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 
 
@@ -193,7 +197,7 @@ def push_boks(payload, client, username, method):
     """
     LOG_ID = "[PB Jason L]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
-    bok_1["pk_header_id"] = str(uuid.uuid4())
+    bok_2s = []
     client_name = None
     old_quote = None
     best_quotes = None
@@ -238,12 +242,12 @@ def push_boks(payload, client, username, method):
     # Check duplicated push with `b_client_order_num`
     if method == "POST":
         if is_biz:
-            bok_1s = BOK_1_headers.objects.filter(
+            bok_1_objs = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
             )
 
-            if bok_1s.exists():
+            if bok_1_objs.exists():
                 message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
                 logger.info(f"@884 {LOG_ID} {message}")
 
@@ -252,36 +256,70 @@ def push_boks(payload, client, username, method):
                     "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
                 }
 
-                if int(bok_1s.first().success) == dme_constants.BOK_SUCCESS_3:  # Update
+                if (
+                    int(bok_1_objs.first().success) == dme_constants.BOK_SUCCESS_3
+                ):  # Update
                     # Delete existing data
-                    pk_header_id = bok_1s.first().pk_header_id
-                    old_bok_1 = bok_1s.first()
+                    pk_header_id = bok_1_objs.first().pk_header_id
+                    old_bok_1 = bok_1_objs.first()
                     old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                     old_bok_3s = BOK_3_lines_data.objects.filter(
                         fk_header_id=pk_header_id
                     )
-                    # push_operations.detect_modified_data(
-                    #     client, old_bok_1, old_bok_2s, old_bok_3s, payload
-                    # )
+                    quotes = API_booking_quotes.objects.filter(
+                        fk_booking_id=pk_header_id
+                    )
 
-                    old_bok_3s.delete()
-                    old_bok_2s.delete()
-                    old_bok_1.delete()
+                    # Check new Order info
+                    bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+                    warehouse = get_warehouse(
+                        client, code=f"JASON_L_{bok_1['warehouse_code']}"
+                    )
+                    del bok_1["warehouse_code"]
+                    bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+                    bok_1["b_clientPU_Warehouse"] = warehouse.name
+                    bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+                    is_updated = update_when_no_quote_required(
+                        old_bok_1, old_bok_2s, bok_1, bok_2s
+                    )
+
+                    if not is_updated:
+                        logger.info(
+                            f"@8850 {LOG_ID} Order {bok_1['b_client_order_num']} requires new quotes."
+                        )
+                        quotes.delete()
+                        old_bok_3s.delete()
+                        old_bok_2s.delete()
+                        old_bok_1.delete()
+                    else:
+                        # Return price page url
+                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_objs.first().client_booking_id}/"
+                        json_res["pricePageUrl"] = url
+                        logger.info(f"@885 {LOG_ID} Response: {json_res}")
+                        return json_res
                 else:
-                    # Return status url
-                    url = f"http://{settings.WEB_SITE_IP}/status/{bok_1s.first().client_booking_id}/"
+                    # Return status page url
+                    url = f"http://{settings.WEB_SITE_IP}/status/{bok_1_objs.first().client_booking_id}/"
                     json_res["pricePageUrl"] = url
-                    logger.info(f"@885 {LOG_ID} Response: {json_res}")
-
+                    logger.info(f"@886 {LOG_ID} Response: {json_res}")
                     return json_res
 
     # Prepare population
+    if not bok_2s:
+        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+
+        warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
+        del bok_1["warehouse_code"]
+        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1["b_clientPU_Warehouse"] = warehouse.name
+        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+
+    bok_1["pk_header_id"] = str(uuid.uuid4())
+
     # Generate `client_booking_id` for Pronto
     if is_biz:
         client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
         bok_1["client_booking_id"] = client_booking_id
-
-    bok_1["pk_header_id"] = str(uuid.uuid4())
 
     bok_1["fk_client_id"] = client.dme_account_num
     bok_1["x_booking_Created_With"] = "DME PUSH API"
@@ -291,14 +329,6 @@ def push_boks(payload, client, username, method):
         bok_1["success"] = dme_constants.BOK_SUCCESS_4
     else:
         bok_1["success"] = dme_constants.BOK_SUCCESS_3
-
-    bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-
-    warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
-    del bok_1["warehouse_code"]
-    bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-    bok_1["b_clientPU_Warehouse"] = warehouse.name
-    bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
     if not bok_1.get("b_028_b_pu_company"):
         bok_1["b_028_b_pu_company"] = warehouse.name
