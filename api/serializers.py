@@ -522,6 +522,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_id = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
     fp_name = serializers.SerializerMethodField(read_only=True)
+    cost = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
@@ -530,6 +531,9 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     def get_client_customer_mark_up(self, obj):
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         return client_customer_mark_up
+
+    def get_cost(self, obj):
+        return obj.client_mu_1_minimum_values
 
     def get_eta(self, obj):
         return obj.etd
@@ -542,6 +546,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         fields = (
             "cost_id",
             "client_mu_1_minimum_values",
+            "cost",
             "client_customer_mark_up",
             "eta",
             "service_name",
