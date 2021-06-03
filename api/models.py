@@ -2061,7 +2061,12 @@ class Booking_lines(models.Model):
         blank=True,
         default=None,
     )
-    zbl_121_integer_1 = models.IntegerField(blank=True, null=True, default=None)
+    zbl_121_integer_1 = models.IntegerField(
+        blank=True, null=True, default=None
+    )  # JasonL - Sequence
+    zbl_102_text_2 = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )  # JasonL - ProductCode
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

@@ -1038,7 +1038,7 @@ def scanned(payload, client):
                 picked_item.get("timestamp") or datetime.now()
             )
 
-            if old_line.e_item_type in SERVICE_GROUP_CODES:
+            if old_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
                 new_line.is_deleted = True
 
             new_line.save()
