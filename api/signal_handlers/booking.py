@@ -11,6 +11,8 @@ from api.models import (
 )
 from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
+from api.operations.pronto_xi.index import update_note as update_pronto_note
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,25 @@ def pre_save_handler(instance):
             except Exception as e:
                 logger.info(f"#505 {LOG_ID} Error {e}")
                 pass
+
+        # JasonL
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            quote = instance.api_booking_quote
+
+            if quote and (
+                old.b_status != instance.b_status  # Status
+                or (
+                    instance.b_dateBookedDate
+                    and old.b_dateBookedDate != instance.b_dateBookedDate  # BookedDate
+                )
+                or (
+                    instance.v_FPBookingNumber
+                    and old.v_FPBookingNumber
+                    != instance.v_FPBookingNumber  # Consignment
+                )
+                or (old.api_booking_quote_id != instance.api_booking_quote_id)  # Quote
+            ):
+                update_pronto_note(quote, instance, [], "booking")
 
 
 def post_save_handler(instance):

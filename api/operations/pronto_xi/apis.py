@@ -6,7 +6,7 @@ from django.conf import settings
 from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
-from api.fp_apis.operations.surcharge.index import get_surcharges
+from api.fp_apis.operations.surcharge.index import get_surcharges_total
 
 logger = logging.getLogger(__name__)
 
@@ -276,12 +276,7 @@ def send_info_back_to_pronto(bok_1, quote):
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     tax_value_1 = bok_1.quote.tax_value_1 or 0
     ordered_qty = 1
-    surcharges = get_surcharges(bok_1, bok_2s, bok_1.quote)
-    surcharge_total = 0
-
-    for surcharge in surcharges:
-        surcharge_total += float(surcharge["value"])
-
+    surcharge_total = get_surcharges_total(bok_1, bok_2s, bok_1.quote)
     item_price = "{0:.2f}".format(
         (bok_1.quote.client_mu_1_minimum_values + surcharge_total)
         * (client.client_customer_mark_up + 1)
@@ -341,4 +336,31 @@ def send_info_back_to_pronto(bok_1, quote):
         )
 
     logger.info(f"@659 {LOG_ID} Finish! bok_1 ID: {bok_1.pk}")
+    return True
+
+
+def update_pronto_note(order_num, note):
+    LOG_ID = "[PRONTO UPDATE NOTE]"
+    logger.info(f"@660 {LOG_ID} Start! OrderNum: {order_num}, Note: {note}")
+
+    token = get_token()
+    url = f"{API_URL}/api/SalesOrderPostOrderNotes"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Pronto-Token": token,
+    }
+    body = f'<SalesOrderPostOrderNotesRequest xmlns="http://www.pronto.net/so/1.0.0"> \
+                <SalesOrders> \
+                    <SalesOrder SOOrderNo="{order_num}" SOBOSuffix=" "> \
+                        <Notes>{note}</Notes> \
+                    </SalesOrder> \
+                </SalesOrders> \
+            </SalesOrderPostOrderNotesRequest>'
+
+    response = send_soap_request(url, body, headers)
+    logger.info(
+        f"@661 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+    )
+
+    logger.info(f"@669 {LOG_ID} Finish! OrderNum: {order_num}")
     return True

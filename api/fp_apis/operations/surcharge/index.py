@@ -136,3 +136,14 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             applicable_surcharges.append(result)
 
     return applicable_surcharges
+
+
+def get_surcharges_total(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+    _total = 0
+
+    surcharges = get_surcharges(booking_obj, line_objs, quote_obj, data_type)
+
+    for surcharge in surcharges:
+        _total += float(surcharge["value"])
+
+    return _total
