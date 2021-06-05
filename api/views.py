@@ -1288,7 +1288,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print("Exception: ", e)
+            logger.error(f"update_booking Error: {str(e)}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"])
@@ -1662,6 +1662,14 @@ class BookingsViewSet(viewsets.ViewSet):
                     booking.z_calculated_ETA = datetime.strptime(
                         field_content, "%Y-%m-%d %H:%M:%S"
                     ) + timedelta(days=delivery_kpi_days)
+                elif field_name == "vx_freight_provider" and field_content:
+                    logger.info(f"Rebuild label required")
+                    booking.z_downloaded_shipping_label_timestamp = None
+
+                    if booking.z_label_url:
+                        booking.z_label_url = "[REBUILD_REQUIRED]" + booking.z_label_url
+                    else:
+                        booking.z_label_url = "[REBUILD_REQUIRED]"
 
                 booking.save()
             return JsonResponse(

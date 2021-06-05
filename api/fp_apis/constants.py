@@ -236,7 +236,7 @@ FP_CREDENTIALS = {
         "test": {
             "test_bed_1": {
                 "accountCode": "DELVME",
-                "accountKey": "ce0d58fd22ae8619974958e65302a715",  # 11e328f646051c3decc4b2bb4584530b
+                "accountKey": "11e328f646051c3decc4b2bb4584530b",
                 "accountState": "NSW",
             },
         },

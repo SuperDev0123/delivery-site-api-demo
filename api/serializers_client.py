@@ -118,6 +118,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "quote_id",
             "b_client_order_num",
             "b_client_sales_inv_num",
+            "b_091_send_quote_to_pronto",
         )
 
 
@@ -131,8 +132,8 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     )
     fk_header_id = serializers.CharField(validators=[should_have_value])
     success = serializers.CharField(validators=[should_have_value])
-    # Sequence
-    zbl_121_integer_1 = serializers.IntegerField(required=False)
+    zbl_121_integer_1 = serializers.IntegerField(required=False)  # Sequence
+    zbl_102_text_2 = serializers.CharField(required=False)  # ProductGroupCode
 
     class Meta:
         model = BOK_2_lines
@@ -147,6 +148,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "l_008_weight_UOM",
             "l_009_weight_per_each",
             "success",
+            "is_deleted",
             "fk_header_id",
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",

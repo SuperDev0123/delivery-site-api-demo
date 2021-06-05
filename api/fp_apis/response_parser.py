@@ -114,6 +114,18 @@ def parse_pricing_response(
                 result["service_code"] = service_code
                 result["service_name"] = service_name
                 results.append(result)
+        # Allied
+        elif fp_name == "allied" and "price" in json_data:
+            result = {}
+            result["account_code"] = account_code
+            result["api_results_id"] = json_data["requestId"]
+            result["fk_booking_id"] = booking.pk_booking_id
+            result["fk_client_id"] = dme_client.company_name
+            result["freight_provider"] = get_service_provider(fp_name, False)
+            result["fee"] = json_data["price"]
+            result["service_name"] = "Road Express"
+            result["etd"] = 3  # TODO
+            results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
             result = {}

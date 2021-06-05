@@ -200,7 +200,7 @@ def select_best_options(pricings):
     if lowest_pricing.pk == fastest_pricing.pk:
         return [lowest_pricing]
     else:
-        return [fastest_pricing, lowest_pricing]
+        return [lowest_pricing, fastest_pricing]
 
 
 def auto_select_pricing(booking, pricings, auto_select_type):

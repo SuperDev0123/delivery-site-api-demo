@@ -17,6 +17,7 @@ from api.models import (
     BOK_2_lines,
     BOK_3_lines_data,
     Pallet,
+    API_booking_quotes,
 )
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
@@ -26,7 +27,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
-from api.common.pallet import get_number_of_pallets
+from api.common.pallet import get_number_of_pallets, get_suitable_pallet
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -35,13 +36,18 @@ from api.fp_apis.utils import (
 )
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
-from api.operations import push_operations, product_operations as product_oper
+from api.operations import product_operations as product_oper
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
+from api.operations.pronto_xi.index import send_info_back
 from api.clients.operations.index import get_warehouse, get_suburb_state
-from api.clients.jason_l.operations import get_picked_items
-from api.clients.jason_l.constants import SPECIAL_GROUP_NO
+from api.clients.jason_l.operations import (
+    get_picked_items,
+    update_when_no_quote_required,
+)
+from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
+
 
 logger = logging.getLogger(__name__)
 
@@ -191,13 +197,11 @@ def push_boks(payload, client, username, method):
     """
     LOG_ID = "[PB Jason L]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
-    bok_1["pk_header_id"] = str(uuid.uuid4())
+    bok_2s = []
     client_name = None
     old_quote = None
     best_quotes = None
     json_results = []
-
-    warehouse = get_warehouse(client)
 
     # Assign vars
     is_biz = "_bizsys" in username
@@ -235,159 +239,189 @@ def push_boks(payload, client, username, method):
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 
-    bok_1["pk_header_id"] = str(uuid.uuid4())
-
     # Check duplicated push with `b_client_order_num`
     if method == "POST":
         if is_biz:
-            bok_1s = BOK_1_headers.objects.filter(
+            bok_1_objs = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
             )
-            if bok_1s.exists():
-                # If "sales quote" request, then clear all existing information
-                if bok_1["b_client_order_num"][:2] == "Q_":
-                    pk_header_id = bok_1s.first().pk_header_id
-                    old_bok_1 = bok_1s.first()
+
+            if bok_1_objs.exists():
+                message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                logger.info(f"@884 {LOG_ID} {message}")
+
+                json_res = {
+                    "status": False,
+                    "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
+                }
+
+                if (
+                    int(bok_1_objs.first().success) == dme_constants.BOK_SUCCESS_3
+                ):  # Update
+                    # Delete existing data
+                    pk_header_id = bok_1_objs.first().pk_header_id
+                    old_bok_1 = bok_1_objs.first()
                     old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                     old_bok_3s = BOK_3_lines_data.objects.filter(
                         fk_header_id=pk_header_id
                     )
-                    old_bok_1.delete()
-                    old_bok_2s.delete()
-                    old_bok_3s.delete()
-                    old_quote = old_bok_1.quote
-                else:
-                    message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-                    logger.info(f"@884 {LOG_ID} {message}")
+                    quotes = API_booking_quotes.objects.filter(
+                        fk_booking_id=pk_header_id
+                    )
 
-                    json_res = {
-                        "status": False,
-                        "message": f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist.",
-                    }
+                    # Check new Order info
+                    bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+                    warehouse = get_warehouse(
+                        client, code=f"JASON_L_{bok_1['warehouse_code']}"
+                    )
+                    del bok_1["warehouse_code"]
+                    bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+                    bok_1["b_clientPU_Warehouse"] = warehouse.name
+                    bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+                    is_updated = update_when_no_quote_required(
+                        old_bok_1, old_bok_2s, bok_1, bok_2s
+                    )
 
-                    if bok_1s.first().success == dme_constants.BOK_SUCCESS_3:
-                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1s.first().client_booking_id}/"
+                    if not is_updated:
+                        logger.info(
+                            f"@8850 {LOG_ID} Order {bok_1['b_client_order_num']} requires new quotes."
+                        )
+                        quotes.delete()
+                        old_bok_3s.delete()
+                        old_bok_2s.delete()
+                        old_bok_1.delete()
                     else:
-                        url = f"http://{settings.WEB_SITE_IP}/status/{bok_1s.first().client_booking_id}/"
-
+                        # Return price page url
+                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_objs.first().client_booking_id}/"
+                        json_res["pricePageUrl"] = url
+                        logger.info(f"@885 {LOG_ID} Response: {json_res}")
+                        return json_res
+                else:
+                    # Return status page url
+                    url = f"http://{settings.WEB_SITE_IP}/status/{bok_1_objs.first().client_booking_id}/"
                     json_res["pricePageUrl"] = url
-                    logger.info(f"@885 {LOG_ID} Response: {json_res}")
-
+                    logger.info(f"@886 {LOG_ID} Response: {json_res}")
                     return json_res
 
-    # Generate `client_booking_id` for SAPB1
-    if is_biz:
-        client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
-        bok_1["client_booking_id"] = client_booking_id
+    # Prepare population
+    if not bok_2s:
+        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
-    with transaction.atomic():
-        # Save bok_1
-        bok_1["fk_client_id"] = client.dme_account_num
-        bok_1["x_booking_Created_With"] = "DME PUSH API"
-        bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
+        warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
+        del bok_1["warehouse_code"]
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["b_clientPU_Warehouse"] = warehouse.name
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
-        if bok_1.get("shipping_type") == "DMEA":
-            bok_1["success"] = dme_constants.BOK_SUCCESS_4
-        else:
-            bok_1["success"] = dme_constants.BOK_SUCCESS_3
+    bok_1["pk_header_id"] = str(uuid.uuid4())
 
-        if not bok_1.get("b_028_b_pu_company"):
-            bok_1["b_028_b_pu_company"] = warehouse.name
+    # Generate `client_booking_id` for Pronto
+    if is_biz:
+        client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
+        bok_1["client_booking_id"] = client_booking_id
 
-        if not bok_1.get("b_035_b_pu_contact_full_name"):
-            bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
+    bok_1["fk_client_id"] = client.dme_account_num
+    bok_1["x_booking_Created_With"] = "DME PUSH API"
+    bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
 
-        if not bok_1.get("b_037_b_pu_email"):
-            bok_1["b_037_b_pu_email"] = warehouse.contact_email
+    if bok_1.get("shipping_type") == "DMEA":
+        bok_1["success"] = dme_constants.BOK_SUCCESS_4
+    else:
+        bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
-        if not bok_1.get("b_038_b_pu_phone_main"):
-            bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
+    if not bok_1.get("b_028_b_pu_company"):
+        bok_1["b_028_b_pu_company"] = warehouse.name
 
-        if not bok_1.get("b_029_b_pu_address_street_1"):
-            bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
+    if not bok_1.get("b_035_b_pu_contact_full_name"):
+        bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
 
-        if not bok_1.get("b_030_b_pu_address_street_2"):
-            bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
+    if not bok_1.get("b_037_b_pu_email"):
+        bok_1["b_037_b_pu_email"] = warehouse.contact_email
 
-        if not bok_1.get("b_034_b_pu_address_country"):
-            bok_1["b_034_b_pu_address_country"] = "AU"
+    if not bok_1.get("b_038_b_pu_phone_main"):
+        bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
 
-        if not bok_1.get("b_033_b_pu_address_postalcode"):
-            bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
+    if not bok_1.get("b_029_b_pu_address_street_1"):
+        bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
 
-        if not bok_1.get("b_031_b_pu_address_state"):
-            bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
+    if not bok_1.get("b_030_b_pu_address_street_2"):
+        bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
 
-        if not bok_1.get("b_032_b_pu_address_suburb"):
-            bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
+    if not bok_1.get("b_034_b_pu_address_country"):
+        bok_1["b_034_b_pu_address_country"] = "AU"
 
-        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+    if not bok_1.get("b_033_b_pu_address_postalcode"):
+        bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
 
-        if not bok_1.get("b_027_b_pu_address_type"):
-            bok_1["b_027_b_pu_address_type"] = "business"
-        if not bok_1.get("b_053_b_del_address_type"):
-            bok_1["b_053_b_del_address_type"] = "business"
+    if not bok_1.get("b_031_b_pu_address_state"):
+        bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
 
-        if not bok_1.get("b_019_b_pu_tail_lift"):
-            bok_1["b_019_b_pu_tail_lift"] = False
-        if not bok_1.get("b_041_b_del_tail_lift"):
-            bok_1["b_041_b_del_tail_lift"] = 0
+    if not bok_1.get("b_032_b_pu_address_suburb"):
+        bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
-        if not bok_1.get("b_072_b_pu_no_of_assists"):
-            bok_1["b_072_b_pu_no_of_assists"] = 0
-        if not bok_1.get("b_073_b_del_no_of_assists"):
-            bok_1["b_073_b_del_no_of_assists"] = 0
+    if not bok_1.get("b_027_b_pu_address_type"):
+        bok_1["b_027_b_pu_address_type"] = "business"
+    if not bok_1.get("b_053_b_del_address_type"):
+        bok_1["b_053_b_del_address_type"] = "business"
 
-        if not bok_1.get("b_078_b_pu_location"):
-            bok_1["b_078_b_pu_location"] = BOK_1_headers.PDWD
-        if not bok_1.get("b_068_b_del_location"):
-            bok_1["b_068_b_del_location"] = BOK_1_headers.DDWD
+    if not bok_1.get("b_019_b_pu_tail_lift"):
+        bok_1["b_019_b_pu_tail_lift"] = False
+    if not bok_1.get("b_041_b_del_tail_lift"):
+        bok_1["b_041_b_del_tail_lift"] = 0
 
-        if not bok_1.get("b_074_b_pu_access"):
-            bok_1["b_074_b_pu_access"] = "Level Driveway"
-        if not bok_1.get("b_075_b_del_access"):
-            bok_1["b_075_b_del_access"] = "Level Driveway"
+    if not bok_1.get("b_072_b_pu_no_of_assists"):
+        bok_1["b_072_b_pu_no_of_assists"] = 0
+    if not bok_1.get("b_073_b_del_no_of_assists"):
+        bok_1["b_073_b_del_no_of_assists"] = 0
 
-        if not bok_1.get("b_079_b_pu_floor_number"):
-            bok_1["b_079_b_pu_floor_number"] = 0  # Ground
-        if not bok_1.get("b_069_b_del_floor_number"):
-            bok_1["b_069_b_del_floor_number"] = 0  # Ground
+    if not bok_1.get("b_078_b_pu_location"):
+        bok_1["b_078_b_pu_location"] = BOK_1_headers.PDWD
+    if not bok_1.get("b_068_b_del_location"):
+        bok_1["b_068_b_del_location"] = BOK_1_headers.DDWD
 
-        if not bok_1.get("b_080_b_pu_floor_access_by"):
-            bok_1["b_080_b_pu_floor_access_by"] = BOK_1_headers.NONE
-        if not bok_1.get("b_070_b_del_floor_access_by"):
-            bok_1["b_070_b_del_floor_access_by"] = BOK_1_headers.NONE
+    if not bok_1.get("b_074_b_pu_access"):
+        bok_1["b_074_b_pu_access"] = "Level Driveway"
+    if not bok_1.get("b_075_b_del_access"):
+        bok_1["b_075_b_del_access"] = "Level Driveway"
 
-        if not bok_1.get("b_076_b_pu_service"):
-            bok_1["b_076_b_pu_service"] = BOK_1_headers.NONE
-        if not bok_1.get("b_077_b_pu_service"):
-            bok_1["b_077_b_pu_service"] = BOK_1_headers.NONE
+    if not bok_1.get("b_079_b_pu_floor_number"):
+        bok_1["b_079_b_pu_floor_number"] = 0  # Ground
+    if not bok_1.get("b_069_b_del_floor_number"):
+        bok_1["b_069_b_del_floor_number"] = 0  # Ground
 
-        if not bok_1.get("b_054_b_del_company"):
-            bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
+    if not bok_1.get("b_080_b_pu_floor_access_by"):
+        bok_1["b_080_b_pu_floor_access_by"] = BOK_1_headers.NONE
+    if not bok_1.get("b_070_b_del_floor_access_by"):
+        bok_1["b_070_b_del_floor_access_by"] = BOK_1_headers.NONE
 
-        de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
-        de_state, de_suburb = get_suburb_state(de_postal_code)
-        bok_1["b_057_b_del_address_state"] = de_state.upper()
-        bok_1["b_058_b_del_address_suburb"] = de_suburb
-        bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+    if not bok_1.get("b_076_b_pu_service"):
+        bok_1["b_076_b_pu_service"] = BOK_1_headers.NONE
+    if not bok_1.get("b_077_b_pu_service"):
+        bok_1["b_077_b_pu_service"] = BOK_1_headers.NONE
 
-        bok_1_serializer = BOK_1_Serializer(data=bok_1)
+    if not bok_1.get("b_054_b_del_company"):
+        bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
-        if not bok_1_serializer.is_valid():
-            message = f"Serialiser Error - {bok_1_serializer.errors}"
-            logger.info(f"@8821 {LOG_ID} {message}")
-            raise Exception(message)
+    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
+    de_state, de_suburb = get_suburb_state(de_postal_code)
+    bok_1["b_057_b_del_address_state"] = de_state.upper()
+    bok_1["b_058_b_del_address_suburb"] = de_suburb
+    bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
 
-        # Save bok_2s (Product & Child items)
-        items = product_oper.get_product_items(bok_2s, client, is_web)
-        new_bok_2s = []
-        bok_2_objs = []
+    bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
+    if not bok_1_serializer.is_valid():
+        message = f"Serialiser Error - {bok_1_serializer.errors}"
+        logger.info(f"@8821 {LOG_ID} {message}")
+        raise Exception(message)
+
+    # Save bok_2s (Product & Child items)
+    items = product_oper.get_product_items(bok_2s, client, is_web)
+    new_bok_2s = []
+    bok_2_objs = []
+
+    with transaction.atomic():
         for index, item in enumerate(items):
             line = {}
             line["fk_header_id"] = bok_1["pk_header_id"]
@@ -406,6 +440,8 @@ def push_boks(payload, client, username, method):
             line["e_item_type"] = item["e_item_type"]
             line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
             line["zbl_102_text_2"] = item["zbl_102_text_2"]
+            line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
+
             new_bok_2s.append({"booking_line": line})
 
             bok_2_serializer = BOK_2_Serializer(data=line)
@@ -427,7 +463,11 @@ def push_boks(payload, client, username, method):
     carton_cnt = 0
     total_weight = 0
 
-    pallet = Pallet.objects.all().first()
+    # Select suitable pallet and get required pallets count
+    pallets = Pallet.objects.all()
+    pallet_index = get_suitable_pallet(bok_2_objs, pallets)
+    pallet = pallets[pallet_index]
+    logger.info(f"@8125 {LOG_ID} Selected pallet: {pallet}")
     number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
 
     if not number_of_pallets:
@@ -442,7 +482,7 @@ def push_boks(payload, client, username, method):
 
     need_palletize = False
     for bok_2_obj in bok_2_objs:
-        if bok_2_obj.zbl_102_text_2 in SPECIAL_GROUP_NO:
+        if bok_2_obj.zbl_102_text_2 in NEED_PALLET_GROUP_CODES:
             need_palletize = True
             break
 
@@ -542,6 +582,10 @@ def push_boks(payload, client, username, method):
     booking_lines = []
     for bok_2 in bok_2s:
         _bok_2 = bok_2["booking_line"]
+
+        if _bok_2["is_deleted"]:
+            continue
+
         bok_2_line = {
             "fk_booking_id": _bok_2["fk_header_id"],
             "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
@@ -584,13 +628,16 @@ def push_boks(payload, client, username, method):
         ).data
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
-        if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-            best_quote = best_quotes[0]
-            bok_1_obj.b_003_b_service_name = best_quote.service_name
-            bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
-            bok_1_obj.save()
-            fc_log.new_quote = best_quotes[0]
-            fc_log.save()
+        # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+        best_quote = best_quotes[0]
+        bok_1_obj.b_003_b_service_name = best_quote.service_name
+        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+        bok_1_obj.save()
+        fc_log.new_quote = best_quotes[0]
+        fc_log.save()
+
+        # Send quote info back to Pronto
+        # result = send_info_back(bok_1_obj, best_quote)
     else:
         message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
         logger.error(message)
@@ -747,7 +794,7 @@ def auto_repack(payload, client):
                 bok_2.delete()
 
             # Rollback deleted original Bok_2
-            if bok_2.is_deleted:
+            if bok_2.is_deleted and not bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES:
                 bok_2.is_deleted = not bok_2.is_deleted
                 bok_2.save()
 
@@ -793,6 +840,9 @@ def auto_repack(payload, client):
 
     booking_lines = []
     for _bok_2 in new_bok_2s:
+        if _bok_2.is_deleted:
+            continue
+
         bok_2_line = {
             # "fk_booking_id": _bok_2.fk_header_id,
             "e_type_of_packaging": _bok_2.l_001_type_of_packaging,
@@ -989,6 +1039,10 @@ def scanned(payload, client):
             new_line.picked_up_timestamp = (
                 picked_item.get("timestamp") or datetime.now()
             )
+
+            if old_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                new_line.is_deleted = True
+
             new_line.save()
 
             # Soft delete source line

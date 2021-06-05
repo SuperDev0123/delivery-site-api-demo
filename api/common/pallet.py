@@ -2,6 +2,7 @@ import math
 import logging
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.models import Booking_lines
 
 logger = logging.getLogger(__name__)
 
@@ -59,3 +60,63 @@ def get_number_of_pallets(booking_lines, pallet):
     number_of_pallets_for_palletized = math.ceil(sum_cube / pallet_cube)
 
     return number_of_pallets_for_palletized + number_of_pallets_for_unpalletized
+
+
+def get_suitable_pallet(bok_2s, pallets):
+    first_lengths, second_lengths, third_lengths = [], [], []
+    for item in bok_2s:
+        length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+        width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+        line_dimensions = [length, width, height]
+        line_dimensions.sort()
+
+        first_lengths.append(line_dimensions[0])
+        second_lengths.append(line_dimensions[1])
+        third_lengths.append(line_dimensions[2])
+
+    max_dimensions = [max(first_lengths), max(second_lengths), max(third_lengths)]
+
+    available_pallets, non_available_pallets = [], []
+    for index, pallet in enumerate(pallets):
+        dimensions = [pallet.length / 1000, pallet.width / 1000, pallet.height / 1000]
+        dimensions.sort()
+        if (
+            dimensions[0] >= max_dimensions[0]
+            and dimensions[1] >= max_dimensions[1]
+            and dimensions[2] >= max_dimensions[2]
+        ):
+            available_pallets.append(
+                {
+                    "index": index,
+                    "cubic_meter": pallet.length
+                    * pallet.width
+                    * pallet.height
+                    / 1000000,
+                }
+            )
+        else:
+            non_available_pallets.append(
+                {
+                    "index": index,
+                    "cubic_meter": pallet.length
+                    * pallet.width
+                    * pallet.height
+                    / 1000000,
+                }
+            )
+
+    min_cubic, max_cubic, pallet_index = 10000, 0, 0
+    if available_pallets:
+        for pallet in available_pallets:
+            if pallet["cubic_meter"] < min_cubic:
+                min_cubic = pallet["cubic_meter"]
+                pallet_index = pallet["index"]
+        return pallet_index
+
+    else:
+        for pallet in non_available_pallets:
+            if pallet["cubic_meter"] > max_cubic:
+                max_cubic = pallet["cubic_meter"]
+                pallet_index = pallet["index"]
+        return pallet_index

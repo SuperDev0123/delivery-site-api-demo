@@ -470,6 +470,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     eta_pu_by = serializers.SerializerMethodField(read_only=True)
     eta_de_by = serializers.SerializerMethodField(read_only=True)
     is_deliverable = serializers.SerializerMethodField(read_only=True)
+    inv_cost_quoted = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -498,6 +499,13 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None
 
+    def get_inv_cost_quoted(self, obj):
+        try:
+            booking = self.context.get("booking")
+            return round(obj.fee * (1 + obj.mu_percentage_fuel_levy), 3)
+        except Exception as e:
+            return None
+
     def get_is_deliverable(self, obj):
         try:
             booking = self.context.get("booking")
@@ -513,24 +521,19 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_id = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
-    cost = serializers.SerializerMethodField(read_only=True)
     fp_name = serializers.SerializerMethodField(read_only=True)
+    cost = serializers.SerializerMethodField(read_only=True)
+    client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
 
+    def get_client_customer_mark_up(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
+        return client_customer_mark_up
+
     def get_cost(self, obj):
-        client_customer_mark_up = self.context.get("client_customer_mark_up", None)
-
-        if obj.tax_value_1:
-            _cost = dme_math.ceil(obj.client_mu_1_minimum_values + obj.tax_value_1, 2)
-        else:
-            _cost = dme_math.ceil(obj.client_mu_1_minimum_values, 2)
-
-        if client_customer_mark_up:
-            _cost = round(_cost * (1 + client_customer_mark_up), 2)
-
-        return _cost
+        return obj.client_mu_1_minimum_values
 
     def get_eta(self, obj):
         return obj.etd
@@ -540,7 +543,15 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = API_booking_quotes
-        fields = ("cost_id", "cost", "eta", "service_name", "fp_name")
+        fields = (
+            "cost_id",
+            "client_mu_1_minimum_values",
+            "cost",
+            "client_customer_mark_up",
+            "eta",
+            "service_name",
+            "fp_name",
+        )
 
 
 class EmailTemplatesSerializer(serializers.ModelSerializer):

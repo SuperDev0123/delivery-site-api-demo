@@ -3,7 +3,12 @@ from datetime import datetime
 
 from django.conf import settings
 
-from api.models import Bookings, Booking_lines, Api_booking_confirmation_lines
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Api_booking_confirmation_lines,
+    API_booking_quotes,
+)
 from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 
@@ -23,7 +28,7 @@ def pre_save_handler(instance):
         pass
 
     else:
-        logger.info(f"Booking pre_save: {instance.id}")
+        logger.info(f"{LOG_ID} Booking PK: {instance.id}")
         old = Bookings.objects.get(id=instance.id)
 
         if old.dme_status_detail != instance.dme_status_detail:  # field will be updated
@@ -68,70 +73,94 @@ def pre_save_handler(instance):
                     instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
             except Exception as e:
-                logger.info(f"Error 515 {e}")
+                logger.info(f"#505 {LOG_ID} Error {e}")
                 pass
-
-        if (
-            old.vx_freight_provider
-            and old.vx_freight_provider != instance.vx_freight_provider
-        ):
-            logger.info(f"REBUILD_REQUIRED")
-            instance.z_label_url = "REBUILD_REQUIRED"
-            instance.z_downloaded_shipping_label_timestamp = None
 
 
 def post_save_handler(instance):
     LOG_ID = "[BOOKING POST SAVE]"
-    logger.info(f"Booking pre_save: {instance.id}")
+    logger.info(f"{LOG_ID} Booking PK: {instance.id}")
 
-    if instance.vx_freight_provider and instance.z_label_url == "REBUILD_REQUIRED":
-        # Build Label
-        _fp_name = instance.vx_freight_provider.lower()
-        file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-
-        if instance.b_client_name == "Jason L":
-            lines = Booking_lines.objects.filter(
+    try:
+        if (
+            instance.vx_freight_provider
+            and "[REBUILD_REQUIRED]" in instance.z_label_url
+        ):
+            # Check if pricings exist for selected FP
+            quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=instance.pk_booking_id,
-                is_deleted=False,
-                sscc__isnull=False,
-            )
+                freight_provider__iexact=instance.vx_freight_provider,
+            ).order_by("fee")
 
-            if lines.count() == 0:
-                instance.z_label_url = None
+            if not quotes:
+                instance.b_error_Capture = "Quote doen't exist"
+
+                if instance.z_label_url:
+                    instance.z_label_url = instance.z_label_url[18:]
+
                 instance.save()
                 return
 
-            sscc_lines = {}
+            # Mapping Pircing info to Booking
+            quote = quotes.first()
+            instance.vx_account_code = quote.account_code
+            instance.vx_serviceName = quote.service_name
+            instance.v_service_Type = quote.service_code
+            instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+            instance.inv_sell_quoted = quote.client_mu_1_minimum_values
+            instance.api_booking_quote = quote
 
-            for line in lines:
-                if line.sscc not in sscc_lines:
-                    sscc_lines[line.sscc] = [line]
-                else:
-                    sscc_lines[line.sscc].append(line)
-
-            labeled_ssccs = []
-            for sscc in sscc_lines:
-                if sscc in labeled_ssccs:
-                    continue
-
-                file_path, file_name = build_label(
-                    booking=instance,
-                    file_path=file_path,
-                    lines=sscc_lines[sscc],
-                    label_index=0,
-                    sscc=sscc,
-                    one_page_label=True,
-                )
-
-                # Convert label into ZPL format
-                logger.info(
-                    f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-                )
-                label_url = f"{file_path}/{file_name}"
-        else:
+            # Build Label
             _fp_name = instance.vx_freight_provider.lower()
             file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-            file_path, file_name = build_label(booking=instance, file_path=file_path)
 
-        instance.z_label_url = f"{_fp_name}_au/{file_name}"
-        instance.save()
+            if instance.b_client_name == "Jason L":
+                lines = Booking_lines.objects.filter(
+                    fk_booking_id=instance.pk_booking_id,
+                    is_deleted=False,
+                    sscc__isnull=False,
+                )
+
+                if lines.count() == 0:
+                    instance.z_label_url = None
+                    instance.save()
+                    return instance
+
+                sscc_lines = {}
+
+                for line in lines:
+                    if line.sscc not in sscc_lines:
+                        sscc_lines[line.sscc] = [line]
+                    else:
+                        sscc_lines[line.sscc].append(line)
+
+                labeled_ssccs = []
+                for sscc in sscc_lines:
+                    if sscc in labeled_ssccs:
+                        continue
+
+                    file_path, file_name = build_label(
+                        booking=instance,
+                        file_path=file_path,
+                        lines=sscc_lines[sscc],
+                        label_index=0,
+                        sscc=sscc,
+                        one_page_label=True,
+                    )
+
+                    # Convert label into ZPL format
+                    logger.info(
+                        f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
+                    )
+                    label_url = f"{file_path}/{file_name}"
+            else:
+                _fp_name = instance.vx_freight_provider.lower()
+                file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+                file_path, file_name = build_label(
+                    booking=instance, file_path=file_path
+                )
+
+            instance.z_label_url = f"{_fp_name}_au/{file_name}"
+            instance.save()
+    except Exception as e:
+        logger.info(f"{LOG_ID} Error: {str(e)}")
