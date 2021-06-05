@@ -364,7 +364,6 @@ def build_csv(fileHandler, bookings, booking_lines):
                     + h35
                     + comma
                     + h36 
-                    + comma
                 )
                 fileHandler.write(newLine + eachLineText)
                 eachLineText = ""
@@ -464,7 +463,6 @@ def build_csv(fileHandler, bookings, booking_lines):
                 + h35
                 + comma
                 + h36
-                + comma
             )
             fileHandler.write(newLine + eachLineText)
             eachLineText = ""
