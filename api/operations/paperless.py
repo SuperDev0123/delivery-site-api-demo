@@ -266,7 +266,7 @@ def send_order_info(bok_1):
             body = build_xml_with_bok(bok_1, bok_2s)
             logger.info(f"@9000 {LOG_ID} payload body - {body}")
         except Exception as e:
-            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}"
+            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrder Number: {str(bok_1.b_client_order_num)}"
             logger.error(error)
             raise Exception(error)
 
