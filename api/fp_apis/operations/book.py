@@ -93,6 +93,9 @@ def book(fp_name, booking, booker):
                 )
             elif booking.vx_freight_provider.lower() == "sendle":
                 booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
+            elif booking.vx_freight_provider.lower() == "allied":
+                booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                booking.jobNumber = json_data["jobNumber"]
 
             booking.fk_fp_pickup_id = json_data["consignmentNumber"]
             booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
