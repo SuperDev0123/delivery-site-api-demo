@@ -79,7 +79,7 @@ def pre_save_handler(instance):
                 pass
 
         # JasonL
-        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        if instance.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
             quote = instance.api_booking_quote
 
             if quote and (
