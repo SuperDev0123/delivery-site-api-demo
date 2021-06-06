@@ -266,7 +266,7 @@ def send_order_info(bok_1):
             body = build_xml_with_bok(bok_1, bok_2s)
             logger.info(f"@9000 {LOG_ID} payload body - {body}")
         except Exception as e:
-            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrder Number: {str(bok_1.b_client_order_num)}"
+            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrder Number: {bok_1.b_client_order_num}"
             logger.error(error)
             raise Exception(error)
 
@@ -304,13 +304,15 @@ def send_order_info(bok_1):
         )
         return json_res
     except Exception as e:
-        to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
-        subject = "Error on Paperless workflow"
+        if bok_1.b_client_order_num:
+            to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
+            subject = "Error on Paperless workflow"
 
-        if settings.ENV == "prod":
-            to_emails.append(settings.SUPPORT_CENTER_EMAIL)
-            to_emails.append("randerson@plumproducts.com")  # Plum agent
+            if settings.ENV == "prod":
+                to_emails.append(settings.SUPPORT_CENTER_EMAIL)
+                to_emails.append("randerson@plumproducts.com")  # Plum agent
 
-        send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
-        logger.error(f"@905 {LOG_ID} Sent email notification!")
+            send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
+            logger.error(f"@905 {LOG_ID} Sent email notification!")
+
         return None
