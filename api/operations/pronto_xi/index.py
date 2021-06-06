@@ -63,7 +63,7 @@ def update_note(quote, booking, lines=[], type="bok"):
         client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
 
         # Status
-        booking_status = booking.b_status
+        booking_status = booking.b_status.replace(" ", "_")
 
         # Consignment Number
         consignment_num = booking.v_FPBookingNumber or "---"
