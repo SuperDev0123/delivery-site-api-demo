@@ -85,7 +85,12 @@ def get_tracking_payload(booking, fp_name):
     try:
         payload = {}
         consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+        consignmentDetails.append(
+            {
+                "consignmentNumber": booking.v_FPBookingNumber,
+                "de_to_address_postcode": booking.de_To_Address_PostalCode,
+            }
+        )
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
