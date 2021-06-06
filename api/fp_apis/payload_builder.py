@@ -277,6 +277,9 @@ def get_book_payload(booking, fp_name):
     # Detail for each FP
     if fp_name == "allied":
         payload["serviceType"] = "R"
+        payload["docketNumber"] = gen_consignment_num(
+            "allied", booking.b_bookingID_Visual
+        )
     if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"
