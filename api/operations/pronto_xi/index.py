@@ -70,7 +70,7 @@ def update_note(quote, booking, lines=[], type="bok"):
 
         # Estimated Date
         est_date = booking.puPickUpAvailFrom_Date + timedelta(
-            hours=get_etd_in_hour(quote.etd)
+            hours=get_etd_in_hour(quote)
         )
 
     # Total Cost
