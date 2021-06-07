@@ -16,7 +16,6 @@ import datetime
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
@@ -181,66 +180,66 @@ EMAIL_ROOT = os.path.join(BASE_DIR, "templates/email")
 
 # Logging setting
 
-if ENV == "prod":
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "verbose": {
-                "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-                "datefmt": "%d/%b/%Y %H:%M:%S",
-            }
+# if ENV == "prod":
+#     LOGGING = {
+#         "version": 1,
+#         "disable_existing_loggers": False,
+#         "formatters": {
+#             "verbose": {
+#                 "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+#                 "datefmt": "%d/%b/%Y %H:%M:%S",
+#             }
+#         },
+#         "root": {
+#             "level": "ERROR",
+#             "handlers": ["bugsnag"],
+#         },
+#         "handlers": {
+#             "console": {
+#                 "level": "INFO",
+#                 "class": "logging.StreamHandler",
+#                 "formatter": "verbose",
+#             },
+#             "file": {
+#                 "level": "INFO",
+#                 "class": "logging.handlers.RotatingFileHandler",
+#                 "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+#                 "backupCount": 30,  # keep at most 30 log files
+#                 "maxBytes": 1024 * 1024 * 10,  # 10 MB
+#                 "formatter": "verbose",
+#             },
+#             "bugsnag": {
+#                 "level": "ERROR",
+#                 "class": "bugsnag.handlers.BugsnagHandler",
+#             },
+#         },
+#         "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
+#     }
+# else:
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
-        "root": {
-            "level": "ERROR",
-            "handlers": ["bugsnag"],
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": "./logs/debug.log",
+            "formatter": "verbose",
         },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-            },
-            "file": {
-                "level": "INFO",
-                "class": "logging.handlers.RotatingFileHandler",
-                "filename": "./logs/debug.log",
-                "backupCount": 30,  # keep at most 30 log files
-                "maxBytes": 1024 * 1024 * 10,  # 10 MB
-                "formatter": "verbose",
-            },
-            "bugsnag": {
-                "level": "ERROR",
-                "class": "bugsnag.handlers.BugsnagHandler",
-            },
-        },
-        "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
-    }
-else:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "verbose": {
-                "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-                "datefmt": "%d/%b/%Y %H:%M:%S",
-            }
-        },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "verbose",
-            },
-            "file": {
-                "level": "INFO",
-                "class": "logging.FileHandler",
-                "filename": "./logs/debug.log",
-                "formatter": "verbose",
-            },
-        },
-        "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
-    }
+    },
+    "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
+}
 
 # S3 url
 S3_URL = os.environ["S3_URL"]
