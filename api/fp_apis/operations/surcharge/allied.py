@@ -1,5 +1,5 @@
 import math
-from api.models import FP_onforwarding
+from api.models import FP_onforwarding, FP_costs
 # def cw(param):
 #     if :
 #         return {
@@ -163,22 +163,22 @@ from api.models import FP_onforwarding
 #         return None
 
 # dummy values for below 3
-def op(param):
-    dimensions = [param['max_length'], param['max_width'], param['max_height']]
-    dimensions.sort()
-    limits = [1.4, 1.2, 1.2]
-    pallet_cube = 1.4 * 1.2 * 1.2
-    limits.sort()
-    if dimensions[0] > limits[0] or dimensions[1] > limits[1] or dimensions[2] > limits[2] or param['max_weight'] > 500:
-        return {
-            'name': 'Oversize Pallets',
-            'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
-                'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
-                'pallets. An additional pallet charge will apply.',
-            'value': (max(math.ceil(param['total_cubic'] / pallet_cube), math.ceil(param['max_weight'] / 500)) - 1) * 'base_charge'
-        }
-    else:
-        return None
+# def op(param):
+#     dimensions = [param['max_length'], param['max_width'], param['max_height']]
+#     dimensions.sort()
+#     limits = [1.4, 1.2, 1.2]
+#     pallet_cube = 1.4 * 1.2 * 1.2
+#     limits.sort()
+#     if dimensions[0] > limits[0] or dimensions[1] > limits[1] or dimensions[2] > limits[2] or param['max_weight'] > 500:
+#         return {
+#             'name': 'Oversize Pallets',
+#             'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
+#                 'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
+#                 'pallets. An additional pallet charge will apply.',
+#             'value': (max(math.ceil(param['total_cubic'] / pallet_cube), math.ceil(param['max_weight'] / 500)) - 1) * 'base_charge'
+#         }
+#     else:
+#         return None
 
 # def bbs(param):
 #     if param['max_dimension'] >= 1.4:
@@ -214,6 +214,96 @@ def op(param):
 #     else:
 #         return None
 
+def lws(param):
+    length_surcharge, width_surcharge = None, None
+    if param['length'] >= 1.2 and param['length'] < 2.4:
+        length_surcharge = {
+            'name': 'Lengths [LSC] 1.20-2.39 metre',
+            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
+            'value': 5.4
+        }
+    elif param['length'] >= 2.4 and param['length'] < 3.6:
+        length_surcharge = {
+            'name': 'Lengths [LSC] 2.40-3.59 metre',
+            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
+            'value': 11.93
+        }
+    elif param['length'] >= 3.6 and param['length'] < 4.2:
+        length_surcharge = {
+            'name': 'Lengths [LSC] 3.6-4.19 metre',
+            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
+            'value': 25.4
+        }
+    elif param['length'] >= 4.2 and param['length'] < 4.8:
+        length_surcharge = {
+            'name': 'Lengths [LSC] 4.2-4.79 metre',
+            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
+            'value': 88.61
+        }
+    elif param['length'] >= 4.8 and param['length'] < 6:
+        length_surcharge = {
+            'name': 'Lengths [LSC] 4.8-5.59 metre',
+            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
+            'value': 119.19
+        }
+    elif:
+        length_surcharge = {
+            'name': 'Lengths [LSC] over 6 metre',
+            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
+            'value': 153.91
+        }
+    else:
+        length_surcharge = {}
+
+    if param['width'] > 1.1 and param['width'] <= 1.6:
+        width_surcharge = {
+            'name': 'Width [WS] 1.10-1.60 metre',
+            'description': 'Items that exceed width will attract a surcharge',
+            'value': 7.5
+        }
+    elif param['width'] > 1.6 and param['width'] <= 2.4:
+        width_surcharge = {
+            'name': 'Width [WS] 1.61-2.4 metre',
+            'description': 'Items that exceed width will attract a surcharge',
+            'value': 10.5
+        }
+    else:
+        width_surcharge = {}
+
+    if length_surcharge and width_surcharge:
+        if length_surcharge['value'] > width_surcharge['value']:
+            return length_surcharge
+        else:
+            return width_surcharge
+    elif length_surcharge or width_surcharge:
+        if length_surcharge:
+            return length_surcharge
+        else:
+            return width_surcharge
+    else:
+        return None
+
+def kcfp(param):
+    if param['is_pallet']:
+        if param['max_weight'] < 350:
+            return {
+                'name': 'Minimum Charge-Skids/ Pallets',
+                'description': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your ' +
+                    'freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.',
+                'value': 0.11 * param['dead_weight']
+            }
+        else:
+            return {
+                'name': 'Oversize Pallets',
+                'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
+                    'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
+                    'pallets. An additional pallet charge will apply.',
+                'value': (max(math.ceil(param['total_cubic'] / pallet_cube), math.ceil(param['max_weight'] / 500)) - 1) * 'base_charge'
+            }
+    else:
+        return None
+
+
 def ofpu(param):
     try:
         pu_onforwarding = FP_onforwarding.objects.get(fp_company_name='Allied', state=param['pu_address_state'], postcode=param['pu_address_postcode'], suburb=param['pu_address_suburb'])
@@ -221,7 +311,7 @@ def ofpu(param):
             'name': 'Onforwarding(Pickup)',
             'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
                 'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
-            'value': pu_onforwarding.price_per_kg
+            'value': pu_onforwarding.base_price + pu_onforwarding.price_per_kg * param['dead_weight']
         }
     except Exception as e:
         return None
@@ -233,7 +323,7 @@ def ofde(param):
             'name': 'Onforwarding(Delivery)',
             'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
                 'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
-            'value': de_onforwarding.price_per_kg
+            'value': de_to_onforwarding.base_price + de_to_onforwarding.price_per_kg * param['dead_weight']
         }
     except Exception as e:
         return None

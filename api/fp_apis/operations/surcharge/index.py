@@ -111,9 +111,27 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         if line['e_dangerousGoods']:
             has_dangerous_item = True
 
+        item_cubic_weight = get_cubic_meter(
+            line["e_dimLength"],
+            line["e_dimWidth"],
+            line["e_dimHeight"],
+            line["e_dimUOM"],
+            1,
+        ) * m3_to_kg_factor
+        item_dead_weight = line["e_weightPerEach"] * _get_weight_amount(line["e_weightUOM"])
+        is_pallet = line['e_type_of_packaging'].lower() == 'pallet'
+        if is_pallet:
+            item_max_weight = max(item_cubic_weight, item_dead_weight)
+        else:
+            item_max_weight = item_dead_weight
+
         lines_data.append({
             'pk': line['pk'],
             'max_dimension': max(line['e_dimLength'], line['e_dimWidth'], line['e_dimHeight']) * _get_dim_amount(line['e_dimUOM']),
+            'length': line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"]),
+            'width': line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"]),
+            'max_weight': math.ceil(item_max_weight),
+            'is_pallet': is_pallet,
             'quantity': line['e_qty']
         })
         

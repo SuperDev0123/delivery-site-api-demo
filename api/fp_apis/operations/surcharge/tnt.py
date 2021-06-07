@@ -197,24 +197,24 @@ def os5(param):
         return None
 
 
-def lr(param):
-    if (
-        param["de_to_address_state"].lower() == "wa"
-        and param["de_to_address_city"] != "Perth"
-        and param["vx_service_name"].lower()
-        in ["road express", "fashion express", "technology express"]
-    ):
-        return {
-            "name": "Western Australia Regional Surcharge(LR)",
-            "description": "10% - Surcharge effective 06/01/2013 (where applicable)"
-            + "For all shipments travelling to Western Australia regional/country locations, excluding Perth and applicable to the following services:"
-            + "Road Express (XPDD) Fashion Express (FASH) Technology Express (COMP) Examples Sydney (SYD) to Tom Price (TPR) - Surcharge applies Brisbane (BNE) to Perth (PTH) - Surcharge doesn't apply "
-            + "Perth (PTH) to Albany (ABY) - Surcharge applies Albany (ABY) t Perth (PTH) - Surcharge applies Perth (PTH) to Perth (PTH) - Surcharge doesn't apply "
-            + "Perth (PTH) to Melbourne (MEL) - Surcharge doesn't apply",
-            "value": "10%",
-        }
-    else:
-        return None
+# def lr(param):
+#     if (
+#         param["de_to_address_state"].lower() == "wa"
+#         and param["de_to_address_city"] != "Perth"
+#         and param["vx_service_name"].lower()
+#         in ["road express", "fashion express", "technology express"]
+#     ):
+#         return {
+#             "name": "Western Australia Regional Surcharge(LR)",
+#             "description": "10% - Surcharge effective 06/01/2013 (where applicable)"
+#             + "For all shipments travelling to Western Australia regional/country locations, excluding Perth and applicable to the following services:"
+#             + "Road Express (XPDD) Fashion Express (FASH) Technology Express (COMP) Examples Sydney (SYD) to Tom Price (TPR) - Surcharge applies Brisbane (BNE) to Perth (PTH) - Surcharge doesn't apply "
+#             + "Perth (PTH) to Albany (ABY) - Surcharge applies Albany (ABY) t Perth (PTH) - Surcharge applies Perth (PTH) to Perth (PTH) - Surcharge doesn't apply "
+#             + "Perth (PTH) to Melbourne (MEL) - Surcharge doesn't apply",
+#             "value": "10%",
+#         }
+#     else:
+#         return None
 
 
 def tnt():
@@ -228,7 +228,7 @@ def tnt():
             rsd,
             rsd30,
             rsd100,
-            lr,
+            # lr,
         ],
         'line': [
             os0,
