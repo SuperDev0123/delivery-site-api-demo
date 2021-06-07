@@ -18,6 +18,12 @@ if settings.ENV in ["local", "dev"]:
     USERNAME = "delme"
     PASSWORD = "Dme1234!$*"
     CUSTOMER_CODE = "3QD3D5X"
+else:
+    PORT = "8443"
+    API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/U01_avenue"
+    USERNAME = "delme"
+    PASSWORD = "Dme1234!$*"
+    CUSTOMER_CODE = "3QD3D5X"
 
 
 def parse_token_xml(response):
