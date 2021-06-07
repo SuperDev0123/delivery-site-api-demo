@@ -12,18 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 # Constants
+PORT = "8443"
+USERNAME = "delme"
+PASSWORD = "Dme1234!$*"
+CUSTOMER_CODE = "3QD3D5X"
+
 if settings.ENV in ["local", "dev"]:
-    PORT = "8443"
     API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/U01_avenue"
-    USERNAME = "delme"
-    PASSWORD = "Dme1234!$*"
-    CUSTOMER_CODE = "3QD3D5X"
 else:
-    PORT = "8443"
-    API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/U01_avenue"
-    USERNAME = "delme"
-    PASSWORD = "Dme1234!$*"
-    CUSTOMER_CODE = "3QD3D5X"
+    API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/L01_avenue"
 
 
 def parse_token_xml(response):

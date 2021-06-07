@@ -51,10 +51,10 @@ def update_note(quote, booking, lines=[], type="bok"):
         f"@630 {LOG_ID} orderNum: {booking.b_client_order_num}, quote ID: {quote.pk}"
     )
 
-    consignment_num = "---"
+    consignment_num = "---                    "
     total_cost = 0
     booking_status = "Picking"
-    est_date = "---"
+    est_date = "---                    "
 
     # Client
     if type == "bok":
@@ -66,7 +66,7 @@ def update_note(quote, booking, lines=[], type="bok"):
         booking_status = booking.b_status.replace(" ", "_")
 
         # Consignment Number
-        consignment_num = booking.v_FPBookingNumber or "---"
+        consignment_num = booking.v_FPBookingNumber or "---                    "
 
         # Estimated Date
         est_date = booking.puPickUpAvailFrom_Date + timedelta(
