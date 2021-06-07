@@ -86,7 +86,7 @@ def update_note(quote, booking, lines=[], type="bok"):
                 fk_booking_id=booking.pk_booking_id, is_deleted=False
             )
 
-    surcharge_total = get_surcharges_total(booking, _lines, quote)
+    surcharge_total = get_surcharges_total(booking, _lines, quote, type)
     total_cost = "{0:.2f}".format(
         (quote.client_mu_1_minimum_values + surcharge_total)
         * (client.client_customer_mark_up + 1)
