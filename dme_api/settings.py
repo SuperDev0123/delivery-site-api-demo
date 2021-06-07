@@ -204,7 +204,7 @@ if ENV == "prod":
             "file": {
                 "level": "INFO",
                 "class": "logging.handlers.RotatingFileHandler",
-                "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+                "filename": "./logs/debug.log",
                 "backupCount": 30,  # keep at most 30 log files
                 "maxBytes": 1024 * 1024 * 10,  # 10 MB
                 "formatter": "verbose",
