@@ -1,3 +1,7 @@
+jason_l_surcharges = {
+    'rsd': 2.37,
+    'os0': 8.23
+}
 def dgre(param):
     if param["has_dangerous_item"] and param['vx_service_name'].lower() == "road express":
         return {
@@ -90,7 +94,7 @@ def rsd(param):
         return {
             "name": "Residential Delivery (RSD)",
             "description": "Fee per consignment for delivery to a residential address4. ",
-            "value": 5,
+            "value": jason_l_surcharges['rsd'] if param['is_jason_l'] else 5,
         }
     else:
         return None
@@ -136,7 +140,7 @@ def os0(param):
         return {
             "name": "Oversize Freight (OS0)",
             "description": "Oversize freight where any one dimension (length, height or width) exceeds 1.49 metres.",
-            "value": 10,
+            "value": jason_l_surcharges['os0'] if param['is_jason_l'] else 10,
         }
     else:
         return None

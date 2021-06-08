@@ -39,6 +39,7 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
             "del_tail_lift": booking_obj.b_041_b_del_tail_lift,
             "vx_serviceName": quote_obj.service_name,
             "vx_freight_provider": quote_obj.freight_provider,
+            "client_id": booking_obj.fk_client_id
         }
 
         for line_obj in line_objs:
@@ -146,6 +147,7 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             "de_to_address_suburb": booking["de_To_Address_Suburb"],
             "vx_freight_provider": booking['vx_freight_provider'],
             "vx_service_name": booking["vx_serviceName"],
+            "is_jason_l": booking['client_id'] == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         })
         
     max_dimension = max(lengths + widths + heights)
@@ -183,6 +185,7 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         "vx_service_name": booking["vx_serviceName"],
         "has_dangerous_item": has_dangerous_item,
         "is_tail_lift": booking["pu_tail_lift"] or booking["del_tail_lift"],
+        "is_jason_l": booking['client_id'] == "1af6bcd2-6148-11eb-ae93-0242ac130002"
     }
 
     print(order_data)
