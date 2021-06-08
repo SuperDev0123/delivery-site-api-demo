@@ -234,7 +234,7 @@ def ofpu(param):
             'name': 'Onforwarding(Pickup)',
             'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
                 'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
-            'value': pu_onforwarding.base_price + pu_onforwarding.price_per_kg * param['dead_weight']
+            'value': pu_onforwarding.base_price + pu_onforwarding.price_per_kg * param['max_weight']
         }
     except Exception as e:
         return None
@@ -246,7 +246,7 @@ def ofde(param):
             'name': 'Onforwarding(Delivery)',
             'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
                 'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
-            'value': de_to_onforwarding.base_price + de_to_onforwarding.price_per_kg * param['dead_weight']
+            'value': de_to_onforwarding.base_price + de_to_onforwarding.price_per_kg * param['max_weight']
         }
     except Exception as e:
         return None
