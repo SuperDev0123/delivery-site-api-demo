@@ -27,8 +27,13 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
         # Build `Booking` and `Lines` for Surcharge
         booking = {
             "pu_Address_Type": booking_obj.b_027_b_pu_address_type,
-            "de_To_AddressType": booking_obj.b_053_b_del_address_type,
+            "pu_Address_State": booking_obj.b_031_b_pu_address_state,
+            "pu_Address_PostalCode": booking_obj.b_033_b_pu_address_postalcode,
+            "pu_Address_Suburb": booking_obj.b_032_b_pu_address_suburb,
             "de_To_Address_State": booking_obj.b_057_b_del_address_state,
+            "de_To_Address_PostalCode": booking_obj.b_059_b_del_address_postalcode,
+            "de_To_Address_Suburb": booking_obj.b_058_b_del_address_suburb,
+            "de_To_AddressType": booking_obj.b_053_b_del_address_type,
             "de_To_Address_City": booking_obj.b_058_b_del_address_suburb,
             "pu_tail_lift": booking_obj.b_019_b_pu_tail_lift,
             "del_tail_lift": booking_obj.b_041_b_del_tail_lift,
@@ -132,7 +137,15 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             'width': line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"]),
             'max_weight': math.ceil(item_max_weight),
             'is_pallet': is_pallet,
-            'quantity': line['e_qty']
+            'quantity': line['e_qty'],
+            "pu_address_state": booking["pu_Address_State"],
+            "pu_address_postcode": booking["pu_Address_PostalCode"],
+            "pu_address_suburb": booking["pu_Address_Suburb"],
+            "de_to_address_state": booking["de_To_Address_State"],
+            "de_to_address_postcode": booking["de_To_Address_PostalCode"],
+            "de_to_address_suburb": booking["de_To_Address_Suburb"],
+            "vx_freight_provider": booking['vx_freight_provider'],
+            "vx_service_name": booking["vx_serviceName"],
         })
         
     max_dimension = max(lengths + widths + heights)
@@ -141,8 +154,13 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
 
     order_data = {
         "pu_address_type": booking["pu_Address_Type"],
+        "pu_address_state": booking["pu_Address_State"],
+        "pu_address_postcode": booking["pu_Address_PostalCode"],
+        "pu_address_suburb": booking["pu_Address_Suburb"],
         "de_to_address_type": booking["de_To_AddressType"],
         "de_to_address_state": booking["de_To_Address_State"],
+        "de_to_address_postcode": booking["de_To_Address_PostalCode"],
+        "de_to_address_suburb": booking["de_To_Address_Suburb"],
         "de_to_address_city": booking["de_To_Address_City"],
         "dead_weight": dead_weight,
         "cubic_weight": cubic_weight,
@@ -161,6 +179,7 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         "max_diagonal": max(diagonals),
         "min_diagonal": min(diagonals),
         "total_qty": total_qty,
+        "vx_freight_provider": booking['vx_freight_provider'],
         "vx_service_name": booking["vx_serviceName"],
         "has_dangerous_item": has_dangerous_item,
         "is_tail_lift": booking["pu_tail_lift"] or booking["del_tail_lift"],
@@ -181,26 +200,67 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
 
         if result:
             surcharges.append(result)
+    
+    if booking['vx_freight_provider'].lower() == 'allied':
+        line_surcharges = []
+        for opt_func in surcharge_opt_funcs['line']:
+            for line in lines_data:
+                result = opt_func(line)
 
-    for opt_func in surcharge_opt_funcs['line']:
-        line_surcharges, total, temp = [], 0, {}
-        for line in lines_data:
-            result = opt_func(line)
+                if result:
+                    line_surcharges.append({
+                        'pk': line['pk'],
+                        'quantity': line['quantity'],
+                        'name': result['name'],
+                        'description': result['description'],
+                        'value': result['value']
+                    })
+        line_surcharge_dict = {}
+        for item in line_surcharges:
+            if item['name'] not in line_surcharge_dict:
+                line_surcharge_dict[item['name']] = {
+                    'name': item['name'],
+                    'description': item['description'],
+                    'value': item['value'] * item['quantity'],
+                    'lines': [
+                        {
+                            'pk': item['pk'],
+                            'quantity': item['quantity'],
+                            'value': item['value']
+                        }
+                    ]
+                }
+            else:
+                line_surcharge_dict[item['name']]['value'] += item['value'] * item['quantity']
+                line_surcharge_dict[item['name']]['lines'].append(
+                    {
+                        'pk': item['pk'],
+                        'quantity': item['quantity'],
+                        'value': item['value']
+                    }
+                )
 
-            if result:
-                temp = result
-                line_surcharges.append({
-                    'pk': line['pk'],
-                    'quantity': line['quantity'],
-                    'value': result['value']
+        surcharges += list(line_surcharge_dict.values())
+    else:
+        for opt_func in surcharge_opt_funcs['line']:
+            line_surcharges, total, temp = [], 0, {}
+            for line in lines_data:
+                result = opt_func(line)
+
+                if result:
+                    temp = result
+                    line_surcharges.append({
+                        'pk': line['pk'],
+                        'quantity': line['quantity'],
+                        'value': result['value']
+                    })
+                    total += line['quantity'] * result['value']
+            if line_surcharges:
+                surcharges.append({
+                    'name': temp['name'],
+                    'description': temp['description'],
+                    'value': total,
+                    'lines': line_surcharges
                 })
-                total += line['quantity'] * result['value']
-        if line_surcharges:
-            surcharges.append({
-                'name': temp['name'],
-                'description': temp['description'],
-                'value': total,
-                'lines': line_surcharges
-            })
 
     return surcharges
