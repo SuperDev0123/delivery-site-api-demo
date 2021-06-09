@@ -4794,3 +4794,16 @@ class PostalCode(models.Model):
 
     class Meta:
         db_table = "postal_code"
+
+
+class Surcharge(models.Model):
+    id = models.AutoField(primary_key=True)
+    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=255, default=None, null=True)
+    amount = models.FloatField(null=True, default=None)
+    line_id = models.CharField(max_length=36, default=None, null=True)  # Line/BOK_2 pk
+    qty = models.IntegerField(blank=True, null=True, default=0)  # Line/BOK_2 qty
+
+    class Meta:
+        db_table = "dme_surcharge"

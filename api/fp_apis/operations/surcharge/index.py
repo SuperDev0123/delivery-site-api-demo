@@ -8,17 +8,9 @@ from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
 
-from api.models import Booking_lines
+from api.models import Booking_lines, Surcharge
 
 logger = logging.getLogger(__name__)
-
-
-def get_available_surcharge_opts(booking):
-
-    lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-    if len(lines) == 0:
-        logger.info(f"No Booking Lines to deliver")
-        return None
 
 
 def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
@@ -38,7 +30,6 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
             "de_To_Address_PostalCode": booking_obj.b_059_b_del_address_postalcode,
             "de_To_Address_Suburb": booking_obj.b_058_b_del_address_suburb,
             "de_To_AddressType": booking_obj.b_053_b_del_address_type,
-            "de_To_Address_City": booking_obj.b_058_b_del_address_suburb,
             "pu_tail_lift": booking_obj.b_019_b_pu_tail_lift,
             "del_tail_lift": booking_obj.b_041_b_del_tail_lift,
             "vx_serviceName": quote_obj.service_name,
@@ -64,17 +55,23 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
     else:
         booking = {
             "pu_Address_Type": booking_obj.pu_Address_Type,
+            "pu_Address_State": booking_obj.pu_Address_State,
+            "pu_Address_PostalCode": booking_obj.pu_Address_PostalCode,
+            "pu_Address_Suburb": booking_obj.pu_Address_Suburb,
             "de_To_AddressType": booking_obj.de_To_AddressType,
             "de_To_Address_State": booking_obj.de_To_Address_State,
-            "de_To_Address_City": booking_obj.de_To_Address_City,
-            "pu_tail_lift": booking_obj.b_booking_tail_lift_pickup,
-            "del_tail_lift": booking_obj.b_booking_tail_lift_deliver,
+            "de_To_Address_PostalCode": booking_obj.de_To_Address_PostalCode,
+            "de_To_Address_Suburb": booking_obj.de_To_Address_Suburb,
+            "pu_tail_lift": booking_obj.pu_tail_lift,
+            "del_tail_lift": booking_obj.de_tail_lift,
             "vx_serviceName": quote_obj.service_name,
             "vx_freight_provider": quote_obj.freight_provider,
+            "client_id": booking_obj.kf_client_id,
         }
 
         for line_obj in line_objs:
             line = {
+                "pk": line_obj.pk_lines_id,
                 "e_type_of_packaging": line_obj.e_type_of_packaging,
                 "e_qty": int(line_obj.e_qty),
                 "e_item": line_obj.e_item,
@@ -84,14 +81,14 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
                 "e_dimHeight": line_obj.e_dimHeight,
                 "e_weightUOM": line_obj.e_weightUOM,
                 "e_weightPerEach": line_obj.e_weightPerEach,
-                "e_dangerousGoods": line_obj.e_dangerousGoods,
+                "e_dangerousGoods": False,
             }
             lines.append(line)
 
     return booking, lines
 
 
-def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
 
     m3_to_kg_factor = 250
@@ -211,7 +208,6 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         "de_to_address_state": booking["de_To_Address_State"],
         "de_to_address_postcode": booking["de_To_Address_PostalCode"],
         "de_to_address_suburb": booking["de_To_Address_Suburb"],
-        "de_to_address_city": booking["de_To_Address_City"],
         "dead_weight": dead_weight,
         "cubic_weight": cubic_weight,
         "total_cubic": total_cubic,
@@ -323,12 +319,61 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     return surcharges
 
 
-def get_surcharges_total(booking_obj, line_objs, quote_obj, data_type="bok_1"):
-    _total = 0
+def get_surcharges(quote):
+    return Surcharge.objects.filter(quote=quote, line_id__isnull=True)
 
-    surcharges = get_surcharges(booking_obj, line_objs, quote_obj, data_type)
+
+def get_surcharges_total(quote):
+    _total = 0
+    surcharges = get_surcharges(quote)
 
     for surcharge in surcharges:
-        _total += float(surcharge["value"])
+        _total += surcharge.amount
 
     return _total
+
+
+def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+    """
+    Surcharge table management
+
+    - Delete existing of Quote
+    - Calc new surcharge opts
+    - Create new Surcharge objects
+    """
+
+    result = []
+
+    # Do not process for `Allied` Quote
+    if quote_obj.freight_provider.lower() == "allied":
+        return result
+
+    # Delete existing Surcharges
+    Surcharge.objects.filter(quote=quote_obj).delete()
+
+    # Calc new surcharge opts
+    surcharges = clac_surcharges(booking_obj, line_objs, quote_obj, data_type)
+
+    # Create new Surcharge objects
+    for surcharge in surcharges:
+        lines = surcharge.get("lines")
+
+        surcharge_obj = Surcharge()
+        surcharge_obj.quote = quote_obj
+        surcharge_obj.name = surcharge["name"]
+        surcharge_obj.amount = surcharge["value"]
+        surcharge_obj.save()
+        result.append(surcharge_obj)
+
+        if lines:
+            for line in lines:
+                surcharge_obj = Surcharge()
+                surcharge_obj.quote = quote_obj
+                surcharge_obj.name = surcharge["name"]
+                surcharge_obj.amount = line["value"]
+                surcharge_obj.line_id = line["pk"]
+                surcharge_obj.qty = line["quantity"]
+                surcharge_obj.save()
+                result.append(surcharge_obj)
+
+    return result

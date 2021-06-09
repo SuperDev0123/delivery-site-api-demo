@@ -442,12 +442,13 @@ def push_boks(payload, client, username, method):
             line["zbl_102_text_2"] = item["zbl_102_text_2"]
             line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
 
-            new_bok_2s.append({"booking_line": line})
-
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
                 bok_2_objs.append(bok_2_obj)
+
+                line["pk_lines_id"] = bok_2_obj.pk
+                new_bok_2s.append({"booking_line": line})
             else:
                 message = f"Serialiser Error - {bok_2_serializer.errors}"
                 logger.info(f"@8831 {LOG_ID} {message}")
@@ -564,6 +565,7 @@ def push_boks(payload, client, username, method):
         "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
         "pu_Address_State": bok_1["b_031_b_pu_address_state"],
         "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+        "pu_Address_Type": bok_1["b_027_b_pu_address_type"],
         "deToCompanyName": bok_1["b_054_b_del_company"],
         "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
         "de_Email": bok_1["b_063_b_del_email"],
@@ -574,6 +576,9 @@ def push_boks(payload, client, username, method):
         "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
         "de_To_Address_State": bok_1["b_057_b_del_address_state"],
         "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+        "de_To_AddressType": bok_1["b_053_b_del_address_type"],
+        "pu_tail_lift": bok_1["b_019_b_pu_tail_lift"],
+        "de_tail_lift": bok_1["b_041_b_del_tail_lift"],
         "client_warehouse_code": bok_1["b_client_warehouse_code"],
         "kf_client_id": bok_1["fk_client_id"],
         "b_client_name": client.company_name,
@@ -588,6 +593,7 @@ def push_boks(payload, client, username, method):
 
         bok_2_line = {
             "fk_booking_id": _bok_2["fk_header_id"],
+            "pk_lines_id": _bok_2["fk_header_id"],
             "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
             "e_qty": _bok_2["l_002_qty"],
             "e_item": _bok_2["l_003_item"],
@@ -684,6 +690,7 @@ def push_boks(payload, client, username, method):
             return result
         else:
             logger.info(f"@8838 {LOG_ID} success: True, 201_created")
+            result = {"success": True, "results": json_results}
             return json_results
     else:
         message = "Pricing cannot be returned due to incorrect address information."
@@ -825,6 +832,7 @@ def auto_repack(payload, client):
         "pu_Address_PostalCode": bok_1.b_033_b_pu_address_postalcode,
         "pu_Address_State": bok_1.b_031_b_pu_address_state,
         "pu_Address_Suburb": bok_1.b_032_b_pu_address_suburb,
+        "pu_Address_Type": bok_1.b_027_b_pu_address_type,
         "deToCompanyName": bok_1.b_054_b_del_company,
         "de_to_Contact_F_LName": bok_1.b_061_b_del_contact_full_name,
         "de_Email": bok_1.b_063_b_del_email,
@@ -835,6 +843,9 @@ def auto_repack(payload, client):
         "de_To_Address_PostalCode": bok_1.b_059_b_del_address_postalcode,
         "de_To_Address_State": bok_1.b_057_b_del_address_state,
         "de_To_Address_Suburb": bok_1.b_058_b_del_address_suburb,
+        "de_To_AddressType": bok_1.b_053_b_del_address_type,
+        "pu_tail_lift": bok_1.b_019_b_pu_tail_lift,
+        "de_tail_lift": bok_1.b_041_b_del_tail_lift,
         "client_warehouse_code": bok_1.b_client_warehouse_code,
         "kf_client_id": bok_1.fk_client_id,
         "b_client_name": client.company_name,
@@ -847,6 +858,7 @@ def auto_repack(payload, client):
 
         bok_2_line = {
             # "fk_booking_id": _bok_2.fk_header_id,
+            "pk_lines_id": _bok_2.pk,
             "e_type_of_packaging": _bok_2.l_001_type_of_packaging,
             "e_qty": int(_bok_2.l_002_qty),
             "e_item": _bok_2.l_003_item,

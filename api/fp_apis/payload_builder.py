@@ -743,7 +743,7 @@ def get_pricing_payload(
     booking,
     fp_name,
     account_detail,
-    booking_lines=None,
+    booking_lines,
     service_code=None,
 ):
     payload = {}
@@ -823,11 +823,6 @@ def get_pricing_payload(
         "suburb": "" or booking.de_To_Address_Suburb,
         "sortCode": "" or booking.de_To_Address_PostalCode,
     }
-
-    if not booking_lines:
-        booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, is_deleted=False
-        )
 
     items = []
     for line in booking_lines:

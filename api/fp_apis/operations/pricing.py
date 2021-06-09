@@ -9,9 +9,17 @@ from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
 from api.serializers import ApiBookingQuotesSerializer
-from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Log,
+    API_booking_quotes,
+    Client_FP,
+    FP_Service_ETDs,
+)
 
 from api.fp_apis.operations.common import _set_error
+from api.fp_apis.operations.surcharge.index import gen_surcharges
 from api.fp_apis.built_in.index import get_pricing as get_self_pricing
 from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
@@ -55,6 +63,11 @@ def pricing(body, booking_id, is_pricing_only=False):
         else:
             return False, "Booking does not exist", None
 
+    if not booking_lines:
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
+
     # Set is_used flag for existing old pricings
     if booking.pk_booking_id:
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).update(
@@ -88,6 +101,10 @@ def pricing(body, booking_id, is_pricing_only=False):
 
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes)
+
+        # Calculate Surcharges
+        for quote in quotes:
+            gen_surcharges(booking, booking_lines, quote, "booking")
 
     return booking, True, "Retrieved all Pricing info", quotes
 

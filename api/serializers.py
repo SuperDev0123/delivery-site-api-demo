@@ -39,6 +39,7 @@ from api.models import (
     CostOptionMap,
     BookingCostOption,
     Pallet,
+    Surcharge,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -786,4 +787,10 @@ class BookingCostOptionSerializer(serializers.ModelSerializer):
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
+        fields = "__all__"
+
+
+class SurchargeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Surcharge
         fields = "__all__"
