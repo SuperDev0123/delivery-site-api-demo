@@ -200,11 +200,11 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     cubic_weight = math.ceil(cubic_weight)
 
     order_data = {
-        "pu_address_type": booking["pu_Address_Type"],
+        "pu_address_type": booking["pu_Address_Type"] or "",
         "pu_address_state": booking["pu_Address_State"],
         "pu_address_postcode": booking["pu_Address_PostalCode"],
         "pu_address_suburb": booking["pu_Address_Suburb"],
-        "de_to_address_type": booking["de_To_AddressType"],
+        "de_to_address_type": booking["de_To_AddressType"] or "",
         "de_to_address_state": booking["de_To_Address_State"],
         "de_to_address_postcode": booking["de_To_Address_PostalCode"],
         "de_to_address_suburb": booking["de_To_Address_Suburb"],
