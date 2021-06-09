@@ -292,13 +292,13 @@ async def _api_pricing_worker_builder(
 
                     for surcharge in surcharges:
                         if float(surcharge["amount"]) > 0:
-                            surcharge = Surcharge()
-                            surcharge.name = surcharge["name"]
-                            surcharge.description = surcharge["description"]
-                            surcharge.amount = float(surcharge["amount"])
-                            surcharge.quote = quote
-                            surcharge.fp_id = 2  # Allied(Hardcode)
-                            surcharge.save()
+                            surcharge_obj = Surcharge()
+                            surcharge_obj.name = surcharge["name"]
+                            surcharge_obj.description = surcharge["description"]
+                            surcharge_obj.amount = float(surcharge["amount"])
+                            surcharge_obj.quote = quote
+                            surcharge_obj.fp_id = 2  # Allied(Hardcode)
+                            surcharge_obj.save()
                 else:
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
