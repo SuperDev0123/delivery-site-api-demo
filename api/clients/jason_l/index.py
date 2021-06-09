@@ -691,7 +691,7 @@ def push_boks(payload, client, username, method):
         else:
             logger.info(f"@8838 {LOG_ID} success: True, 201_created")
             result = {"success": True, "results": json_results}
-            return json_results
+            return result
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
