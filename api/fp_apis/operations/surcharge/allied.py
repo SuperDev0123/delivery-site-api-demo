@@ -1,5 +1,6 @@
 import math
 from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_providers
+
 # def cw(param):
 #     if :
 #         return {
@@ -87,19 +88,19 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 def pks(param):
     try:
         fp_id = Fp_freight_providers.objects.get(
-            fp_company_name=param['vx_freight_provider']
+            fp_company_name=param["vx_freight_provider"]
         ).id
         pu_zone = FP_zones.objects.get(
             fk_fp=fp_id,
-            state=param['pu_address_state'],
-            postal_code=param['pu_address_postcode'],
-            suburb=param['pu_address_suburb'],
+            state=param["pu_address_state"],
+            postal_code=param["pu_address_postcode"],
+            suburb=param["pu_address_suburb"],
         ).zone
         de_zone = FP_zones.objects.get(
             fk_fp=fp_id,
-            state=param['de_to_address_state'],
-            postal_code=param['de_to_address_postcode'],
-            suburb=param['de_to_address_suburb'],
+            state=param["de_to_address_state"],
+            postal_code=param["de_to_address_postcode"],
+            suburb=param["de_to_address_suburb"],
         ).zone
 
         rules = FP_pricing_rules.objects.filter(
@@ -110,90 +111,90 @@ def pks(param):
         )
 
         if not rules:
-            raise Exception('No pricing rule')
+            raise Exception("No pricing rule")
 
         per_kg_charge = rules.first().cost.per_UOM_charge
-        # print('ppppppp', param['vx_service_name'], per_kg_charge)
     except Exception as e:
         per_kg_charge = 0
-        
-    if param['is_pallet'] and per_kg_charge:
-        if param['max_weight'] < 350:
+
+    if param["is_pallet"] and per_kg_charge:
+        if param["max_weight"] < 350:
             return {
-                'name': 'Minimum Charge-Skids/ Pallets',
-                'description': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your ' +
-                    'freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.',
-                'value': per_kg_charge * 350
+                "name": "Minimum Charge-Skids/ Pallets",
+                "description": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your "
+                + "freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.",
+                "value": per_kg_charge * 350,
             }
         else:
             return {
-                'name': 'Oversize Pallets',
-                'description': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. ' +
-                    'Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full ' +
-                    'pallets. An additional pallet charge will apply.',
-                'value': per_kg_charge * param['max_weight']
+                "name": "Oversize Pallets",
+                "description": "Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. "
+                + "Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full "
+                + "pallets. An additional pallet charge will apply.",
+                "value": per_kg_charge * param["max_weight"],
             }
     else:
         return None
 
+
 def lws(param):
     length_surcharge, width_surcharge = None, None
-    if param['length'] >= 1.2 and param['length'] < 2.4:
+    if param["length"] >= 1.2 and param["length"] < 2.4:
         length_surcharge = {
-            'name': 'Lengths [LSC] 1.20-2.39 metre',
-            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
-            'value': 5.4
+            "name": "Lengths [LSC] 1.20-2.39 metre",
+            "description": "Items that exceed lenghts in any direction will attract a surcharge",
+            "value": 5.4,
         }
-    elif param['length'] >= 2.4 and param['length'] < 3.6:
+    elif param["length"] >= 2.4 and param["length"] < 3.6:
         length_surcharge = {
-            'name': 'Lengths [LSC] 2.40-3.59 metre',
-            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
-            'value': 11.93
+            "name": "Lengths [LSC] 2.40-3.59 metre",
+            "description": "Items that exceed lenghts in any direction will attract a surcharge",
+            "value": 11.93,
         }
-    elif param['length'] >= 3.6 and param['length'] < 4.2:
+    elif param["length"] >= 3.6 and param["length"] < 4.2:
         length_surcharge = {
-            'name': 'Lengths [LSC] 3.6-4.19 metre',
-            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
-            'value': 25.4
+            "name": "Lengths [LSC] 3.6-4.19 metre",
+            "description": "Items that exceed lenghts in any direction will attract a surcharge",
+            "value": 25.4,
         }
-    elif param['length'] >= 4.2 and param['length'] < 4.8:
+    elif param["length"] >= 4.2 and param["length"] < 4.8:
         length_surcharge = {
-            'name': 'Lengths [LSC] 4.2-4.79 metre',
-            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
-            'value': 88.61
+            "name": "Lengths [LSC] 4.2-4.79 metre",
+            "description": "Items that exceed lenghts in any direction will attract a surcharge",
+            "value": 88.61,
         }
-    elif param['length'] >= 4.8 and param['length'] < 6:
+    elif param["length"] >= 4.8 and param["length"] < 6:
         length_surcharge = {
-            'name': 'Lengths [LSC] 4.8-5.59 metre',
-            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
-            'value': 119.19
+            "name": "Lengths [LSC] 4.8-5.59 metre",
+            "description": "Items that exceed lenghts in any direction will attract a surcharge",
+            "value": 119.19,
         }
-    elif param['length'] >= 6:
+    elif param["length"] >= 6:
         length_surcharge = {
-            'name': 'Lengths [LSC] over 6 metre',
-            'description': 'Items that exceed lenghts in any direction will attract a surcharge',
-            'value': 153.91
+            "name": "Lengths [LSC] over 6 metre",
+            "description": "Items that exceed lenghts in any direction will attract a surcharge",
+            "value": 153.91,
         }
     else:
         length_surcharge = {}
 
-    if param['width'] > 1.1 and param['width'] <= 1.6:
+    if param["width"] > 1.1 and param["width"] <= 1.6:
         width_surcharge = {
-            'name': 'Width [WS] 1.10-1.60 metre',
-            'description': 'Items that exceed width will attract a surcharge',
-            'value': 7.5
+            "name": "Width [WS] 1.10-1.60 metre",
+            "description": "Items that exceed width will attract a surcharge",
+            "value": 7.5,
         }
-    elif param['width'] > 1.6 and param['width'] <= 2.4:
+    elif param["width"] > 1.6 and param["width"] <= 2.4:
         width_surcharge = {
-            'name': 'Width [WS] 1.61-2.4 metre',
-            'description': 'Items that exceed width will attract a surcharge',
-            'value': 10.5
+            "name": "Width [WS] 1.61-2.4 metre",
+            "description": "Items that exceed width will attract a surcharge",
+            "value": 10.5,
         }
     else:
         width_surcharge = {}
 
     if length_surcharge and width_surcharge:
-        if length_surcharge['value'] > width_surcharge['value']:
+        if length_surcharge["value"] > width_surcharge["value"]:
             return length_surcharge
         else:
             return width_surcharge
@@ -205,11 +206,12 @@ def lws(param):
     else:
         return None
 
+
 # def bbs(param):
 #     if param['max_dimension'] >= 1.4:
 #         return {
 #             'name': 'Big Bulky Surcharge',
-#             'description': 'Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double ' + 
+#             'description': 'Where freight travelling extends beyond a pallet space, in any direction, then a surcharge equivalent to double ' +
 #                 'the chargeable weight (the greater of either the cubic or dead weight) of the item travelling is charged.',
 #             'value': 0.1 * param['dead_weight']
 #         }
@@ -227,39 +229,44 @@ def lws(param):
 #     else:
 #         return None
 
+
 def ofpu(param):
     try:
-        pu_onforwarding = FP_onforwarding.objects.get(fp_company_name='Allied', state=param['pu_address_state'], postcode=param['pu_address_postcode'], suburb=param['pu_address_suburb'])
+        pu_onforwarding = FP_onforwarding.objects.get(
+            fp_company_name="Allied",
+            state=param["pu_address_state"],
+            postcode=param["pu_address_postcode"],
+            suburb=param["pu_address_suburb"],
+        )
         return {
-            'name': 'Onforwarding(Pickup)',
-            'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
-                'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
-            'value': pu_onforwarding.base_price + pu_onforwarding.price_per_kg * param['max_weight']
+            "name": "Onforwarding(Pickup)",
+            "description": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, "
+            + "as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
+            "value": pu_onforwarding.base_price
+            + pu_onforwarding.price_per_kg * param["max_weight"],
         }
     except Exception as e:
         return None
+
 
 def ofde(param):
     try:
-        de_to_onforwarding = FP_onforwarding.objects.get(fp_company_name='Allied', state=param['de_to_address_state'], postcode=param['de_to_address_postcode'], suburb=param['de_to_address_suburb'])
+        de_to_onforwarding = FP_onforwarding.objects.get(
+            fp_company_name="Allied",
+            state=param["de_to_address_state"],
+            postcode=param["de_to_address_postcode"],
+            suburb=param["de_to_address_suburb"],
+        )
         return {
-            'name': 'Onforwarding(Delivery)',
-            'description': 'All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, ' +
-                'as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.',
-            'value': de_to_onforwarding.base_price + de_to_onforwarding.price_per_kg * param['max_weight']
+            "name": "Onforwarding(Delivery)",
+            "description": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, "
+            + "as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
+            "value": de_to_onforwarding.base_price
+            + de_to_onforwarding.price_per_kg * param["max_weight"],
         }
     except Exception as e:
         return None
-   
-def allied():
-    return {
-        'order': [
-            ofpu,
-            ofde
-        ],
-        'line': [
-            pks,
-            lws
-        ]
-    }
 
+
+def allied():
+    return {"order": [ofpu, ofde], "line": [pks, lws]}
