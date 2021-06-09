@@ -791,6 +791,11 @@ class PalletSerializer(serializers.ModelSerializer):
 
 
 class SurchargeSerializer(serializers.ModelSerializer):
+    description = serializers.SerializerMethodField(read_only=True)
+
+    def get_description(self, obj):
+        return ""
+
     class Meta:
         model = Surcharge
         fields = "__all__"

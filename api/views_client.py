@@ -225,10 +225,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                         if _quote.pk == json_result["cost_id"]:
                             quote = _quote
 
-                    print("@1 - ", get_surcharges(quote))
                     json_result["surcharges"] = SurchargeSerializer(
                         get_surcharges(quote), many=True
-                    )
+                    ).data
 
                 result["pricings"] = json_results
 
