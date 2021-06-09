@@ -292,7 +292,7 @@ async def _api_pricing_worker_builder(
 
                     for surcharge in surcharges:
                         if float(surcharge["amount"]) > 0:
-                            surcharge = Surcahrge()
+                            surcharge = Surcharge()
                             surcharge.name = surcharge["name"]
                             surcharge.description = surcharge["description"]
                             surcharge.amount = float(surcharge["amount"])
