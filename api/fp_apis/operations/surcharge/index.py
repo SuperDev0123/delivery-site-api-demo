@@ -20,11 +20,13 @@ def get_available_surcharge_opts(booking):
         return None
 
 def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
+    """
+    Build `Booking` and `Lines` for Surcharge
+    """
     booking = {}
     lines = []
 
     if data_type == "bok_1":
-        # Build `Booking` and `Lines` for Surcharge
         booking = {
             "pu_Address_Type": booking_obj.b_027_b_pu_address_type,
             "pu_Address_State": booking_obj.b_031_b_pu_address_state,
@@ -55,6 +57,32 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
                 "e_weightUOM": line_obj.l_008_weight_UOM,
                 "e_weightPerEach": line_obj.l_009_weight_per_each,
                 "e_dangerousGoods": False,
+            }
+            lines.append(line)
+    else:
+        booking = {
+            "pu_Address_Type": booking_obj.pu_Address_Type,
+            "de_To_AddressType": booking_obj.de_To_AddressType,
+            "de_To_Address_State": booking_obj.de_To_Address_State,
+            "de_To_Address_City": booking_obj.de_To_Address_City,
+            "pu_tail_lift": booking_obj.b_booking_tail_lift_pickup,
+            "del_tail_lift": booking_obj.b_booking_tail_lift_deliver,
+            "vx_serviceName": quote_obj.service_name,
+            "vx_freight_provider": quote_obj.freight_provider,
+        }
+
+        for line_obj in line_objs:
+            line = {
+                "e_type_of_packaging": line_obj.e_type_of_packaging,
+                "e_qty": int(line_obj.e_qty),
+                "e_item": line_obj.e_item,
+                "e_dimUOM": line_obj.e_dimUOM,
+                "e_dimLength": line_obj.e_dimLength,
+                "e_dimWidth": line_obj.e_dimWidth,
+                "e_dimHeight": line_obj.e_dimHeight,
+                "e_weightUOM": line_obj.e_weightUOM,
+                "e_weightPerEach": line_obj.e_weightPerEach,
+                "e_dangerousGoods": line_obj.e_dangerousGoods,
             }
             lines.append(line)
 
@@ -267,3 +295,14 @@ def get_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 })
 
     return surcharges
+
+
+def get_surcharges_total(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+    _total = 0
+
+    surcharges = get_surcharges(booking_obj, line_objs, quote_obj, data_type)
+
+    for surcharge in surcharges:
+        _total += float(surcharge["value"])
+
+    return _total

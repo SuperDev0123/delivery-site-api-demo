@@ -103,7 +103,7 @@ def get_etd_in_hour(pricing):
 
             return etd.fp_03_delivery_hours
         except Exception as e:
-            message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+            message = f"#810 [get_etd_in_hour] Missing ETD - {pricing.freight_provider}, {pricing.service_name}, {pricing.etd}"
             logger.info(message)
             # raise Exception(message)
             return None

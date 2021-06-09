@@ -85,7 +85,12 @@ def get_tracking_payload(booking, fp_name):
     try:
         payload = {}
         consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+        consignmentDetails.append(
+            {
+                "consignmentNumber": booking.v_FPBookingNumber,
+                "de_to_address_postcode": booking.de_To_Address_PostalCode,
+            }
+        )
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
@@ -277,6 +282,9 @@ def get_book_payload(booking, fp_name):
     # Detail for each FP
     if fp_name == "allied":
         payload["serviceType"] = "R"
+        payload["docketNumber"] = gen_consignment_num(
+            "allied", booking.b_bookingID_Visual
+        )
     if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"

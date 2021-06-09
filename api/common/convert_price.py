@@ -99,7 +99,7 @@ def apply_markups(quotes):
         return quotes
 
     for quote in quotes:
-        fp_name = quotes[0].freight_provider.lower()
+        fp_name = quote.freight_provider.lower()
         fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
         client_mu_1_minimum_values, mu_percentage_fuel_levy = _apply_mu(
             quote, fp, client
