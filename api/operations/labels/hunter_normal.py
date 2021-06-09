@@ -123,9 +123,9 @@ class RotatedImage(Image):
 
 
 def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
-    logger.info(
-        f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
-    )
+    # logger.info(
+    #     f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+    # )
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -224,11 +224,14 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     fp_routing = FPRouting.objects.filter(
         suburb=de_suburb, dest_postcode=de_postcode, state=de_state
     )
-    if fp_routing[0]:
-        head_port = fp_routing[0].orig_depot
-        port_code = fp_routing[0].gateway
+    if fp_routing[0] and fp_routing[0].orig_depot:
+        head_port = fp_routing[0].orig_depot 
     else:
         head_port = ""
+
+    if fp_routing[0] and fp_routing[0].gateway:
+        port_code = fp_routing[0].gateway     
+    else:
         port_code = ""
 
     totalQty = 0

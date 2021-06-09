@@ -1598,9 +1598,7 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
-    DME_price_from_client = models.IntegerField(
-        verbose_name=_("DME Price From Client"), blank=True, default=0, null=True
-    )
+    client_overrided_quote = models.FloatField(blank=True, default=None, null=True)
     z_label_url = models.CharField(
         verbose_name=_("PDF Url"), max_length=255, blank=True, null=True, default=None
     )
@@ -2063,7 +2061,12 @@ class Booking_lines(models.Model):
         blank=True,
         default=None,
     )
-    zbl_121_integer_1 = models.IntegerField(blank=True, null=True, default=None)
+    zbl_121_integer_1 = models.IntegerField(
+        blank=True, null=True, default=None
+    )  # JasonL - Sequence
+    zbl_102_text_2 = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )  # JasonL - ProductCode
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
