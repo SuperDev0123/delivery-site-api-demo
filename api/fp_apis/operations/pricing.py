@@ -280,7 +280,7 @@ async def _api_pricing_worker_builder(
                 surcharges = []
 
                 if (
-                    parse_result["freight_provider"].lower() == "Allied"
+                    parse_result["freight_provider"].lower() == "allied"
                     and "surcharges" in parse_result
                 ):
                     surcharges = parse_result["surcharges"]
