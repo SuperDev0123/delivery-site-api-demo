@@ -387,6 +387,7 @@ class UserViewSet(viewsets.ViewSet):
             client_employees = Client_employees.objects.filter(
                 email__isnull=False
             ).order_by("name_first")
+            company_name = "dme"
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -401,6 +402,7 @@ class UserViewSet(viewsets.ViewSet):
                 .prefetch_related("fk_id_dme_client")
                 .order_by("name_first")
             )
+            company_name = client_employee.fk_id_dme_client.company_name
 
         results = []
         for client_employee in client_employees:
@@ -409,7 +411,7 @@ class UserViewSet(viewsets.ViewSet):
                 "name_first": client_employee.name_first,
                 "name_last": client_employee.name_last,
                 "email": client_employee.email,
-                "company_name": client_employee.fk_id_dme_client.company_name,
+                "company_name": company_name,
             }
             results.append(result)
 
@@ -1996,7 +1998,8 @@ class BookingViewSet(viewsets.ViewSet):
                 for booking_line in booking_lines:
                     e_qty_total += booking_line.e_qty or 0
 
-                if not client_customer_mark_up:
+                client_customer_mark_up = 0
+                if not client_customer_mark_up and booking.kf_client_id:
                     client = DME_clients.objects.get(
                         dme_account_num=booking.kf_client_id
                     )
