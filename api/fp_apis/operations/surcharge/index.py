@@ -8,7 +8,7 @@ from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
 
-from api.models import Booking_lines, Surcharge
+from api.models import Booking_lines, Surcharge, Fp_freight_providers
 
 logger = logging.getLogger(__name__)
 
@@ -321,14 +321,14 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
 
 
 def get_surcharges(quote):
-    return Surcharge.objects.filter(quote=quote, line_id__isnull=True)
+    return Surcharge.objects.filter(quote=quote)
 
 
 def get_surcharges_total(quote):
     _total = 0
     surcharges = get_surcharges(quote)
 
-    for surcharge in surcharges:
+    for surcharge in surcharges.filter(line_id__isnull=True):
         _total += surcharge.amount
 
     return _total
@@ -356,16 +356,20 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     surcharges = clac_surcharges(booking_obj, line_objs, quote_obj, data_type)
 
     # Create new Surcharge objects
-    for surcharge in surcharges:
-        lines = surcharge.get("lines")
+    fp = Fp_freight_providers.objects.get(
+        fp_company_name__iexact=quote_obj.freight_provider
+    )
 
+    for surcharge in surcharges:
         surcharge_obj = Surcharge()
         surcharge_obj.quote = quote_obj
         surcharge_obj.name = surcharge["name"]
         surcharge_obj.amount = surcharge["value"]
+        surcharge_obj.fp = fp
         surcharge_obj.save()
         result.append(surcharge_obj)
 
+        lines = surcharge.get("lines")
         if lines:
             for line in lines:
                 surcharge_obj = Surcharge()
@@ -374,6 +378,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 surcharge_obj.amount = line["value"]
                 surcharge_obj.line_id = line["pk"]
                 surcharge_obj.qty = line["quantity"]
+                surcharge_obj.fp = fp
                 surcharge_obj.save()
                 result.append(surcharge_obj)
 

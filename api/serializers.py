@@ -44,6 +44,7 @@ from api.models import (
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
 from api.common import math as dme_math
+from api.fp_apis.operations.surcharge.common import SURCHARGE_NAME_DESC
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -794,7 +795,7 @@ class SurchargeSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField(read_only=True)
 
     def get_description(self, obj):
-        return ""
+        return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
 
     class Meta:
         model = Surcharge
