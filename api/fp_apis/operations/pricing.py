@@ -276,6 +276,7 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
+                print("@2 - ", parse_result)
                 # Allied surcharges
                 surcharges = []
 
