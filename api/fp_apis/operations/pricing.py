@@ -276,7 +276,6 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                print("@2 - ", parse_result)
                 # Allied surcharges
                 surcharges = []
 
@@ -285,7 +284,7 @@ async def _api_pricing_worker_builder(
                     and "surcharges" in parse_result
                 ):
                     surcharges = parse_result["surcharges"]
-                    del parse_result.surcharges
+                    del parse_result["surcharges"]
 
                 serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
