@@ -13,15 +13,16 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #         return None
 
 
-# def tl(param):
-#     if param['is_tail_lift']:
-#         return {
-#             'name': 'Tail Lift [TL]',
-#             'description': 'For deliveries requiring tail lifts',
-#             'value': 44.07
-#         }
-#     else:
-#         return None
+def tl(param):
+    if param["is_tail_lift"]:
+        return {
+            "name": "Tail Lift [TL]",
+            "description": "For deliveries requiring tail lifts",
+            "value": 60,
+        }
+    else:
+        return None
+
 
 # def tm(param):
 #     if param['is_tail_lift']:
@@ -269,4 +270,4 @@ def ofde(param):
 
 
 def allied():
-    return {"order": [ofpu, ofde], "line": [pks, lws]}
+    return {"order": [ofpu, ofde, tl], "line": [pks, lws]}

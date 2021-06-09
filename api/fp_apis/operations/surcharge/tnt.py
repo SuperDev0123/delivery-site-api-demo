@@ -17,7 +17,7 @@ def dgre(param):
 def dgere(param):
     if param["has_dangerous_item"] and param['vx_service_name'].lower() != "road express":
         return {
-            "name": "Dangerous Goods (Road Express)",
+            "name": "Dangerous Goods (excluding Road Express)",
             "description": "Surcharge per consignment. In addition, the MHP Fee will apply per item to each and all items consigned under the same consignment note where that consignment "
             + "contains Dangerous Goods, including any non-Dangerous Goods items consigned under that consignment note. (Dangerous Goods consignment notes are to contain Dangerous Goods items only.)",
             "value": 200,
