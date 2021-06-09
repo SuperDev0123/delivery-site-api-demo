@@ -16,6 +16,7 @@ from api.models import (
     API_booking_quotes,
     Client_FP,
     FP_Service_ETDs,
+    Surcharge,
 )
 
 from api.fp_apis.operations.common import _set_error
@@ -275,10 +276,29 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                # Allied surcharges
+                surcharges = []
 
+                if (
+                    parse_result["freight_provider"].lower() == "Allied"
+                    and "surcharges" in parse_result
+                ):
+                    surcharges = parse_result["surcharges"]
+                    del parse_result.surcharges
+
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
-                    serializer.save()
+                    quote = serializer.save()
+
+                    for surcharge in surcharges:
+                        if float(surcharge["amount"]) > 0:
+                            surcharge = Surcahrge()
+                            surcharge.name = surcharge["name"]
+                            surcharge.description = surcharge["description"]
+                            surcharge.amount = float(surcharge["amount"])
+                            surcharge.quote = quote
+                            surcharge.fp_id = 2  # Allied(Hardcode)
+                            surcharge.save()
                 else:
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:

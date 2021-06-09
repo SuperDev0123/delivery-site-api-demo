@@ -122,9 +122,10 @@ def parse_pricing_response(
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
             result["freight_provider"] = get_service_provider(fp_name, False)
-            result["fee"] = json_data["price"]
+            result["fee"] = json_data["netPrice"]
             result["service_name"] = "Road Express"
             result["etd"] = 3  # TODO
+            result["surcharges"] = json_data["surcharges"]
             results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
