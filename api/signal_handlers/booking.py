@@ -174,15 +174,15 @@ def post_save_handler(instance):
                     logger.info(
                         f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
                     )
-                    label_url = f"{file_path}/{file_name}"
+                    instance.z_label_url = f"{file_path}/{file_name}"
+                    instance.save()
             else:
                 _fp_name = instance.vx_freight_provider.lower()
                 file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
                 file_path, file_name = build_label(
                     booking=instance, file_path=file_path
                 )
-
-            instance.z_label_url = f"{_fp_name}_au/{file_name}"
-            instance.save()
+                instance.z_label_url = f"{_fp_name}_au/{file_name}"
+                instance.save()
     except Exception as e:
         logger.info(f"{LOG_ID} Error: {str(e)}")
