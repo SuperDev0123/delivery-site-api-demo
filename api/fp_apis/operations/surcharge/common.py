@@ -16,6 +16,8 @@ SURCHARGE_NAME_DESC = {
         "HD": "FREIGHT OVERSIZED HOME DELIVERY",
         "LSC": "LENGTH SURCHARGE",
         "MHF": "MANUAL HANDLING FEE",
+        "Onforwarding(Pickup)": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
+        "Onforwarding(Delivery)": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
     },
     "HUNTER": {
         "Excess Lengths: 2.5m up to/not incl. 4.0m13": "",
