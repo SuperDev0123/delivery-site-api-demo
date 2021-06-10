@@ -40,13 +40,6 @@ def _apply_mu(quote, fp, client):
 
     logger.info(f"[FP $ -> DME $] Start quote: {quote}")
 
-    tax = quote.tax_value_1 if quote.tax_value_1 else 0
-    surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
-    if quote.client_mu_1_minimum_values:
-        cost = float(quote.client_mu_1_minimum_values + tax) * (1 + fp_mu) + surcharge
-    else:
-        cost = float(quote.fee + tax) * (1 + fp_mu) + surcharge
-
     # # Apply FP MU only when used DME's credential
     # if _is_used_client_credential(fp_name, client_name, quote.account_code):
 
@@ -55,6 +48,13 @@ def _apply_mu(quote, fp, client):
         fp_mu = 0
     else:  # FP MU(Fuel Levy)
         fp_mu = fp.fp_markupfuel_levy_percent
+
+    tax = quote.tax_value_1 if quote.tax_value_1 else 0
+    surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
+    if quote.client_mu_1_minimum_values:
+        cost = float(quote.client_mu_1_minimum_values + tax) * (1 + fp_mu) + surcharge
+    else:
+        cost = float(quote.fee + tax) * (1 + fp_mu) + surcharge
 
     # Client MU
     client_mu = client.client_mark_up_percent
