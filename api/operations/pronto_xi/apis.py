@@ -188,6 +188,16 @@ def parse_order_xml(response, token):
 def get_order(order_num):
     logger.info(f"@640 [PRONTO GET ORDER] Start! Order: {order_num}")
 
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+        message = f"@6400 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
+        logger.info(message)
+    # ---
+
     token = get_token()
     url = f"{API_URL}/api/SalesOrderGetSalesOrders"
     headers = {
@@ -197,7 +207,8 @@ def get_order(order_num):
     body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?> \
                 <SalesOrderGetSalesOrdersRequest> \
                     <Parameters> \
-                        <SOOrderNo>{order_num}</SOOrderNo> \
+                        <SOOrderNo>{_order_num}</SOOrderNo> \
+                        <SOBOSuffix>{suffix}</SOBOSuffix> \
                     </Parameters> \
                     <RequestFields> \
                         <SalesOrders> \
