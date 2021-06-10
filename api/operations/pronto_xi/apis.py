@@ -381,9 +381,10 @@ def update_pronto_note(order_num, note):
                 </SalesOrders> \
             </SalesOrderPostOrderNotesRequest>'
 
+    logger.info(f"@661 {LOG_ID} request body: {body}")
     response = send_soap_request(url, body, headers)
     logger.info(
-        f"@661 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+        f"@662 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
     )
 
     logger.info(f"@669 {LOG_ID} Finish! OrderNum: {order_num}")
