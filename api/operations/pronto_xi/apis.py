@@ -375,13 +375,13 @@ def update_pronto_note(order_num, note):
     }
     body = f'<SalesOrderPostOrderNotesRequest xmlns="http://www.pronto.net/so/1.0.0"> \
                 <SalesOrders> \
-                    <SalesOrder SOOrderNo="{_order_num}" SOBOSuffix={suffix}> \
+                    <SalesOrder SOOrderNo="{_order_num}" SOBOSuffix="{suffix}"> \
                         <Notes>{note}</Notes> \
                     </SalesOrder> \
                 </SalesOrders> \
             </SalesOrderPostOrderNotesRequest>'
 
-    logger.info(f"@661 {LOG_ID} request body: {body}")
+    # logger.info(f"@661 {LOG_ID} request body: {body}")
     response = send_soap_request(url, body, headers)
     logger.info(
         f"@662 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
