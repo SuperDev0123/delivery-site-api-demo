@@ -92,7 +92,7 @@ def update_note(quote, booking, lines=[], type="bok"):
         * (client.client_customer_mark_up + 1)
     )
 
-    note = f"Consignment:{consignment_num} TotalCost:{total_cost} Status:{booking_status} EstDate:{est_date}"
+    note = f"Consignment:{consignment_num}                TotalCost:{total_cost}                Status:{booking_status}                EstDate:{est_date}"
     result = update_pronto_note(booking.b_client_order_num, note)
 
     logger.info(f"@639 {LOG_ID} Finished!")
