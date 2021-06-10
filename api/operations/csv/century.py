@@ -19,7 +19,7 @@ def build_csv(fileHandler, bookings, booking_lines):
     fileHandler.write(
         "pickupName,pickupAddress,pickupAddress2,pickupSuburb,pickupPostcode,pickupState,pickupContact,pickupPhone,pickupDate,pickupTime,\
         dropName,dropAddress1,dropAddress2,dropSuburb,dropPostcode,dropState,dropContact,dropPhone,senderReference,reference1,\
-        specialInstructions,description,quantity,pallets,labels,totalWeight,totalVolume,length,width,height,\
+        specialInstructions,description,quantity,pallets,clientName,totalWeight,totalVolume,length,width,height,\
         weight,goodsType,rateType,vehicleType,deliveryTime,deliverTimeTo,warehouse_code"
     )
 
@@ -135,6 +135,11 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h20 = str(booking.de_to_PickUp_Instructions_Address)
 
+        if booking.b_client_name is None:
+            h24 = ""
+        else:
+            h24 = str(booking.b_client_name)
+
         # if booking.vx_serviceName is None:
         #     h32 = ""
         # else:
@@ -176,8 +181,6 @@ def build_csv(fileHandler, bookings, booking_lines):
                     h22 = str(booking_line.e_qty)
 
                 h23 = ""
-
-                h24 = ""
 
                 # Calc totalWeight
                 h25 = "0"
