@@ -17,8 +17,8 @@ def get_picked_items(order_num, sscc):
 
     if settings.ENV != "local":  # Only on DEV or PROD
         logger.info(f"@301 {LOG_ID} Running .sh script...")
-        cmd_dir = "/home/ubuntu/jason_l/JasonL01_full_0.1/JasonL01_full"
-        cmd_file = os.path.join(cmd_dir, "JasonL01_full_run.sh")
+        cmd_dir = "/home/ubuntu/jason_l/JasonU01_part/src"
+        cmd_file = os.path.join(cmd_dir, "run.sh")
         subprocess.call([cmd_file], cwd=cmd_dir)
         logger.info(f"@302 {LOG_ID} Finish running .sh")
 
