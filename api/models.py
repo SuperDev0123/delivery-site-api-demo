@@ -501,7 +501,7 @@ class API_booking_quotes(models.Model):
     )
     client_mu_1_minimum_values = models.FloatField(
         verbose_name=_("Client MU 1 Minimum Value"), blank=True, null=True
-    )
+    )  # fee * (1 + mu_percentage_fuel_levy)
     x_price_per_UOM = models.IntegerField(
         verbose_name=_("Price per UOM"), blank=True, null=True
     )
@@ -526,9 +526,9 @@ class API_booking_quotes(models.Model):
     x_fk_pricin_id = models.IntegerField(
         verbose_name=_("Pricin ID"), blank=True, null=True
     )
-    x_price_surcharge = models.IntegerField(
+    x_price_surcharge = models.FloatField(
         verbose_name=_("Price Surcharge"), blank=True, null=True
-    )
+    )  # Total of surcharges
     x_minumum_charge = models.IntegerField(
         verbose_name=_("Minimum Charge"), blank=True, null=True
     )
@@ -1936,7 +1936,11 @@ class Bookings(models.Model):
                     elif service_etd.fp_service_time_uom.lower() == "hours":
                         return service_etd.fp_03_delivery_hours, "hours"
 
-        return None, None
+    def get_client(self):
+        try:
+            return DME_clients.objects.get(dme_account_num=self.kf_client_id)
+        except:
+            return None
 
 
 @receiver(pre_save, sender=Bookings)

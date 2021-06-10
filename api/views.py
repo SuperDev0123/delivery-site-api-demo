@@ -3649,11 +3649,18 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             .exclude(service_name="Air Freight")
             .order_by("client_mu_1_minimum_values")
         )
+
+        client = booking.get_client()
+        context = {
+            "booking": booking,
+            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+        }
+
         serializer = ApiBookingQuotesSerializer(
             queryset,
             many=True,
             fields_to_exclude=fields_to_exclude,
-            context={"booking": booking},
+            context=context,
         )
         return Response(serializer.data)
 

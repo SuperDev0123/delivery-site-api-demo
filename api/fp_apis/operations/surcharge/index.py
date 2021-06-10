@@ -344,6 +344,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     """
 
     result = []
+    total = 0
 
     # Do not process for `Allied` Quote
     if quote_obj.freight_provider.lower() == "allied":
@@ -367,6 +368,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         surcharge_obj.amount = surcharge["value"]
         surcharge_obj.fp = fp
         surcharge_obj.save()
+        total += float(surcharge["value"])
         result.append(surcharge_obj)
 
         lines = surcharge.get("lines")
@@ -381,5 +383,9 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 surcharge_obj.fp = fp
                 surcharge_obj.save()
                 result.append(surcharge_obj)
+
+    if total:  # Update Quote's surchargeTotal
+        quote_obj.x_price_surcharge = total
+        quote_obj.save()
 
     return result

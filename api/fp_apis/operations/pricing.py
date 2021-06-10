@@ -100,12 +100,12 @@ def pricing(body, booking_id, is_pricing_only=False):
         # Interpolate gaps (for Plum client now)
         quotes = interpolate_gaps(quotes)
 
-        # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes)
-
         # Calculate Surcharges
         for quote in quotes:
             gen_surcharges(booking, booking_lines, quote, "booking")
+
+        # Apply Markups (FP Markup and Client Markup)
+        quotes = apply_markups(quotes)
 
     return booking, True, "Retrieved all Pricing info", quotes
 
