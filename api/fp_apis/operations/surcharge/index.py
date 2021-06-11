@@ -240,11 +240,12 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     elif booking["vx_freight_provider"].lower() == "hunter":
         surcharge_opt_funcs = hunter()
 
-    for opt_func in surcharge_opt_funcs["order"]:
-        result = opt_func(order_data)
+    if surcharge_opt_funcs:
+        for opt_func in surcharge_opt_funcs["order"]:
+            result = opt_func(order_data)
 
-        if result:
-            surcharges.append(result)
+            if result:
+                surcharges.append(result)
 
     if booking["vx_freight_provider"].lower() == "allied":
         pass
