@@ -8,6 +8,10 @@ SURCHARGE_NAME_DESC = {
         'Lengths [LSC] over 6 metre': 'Items that exceed lenghts in any direction will attract a surcharge',
         'Width [WS] 1.10-1.60 metre': 'Items that exceed widthwill attract a surcharge',
         'Width [WS] 1.61-2.4 metre': 'Items that exceed widthwill attract a surcharge',
+        'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.': 'For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)',
+        'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.''For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)',
+        'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.': 'For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply',
+        'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.': 'For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply',
         'Tail Lift [TL]': 'For deliveries requiring tail lifts',
         'Oversize Pallets': 'Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full pallets. An additional pallet charge will apply.',
         'Minimum Charge-Skids/ Pallets': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.'
