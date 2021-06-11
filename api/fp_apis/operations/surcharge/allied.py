@@ -11,6 +11,41 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #     else:
 #         return None
 
+def get_per_kg_charge(param): 
+    try:
+        fp_id = Fp_freight_providers.objects.get(
+            fp_company_name=param['vx_freight_provider']
+        ).id
+        pu_zone = FP_zones.objects.get(
+            fk_fp=fp_id,
+            state=param['pu_address_state'],
+            postal_code=param['pu_address_postcode'],
+            suburb=param['pu_address_suburb'],
+        ).zone
+        de_zone = FP_zones.objects.get(
+            fk_fp=fp_id,
+            state=param['de_to_address_state'],
+            postal_code=param['de_to_address_postcode'],
+            suburb=param['de_to_address_suburb'],
+        ).zone
+
+        rules = FP_pricing_rules.objects.filter(
+            freight_provider_id=fp_id,
+            service_type=param['vx_service_name'],
+            pu_zone=pu_zone,
+            de_zone=de_zone,
+        )
+
+        if not rules:
+            raise Exception('No pricing rule')
+
+        base_charge = rule.first().cost.basic_charge
+        per_kg_charge = rules.first().cost.per_UOM_charge
+    except Exception as e:
+        base_charge = 0
+        per_kg_charge = 0
+
+    return base_charge, per_kg_charge
 
 def tl(param):
     if param['is_tail_lift']:
@@ -96,38 +131,16 @@ def hd3(param):
     else:
         return None
 
+def ow(param):
+    base_charge, per_kg_charge = get_per_kg_charge(param)
+    return {
+        'name': 'Overweight',
+        'description': 'Base charge plus kilo charge',
+        'value': base_charge + per_kg_charge * param['max_weight']
+    }
+
 def mc(param):
-    try:
-        fp_id = Fp_freight_providers.objects.get(
-            fp_company_name=param['vx_freight_provider']
-        ).id
-        pu_zone = FP_zones.objects.get(
-            fk_fp=fp_id,
-            state=param['pu_address_state'],
-            postal_code=param['pu_address_postcode'],
-            suburb=param['pu_address_suburb'],
-        ).zone
-        de_zone = FP_zones.objects.get(
-            fk_fp=fp_id,
-            state=param['de_to_address_state'],
-            postal_code=param['de_to_address_postcode'],
-            suburb=param['de_to_address_suburb'],
-        ).zone
-
-        rules = FP_pricing_rules.objects.filter(
-            freight_provider_id=fp_id,
-            service_type=param['vx_service_name'],
-            pu_zone=pu_zone,
-            de_zone=de_zone,
-        )
-
-        if not rules:
-            raise Exception('No pricing rule')
-
-        per_kg_charge = rules.first().cost.per_UOM_charge
-    except Exception as e:
-        per_kg_charge = 0
-        
+    base_charge, per_kg_charge = get_per_kg_charge(param)
     if param['is_pallet'] and per_kg_charge and param['max_weight'] < 350:
         return {
             'name': 'Minimum Charge-Skids/ Pallets',
@@ -256,6 +269,7 @@ def ofde(param):
 def allied():
     return {
         'order': [
+            ow,
             ofpu,
             ofde,
             tl,

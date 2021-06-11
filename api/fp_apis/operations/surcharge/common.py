@@ -1,5 +1,6 @@
 SURCHARGE_NAME_DESC = {
     'ALLIED': {
+        'Overweight': 'Base charge plus kilo charge',
         'Lengths [LSC] 1.20-2.39 metre': 'Items that exceed lenghts in any direction will attract a surcharge',
         'Lengths [LSC] 2.40-3.59 metre': 'Items that exceed lenghts in any direction will attract a surcharge',
         'Lengths [LSC] 3.60-4.19 metre': 'Items that exceed lenghts in any direction will attract a surcharge',
