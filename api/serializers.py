@@ -553,7 +553,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_cost(self, obj):
-        return obj.client_mu_1_minimum_values
+        return round(obj.client_mu_1_minimum_values, 2)
 
     def get_surcharge_total(self, obj):
         return obj.x_price_surcharge if obj.x_price_surcharge else 0
