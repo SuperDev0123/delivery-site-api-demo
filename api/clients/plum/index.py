@@ -116,6 +116,7 @@ def partial_pricing(payload, client, warehouse):
 
         for item in items:
             booking_line = {
+                "pk_lines_id": "1",
                 "e_type_of_packaging": "Carton" or item.get("e_type_of_packaging"),
                 "fk_booking_id": bok_1["pk_header_id"],
                 "e_qty": item["qty"],
