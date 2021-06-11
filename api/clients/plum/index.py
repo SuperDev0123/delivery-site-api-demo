@@ -541,12 +541,12 @@ def push_boks(payload, client, username, method):
                 line["l_009_weight_per_each"] = item["e_weightPerEach"]
                 line["l_008_weight_UOM"] = item["e_weightUOM"]
                 line["e_item_type"] = item["e_item_type"]
-                new_bok_2s.append({"booking_line": line})
 
                 bok_2_serializer = BOK_2_Serializer(data=line)
                 if bok_2_serializer.is_valid():
                     result = bok_2_serializer.save()
-                    new_bok_2s["booking_line"]["pk_lines_id"] = result.pk
+                    line["pk_lines_id"] = result.pk
+                    new_bok_2s.append({"booking_line": line})
                 else:
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8821 {LOG_ID} {message}")
