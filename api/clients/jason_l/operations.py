@@ -25,7 +25,7 @@ def get_picked_items(order_num, sscc):
     if settings.ENV == "local":
         file_path = "/Users/juli/Desktop/sscc.csv"
     else:
-        file_path = "/home/ubuntu/jason_l/JasonU01_part/src/sscc.csv"
+        file_path = "/home/ubuntu/jason_l/JasonU01_part/src/sscc_partial.csv"
 
     csv_file = open(file_path)
     logger.info(f"@320 {LOG_ID} File({file_path}) opened!")
