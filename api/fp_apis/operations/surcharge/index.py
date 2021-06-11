@@ -240,84 +240,83 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     elif booking["vx_freight_provider"].lower() == "hunter":
         surcharge_opt_funcs = hunter()
 
-    print("@1 - ", quote_obj.freight_provider, surcharge_opt_funcs)
-    if "order" in surcharge_opt_funcs and surcharge_opt_funcs["order"]:
+    if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:
             result = opt_func(order_data)
 
             if result:
                 surcharges.append(result)
 
-    if booking["vx_freight_provider"].lower() == "allied":
-        pass
-        line_surcharges = []
-        for opt_func in surcharge_opt_funcs["line"]:
-            for line in lines_data:
-                result = opt_func(line)
+    if surcharge_opt_funcs:
+        if booking["vx_freight_provider"].lower() == "allied":
+            line_surcharges = []
+            for opt_func in surcharge_opt_funcs["line"]:
+                for line in lines_data:
+                    result = opt_func(line)
 
-                if result:
-                    line_surcharges.append(
-                        {
-                            "pk": line["pk"],
-                            "quantity": line["quantity"],
-                            "name": result["name"],
-                            "description": result["description"],
-                            "value": result["value"],
-                        }
+                    if result:
+                        line_surcharges.append(
+                            {
+                                "pk": line["pk"],
+                                "quantity": line["quantity"],
+                                "name": result["name"],
+                                "description": result["description"],
+                                "value": result["value"],
+                            }
+                        )
+            line_surcharge_dict = {}
+            for item in line_surcharges:
+                if item["name"] not in line_surcharge_dict:
+                    line_surcharge_dict[item["name"]] = {
+                        "name": item["name"],
+                        "description": item["description"],
+                        "value": item["value"] * item["quantity"],
+                        "lines": [
+                            {
+                                "pk": item["pk"],
+                                "quantity": item["quantity"],
+                                "value": item["value"],
+                            }
+                        ],
+                    }
+                else:
+                    line_surcharge_dict[item["name"]]["value"] += (
+                        item["value"] * item["quantity"]
                     )
-        line_surcharge_dict = {}
-        for item in line_surcharges:
-            if item["name"] not in line_surcharge_dict:
-                line_surcharge_dict[item["name"]] = {
-                    "name": item["name"],
-                    "description": item["description"],
-                    "value": item["value"] * item["quantity"],
-                    "lines": [
+                    line_surcharge_dict[item["name"]]["lines"].append(
                         {
                             "pk": item["pk"],
                             "quantity": item["quantity"],
                             "value": item["value"],
                         }
-                    ],
-                }
-            else:
-                line_surcharge_dict[item["name"]]["value"] += (
-                    item["value"] * item["quantity"]
-                )
-                line_surcharge_dict[item["name"]]["lines"].append(
-                    {
-                        "pk": item["pk"],
-                        "quantity": item["quantity"],
-                        "value": item["value"],
-                    }
-                )
+                    )
 
-        # surcharges += list(line_surcharge_dict.values())
-    else:
-        for opt_func in surcharge_opt_funcs["line"]:
-            line_surcharges, total, temp = [], 0, {}
-            for line in lines_data:
-                result = opt_func(line)
+            surcharges += list(line_surcharge_dict.values())
+        else:
+            for opt_func in surcharge_opt_funcs["line"]:
+                line_surcharges, total, temp = [], 0, {}
+                for line in lines_data:
+                    result = opt_func(line)
 
-                if result:
-                    temp = result
-                    line_surcharges.append(
+                    if result:
+                        temp = result
+                        line_surcharges.append(
+                            {
+                                "pk": line["pk"],
+                                "quantity": line["quantity"],
+                                "value": result["value"],
+                            }
+                        )
+                        total += line["quantity"] * result["value"]
+                if line_surcharges:
+                    surcharges.append(
                         {
-                            "pk": line["pk"],
-                            "quantity": line["quantity"],
-                            "value": result["value"],
+                            "name": temp["name"],
+                            "description": temp["description"],
+                            "value": total,
+                            "lines": line_surcharges,
                         }
                     )
-                    total += line["quantity"] * result["value"]
-            if line_surcharges:
-                surcharges.append(
-                    {
-                        "name": temp["name"],
-                        "description": temp["description"],
-                        "value": total,
-                        "lines": line_surcharges,
-                    }
-                )
 
     return surcharges
 
