@@ -39,10 +39,15 @@ from api.models import (
     CostOptionMap,
     BookingCostOption,
     Pallet,
+    Surcharge,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
 from api.common import math as dme_math
+from api.fp_apis.operations.surcharge.common import SURCHARGE_NAME_DESC
+from api.fp_apis.operations.surcharge.index import (
+    get_surcharges as get_surcharges_with_quote,
+)
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -471,6 +476,9 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     eta_de_by = serializers.SerializerMethodField(read_only=True)
     is_deliverable = serializers.SerializerMethodField(read_only=True)
     inv_cost_quoted = serializers.SerializerMethodField(read_only=True)
+    surcharge_total = serializers.SerializerMethodField(read_only=True)
+    client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
+    surcharges = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -513,6 +521,17 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None
 
+    def get_surcharge_total(self, obj):
+        return obj.x_price_surcharge if obj.x_price_surcharge else 0
+
+    def get_client_customer_mark_up(self, obj):
+        client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
+        return client_customer_mark_up
+
+    def get_surcharges(self, obj):
+        surcharges = get_surcharges_with_quote(obj)
+        return SurchargeSerializer(surcharges, many=True).data
+
     class Meta:
         model = API_booking_quotes
         fields = "__all__"
@@ -524,6 +543,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     fp_name = serializers.SerializerMethodField(read_only=True)
     cost = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
+    surcharge_total = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -533,7 +553,10 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_cost(self, obj):
-        return obj.client_mu_1_minimum_values
+        return round(obj.client_mu_1_minimum_values, 2)
+
+    def get_surcharge_total(self, obj):
+        return obj.x_price_surcharge if obj.x_price_surcharge else 0
 
     def get_eta(self, obj):
         return obj.etd
@@ -547,6 +570,8 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "cost_id",
             "client_mu_1_minimum_values",
             "cost",
+            "tax_value_1",
+            "surcharge_total",
             "client_customer_mark_up",
             "eta",
             "service_name",
@@ -786,4 +811,15 @@ class BookingCostOptionSerializer(serializers.ModelSerializer):
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
+        fields = "__all__"
+
+
+class SurchargeSerializer(serializers.ModelSerializer):
+    description = serializers.SerializerMethodField(read_only=True)
+
+    def get_description(self, obj):
+        return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
+
+    class Meta:
+        model = Surcharge
         fields = "__all__"

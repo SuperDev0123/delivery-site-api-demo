@@ -27,7 +27,7 @@ from rest_framework.decorators import (
     action,
 )
 from api.serializers_client import *
-from api.serializers import SimpleQuoteSerializer
+from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
 from api.models import *
 from api.common import (
     trace_error,
@@ -37,7 +37,7 @@ from api.common import (
 )
 from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import get_status_category_from_status
-from api.fp_apis.operations.surcharge.index import get_surcharges
+from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.standard import index as standard
@@ -154,8 +154,19 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             #     "b_091_send_quote_to_pronto", False
             # )
             bok_1.save()
-            res_json = {"success": True, "message": "Freigth options are updated."}
 
+            # Re-Gen Surcharges
+            quotes = API_booking_quotes.objects.filter(
+                fk_booking_id=bok_1.pk_header_id, is_used=False
+            )
+            bok_2s = BOK_2_lines.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
+
+            for quote in quotes:
+                gen_surcharges(bok_1, bok_2s, quote, "bok_1")
+
+            res_json = {"success": True, "message": "Freigth options are updated."}
             return Response(res_json, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(
@@ -214,7 +225,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                         if _quote.pk == json_result["cost_id"]:
                             quote = _quote
 
-                    json_result["surcharges"] = get_surcharges(bok_1, bok_2s, quote)
+                    json_result["surcharges"] = SurchargeSerializer(
+                        get_surcharges(quote), many=True
+                    ).data
 
                 result["pricings"] = json_results
 

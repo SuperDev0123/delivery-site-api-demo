@@ -91,6 +91,10 @@ def partial_pricing(payload, client, warehouse):
         "de_To_Address_PostalCode": de_postal_code,
         "de_To_Address_State": de_state.upper(),
         "de_To_Address_Suburb": de_suburb,
+        "pu_Address_Type": "business",
+        "de_To_AddressType": "residential",
+        "b_booking_tail_lift_pickup": False,
+        "b_booking_tail_lift_deliver": False,
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
@@ -112,6 +116,7 @@ def partial_pricing(payload, client, warehouse):
 
         for item in items:
             booking_line = {
+                "pk_lines_id": "1",
                 "e_type_of_packaging": "Carton" or item.get("e_type_of_packaging"),
                 "fk_booking_id": bok_1["pk_header_id"],
                 "e_qty": item["qty"],
@@ -128,6 +133,7 @@ def partial_pricing(payload, client, warehouse):
         for bok_2 in bok_2s:
             e_type_of_packaging = "Carton"
             booking_line = {
+                "pk_lines_id": "1",
                 "e_type_of_packaging": e_type_of_packaging,
                 "fk_booking_id": bok_1["pk_header_id"],
                 "e_qty": _bok_2["l_002_qty"],
@@ -535,11 +541,12 @@ def push_boks(payload, client, username, method):
                 line["l_009_weight_per_each"] = item["e_weightPerEach"]
                 line["l_008_weight_UOM"] = item["e_weightUOM"]
                 line["e_item_type"] = item["e_item_type"]
-                new_bok_2s.append({"booking_line": line})
 
                 bok_2_serializer = BOK_2_Serializer(data=line)
                 if bok_2_serializer.is_valid():
-                    bok_2_serializer.save()
+                    result = bok_2_serializer.save()
+                    line["pk_lines_id"] = result.pk
+                    new_bok_2s.append({"booking_line": line})
                 else:
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8821 {LOG_ID} {message}")
@@ -558,7 +565,8 @@ def push_boks(payload, client, username, method):
 
                 bok_2_serializer = BOK_2_Serializer(data=_bok_2)
                 if bok_2_serializer.is_valid():
-                    bok_2_serializer.save()
+                    result = bok_2_serializer.save()
+                    bok_2["booking_line"]["pk_lines_id"] = result.pk
                 else:
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8821 {LOG_ID} {message}")
@@ -612,6 +620,10 @@ def push_boks(payload, client, username, method):
         "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
         "de_To_Address_State": bok_1["b_057_b_del_address_state"],
         "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+        "pu_Address_Type": "business",
+        "de_To_AddressType": "residential",
+        "b_booking_tail_lift_pickup": False,
+        "b_booking_tail_lift_deliver": False,
         "client_warehouse_code": bok_1["b_client_warehouse_code"],
         "kf_client_id": bok_1["fk_client_id"],
         "b_client_name": client.company_name,
@@ -621,6 +633,7 @@ def push_boks(payload, client, username, method):
     for bok_2 in bok_2s:
         _bok_2 = bok_2["booking_line"]
         bok_2_line = {
+            "pk_lines_id": _bok_2["pk_lines_id"],
             "fk_booking_id": _bok_2["fk_header_id"],
             "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
             "e_qty": _bok_2["l_002_qty"],

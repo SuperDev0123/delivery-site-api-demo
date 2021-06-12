@@ -9,9 +9,18 @@ from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
 from api.serializers import ApiBookingQuotesSerializer
-from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Log,
+    API_booking_quotes,
+    Client_FP,
+    FP_Service_ETDs,
+    Surcharge,
+)
 
 from api.fp_apis.operations.common import _set_error
+from api.fp_apis.operations.surcharge.index import gen_surcharges
 from api.fp_apis.built_in.index import get_pricing as get_self_pricing
 from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
@@ -55,6 +64,11 @@ def pricing(body, booking_id, is_pricing_only=False):
         else:
             return False, "Booking does not exist", None
 
+    if not booking_lines:
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
+
     # Set is_used flag for existing old pricings
     if booking.pk_booking_id:
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).update(
@@ -85,6 +99,10 @@ def pricing(body, booking_id, is_pricing_only=False):
     if quotes.exists():
         # Interpolate gaps (for Plum client now)
         quotes = interpolate_gaps(quotes)
+
+        # Calculate Surcharges
+        for quote in quotes:
+            gen_surcharges(booking, booking_lines, quote, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes)
@@ -258,10 +276,29 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                # Allied surcharges
+                surcharges = []
 
+                if (
+                    parse_result["freight_provider"].lower() == "allied"
+                    and "surcharges" in parse_result
+                ):
+                    surcharges = parse_result["surcharges"]
+                    del parse_result["surcharges"]
+
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
-                    serializer.save()
+                    quote = serializer.save()
+
+                    # for surcharge in surcharges:
+                    #     if float(surcharge["amount"]) > 0:
+                    #         surcharge_obj = Surcharge()
+                    #         surcharge_obj.name = surcharge["name"]
+                    #         surcharge_obj.description = surcharge["description"]
+                    #         surcharge_obj.amount = float(surcharge["amount"])
+                    #         surcharge_obj.quote = quote
+                    #         surcharge_obj.fp_id = 2  # Allied(Hardcode)
+                    #         surcharge_obj.save()
                 else:
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:

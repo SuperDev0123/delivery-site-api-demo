@@ -18,8 +18,8 @@ def populate_bok(bok_1):
     logger.info(f"@620 {LOG_ID} inital bok_1: {bok_1}")
     order, lines = get_order(bok_1["b_client_order_num"])
 
-    if order["b_client_order_num"] != bok_1["b_client_order_num"]:
-        raise Exception({"success": False, "message": "Wrong Order is feched."})
+    # if order["b_client_order_num"] != bok_1["b_client_order_num"]:
+    #     raise Exception({"success": False, "message": "Wrong Order is feched."})
 
     for property in bok_1:
         order[property] = bok_1[property]
@@ -86,13 +86,13 @@ def update_note(quote, booking, lines=[], type="bok"):
                 fk_booking_id=booking.pk_booking_id, is_deleted=False
             )
 
-    surcharge_total = get_surcharges_total(booking, _lines, quote, type)
+    surcharge_total = get_surcharges_total(quote)
     total_cost = "{0:.2f}".format(
         (quote.client_mu_1_minimum_values + surcharge_total)
         * (client.client_customer_mark_up + 1)
     )
 
-    note = f"Consignment:{consignment_num} TotalCost:{total_cost} Status:{booking_status} EstDate:{est_date}"
+    note = f"Consignment:{consignment_num}      TotalCost:{total_cost}                Status:{booking_status}                EstDate:{est_date}"
     result = update_pronto_note(booking.b_client_order_num, note)
 
     logger.info(f"@639 {LOG_ID} Finished!")

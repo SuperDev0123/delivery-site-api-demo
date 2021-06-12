@@ -188,6 +188,16 @@ def parse_order_xml(response, token):
 def get_order(order_num):
     logger.info(f"@640 [PRONTO GET ORDER] Start! Order: {order_num}")
 
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+        message = f"@6400 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
+        logger.info(message)
+    # ---
+
     token = get_token()
     url = f"{API_URL}/api/SalesOrderGetSalesOrders"
     headers = {
@@ -197,7 +207,8 @@ def get_order(order_num):
     body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?> \
                 <SalesOrderGetSalesOrdersRequest> \
                     <Parameters> \
-                        <SOOrderNo>{order_num}</SOOrderNo> \
+                        <SOOrderNo>{_order_num}</SOOrderNo> \
+                        <SOBOSuffix>{suffix}</SOBOSuffix> \
                     </Parameters> \
                     <RequestFields> \
                         <SalesOrders> \
@@ -346,6 +357,16 @@ def update_pronto_note(order_num, note):
     LOG_ID = "[PRONTO UPDATE NOTE]"
     logger.info(f"@660 {LOG_ID} Start! OrderNum: {order_num}, Note: {note}")
 
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+        message = f"@6400 [PRONTO UPDATE NOTE] OrderNum: {_order_num}, Suffix: {suffix}"
+        logger.info(message)
+    # ---
+
     token = get_token()
     url = f"{API_URL}/api/SalesOrderPostOrderNotes"
     headers = {
@@ -354,15 +375,16 @@ def update_pronto_note(order_num, note):
     }
     body = f'<SalesOrderPostOrderNotesRequest xmlns="http://www.pronto.net/so/1.0.0"> \
                 <SalesOrders> \
-                    <SalesOrder SOOrderNo="{order_num}" SOBOSuffix=" "> \
+                    <SalesOrder SOOrderNo="{_order_num}" SOBOSuffix="{suffix}"> \
                         <Notes>{note}</Notes> \
                     </SalesOrder> \
                 </SalesOrders> \
             </SalesOrderPostOrderNotesRequest>'
 
+    # logger.info(f"@661 {LOG_ID} request body: {body}")
     response = send_soap_request(url, body, headers)
     logger.info(
-        f"@661 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+        f"@662 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
     )
 
     logger.info(f"@669 {LOG_ID} Finish! OrderNum: {order_num}")

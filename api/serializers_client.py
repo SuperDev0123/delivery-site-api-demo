@@ -138,6 +138,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     class Meta:
         model = BOK_2_lines
         fields = (
+            "pk_lines_id",
             "l_001_type_of_packaging",
             "l_002_qty",
             "l_003_item",
