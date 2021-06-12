@@ -11,8 +11,6 @@ SURCHARGE_NAME_DESC = {
         "Tail Lift [TL]": "For deliveries requiring tail lifts",
         "Oversize Pallets": "Standard pallet sizes are measured at a maximum of 1.2m x 1.2m x 1.4m and weighed at a maximum of 500 kilograms. Pallets greater than will incur oversize pallet charges, in line with the number of pallet spaces occupied, charged in full pallets. An additional pallet charge will apply.",
         "Minimum Charge-Skids/ Pallets": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.",
-        "ON FWD PICKUP": "ON FORWARD PICKUP",
-        "ON FWD DELIVERY": "ON FWD DELIVERY",
         "HD": "FREIGHT OVERSIZED HOME DELIVERY",
         "LSC": "LENGTH SURCHARGE",
         "MHF": "MANUAL HANDLING FEE",
