@@ -12,33 +12,34 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #     else:
 #         return None
 
-def get_per_kg_charge(param): 
+
+def get_per_kg_charge(param):
     try:
         fp_id = Fp_freight_providers.objects.get(
-            fp_company_name=param['vx_freight_provider']
+            fp_company_name=param["vx_freight_provider"]
         ).id
         pu_zone = FP_zones.objects.get(
             fk_fp=fp_id,
-            state=param['pu_address_state'],
-            postal_code=param['pu_address_postcode'],
-            suburb=param['pu_address_suburb'],
+            state=param["pu_address_state"],
+            postal_code=param["pu_address_postcode"],
+            suburb=param["pu_address_suburb"],
         ).zone
         de_zone = FP_zones.objects.get(
             fk_fp=fp_id,
-            state=param['de_to_address_state'],
-            postal_code=param['de_to_address_postcode'],
-            suburb=param['de_to_address_suburb'],
+            state=param["de_to_address_state"],
+            postal_code=param["de_to_address_postcode"],
+            suburb=param["de_to_address_suburb"],
         ).zone
 
         rules = FP_pricing_rules.objects.filter(
             freight_provider_id=fp_id,
-            service_type=param['vx_service_name'],
+            service_type=param["vx_service_name"],
             pu_zone=pu_zone,
             de_zone=de_zone,
         )
 
         if not rules:
-            raise Exception('No pricing rule')
+            raise Exception("No pricing rule")
 
         base_charge = rule.first().cost.basic_charge
         per_kg_charge = rules.first().cost.per_UOM_charge
@@ -47,6 +48,7 @@ def get_per_kg_charge(param):
         per_kg_charge = 0
 
     return base_charge, per_kg_charge
+
 
 def tl(param):
     if param["is_tail_lift"]:
@@ -94,62 +96,78 @@ def tl(param):
 
 
 def hd0(param):
-    if param['de_to_address_type'].lower() == 'residential' and param['max_weight'] < 22:
+    if (
+        param["de_to_address_type"].lower() == "residential"
+        and param["max_weight"] < 22
+    ):
         return {
-            'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
-            'description': 'For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)',
-            'value': 10.6 * 0.5
+            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ",
+            "description": "For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)",
+            "value": 10.6 * 0.5,
         }
     else:
         return None
+
 
 def hd1(param):
-    if param['de_to_address_type'].lower() == 'residential' and param['max_weight'] >= 22 and param['max_weight'] < 55:
+    if (
+        param["de_to_address_type"].lower() == "residential"
+        and param["max_weight"] >= 22
+        and param["max_weight"] < 55
+    ):
         return {
-            'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
-            'description': 'For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)',
-            'value': 21.19 * 0.5
+            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ",
+            "description": "For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
+            "value": 21.19 * 0.5,
         }
     else:
         return None
+
 
 def hd2(param):
-    if param['de_to_address_type'].lower() == 'residential' and ((param['dead_weight'] >= 55 and param['dead_weight'] < 90) or (param['cubic_weight'] >= 55 and param['cubic_weight'] < 135)):
+    if param["de_to_address_type"].lower() == "residential" and (
+        (param["dead_weight"] >= 55 and param["dead_weight"] < 90)
+        or (param["cubic_weight"] >= 55 and param["cubic_weight"] < 135)
+    ):
         return {
-            'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
-            'description': 'For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply',
-            'value': 74.15 * 0.5
+            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ",
+            "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
+            "value": 74.15 * 0.5,
         }
     else:
         return None
 
-        
+
 def hd3(param):
-    if param['de_to_address_type'].lower() == 'residential' and (param['dead_weight'] >= 90 or param['cubic_weight'] >= 135):
+    if param["de_to_address_type"].lower() == "residential" and (
+        param["dead_weight"] >= 90 or param["cubic_weight"] >= 135
+    ):
         return {
-            'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
-            'description': 'For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply',
-            'value': 158.87 * 0.5
+            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ",
+            "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
+            "value": 158.87 * 0.5,
         }
     else:
         return None
+
 
 def ow(param):
     base_charge, per_kg_charge = get_per_kg_charge(param)
     return {
-        'name': 'Overweight',
-        'description': 'Base charge plus kilo charge',
-        'value': base_charge + per_kg_charge * param['max_weight']
+        "name": "Overweight",
+        "description": "Base charge plus kilo charge",
+        "value": base_charge + per_kg_charge * param["max_weight"],
     }
+
 
 def mc(param):
     base_charge, per_kg_charge = get_per_kg_charge(param)
-    if param['is_pallet'] and per_kg_charge and param['max_weight'] < 350:
+    if param["is_pallet"] and per_kg_charge and param["max_weight"] < 350:
         return {
-            'name': 'Minimum Charge-Skids/ Pallets',
-            'description': 'The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your ' +
-                'freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.',
-            'value': per_kg_charge * (350 - param['max_weight'])
+            "name": "Minimum Charge-Skids/ Pallets",
+            "description": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your "
+            + "freight is not presented on a pallet or skid, these charges may be applied if items cannot be lifted by one person.",
+            "value": per_kg_charge * (350 - param["max_weight"]),
         }
     else:
         return None
@@ -284,25 +302,7 @@ def ofde(param):
         }
     except Exception as e:
         return None
-   
-def allied():
-    return {
-        'order': [
-            ow,
-            ofpu,
-            ofde,
-            tl,
-            hd0,
-            hd1,
-            hd2,
-            hd3
-        ],
-        'line': [
-            mc,
-            lws
-        ]
-    }
 
 
 def allied():
-    return {"order": [ofpu, ofde, tl], "line": [pks, lws]}
+    return {"order": [ow, ofpu, ofde, tl, hd0, hd1, hd2, hd3], "line": [mc, lws]}
