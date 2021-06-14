@@ -3631,14 +3631,19 @@ class FPStoreBookingLog(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
-        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id).first()
+        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id)
 
-        if dme_employee is not None:
+        if dme_employee:
             user_type = "DME"
             fields_to_exclude = []
         else:
             user_type = "CLIENT"
-            fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
+            fields_to_exclude = [
+                "fee",
+                "mu_percentage_fuel_levy",
+                "fuel_levy_base",
+                "client_mark_up_percent",
+            ]
 
         fk_booking_id = request.GET["fk_booking_id"]
         booking = Bookings.objects.get(pk_booking_id=fk_booking_id)

@@ -479,6 +479,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     surcharge_total = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharges = serializers.SerializerMethodField(read_only=True)
+    cost_dollar = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -532,6 +533,9 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         surcharges = get_surcharges_with_quote(obj)
         return SurchargeSerializer(surcharges, many=True).data
 
+    def get_cost_dollar(self, obj):
+        return obj.fee * (1 + obj.client_mark_up_percent)
+
     class Meta:
         model = API_booking_quotes
         fields = "__all__"
@@ -544,6 +548,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharge_total = serializers.SerializerMethodField(read_only=True)
+    cost_dollar = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -556,7 +561,8 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return round(obj.client_mu_1_minimum_values, 2)
 
     def get_surcharge_total(self, obj):
-        return obj.x_price_surcharge if obj.x_price_surcharge else 0
+        _result = obj.x_price_surcharge if obj.x_price_surcharge else 0
+        return _result * (1 + obj.client_mark_up_percent)
 
     def get_eta(self, obj):
         return obj.etd
@@ -564,18 +570,21 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     def get_fp_name(self, obj):
         return obj.freight_provider
 
+    def get_cost_dollar(self, obj):
+        return obj.fee * (1 + obj.client_mark_up_percent)
+
     class Meta:
         model = API_booking_quotes
         fields = (
             "cost_id",
             "client_mu_1_minimum_values",
             "cost",
-            "tax_value_1",
             "surcharge_total",
             "client_customer_mark_up",
             "eta",
             "service_name",
             "fp_name",
+            "cost_dollar",
         )
 
 
