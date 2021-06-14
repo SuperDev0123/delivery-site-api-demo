@@ -3638,12 +3638,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fields_to_exclude = []
         else:
             user_type = "CLIENT"
-            fields_to_exclude = [
-                "fee",
-                "mu_percentage_fuel_levy",
-                "fuel_levy_base",
-                "client_mark_up_percent",
-            ]
+            fields_to_exclude = ["fee", "client_mark_up_percent", "fuel_levy_base"]
 
         fk_booking_id = request.GET["fk_booking_id"]
         booking = Bookings.objects.get(pk_booking_id=fk_booking_id)

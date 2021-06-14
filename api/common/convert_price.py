@@ -82,7 +82,7 @@ def _apply_mu(quote, fp, client):
 def apply_markups(quotes):
     logger.info(f"[APPLY MU] Start")
 
-    if not quotes.exists():
+    if not quotes:
         logger.info(f"[APPLY MU] No Quotes!")
         return quotes
 

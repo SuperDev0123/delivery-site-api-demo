@@ -480,6 +480,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharges = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
+    fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -531,10 +532,14 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 
     def get_surcharges(self, obj):
         surcharges = get_surcharges_with_quote(obj)
-        return SurchargeSerializer(surcharges, many=True).data
+        context = {"client_mark_up_percent": obj.client_mark_up_percent}
+        return SurchargeSerializer(surcharges, context=context, many=True).data
 
     def get_cost_dollar(self, obj):
         return obj.fee * (1 + obj.client_mark_up_percent)
+
+    def get_fuel_levy_base_cl(self, obj):
+        return obj.fuel_levy_base * (1 + obj.client_mark_up_percent)
 
     class Meta:
         model = API_booking_quotes
@@ -549,6 +554,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharge_total = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
+    fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -573,6 +579,9 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     def get_cost_dollar(self, obj):
         return obj.fee * (1 + obj.client_mark_up_percent)
 
+    def get_fuel_levy_base_cl(self, obj):
+        return obj.fuel_levy_base * (1 + obj.client_mark_up_percent)
+
     class Meta:
         model = API_booking_quotes
         fields = (
@@ -585,6 +594,8 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "service_name",
             "fp_name",
             "cost_dollar",
+            "fuel_levy_base_cl",
+            "mu_percentage_fuel_levy",
         )
 
 
@@ -825,9 +836,14 @@ class PalletSerializer(serializers.ModelSerializer):
 
 class SurchargeSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField(read_only=True)
+    amount_cl = serializers.SerializerMethodField(read_only=True)
 
     def get_description(self, obj):
         return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
+
+    def get_amount_cl(self, obj):
+        client_mark_up_percent = self.context.get("client_mark_up_percent", 0)
+        return obj.amount * (1 + client_mark_up_percent)
 
     class Meta:
         model = Surcharge

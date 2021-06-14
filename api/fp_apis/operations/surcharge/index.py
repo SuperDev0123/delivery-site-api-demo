@@ -386,7 +386,10 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 result.append(surcharge_obj)
 
     if total:  # Update Quote's surchargeTotal
+        from api.common.convert_price import apply_markups
+
         quote_obj.x_price_surcharge = total
         quote_obj.save()
+        apply_markups([quote_obj])
 
     return result
