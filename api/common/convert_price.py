@@ -58,7 +58,7 @@ def _apply_mu(quote, fp, client):
         fuel_levy_base = quote.fee * fp_mu
 
     surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
-    cost = fuel_levy_base + surcharge
+    cost = quote.fee + fuel_levy_base + surcharge
 
     # Client MU
     client_mu = client.client_mark_up_percent
