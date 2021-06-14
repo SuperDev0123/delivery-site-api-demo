@@ -52,11 +52,13 @@ def _apply_mu(quote, fp, client):
     # DME will consider tax on `invoicing` stage
     # tax = quote.tax_value_1 if quote.tax_value_1 else 0
 
-    if quote.client_mu_1_minimum_values:
-        fuel_levy_base = quote.client_mu_1_minimum_values * fp_mu
-    else:
-        fuel_levy_base = quote.fee * fp_mu
+    # Deactivated 2021-06-14: Need to be considered again
+    # if quote.client_mu_1_minimum_values:
+    #     fuel_levy_base = quote.client_mu_1_minimum_values * fp_mu
+    # else:
+    #     fuel_levy_base = quote.fee * fp_mu
 
+    fuel_levy_base = quote.fee * fp_mu
     surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
     cost = quote.fee + fuel_levy_base + surcharge
 

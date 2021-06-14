@@ -9,6 +9,7 @@ from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
 
 from api.models import Booking_lines, Surcharge, Fp_freight_providers
+from api.common.convert_price import apply_markups
 
 logger = logging.getLogger(__name__)
 
@@ -385,11 +386,9 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 surcharge_obj.save()
                 result.append(surcharge_obj)
 
-    if total:  # Update Quote's surchargeTotal
-        from api.common.convert_price import apply_markups
-
-        quote_obj.x_price_surcharge = total
-        quote_obj.save()
-        apply_markups([quote_obj])
+    quote_obj.client_mu_1_minimum_values = quote_obj.fee
+    quote_obj.x_price_surcharge = total
+    quote_obj.save()
+    apply_markups([quote_obj])
 
     return result
