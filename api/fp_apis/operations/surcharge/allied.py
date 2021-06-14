@@ -12,7 +12,7 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #     else:
 #         return None
 
-def get_per_kg_charge(param): 
+def get_base_kg_charge(param): 
     try:
         fp_id = Fp_freight_providers.objects.get(
             fp_company_name=param['vx_freight_provider']
@@ -94,7 +94,7 @@ def tl(param):
 
 
 def hd0(param):
-    if param['de_to_address_type'].lower() == 'residential' and param['max_weight'] < 22:
+    if param['de_to_address_type'].lower() == 'residential' and param['max_weight'] <= 22:
         return {
             'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
             'description': 'For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)',
@@ -104,7 +104,7 @@ def hd0(param):
         return None
 
 def hd1(param):
-    if param['de_to_address_type'].lower() == 'residential' and param['max_weight'] >= 22 and param['max_weight'] < 55:
+    if param['de_to_address_type'].lower() == 'residential' and param['max_weight'] > 22 and param['max_weight'] <= 55:
         return {
             'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
             'description': 'For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)',
@@ -114,7 +114,7 @@ def hd1(param):
         return None
 
 def hd2(param):
-    if param['de_to_address_type'].lower() == 'residential' and ((param['dead_weight'] >= 55 and param['dead_weight'] < 90) or (param['cubic_weight'] >= 55 and param['cubic_weight'] < 135)):
+    if param['de_to_address_type'].lower() == 'residential' and ((param['dead_weight'] > 55 and param['dead_weight'] <= 90) or (param['cubic_weight'] > 55 and param['cubic_weight'] <= 135)):
         return {
             'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
             'description': 'For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply',
@@ -125,7 +125,7 @@ def hd2(param):
 
         
 def hd3(param):
-    if param['de_to_address_type'].lower() == 'residential' and (param['dead_weight'] >= 90 or param['cubic_weight'] >= 135):
+    if param['de_to_address_type'].lower() == 'residential' and (param['dead_weight'] > 90 or param['cubic_weight'] > 135):
         return {
             'name': 'Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. ',
             'description': 'For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply',
@@ -134,16 +134,16 @@ def hd3(param):
     else:
         return None
 
-def ow(param):
-    base_charge, per_kg_charge = get_per_kg_charge(param)
-    return {
-        'name': 'Overweight',
-        'description': 'Base charge plus kilo charge',
-        'value': base_charge + per_kg_charge * param['max_weight']
-    }
+# def ow(param):
+#     base_charge, per_kg_charge = get_base_kg_charge(param)
+#     return {
+#         'name': 'Overweight',
+#         'description': 'Base charge plus kilo charge',
+#         'value': base_charge + per_kg_charge * param['max_weight']
+#     }
 
 def mc(param):
-    base_charge, per_kg_charge = get_per_kg_charge(param)
+    base_charge, per_kg_charge = get_base_kg_charge(param)
     if param['is_pallet'] and per_kg_charge and param['max_weight'] < 350:
         return {
             'name': 'Minimum Charge-Skids/ Pallets',
@@ -288,7 +288,7 @@ def ofde(param):
 def allied():
     return {
         'order': [
-            ow,
+            # ow,
             ofpu,
             ofde,
             tl,
@@ -303,6 +303,3 @@ def allied():
         ]
     }
 
-
-def allied():
-    return {"order": [ofpu, ofde, tl], "line": [pks, lws]}
