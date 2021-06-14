@@ -991,6 +991,7 @@ def pricing(request):
         is_pricing_only = True
 
     booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
+    client = booking.get_client()
 
     if not success:
         return JsonResponse(
@@ -998,7 +999,12 @@ def pricing(request):
         )
 
     json_results = ApiBookingQuotesSerializer(
-        results, many=True, context={"booking": booking}
+        results,
+        many=True,
+        context={
+            "booking": booking,
+            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+        },
     ).data
 
     if is_pricing_only:

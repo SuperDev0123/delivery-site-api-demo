@@ -499,6 +499,8 @@ class API_booking_quotes(models.Model):
     mu_percentage_fuel_levy = models.FloatField(
         verbose_name=_("Mu Percentage Fuel Levy"), blank=True, null=True
     )
+    fuel_levy_base = models.FloatField(blank=True, null=True, default=0)
+    client_mark_up_percent = models.FloatField(blank=True, null=True, default=0)
     client_mu_1_minimum_values = models.FloatField(
         verbose_name=_("Client MU 1 Minimum Value"), blank=True, null=True
     )  # fee * (1 + mu_percentage_fuel_levy)
