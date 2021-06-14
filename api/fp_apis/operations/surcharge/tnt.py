@@ -1,9 +1,11 @@
-jason_l_surcharges = {
-    'rsd': 2.37,
-    'os0': 8.23
-}
+jason_l_surcharges = {"rsd": 2.37, "os0": 8.23}
+
+
 def dgre(param):
-    if param["has_dangerous_item"] and param['vx_service_name'].lower() == "road express":
+    if (
+        param["has_dangerous_item"]
+        and param["vx_service_name"].lower() == "road express"
+    ):
         return {
             "name": "Dangerous Goods (Road Express)",
             "description": "Surcharge per consignment. In addition, the MHP Fee will apply per item to each and all items consigned under the same consignment note where that consignment "
@@ -15,7 +17,10 @@ def dgre(param):
 
 
 def dgere(param):
-    if param["has_dangerous_item"] and param['vx_service_name'].lower() != "road express":
+    if (
+        param["has_dangerous_item"]
+        and param["vx_service_name"].lower() != "road express"
+    ):
         return {
             "name": "Dangerous Goods (excluding Road Express)",
             "description": "Surcharge per consignment. In addition, the MHP Fee will apply per item to each and all items consigned under the same consignment note where that consignment "
@@ -93,8 +98,8 @@ def rsd(param):
     if param["de_to_address_type"].lower() == "residential":
         return {
             "name": "Residential Delivery (RSD)",
-            "description": "Fee per consignment for delivery to a residential address4. ",
-            "value": jason_l_surcharges['rsd'] if param['is_jason_l'] else 5,
+            "description": "Fee per consignment for delivery to a residential address4.",
+            "value": jason_l_surcharges["rsd"] if param["is_jason_l"] else 5,
         }
     else:
         return None
@@ -118,7 +123,10 @@ def rsd30(param):
 
 
 def rsd100(param):
-    if param["de_to_address_type"].lower() == "residential" and param["max_weight"] >= 100:
+    if (
+        param["de_to_address_type"].lower() == "residential"
+        and param["max_weight"] >= 100
+    ):
         return {
             "name": "Heavyweight Residential Delivery (RSD100)",
             "description": "Fee per consignment for delivery from a residential address4 with a chargeable weight5 of 100kg and over."
@@ -140,7 +148,7 @@ def os0(param):
         return {
             "name": "Oversize Freight (OS0)",
             "description": "Oversize freight where any one dimension (length, height or width) exceeds 1.49 metres.",
-            "value": jason_l_surcharges['os0'] if param['is_jason_l'] else 10,
+            "value": jason_l_surcharges["os0"] if param["is_jason_l"] else 10,
         }
     else:
         return None
@@ -223,7 +231,7 @@ def os5(param):
 
 def tnt():
     return {
-        'order': [
+        "order": [
             dgre,
             dgere,
             rsp,
@@ -234,12 +242,12 @@ def tnt():
             rsd100,
             # lr,
         ],
-        'line': [
+        "line": [
             os0,
             os1,
             os2,
             os3,
             os4,
             os5,
-        ]
+        ],
     }
