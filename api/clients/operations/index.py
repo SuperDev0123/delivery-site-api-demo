@@ -65,10 +65,8 @@ def get_suburb_state(postal_code, clue):
 
     selected_address = addresses[0]
     for address in addresses:
-        if (
-            address.state in clue
-            and address.suburb in clue
-            and len(address.suburb) > len(selected_address.suburb)
+        if address.suburb.lower() in clue and len(address.suburb) > len(
+            selected_address.suburb
         ):
             selected_address = address
 

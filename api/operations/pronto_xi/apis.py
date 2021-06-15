@@ -155,7 +155,7 @@ def parse_order_xml(response, token):
     addresses.append(
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
     )
-    b_058 = "||".join(addresses)[:40]
+    b_058 = "||".join(addresses)[:40].lower()
 
     order = {
         "b_client_order_num": order_num,
