@@ -25,7 +25,7 @@ def get_number_of_pallets(booking_lines, pallet):
 
     (
         palletized_lines,
-        unpalletized_lines,
+        unpalletized_line_pks,
         line_dimensions,
         sum_cube,
         unpalletized_dead_weight,
@@ -47,7 +47,7 @@ def get_number_of_pallets(booking_lines, pallet):
             palletized_lines.append(item)
             sum_cube += width * height * length * item.l_002_qty
         else:
-            unpalletized_lines.append(item)
+            unpalletized_line_pks.append(item.pk)
             unpalletized_dead_weight += (
                 item.l_002_qty
                 * item.l_009_weight_per_each
@@ -59,10 +59,7 @@ def get_number_of_pallets(booking_lines, pallet):
     number_of_pallets_for_unpalletized = math.ceil(unpalletized_weight / pallet_weight)
     number_of_pallets_for_palletized = math.ceil(sum_cube / pallet_cube)
 
-    return {
-        'number_of_pallets': number_of_pallets_for_palletized,
-        'unpalletized_lines': unpalletized_lines
-    }
+    return number_of_pallets_for_palletized, unpalletized_line_pks
 
 
 def get_suitable_pallet(bok_2s, pallets):
@@ -96,18 +93,14 @@ def get_suitable_pallet(bok_2s, pallets):
             available_pallets.append(
                 {
                     "index": index,
-                    "cubic_meter": pallet_length
-                    * pallet_width
-                    * pallet_height
+                    "cubic_meter": pallet_length * pallet_width * pallet_height,
                 }
             )
         else:
             non_available_pallets.append(
                 {
                     "index": index,
-                    "cubic_meter": pallet_length
-                    * pallet_width
-                    * pallet_height
+                    "cubic_meter": pallet_length * pallet_width * pallet_height,
                 }
             )
 
