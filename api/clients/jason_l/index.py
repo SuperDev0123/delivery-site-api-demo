@@ -28,6 +28,7 @@ from api.common import (
     status_history,
 )
 from api.common.pallet import get_number_of_pallets, get_suitable_pallet
+from api.common.booking_quote import set_booking_quote
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -324,6 +325,7 @@ def push_boks(payload, client, username, method):
     bok_1["fk_client_id"] = client.dme_account_num
     bok_1["x_booking_Created_With"] = "DME PUSH API"
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
+    bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
 
     if bok_1.get("shipping_type") == "DMEA":
         bok_1["success"] = dme_constants.BOK_SUCCESS_4
@@ -1102,6 +1104,40 @@ def scanned(payload, client):
             else:
                 sscc_lines[picked_item["sscc"]].append(new_line)
 
+    # Should get pricing again
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+    booking.save()
+
+    new_fc_log = FC_Log.objects.create(
+        client_booking_id=booking.b_client_booking_ref_num,
+        old_quote=booking.api_booking_quote,
+    )
+    new_fc_log.save()
+    logger.info(f"#371 {LOG_ID} {booking.b_bookingID_Visual} - getting Quotes again...")
+    _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
+    logger.info(
+        f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quotes.exists() and quotes.count() > 0:
+        if booking.booking_type == "DMEM":
+            quotes = quotes.filter(
+                freight_provider__iexact=booking.vx_freight_provider,
+                service_name=booking.vx_serviceName,
+            )
+
+        best_quotes = select_best_options(pricings=quotes)
+        logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
+
+        if best_quotes:
+            set_booking_quote(booking, best_quotes[0])
+            new_fc_log.new_quote = booking.api_booking_quote
+            new_fc_log.save()
+        else:
+            set_booking_quote(booking, None)
+
     # Build label with SSCC - one sscc should have one page label
     labeled_ssccs = []
     for sscc in sscc_lines:
@@ -1109,7 +1145,7 @@ def scanned(payload, client):
             continue
 
         if not booking.vx_freight_provider and booking.api_booking_quote:
-            _booking = migrate_quote_info_to_booking(booking, booking.api_booking_quote)
+            _booking = set_booking_quote(booking, booking.api_booking_quote)
 
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -1141,53 +1177,13 @@ def scanned(payload, client):
 
         labeled_ssccs.append(labeled_ssccs)
 
-    """
-        Move to Ready api
-    """
-    # # Should get pricing again when if fully picked
-    # if is_picked_all:
-    #     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    #     booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-    #     booking.save()
+    message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
+    logger.info(message)
 
-    #     new_fc_log = FC_Log.objects.create(
-    #         client_booking_id=booking.b_client_booking_ref_num,
-    #         old_quote=booking.api_booking_quote,
-    #     )
-    #     new_fc_log.save()
-    #     logger.info(
-    #         f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
-    #     )
-    #     _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
-    #     logger.info(
-    #         f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
-    #     )
-
-    #     # Select best quotes(fastest, lowest)
-    #     if quotes.exists() and quotes.count() > 0:
-    #         quotes = quotes.filter(
-    #             freight_provider__iexact=booking.vx_freight_provider,
-    #             service_name=booking.vx_serviceName,
-    #         )
-    #         best_quotes = select_best_options(pricings=quotes)
-    #         logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
-
-    #         if best_quotes:
-    #             booking.api_booking_quote = best_quotes[0]
-    #             booking.save()
-    #             new_fc_log.new_quote = booking.api_booking_quote
-    #             new_fc_log.save()
-    #         else:
-    #             booking.api_booking_quote = None
-    #             booking.save()
-
-    logger.info(
-        f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
-    )
-
-    return {
+    res_json = {
         "labelUrl": f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
     }
+    return res_json
 
 
 def ready_boks(payload, client):

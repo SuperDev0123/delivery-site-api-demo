@@ -35,7 +35,6 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
-from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import get_status_category_from_status
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum

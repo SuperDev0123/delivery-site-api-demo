@@ -31,6 +31,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.booking_quote import set_booking_quote
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.operations.book import book as book_oper
@@ -1041,9 +1042,7 @@ def scanned(payload, client):
                     raise Exception("Booking doens't have quote.")
 
                 if not booking.vx_freight_provider and booking.api_booking_quote:
-                    _booking = migrate_quote_info_to_booking(
-                        booking, booking.api_booking_quote
-                    )
+                    _booking = set_booking_quote(booking, booking.api_booking_quote)
 
                 if fp_name != "hunter":
                     file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -1124,13 +1123,11 @@ def scanned(payload, client):
                 logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
 
                 if best_quotes:
-                    booking.api_booking_quote = best_quotes[0]
-                    booking.save()
+                    set_booking_quote(booking, best_quotes[0])
                     new_fc_log.new_quote = booking.api_booking_quote
                     new_fc_log.save()
                 else:
-                    booking.api_booking_quote = None
-                    booking.save()
+                    set_booking_quote(booking, None)
 
         # If Hunter Order?
         if fp_name == "hunter" and booking.b_status != "Picking":

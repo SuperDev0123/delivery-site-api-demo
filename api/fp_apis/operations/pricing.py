@@ -8,6 +8,7 @@ from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
+from api.common.booking_quote import set_booking_quote
 from api.serializers import ApiBookingQuotesSerializer
 from api.models import (
     Bookings,
@@ -55,14 +56,13 @@ def pricing(body, booking_id, is_pricing_only=False):
     if not is_pricing_only:
         booking = Bookings.objects.filter(id=booking_id).first()
 
+        if not booking:
+            return None, False, "Booking does not exist", None
+
         # Delete all pricing info if exist for this booking
-        if booking:
-            pk_booking_id = booking.pk_booking_id
-            booking.api_booking_quote = None  # Reset pricing relation
-            booking.save()
-            # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
-        else:
-            return False, "Booking does not exist", None
+        pk_booking_id = booking.pk_booking_id
+        # set_booking_quote(booking, None)
+        # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
 
     if not booking_lines:
         booking_lines = Booking_lines.objects.filter(

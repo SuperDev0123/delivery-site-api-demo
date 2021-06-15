@@ -1,12 +1,11 @@
 import logging
-from datetime import datetime
+from datetime import datetime, date
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from api.models import *
-from api.common import common_times
-from api.common import common_times
+from api.common import common_times as dme_time_lib
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
@@ -755,7 +754,13 @@ def get_pricing_payload(
 
     payload["spAccountDetails"] = account_detail
     payload["serviceProvider"] = get_service_provider(fp_name)
-    payload["readyDate"] = "" or str(booking.puPickUpAvailFrom_Date)[:10]
+
+    # Check puPickUpAvailFrom_Date
+    if not puPickUpAvailFrom_Date or puPickUpAvailFrom_Date < date.today():
+        booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
+        booking.save()
+
+    payload["readyDate"] = "" or next_biz_day
     payload["referenceNumber"] = "" or booking.b_clientReference_RA_Numbers
 
     client_process = None
