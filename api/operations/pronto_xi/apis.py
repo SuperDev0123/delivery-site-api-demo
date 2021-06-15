@@ -142,6 +142,7 @@ def parse_order_xml(response, token):
         "{http://www.pronto.net/so/1.0.0}WarehouseCode"
     ).text
 
+    # For `clue` param of `get_suburb_state()`
     addresses = []
     addresses.append(
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "

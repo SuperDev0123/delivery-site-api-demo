@@ -551,10 +551,16 @@ def push_boks(payload, client, username, method):
         bok_1_obj.b_081_b_pu_auto_pack = True
         bok_1_obj.save()
 
+    # Get next business day
+    next_biz_day = bok_1.get("b_021_pu_avail_from_date")
+    if not next_biz_day or next_biz_day < date.today():
+        next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+        next_biz_day = str(next_biz_day)[:10]
+
     # Get Pricings
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "",
         "puCompany": bok_1["b_028_b_pu_company"],
         "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
@@ -825,10 +831,16 @@ def auto_repack(payload, client):
     bok_1.b_081_b_pu_auto_pack = repack_status
     bok_1.save()
 
+    # Get next business day
+    next_biz_day = bok_1.b_021_pu_avail_from_date
+    if not next_biz_day or next_biz_day < date.today():
+        next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+        next_biz_day = str(next_biz_day)[:10]
+
     # Get Pricings
     booking = {
         "pk_booking_id": bok_1.pk_header_id,
-        "puPickUpAvailFrom_Date": bok_1.b_021_b_pu_avail_from_date,
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "",
         "puCompany": bok_1.b_028_b_pu_company,
         "pu_Contact_F_L_Name": bok_1.b_035_b_pu_contact_full_name,
