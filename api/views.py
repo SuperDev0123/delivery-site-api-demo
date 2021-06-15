@@ -2599,6 +2599,9 @@ class BookingViewSet(viewsets.ViewSet):
         result_with_sscc = {}
 
         for booking_line in booking_lines:
+            if booking_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                continue
+
             if booking_line.sscc and not booking_line.sscc in sscc_arr:
                 sscc_arr.append(booking_line.sscc)
 
