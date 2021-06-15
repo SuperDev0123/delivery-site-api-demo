@@ -472,11 +472,6 @@ def push_boks(payload, client, username, method):
     logger.info(f"@8125 {LOG_ID} Selected pallet: {pallet}")
     number_of_pallets, unpalletized_line_pks = get_number_of_pallets(bok_2_objs, pallet)
 
-    if not number_of_pallets:
-        message = "0 number of Pallets."
-        logger.info(f"@801 {LOG_ID} {message}")
-        return message
-
     # Get number of lines (`EACH`, `CTN`, `PAL`)
     for bok_2_obj in bok_2_objs:
         total_weight += bok_2_obj.l_009_weight_per_each * bok_2_obj.l_002_qty
