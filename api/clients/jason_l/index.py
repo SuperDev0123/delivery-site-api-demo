@@ -445,10 +445,11 @@ def push_boks(payload, client, username, method):
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
-                bok_2_objs.append(bok_2_obj)
 
-                line["pk_lines_id"] = bok_2_obj.pk
-                new_bok_2s.append({"booking_line": line})
+                if not line["is_deleted"]:
+                    bok_2_objs.append(bok_2_obj)
+                    line["pk_lines_id"] = bok_2_obj.pk
+                    new_bok_2s.append({"booking_line": line})
             else:
                 message = f"Serialiser Error - {bok_2_serializer.errors}"
                 logger.info(f"@8831 {LOG_ID} {message}")
@@ -469,7 +470,7 @@ def push_boks(payload, client, username, method):
     pallet_index = get_suitable_pallet(bok_2_objs, pallets)
     pallet = pallets[pallet_index]
     logger.info(f"@8125 {LOG_ID} Selected pallet: {pallet}")
-    number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
+    number_of_pallets, unpalletized_line_pks = get_number_of_pallets(bok_2_objs, pallet)
 
     if not number_of_pallets:
         message = "0 number of Pallets."
@@ -519,6 +520,9 @@ def push_boks(payload, client, username, method):
 
         # Create Bok_3s
         for bok_2_obj in bok_2_objs:
+            if bok_2_obj.pk in unpalletized_line_pks:
+                continue
+
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
@@ -717,7 +721,7 @@ def auto_repack(payload, client):
     if repack_status:  # repack
         # Get Pallet
         pallet = Pallet.objects.get(pk=pallet_id)
-        number_of_pallets = get_number_of_pallets(bok_2s, pallet)
+        number_of_pallets, unpalletized_line_pks = get_number_of_pallets(bok_2s, pallet)
 
         if not number_of_pallets:
             message = "0 number of Pallets."
@@ -767,6 +771,12 @@ def auto_repack(payload, client):
             if bok_2.l_001_type_of_packaging == "PAL":
                 continue
             else:
+                if (
+                    bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES
+                    or bok_2.pk in unpalletized_line_pks
+                ):
+                    continue
+
                 bok_3 = {}
                 bok_3["fk_header_id"] = bok_1.pk_header_id
                 bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
