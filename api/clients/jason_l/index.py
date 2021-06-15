@@ -481,6 +481,7 @@ def push_boks(payload, client, username, method):
     for bok_2_obj in bok_2_objs:
         if bok_2_obj.zbl_102_text_2 in NEED_PALLET_GROUP_CODES:
             need_palletize = True
+            logger.info(f"@8126 {LOG_ID} Need Palletized! - {bok_2_obj.zbl_102_text_2}")
             break
 
     if number_of_pallets or carton_cnt > 2 or need_palletize:
