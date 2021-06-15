@@ -42,7 +42,7 @@ def get_warehouse(client, code=None):
         raise Exception(message)
 
 
-def get_suburb_state(postal_code, clue):
+def get_suburb_state(postal_code, clue=""):
     """
     get `suburb` and `state` from postal_code
 
@@ -63,11 +63,20 @@ def get_suburb_state(postal_code, clue):
         logger.info(f"{LOG_ID} {message}")
         raise Exception(message)
 
-    selected_address = addresses[0]
+    selected_address = None
+    print("@! - ", clue)
     for address in addresses:
-        if address.suburb.lower() in clue and len(address.suburb) > len(
-            selected_address.suburb
-        ):
-            selected_address = address
+        print("@2 - ", address.suburb.lower())
+
+        if clue and address.suburb.lower() in clue:
+            if not selected_address:
+                selected_address = address
+            elif selected_address and len(address.suburb) > len(
+                selected_address.suburb
+            ):
+                selected_address = address
+
+    if not selected_address:
+        selected_address = addresses[0]
 
     return selected_address.state, selected_address.suburb
