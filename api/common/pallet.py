@@ -19,8 +19,8 @@ def get_number_of_pallets(booking_lines, pallet):
     pallet_height = 2.1
     pallet_weight = 500
     m3_to_kg_factor = 250
-    pallet_length = pallet.length / 1000
-    pallet_width = pallet.width / 1000
+    pallet_length = max(pallet.length, pallet.width) / 1000
+    pallet_width = min(pallet.length, pallet.width) / 1000
     pallet_cube = pallet_length * pallet_width * pallet_height * 0.8
 
     (
@@ -33,8 +33,10 @@ def get_number_of_pallets(booking_lines, pallet):
     ) = ([], [], [], 0, 0, 0)
 
     for item in booking_lines:
-        length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
-        width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+        line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        length = max(line_length, line_width)
+        width = min(line_length, line_width)
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
 
         if (
@@ -58,16 +60,18 @@ def get_number_of_pallets(booking_lines, pallet):
     number_of_pallets_for_palletized = math.ceil(sum_cube / pallet_cube)
 
     return {
-        number_of_pallets: number_of_pallets_for_palletized,
-        unpalletized_lines: unpalletized_lines
+        'number_of_pallets': number_of_pallets_for_palletized,
+        'unpalletized_lines': unpalletized_lines
     }
 
 
 def get_suitable_pallet(bok_2s, pallets):
     lengths, widths, heights = [], [], []
     for item in bok_2s:
-        length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
-        width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+        line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        length = max(line_length, line_width)
+        width = min(line_length, line_width)
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
 
         lengths.append(length)
@@ -80,8 +84,8 @@ def get_suitable_pallet(bok_2s, pallets):
 
     available_pallets, non_available_pallets = [], []
     for index, pallet in enumerate(pallets):
-        pallet_length = pallet.length / 1000
-        pallet_width = pallet.width / 1000
+        pallet_length = max(pallet.length, pallet.width) / 1000
+        pallet_width = min(pallet.length, pallet.width) / 1000
         pallet_height = pallet.height / 1000
 
         if (
@@ -92,24 +96,22 @@ def get_suitable_pallet(bok_2s, pallets):
             available_pallets.append(
                 {
                     "index": index,
-                    "cubic_meter": pallet.length
-                    * pallet.width
-                    * pallet.height
-                    / 1000000,
+                    "cubic_meter": pallet_length
+                    * pallet_width
+                    * pallet_height
                 }
             )
         else:
             non_available_pallets.append(
                 {
                     "index": index,
-                    "cubic_meter": pallet.length
-                    * pallet.width
-                    * pallet.height
-                    / 1000000,
+                    "cubic_meter": pallet_length
+                    * pallet_width
+                    * pallet_height
                 }
             )
 
-    min_cubic, max_cubic, pallet_index = 10000, 0, 0
+    min_cubic, max_cubic, pallet_index = 100000, 0, 0
     if available_pallets:
         for pallet in available_pallets:
             if pallet["cubic_meter"] < min_cubic:
