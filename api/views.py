@@ -2550,6 +2550,8 @@ class BookingViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_labels(self, request):
+        from api.clients.jason_l.constants import SERVICE_GROUP_CODES
+
         LOG_ID = "[LABELS]"
         b_client_booking_ref_num = request.GET.get("b_client_booking_ref_num", None)
         message = f"#100 {LOG_ID}: b_client_booking_ref_num: {b_client_booking_ref_num}"
