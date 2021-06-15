@@ -756,7 +756,8 @@ def get_pricing_payload(
     payload["serviceProvider"] = get_service_provider(fp_name)
 
     # Check puPickUpAvailFrom_Date
-    if not puPickUpAvailFrom_Date or puPickUpAvailFrom_Date < date.today():
+    pu_avail_from = booking.puPickUpAvailFrom_Date
+    if not pu_avail_from or pu_avail_from < date.today():
         booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
         booking.save()
 
