@@ -42,9 +42,12 @@ def get_warehouse(client, code=None):
         raise Exception(message)
 
 
-def get_suburb_state(postal_code):
+def get_suburb_state(postal_code, clue):
     """
     get `suburb` and `state` from postal_code
+
+    postal_code: PostalCode
+    clue: String which may contains Suburb and State
     """
     LOG_ID = "[GET ADDRESS]"
 
@@ -59,5 +62,14 @@ def get_suburb_state(postal_code):
         message = "Suburb and or postal code mismatch please check info and try again."
         logger.info(f"{LOG_ID} {message}")
         raise Exception(message)
-    else:
-        return addresses[0].state, addresses[0].suburb
+
+    selected_address = addresses[0]
+    for address in addresses:
+        if (
+            address.state in clue
+            and address.suburb in clue
+            and len(address.suburb) > len(selected_address.suburb)
+        ):
+            selected_address = address
+
+    return selected_address.state, selected_address.suburb

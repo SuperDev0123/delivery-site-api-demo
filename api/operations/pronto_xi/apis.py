@@ -142,6 +142,21 @@ def parse_order_xml(response, token):
         "{http://www.pronto.net/so/1.0.0}WarehouseCode"
     ).text
 
+    addresses = []
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address5").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
+    )
+    b_058 = "||".join(addresses)[:40]
+
     order = {
         "b_client_order_num": order_num,
         "b_021_b_pu_avail_from_date": b_021,
