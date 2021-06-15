@@ -64,10 +64,7 @@ def get_suburb_state(postal_code, clue=""):
         raise Exception(message)
 
     selected_address = None
-    print("@! - ", clue)
     for address in addresses:
-        print("@2 - ", address.suburb.lower())
-
         if clue and address.suburb.lower() in clue:
             if not selected_address:
                 selected_address = address
