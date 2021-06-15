@@ -1071,6 +1071,8 @@ def scanned(payload, client):
             new_line.e_dimHeight = picked_item["dimensions"]["height"]
             new_line.e_weightUOM = picked_item["weight"]["unit"]
             new_line.e_weightPerEach = picked_item["weight"]["weight"]
+            new_line.is_deleted = old_line.is_deleted
+            new_line.zbl_102_text_2 = old_line.zbl_102_text_2
             new_line.sscc = picked_item["sscc"]
             new_line.picked_up_timestamp = (
                 picked_item.get("timestamp") or datetime.now()
