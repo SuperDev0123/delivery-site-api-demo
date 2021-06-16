@@ -683,11 +683,11 @@ def push_boks(payload, client, username, method):
             result = {"success": True, "results": json_results}
             url = None
 
-            elif bok_1["shipping_type"] == 'DMEM'
+            if bok_1["shipping_type"] == "DMEM":
                 url = (
                     f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
                 )
-            elif bok_1["shipping_type"] == 'DMEA':
+            elif bok_1["shipping_type"] == "DMEA":
                 url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
