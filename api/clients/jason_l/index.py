@@ -1099,7 +1099,7 @@ def scanned(payload, client):
 
     # Should get pricing again
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+    booking.puPickUpAvailFrom_Date = next_biz_day
     booking.save()
 
     new_fc_log = FC_Log.objects.create(
