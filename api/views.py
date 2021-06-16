@@ -2593,7 +2593,7 @@ class BookingViewSet(viewsets.ViewSet):
             "e_qty",
             "e_type_of_packaging",
         )
-        line_datas = booking.lines().only(
+        line_datas = booking.line_datas().only(
             "pk_id_lines_data", "quantity", "itemDescription", "clientRefNumber"
         )
 
