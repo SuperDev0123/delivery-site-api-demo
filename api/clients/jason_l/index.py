@@ -1072,7 +1072,7 @@ def scanned(payload, client):
             new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
             new_line.save()
 
-            sscc_lines[sscc] = new_line
+            sscc_lines[sscc] = [new_line]
 
             # Create new line_data(s)
             for picked_item in picked_items:
