@@ -1066,7 +1066,7 @@ def scanned(payload, client):
             new_line.e_dimHeight = first_item["dimensions"]["height"]
             new_line.e_weightUOM = first_item["weight"]["unit"]
             new_line.e_weightPerEach = first_item["weight"]["weight"]
-            new_line.is_deleted = old_line.zbl_102_text_2 in SERVICE_GROUP_CODES
+            new_line.is_deleted = False
             new_line.zbl_102_text_2 = None
             new_line.sscc = first_item["sscc"]
             new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
