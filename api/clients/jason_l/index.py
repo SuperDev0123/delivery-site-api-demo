@@ -1085,6 +1085,9 @@ def scanned(payload, client):
                     if line.zbl_121_integer_1 == picked_item["items"][0]["sequence"]:
                         original_line = line
 
+                if original_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                    continue
+
                 line_data = Booking_lines_data()
                 line_data.fk_booking_id = pk_booking_id
                 line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
