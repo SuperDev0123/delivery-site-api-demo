@@ -2655,7 +2655,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "e_item": original_line.e_item,
                         "e_item_type": original_line.e_item_type,
                         "e_qty": line_data.quantity,
-                        "e_type_of_packaging": booking_line.e_type_of_packaging,
+                        "e_type_of_packaging": original_line.e_type_of_packaging,
                         "is_available": is_available,
                         "url": label_url,
                         "zpl": zpl_data,
