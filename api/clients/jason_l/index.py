@@ -115,7 +115,7 @@ def partial_pricing(payload, client, warehouse):
         logger.info(f"@816 {LOG_ID} {message}")
         raise Exception(message)
 
-    items = product_oper.get_product_items(bok_2s, client, True)
+    items = product_oper.get_product_items(bok_2s, client, True, False)
 
     for item in items:
         booking_line = {
@@ -420,7 +420,7 @@ def push_boks(payload, client, username, method):
         raise Exception(message)
 
     # Save bok_2s (Product & Child items)
-    items = product_oper.get_product_items(bok_2s, client, is_web)
+    items = product_oper.get_product_items(bok_2s, client, is_web, False)
     new_bok_2s = []
     bok_2_objs = []
 

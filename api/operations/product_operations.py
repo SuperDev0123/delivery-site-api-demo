@@ -27,7 +27,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s, client, is_web=False):
+def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=True):
     """
     get all items from array of "model_number" and "qty"
     """
@@ -76,7 +76,9 @@ def get_product_items(bok_2s, client, is_web=False):
                     "zbl_102_text_2": zbl_102_text_2,  # ProductGroupCode
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
-                results = _append_line(results, line, qty)
+
+                if is_bundle_by_model_number:
+                    results = _append_line(results, line, qty)
         else:  # Biz - Sap/b1, Pronto
             has_product = False
             for product in products:
@@ -101,7 +103,9 @@ def get_product_items(bok_2s, client, is_web=False):
                     "zbl_102_text_2": zbl_102_text_2,
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
-                results = _append_line(results, line, qty)
+
+                if is_bundle_by_model_number:
+                    results = _append_line(results, line, qty)
 
     # Jason L: populate DIMs by ProductGroupCode
     for result in results:
