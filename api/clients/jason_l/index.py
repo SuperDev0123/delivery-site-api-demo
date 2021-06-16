@@ -1,3 +1,4 @@
+import os
 import json
 import uuid
 import logging
@@ -75,7 +76,7 @@ def partial_pricing(payload, client, warehouse):
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",
@@ -553,9 +554,12 @@ def push_boks(payload, client, username, method):
         bok_1_obj.b_081_b_pu_auto_pack = True
         bok_1_obj.save()
 
+        # map bookings
+        if bok_1.get("shipping_type") == "DMEA":
+            os.popen("sh /opt/chrons/MoveSuccess2ToBookings.sh")
+
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    next_biz_day = str(next_biz_day)[:10]
 
     # Get Pricings
     booking = {
@@ -833,7 +837,6 @@ def auto_repack(payload, client):
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    next_biz_day = str(next_biz_day)[:10]
 
     # Get Pricings
     booking = {
