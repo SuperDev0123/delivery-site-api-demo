@@ -9,17 +9,18 @@ from api.clients.jason_l.constants import DIM_BY_GROUP_CODE as JASONL_DIM_BY_GRO
 logger = logging.getLogger(__name__)
 
 
-def _append_line(results, line, qty):
+def _append_line(results, line, qty, is_bundle_by_model_number):
     """
     if same e_item_type(model_number), then merge both
     """
     is_new = True
 
-    for index, result in enumerate(results):
-        if result["e_item_type"] == line["e_item_type"]:
-            results[index]["qty"] += line["qty"]
-            is_new = False
-            break
+    if is_bundle_by_model_number:
+        for index, result in enumerate(results):
+            if result["e_item_type"] == line["e_item_type"]:
+                results[index]["qty"] += line["qty"]
+                is_new = False
+                break
 
     if is_new:
         results.append(line)
@@ -77,8 +78,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
 
-                if is_bundle_by_model_number:
-                    results = _append_line(results, line, qty)
+                results = _append_line(results, line, qty, is_bundle_by_model_number)
         else:  # Biz - Sap/b1, Pronto
             has_product = False
             for product in products:
@@ -104,8 +104,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
 
-                if is_bundle_by_model_number:
-                    results = _append_line(results, line, qty)
+                results = _append_line(results, line, qty, is_bundle_by_model_number)
 
     # Jason L: populate DIMs by ProductGroupCode
     for result in results:
