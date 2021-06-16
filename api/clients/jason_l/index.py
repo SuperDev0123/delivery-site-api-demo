@@ -328,10 +328,8 @@ def push_boks(payload, client, username, method):
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
     bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
 
-    if bok_1.get("shipping_type") == "DMEA":
-        bok_1["success"] = dme_constants.BOK_SUCCESS_4
-    else:
-        bok_1["success"] = dme_constants.BOK_SUCCESS_3
+    # `DMEA` or `DMEM` - set `success` as 3
+    bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
     if not bok_1.get("b_028_b_pu_company"):
         bok_1["b_028_b_pu_company"] = warehouse.name
@@ -554,10 +552,6 @@ def push_boks(payload, client, username, method):
         bok_1_obj.b_081_b_pu_auto_pack = True
         bok_1_obj.save()
 
-        # map bookings
-        if bok_1.get("shipping_type") == "DMEA":
-            os.popen("sh /opt/chrons/MoveSuccess2ToBookings.sh")
-
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
 
@@ -689,11 +683,11 @@ def push_boks(payload, client, username, method):
             result = {"success": True, "results": json_results}
             url = None
 
-            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+            elif bok_1["shipping_type"] == 'DMEM'
                 url = (
                     f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
                 )
-            elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+            elif bok_1["shipping_type"] == 'DMEA':
                 url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
