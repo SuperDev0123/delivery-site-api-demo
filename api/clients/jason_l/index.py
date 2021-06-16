@@ -1158,8 +1158,6 @@ def scanned(payload, client):
         with open(label_url[:-4] + ".zpl", "rb") as zpl:
             zpl_data = str(b64encode(zpl.read()))[2:-1]
 
-        labeled_ssccs.append(labeled_ssccs)
-
     message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     logger.info(message)
 
