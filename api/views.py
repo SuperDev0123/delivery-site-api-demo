@@ -2564,6 +2564,7 @@ class BookingViewSet(viewsets.ViewSet):
             Bookings.objects.filter(b_client_booking_ref_num=b_client_booking_ref_num)
             .only(
                 "id",
+                "pk_booking_id",
                 "b_bookingID_Visual",
                 "b_client_name",
                 "b_client_order_num",
@@ -2583,66 +2584,74 @@ class BookingViewSet(viewsets.ViewSet):
 
         logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
 
-        booking_lines = (
-            booking.lines()
-            .filter(is_deleted=False)
-            .only(
-                "pk_lines_id",
-                "sscc",
-                "e_item",
-                "e_item_type",
-                "e_qty",
-                "e_type_of_packaging",
-            )
+        lines = booking.lines().only(
+            "pk_lines_id",
+            "pk_booking_lines_id",
+            "sscc",
+            "e_item",
+            "e_item_type",
+            "e_qty",
+            "e_type_of_packaging",
         )
+        line_datas = booking.lines().only(
+            "pk_id_lines_data", "quantity", "itemDescription", "clientRefNumber"
+        )
+
         sscc_arr = []
         result_with_sscc = {}
 
-        for booking_line in booking_lines:
-            if booking_line.sscc and not booking_line.sscc in sscc_arr:
-                sscc_arr.append(booking_line.sscc)
+        for line in lines:
+            if line.sscc and not line.sscc in sscc_arr:
+                sscc_arr.append(line.sscc)
 
         for sscc in sscc_arr:
             result_with_sscc[str(sscc)] = []
 
-            for booking_line in booking_lines:
-                if booking_line.sscc == sscc:
-                    label_url = None
-                    is_available = False
+            for line_data in line_datas:
+                if line_data.clientRefNumber != sscc:
+                    continue
 
-                    # For TNT orders, DME builds label for each SSCC
-                    # if booking.vx_freight_provider == "TNT":
-                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
-                    file_name = (
-                        booking.pu_Address_State
-                        + "_"
-                        + str(booking.b_bookingID_Visual)
-                        + "_"
-                        + str(booking_line.sscc)
-                        + ".pdf"
-                    )
-                    is_available = doesFileExist(file_path, file_name)
-                    label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+                original_line = None
+                for line in lines:
+                    if (
+                        not line.sscc
+                        and line.e_item_type == line_data.modelNumber
+                        and line.zbl_121_integer_1 == line_data.itemSerialNumbers
+                    ):
+                        original_line = line
 
-                    with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
-                        zpl_data = str(b64encode(zpl.read()))[2:-1]
+                label_url = None
+                is_available = False
 
-                    # For Hunter orders, DME builds label for entire Booking
-                    # elif booking.vx_freight_provider == "Hunter":
+                # For TNT orders, DME builds label for each SSCC
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
+                file_name = (
+                    booking.pu_Address_State
+                    + "_"
+                    + str(booking.b_bookingID_Visual)
+                    + "_"
+                    + str(sscc)
+                    + ".pdf"
+                )
+                is_available = doesFileExist(file_path, file_name)
+                label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                    result_with_sscc[str(sscc)].append(
-                        {
-                            "pk_lines_id": booking_line.pk_lines_id,
-                            "sscc": booking_line.sscc,
-                            "e_item": booking_line.e_item,
-                            "e_item_type": booking_line.e_item_type,
-                            "e_qty": booking_line.e_qty,
-                            "e_type_of_packaging": booking_line.e_type_of_packaging,
-                            "is_available": is_available,
-                            "url": label_url,
-                            "zpl": zpl_data,
-                        }
-                    )
+                with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
+                    zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+                result_with_sscc[str(sscc)].append(
+                    {
+                        "pk_lines_id": original_line.pk_lines_id,
+                        "sscc": sscc,
+                        "e_item": original_line.e_item,
+                        "e_item_type": original_line.e_item_type,
+                        "e_qty": line_data.quantity,
+                        "e_type_of_packaging": booking_line.e_type_of_packaging,
+                        "is_available": is_available,
+                        "url": label_url,
+                        "zpl": zpl_data,
+                    }
+                )
 
         result = {
             "id": booking.pk,

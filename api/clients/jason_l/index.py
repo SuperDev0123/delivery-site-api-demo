@@ -1010,31 +1010,33 @@ def scanned(payload, client):
         logger.info(f"@352 {LOG_ID} {message}")
         raise ValidationError(message)
 
-    # If Order exists
+    # Fetch original data
     pk_booking_id = booking.pk_booking_id
     fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-    original_items = lines.exclude(e_item="Auto repacked item").filter(
+    original_lines = lines.exclude(e_item="Auto repacked item").filter(
         sscc__isnull=True
     )
 
     logger.info(f"@360 {LOG_ID} Booking: {booking}")
     logger.info(f"@361 {LOG_ID} Lines: {lines}")
-    logger.info(f"@362 {LOG_ID} Original Lines: {original_items}")
+    logger.info(f"@362 {LOG_ID} Original Lines: {original_lines}")
+
+    # prepare save
+    sscc_list = []
+    for item in picked_items:
+        if item["sscc"] not in sscc_list:
+            sscc_list.append(item["sscc"])
 
     with transaction.atomic():
         # Rollback `auto repack` | `already packed` operation
         for line in lines:
-            if (
-                line.e_item == "Auto repacked item"
-                and line.e_type_of_packaging == "PAL"
-            ):
-                line.is_deleted = True
-                line.save()
-
-            if line.sscc:
+            if line.sscc:  # Delete prev sscc lines
                 line.delete()
+
+            line.is_deleted = True
+            line.save()
 
         # Delete all LineData
         for line_data in line_datas:
@@ -1042,60 +1044,55 @@ def scanned(payload, client):
 
         # Save
         sscc_lines = {}
-        for picked_item in picked_items:
-            # Find source line
-            old_line = None
-            first_item = picked_item["items"][0]
+        for sscc in sscc_list:
+            first_item = None
+            for picked_item in picked_items:
+                if picked_item["sscc"] == sscc:
+                    first_item = picked_item
+                    break
 
-            for original_item in original_items:
-                if original_item.zbl_121_integer_1 == first_item["sequence"]:
-                    old_line = original_item
-
-            # Create new Lines
+            # Create new Line
             new_line = Booking_lines()
             new_line.fk_booking_id = pk_booking_id
             new_line.pk_booking_lines_id = str(uuid.uuid4())
-            new_line.e_type_of_packaging = picked_item.get("package_type")
+            new_line.e_type_of_packaging = first_item.get("package_type")
             new_line.e_qty = first_item["qty"]
-            new_line.zbl_121_integer_1 = first_item["sequence"]
-            new_line.e_item = old_line.e_item
-            new_line.e_item_type = old_line.e_item_type
-            new_line.e_dimUOM = picked_item["dimensions"]["unit"]
-            new_line.e_dimLength = picked_item["dimensions"]["length"]
-            new_line.e_dimWidth = picked_item["dimensions"]["width"]
-            new_line.e_dimHeight = picked_item["dimensions"]["height"]
-            new_line.e_weightUOM = picked_item["weight"]["unit"]
-            new_line.e_weightPerEach = picked_item["weight"]["weight"]
+            new_line.zbl_121_integer_1 = 0
+            new_line.e_item = "Picked Item"
+            new_line.e_item_type = None
+            new_line.e_dimUOM = first_item["dimensions"]["unit"]
+            new_line.e_dimLength = first_item["dimensions"]["length"]
+            new_line.e_dimWidth = first_item["dimensions"]["width"]
+            new_line.e_dimHeight = first_item["dimensions"]["height"]
+            new_line.e_weightUOM = first_item["weight"]["unit"]
+            new_line.e_weightPerEach = first_item["weight"]["weight"]
             new_line.is_deleted = old_line.zbl_102_text_2 in SERVICE_GROUP_CODES
-            new_line.zbl_102_text_2 = old_line.zbl_102_text_2
-            new_line.sscc = picked_item["sscc"]
-            new_line.picked_up_timestamp = (
-                picked_item.get("timestamp") or datetime.now()
-            )
-
-            if old_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
-                new_line.is_deleted = True
-
+            new_line.zbl_102_text_2 = None
+            new_line.sscc = first_item["sscc"]
+            new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
             new_line.save()
 
-            # Soft delete source line
-            old_line.is_deleted = True
-            old_line.save()
+            sscc_lines[sscc] = new_line
 
-            # Create new line_data
-            for item in picked_item["items"]:
+            # Create new line_data(s)
+            for picked_item in picked_items:
+                if picked_item["sscc"] != sscc:
+                    continue
+
+                original_line = None
+                for line in original_lines:
+                    if line.zbl_121_integer_1 == first_item["sequence"]:
+                        original_line = line
+
                 line_data = Booking_lines_data()
                 line_data.fk_booking_id = pk_booking_id
                 line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
-                line_data.itemDescription = "Picked at warehouse"
-                line_data.quantity = item.get("qty")
-                line_data.clientRefNumber = picked_item["sscc"]
+                line_data.quantity = picked_item.get("qty")
+                line_data.itemDescription = original_line.e_item
+                line_data.modelNumber = original_line.e_item_type
+                line_data.clientRefNumber = sscc
+                line_data.itemSerialNumbers = original_line.zbl_121_integer_1
                 line_data.save()
-
-            if picked_item["sscc"] not in sscc_lines:
-                sscc_lines[picked_item["sscc"]] = [new_line]
-            else:
-                sscc_lines[picked_item["sscc"]].append(new_line)
 
     # Should get pricing again
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
@@ -1132,14 +1129,7 @@ def scanned(payload, client):
             set_booking_quote(booking, None)
 
     # Build label with SSCC - one sscc should have one page label
-    labeled_ssccs = []
-    for sscc in sscc_lines:
-        if sscc in labeled_ssccs:
-            continue
-
-        if not booking.vx_freight_provider and booking.api_booking_quote:
-            _booking = set_booking_quote(booking, booking.api_booking_quote)
-
+    for sscc in sscc_list:
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )

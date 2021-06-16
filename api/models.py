@@ -1859,6 +1859,9 @@ class Bookings(models.Model):
     def lines(self):
         return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
 
+    def line_datas(self):
+        return Booking_lines_data.objects.filter(fk_booking_id=self.pk_booking_id)
+
     def get_total_lines_qty(self):
         try:
             qty = 0
