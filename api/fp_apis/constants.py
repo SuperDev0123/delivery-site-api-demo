@@ -110,6 +110,21 @@ FP_CREDENTIALS = {
                 "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
                 "accountPassword": "x81775935aece65541c9",
             },
+            "VIC-HZ": {
+                "accountCode": "10164661",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "SA-HZ": {
+                "accountCode": "10164671",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "WA-HZ": {
+                "accountCode": "10164660",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
         },
     },
     "hunter": {

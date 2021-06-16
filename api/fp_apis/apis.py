@@ -561,8 +561,7 @@ def get_label(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = s0
-                _set_error(booking, error_msg)
+                _set_error(booking, str(e))
                 return JsonResponse(
                     {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
                 )
@@ -991,6 +990,7 @@ def pricing(request):
         is_pricing_only = True
 
     booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
+    client = booking.get_client()
 
     if not success:
         return JsonResponse(
@@ -998,7 +998,12 @@ def pricing(request):
         )
 
     json_results = ApiBookingQuotesSerializer(
-        results, many=True, context={"booking": booking}
+        results,
+        many=True,
+        context={
+            "booking": booking,
+            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+        },
     ).data
 
     if is_pricing_only:

@@ -387,6 +387,7 @@ class UserViewSet(viewsets.ViewSet):
             client_employees = Client_employees.objects.filter(
                 email__isnull=False
             ).order_by("name_first")
+            company_name = "dme"
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -401,6 +402,7 @@ class UserViewSet(viewsets.ViewSet):
                 .prefetch_related("fk_id_dme_client")
                 .order_by("name_first")
             )
+            company_name = client_employee.fk_id_dme_client.company_name
 
         results = []
         for client_employee in client_employees:
@@ -409,7 +411,7 @@ class UserViewSet(viewsets.ViewSet):
                 "name_first": client_employee.name_first,
                 "name_last": client_employee.name_last,
                 "email": client_employee.email,
-                "company_name": client_employee.fk_id_dme_client.company_name,
+                "company_name": company_name,
             }
             results.append(result)
 
@@ -1996,7 +1998,8 @@ class BookingViewSet(viewsets.ViewSet):
                 for booking_line in booking_lines:
                     e_qty_total += booking_line.e_qty or 0
 
-                if not client_customer_mark_up:
+                client_customer_mark_up = 0
+                if not client_customer_mark_up and booking.kf_client_id:
                     client = DME_clients.objects.get(
                         dme_account_num=booking.kf_client_id
                     )
@@ -2561,6 +2564,7 @@ class BookingViewSet(viewsets.ViewSet):
             Bookings.objects.filter(b_client_booking_ref_num=b_client_booking_ref_num)
             .only(
                 "id",
+                "pk_booking_id",
                 "b_bookingID_Visual",
                 "b_client_name",
                 "b_client_order_num",
@@ -2580,66 +2584,75 @@ class BookingViewSet(viewsets.ViewSet):
 
         logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
 
-        booking_lines = (
-            booking.lines()
-            .filter(is_deleted=False)
-            .only(
-                "pk_lines_id",
-                "sscc",
-                "e_item",
-                "e_item_type",
-                "e_qty",
-                "e_type_of_packaging",
-            )
+        lines = booking.lines().only(
+            "pk_lines_id",
+            "pk_booking_lines_id",
+            "sscc",
+            "e_item",
+            "e_item_type",
+            "e_qty",
+            "e_type_of_packaging",
         )
+        line_datas = booking.line_datas().only(
+            "pk_id_lines_data", "quantity", "itemDescription", "clientRefNumber"
+        )
+
         sscc_arr = []
         result_with_sscc = {}
 
-        for booking_line in booking_lines:
-            if booking_line.sscc and not booking_line.sscc in sscc_arr:
-                sscc_arr.append(booking_line.sscc)
+        for line in lines:
+            if line.sscc and not line.sscc in sscc_arr:
+                sscc_arr.append(line.sscc)
 
         for sscc in sscc_arr:
             result_with_sscc[str(sscc)] = []
 
-            for booking_line in booking_lines:
-                if booking_line.sscc == sscc:
-                    label_url = None
-                    is_available = False
+            for line_data in line_datas:
+                if line_data.clientRefNumber != sscc:
+                    continue
 
-                    # For TNT orders, DME builds label for each SSCC
-                    # if booking.vx_freight_provider == "TNT":
-                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
-                    file_name = (
-                        booking.pu_Address_State
-                        + "_"
-                        + str(booking.b_bookingID_Visual)
-                        + "_"
-                        + str(booking_line.sscc)
-                        + ".pdf"
-                    )
-                    is_available = doesFileExist(file_path, file_name)
-                    label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+                original_line = None
+                for line in lines:
+                    if (
+                        not line.sscc
+                        and line.e_item_type == line_data.modelNumber
+                        and str(line.zbl_121_integer_1) == line_data.itemSerialNumbers
+                    ):
+                        original_line = line
+                        break
 
-                    with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
-                        zpl_data = str(b64encode(zpl.read()))[2:-1]
+                label_url = None
+                is_available = False
 
-                    # For Hunter orders, DME builds label for entire Booking
-                    # elif booking.vx_freight_provider == "Hunter":
+                # For TNT orders, DME builds label for each SSCC
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
+                file_name = (
+                    booking.pu_Address_State
+                    + "_"
+                    + str(booking.b_bookingID_Visual)
+                    + "_"
+                    + str(sscc)
+                    + ".pdf"
+                )
+                is_available = doesFileExist(file_path, file_name)
+                label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                    result_with_sscc[str(sscc)].append(
-                        {
-                            "pk_lines_id": booking_line.pk_lines_id,
-                            "sscc": booking_line.sscc,
-                            "e_item": booking_line.e_item,
-                            "e_item_type": booking_line.e_item_type,
-                            "e_qty": booking_line.e_qty,
-                            "e_type_of_packaging": booking_line.e_type_of_packaging,
-                            "is_available": is_available,
-                            "url": label_url,
-                            "zpl": zpl_data,
-                        }
-                    )
+                with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
+                    zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+                result_with_sscc[str(sscc)].append(
+                    {
+                        "pk_lines_id": original_line.pk_lines_id,
+                        "sscc": sscc,
+                        "e_item": original_line.e_item,
+                        "e_item_type": original_line.e_item_type,
+                        "e_qty": line_data.quantity,
+                        "e_type_of_packaging": original_line.e_type_of_packaging,
+                        "is_available": is_available,
+                        "url": label_url,
+                        "zpl": zpl_data,
+                    }
+                )
 
         result = {
             "id": booking.pk,
@@ -3628,14 +3641,14 @@ class FPStoreBookingLog(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
-        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id).first()
+        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id)
 
-        if dme_employee is not None:
+        if dme_employee:
             user_type = "DME"
             fields_to_exclude = []
         else:
             user_type = "CLIENT"
-            fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
+            fields_to_exclude = ["fee", "client_mark_up_percent", "fuel_levy_base"]
 
         fk_booking_id = request.GET["fk_booking_id"]
         booking = Bookings.objects.get(pk_booking_id=fk_booking_id)
@@ -3646,11 +3659,18 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             .exclude(service_name="Air Freight")
             .order_by("client_mu_1_minimum_values")
         )
+
+        client = booking.get_client()
+        context = {
+            "booking": booking,
+            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+        }
+
         serializer = ApiBookingQuotesSerializer(
             queryset,
             many=True,
             fields_to_exclude=fields_to_exclude,
-            context={"booking": booking},
+            context=context,
         )
         return Response(serializer.data)
 

@@ -3,20 +3,24 @@ import xml.etree.ElementTree as ET
 
 from django.conf import settings
 
+from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
-from api.models import BOK_1_headers, BOK_2_lines, Log
+from api.fp_apis.operations.surcharge.index import get_surcharges_total
 
 logger = logging.getLogger(__name__)
 
 
 # Constants
+PORT = "8443"
+USERNAME = "delme"
+PASSWORD = "Dme1234!$*"
+CUSTOMER_CODE = "3QD3D5X"
+
 if settings.ENV in ["local", "dev"]:
-    PORT = "8443"
     API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/U01_avenue"
-    USERNAME = "delme"
-    PASSWORD = "Dme1234!$*"
-    CUSTOMER_CODE = "3QD3D5X"
+else:
+    API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/L01_avenue"
 
 
 def parse_token_xml(response):
@@ -138,6 +142,22 @@ def parse_order_xml(response, token):
         "{http://www.pronto.net/so/1.0.0}WarehouseCode"
     ).text
 
+    # For `clue` param of `get_suburb_state()`
+    addresses = []
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address5").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
+    )
+    b_058 = "||".join(addresses)[:40].lower()
+
     order = {
         "b_client_order_num": order_num,
         "b_021_b_pu_avail_from_date": b_021,
@@ -184,6 +204,16 @@ def parse_order_xml(response, token):
 def get_order(order_num):
     logger.info(f"@640 [PRONTO GET ORDER] Start! Order: {order_num}")
 
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+        message = f"@6400 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
+        logger.info(message)
+    # ---
+
     token = get_token()
     url = f"{API_URL}/api/SalesOrderGetSalesOrders"
     headers = {
@@ -193,7 +223,8 @@ def get_order(order_num):
     body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?> \
                 <SalesOrderGetSalesOrdersRequest> \
                     <Parameters> \
-                        <SOOrderNo>{order_num}</SOOrderNo> \
+                        <SOOrderNo>{_order_num}</SOOrderNo> \
+                        <SOBOSuffix>{suffix}</SOBOSuffix> \
                     </Parameters> \
                     <RequestFields> \
                         <SalesOrders> \
@@ -247,47 +278,130 @@ def get_order(order_num):
 
 def send_info_back_to_pronto(bok_1, quote):
     LOG_ID = "[PRONTO SEND ORDER BACK]"
+
+    if not bok_1.b_091_send_quote_to_pronto:
+        logger.info(
+            f"@650 {LOG_ID} Flag is OFF! Do not need to send. bok_1 ID: {bok_1.pk}"
+        )
+        return True
+
     logger.info(f"@650 {LOG_ID} Start! bok_1 ID: {bok_1.pk}")
 
-    # Get service line
+    # Query data
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     bok_2s = BOK_2_lines.objects.filter(
+        fk_header_id=bok_1.pk_header_id, is_deleted=False
+    )
+    service_bok_2s = BOK_2_lines.objects.filter(
         fk_header_id=bok_1.pk_header_id, is_deleted=True, zbl_102_text_2="FR01"
     )
 
-    if not bok_2s:
+    if not service_bok_2s:
         logger.info(f"@651 {LOG_ID} No service(FR01) bok_2 found")
         return None
 
-    bok_2 = bok_2s.first()
+    bok_2 = service_bok_2s.first()
 
+    # Calc `ordered_qty` & `item_price`
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+    tax_value_1 = bok_1.quote.tax_value_1 or 0
+    ordered_qty = 1
+    surcharge_total = get_surcharges_total(bok_1, bok_2s, bok_1.quote)
+    item_price = "{0:.2f}".format(
+        (bok_1.quote.client_mu_1_minimum_values + surcharge_total)
+        * (client.client_customer_mark_up + 1)
+    )
+
+    logger.info(
+        f"@652 {LOG_ID} Info to back - ordered_qty: {ordered_qty}, item_price: {item_price}"
+    )
+
+    # Get token
     token = get_token()
-    url = f"{API_URL}/api/SalesOrderInsertSalesOrderLines"
+
+    # Update LineQty
+    url = f"{API_URL}/api/SalesOrderPostLineQtyOverride"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "X-Pronto-Token": token,
     }
-
-    body = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?> \
-                <SalesOrderInsertSalesOrderLinesRequest> \
-                    <SalesOrderLines> \
-                        <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}"> \
-                            <TypeCode>SN</TypeCode> \
-                            <OrderedQty>{quote.client_mu_1_minimum_values}</OrderedQty> \
-                            <PriceOverrideFlag>Y</PriceOverrideFlag> \
-                            <ItemCode>{bok_2.e_item_type}</ItemCode> \
-                            <LineDescription>Qutoe from DME</LineDescription> \
-                        </SalesOrderLine> \
-                    </SalesOrderLines> \
-                </SalesOrderInsertSalesOrderLinesRequest>'
+    body = f'<SalesOrderPostLineQtyOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
+                <SalesOrderLines> \
+                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
+                        <OrderedQty>1</OrderedQty> \
+                    </SalesOrderLine> \
+                </SalesOrderLines> \
+            </SalesOrderPostLineQtyOverrideRequest>'
 
     response = send_soap_request(url, body, headers)
     logger.info(
-        f"@652 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+        f"@653 {LOG_ID} SalesOrderPostLineQtyOverride response status_code: {response.status_code}"
     )
 
     if response.status_code != 200:
-        logger.error(f"@653 {LOG_ID} Failed")
-        return False
-    else:
-        logger.error(f"@654 {LOG_ID} Success")
-        return True
+        logger.info(
+            f"@654 {LOG_ID} SalesOrderPostLinePriceOverride response content: {response.content}"
+        )
+
+    # Update LinePrice
+    url = f"{API_URL}/api/SalesOrderPostLinePriceOverride"
+    body = f'<SalesOrderPostLinePriceOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
+                <SalesOrderLines> \
+                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
+                        <ItemPrice>{item_price}</ItemPrice> \
+                        <PriceOverrideFlag>Y</PriceOverrideFlag> \
+                        <PriceRule>D</PriceRule> \
+                    </SalesOrderLine> \
+                </SalesOrderLines> \
+            </SalesOrderPostLinePriceOverrideRequest>'
+
+    response = send_soap_request(url, body, headers)
+    logger.info(
+        f"@655 {LOG_ID} SalesOrderPostLinePriceOverride response status_code: {response.status_code}"
+    )
+
+    if response.status_code != 200:
+        logger.info(
+            f"@656 {LOG_ID} SalesOrderPostLinePriceOverride response content: {response.content}"
+        )
+
+    logger.info(f"@659 {LOG_ID} Finish! bok_1 ID: {bok_1.pk}")
+    return True
+
+
+def update_pronto_note(order_num, note):
+    LOG_ID = "[PRONTO UPDATE NOTE]"
+    logger.info(f"@660 {LOG_ID} Start! OrderNum: {order_num}, Note: {note}")
+
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+        message = f"@6400 [PRONTO UPDATE NOTE] OrderNum: {_order_num}, Suffix: {suffix}"
+        logger.info(message)
+    # ---
+
+    token = get_token()
+    url = f"{API_URL}/api/SalesOrderPostOrderNotes"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Pronto-Token": token,
+    }
+    body = f'<SalesOrderPostOrderNotesRequest xmlns="http://www.pronto.net/so/1.0.0"> \
+                <SalesOrders> \
+                    <SalesOrder SOOrderNo="{_order_num}" SOBOSuffix="{suffix}"> \
+                        <Notes>{note}</Notes> \
+                    </SalesOrder> \
+                </SalesOrders> \
+            </SalesOrderPostOrderNotesRequest>'
+
+    # logger.info(f"@661 {LOG_ID} request body: {body}")
+    response = send_soap_request(url, body, headers)
+    logger.info(
+        f"@662 {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
+    )
+
+    logger.info(f"@669 {LOG_ID} Finish! OrderNum: {order_num}")
+    return True
