@@ -901,6 +901,7 @@ def auto_repack(payload, client):
     logger.info(
         f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
     )
+    json_results = []
 
     # Select best quotes(fastest, lowest)
     if quote_set.exists() and quote_set.count() > 0:
