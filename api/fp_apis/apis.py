@@ -561,8 +561,7 @@ def get_label(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = s0
-                _set_error(booking, error_msg)
+                _set_error(booking, str(e))
                 return JsonResponse(
                     {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
                 )

@@ -2613,14 +2613,6 @@ class BookingViewSet(viewsets.ViewSet):
 
                 original_line = None
                 for line in lines:
-                    print(
-                        "@1 - ",
-                        line.sscc,
-                        line.e_item_type,
-                        line.zbl_121_integer_1,
-                        line_data.modelNumber,
-                        line_data.itemSerialNumbers,
-                    )
                     if (
                         not line.sscc
                         and line.e_item_type == line_data.modelNumber
