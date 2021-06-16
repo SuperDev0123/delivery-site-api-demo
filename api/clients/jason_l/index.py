@@ -554,10 +554,8 @@ def push_boks(payload, client, username, method):
         bok_1_obj.save()
 
     # Get next business day
-    next_biz_day = bok_1.get("b_021_pu_avail_from_date")
-    if not next_biz_day or next_biz_day < date.today():
-        next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-        next_biz_day = str(next_biz_day)[:10]
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    next_biz_day = str(next_biz_day)[:10]
 
     # Get Pricings
     booking = {
@@ -834,10 +832,8 @@ def auto_repack(payload, client):
     bok_1.save()
 
     # Get next business day
-    next_biz_day = bok_1.b_021_pu_avail_from_date
-    if not next_biz_day or next_biz_day < date.today():
-        next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-        next_biz_day = str(next_biz_day)[:10]
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    next_biz_day = str(next_biz_day)[:10]
 
     # Get Pricings
     booking = {
