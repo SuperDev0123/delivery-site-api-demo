@@ -173,37 +173,37 @@ def mc(param):
 
 def lws(param):
     length_surcharge, width_surcharge = None, None
-    if param["length"] >= 1.2 and param["length"] < 2.4:
+    if param["max_dimension"] >= 1.2 and param["max_dimension"] < 2.4:
         length_surcharge = {
             "name": "Lengths [LSC] 1.20-2.39 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 5.4,
         }
-    elif param["length"] >= 2.4 and param["length"] < 3.6:
+    elif param["max_dimension"] >= 2.4 and param["max_dimension"] < 3.6:
         length_surcharge = {
             "name": "Lengths [LSC] 2.40-3.59 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 11.93,
         }
-    elif param["length"] >= 3.6 and param["length"] < 4.2:
+    elif param["max_dimension"] >= 3.6 and param["max_dimension"] < 4.2:
         length_surcharge = {
             "name": "Lengths [LSC] 3.6-4.19 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 25.4,
         }
-    elif param["length"] >= 4.2 and param["length"] < 4.8:
+    elif param["max_dimension"] >= 4.2 and param["max_dimension"] < 4.8:
         length_surcharge = {
             "name": "Lengths [LSC] 4.2-4.79 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 88.61,
         }
-    elif param["length"] >= 4.8 and param["length"] < 6:
+    elif param["max_dimension"] >= 4.8 and param["max_dimension"] < 6:
         length_surcharge = {
             "name": "Lengths [LSC] 4.8-5.59 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 119.19,
         }
-    elif param["length"] >= 6:
+    elif param["max_dimension"] >= 6:
         length_surcharge = {
             "name": "Lengths [LSC] over 6 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
@@ -212,13 +212,13 @@ def lws(param):
     else:
         length_surcharge = {}
 
-    if param["width"] > 1.1 and param["width"] <= 1.6:
+    if param["max_dimension"] > 1.1 and param["max_dimension"] <= 1.6:
         width_surcharge = {
             "name": "Width [WS] 1.10-1.60 metre",
             "description": "Items that exceed width will attract a surcharge",
             "value": 7.5,
         }
-    elif param["width"] > 1.6 and param["width"] <= 2.4:
+    elif param["max_dimension"] > 1.6 and param["max_dimension"] <= 2.4:
         width_surcharge = {
             "name": "Width [WS] 1.61-2.4 metre",
             "description": "Items that exceed width will attract a surcharge",
