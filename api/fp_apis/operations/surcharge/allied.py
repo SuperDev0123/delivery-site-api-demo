@@ -12,8 +12,7 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #     else:
 #         return None
 
-
-def get_per_kg_charge(param):
+def get_base_kg_charge(param): 
     try:
         fp_id = Fp_freight_providers.objects.get(
             fp_company_name=param["vx_freight_provider"]
@@ -112,8 +111,8 @@ def hd0(param):
 def hd1(param):
     if (
         param["de_to_address_type"].lower() == "residential"
-        and param["max_weight"] >= 22
-        and param["max_weight"] < 55
+        and param["max_weight"] > 22
+        and param["max_weight"] <= 55
     ):
         return {
             "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
@@ -126,8 +125,8 @@ def hd1(param):
 
 def hd2(param):
     if param["de_to_address_type"].lower() == "residential" and (
-        (param["dead_weight"] >= 55 and param["dead_weight"] < 90)
-        or (param["cubic_weight"] >= 55 and param["cubic_weight"] < 135)
+        (param["dead_weight"] > 55 and param["dead_weight"] <= 90)
+        or (param["cubic_weight"] > 55 and param["cubic_weight"] <= 135)
     ):
         return {
             "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
@@ -140,7 +139,7 @@ def hd2(param):
 
 def hd3(param):
     if param["de_to_address_type"].lower() == "residential" and (
-        param["dead_weight"] >= 90 or param["cubic_weight"] >= 135
+        param["dead_weight"] > 90 or param["cubic_weight"] > 135
     ):
         return {
             "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
@@ -150,19 +149,18 @@ def hd3(param):
     else:
         return None
 
-
-def ow(param):
-    base_charge, per_kg_charge = get_per_kg_charge(param)
-    return {
-        "name": "Overweight",
-        "description": "Base charge plus kilo charge",
-        "value": base_charge + per_kg_charge * param["max_weight"],
-    }
+# def ow(param):
+#     base_charge, per_kg_charge = get_base_kg_charge(param)
+#     return {
+#         'name': 'Overweight',
+#         'description': 'Base charge plus kilo charge',
+#         'value': base_charge + per_kg_charge * param['max_weight']
+#     }
 
 
 def mc(param):
-    base_charge, per_kg_charge = get_per_kg_charge(param)
-    if param["is_pallet"] and per_kg_charge and param["max_weight"] < 350:
+    base_charge, per_kg_charge = get_base_kg_charge(param)
+    if param['is_pallet'] and per_kg_charge and param['max_weight'] < 350:
         return {
             "name": "Minimum Charge-Skids/ Pallets",
             "description": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your "
@@ -175,37 +173,37 @@ def mc(param):
 
 def lws(param):
     length_surcharge, width_surcharge = None, None
-    if param["length"] >= 1.2 and param["length"] < 2.4:
+    if param["max_dimension"] >= 1.2 and param["max_dimension"] < 2.4:
         length_surcharge = {
             "name": "Lengths [LSC] 1.20-2.39 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 5.4,
         }
-    elif param["length"] >= 2.4 and param["length"] < 3.6:
+    elif param["max_dimension"] >= 2.4 and param["max_dimension"] < 3.6:
         length_surcharge = {
             "name": "Lengths [LSC] 2.40-3.59 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 11.93,
         }
-    elif param["length"] >= 3.6 and param["length"] < 4.2:
+    elif param["max_dimension"] >= 3.6 and param["max_dimension"] < 4.2:
         length_surcharge = {
             "name": "Lengths [LSC] 3.6-4.19 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 25.4,
         }
-    elif param["length"] >= 4.2 and param["length"] < 4.8:
+    elif param["max_dimension"] >= 4.2 and param["max_dimension"] < 4.8:
         length_surcharge = {
             "name": "Lengths [LSC] 4.2-4.79 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 88.61,
         }
-    elif param["length"] >= 4.8 and param["length"] < 6:
+    elif param["max_dimension"] >= 4.8 and param["max_dimension"] < 6:
         length_surcharge = {
             "name": "Lengths [LSC] 4.8-5.59 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 119.19,
         }
-    elif param["length"] >= 6:
+    elif param["max_dimension"] >= 6:
         length_surcharge = {
             "name": "Lengths [LSC] over 6 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
@@ -214,13 +212,13 @@ def lws(param):
     else:
         length_surcharge = {}
 
-    if param["width"] > 1.1 and param["width"] <= 1.6:
+    if param["max_dimension"] > 1.1 and param["max_dimension"] <= 1.6:
         width_surcharge = {
             "name": "Width [WS] 1.10-1.60 metre",
             "description": "Items that exceed width will attract a surcharge",
             "value": 7.5,
         }
-    elif param["width"] > 1.6 and param["width"] <= 2.4:
+    elif param["max_dimension"] > 1.6 and param["max_dimension"] <= 2.4:
         width_surcharge = {
             "name": "Width [WS] 1.61-2.4 metre",
             "description": "Items that exceed width will attract a surcharge",
@@ -302,7 +300,22 @@ def ofde(param):
         }
     except Exception as e:
         return None
-
-
+   
 def allied():
-    return {"order": [ow, ofpu, ofde, tl, hd0, hd1, hd2, hd3], "line": [mc, lws]}
+    return {
+        'order': [
+            # ow,
+            ofpu,
+            ofde,
+            tl,
+            hd0,
+            hd1,
+            hd2,
+            hd3
+        ],
+        'line': [
+            mc,
+            lws
+        ]
+    }
+
