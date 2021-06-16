@@ -1081,7 +1081,7 @@ def scanned(payload, client):
 
                 original_line = None
                 for line in original_lines:
-                    if line.zbl_121_integer_1 == first_item["sequence"]:
+                    if line.zbl_121_integer_1 == first_item["items"][0]["sequence"]:
                         original_line = line
 
                 line_data = Booking_lines_data()
