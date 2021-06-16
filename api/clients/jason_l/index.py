@@ -1034,6 +1034,7 @@ def scanned(payload, client):
         for line in lines:
             if line.sscc:  # Delete prev sscc lines
                 line.delete()
+                # continue
 
             line.is_deleted = True
             line.save()
@@ -1081,7 +1082,7 @@ def scanned(payload, client):
 
                 original_line = None
                 for line in original_lines:
-                    if line.zbl_121_integer_1 == first_item["items"][0]["sequence"]:
+                    if line.zbl_121_integer_1 == picked_item["items"][0]["sequence"]:
                         original_line = line
 
                 line_data = Booking_lines_data()
