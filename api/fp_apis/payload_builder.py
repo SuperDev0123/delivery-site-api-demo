@@ -761,7 +761,7 @@ def get_pricing_payload(
         booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
         booking.save()
 
-    payload["readyDate"] = "" or pu_avail_from
+    payload["readyDate"] = "" or str(pu_avail_from)[:10]
     payload["referenceNumber"] = "" or booking.b_clientReference_RA_Numbers
 
     client_process = None
