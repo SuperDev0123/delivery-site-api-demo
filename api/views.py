@@ -3887,14 +3887,14 @@ def get_csv(request):
                         )
                         api_booking_confirmation_line.save()
                         index = index + 1
-            elif vx_freight_provider in ["dhl", "state transport"]:
+            elif vx_freight_provider in ["dhl", "state transport", "century"]:
                 booking.b_dateBookedDate = get_sydney_now_time(return_type="datetime")
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.save()
 
-                if vx_freight_provider == "state transport":
+                if vx_freight_provider == "state transport" or vx_freight_provider == "century":
                     file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
                     file_path, file_name = build_label(booking, file_path)
                     booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
