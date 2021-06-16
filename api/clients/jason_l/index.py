@@ -1091,7 +1091,7 @@ def scanned(payload, client):
                 line_data = Booking_lines_data()
                 line_data.fk_booking_id = pk_booking_id
                 line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
-                line_data.quantity = picked_item.get("qty")
+                line_data.quantity = picked_item["items"][0]["qty"]
                 line_data.itemDescription = original_line.e_item
                 line_data.modelNumber = original_line.e_item_type
                 line_data.clientRefNumber = sscc
