@@ -507,6 +507,7 @@ def push_boks(payload, client, username, method):
             line["l_007_dim_height"] = pallet.height
             line["l_009_weight_per_each"] = total_weight / number_of_pallets
             line["l_008_weight_UOM"] = "KG"
+            line["is_deleted"] = False
 
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
