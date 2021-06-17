@@ -20,9 +20,9 @@ SURCHARGE_NAME_DESC = {
         "Home Deliveries [HD]": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
     },
     "HUNTER": {
-        "Excess Lengths (2.5m+)": "2.5m up to/not incl. 4.0m13",
-        "Excess Lengths (4.0m+)": "4.0m up to/not incl. 6.0m13",
-        "Excess Lengths (6.0m+)": "6.0m and greater13",
+        "Excess Lengths (2.5m+)": "2.5m up to/not incl. 4.0m",
+        "Excess Lengths (4.0m+)": "4.0m up to/not incl. 6.0m",
+        "Excess Lengths (6.0m+)": "6.0m and greater",
         "Bulk Delivery to Residential Address - Average dead or cubic weight per item 34-49kg": "",
         "Bulk Delivery to Residential Address - Average dead or cubic weight per item 50-74kg": "",
         "Bulk Delivery to Residential Address - Average dead or cubic weight per item 75-99kg": "",
