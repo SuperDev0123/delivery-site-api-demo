@@ -182,6 +182,9 @@ def parse_pricing_response(
             results.append(result)
 
         if is_from_self and "price" in json_data:  # Built-in
+            msg = f"#510 Built-in result: {json_data}"
+            logger.info(msg)
+
             for price in json_data["price"]:
                 result = {}
                 result["account_code"] = account_code
