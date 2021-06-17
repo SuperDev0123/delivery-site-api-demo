@@ -122,7 +122,7 @@ def book(fp_name, booking, booker):
             is_get_label = True  # Flag to decide if need to get label from response
 
             if (
-                booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002"
+                booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
             ):  # Jason L:
                 is_get_label = False
 
