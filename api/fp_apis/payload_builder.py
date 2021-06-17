@@ -31,9 +31,6 @@ def get_account_detail(booking, fp_name):
 
     if account_code:
         for client_name in FP_CREDENTIALS[_fp_name].keys():
-            if settings.ENV == "prod" and client_name == "test":
-                continue
-
             for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                 detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
@@ -49,7 +46,10 @@ def get_account_detail(booking, fp_name):
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
     if _fp_name in ["allied"]:
-        account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+        if settings.ENV != "prod":
+            account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+        else:
+            account_detail = FP_CREDENTIALS["allied"]["dme"]["live_0"]
 
     if not account_detail:
         booking.b_errorCapture = f"Couldn't find Account Detail"
