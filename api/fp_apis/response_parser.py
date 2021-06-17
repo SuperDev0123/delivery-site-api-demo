@@ -125,11 +125,14 @@ def parse_pricing_response(
             result["fee"] = json_data["netPrice"]
             result["service_name"] = "Road Express"
             result["etd"] = 3  # TODO
-            result["x_price_surcharge"] = float(json_data["totalPrice"]) - float(
-                json_data["netPrice"]
-            )  # set surchargeTotal
+
+            # We do not get surcharge from Allied api
+            result["x_price_surcharge"] = 0
+            # result["x_price_surcharge"] = float(json_data["totalPrice"]) - float(
+            #     json_data["netPrice"]
+            # )  # set surchargeTotal
             # Extra info - should be deleted before serialized
-            result["surcharges"] = json_data["surcharges"]
+            # result["surcharges"] = json_data["surcharges"]
             results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]

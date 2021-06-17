@@ -276,20 +276,22 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                # Allied surcharges
-                surcharges = []
+                # We do not get surcharges from Allied api
+                # # Allied surcharges
+                # surcharges = []
 
-                if (
-                    parse_result["freight_provider"].lower() == "allied"
-                    and "surcharges" in parse_result
-                ):
-                    surcharges = parse_result["surcharges"]
-                    del parse_result["surcharges"]
+                # if (
+                #     parse_result["freight_provider"].lower() == "allied"
+                #     and "surcharges" in parse_result
+                # ):
+                #     surcharges = parse_result["surcharges"]
+                #     del parse_result["surcharges"]
 
                 serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
                     quote = serializer.save()
 
+                    # We do not get surcharges from Allied api
                     # for surcharge in surcharges:
                     #     if float(surcharge["amount"]) > 0:
                     #         surcharge_obj = Surcharge()
