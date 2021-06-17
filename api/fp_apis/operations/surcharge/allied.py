@@ -51,14 +51,20 @@ def get_base_kg_charge(param):
 
 
 def tl(param):
-    if "is_tail_lift" in param["is_tail_lift"] and param["is_tail_lift"] == True:
-        return {
-            "name": "Tail Lift [TL]",
-            "description": "For deliveries requiring tail lifts",
-            "value": 60,
-        }
-    else:
-        return None
+    """
+    Allied pricing api contains this surcharge.
+
+    Disable until we use built-in pricing module for Allied
+    """
+
+    # if "is_tail_lift" in param["is_tail_lift"] and param["is_tail_lift"] == True:
+    #     return {
+    #         "name": "Tail Lift [TL]",
+    #         "description": "For deliveries requiring tail lifts",
+    #         "value": 60,
+    #     }
+    # else:
+    #     return None
 
 
 # def tm(param):
