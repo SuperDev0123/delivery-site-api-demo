@@ -51,20 +51,14 @@ def get_base_kg_charge(param):
 
 
 def tl(param):
-    """
-    Allied pricing api contains this surcharge.
-
-    Disable until we use built-in pricing module for Allied
-    """
-
-    # if "is_tail_lift" in param["is_tail_lift"] and param["is_tail_lift"] == True:
-    #     return {
-    #         "name": "Tail Lift [TL]",
-    #         "description": "For deliveries requiring tail lifts",
-    #         "value": 60,
-    #     }
-    # else:
-    #     return None
+    if "is_tail_lift" in param["is_tail_lift"] and param["is_tail_lift"] == True:
+        return {
+            "name": "Tail Lift [TL]",
+            "description": "For deliveries requiring tail lifts",
+            "value": 60,
+        }
+    else:
+        return None
 
 
 # def tm(param):
@@ -220,20 +214,26 @@ def lws(param):
     else:
         length_surcharge = {}
 
-    if param["max_dimension"] > 1.1 and param["max_dimension"] <= 1.6:
-        width_surcharge = {
-            "name": "Width [WS] 1.10-1.60 metre",
-            "description": "Items that exceed width will attract a surcharge",
-            "value": 7.5,
-        }
-    elif param["max_dimension"] > 1.6 and param["max_dimension"] <= 2.4:
-        width_surcharge = {
-            "name": "Width [WS] 1.61-2.4 metre",
-            "description": "Items that exceed width will attract a surcharge",
-            "value": 10.5,
-        }
-    else:
-        width_surcharge = {}
+    """
+    Allied pricing api contains this surcharge.
+
+    Disable until we use built-in pricing module for Allied
+    """
+    # if param["max_dimension"] > 1.1 and param["max_dimension"] <= 1.6:
+    #     width_surcharge = {
+    #         "name": "Width [WS] 1.10-1.60 metre",
+    #         "description": "Items that exceed width will attract a surcharge",
+    #         "value": 7.5,
+    #     }
+    # elif param["max_dimension"] > 1.6 and param["max_dimension"] <= 2.4:
+    #     width_surcharge = {
+    #         "name": "Width [WS] 1.61-2.4 metre",
+    #         "description": "Items that exceed width will attract a surcharge",
+    #         "value": 10.5,
+    #     }
+    # else:
+    #     width_surcharge = {}
+    width_surcharge = {}
 
     if length_surcharge and width_surcharge:
         if length_surcharge["value"] > width_surcharge["value"]:
