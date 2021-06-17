@@ -210,8 +210,13 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     totalCubic = 0
     for booking_line in lines:
         totalQty = totalQty + booking_line.e_qty
-        totalWeight = totalWeight + booking_line.e_Total_KG_weight
-        totalCubic = totalCubic + booking_line.e_1_Total_dimCubicMeter
+        totalWeight = totalWeight + booking_line.e_qty * booking_line.e_weightPerEach
+        totalCubic = totalCubic + get_cubic_meter(
+            booking_line.e_dimLength,
+            booking_line.e_dimWidth,
+            booking_line.e_dimHeight,
+            booking_line.e_dimUOM,
+        )
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
