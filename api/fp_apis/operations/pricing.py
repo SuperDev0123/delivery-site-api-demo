@@ -305,7 +305,7 @@ async def _api_pricing_worker_builder(
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
         trace_error.print()
-        logger.info(f"@402 [PRICING] Exception: {e}")
+        logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
 
 async def _built_in_pricing_worker_builder(
