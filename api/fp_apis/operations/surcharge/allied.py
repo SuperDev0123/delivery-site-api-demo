@@ -51,6 +51,7 @@ def get_base_kg_charge(param):
 
 
 def tl(param):
+    print("@! - ", param["is_tail_lift"], " -")
     if param["is_tail_lift"]:
         return {
             "name": "Tail Lift [TL]",
