@@ -511,6 +511,7 @@ def push_boks(payload, client, username, method):
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_serializer.save()
+                bok_2s = [{"booking_line": line}]
             else:
                 message = f"Serialiser Error - {bok_2_serializer.errors}"
                 logger.info(f"@8131 {LOG_ID} {message}")
