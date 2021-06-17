@@ -174,16 +174,16 @@ def mc(param):
 
 
 def lws(param):
-    length_surcharge, width_surcharge = None, None
-
     """
     Allied pricing api contains this surcharge.
 
     Disable until we use built-in pricing module for Allied
     """
-    length_surcharge = {}
-    width_surcharge = {}
+    return None
 
+    # length_surcharge, width_surcharge = None, None
+
+    # Width surcharge
     # if param["max_dimension"] >= 1.2 and param["max_dimension"] < 2.4:
     #     length_surcharge = {
     #         "name": "Lengths [LSC] 1.20-2.39 metre",
@@ -234,18 +234,19 @@ def lws(param):
     #         "value": 10.5,
     #     }
 
-    if length_surcharge and width_surcharge:
-        if length_surcharge["value"] > width_surcharge["value"]:
-            return length_surcharge
-        else:
-            return width_surcharge
-    elif length_surcharge or width_surcharge:
-        if length_surcharge:
-            return length_surcharge
-        else:
-            return width_surcharge
-    else:
-        return None
+    # Length surcharge
+    # if length_surcharge and width_surcharge:
+    #     if length_surcharge["value"] > width_surcharge["value"]:
+    #         return length_surcharge
+    #     else:
+    #         return width_surcharge
+    # elif length_surcharge or width_surcharge:
+    #     if length_surcharge:
+    #         return length_surcharge
+    #     else:
+    #         return width_surcharge
+    # else:
+    #     return None
 
 
 # def bbs(param):
