@@ -116,7 +116,7 @@ def hd1(param):
         and param["max_weight"] <= 55
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
+            "name": "Home Deliveries [HD]",
             "description": "For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
             "value": 21.19 * 0.5,
         }
@@ -130,7 +130,7 @@ def hd2(param):
         or (param["cubic_weight"] > 55 and param["cubic_weight"] <= 135)
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
+            "name": "Home Deliveries [HD]",
             "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
             "value": 74.15 * 0.5,
         }
@@ -143,7 +143,7 @@ def hd3(param):
         param["dead_weight"] > 90 or param["cubic_weight"] > 135
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
+            "name": "Home Deliveries [HD]",
             "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
             "value": 158.87 * 0.5,
         }
