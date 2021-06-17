@@ -791,10 +791,10 @@ def auto_repack(payload, client):
             bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1.success
-            bok_3["ld_005_item_serial_number"] = bok_2_obj.zbl_121_integer_1  # Sequence
-            bok_3["ld_001_qty"] = bok_2_obj.l_002_qty
-            bok_3["ld_003_item_description"] = bok_2_obj.l_003_item
-            bok_3["ld_002_model_number"] = bok_2_obj.e_item_type
+            bok_3["ld_005_item_serial_number"] = bok_2.zbl_121_integer_1  # Sequence
+            bok_3["ld_001_qty"] = bok_2.l_002_qty
+            bok_3["ld_003_item_description"] = bok_2.l_003_item
+            bok_3["ld_002_model_number"] = bok_2.e_item_type
             bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
             bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
             bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
