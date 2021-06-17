@@ -515,7 +515,8 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Weight: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            str(booking_line.e_Total_KG_weight) + "Kg" or "",
+                            str(booking_line.e_qty * booking_line.e_weightPerEach)
+                            + "Kg",
                         ),
                         style_left,
                     ),
@@ -663,7 +664,13 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                             booking_line.e_dimWidth or "",
                             booking_line.e_dimHeight or "",
                             booking_line.e_dimLength or "",
-                            booking_line.e_1_Total_dimCubicMeter or "",
+                            get_cubic_meter(
+                                booking_line.e_dimLength,
+                                booking_line.e_dimWidth,
+                                booking_line.e_dimHeight,
+                                booking_line.e_dimUOM,
+                            )
+                            or "",
                         ),
                         style_left,
                     )
