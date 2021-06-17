@@ -114,7 +114,7 @@ def parse_pricing_response(
                 result["service_code"] = service_code
                 result["service_name"] = service_name
                 results.append(result)
-        # Allied
+        # Allied API
         elif fp_name == "allied" and "netPrice" in json_data:
             result = {}
             result["account_code"] = account_code
@@ -180,7 +180,8 @@ def parse_pricing_response(
             result["service_name"] = min_serviceName
 
             results.append(result)
-        elif is_from_self and "price" in json_data:  # Built-in
+
+        if is_from_self and "price" in json_data:  # Built-in
             for price in json_data["price"]:
                 result = {}
                 result["account_code"] = account_code
