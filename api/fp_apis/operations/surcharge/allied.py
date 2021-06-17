@@ -12,7 +12,8 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #     else:
 #         return None
 
-def get_base_kg_charge(param): 
+
+def get_base_kg_charge(param):
     try:
         fp_id = Fp_freight_providers.objects.get(
             fp_company_name=param["vx_freight_provider"]
@@ -100,8 +101,8 @@ def hd0(param):
         and param["max_weight"] < 22
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
-            "description": "For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)",
+            "name": "Home Deliveries [HD]",
+            "description": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)",
             "value": 10.6 * 0.5,
         }
     else:
@@ -149,6 +150,7 @@ def hd3(param):
     else:
         return None
 
+
 # def ow(param):
 #     base_charge, per_kg_charge = get_base_kg_charge(param)
 #     return {
@@ -160,7 +162,7 @@ def hd3(param):
 
 def mc(param):
     base_charge, per_kg_charge = get_base_kg_charge(param)
-    if param['is_pallet'] and per_kg_charge and param['max_weight'] < 350:
+    if param["is_pallet"] and per_kg_charge and param["max_weight"] < 350:
         return {
             "name": "Minimum Charge-Skids/ Pallets",
             "description": "The minimum charge for a skid is 175 kilograms, and for a pallet is 350 kilograms.  Please note that even if your "
@@ -199,7 +201,7 @@ def lws(param):
         }
     elif param["max_dimension"] >= 4.8 and param["max_dimension"] < 6:
         length_surcharge = {
-            "name": "Lengths [LSC] 4.8-5.59 metre",
+            "name": "Lengths [LSC] 4.8-5.99 metre",
             "description": "Items that exceed lenghts in any direction will attract a surcharge",
             "value": 119.19,
         }
@@ -300,10 +302,11 @@ def ofde(param):
         }
     except Exception as e:
         return None
-   
+
+
 def allied():
     return {
-        'order': [
+        "order": [
             # ow,
             ofpu,
             ofde,
@@ -311,11 +314,7 @@ def allied():
             hd0,
             hd1,
             hd2,
-            hd3
+            hd3,
         ],
-        'line': [
-            mc,
-            lws
-        ]
+        "line": [mc, lws],
     }
-
