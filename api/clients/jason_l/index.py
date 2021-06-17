@@ -523,6 +523,7 @@ def push_boks(payload, client, username, method):
 
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
+            bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1_obj.success
             bok_3["ld_005_item_serial_number"] = bok_2_obj.zbl_121_integer_1  # Sequence
@@ -774,6 +775,7 @@ def auto_repack(payload, client):
 
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1.pk_header_id
+            bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1.success
             # bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
