@@ -31,6 +31,9 @@ def get_account_detail(booking, fp_name):
 
     if account_code:
         for client_name in FP_CREDENTIALS[_fp_name].keys():
+            if settings.ENV == "prod" and client_name == "test":
+                continue
+
             for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                 detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
