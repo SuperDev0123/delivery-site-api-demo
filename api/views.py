@@ -3044,6 +3044,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # print("Exception: ", e)
+            logger.error(f"@902 - save_status_history: {str(e)}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
