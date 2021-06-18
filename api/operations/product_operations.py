@@ -47,6 +47,9 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 "'model_number' and 'qty' are required for each booking_line"
             )
 
+        if model_number in ["ZROUND", "ZROUNDDISC", "ZSHORTSHIP", "ZDISCOUNT"]:
+            continue
+
         products = Client_Products.objects.filter(
             Q(parent_model_number=model_number) | Q(child_model_number=model_number)
         ).filter(fk_id_dme_client=client)
