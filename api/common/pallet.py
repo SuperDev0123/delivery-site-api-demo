@@ -94,6 +94,15 @@ def get_suitable_pallet(bok_2s, pallets):
         pallet_width = pallet.width / 1000
         pallet_height = pallet.height / 1000
 
+        print(
+            "@1 - ",
+            pallet_length,
+            pallet_height,
+            pallet_width,
+            max_length,
+            max_width,
+            max_height,
+        )
         if (
             pallet_length >= max_length
             and pallet_width >= max_width
