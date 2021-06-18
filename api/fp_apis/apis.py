@@ -578,6 +578,7 @@ def get_label(request, fp_name):
             logger.info(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
+            z_label_url = None
 
             while (
                 json_data is None
