@@ -827,6 +827,7 @@ def auto_repack(payload, client):
                 bok_2.l_001_type_of_packaging == "PAL"
                 and bok_2.l_003_item == "Auto repacked item"
             ):
+                bok_2.is_deleted = True
                 bok_2.delete()
 
             # Rollback deleted original Bok_2
