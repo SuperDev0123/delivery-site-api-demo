@@ -2635,8 +2635,8 @@ class BookingViewSet(viewsets.ViewSet):
                 is_available = doesFileExist(file_path, file_name)
                 label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
-                    zpl_data = str(b64encode(zpl.read()))[2:-1]
+                with open(f"{file_path}{file_name}", "rb") as pdf:
+                    pdf_data = str(b64encode(pdf.read()))
 
                 result_with_sscc[str(sscc)].append(
                     {
@@ -2648,7 +2648,7 @@ class BookingViewSet(viewsets.ViewSet):
                         "e_type_of_packaging": original_line.e_type_of_packaging,
                         "is_available": is_available,
                         "url": label_url,
-                        "zpl": zpl_data,
+                        "pdf": pdf_data,
                     }
                 )
 
