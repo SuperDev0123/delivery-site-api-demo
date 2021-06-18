@@ -688,14 +688,17 @@ def push_boks(payload, client, username, method):
     if json_results:
         if is_biz:
             result = {"success": True, "results": json_results}
-            url = None
 
-            if bok_1["shipping_type"] == "DMEM":
-                url = (
-                    f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                )
-            elif bok_1["shipping_type"] == "DMEA":
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+            # Commented (2021-06-18)
+            # if bok_1["shipping_type"] == "DMEM":
+            #     url = (
+            #         f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+            #     )
+            # elif bok_1["shipping_type"] == "DMEA":
+            #     url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+
+            # Show price page either DMEA and DMEM
+            url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
