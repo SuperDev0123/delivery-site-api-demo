@@ -68,7 +68,7 @@ def get_suitable_pallet(bok_2s, pallets):
         line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
         line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
 
-        # Daniel need to see this.
+        # Daniel needs to see this.
         # length = max(line_length, line_width)
         # width = min(line_length, line_width)
         length = line_length
@@ -86,8 +86,12 @@ def get_suitable_pallet(bok_2s, pallets):
 
     available_pallets, non_available_pallets = [], []
     for index, pallet in enumerate(pallets):
-        pallet_length = max(pallet.length, pallet.width) / 1000
-        pallet_width = min(pallet.length, pallet.width) / 1000
+        # Daniel needs to see this.
+        # pallet_length = max(pallet.length, pallet.width) / 1000
+        # pallet_width = min(pallet.length, pallet.width) / 1000
+
+        pallet_length = pallet.length / 1000
+        pallet_width = pallet.width / 1000
         pallet_height = pallet.height / 1000
 
         if (
