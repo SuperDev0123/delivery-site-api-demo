@@ -827,7 +827,6 @@ def auto_repack(payload, client):
                 bok_2.l_001_type_of_packaging == "PAL"
                 and bok_2.l_003_item == "Auto repacked item"
             ):
-                bok_2.is_deleted = True
                 bok_2.delete()
 
             # Rollback deleted original Bok_2
@@ -835,8 +834,8 @@ def auto_repack(payload, client):
                 bok_2.is_deleted = not bok_2.is_deleted
                 bok_2.save()
 
-            if not bok_2.is_deleted:
-                new_bok_2s.append(bok_2)
+                if not bok_2.is_deleted:
+                    new_bok_2s.append(bok_2)
 
         for bok_3 in bok_3s:
             bok_3.is_deleted = not bok_3.is_deleted
