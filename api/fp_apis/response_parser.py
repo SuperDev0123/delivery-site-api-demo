@@ -114,7 +114,7 @@ def parse_pricing_response(
                 result["service_code"] = service_code
                 result["service_name"] = service_name
                 results.append(result)
-        # Allied
+        # Allied API
         elif fp_name == "allied" and "netPrice" in json_data:
             result = {}
             result["account_code"] = account_code
@@ -125,11 +125,14 @@ def parse_pricing_response(
             result["fee"] = json_data["netPrice"]
             result["service_name"] = "Road Express"
             result["etd"] = 3  # TODO
-            result["x_price_surcharge"] = float(json_data["totalPrice"]) - float(
-                json_data["netPrice"]
-            )  # set surchargeTotal
+
+            # We do not get surcharge from Allied api
+            result["x_price_surcharge"] = 0
+            # result["x_price_surcharge"] = float(json_data["totalPrice"]) - float(
+            #     json_data["netPrice"]
+            # )  # set surchargeTotal
             # Extra info - should be deleted before serialized
-            result["surcharges"] = json_data["surcharges"]
+            # result["surcharges"] = json_data["surcharges"]
             results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
@@ -177,7 +180,11 @@ def parse_pricing_response(
             result["service_name"] = min_serviceName
 
             results.append(result)
-        elif is_from_self and "price" in json_data:  # Built-in
+
+        if is_from_self and "price" in json_data:  # Built-in
+            msg = f"#510 Built-in result: {json_data}"
+            logger.info(msg)
+
             for price in json_data["price"]:
                 result = {}
                 result["account_code"] = account_code

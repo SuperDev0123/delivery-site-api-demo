@@ -507,10 +507,12 @@ def push_boks(payload, client, username, method):
             line["l_007_dim_height"] = pallet.height
             line["l_009_weight_per_each"] = total_weight / number_of_pallets
             line["l_008_weight_UOM"] = "KG"
+            line["is_deleted"] = False
 
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_serializer.save()
+                bok_2s = [{"booking_line": line}]
             else:
                 message = f"Serialiser Error - {bok_2_serializer.errors}"
                 logger.info(f"@8131 {LOG_ID} {message}")
@@ -523,8 +525,13 @@ def push_boks(payload, client, username, method):
 
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
+            bok_3["v_client_pk_consigment_num"] = bok_1_obj.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1_obj.success
+            bok_3["ld_005_item_serial_number"] = bok_2_obj.zbl_121_integer_1  # Sequence
+            bok_3["ld_001_qty"] = bok_2_obj.l_002_qty
+            bok_3["ld_003_item_description"] = bok_2_obj.l_003_item
+            bok_3["ld_002_model_number"] = bok_2_obj.e_item_type
             bok_3["zbld_121_integer_1"] = bok_2_obj.zbl_121_integer_1  # Sequence
             bok_3["zbld_122_integer_2"] = bok_2_obj.l_002_qty
             bok_3["zbld_131_decimal_1"] = bok_2_obj.l_005_dim_length
@@ -540,13 +547,13 @@ def push_boks(payload, client, username, method):
             bok_3_serializer = BOK_3_Serializer(data=bok_3)
             if bok_3_serializer.is_valid():
                 bok_3_serializer.save()
+
+                bok_2_obj.is_deleted = True
+                bok_2_obj.save()
             else:
                 message = f"Serialiser Error - {bok_3_serializer.errors}"
                 logger.info(f"@8132 {LOG_ID} {message}")
                 raise Exception(message)
-
-            bok_2_obj.is_deleted = True
-            bok_2_obj.save()
 
         # Set `auto_repack` flag
         bok_1_obj.b_081_b_pu_auto_pack = True
@@ -781,8 +788,13 @@ def auto_repack(payload, client):
 
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1.pk_header_id
+            bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1.success
+            bok_3["ld_005_item_serial_number"] = bok_2.zbl_121_integer_1  # Sequence
+            bok_3["ld_001_qty"] = bok_2.l_002_qty
+            bok_3["ld_003_item_description"] = bok_2.l_003_item
+            bok_3["ld_002_model_number"] = bok_2.e_item_type
             bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
             bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
             bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length

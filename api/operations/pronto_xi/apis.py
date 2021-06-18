@@ -210,8 +210,9 @@ def get_order(order_num):
 
     if len(iters) > 1:
         _order_num, suffix = iters[0], iters[1]
-        message = f"@6400 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
-        logger.info(message)
+
+    message = f"@641 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
+    logger.info(message)
     # ---
 
     token = get_token()

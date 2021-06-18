@@ -66,7 +66,6 @@ def partial_pricing(payload, client, warehouse):
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
@@ -602,7 +601,7 @@ def push_boks(payload, client, username, method):
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": pu_avil,
+        "puPickUpAvailFrom_Date": pu_avil.date(),
         "b_clientReference_RA_Numbers": bok_1["b_000_1_b_clientreference_ra_numbers"],
         "puCompany": bok_1["b_028_b_pu_company"],
         "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
