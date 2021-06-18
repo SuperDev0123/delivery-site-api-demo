@@ -51,7 +51,7 @@ def get_base_kg_charge(param):
 
 
 def tl(param):
-    if "is_tail_lift" in param["is_tail_lift"] and param["is_tail_lift"] == True:
+    if "is_tail_lift" in param and param["is_tail_lift"] == True:
         return {
             "name": "Tail Lift [TL]",
             "description": "For deliveries requiring tail lifts",
