@@ -2635,8 +2635,8 @@ class BookingViewSet(viewsets.ViewSet):
                 is_available = doesFileExist(file_path, file_name)
                 label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                with open(f"{file_path}{file_name}", "rb") as pdf:
-                    pdf_data = str(b64encode(pdf.read()))
+                with open(f"{file_path}{file_name}", "rb") as file:
+                    pdf_data = str(b64encode(file.read()))[2:-1]
 
                 result_with_sscc[str(sscc)].append(
                     {
