@@ -463,7 +463,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 end_date_str = column_filter.split("-")[1]
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
                 end_date = datetime.strptime(end_date_str, "%d/%m/%y")
-                end_date = end_date.replace(hour=13, minute=59, second=59)
+                end_date = end_date.replace(hour=23, minute=59, second=59)
                 queryset = queryset.filter(
                     b_dateBookedDate__range=(
                         convert_to_UTC_tz(start_date),
@@ -484,12 +484,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 end_date_str = column_filter.split("-")[1]
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
                 end_date = datetime.strptime(end_date_str, "%d/%m/%y")
-                end_date = end_date.replace(hour=13, minute=59, second=59)
                 queryset = queryset.filter(
-                    puPickUpAvailFrom_Date__range=(
-                        convert_to_UTC_tz(start_date),
-                        convert_to_UTC_tz(end_date),
-                    )
+                    puPickUpAvailFrom_Date__range=(start_date, end_date)
                 )
             elif column_filter and not "-" in column_filter:
                 date = datetime.strptime(column_filter, "%d/%m/%y")
