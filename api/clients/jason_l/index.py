@@ -487,7 +487,7 @@ def push_boks(payload, client, username, method):
             logger.info(f"@8126 {LOG_ID} Need Palletized! - {bok_2_obj.zbl_102_text_2}")
             break
 
-    if number_of_pallets or carton_cnt > 2 or need_palletize:
+    if carton_cnt > 2 or need_palletize:
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
 
