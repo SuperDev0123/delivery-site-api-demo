@@ -67,8 +67,8 @@ def get_suitable_pallet(bok_2s, pallets):
     for item in bok_2s:
         line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
         line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
-        length = max(line_length, line_width)
-        width = min(line_length, line_width)
+        # length = max(line_length, line_width)
+        # width = min(line_length, line_width)
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
 
         lengths.append(length)
