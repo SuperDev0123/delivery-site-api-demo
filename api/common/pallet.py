@@ -62,8 +62,30 @@ def get_number_of_pallets(booking_lines, pallet):
     return number_of_pallets_for_palletized, unpalletized_line_pks
 
 
-def get_suitable_pallet(bok_2s, pallets):
-    lengths, widths, heights = [], [], []
+def get_suitable_pallets(bok_2s, pallets):
+    # occupied pallet space percent in case of packing different line items in one pallet
+    available_percent = 80
+
+    # prepaer pallets data
+    pallets_data = []
+    for pallet in pallets:
+        length = max(pallet.length, pallet.width) / 1000
+        width = min(pallet.length, pallet.width) / 1000
+        height = pallet.height / 1000
+        total_cubic = length * width * height
+        available_cubic = total_cubic * available_percent / 100
+        pallets_data.append(
+            {
+                "length": length,
+                "width": width,
+                "height": height,
+                "total_cubic": total_cubic,
+                "available_cubic": available_cubic,
+            }
+        )
+
+    # prepare lines data
+    lines_data = []
     for item in bok_2s:
         line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
         line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
@@ -75,64 +97,132 @@ def get_suitable_pallet(bok_2s, pallets):
         width = line_width
 
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+        cubic = length * width * height
 
-        lengths.append(length)
-        widths.append(width)
-        heights.append(height)
+        available_pallets, min_pallet_cubic, smallest_pallet = [], None, None
+        for index, pallet in enumerate(pallets_data):
+            if (
+                pallet["length"] >= length
+                and pallet["width"] >= width
+                and pallet["height"] >= height
+            ):
+                if min_pallet_cubic is None or pallet["total_cubic"] < min_pallet_cubic:
+                    min_pallet_cubic = pallet["total_cubic"]
+                    smallest_pallet = index
+                available_pallets.append(index)
 
-    max_length = max(lengths)
-    max_width = max(widths)
-    max_height = max(heights)
-
-    available_pallets, non_available_pallets = [], []
-    for index, pallet in enumerate(pallets):
-        # Daniel needs to see this.
-        # pallet_length = max(pallet.length, pallet.width) / 1000
-        # pallet_width = min(pallet.length, pallet.width) / 1000
-
-        pallet_length = pallet.length / 1000
-        pallet_width = pallet.width / 1000
-        pallet_height = pallet.height / 1000
-
-        print(
-            "@1 - ",
-            pallet_length,
-            pallet_height,
-            pallet_width,
-            max_length,
-            max_width,
-            max_height,
+        lines_data.append(
+            {
+                "length": length,
+                "width": width,
+                "height": height,
+                "quantity": item.l_002_qty,
+                "cubic": cubic,
+                "available_pallets": available_pallets,
+                "smallest_pallet": smallest_pallet,
+            }
         )
-        if (
-            pallet_length >= max_length
-            and pallet_width >= max_width
-            and pallet_height >= max_height
-        ):
-            available_pallets.append(
-                {
-                    "index": index,
-                    "cubic_meter": pallet_length * pallet_width * pallet_height,
-                }
-            )
+
+    # sort lines data in descending order of greater of length and width
+    sorted(lines_data, key=lambda k: k["length"], reverse=True)
+
+    palletized, non_palletized = [], []
+    for index, line in enumerate(lines_data):
+        if line["quantity"] > 0:
+            # check if there is suitable pallet
+            if not line["smallest_pallet"]:
+                non_palletized.append(
+                    {"line_index": index, "quantity": line["quantity"]}
+                )
+            else:
+                for pallet_item in palletized:
+                    # check if items can be packed in previously packed pallets
+                    if (
+                        pallet_item["pallet_index"] in line["available_pallets"]
+                        and pallet_item["remaining_space"] > line["cubic"]
+                        and line["quantity"]
+                    ):
+                        packable_count = min(
+                            math.floor(pallet_item["remaining_space"] / line["cubic"]),
+                            line["quantity"],
+                        )
+                        pallet_item["remaining_space"] -= packable_count * line["cubic"]
+                        pallet_item["lines"].append(
+                            {"line_index": index, "quantity": packable_count}
+                        )
+                        line["quantity"] -= packable_count
+
+                # check if new pallet needs to be used
+                if line["quantity"]:
+                    for i in iter(int, 1):
+                        if line["quantity"]:
+                            packable_count = min(
+                                math.floor(
+                                    pallets_data[line["smallest_pallet"]]["total_cubic"]
+                                    / line["cubic"]
+                                ),
+                                line["quantity"],
+                            )
+                            line["quantity"] -= packable_count
+                            needed_space = packable_count * line["cubic"]
+
+                            # if pallets_data[line['smallest_pallet']]['total_cubic'] % line['cubic'] == 0:
+                            #     packable_count = min(
+                            #         math.floor(pallets_data[line['smallest_pallet']]['total_cubic'] / line['cubic']),
+                            #         line['quantity']
+                            #     )
+                            # else:
+                            #     packable_count = min(
+                            #         math.floor(pallets_data[line['smallest_pallet']]['available_cubic'] / line['cubic']),
+                            #         line['quantity']
+                            #     )
+                            # line['quantity'] -= packable_count
+                            # needed_space = packable_count * line['cubic']
+
+                            # check if pallet is packed with items of same line
+                            if (
+                                needed_space
+                                > pallets_data[line["smallest_pallet"]][
+                                    "available_cubic"
+                                ]
+                                and needed_space
+                                <= pallets_data[line["smallest_pallet"]]["total_cubic"]
+                            ):
+                                # if pallets_data[line['smallest_pallet']]['total_cubic'] % line['cubic'] == 0:
+                                palletized.append(
+                                    {
+                                        "pallet_index": line["smallest_pallet"],
+                                        "remaining_space": 0,
+                                        "lines": [
+                                            {
+                                                "line_index": index,
+                                                "quantity": packable_count,
+                                            }
+                                        ],
+                                    }
+                                )
+
+                            else:
+                                palletized.append(
+                                    {
+                                        "pallet_index": line["smallest_pallet"],
+                                        "remaining_space": pallets_data[
+                                            line["smallest_pallet"]
+                                        ]["available_cubic"]
+                                        - needed_space,
+                                        "lines": [
+                                            {
+                                                "line_index": index,
+                                                "quantity": packable_count,
+                                            }
+                                        ],
+                                    }
+                                )
+
+                        else:
+                            break
+
         else:
-            non_available_pallets.append(
-                {
-                    "index": index,
-                    "cubic_meter": pallet_length * pallet_width * pallet_height,
-                }
-            )
+            continue
 
-    min_cubic, max_cubic, pallet_index = 100000, 0, 0
-    if available_pallets:
-        for pallet in available_pallets:
-            if pallet["cubic_meter"] < min_cubic:
-                min_cubic = pallet["cubic_meter"]
-                pallet_index = pallet["index"]
-        return pallet_index
-
-    else:
-        for pallet in non_available_pallets:
-            if pallet["cubic_meter"] > max_cubic:
-                max_cubic = pallet["cubic_meter"]
-                pallet_index = pallet["index"]
-        return pallet_index
+    return {"palletized": palletized, "non_palletized": non_palletized}
