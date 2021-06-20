@@ -148,8 +148,22 @@ def get_suitable_pallets(bok_2s, pallets):
                             line['quantity'] -= packable_count
                             needed_space = packable_count * line['cubic']
 
+                            # if pallets_data[line['smallest_pallet']]['total_cubic'] % line['cubic'] == 0:   
+                            #     packable_count = min(
+                            #         math.floor(pallets_data[line['smallest_pallet']]['total_cubic'] / line['cubic']), 
+                            #         line['quantity']
+                            #     )
+                            # else:
+                            #     packable_count = min(
+                            #         math.floor(pallets_data[line['smallest_pallet']]['available_cubic'] / line['cubic']), 
+                            #         line['quantity']
+                            #     )
+                            # line['quantity'] -= packable_count
+                            # needed_space = packable_count * line['cubic']
+
                             # check if pallet is packed with items of same line
-                            if needed_space > pallets_data[line['smallest_pallet']]['available_cubic'] and needed_space <= pallets_data[line['smallest_pallet']]['total_cubic']:
+                            if needed_space > pallets_data[line['smallest_pallet']]['available_cubic'] and needed_space <= pallets_data[line['smallest_pallet']]['total_cubic']: 
+                            # if pallets_data[line['smallest_pallet']]['total_cubic'] % line['cubic'] == 0:   
                                 palletized.append({
                                     'pallet_index': line['smallest_pallet'],
                                     'remaining_space': 0,
