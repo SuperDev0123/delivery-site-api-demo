@@ -119,6 +119,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_client_order_num",
             "b_client_sales_inv_num",
             "b_091_send_quote_to_pronto",
+            "b_092_booking_type",
         )
 
 

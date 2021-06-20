@@ -31,6 +31,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.booking_quote import set_booking_quote
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.operations.book import book as book_oper
@@ -65,11 +66,10 @@ def partial_pricing(payload, client, warehouse):
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",
@@ -596,9 +596,12 @@ def push_boks(payload, client, username, method):
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
+    # PU avail
+    pu_avil = datetime.strptime(bok_1["b_021_b_pu_avail_from_date"], "%Y-%m-%d")
+
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": pu_avil.date(),
         "b_clientReference_RA_Numbers": bok_1["b_000_1_b_clientreference_ra_numbers"],
         "puCompany": bok_1["b_028_b_pu_company"],
         "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
@@ -1041,9 +1044,7 @@ def scanned(payload, client):
                     raise Exception("Booking doens't have quote.")
 
                 if not booking.vx_freight_provider and booking.api_booking_quote:
-                    _booking = migrate_quote_info_to_booking(
-                        booking, booking.api_booking_quote
-                    )
+                    _booking = set_booking_quote(booking, booking.api_booking_quote)
 
                 if fp_name != "hunter":
                     file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -1124,13 +1125,11 @@ def scanned(payload, client):
                 logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
 
                 if best_quotes:
-                    booking.api_booking_quote = best_quotes[0]
-                    booking.save()
+                    set_booking_quote(booking, best_quotes[0])
                     new_fc_log.new_quote = booking.api_booking_quote
                     new_fc_log.save()
                 else:
-                    booking.api_booking_quote = None
-                    booking.save()
+                    set_booking_quote(booking, None)
 
         # If Hunter Order?
         if fp_name == "hunter" and booking.b_status != "Picking":

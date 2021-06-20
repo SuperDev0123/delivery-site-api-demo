@@ -210,8 +210,13 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     totalCubic = 0
     for booking_line in lines:
         totalQty = totalQty + booking_line.e_qty
-        totalWeight = totalWeight + booking_line.e_Total_KG_weight
-        totalCubic = totalCubic + booking_line.e_1_Total_dimCubicMeter
+        totalWeight = totalWeight + booking_line.e_qty * booking_line.e_weightPerEach
+        totalCubic = totalCubic + get_cubic_meter(
+            booking_line.e_dimLength,
+            booking_line.e_dimWidth,
+            booking_line.e_dimHeight,
+            booking_line.e_dimUOM,
+        )
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
@@ -510,7 +515,8 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Weight: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            str(booking_line.e_Total_KG_weight) + "Kg" or "",
+                            str(booking_line.e_qty * booking_line.e_weightPerEach)
+                            + "Kg",
                         ),
                         style_left,
                     ),
@@ -658,7 +664,13 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                             booking_line.e_dimWidth or "",
                             booking_line.e_dimHeight or "",
                             booking_line.e_dimLength or "",
-                            booking_line.e_1_Total_dimCubicMeter or "",
+                            get_cubic_meter(
+                                booking_line.e_dimLength,
+                                booking_line.e_dimWidth,
+                                booking_line.e_dimHeight,
+                                booking_line.e_dimUOM,
+                            )
+                            or "",
                         ),
                         style_left,
                     )

@@ -8,6 +8,7 @@ from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
+from api.common.booking_quote import set_booking_quote
 from api.serializers import ApiBookingQuotesSerializer
 from api.models import (
     Bookings,
@@ -55,14 +56,13 @@ def pricing(body, booking_id, is_pricing_only=False):
     if not is_pricing_only:
         booking = Bookings.objects.filter(id=booking_id).first()
 
+        if not booking:
+            return None, False, "Booking does not exist", None
+
         # Delete all pricing info if exist for this booking
-        if booking:
-            pk_booking_id = booking.pk_booking_id
-            booking.api_booking_quote = None  # Reset pricing relation
-            booking.save()
-            # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
-        else:
-            return False, "Booking does not exist", None
+        pk_booking_id = booking.pk_booking_id
+        # set_booking_quote(booking, None)
+        # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
 
     if not booking_lines:
         booking_lines = Booking_lines.objects.filter(
@@ -276,20 +276,22 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                # Allied surcharges
-                surcharges = []
+                # We do not get surcharges from Allied api
+                # # Allied surcharges
+                # surcharges = []
 
-                if (
-                    parse_result["freight_provider"].lower() == "allied"
-                    and "surcharges" in parse_result
-                ):
-                    surcharges = parse_result["surcharges"]
-                    del parse_result["surcharges"]
+                # if (
+                #     parse_result["freight_provider"].lower() == "allied"
+                #     and "surcharges" in parse_result
+                # ):
+                #     surcharges = parse_result["surcharges"]
+                #     del parse_result["surcharges"]
 
                 serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
                     quote = serializer.save()
 
+                    # We do not get surcharges from Allied api
                     # for surcharge in surcharges:
                     #     if float(surcharge["amount"]) > 0:
                     #         surcharge_obj = Surcharge()
@@ -303,7 +305,7 @@ async def _api_pricing_worker_builder(
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
         trace_error.print()
-        logger.info(f"@402 [PRICING] Exception: {e}")
+        logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
 
 async def _built_in_pricing_worker_builder(

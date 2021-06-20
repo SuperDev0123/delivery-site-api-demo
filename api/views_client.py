@@ -35,7 +35,6 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
-from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import get_status_category_from_status
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
@@ -631,6 +630,7 @@ def get_delivery_status(request):
             )
 
         booking = {
+            "uid": booking.pk,
             "b_bookingID_Visual": booking.b_bookingID_Visual,
             "b_client_order_num": booking.b_client_order_num,
             "b_client_sales_inv_num": booking.b_client_sales_inv_num,
@@ -699,6 +699,7 @@ def get_delivery_status(request):
 
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     booking = {
+        "b_bookingID_Visual": None,
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
         "b_028_b_pu_company": bok_1.b_028_b_pu_company,

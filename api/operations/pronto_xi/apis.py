@@ -142,6 +142,22 @@ def parse_order_xml(response, token):
         "{http://www.pronto.net/so/1.0.0}WarehouseCode"
     ).text
 
+    # For `clue` param of `get_suburb_state()`
+    addresses = []
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address5").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
+    )
+    b_058 = "||".join(addresses)[:40].lower()
+
     order = {
         "b_client_order_num": order_num,
         "b_021_b_pu_avail_from_date": b_021,
@@ -194,8 +210,9 @@ def get_order(order_num):
 
     if len(iters) > 1:
         _order_num, suffix = iters[0], iters[1]
-        message = f"@6400 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
-        logger.info(message)
+
+    message = f"@641 [PRONTO GET ORDER] OrderNum: {_order_num}, Suffix: {suffix}"
+    logger.info(message)
     # ---
 
     token = get_token()
