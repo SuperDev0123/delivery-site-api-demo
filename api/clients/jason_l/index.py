@@ -504,7 +504,7 @@ def push_boks(payload, client, username, method):
             new_line["pk_booking_lines_id"] = str(uuid.uuid1())
             new_line["success"] = bok_1["success"]
             new_line["l_001_type_of_packaging"] = "PAL"
-            new_line["l_002_qty"] = 1
+            new_line["l_002_qty"] = palletized_item["quantity"]
             new_line["l_003_item"] = "Auto repacked item"
             new_line["l_004_dim_UOM"] = "mm"
             new_line["l_005_dim_length"] = pallet.length
