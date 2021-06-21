@@ -721,6 +721,7 @@ def push_boks(payload, client, username, method):
 
 def auto_repack(payload, client):
     LOG_ID = "[AR Jason L]"  # Auto Repack
+
     client_booking_id = payload.get("identifier")
     repack_status = payload.get("status")
     pallet_id = payload.get("palletId")
@@ -737,95 +738,192 @@ def auto_repack(payload, client):
 
     if repack_status:  # repack
         # Get Pallet
-        pallet = Pallet.objects.get(pk=pallet_id)
-        number_of_pallets, unpalletized_line_pks = get_number_of_pallets(bok_2s, pallet)
+        if pallet_id == -1:
+            # Select suitable pallet and get required pallets count
+            pallets = Pallet.objects.all()
+            palletized, non_palletized = get_palletized_by_ai(bok_2s, pallets)
+            logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
 
-        if not number_of_pallets and not unpalletized_line_pks:
-            message = "0 number of Pallets."
-            logger.info(f"@801 {LOG_ID} {message}")
-            return message
+            # Delete existing Pallet Bok_2
+            for bok_2 in bok_2s:
+                if bok_2.l_001_type_of_packaging == "PAL":
+                    bok_2.delete()
 
-        total_weight = 0
-        for bok_2 in bok_2s:
-            total_weight += bok_2.l_009_weight_per_each * bok_2.l_002_qty
+            # Delete existing Bok_3s
+            for bok_3 in bok_3s:
+                bok_3.delete()
 
-        # Delete existing Pallet Bok_2
-        for bok_2 in bok_2s:
-            if bok_2.l_001_type_of_packaging == "PAL":
-                bok_2.delete()
+            # Create one PAL bok_2
+            for palletized_item in palletized:
+                pallet = pallets[palletized_item["pallet_index"]]
 
-        # Delete existing Bok_3s
-        for bok_3 in bok_3s:
-            bok_3.delete()
+                total_weight = 0
+                for _iter in palletized_item["lines"]:
+                    line_in_pallet = _iter["line_obj"]
+                    total_weight += (
+                        line_in_pallet.l_009_weight_per_each * line_in_pallet.l_002_qty
+                    )
 
-        # Create new *1* Pallet Bok_2
-        if number_of_pallets:
-            line = {}
-            line["fk_header_id"] = bok_1.pk_header_id
-            line["v_client_pk_consigment_num"] = bok_1.pk_header_id
-            line["pk_booking_lines_id"] = str(uuid.uuid1())
-            line["success"] = bok_1.success
-            line["l_001_type_of_packaging"] = "PAL"
-            line["l_002_qty"] = number_of_pallets
-            line["l_003_item"] = "Auto repacked item"
-            line["l_004_dim_UOM"] = "mm"
-            line["l_005_dim_length"] = pallet.length
-            line["l_006_dim_width"] = pallet.width
-            line["l_007_dim_height"] = pallet.height
-            line["l_009_weight_per_each"] = total_weight / number_of_pallets
-            line["l_008_weight_UOM"] = "KG"
+                new_line = {}
+                new_line["fk_header_id"] = bok_1.pk_header_id
+                new_line["v_client_pk_consigment_num"] = bok_1.pk_header_id
+                new_line["pk_booking_lines_id"] = str(uuid.uuid1())
+                new_line["success"] = bok_1.success
+                new_line["l_001_type_of_packaging"] = "PAL"
+                new_line["l_002_qty"] = 1  # palletized_item["quantity"]
+                new_line["l_003_item"] = "Auto repacked item"
+                new_line["l_004_dim_UOM"] = "mm"
+                new_line["l_005_dim_length"] = pallet.length
+                new_line["l_006_dim_width"] = pallet.width
+                new_line["l_007_dim_height"] = pallet.height
+                new_line["l_009_weight_per_each"] = round(total_weight, 2)
+                new_line["l_008_weight_UOM"] = "KG"
+                new_line["is_deleted"] = False
 
-            bok_2_serializer = BOK_2_Serializer(data=line)
-            if bok_2_serializer.is_valid():
-                new_bok_2 = bok_2_serializer.save()
-                new_bok_2s.append(new_bok_2)
-            else:
-                message = f"Serialiser Error - {bok_2_serializer.errors}"
-                logger.info(f"@8131 {LOG_ID} {message}")
-                raise Exception(message)
+                bok_2_serializer = BOK_2_Serializer(data=new_line)
+                if bok_2_serializer.is_valid():
+                    # Create Bok_3s
+                    for _iter in palletized_item["lines"]:
+                        line = _iter["line_obj"]  # line_in_pallet
 
-        # Create Bok_3 and soft delete existing CTN Bok_2
-        for bok_2 in bok_2s:
-            if bok_2.l_001_type_of_packaging == "PAL":
-                continue
+                        if bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                            continue
 
-            if (
-                bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES
-                or bok_2.pk in unpalletized_line_pks
-            ):
-                continue
+                        bok_3 = {}
+                        bok_3["fk_header_id"] = bok_1.pk_header_id
+                        bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
+                        bok_3["fk_booking_lines_id"] = new_line["pk_booking_lines_id"]
+                        bok_3["success"] = line.success
+                        bok_3[
+                            "ld_005_item_serial_number"
+                        ] = line.zbl_121_integer_1  # Sequence
+                        bok_3["ld_001_qty"] = line.l_002_qty
+                        bok_3["ld_003_item_description"] = line.l_003_item
+                        bok_3["ld_002_model_number"] = line.e_item_type
+                        bok_3["zbld_121_integer_1"] = line.zbl_121_integer_1  # Sequence
+                        bok_3["zbld_122_integer_2"] = _iter["quantity"]
+                        bok_3["zbld_131_decimal_1"] = line.l_005_dim_length
+                        bok_3["zbld_132_decimal_2"] = line.l_006_dim_width
+                        bok_3["zbld_133_decimal_3"] = line.l_007_dim_height
+                        bok_3["zbld_134_decimal_4"] = round(
+                            line.l_009_weight_per_each, 2
+                        )
+                        bok_3["zbld_101_text_1"] = line.l_004_dim_UOM
+                        bok_3["zbld_102_text_2"] = line.l_008_weight_UOM
+                        bok_3["zbld_103_text_3"] = line.e_item_type
+                        bok_3["zbld_104_text_4"] = line.l_001_type_of_packaging
+                        bok_3["zbld_105_text_5"] = line.l_003_item
 
-            bok_3 = {}
-            bok_3["fk_header_id"] = bok_1.pk_header_id
-            bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
-            bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
-            bok_3["success"] = bok_1.success
-            bok_3["ld_005_item_serial_number"] = bok_2.zbl_121_integer_1  # Sequence
-            bok_3["ld_001_qty"] = bok_2.l_002_qty
-            bok_3["ld_003_item_description"] = bok_2.l_003_item
-            bok_3["ld_002_model_number"] = bok_2.e_item_type
-            bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
-            bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
-            bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
-            bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
-            bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
-            bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
-            bok_3["zbld_101_text_1"] = bok_2.l_004_dim_UOM
-            bok_3["zbld_102_text_2"] = bok_2.l_008_weight_UOM
-            bok_3["zbld_103_text_3"] = bok_2.e_item_type
-            bok_3["zbld_104_text_4"] = bok_2.l_001_type_of_packaging
-            bok_3["zbld_105_text_5"] = bok_2.l_003_item
+                        bok_3_serializer = BOK_3_Serializer(data=bok_3)
+                        if bok_3_serializer.is_valid():
+                            bok_3_serializer.save()
 
-            bok_3_serializer = BOK_3_Serializer(data=bok_3)
-            if bok_3_serializer.is_valid():
-                bok_3_serializer.save()
-            else:
-                message = f"Serialiser Error - {bok_3_serializer.errors}"
-                logger.info(f"@8132 {LOG_ID} {message}, {bok_3}")
-                raise Exception(message)
+                            # Soft delete `line in pallet`
+                            line.is_deleted = True
+                            line.save()
+                        else:
+                            message = f"Serialiser Error - {bok_3_serializer.errors}"
+                            logger.info(f"@8134 {LOG_ID} {message}")
+                            raise Exception(message)
 
-            bok_2.is_deleted = not bok_2.is_deleted
-            bok_2.save()
+                    new_bok_2 = bok_2_serializer.save()
+                    new_bok_2s.append(new_bok_2)
+                else:
+                    message = f"Serialiser Error - {bok_2_serializer.errors}"
+                    logger.info(f"@8135 {LOG_ID} {message}")
+                    raise Exception(message)
+        else:
+            pallet = Pallet.objects.get(pk=pallet_id)
+            number_of_pallets, unpalletized_line_pks = get_number_of_pallets(
+                bok_2s, pallet
+            )
+
+            if not number_of_pallets and not unpalletized_line_pks:
+                message = "0 number of Pallets."
+                logger.info(f"@801 {LOG_ID} {message}")
+                return message
+
+            total_weight = 0
+            for bok_2 in bok_2s:
+                total_weight += bok_2.l_009_weight_per_each * bok_2.l_002_qty
+
+            # Delete existing Pallet Bok_2
+            for bok_2 in bok_2s:
+                if bok_2.l_001_type_of_packaging == "PAL":
+                    bok_2.delete()
+
+            # Delete existing Bok_3s
+            for bok_3 in bok_3s:
+                bok_3.delete()
+
+            # Create new *1* Pallet Bok_2
+            if number_of_pallets:
+                line = {}
+                line["fk_header_id"] = bok_1.pk_header_id
+                line["v_client_pk_consigment_num"] = bok_1.pk_header_id
+                line["pk_booking_lines_id"] = str(uuid.uuid1())
+                line["success"] = bok_1.success
+                line["l_001_type_of_packaging"] = "PAL"
+                line["l_002_qty"] = number_of_pallets
+                line["l_003_item"] = "Auto repacked item"
+                line["l_004_dim_UOM"] = "mm"
+                line["l_005_dim_length"] = pallet.length
+                line["l_006_dim_width"] = pallet.width
+                line["l_007_dim_height"] = pallet.height
+                line["l_009_weight_per_each"] = total_weight / number_of_pallets
+                line["l_008_weight_UOM"] = "KG"
+
+                bok_2_serializer = BOK_2_Serializer(data=line)
+                if bok_2_serializer.is_valid():
+                    new_bok_2 = bok_2_serializer.save()
+                    new_bok_2s.append(new_bok_2)
+                else:
+                    message = f"Serialiser Error - {bok_2_serializer.errors}"
+                    logger.info(f"@8131 {LOG_ID} {message}")
+                    raise Exception(message)
+
+            # Create Bok_3 and soft delete existing CTN Bok_2
+            for bok_2 in bok_2s:
+                if bok_2.l_001_type_of_packaging == "PAL":
+                    continue
+
+                if (
+                    bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES
+                    or bok_2.pk in unpalletized_line_pks
+                ):
+                    continue
+
+                bok_3 = {}
+                bok_3["fk_header_id"] = bok_1.pk_header_id
+                bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
+                bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
+                bok_3["success"] = bok_1.success
+                bok_3["ld_005_item_serial_number"] = bok_2.zbl_121_integer_1  # Sequence
+                bok_3["ld_001_qty"] = bok_2.l_002_qty
+                bok_3["ld_003_item_description"] = bok_2.l_003_item
+                bok_3["ld_002_model_number"] = bok_2.e_item_type
+                bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
+                bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
+                bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
+                bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
+                bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
+                bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
+                bok_3["zbld_101_text_1"] = bok_2.l_004_dim_UOM
+                bok_3["zbld_102_text_2"] = bok_2.l_008_weight_UOM
+                bok_3["zbld_103_text_3"] = bok_2.e_item_type
+                bok_3["zbld_104_text_4"] = bok_2.l_001_type_of_packaging
+                bok_3["zbld_105_text_5"] = bok_2.l_003_item
+
+                bok_3_serializer = BOK_3_Serializer(data=bok_3)
+                if bok_3_serializer.is_valid():
+                    bok_3_serializer.save()
+                else:
+                    message = f"Serialiser Error - {bok_3_serializer.errors}"
+                    logger.info(f"@8132 {LOG_ID} {message}, {bok_3}")
+                    raise Exception(message)
+
+                bok_2.is_deleted = not bok_2.is_deleted
+                bok_2.save()
     else:  # rollback repack
         for bok_2 in bok_2s:
             # Delete existing Pallet
