@@ -786,7 +786,7 @@ def auto_repack(payload, client):
                     for _iter in palletized_item["lines"]:
                         line = _iter["line_obj"]  # line_in_pallet
 
-                        if bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                        if line.zbl_102_text_2 in SERVICE_GROUP_CODES:
                             continue
 
                         bok_3 = {}
