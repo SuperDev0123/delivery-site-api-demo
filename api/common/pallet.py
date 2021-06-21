@@ -227,8 +227,9 @@ def get_palletized_by_ai(bok_2s, pallets):
             ):
                 for index, line in enumerate(item["lines"]):
                     if (
-                        line["line_index"] != sorted_item[index]["line_index"]
-                        or sorted_item[index]["quantity"] % line["quantity"] != 0
+                        line["line_index"] != sorted_item["lines"][index]["line_index"]
+                        or sorted_item["lines"][index]["quantity"] % line["quantity"]
+                        != 0
                     ):
                         is_equal = False
             else:
