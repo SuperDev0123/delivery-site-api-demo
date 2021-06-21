@@ -238,4 +238,4 @@ def get_palletized_by_ai(bok_2s, pallets):
     #         item["quantity"] = 1
     #         reformatted_palletized.append(item)
 
-    return reformatted_palletized, non_palletized
+    return palletized, non_palletized
