@@ -504,7 +504,7 @@ def push_boks(payload, client, username, method):
             new_line["pk_booking_lines_id"] = str(uuid.uuid1())
             new_line["success"] = bok_1["success"]
             new_line["l_001_type_of_packaging"] = "PAL"
-            new_line["l_002_qty"] = 1  # palletized_item["quantity"]
+            new_line["l_002_qty"] = palletized_item["quantity"]
             new_line["l_003_item"] = "Auto repacked item"
             new_line["l_004_dim_UOM"] = "mm"
             new_line["l_005_dim_length"] = pallet.length
@@ -737,21 +737,19 @@ def auto_repack(payload, client):
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
     if repack_status:  # repack
+        # Delete existing Bok_2s and Bok_3s
+        bok_2s.filter(l_003_item="Auto repacked item").delete()
+        bok_3s.delete()
+        bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
+            zbl_102_text_2__in=SERVICE_GROUP_CODES
+        )
+
         # Get Pallet
         if pallet_id == -1:
             # Select suitable pallet and get required pallets count
             pallets = Pallet.objects.all()
             palletized, non_palletized = get_palletized_by_ai(bok_2s, pallets)
             logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
-
-            # Delete existing Pallet Bok_2
-            for bok_2 in bok_2s:
-                if bok_2.l_001_type_of_packaging == "PAL":
-                    bok_2.delete()
-
-            # Delete existing Bok_3s
-            for bok_3 in bok_3s:
-                bok_3.delete()
 
             # Create one PAL bok_2
             for palletized_item in palletized:
@@ -770,7 +768,7 @@ def auto_repack(payload, client):
                 new_line["pk_booking_lines_id"] = str(uuid.uuid1())
                 new_line["success"] = bok_1.success
                 new_line["l_001_type_of_packaging"] = "PAL"
-                new_line["l_002_qty"] = 1  # palletized_item["quantity"]
+                new_line["l_002_qty"] = palletized_item["quantity"]
                 new_line["l_003_item"] = "Auto repacked item"
                 new_line["l_004_dim_UOM"] = "mm"
                 new_line["l_005_dim_length"] = pallet.length
@@ -846,15 +844,6 @@ def auto_repack(payload, client):
             total_weight = 0
             for bok_2 in bok_2s:
                 total_weight += bok_2.l_009_weight_per_each * bok_2.l_002_qty
-
-            # Delete existing Pallet Bok_2
-            for bok_2 in bok_2s:
-                if bok_2.l_001_type_of_packaging == "PAL":
-                    bok_2.delete()
-
-            # Delete existing Bok_3s
-            for bok_3 in bok_3s:
-                bok_3.delete()
 
             # Create new *1* Pallet Bok_2
             if number_of_pallets:
