@@ -1,4 +1,4 @@
-from api.models import Fp_freight_providers
+from api.models import Fp_freight_providers, FP_carriers, FP_zones
 
 
 def filter_booking_lines(booking, booking_lines):

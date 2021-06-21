@@ -5,10 +5,12 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
+from api.common.booking_quote import set_booking_quote
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
+from api.helpers.etd import get_etd
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _convert_UOM(value, uom, type, fp_name):
@@ -18,12 +20,9 @@ def _convert_UOM(value, uom, type, fp_name):
         converted_value = value * ratio.get_ratio(uom, FP_UOM[_fp_name][type], type)
         return round(converted_value, 2)
     except Exception as e:
-        logger.info(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
-        raise Exception(
-            f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
-        )
+        message = f"#408 Error - FP: {_fp_name}, value: {value}, uom: {uom}, type: {type}, standard_uom: {FP_UOM[_fp_name][type]}"
+        logger.info(message)
+        raise Exception(message)
 
 
 def gen_consignment_num(fp_name, booking_visual_id):
@@ -84,24 +83,31 @@ def get_status_category_from_status(status):
 
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
-    fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=pricing.freight_provider
-    )
-
-    if fp.fp_company_name.lower() == "tnt":
-        return float(pricing.etd) * 24
-
     try:
-        etd = FP_Service_ETDs.objects.get(
-            freight_provider_id=fp.id,
-            fp_delivery_time_description=pricing.etd,
-            fp_delivery_service_code=pricing.service_name,
-        )
-        return etd.fp_03_delivery_hours
-    except Exception as e:
-        message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
-        logger.info(message)
-        raise Exception(message)
+        logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
+        etd, unit = get_etd(pricing.etd)
+
+        if unit == "Days":
+            etd *= 24
+
+        return etd
+    except:
+        try:
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name__iexact=pricing.freight_provider
+            )
+            etd = FP_Service_ETDs.objects.get(
+                freight_provider_id=fp.id,
+                fp_delivery_time_description=pricing.etd,
+                fp_delivery_service_code=pricing.service_name,
+            )
+
+            return etd.fp_03_delivery_hours
+        except Exception as e:
+            message = f"#810 [get_etd_in_hour] Missing ETD - {pricing.freight_provider}, {pricing.service_name}, {pricing.etd}"
+            logger.info(message)
+            # raise Exception(message)
+            return None
 
 
 def _is_deliverable_price(pricing, booking):
@@ -195,7 +201,7 @@ def select_best_options(pricings):
     if lowest_pricing.pk == fastest_pricing.pk:
         return [lowest_pricing]
     else:
-        return [fastest_pricing, lowest_pricing]
+        return [lowest_pricing, fastest_pricing]
 
 
 def auto_select_pricing(booking, pricings, auto_select_type):
@@ -231,25 +237,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
-        booking.api_booking_quote = filtered_pricing
-        booking.vx_freight_provider = filtered_pricing.freight_provider
-        booking.vx_account_code = filtered_pricing.account_code
-        booking.vx_serviceName = filtered_pricing.service_name
-        booking.inv_cost_quoted = filtered_pricing.fee * (
-            1 + filtered_pricing.mu_percentage_fuel_levy
-        )
-        booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
-
-        fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing.freight_provider
-        )
-
-        if fp and fp.service_cutoff_time:
-            booking.s_02_Booking_Cutoff_Time = fp.service_cutoff_time
-        else:
-            booking.s_02_Booking_Cutoff_Time = "12:00:00"
-
-        booking.save()
+        set_booking_quote(booking, filtered_pricing)
         return True
     else:
         logger.info("#855 - Could not find proper pricing")

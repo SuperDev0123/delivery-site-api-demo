@@ -111,12 +111,15 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_078_b_pu_location",
             "b_079_b_pu_floor_number",
             "b_080_b_pu_floor_access_by",
+            "b_081_b_pu_auto_pack",
             "b_000_3_consignment_number",
             "success",
             "x_booking_Created_With",
             "quote_id",
             "b_client_order_num",
             "b_client_sales_inv_num",
+            "b_091_send_quote_to_pronto",
+            "b_092_booking_type",
         )
 
 
@@ -130,12 +133,13 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     )
     fk_header_id = serializers.CharField(validators=[should_have_value])
     success = serializers.CharField(validators=[should_have_value])
-    # Sequence
-    zbl_121_integer_1 = serializers.IntegerField(required=False)
+    zbl_121_integer_1 = serializers.IntegerField(required=False)  # Sequence
+    zbl_102_text_2 = serializers.CharField(required=False)  # ProductGroupCode
 
     class Meta:
         model = BOK_2_lines
         fields = (
+            "pk_lines_id",
             "l_001_type_of_packaging",
             "l_002_qty",
             "l_003_item",
@@ -146,11 +150,13 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "l_008_weight_UOM",
             "l_009_weight_per_each",
             "success",
+            "is_deleted",
             "fk_header_id",
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",
             "e_item_type",
             "zbl_121_integer_1",  # Sequence
+            "zbl_102_text_2",  # ProductGroupCode
         )
 
 

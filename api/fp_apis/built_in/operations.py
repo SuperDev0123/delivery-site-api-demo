@@ -3,7 +3,7 @@ import logging
 from api.models import FP_zones, FP_vehicles
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 PALLETS = ["pallet", "plt"]
 
 

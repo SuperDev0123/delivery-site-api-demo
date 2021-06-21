@@ -31,6 +31,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.booking_quote import set_booking_quote
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.operations.book import book as book_oper
@@ -38,11 +39,13 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
-from api.operations import push_operations, product_operations as product_oper
+from api.operations import product_operations as product_oper
+from api.operations import paperless
 from api.clients.operations.index import get_warehouse, get_suburb_state
+from api.clients.plum.operations import detect_modified_data
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):
@@ -63,11 +66,10 @@ def partial_pricing(payload, client, warehouse):
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",
@@ -89,6 +91,10 @@ def partial_pricing(payload, client, warehouse):
         "de_To_Address_PostalCode": de_postal_code,
         "de_To_Address_State": de_state.upper(),
         "de_To_Address_Suburb": de_suburb,
+        "pu_Address_Type": "business",
+        "de_To_AddressType": "residential",
+        "b_booking_tail_lift_pickup": False,
+        "b_booking_tail_lift_deliver": False,
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
@@ -106,10 +112,11 @@ def partial_pricing(payload, client, warehouse):
             logger.info(f"@816 {LOG_ID} {message}")
             raise Exception(message)
 
-        items = product_oper.get_product_items(bok_2s, client)
+        items = product_oper.get_product_items(bok_2s, client, True)
 
         for item in items:
             booking_line = {
+                "pk_lines_id": "1",
                 "e_type_of_packaging": "Carton" or item.get("e_type_of_packaging"),
                 "fk_booking_id": bok_1["pk_header_id"],
                 "e_qty": item["qty"],
@@ -126,6 +133,7 @@ def partial_pricing(payload, client, warehouse):
         for bok_2 in bok_2s:
             e_type_of_packaging = "Carton"
             booking_line = {
+                "pk_lines_id": "1",
                 "e_type_of_packaging": e_type_of_packaging,
                 "fk_booking_id": bok_1["pk_header_id"],
                 "e_qty": _bok_2["l_002_qty"],
@@ -288,7 +296,11 @@ def push_boks(payload, client, username, method):
                 bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
                 bok_1_obj.save()
 
-                if bok_1.get("shipping_type") == "DMEA":
+                # Just set the order
+                if (
+                    bok_1.get("shipping_type") == "DMEA"
+                    and bok_1_obj.success != dme_constants.BOK_SUCCESS_4
+                ):
                     pk_header_id = bok_1_obj.pk_header_id
                     bok_2_objs = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                     bok_3_objs = BOK_3_lines_data.objects.filter(
@@ -312,6 +324,8 @@ def push_boks(payload, client, username, method):
                         service_name = bok_1_obj.quote.service_name
                         bok_1_obj.b_003_b_service_name = service_name
                         bok_1_obj.save()
+
+                    paperless.send_order_info(bok_1_obj)
 
             if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
                 url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_obj.client_booking_id}/"
@@ -359,9 +373,7 @@ def push_boks(payload, client, username, method):
             old_bok_1 = old_bok_1s.first()
             old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
             old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
-            push_operations.detect_modified_data(
-                client, old_bok_1, old_bok_2s, old_bok_3s, boks_json
-            )
+            detect_modified_data(client, old_bok_1, old_bok_2s, old_bok_3s, payload)
 
             old_bok_1.delete()
             old_bok_2s.delete()
@@ -510,8 +522,7 @@ def push_boks(payload, client, username, method):
 
         # Save bok_2s
         if "model_number" in bok_2s[0]:  # Product & Child items
-            ignore_product = is_biz
-            items = product_oper.get_product_items(bok_2s, client, ignore_product)
+            items = product_oper.get_product_items(bok_2s, client, is_web)
             new_bok_2s = []
 
             for index, item in enumerate(items):
@@ -530,11 +541,12 @@ def push_boks(payload, client, username, method):
                 line["l_009_weight_per_each"] = item["e_weightPerEach"]
                 line["l_008_weight_UOM"] = item["e_weightUOM"]
                 line["e_item_type"] = item["e_item_type"]
-                new_bok_2s.append({"booking_line": line})
 
                 bok_2_serializer = BOK_2_Serializer(data=line)
                 if bok_2_serializer.is_valid():
-                    bok_2_serializer.save()
+                    result = bok_2_serializer.save()
+                    line["pk_lines_id"] = result.pk
+                    new_bok_2s.append({"booking_line": line})
                 else:
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8821 {LOG_ID} {message}")
@@ -553,7 +565,8 @@ def push_boks(payload, client, username, method):
 
                 bok_2_serializer = BOK_2_Serializer(data=_bok_2)
                 if bok_2_serializer.is_valid():
-                    bok_2_serializer.save()
+                    result = bok_2_serializer.save()
+                    bok_2["booking_line"]["pk_lines_id"] = result.pk
                 else:
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8821 {LOG_ID} {message}")
@@ -583,9 +596,12 @@ def push_boks(payload, client, username, method):
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
+    # PU avail
+    pu_avil = datetime.strptime(bok_1["b_021_b_pu_avail_from_date"], "%Y-%m-%d")
+
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": pu_avil.date(),
         "b_clientReference_RA_Numbers": bok_1["b_000_1_b_clientreference_ra_numbers"],
         "puCompany": bok_1["b_028_b_pu_company"],
         "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
@@ -607,6 +623,10 @@ def push_boks(payload, client, username, method):
         "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
         "de_To_Address_State": bok_1["b_057_b_del_address_state"],
         "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+        "pu_Address_Type": "business",
+        "de_To_AddressType": "residential",
+        "b_booking_tail_lift_pickup": False,
+        "b_booking_tail_lift_deliver": False,
         "client_warehouse_code": bok_1["b_client_warehouse_code"],
         "kf_client_id": bok_1["fk_client_id"],
         "b_client_name": client.company_name,
@@ -616,8 +636,8 @@ def push_boks(payload, client, username, method):
     for bok_2 in bok_2s:
         _bok_2 = bok_2["booking_line"]
         bok_2_line = {
+            "pk_lines_id": _bok_2["pk_lines_id"],
             "fk_booking_id": _bok_2["fk_header_id"],
-            "packagingType": _bok_2["l_001_type_of_packaging"],
             "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
             "e_qty": _bok_2["l_002_qty"],
             "e_item": _bok_2["l_003_item"],
@@ -668,7 +688,9 @@ def push_boks(payload, client, username, method):
     else:
         message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
         logger.error(message)
-        send_email_to_admins("No FC result", message)
+
+        if bok_1["b_client_order_num"]:
+            send_email_to_admins("No FC result", message)
 
     # Set Express or Standard
     if len(json_results) == 1:
@@ -693,6 +715,9 @@ def push_boks(payload, client, username, method):
 
     if json_results:
         if is_biz:
+            if bok_1.get("shipping_type") == "DMEA":  # Direct push from Sapb1
+                paperless.send_order_info(bok_1_obj)
+
             result = {"success": True, "results": json_results}
             url = None
 
@@ -1019,9 +1044,7 @@ def scanned(payload, client):
                     raise Exception("Booking doens't have quote.")
 
                 if not booking.vx_freight_provider and booking.api_booking_quote:
-                    _booking = migrate_quote_info_to_booking(
-                        booking, booking.api_booking_quote
-                    )
+                    _booking = set_booking_quote(booking, booking.api_booking_quote)
 
                 if fp_name != "hunter":
                     file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -1102,13 +1125,11 @@ def scanned(payload, client):
                 logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
 
                 if best_quotes:
-                    booking.api_booking_quote = best_quotes[0]
-                    booking.save()
+                    set_booking_quote(booking, best_quotes[0])
                     new_fc_log.new_quote = booking.api_booking_quote
                     new_fc_log.save()
                 else:
-                    booking.api_booking_quote = None
-                    booking.save()
+                    set_booking_quote(booking, None)
 
         # If Hunter Order?
         if fp_name == "hunter" and booking.b_status != "Picking":
@@ -1384,7 +1405,7 @@ def manifest(payload, client, username):
         _missing_order_nums = ", ".join(missing_order_nums)
         raise ValidationError(f"Missing Order numbers: {_missing_order_nums}")
 
-    manifest_url = build_manifest(booking_ids, username)
+    bookings, manifest_url = build_manifest(booking_ids, username)
 
     with open(manifest_url, "rb") as manifest:
         manifest_data = str(b64encode(manifest.read()))

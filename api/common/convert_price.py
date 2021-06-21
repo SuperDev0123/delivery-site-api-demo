@@ -4,7 +4,7 @@ from api.models import DME_clients, Fp_freight_providers
 from api.fp_apis.constants import FP_CREDENTIALS
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _is_used_client_credential(fp_name, client_name, account_code):
@@ -46,23 +46,23 @@ def _apply_mu(quote, fp, client):
     # Apply FP MU when only Client doesn't have any FP credential
     if client.gap_percent:
         fp_mu = 0
-    else:  # FP Markup(Fuel Levy)
+    else:  # FP MU(Fuel Levy)
         fp_mu = fp.fp_markupfuel_levy_percent
 
-    if quote.client_mu_1_minimum_values:
-        if quote.tax_value_1:
-            cost = float(quote.client_mu_1_minimum_values + quote.tax_value_1) * (
-                1 + fp_mu
-            )
-        else:
-            cost = float(quote.client_mu_1_minimum_values) * (1 + fp_mu)
-    else:
-        if quote.tax_value_1:
-            cost = float(quote.fee + quote.tax_value_1) * (1 + fp_mu)
-        else:
-            cost = float(quote.fee) * (1 + fp_mu)
+    # DME will consider tax on `invoicing` stage
+    # tax = quote.tax_value_1 if quote.tax_value_1 else 0
 
-    # Client Markup
+    # Deactivated 2021-06-14: Need to be considered again
+    # if quote.client_mu_1_minimum_values:
+    #     fuel_levy_base = quote.client_mu_1_minimum_values * fp_mu
+    # else:
+    #     fuel_levy_base = quote.fee * fp_mu
+
+    fuel_levy_base = quote.fee * fp_mu
+    surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
+    cost = quote.fee + fuel_levy_base + surcharge
+
+    # Client MU
     client_mu = client.client_mark_up_percent
     client_min_markup_startingcostvalue = client.client_min_markup_startingcostvalue
     client_min = client.client_min_markup_value
@@ -78,13 +78,13 @@ def _apply_mu(quote, fp, client):
             quoted_dollar = cost + client_min
 
     logger.info(f"[FP $ -> DME $] Finish quoted $: {quoted_dollar} FP_MU: {fp_mu}")
-    return quoted_dollar, fp_mu
+    return quoted_dollar, fuel_levy_base
 
 
 def apply_markups(quotes):
     logger.info(f"[APPLY MU] Start")
 
-    if not quotes.exists():
+    if not quotes:
         logger.info(f"[APPLY MU] No Quotes!")
         return quotes
 
@@ -99,13 +99,13 @@ def apply_markups(quotes):
         return quotes
 
     for quote in quotes:
-        fp_name = quotes[0].freight_provider.lower()
+        fp_name = quote.freight_provider.lower()
         fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-        client_mu_1_minimum_values, mu_percentage_fuel_levy = _apply_mu(
-            quote, fp, client
-        )
+        client_mu_1_minimum_values, fuel_levy_base = _apply_mu(quote, fp, client)
         quote.client_mu_1_minimum_values = client_mu_1_minimum_values
-        quote.mu_percentage_fuel_levy = mu_percentage_fuel_levy
+        quote.mu_percentage_fuel_levy = fp.fp_markupfuel_levy_percent
+        quote.fuel_levy_base = fuel_levy_base
+        quote.client_mark_up_percent = client.client_mark_up_percent
         quote.save()
 
     logger.info(f"[APPLY MU] Finished")
@@ -179,8 +179,9 @@ def interpolate_gaps(quotes):
         # Interpolate gaps for DME pricings only
         gap = lowest_pricing.fee - quote.fee
 
-        if lowest_pricing.tax_value_1:
-            gap += float(lowest_pricing.tax_value_1)
+        # DME will consider tax on `invoicing` stage
+        # if lowest_pricing.tax_value_1:
+        #     gap += float(lowest_pricing.tax_value_1)
 
         if (
             not _is_used_client_credential(fp_name, client_name, account_code)

@@ -40,6 +40,9 @@ def build_csv(booking_ids):
         elif vx_freight_provider == "state transport":
             f = open(f"/dme_sftp/state_transport_au/csv/{csv_name}", "w")
     else:
+        local_path = f"{settings.STATIC_PUBLIC}/csvs/"
+        if not os.path.exists(local_path):
+            os.makedirs(local_path)
         f = open(f"{settings.STATIC_PUBLIC}/csvs/{csv_name}", "w")
 
     # Build CSV

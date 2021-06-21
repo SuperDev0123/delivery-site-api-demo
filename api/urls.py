@@ -29,6 +29,7 @@ router.register(r"reports", DmeReportsViewSet, basename="reports")
 router.register(r"pricing", ApiBookingQuotesViewSet, basename="pricing")
 router.register(r"sqlqueries", SqlQueriesViewSet, basename="sqlqueries")
 router.register(r"vehicles", VehiclesViewSet, basename="vehicles")
+router.register(r"pallet", PalletViewSet, basename="pallet")
 router.register(r"availabilities", AvailabilitiesViewSet, basename="availabilities")
 router.register(r"fp-cost", FPCostsViewSet, basename="fp_cost")
 router.register(r"pricing_rules", PricingRulesViewSet, basename="pricing_rules")
@@ -88,6 +89,7 @@ urlpatterns += [
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
+    url(r"^boks/auto_repack/", auto_repack),
     url(r"^reprint_label/", reprint_label),
     url(r"^manifest/", manifest_boks),
     # BOK apis

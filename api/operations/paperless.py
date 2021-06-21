@@ -8,10 +8,41 @@ from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
 from api.models import BOK_1_headers, BOK_2_lines, Log
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def build_xml_with_bok(bok_1, bok_2s):
+    # Validations
+    message = None
+
+    if not bok_1.b_client_order_num:
+        message = "'b_client_order_num' is missing"
+
+    if not bok_1.b_061_b_del_contact_full_name:
+        message = "{bok_1.b_client_order_num} issue: 'b_061_b_del_contact_full_name' is missing"
+
+    if not bok_1.b_055_b_del_address_street_1:
+        message = "{bok_1.b_client_order_num} issue: 'b_055_b_del_address_street_1' is missing"
+
+    if not bok_1.b_058_b_del_address_suburb:
+        message = (
+            "{bok_1.b_client_order_num} issue: 'b_058_b_del_address_suburb' is missing"
+        )
+
+    if not bok_1.b_057_b_del_address_state:
+        message = (
+            "{bok_1.b_client_order_num} issue: 'b_057_b_del_address_state' is missing"
+        )
+
+    if not bok_1.quote:
+        message = "{bok_1.b_client_order_num} issue: no quotes"
+
+    if not bok_1.b_059_b_del_address_postalcode:
+        message = "{bok_1.b_client_order_num} issue: 'b_059_b_del_address_postalcode' is missing"
+
+    if message:
+        raise Exception(message)
+
     # Constants
     dme_account_num = "50365"
     customer_order_number = "y"
@@ -136,6 +167,10 @@ def build_xml_with_bok(bok_1, bok_2s):
     CustomerEmailAddress = ET.SubElement(Header, "CustomerEmailAddress")
     CustomerEmailAddress.text = bok_1.b_063_b_del_email
 
+    if len(bok_2s) == 0:
+        message = f"{bok_1.b_client_order_num} issue: 0 lines"
+        raise Exception(message)
+
     # Build Detail(s)
     for index, bok_2 in enumerate(bok_2s):
         Detail = ET.SubElement(SalesOrderToWMS, "Detail")
@@ -157,15 +192,19 @@ def build_xml_with_bok(bok_1, bok_2s):
     return result
 
 
-def parse_xml(response):
-    xml_str = response.content.decode("utf-8")
+def parse_xml(is_success_xml, xml_str):
+    xml_str = xml_str.decode("utf-8")
     root = ET.fromstring(xml_str)
     Body_ns = "{http://schemas.xmlsoap.org/soap/envelope/}Body"
     Body = root.find(Body_ns)
     json_res = {}
 
-    if response.status_code == 200:
-        SalesOrderToWMSAck_ns = "{http://www.paperless-warehousing.com/TEST/SalesOrderToWMS}SalesOrderToWMSAck"
+    if is_success_xml:
+        if settings.ENV == "prod":
+            SalesOrderToWMSAck_ns = "{http://www.paperless-warehousing.com/ACR/SalesOrderToWMS}SalesOrderToWMSAck"
+        else:
+            SalesOrderToWMSAck_ns = "{http://www.paperless-warehousing.com/TEST/SalesOrderToWMS}SalesOrderToWMSAck"
+
         SalesOrderToWMSAck = Body.find(SalesOrderToWMSAck_ns)
 
         if SalesOrderToWMSAck:
@@ -187,7 +226,7 @@ def parse_xml(response):
                     "Source": ErrorDetails.find("Source").text,
                     "User": ErrorDetails.find("User").text,
                 }
-    elif response.status_code == 500:
+    else:
         Fault_ns = "{http://schemas.xmlsoap.org/soap/envelope/}Fault"
         Fault = Body.find(Fault_ns)
         json_res["faultcode"] = Fault.find("faultcode").text
@@ -198,11 +237,13 @@ def parse_xml(response):
 
 
 def send_order_info(bok_1):
+    LOG_ID = "[PAPERLESS]"
+
     if settings.ENV == "local":
         return True
 
-    if settings.ENV == "prod":
-        return True
+    # if settings.ENV == "prod":
+    #     return True
 
     try:
         headers = {
@@ -217,19 +258,15 @@ def send_order_info(bok_1):
 
         url = f"http://automation.acrsupplypartners.com.au:{port}/SalesOrderToWMS"
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
-        subject = "Error on Paperless workflow"
-        to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
         log = Log(fk_booking_id=bok_1.pk_header_id, request_type="PAPERLESS_ORDER")
         log.save()
 
-        if settings.ENV == "prod":
-            to_emails.append(settings.SUPPORT_CENTER_EMAIL)
-
         try:
+            logger.info(f"@9000 {LOG_ID} url - {url}")
             body = build_xml_with_bok(bok_1, bok_2s)
-            logger.info(f"@9000 Paperless payload body - {body}")
+            logger.info(f"@9000 {LOG_ID} payload body - {body}")
         except Exception as e:
-            error = f"@901 Paperless error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}"
+            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrder Number: {bok_1.b_client_order_num}"
             logger.error(error)
             raise Exception(error)
 
@@ -237,23 +274,23 @@ def send_order_info(bok_1):
         log.save()
         response = send_soap_request(url, body, headers)
         logger.error(
-            f"@9001 - Paperless response status_code: {response.status_code}, content: {response.content}"
+            f"@9001 - {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
         )
         log.request_status = response.status_code
         log.response = response.content.decode("utf-8")
         log.save()
 
         try:
-            json_res = parse_xml(response)
+            json_res = parse_xml(response.status_code == 200, response.content)
         except Exception as e:
-            error = f"@902 Paperless error on parseing response.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\n\n"
+            error = f"@902 {LOG_ID} error on parseing response.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\n\n"
             error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
             error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}"
             logger.error(error)
             raise Exception(error)
 
         if response.status_code > 400 or "ErrorDetails" in json_res:
-            error = f"@903 Paperless response error.\n\nBok_1: {str(bok_1.pk)}\n\n"
+            error = f"@903 {LOG_ID} response error.\n\nBok_1: {str(bok_1.pk)}\n\n"
             error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
             error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}\n\n"
             error += f"Parsed json: {json.dumps(json_res, indent=4)}"
@@ -263,10 +300,19 @@ def send_order_info(bok_1):
         log.response = json.dumps(json_res, indent=4)
         log.save()
         logger.error(
-            f"@9009 - Paperless send_order_info() result: {json.dumps(json_res, indent=4)}"
+            f"@9009 - {LOG_ID} send_order_info() result: {json.dumps(json_res, indent=4)}"
         )
         return json_res
     except Exception as e:
-        send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
-        logger.error("@905 Sent email notification!")
+        if bok_1.b_client_order_num:
+            to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
+            subject = "Error on Paperless workflow"
+
+            if settings.ENV == "prod":
+                to_emails.append(settings.SUPPORT_CENTER_EMAIL)
+                to_emails.append("randerson@plumproducts.com")  # Plum agent
+
+            send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
+            logger.error(f"@905 {LOG_ID} Sent email notification!")
+
         return None

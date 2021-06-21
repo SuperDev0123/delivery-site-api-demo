@@ -4,7 +4,7 @@ import logging
 from api.models import Booking_lines
 from api.fp_apis.built_in import century, camerons, toll, allied
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_pricing(fp_name, booking, booking_lines=[], is_pricing_only=False):
