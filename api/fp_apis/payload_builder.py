@@ -1,12 +1,11 @@
 import logging
-from datetime import datetime
+from datetime import datetime, date
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from api.models import *
-from api.common import common_times
-from api.common import common_times
+from api.common import common_times as dme_time_lib
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
@@ -47,7 +46,10 @@ def get_account_detail(booking, fp_name):
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
     if _fp_name in ["allied"]:
-        account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+        if settings.ENV != "prod":
+            account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+        else:
+            account_detail = FP_CREDENTIALS["allied"]["dme"]["live_0"]
 
     if not account_detail:
         booking.b_errorCapture = f"Couldn't find Account Detail"
@@ -755,7 +757,14 @@ def get_pricing_payload(
 
     payload["spAccountDetails"] = account_detail
     payload["serviceProvider"] = get_service_provider(fp_name)
-    payload["readyDate"] = "" or str(booking.puPickUpAvailFrom_Date)[:10]
+
+    # Check puPickUpAvailFrom_Date
+    pu_avail_from = booking.puPickUpAvailFrom_Date
+    if not pu_avail_from or pu_avail_from < date.today():
+        booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
+        booking.save()
+
+    payload["readyDate"] = "" or str(pu_avail_from)[:10]
     payload["referenceNumber"] = "" or booking.b_clientReference_RA_Numbers
 
     client_process = None

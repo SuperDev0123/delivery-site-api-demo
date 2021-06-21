@@ -390,6 +390,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "x_booking_Created_With",
             "z_CreatedByAccount",
             "b_send_POD_eMail",
+            "booking_type",
         )
 
 

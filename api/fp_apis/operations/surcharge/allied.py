@@ -13,7 +13,7 @@ from api.models import FP_onforwarding, FP_zones, FP_pricing_rules, Fp_freight_p
 #         return None
 
 
-def get_per_kg_charge(param):
+def get_base_kg_charge(param):
     try:
         fp_id = Fp_freight_providers.objects.get(
             fp_company_name=param["vx_freight_provider"]
@@ -51,7 +51,7 @@ def get_per_kg_charge(param):
 
 
 def tl(param):
-    if param["is_tail_lift"]:
+    if "is_tail_lift" in param and param["is_tail_lift"] == True:
         return {
             "name": "Tail Lift [TL]",
             "description": "For deliveries requiring tail lifts",
@@ -101,8 +101,8 @@ def hd0(param):
         and param["max_weight"] < 22
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
-            "description": "For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)",
+            "name": "Home Deliveries [HD]",
+            "description": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)",
             "value": 10.6 * 0.5,
         }
     else:
@@ -112,11 +112,11 @@ def hd0(param):
 def hd1(param):
     if (
         param["de_to_address_type"].lower() == "residential"
-        and param["max_weight"] >= 22
-        and param["max_weight"] < 55
+        and param["max_weight"] > 22
+        and param["max_weight"] <= 55
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
+            "name": "Home Deliveries [HD]",
             "description": "For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
             "value": 21.19 * 0.5,
         }
@@ -126,11 +126,11 @@ def hd1(param):
 
 def hd2(param):
     if param["de_to_address_type"].lower() == "residential" and (
-        (param["dead_weight"] >= 55 and param["dead_weight"] < 90)
-        or (param["cubic_weight"] >= 55 and param["cubic_weight"] < 135)
+        (param["dead_weight"] > 55 and param["dead_weight"] <= 90)
+        or (param["cubic_weight"] > 55 and param["cubic_weight"] <= 135)
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
+            "name": "Home Deliveries [HD]",
             "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
             "value": 74.15 * 0.5,
         }
@@ -140,10 +140,10 @@ def hd2(param):
 
 def hd3(param):
     if param["de_to_address_type"].lower() == "residential" and (
-        param["dead_weight"] >= 90 or param["cubic_weight"] >= 135
+        param["dead_weight"] > 90 or param["cubic_weight"] > 135
     ):
         return {
-            "name": "Home Deliveries [HD] - The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price.",
+            "name": "Home Deliveries [HD]",
             "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
             "value": 158.87 * 0.5,
         }
@@ -151,17 +151,17 @@ def hd3(param):
         return None
 
 
-def ow(param):
-    base_charge, per_kg_charge = get_per_kg_charge(param)
-    return {
-        "name": "Overweight",
-        "description": "Base charge plus kilo charge",
-        "value": base_charge + per_kg_charge * param["max_weight"],
-    }
+# def ow(param):
+#     base_charge, per_kg_charge = get_base_kg_charge(param)
+#     return {
+#         'name': 'Overweight',
+#         'description': 'Base charge plus kilo charge',
+#         'value': base_charge + per_kg_charge * param['max_weight']
+#     }
 
 
 def mc(param):
-    base_charge, per_kg_charge = get_per_kg_charge(param)
+    base_charge, per_kg_charge = get_base_kg_charge(param)
     if param["is_pallet"] and per_kg_charge and param["max_weight"] < 350:
         return {
             "name": "Minimum Charge-Skids/ Pallets",
@@ -174,73 +174,79 @@ def mc(param):
 
 
 def lws(param):
-    length_surcharge, width_surcharge = None, None
-    if param["length"] >= 1.2 and param["length"] < 2.4:
-        length_surcharge = {
-            "name": "Lengths [LSC] 1.20-2.39 metre",
-            "description": "Items that exceed lenghts in any direction will attract a surcharge",
-            "value": 5.4,
-        }
-    elif param["length"] >= 2.4 and param["length"] < 3.6:
-        length_surcharge = {
-            "name": "Lengths [LSC] 2.40-3.59 metre",
-            "description": "Items that exceed lenghts in any direction will attract a surcharge",
-            "value": 11.93,
-        }
-    elif param["length"] >= 3.6 and param["length"] < 4.2:
-        length_surcharge = {
-            "name": "Lengths [LSC] 3.6-4.19 metre",
-            "description": "Items that exceed lenghts in any direction will attract a surcharge",
-            "value": 25.4,
-        }
-    elif param["length"] >= 4.2 and param["length"] < 4.8:
-        length_surcharge = {
-            "name": "Lengths [LSC] 4.2-4.79 metre",
-            "description": "Items that exceed lenghts in any direction will attract a surcharge",
-            "value": 88.61,
-        }
-    elif param["length"] >= 4.8 and param["length"] < 6:
-        length_surcharge = {
-            "name": "Lengths [LSC] 4.8-5.59 metre",
-            "description": "Items that exceed lenghts in any direction will attract a surcharge",
-            "value": 119.19,
-        }
-    elif param["length"] >= 6:
-        length_surcharge = {
-            "name": "Lengths [LSC] over 6 metre",
-            "description": "Items that exceed lenghts in any direction will attract a surcharge",
-            "value": 153.91,
-        }
-    else:
-        length_surcharge = {}
+    """
+    Allied pricing api contains this surcharge.
 
-    if param["width"] > 1.1 and param["width"] <= 1.6:
-        width_surcharge = {
-            "name": "Width [WS] 1.10-1.60 metre",
-            "description": "Items that exceed width will attract a surcharge",
-            "value": 7.5,
-        }
-    elif param["width"] > 1.6 and param["width"] <= 2.4:
-        width_surcharge = {
-            "name": "Width [WS] 1.61-2.4 metre",
-            "description": "Items that exceed width will attract a surcharge",
-            "value": 10.5,
-        }
-    else:
-        width_surcharge = {}
+    Disable until we use built-in pricing module for Allied
+    """
+    return None
 
-    if length_surcharge and width_surcharge:
-        if length_surcharge["value"] > width_surcharge["value"]:
-            return length_surcharge
-        else:
-            return width_surcharge
-    elif length_surcharge or width_surcharge:
-        if length_surcharge:
-            return length_surcharge
-        else:
-            return width_surcharge
-    else:
-        return None
+    # length_surcharge, width_surcharge = None, None
+
+    # Width surcharge
+    # if param["max_dimension"] >= 1.2 and param["max_dimension"] < 2.4:
+    #     length_surcharge = {
+    #         "name": "Lengths [LSC] 1.20-2.39 metre",
+    #         "description": "Items that exceed lenghts in any direction will attract a surcharge",
+    #         "value": 5.4,
+    #     }
+    # elif param["max_dimension"] >= 2.4 and param["max_dimension"] < 3.6:
+    #     length_surcharge = {
+    #         "name": "Lengths [LSC] 2.40-3.59 metre",
+    #         "description": "Items that exceed lenghts in any direction will attract a surcharge",
+    #         "value": 11.93,
+    #     }
+    # elif param["max_dimension"] >= 3.6 and param["max_dimension"] < 4.2:
+    #     length_surcharge = {
+    #         "name": "Lengths [LSC] 3.6-4.19 metre",
+    #         "description": "Items that exceed lenghts in any direction will attract a surcharge",
+    #         "value": 25.4,
+    #     }
+    # elif param["max_dimension"] >= 4.2 and param["max_dimension"] < 4.8:
+    #     length_surcharge = {
+    #         "name": "Lengths [LSC] 4.2-4.79 metre",
+    #         "description": "Items that exceed lenghts in any direction will attract a surcharge",
+    #         "value": 88.61,
+    #     }
+    # elif param["max_dimension"] >= 4.8 and param["max_dimension"] < 6:
+    #     length_surcharge = {
+    #         "name": "Lengths [LSC] 4.8-5.99 metre",
+    #         "description": "Items that exceed lenghts in any direction will attract a surcharge",
+    #         "value": 119.19,
+    #     }
+    # elif param["max_dimension"] >= 6:
+    #     length_surcharge = {
+    #         "name": "Lengths [LSC] over 6 metre",
+    #         "description": "Items that exceed lenghts in any direction will attract a surcharge",
+    #         "value": 153.91,
+    #     }
+
+    # if param["max_dimension"] > 1.1 and param["max_dimension"] <= 1.6:
+    #     width_surcharge = {
+    #         "name": "Width [WS] 1.10-1.60 metre",
+    #         "description": "Items that exceed width will attract a surcharge",
+    #         "value": 7.5,
+    #     }
+    # elif param["max_dimension"] > 1.6 and param["max_dimension"] <= 2.4:
+    #     width_surcharge = {
+    #         "name": "Width [WS] 1.61-2.4 metre",
+    #         "description": "Items that exceed width will attract a surcharge",
+    #         "value": 10.5,
+    #     }
+
+    # Length surcharge
+    # if length_surcharge and width_surcharge:
+    #     if length_surcharge["value"] > width_surcharge["value"]:
+    #         return length_surcharge
+    #     else:
+    #         return width_surcharge
+    # elif length_surcharge or width_surcharge:
+    #     if length_surcharge:
+    #         return length_surcharge
+    #     else:
+    #         return width_surcharge
+    # else:
+    #     return None
 
 
 # def bbs(param):
@@ -305,4 +311,16 @@ def ofde(param):
 
 
 def allied():
-    return {"order": [ow, ofpu, ofde, tl, hd0, hd1, hd2, hd3], "line": [mc, lws]}
+    return {
+        "order": [
+            # ow,
+            ofpu,
+            ofde,
+            tl,
+            hd0,
+            hd1,
+            hd2,
+            hd3,
+        ],
+        "line": [mc, lws],
+    }

@@ -1,3 +1,4 @@
+import os
 import json
 import uuid
 import logging
@@ -28,6 +29,7 @@ from api.common import (
     status_history,
 )
 from api.common.pallet import get_number_of_pallets, get_suitable_pallet
+from api.common.booking_quote import set_booking_quote
 from api.fp_apis.utils import (
     select_best_options,
     get_status_category_from_status,
@@ -74,7 +76,7 @@ def partial_pricing(payload, client, warehouse):
 
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
         "pu_Contact_F_L_Name": "initial_PU_contact",
@@ -113,7 +115,7 @@ def partial_pricing(payload, client, warehouse):
         logger.info(f"@816 {LOG_ID} {message}")
         raise Exception(message)
 
-    items = product_oper.get_product_items(bok_2s, client, True)
+    items = product_oper.get_product_items(bok_2s, client, True, False)
 
     for item in items:
         booking_line = {
@@ -324,11 +326,10 @@ def push_boks(payload, client, username, method):
     bok_1["fk_client_id"] = client.dme_account_num
     bok_1["x_booking_Created_With"] = "DME PUSH API"
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
+    bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
 
-    if bok_1.get("shipping_type") == "DMEA":
-        bok_1["success"] = dme_constants.BOK_SUCCESS_4
-    else:
-        bok_1["success"] = dme_constants.BOK_SUCCESS_3
+    # `DMEA` or `DMEM` - set `success` as 3
+    bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
     if not bok_1.get("b_028_b_pu_company"):
         bok_1["b_028_b_pu_company"] = warehouse.name
@@ -404,7 +405,9 @@ def push_boks(payload, client, username, method):
         bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
     de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
-    de_state, de_suburb = get_suburb_state(de_postal_code)
+    de_state, de_suburb = get_suburb_state(
+        de_postal_code, bok_1["b_058_b_del_address_suburb"]
+    )
     bok_1["b_057_b_del_address_state"] = de_state.upper()
     bok_1["b_058_b_del_address_suburb"] = de_suburb
     bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
@@ -417,7 +420,7 @@ def push_boks(payload, client, username, method):
         raise Exception(message)
 
     # Save bok_2s (Product & Child items)
-    items = product_oper.get_product_items(bok_2s, client, is_web)
+    items = product_oper.get_product_items(bok_2s, client, is_web, False)
     new_bok_2s = []
     bok_2_objs = []
 
@@ -445,10 +448,11 @@ def push_boks(payload, client, username, method):
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
-                bok_2_objs.append(bok_2_obj)
 
-                line["pk_lines_id"] = bok_2_obj.pk
-                new_bok_2s.append({"booking_line": line})
+                if not line["is_deleted"]:
+                    bok_2_objs.append(bok_2_obj)
+                    line["pk_lines_id"] = bok_2_obj.pk
+                    new_bok_2s.append({"booking_line": line})
             else:
                 message = f"Serialiser Error - {bok_2_serializer.errors}"
                 logger.info(f"@8831 {LOG_ID} {message}")
@@ -469,12 +473,7 @@ def push_boks(payload, client, username, method):
     pallet_index = get_suitable_pallet(bok_2_objs, pallets)
     pallet = pallets[pallet_index]
     logger.info(f"@8125 {LOG_ID} Selected pallet: {pallet}")
-    number_of_pallets = get_number_of_pallets(bok_2_objs, pallet)
-
-    if not number_of_pallets:
-        message = "0 number of Pallets."
-        logger.info(f"@801 {LOG_ID} {message}")
-        return message
+    number_of_pallets, unpalletized_line_pks = get_number_of_pallets(bok_2_objs, pallet)
 
     # Get number of lines (`EACH`, `CTN`, `PAL`)
     for bok_2_obj in bok_2_objs:
@@ -485,44 +484,54 @@ def push_boks(payload, client, username, method):
     for bok_2_obj in bok_2_objs:
         if bok_2_obj.zbl_102_text_2 in NEED_PALLET_GROUP_CODES:
             need_palletize = True
+            logger.info(f"@8126 {LOG_ID} Need Palletized! - {bok_2_obj.zbl_102_text_2}")
             break
 
-    if number_of_pallets and (carton_cnt > 2 or need_palletize):
+    if carton_cnt > 2 or need_palletize:
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
-        new_bok_2s = []
 
         # Create one PAL bok_2
-        line = {}
-        line["fk_header_id"] = bok_1["pk_header_id"]
-        line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-        line["pk_booking_lines_id"] = str(uuid.uuid1())
-        line["success"] = bok_1["success"]
-        line["l_001_type_of_packaging"] = "PAL"
-        line["l_002_qty"] = number_of_pallets
-        line["l_003_item"] = "Auto repacked item"
-        line["l_004_dim_UOM"] = "mm"
-        line["l_005_dim_length"] = pallet.length
-        line["l_006_dim_width"] = pallet.width
-        line["l_007_dim_height"] = pallet.height
-        line["l_009_weight_per_each"] = total_weight / number_of_pallets
-        line["l_008_weight_UOM"] = "KG"
-        new_bok_2s.append({"booking_line": line})
+        if number_of_pallets:
+            line = {}
+            line["fk_header_id"] = bok_1["pk_header_id"]
+            line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+            line["pk_booking_lines_id"] = str(uuid.uuid1())
+            line["success"] = bok_1["success"]
+            line["l_001_type_of_packaging"] = "PAL"
+            line["l_002_qty"] = number_of_pallets
+            line["l_003_item"] = "Auto repacked item"
+            line["l_004_dim_UOM"] = "mm"
+            line["l_005_dim_length"] = pallet.length
+            line["l_006_dim_width"] = pallet.width
+            line["l_007_dim_height"] = pallet.height
+            line["l_009_weight_per_each"] = total_weight / number_of_pallets
+            line["l_008_weight_UOM"] = "KG"
+            line["is_deleted"] = False
 
-        bok_2_serializer = BOK_2_Serializer(data=line)
-        if bok_2_serializer.is_valid():
-            bok_2_serializer.save()
-        else:
-            message = f"Serialiser Error - {bok_2_serializer.errors}"
-            logger.info(f"@8131 {LOG_ID} {message}")
-            raise Exception(message)
+            bok_2_serializer = BOK_2_Serializer(data=line)
+            if bok_2_serializer.is_valid():
+                bok_2_serializer.save()
+                bok_2s = [{"booking_line": line}]
+            else:
+                message = f"Serialiser Error - {bok_2_serializer.errors}"
+                logger.info(f"@8131 {LOG_ID} {message}")
+                raise Exception(message)
 
         # Create Bok_3s
         for bok_2_obj in bok_2_objs:
+            if bok_2_obj.pk in unpalletized_line_pks:
+                continue
+
             bok_3 = {}
             bok_3["fk_header_id"] = bok_1_obj.pk_header_id
+            bok_3["v_client_pk_consigment_num"] = bok_1_obj.pk_header_id
             bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
             bok_3["success"] = bok_1_obj.success
+            bok_3["ld_005_item_serial_number"] = bok_2_obj.zbl_121_integer_1  # Sequence
+            bok_3["ld_001_qty"] = bok_2_obj.l_002_qty
+            bok_3["ld_003_item_description"] = bok_2_obj.l_003_item
+            bok_3["ld_002_model_number"] = bok_2_obj.e_item_type
             bok_3["zbld_121_integer_1"] = bok_2_obj.zbl_121_integer_1  # Sequence
             bok_3["zbld_122_integer_2"] = bok_2_obj.l_002_qty
             bok_3["zbld_131_decimal_1"] = bok_2_obj.l_005_dim_length
@@ -538,22 +547,25 @@ def push_boks(payload, client, username, method):
             bok_3_serializer = BOK_3_Serializer(data=bok_3)
             if bok_3_serializer.is_valid():
                 bok_3_serializer.save()
+
+                bok_2_obj.is_deleted = True
+                bok_2_obj.save()
             else:
                 message = f"Serialiser Error - {bok_3_serializer.errors}"
                 logger.info(f"@8132 {LOG_ID} {message}")
                 raise Exception(message)
 
-            bok_2_obj.is_deleted = True
-            bok_2_obj.save()
-
         # Set `auto_repack` flag
         bok_1_obj.b_081_b_pu_auto_pack = True
         bok_1_obj.save()
 
+    # Get next business day
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+
     # Get Pricings
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": bok_1["b_021_b_pu_avail_from_date"],
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "",
         "puCompany": bok_1["b_028_b_pu_company"],
         "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
@@ -676,14 +688,17 @@ def push_boks(payload, client, username, method):
     if json_results:
         if is_biz:
             result = {"success": True, "results": json_results}
-            url = None
 
-            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
-                url = (
-                    f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                )
-            elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+            # Commented (2021-06-18)
+            # if bok_1["shipping_type"] == "DMEM":
+            #     url = (
+            #         f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+            #     )
+            # elif bok_1["shipping_type"] == "DMEA":
+            #     url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+
+            # Show price page either DMEA and DMEM
+            url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
@@ -717,9 +732,9 @@ def auto_repack(payload, client):
     if repack_status:  # repack
         # Get Pallet
         pallet = Pallet.objects.get(pk=pallet_id)
-        number_of_pallets = get_number_of_pallets(bok_2s, pallet)
+        number_of_pallets, unpalletized_line_pks = get_number_of_pallets(bok_2s, pallet)
 
-        if not number_of_pallets:
+        if not number_of_pallets and not unpalletized_line_pks:
             message = "0 number of Pallets."
             logger.info(f"@801 {LOG_ID} {message}")
             return message
@@ -738,61 +753,73 @@ def auto_repack(payload, client):
             bok_3.delete()
 
         # Create new *1* Pallet Bok_2
-        line = {}
-        line["fk_header_id"] = bok_1.pk_header_id
-        line["v_client_pk_consigment_num"] = bok_1.pk_header_id
-        line["pk_booking_lines_id"] = str(uuid.uuid1())
-        line["success"] = bok_1.success
-        line["l_001_type_of_packaging"] = "PAL"
-        line["l_002_qty"] = number_of_pallets
-        line["l_003_item"] = "Auto repacked item"
-        line["l_004_dim_UOM"] = "mm"
-        line["l_005_dim_length"] = pallet.length
-        line["l_006_dim_width"] = pallet.width
-        line["l_007_dim_height"] = pallet.height
-        line["l_009_weight_per_each"] = total_weight / number_of_pallets
-        line["l_008_weight_UOM"] = "KG"
+        if number_of_pallets:
+            line = {}
+            line["fk_header_id"] = bok_1.pk_header_id
+            line["v_client_pk_consigment_num"] = bok_1.pk_header_id
+            line["pk_booking_lines_id"] = str(uuid.uuid1())
+            line["success"] = bok_1.success
+            line["l_001_type_of_packaging"] = "PAL"
+            line["l_002_qty"] = number_of_pallets
+            line["l_003_item"] = "Auto repacked item"
+            line["l_004_dim_UOM"] = "mm"
+            line["l_005_dim_length"] = pallet.length
+            line["l_006_dim_width"] = pallet.width
+            line["l_007_dim_height"] = pallet.height
+            line["l_009_weight_per_each"] = total_weight / number_of_pallets
+            line["l_008_weight_UOM"] = "KG"
 
-        bok_2_serializer = BOK_2_Serializer(data=line)
-        if bok_2_serializer.is_valid():
-            new_bok_2 = bok_2_serializer.save()
-            new_bok_2s.append(new_bok_2)
-        else:
-            message = f"Serialiser Error - {bok_2_serializer.errors}"
-            logger.info(f"@8131 {LOG_ID} {message}")
-            raise Exception(message)
+            bok_2_serializer = BOK_2_Serializer(data=line)
+            if bok_2_serializer.is_valid():
+                new_bok_2 = bok_2_serializer.save()
+                new_bok_2s.append(new_bok_2)
+            else:
+                message = f"Serialiser Error - {bok_2_serializer.errors}"
+                logger.info(f"@8131 {LOG_ID} {message}")
+                raise Exception(message)
 
         # Create Bok_3 and soft delete existing CTN Bok_2
         for bok_2 in bok_2s:
             if bok_2.l_001_type_of_packaging == "PAL":
                 continue
+
+            if (
+                bok_2.zbl_102_text_2 in SERVICE_GROUP_CODES
+                or bok_2.pk in unpalletized_line_pks
+            ):
+                continue
+
+            bok_3 = {}
+            bok_3["fk_header_id"] = bok_1.pk_header_id
+            bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
+            bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
+            bok_3["success"] = bok_1.success
+            bok_3["ld_005_item_serial_number"] = bok_2.zbl_121_integer_1  # Sequence
+            bok_3["ld_001_qty"] = bok_2.l_002_qty
+            bok_3["ld_003_item_description"] = bok_2.l_003_item
+            bok_3["ld_002_model_number"] = bok_2.e_item_type
+            bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
+            bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
+            bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
+            bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
+            bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
+            bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
+            bok_3["zbld_101_text_1"] = bok_2.l_004_dim_UOM
+            bok_3["zbld_102_text_2"] = bok_2.l_008_weight_UOM
+            bok_3["zbld_103_text_3"] = bok_2.e_item_type
+            bok_3["zbld_104_text_4"] = bok_2.l_001_type_of_packaging
+            bok_3["zbld_105_text_5"] = bok_2.l_003_item
+
+            bok_3_serializer = BOK_3_Serializer(data=bok_3)
+            if bok_3_serializer.is_valid():
+                bok_3_serializer.save()
             else:
-                bok_3 = {}
-                bok_3["fk_header_id"] = bok_1.pk_header_id
-                bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
-                bok_3["success"] = bok_1.success
-                bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
-                bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
-                bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
-                bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
-                bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
-                bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
-                bok_3["zbld_101_text_1"] = bok_2.l_004_dim_UOM
-                bok_3["zbld_102_text_2"] = bok_2.l_008_weight_UOM
-                bok_3["zbld_103_text_3"] = bok_2.e_item_type
-                bok_3["zbld_104_text_4"] = bok_2.l_001_type_of_packaging
-                bok_3["zbld_105_text_5"] = bok_2.l_003_item
+                message = f"Serialiser Error - {bok_3_serializer.errors}"
+                logger.info(f"@8132 {LOG_ID} {message}, {bok_3}")
+                raise Exception(message)
 
-                bok_3_serializer = BOK_3_Serializer(data=bok_3)
-                if bok_3_serializer.is_valid():
-                    bok_3_serializer.save()
-                else:
-                    message = f"Serialiser Error - {bok_3_serializer.errors}"
-                    logger.info(f"@8132 {LOG_ID} {message}, {bok_3}")
-                    raise Exception(message)
-
-                bok_2.is_deleted = not bok_2.is_deleted
-                bok_2.save()
+            bok_2.is_deleted = not bok_2.is_deleted
+            bok_2.save()
     else:  # rollback repack
         for bok_2 in bok_2s:
             # Delete existing Pallet
@@ -807,8 +834,8 @@ def auto_repack(payload, client):
                 bok_2.is_deleted = not bok_2.is_deleted
                 bok_2.save()
 
-            if not bok_2.is_deleted:
-                new_bok_2s.append(bok_2)
+                if not bok_2.is_deleted:
+                    new_bok_2s.append(bok_2)
 
         for bok_3 in bok_3s:
             bok_3.is_deleted = not bok_3.is_deleted
@@ -817,10 +844,13 @@ def auto_repack(payload, client):
     bok_1.b_081_b_pu_auto_pack = repack_status
     bok_1.save()
 
+    # Get next business day
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+
     # Get Pricings
     booking = {
         "pk_booking_id": bok_1.pk_header_id,
-        "puPickUpAvailFrom_Date": bok_1.b_021_b_pu_avail_from_date,
+        "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "",
         "puCompany": bok_1.b_028_b_pu_company,
         "pu_Contact_F_L_Name": bok_1.b_035_b_pu_contact_full_name,
@@ -886,6 +916,7 @@ def auto_repack(payload, client):
     logger.info(
         f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
     )
+    json_results = []
 
     # Select best quotes(fastest, lowest)
     if quote_set.exists() and quote_set.count() > 0:
@@ -917,7 +948,7 @@ def auto_repack(payload, client):
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
-    else:
+    elif len(json_results) > 1:
         if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
             json_results[0]["service_name"] = "Express"
             json_results[1]["service_name"] = "Standard"
@@ -995,31 +1026,34 @@ def scanned(payload, client):
         logger.info(f"@352 {LOG_ID} {message}")
         raise ValidationError(message)
 
-    # If Order exists
+    # Fetch original data
     pk_booking_id = booking.pk_booking_id
     fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-    original_items = lines.exclude(e_item="Auto repacked item").filter(
+    original_lines = lines.exclude(e_item="Auto repacked item").filter(
         sscc__isnull=True
     )
 
     logger.info(f"@360 {LOG_ID} Booking: {booking}")
     logger.info(f"@361 {LOG_ID} Lines: {lines}")
-    logger.info(f"@362 {LOG_ID} Original Lines: {original_items}")
+    logger.info(f"@362 {LOG_ID} Original Lines: {original_lines}")
+
+    # prepare save
+    sscc_list = []
+    for item in picked_items:
+        if item["sscc"] not in sscc_list:
+            sscc_list.append(item["sscc"])
 
     with transaction.atomic():
         # Rollback `auto repack` | `already packed` operation
         for line in lines:
-            if (
-                line.e_item == "Auto repacked item"
-                and line.e_type_of_packaging == "PAL"
-            ):
-                line.is_deleted = True
-                line.save()
-
-            if line.sscc:
+            if line.sscc:  # Delete prev sscc lines
                 line.delete()
+                # continue
+
+            line.is_deleted = True
+            line.save()
 
         # Delete all LineData
         for line_data in line_datas:
@@ -1027,68 +1061,95 @@ def scanned(payload, client):
 
         # Save
         sscc_lines = {}
-        for picked_item in picked_items:
-            # Find source line
-            old_line = None
-            first_item = picked_item["items"][0]
+        for sscc in sscc_list:
+            first_item = None
+            for picked_item in picked_items:
+                if picked_item["sscc"] == sscc:
+                    first_item = picked_item
+                    break
 
-            for original_item in original_items:
-                if original_item.zbl_121_integer_1 == first_item["sequence"]:
-                    old_line = original_item
-
-            # Create new Lines
+            # Create new Line
             new_line = Booking_lines()
             new_line.fk_booking_id = pk_booking_id
             new_line.pk_booking_lines_id = str(uuid.uuid4())
-            new_line.e_type_of_packaging = picked_item.get("package_type")
-            new_line.e_qty = first_item["qty"]
-            new_line.zbl_121_integer_1 = first_item["sequence"]
-            new_line.e_item = old_line.e_item
-            new_line.e_item_type = old_line.e_item_type
-            new_line.e_dimUOM = picked_item["dimensions"]["unit"]
-            new_line.e_dimLength = picked_item["dimensions"]["length"]
-            new_line.e_dimWidth = picked_item["dimensions"]["width"]
-            new_line.e_dimHeight = picked_item["dimensions"]["height"]
-            new_line.e_weightUOM = picked_item["weight"]["unit"]
-            new_line.e_weightPerEach = picked_item["weight"]["weight"]
-            new_line.sscc = picked_item["sscc"]
-            new_line.picked_up_timestamp = (
-                picked_item.get("timestamp") or datetime.now()
-            )
-
-            if old_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
-                new_line.is_deleted = True
-
+            new_line.e_type_of_packaging = first_item.get("package_type")
+            new_line.e_qty = 1
+            new_line.zbl_121_integer_1 = 0
+            new_line.e_item = "Picked Item"
+            new_line.e_item_type = None
+            new_line.e_dimUOM = first_item["dimensions"]["unit"]
+            new_line.e_dimLength = first_item["dimensions"]["length"]
+            new_line.e_dimWidth = first_item["dimensions"]["width"]
+            new_line.e_dimHeight = first_item["dimensions"]["height"]
+            new_line.e_weightUOM = first_item["weight"]["unit"]
+            new_line.e_weightPerEach = first_item["weight"]["weight"]
+            new_line.is_deleted = False
+            new_line.zbl_102_text_2 = None
+            new_line.sscc = first_item["sscc"]
+            new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
             new_line.save()
 
-            # Soft delete source line
-            old_line.is_deleted = True
-            old_line.save()
+            sscc_lines[sscc] = [new_line]
 
-            # Create new line_data
-            for item in picked_item["items"]:
+            # Create new line_data(s)
+            for picked_item in picked_items:
+                if picked_item["sscc"] != sscc:
+                    continue
+
+                original_line = None
+                for line in original_lines:
+                    if line.zbl_121_integer_1 == picked_item["items"][0]["sequence"]:
+                        original_line = line
+
+                if original_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                    continue
+
                 line_data = Booking_lines_data()
                 line_data.fk_booking_id = pk_booking_id
                 line_data.fk_booking_lines_id = new_line.pk_booking_lines_id
-                line_data.itemDescription = "Picked at warehouse"
-                line_data.quantity = item.get("qty")
-                line_data.clientRefNumber = picked_item["sscc"]
+                line_data.quantity = picked_item["items"][0]["qty"]
+                line_data.itemDescription = original_line.e_item
+                line_data.modelNumber = original_line.e_item_type
+                line_data.clientRefNumber = sscc
+                line_data.itemSerialNumbers = original_line.zbl_121_integer_1
                 line_data.save()
 
-            if picked_item["sscc"] not in sscc_lines:
-                sscc_lines[picked_item["sscc"]] = [new_line]
-            else:
-                sscc_lines[picked_item["sscc"]].append(new_line)
+    # Should get pricing again
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    booking.puPickUpAvailFrom_Date = next_biz_day
+    booking.save()
+
+    new_fc_log = FC_Log.objects.create(
+        client_booking_id=booking.b_client_booking_ref_num,
+        old_quote=booking.api_booking_quote,
+    )
+    new_fc_log.save()
+    logger.info(f"#371 {LOG_ID} {booking.b_bookingID_Visual} - getting Quotes again...")
+    _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
+    logger.info(
+        f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quotes.exists() and quotes.count() > 0:
+        if booking.booking_type == "DMEM":
+            quotes = quotes.filter(
+                freight_provider__iexact=booking.vx_freight_provider,
+                service_name=booking.vx_serviceName,
+            )
+
+        best_quotes = select_best_options(pricings=quotes)
+        logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
+
+        if best_quotes:
+            set_booking_quote(booking, best_quotes[0])
+            new_fc_log.new_quote = booking.api_booking_quote
+            new_fc_log.save()
+        else:
+            set_booking_quote(booking, None)
 
     # Build label with SSCC - one sscc should have one page label
-    labeled_ssccs = []
-    for sscc in sscc_lines:
-        if sscc in labeled_ssccs:
-            continue
-
-        if not booking.vx_freight_provider and booking.api_booking_quote:
-            _booking = migrate_quote_info_to_booking(booking, booking.api_booking_quote)
-
+    for sscc in sscc_list:
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -1117,55 +1178,13 @@ def scanned(payload, client):
         with open(label_url[:-4] + ".zpl", "rb") as zpl:
             zpl_data = str(b64encode(zpl.read()))[2:-1]
 
-        labeled_ssccs.append(labeled_ssccs)
+    message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
+    logger.info(message)
 
-    """
-        Move to Ready api
-    """
-    # # Should get pricing again when if fully picked
-    # if is_picked_all:
-    #     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    #     booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-    #     booking.save()
-
-    #     new_fc_log = FC_Log.objects.create(
-    #         client_booking_id=booking.b_client_booking_ref_num,
-    #         old_quote=booking.api_booking_quote,
-    #     )
-    #     new_fc_log.save()
-    #     logger.info(
-    #         f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
-    #     )
-    #     _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
-    #     logger.info(
-    #         f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
-    #     )
-
-    #     # Select best quotes(fastest, lowest)
-    #     if quotes.exists() and quotes.count() > 0:
-    #         quotes = quotes.filter(
-    #             freight_provider__iexact=booking.vx_freight_provider,
-    #             service_name=booking.vx_serviceName,
-    #         )
-    #         best_quotes = select_best_options(pricings=quotes)
-    #         logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
-
-    #         if best_quotes:
-    #             booking.api_booking_quote = best_quotes[0]
-    #             booking.save()
-    #             new_fc_log.new_quote = booking.api_booking_quote
-    #             new_fc_log.save()
-    #         else:
-    #             booking.api_booking_quote = None
-    #             booking.save()
-
-    logger.info(
-        f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
-    )
-
-    return {
+    res_json = {
         "labelUrl": f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
     }
+    return res_json
 
 
 def ready_boks(payload, client):
