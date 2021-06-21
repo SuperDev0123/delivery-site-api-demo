@@ -17,7 +17,7 @@ USERNAME = "delme"
 PASSWORD = "Dme1234!$*"
 CUSTOMER_CODE = "3QD3D5X"
 
-if settings.ENV in ["local", "dev"]:
+if settings.ENV not in ["local", "dev"]:
     API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/U01_avenue"
 else:
     API_URL = f"https://jasonl-bi.prontohosted.com.au:{PORT}/pronto/rest/L01_avenue"

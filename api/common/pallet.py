@@ -62,7 +62,7 @@ def get_number_of_pallets(booking_lines, pallet):
     return number_of_pallets_for_palletized, unpalletized_line_pks
 
 
-def get_suitable_pallets(bok_2s, pallets):
+def get_palletized_by_ai(bok_2s, pallets):
     # occupied pallet space percent in case of packing different line items in one pallet
     available_percent = 80
 
@@ -108,6 +108,7 @@ def get_suitable_pallets(bok_2s, pallets):
 
         lines_data.append(
             {
+                "line_obj": item,
                 "length": length,
                 "width": width,
                 "height": height,
@@ -115,6 +116,7 @@ def get_suitable_pallets(bok_2s, pallets):
                 "cubic": cubic,
                 "available_pallets": available_pallets,
                 "smallest_pallet": smallest_pallet,
+                "pallet_objs": pallets,
             }
         )
 
@@ -129,8 +131,8 @@ def get_suitable_pallets(bok_2s, pallets):
                 non_palletized.append(
                     {
                         "line_index": index,
-                        "line_obj": bok_2s[index],
-                        "quantity": line["quantity"]
+                        "line_obj": line["line_obj"],
+                        "quantity": line["quantity"],
                     }
                 )
             else:
@@ -149,8 +151,8 @@ def get_suitable_pallets(bok_2s, pallets):
                         pallet_item["lines"].append(
                             {
                                 "line_index": index,
-                                "line_obj": bok_2s[index], 
-                                "quantity": packable_count
+                                "line_obj": line["line_obj"],
+                                "quantity": packable_count,
                             }
                         )
                         line["quantity"] -= packable_count
@@ -186,7 +188,7 @@ def get_suitable_pallets(bok_2s, pallets):
                                         "lines": [
                                             {
                                                 "line_index": index,
-                                                "line_obj": bok_2s[index],
+                                                "line_obj": line["line_obj"],
                                                 "quantity": packable_count,
                                             }
                                         ],
@@ -205,7 +207,7 @@ def get_suitable_pallets(bok_2s, pallets):
                                         "lines": [
                                             {
                                                 "line_index": index,
-                                                "line_obj": bok_2s[index],
+                                                "line_obj": line["line_obj"],
                                                 "quantity": packable_count,
                                             }
                                         ],
@@ -238,7 +240,4 @@ def get_suitable_pallets(bok_2s, pallets):
             item['quantity'] = 1
             reformatted_palletized.append(item)
 
-    return {
-        'palletized': reformatted_palletized,
-        'non_palletized': non_palletized
-    }
+    return reformatted_palletized, non_palletized
