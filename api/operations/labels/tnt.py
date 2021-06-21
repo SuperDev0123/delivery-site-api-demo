@@ -27,7 +27,7 @@ from api.models import Booking_lines, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -79,7 +79,7 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
-def build_label(booking, filepath, lines=[], label_index=0):
+def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -94,14 +94,24 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     # start pdf file name using naming convention
     if lines:
-        filename = (
-            booking.pu_Address_State
-            + "_"
-            + str(booking.b_bookingID_Visual)
-            + "_"
-            + str(lines[0].pk)
-            + ".pdf"
-        )
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
+            )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
     else:
         filename = (
             booking.pu_Address_State
@@ -119,9 +129,12 @@ def build_label(booking, filepath, lines=[], label_index=0):
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 0
-    for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
+    totalQty = 1
+    if one_page_label:
+        lines = [lines[0]]
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -211,17 +224,22 @@ def build_label(booking, filepath, lines=[], label_index=0):
         )
         routing = None
 
-        for crecord in crecords:
-            if crecord.orig_depot_except == drecord.orig_depot:
-                routing = crecord
-                break
+        if drecord:
+            for crecord in crecords:
+                if crecord.orig_depot_except == drecord.orig_depot:
+                    routing = crecord
+                    break
 
         if not routing:
             routing = crecords.first()
 
-    logger.info(
-        f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
-    )
+        logger.info(
+            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
+        )
+    else:
+        logger.info(
+            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
+        )
 
     e_Total_KG_weight = 0
     for booking_line in lines:
@@ -229,6 +247,9 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     for booking_line in lines:
         for j_index in range(booking_line.e_qty):
+            if one_page_label and j_index > 0:
+                continue
+
             logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
             tbl_data1 = [
                 [
@@ -364,8 +385,8 @@ def build_label(booking, filepath, lines=[], label_index=0):
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (2 / 4) * mm,
-                    float(label_settings["label_image_size_length"]) * (2 / 4) * mm,
+                    float(label_settings["label_image_size_length"]) * (3 / 5) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 5) * mm,
                 ),
                 rowHeights=(float(label_settings["line_height_small"]) * mm),
                 style=[

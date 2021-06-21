@@ -3,7 +3,7 @@ import shutil
 import pysftp
 import logging
 
-logger = logging.getLogger("sftp")
+logger = logging.getLogger(__name__)
 
 
 def download_sftp(

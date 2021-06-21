@@ -2,7 +2,7 @@ import logging
 
 from api.models import Client_employees, Client_warehouses, Utl_suburbs
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def get_client(user):
@@ -22,14 +22,18 @@ def get_client(user):
         raise Exception(message)
 
 
-def get_warehouse(client):
+def get_warehouse(client, code=None):
     """
     get Client's Warehouse
     """
     LOG_ID = "[GET WHSE]"
 
     try:
-        warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+        if code:
+            warehouse = Client_warehouses.objects.get(client_warehouse_code=code)
+        else:
+            warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+
         logger.info(f"{LOG_ID} Warehouse: {warehouse}")
         return warehouse
     except Exception as e:
@@ -38,9 +42,12 @@ def get_warehouse(client):
         raise Exception(message)
 
 
-def get_suburb_state(postal_code):
+def get_suburb_state(postal_code, clue=""):
     """
     get `suburb` and `state` from postal_code
+
+    postal_code: PostalCode
+    clue: String which may contains Suburb and State
     """
     LOG_ID = "[GET ADDRESS]"
 
@@ -55,5 +62,18 @@ def get_suburb_state(postal_code):
         message = "Suburb and or postal code mismatch please check info and try again."
         logger.info(f"{LOG_ID} {message}")
         raise Exception(message)
-    else:
-        return addresses[0].state, addresses[0].suburb
+
+    selected_address = None
+    for address in addresses:
+        if clue and address.suburb.lower() in clue:
+            if not selected_address:
+                selected_address = address
+            elif selected_address and len(address.suburb) > len(
+                selected_address.suburb
+            ):
+                selected_address = address
+
+    if not selected_address:
+        selected_address = addresses[0]
+
+    return selected_address.state, selected_address.suburb

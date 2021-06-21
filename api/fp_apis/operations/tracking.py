@@ -11,7 +11,7 @@ from api.fp_apis.utils import (
     get_status_category_from_status,
 )
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def _extract(fp_name, consignmentStatus):

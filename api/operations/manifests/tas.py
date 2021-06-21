@@ -1,4 +1,4 @@
-import os
+import os, sys
 from datetime import datetime
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import letter, landscape, A6
@@ -88,7 +88,7 @@ def build_manifest(bookings, booking_lines, username):
 
     # start loop through data fetched from dme_bookings table
     date = datetime.now().strftime("%Y%m%d") + "_" + datetime.now().strftime("%H%M%S")
-    filename = "TAS_MANIFEST_" + date + "_m.pdf"
+    filename = "MANIFEST_" + date + "_m.pdf"
     file = open(local_filepath + filename, "a")
     doc = SimpleDocTemplate(
         local_filepath + filename,
@@ -145,7 +145,7 @@ def build_manifest(bookings, booking_lines, username):
             try:
                 _booking_lines = filter_booking_lines(booking, booking_lines)
 
-                carrierName = "TAS FREIGHT"
+                carrierName = booking.vx_freight_provider
                 senderName = ACCOUNT_CODE
                 ConNote = ACCOUNT_CODE + str(new_connot_index + i - 1).zfill(5)
                 Reference = "TEST123"
@@ -734,4 +734,4 @@ def build_manifest(bookings, booking_lines, username):
     fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
     fp_info.save()
 
-    return local_filepath + filename
+    return filename

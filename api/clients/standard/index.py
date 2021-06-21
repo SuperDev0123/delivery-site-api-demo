@@ -9,10 +9,10 @@ from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.common import common_times as dme_time_lib, constants as dme_constants
-from api.operations import push_operations, product_operations as product_oper
+from api.operations import product_operations as product_oper
 from api.clients.operations.index import get_suburb_state
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def push_boks(payload, client):

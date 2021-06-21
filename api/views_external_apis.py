@@ -18,7 +18,7 @@ from api.serializers_client import *
 from api.models import *
 from api.operations import paperless
 
-logger = logging.getLogger("external_apis")
+logger = logging.getLogger(__name__)
 
 
 @api_view(["GET"])
