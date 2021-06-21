@@ -7,6 +7,7 @@ from .models import (
     DME_clients,
 )
 from .validators import should_have_value, should_have_positive_value
+from api.helpers import cubic
 
 
 class BOK_0_Serializer(serializers.ModelSerializer):
@@ -135,6 +136,16 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     success = serializers.CharField(validators=[should_have_value])
     zbl_121_integer_1 = serializers.IntegerField(required=False)  # Sequence
     zbl_102_text_2 = serializers.CharField(required=False)  # ProductGroupCode
+    pallet_cubic_meter = serializers.SerializerMethodField(read_only=True)
+
+    def get_pallet_cubic_meter(self, obj):
+        return cubic.get_cubic_meter(
+            obj.l_005_dim_length,
+            obj.l_006_dim_width,
+            obj.l_007_dim_height,
+            obj.l_004_dim_UOM,
+            obj.l_002_qty,
+        )
 
     class Meta:
         model = BOK_2_lines
@@ -157,11 +168,29 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "e_item_type",
             "zbl_121_integer_1",  # Sequence
             "zbl_102_text_2",  # ProductGroupCode
+            "pallet_cubic_meter",
         )
 
 
 class BOK_3_Serializer(serializers.ModelSerializer):
     success = serializers.CharField(validators=[should_have_value])
+    cubic_meter = serializers.SerializerMethodField(read_only=True)
+
+    def get_cubic_meter(self, obj):
+        if (
+            not obj.zbld_131_decimal_1
+            or not obj.zbld_132_decimal_2
+            or not obj.zbld_133_decimal_3
+        ):
+            return 0
+
+        return cubic.get_cubic_meter(
+            obj.zbld_131_decimal_1,
+            obj.zbld_132_decimal_2,
+            obj.zbld_133_decimal_3,
+            obj.zbld_101_text_1,
+            obj.zbld_122_integer_2,
+        )
 
     class Meta:
         model = BOK_3_lines_data
