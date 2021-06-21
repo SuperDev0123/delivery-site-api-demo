@@ -4,7 +4,7 @@ from api.models import BOK_1_headers, BOK_2_lines, BOK_3_lines_data
 
 # from api.fp_apis.apis import get_pricing
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def on_create_bok_1_handler(bok_1):
@@ -56,7 +56,7 @@ def on_create_bok_1_handler(bok_1):
     #         for bok_2_line in bok_2_lines:
     #             bok_2 = {
     #                 "fk_booking_id": bok_2_line.fk_header_id,
-    #                 "packagingType": bok_2_line.l_001_type_of_packaging,
+    #                 "e_type_of_packaging": bok_2_line.l_001_type_of_packaging,
     #                 "e_qty": bok_2_line.l_002_qty,
     #                 "e_item": bok_2_line.l_003_item,
     #                 "e_dimUOM": bok_2_line.l_004_dim_UOM,

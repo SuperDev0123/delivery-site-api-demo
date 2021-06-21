@@ -15,13 +15,30 @@ elif settings.ENV == "prod":
 PRICING_TIME = 10  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost"
-AVAILABLE_FPS_4_FC = ["Startrack", "AUSPost", "TNT", "Capital", "Hunter", "Sendle"]
+AVAILABLE_FPS_4_FC = [
+    "Startrack",
+    "AUSPost",
+    "TNT",
+    "Capital",
+    "Hunter",
+    "Sendle",
+    "Allied",
+    "Camerons",
+    "Toll",
+    "Century",
+]
 
 BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "premium"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
-    "demo": {"service_types": ["standard", "vip", "premium"]},
+    # "allied": {
+    #     "service_types": [
+    #         "Road Express",
+    #         "Standard Pallet Rate",
+    #         "Oversized Pallet Rate",
+    #     ]
+    # },
 }
 
 FP_CREDENTIALS = {
@@ -90,6 +107,21 @@ FP_CREDENTIALS = {
             },
             "BIO - HTW": {
                 "accountCode": "10160226",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "VIC-HZ": {
+                "accountCode": "10164661",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "SA-HZ": {
+                "accountCode": "10164671",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "WA-HZ": {
+                "accountCode": "10164660",
                 "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
                 "accountPassword": "x81775935aece65541c9",
             },
@@ -169,7 +201,16 @@ FP_CREDENTIALS = {
                 "accountPassword": "Deliver123",
                 "accountUsername": "CIT00000000000098839",
             }
-        }
+        },
+        "jason l": {
+            "live_jasonl_0": {
+                "accountCode": "21879211",
+                "accountKey": "21879211",
+                "accountState": "JSONL",
+                "accountPassword": "prodTNT123",
+                "accountUsername": "CIT00000000000136454",
+            },
+        },
     },
     "capital": {
         "dme": {

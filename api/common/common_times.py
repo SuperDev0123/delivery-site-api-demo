@@ -8,15 +8,16 @@ from datetime import date, timedelta, datetime
 from api.fp_apis.utils import get_etd_in_hour
 from api.models import Fp_freight_providers
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 UTC_TZ = pytz.timezone("UTC")
+TIME_DIFFERENCE = 10  # Difference between UTC and AU(Sydney) time
 
 
 def get_sydney_now_time(return_type="char"):
     sydney_tz = pytz.timezone("Australia/Sydney")
     sydney_now = sydney_tz.localize(datetime.utcnow())
-    sydney_now = sydney_now + timedelta(hours=11)
+    sydney_now = sydney_now + timedelta(hours=TIME_DIFFERENCE)
 
     if return_type == "char":
         return sydney_now.strftime("%Y-%m-%d %H:%M:%S")
@@ -27,7 +28,7 @@ def get_sydney_now_time(return_type="char"):
 
 
 def convert_to_AU_SYDNEY_tz(time, type="datetime"):
-    delta = timedelta(hours=11)
+    delta = timedelta(hours=TIME_DIFFERENCE)
 
     if not time:
         return None
@@ -45,7 +46,7 @@ def convert_to_AU_SYDNEY_tz(time, type="datetime"):
 
 
 def convert_to_UTC_tz(time, type="datetime"):
-    delta = timedelta(hours=11)
+    delta = timedelta(hours=TIME_DIFFERENCE)
 
     if not time:
         return None
@@ -89,7 +90,6 @@ def beautify_eta(json_results, quotes, client):
             except Exception as e:
                 logger.info(f"@880 [beautify_eta] error: {str(e)}")
                 readable_eta = f'{str(result["eta"])} days'
-                pass
 
         try:
             result["eta_in_hour"] = round(float(result["eta"]), 2)

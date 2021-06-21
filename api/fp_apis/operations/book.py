@@ -22,7 +22,7 @@ from api.fp_apis.constants import (
 )
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def book(fp_name, booking, booker):
@@ -93,6 +93,9 @@ def book(fp_name, booking, booker):
                 )
             elif booking.vx_freight_provider.lower() == "sendle":
                 booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
+            elif booking.vx_freight_provider.lower() == "allied":
+                booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                booking.jobNumber = json_data["jobNumber"]
 
             booking.fk_fp_pickup_id = json_data["consignmentNumber"]
             booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
@@ -116,8 +119,15 @@ def book(fp_name, booking, booker):
             status_history.create(booking, "Booked", booker)
 
             # Save Label for Hunter
+            is_get_label = True  # Flag to decide if need to get label from response
+
+            if (
+                booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+            ):  # Jason L:
+                is_get_label = False
+
             create_dir(f"{S3_URL}/pdfs/{_fp_name}_au")
-            if _fp_name == "hunter":
+            if _fp_name == "hunter" and is_get_label:
                 json_label_data = json.loads(response.content)
                 file_name = (
                     f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
@@ -138,7 +148,7 @@ def book(fp_name, booking, booker):
 
                     send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Capital
-            elif _fp_name == "capital":
+            elif _fp_name == "capital" and is_get_label:
                 json_label_data = json.loads(response.content)
                 file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
@@ -157,7 +167,7 @@ def book(fp_name, booking, booker):
 
                     send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Startrack and AusPost
-            elif _fp_name in ["startrack", "auspost"]:
+            elif _fp_name in ["startrack", "auspost"] and is_get_label:
                 Api_booking_confirmation_lines.objects.filter(
                     fk_booking_id=booking.pk_booking_id
                 ).delete()
@@ -168,7 +178,7 @@ def book(fp_name, booking, booker):
                         api_item_id=item["item_id"],
                     ).save()
             # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
-            elif _fp_name == "dhl":
+            elif _fp_name == "dhl" and is_get_label:
                 if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
                     booking.v_FPBookingNumber = f"DME{booking.b_bookingID_Visual}"
                     booking.save()

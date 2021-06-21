@@ -50,7 +50,7 @@ styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 ROWS_PER_PAGE = 20
 #####################
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def filter_booking_lines(booking, booking_lines):
@@ -90,7 +90,7 @@ def build_manifest(bookings, booking_lines, username):
 
     # start loop through data fetched from dme_bookings table
     date = datetime.now().strftime("%Y%m%d") + "_" + datetime.now().strftime("%H%M%S")
-    filename = "DHL_MANIFEST_" + date + "_m.pdf"
+    filename = "MANIFEST_" + date + "_m.pdf"
     file = open(local_filepath + filename, "a")
     doc = SimpleDocTemplate(
         local_filepath + filename,
@@ -720,4 +720,4 @@ def build_manifest(bookings, booking_lines, username):
     fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
     fp_info.save()
 
-    return local_filepath + filename
+    return filename

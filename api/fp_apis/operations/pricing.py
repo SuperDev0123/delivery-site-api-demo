@@ -8,11 +8,21 @@ from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
+from api.common.booking_quote import set_booking_quote
 from api.serializers import ApiBookingQuotesSerializer
-from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Log,
+    API_booking_quotes,
+    Client_FP,
+    FP_Service_ETDs,
+    Surcharge,
+)
 
 from api.fp_apis.operations.common import _set_error
-from api.fp_apis.self_pricing import get_pricing as get_self_pricing
+from api.fp_apis.operations.surcharge.index import gen_surcharges
+from api.fp_apis.built_in.index import get_pricing as get_self_pricing
 from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
 from api.fp_apis.constants import (
@@ -25,7 +35,7 @@ from api.fp_apis.constants import (
 )
 
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 
 def pricing(body, booking_id, is_pricing_only=False):
@@ -46,17 +56,24 @@ def pricing(body, booking_id, is_pricing_only=False):
     if not is_pricing_only:
         booking = Bookings.objects.filter(id=booking_id).first()
 
+        if not booking:
+            return None, False, "Booking does not exist", None
+
         # Delete all pricing info if exist for this booking
-        if booking:
-            pk_booking_id = booking.pk_booking_id
-            booking.api_booking_quote = None  # Reset pricing relation
-            booking.save()
-            API_booking_quotes.objects.filter(fk_booking_id=pk_booking_id).update(
-                is_used=True
-            )
-            # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
-        else:
-            return False, "Booking does not exist", None
+        pk_booking_id = booking.pk_booking_id
+        # set_booking_quote(booking, None)
+        # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
+
+    if not booking_lines:
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
+
+    # Set is_used flag for existing old pricings
+    if booking.pk_booking_id:
+        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).update(
+            is_used=True
+        )
 
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
@@ -82,6 +99,10 @@ def pricing(body, booking_id, is_pricing_only=False):
     if quotes.exists():
         # Interpolate gaps (for Plum client now)
         quotes = interpolate_gaps(quotes)
+
+        # Calculate Surcharges
+        for quote in quotes:
+            gen_surcharges(booking, booking_lines, quote, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes)
@@ -184,9 +205,15 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                         )
                         _workers.add(_worker)
 
-        # elif _fp_name in BUILT_IN_PRICINGS:
-        #     _worker = _built_in_pricing_worker_builder(_fp_name, booking)
-        #     _workers.add(_worker)
+        elif _fp_name in BUILT_IN_PRICINGS:
+            logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
+            _worker = _built_in_pricing_worker_builder(
+                _fp_name,
+                booking,
+                booking_lines,
+                is_pricing_only,
+            )
+            _workers.add(_worker)
 
     logger.info("#911 [PRICING] - Pricing workers will start soon")
     await asyncio.gather(*_workers)
@@ -249,34 +276,50 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                # We do not get surcharges from Allied api
+                # # Allied surcharges
+                # surcharges = []
 
+                # if (
+                #     parse_result["freight_provider"].lower() == "allied"
+                #     and "surcharges" in parse_result
+                # ):
+                #     surcharges = parse_result["surcharges"]
+                #     del parse_result["surcharges"]
+
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
-                    serializer.save()
+                    quote = serializer.save()
+
+                    # We do not get surcharges from Allied api
+                    # for surcharge in surcharges:
+                    #     if float(surcharge["amount"]) > 0:
+                    #         surcharge_obj = Surcharge()
+                    #         surcharge_obj.name = surcharge["name"]
+                    #         surcharge_obj.description = surcharge["description"]
+                    #         surcharge_obj.amount = float(surcharge["amount"])
+                    #         surcharge_obj.quote = quote
+                    #         surcharge_obj.fp_id = 2  # Allied(Hardcode)
+                    #         surcharge_obj.save()
                 else:
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
         trace_error.print()
-        logger.info(f"@402 [PRICING] Exception: {e}")
+        logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
 
-async def _built_in_pricing_worker_builder(_fp_name, booking):
-    results = get_self_pricing(_fp_name, booking)
+async def _built_in_pricing_worker_builder(
+    _fp_name, booking, booking_lines, is_pricing_only
+):
+    results = get_self_pricing(_fp_name, booking, booking_lines, is_pricing_only)
+    logger.info(f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results)}")
     parse_results = parse_pricing_response(results, _fp_name, booking, True)
 
     for parse_result in parse_results:
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            freight_provider__iexact=parse_result["freight_provider"],
-            service_name=parse_result["service_name"],
-        )
-
-        if quotes.exists():
-            serializer = ApiBookingQuotesSerializer(quotes[0], data=parse_result)
-        else:
+        if parse_results and not "error" in parse_results:
             serializer = ApiBookingQuotesSerializer(data=parse_result)
 
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            logger.info(f"@404 [PRICING] Serializer error: {serializer.errors}")
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                logger.info(f"@402 [PRICING] Serializer error: {serializer.errors}")

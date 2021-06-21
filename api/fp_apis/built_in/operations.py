@@ -1,42 +1,54 @@
-import json
 import logging
-import traceback
 
-from api.models import *
-from api.common.ratio import _get_dim_amount, _get_weight_amount, _m3_to_kg
-from .response_parser import parse_pricing_response
-from .constants import BUILT_IN_PRICINGS
+from api.models import FP_zones, FP_vehicles
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 PALLETS = ["pallet", "plt"]
 
 
-def is_in_zone(fp, zone_code, suburb, postal_code, state):
-    zones = FP_zones.objects.filter(zone=zone_code, fk_fp=fp.id)
+def get_zone(fp, state, postal_code, suburb):
+    zones = FP_zones.objects.filter(
+        state=state, postal_code=postal_code, suburb=suburb, fk_fp=fp.id
+    )
 
     if zones:
-        for zone in zones:
-            if zone.suburb and zone.suburb.lower() != suburb:
-                continue
-            if zone.postal_code and zone.postal_code.lower() != postal_code:
-                continue
-            if zone.state and zone.state.lower() != state:
-                continue
-            if (
-                zone.start_postal_code
-                and zone.end_postal_code
-                and postal_code
-                and int(postal_code) < int(zone.start_postal_code)
-                and int(postal_code) > int(zone.end_postal_code)
-            ):
-                continue
+        return zones.first()
 
-            return True
+    return None
 
-    return False
+
+def is_in_zone(fp, zone_code, suburb, postal_code, state):
+    # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}")
+    zones = FP_zones.objects.filter(zone__iexact=zone_code, fk_fp=fp.id)
+    # logger.info(f"#821 {zones.count()}")
+
+    if not zones:
+        return False
+
+    for zone in zones:
+        # logger.info(f"#822 {zone}")
+
+        if zone.suburb and zone.suburb.lower() != suburb:
+            continue
+        if zone.postal_code and zone.postal_code.lower() != postal_code:
+            continue
+        if zone.state and zone.state.lower() != state:
+            continue
+        if (
+            zone.start_postal_code
+            and zone.end_postal_code
+            and postal_code
+            and int(postal_code) < int(zone.start_postal_code)
+            and int(postal_code) > int(zone.end_postal_code)
+        ):
+            continue
+
+        return True
 
 
 def address_filter(booking, booking_lines, rules, fp):
+    LOG_ID = "[BP addr filter]"
     pu_suburb = booking.pu_Address_Suburb.lower()
     pu_postal_code = booking.pu_Address_PostalCode.lower()
     pu_state = booking.pu_Address_State.lower()
@@ -48,29 +60,37 @@ def address_filter(booking, booking_lines, rules, fp):
     filtered_rule_ids = []
     for rule in rules:
         if rule.pu_suburb and rule.pu_suburb.lower() != pu_suburb:
+            # logger.info(f"@850 {LOG_ID} PU Suburb does not match")
             continue
 
         if rule.de_suburb and rule.de_suburb.lower() != de_suburb:
+            # logger.info(f"@851 {LOG_ID} DE Suburb does not match")
             continue
 
         if rule.pu_postal_code and rule.pu_postal_code.lower() != pu_postal_code:
+            # logger.info(f"@852 {LOG_ID} PU PostalCode does not match")
             continue
 
         if rule.de_postal_code and rule.de_postal_code.lower() != de_postal_code:
+            # logger.info(f"@853 {LOG_ID} DE PostalCode does not match")
             continue
 
         if rule.pu_state and rule.pu_state.lower() != pu_state:
+            # logger.info(f"@854 {LOG_ID} PU State does not match")
             continue
 
         if rule.de_state and rule.de_state.lower() != de_state:
+            # logger.info(f"@855 {LOG_ID} DE State does not match")
             continue
 
         if rule.pu_zone:
             if not is_in_zone(fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state):
+                # logger.info(f"@856 {LOG_ID} PU Zone does not match")
                 continue
 
         if rule.de_zone:
             if not is_in_zone(fp, rule.de_zone, de_suburb, de_postal_code, de_state):
+                # logger.info(f"@857 {LOG_ID} DE Zone does not match")
                 continue
 
         filtered_rule_ids.append(rule.id)
@@ -206,11 +226,12 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
             if cost.end_qty and cost.end_qty < pallet_cnt:
                 continue
 
-        if cost.oversize_price and cost.max_length:
+        if cost.max_length:
             c_width = _get_dim_amount(cost.dim_UOM) * cost.max_width
             c_length = _get_dim_amount(cost.dim_UOM) * cost.max_length
             c_height = _get_dim_amount(cost.dim_UOM) * cost.max_height
-        else:
+
+        if cost.oversize_price and cost.price_up_to_width:
             c_width = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_width
             c_length = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_length
             c_height = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_height
@@ -243,9 +264,10 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
     for rule in rules:
         cost = rule.cost
 
-        if cost.oversize_price and cost.max_weight:
+        if cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
-        else:
+
+        if cost.oversize_price and cost.price_up_to_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         comp_count = 0
@@ -353,70 +375,3 @@ def find_cost(booking_lines, rules, fp):
             lowest_cost = cost
 
     return lowest_cost
-
-
-def get_pricing(fp_name, booking):
-    fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-    service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-    booking_lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-    pricies = []
-    for service_type in service_types:
-        rules = FP_pricing_rules.objects.filter(
-            freight_provider_id=fp.id, service_timing_code__iexact=service_type
-        )
-
-        # Address Filter
-        rules = address_filter(booking, booking_lines, rules, fp)
-
-        if not rules:
-            logger.info(f"@831 {fp_name.upper()} - not supported addresses")
-            continue
-
-        # Size(dim) Filter
-        if fp.rule_type.rule_type_code in ["rule_type_01", "rule_type_02"]:
-            rules = dim_filter(booking, booking_lines, rules, fp)
-
-            if not rules:
-                continue
-
-        if fp.rule_type.rule_type_code in ["rule_type_01"]:
-            # Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge'
-            cost = (
-                FP_costs.objects.filter(pk__in=[rule.cost_id for rule in rules])
-                .order_by("per_UOM_charge")
-                .first()
-            )
-            net_price = cost.per_UOM_charge
-        elif fp.rule_type.rule_type_code in ["rule_type_02"]:
-            # Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
-            rules = weight_filter(booking_lines, rules, fp)
-            cost = find_cost(booking_lines, rules, fp)
-            net_price = cost.per_UOM_charge * get_booking_lines_count(booking_lines)
-        elif fp.rule_type.rule_type_code in ["rule_type_03"]:
-            # Greater of 1) or 2)
-            # 1) 'Basic Charge' + (Booking Qty of the matching 'Charge UOM' x 'Per UOM Charge')
-            # 2) 'Basic Charge' + ((Length in meters x width in meters x height in meters x 'M3 to KG Factor)
-            #    x 'Per UOM Charge')
-            cost = rules.first().cost
-            price1 = get_booking_lines_count(booking_lines) * cost.per_UOM_charge
-            price2 = (
-                _m3_to_kg(booking_lines, cost.m3_to_kg_factor) * cost.per_UOM_charge
-            )
-            price0 = price1 if price1 > price2 else price2
-            price0 += cost.basic_charge
-            net_price = price0 if price0 > cost.min_charge else cost.min_charge
-
-        rule = rules.get(cost_id=cost.id)
-        price = {
-            "netPrice": net_price,
-            "totalTaxes": 0,
-            "serviceName": f"{rule.service_timing_code}",
-            "etd": rule.etd.fp_delivery_time_description,
-        }
-        pricies.append(price)
-
-    return {
-        "price": pricies,
-        "requestId": "",
-    }

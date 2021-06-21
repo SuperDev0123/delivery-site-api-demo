@@ -16,7 +16,6 @@ import datetime
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
@@ -180,60 +179,39 @@ EMAIL_ROOT = os.path.join(BASE_DIR, "templates/email")
 
 
 # Logging setting
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            "datefmt": "%d/%b/%Y %H:%M:%S",
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+            "backupCount": 30,  # keep at most 30 log files
+            "maxBytes": 1024 * 1024 * 10,  # 10 MB
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {"": {"handlers": ["file"], "level": "INFO", "propagate": True}},
+}
 
 if ENV == "prod":
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
-        "root": {
-            "level": "ERROR",
-            "handlers": ["bugsnag"],
-        },
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "simple",
-            },
-            "file": {
-                "level": "INFO",
-                "class": "logging.handlers.RotatingFileHandler",
-                "filename": os.path.join(BASE_DIR, "logs/debug.log"),
-                "backupCount": 10,  # keep at most 10 log files
-                "maxBytes": 5242880,  # 5*1024*1024 bytes (5MB)
-            },
-            "bugsnag": {
-                "level": "ERROR",
-                "class": "bugsnag.handlers.BugsnagHandler",
-            },
-        },
-        "loggers": {
-            "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}
-        },
+    LOGGING["handlers"]["bugsnag"] = {
+        "level": "ERROR",
+        "class": "bugsnag.handlers.BugsnagHandler",
     }
-else:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {"simple": {"format": "{asctime} {message}", "style": "{"}},
-        "handlers": {
-            "console": {
-                "level": "INFO",
-                "class": "logging.StreamHandler",
-                "formatter": "simple",
-            },
-            "file": {
-                "level": "INFO",
-                "class": "logging.FileHandler",
-                "filename": "./logs/debug.log",
-                "formatter": "simple",
-            },
-        },
-        "loggers": {
-            "dme_api": {"handlers": ["file"], "level": "INFO", "propagate": True}
-        },
-    }
+
 
 # S3 url
 S3_URL = os.environ["S3_URL"]
