@@ -66,7 +66,7 @@ def get_suitable_pallets(bok_2s, pallets):
     # occupied pallet space percent in case of packing different line items in one pallet
     available_percent = 80
 
-    # prepaer pallets data
+    # prepare pallets data
     pallets_data = []
     for pallet in pallets:
         length = max(pallet.length, pallet.width) / 1000
@@ -127,7 +127,11 @@ def get_suitable_pallets(bok_2s, pallets):
             # check if there is suitable pallet
             if not line["smallest_pallet"]:
                 non_palletized.append(
-                    {"line_index": index, "quantity": line["quantity"]}
+                    {
+                        "line_index": index,
+                        "line_obj": bok_2s[index],
+                        "quantity": line["quantity"]
+                    }
                 )
             else:
                 for pallet_item in palletized:
@@ -143,7 +147,11 @@ def get_suitable_pallets(bok_2s, pallets):
                         )
                         pallet_item["remaining_space"] -= packable_count * line["cubic"]
                         pallet_item["lines"].append(
-                            {"line_index": index, "quantity": packable_count}
+                            {
+                                "line_index": index,
+                                "line_obj": bok_2s[index], 
+                                "quantity": packable_count
+                            }
                         )
                         line["quantity"] -= packable_count
 
@@ -173,10 +181,12 @@ def get_suitable_pallets(bok_2s, pallets):
                                 palletized.append(
                                     {
                                         "pallet_index": line["smallest_pallet"],
+                                        "pallet_obj": pallets[line["smallest_pallet"]],
                                         "remaining_space": 0,
                                         "lines": [
                                             {
                                                 "line_index": index,
+                                                "line_obj": bok_2s[index],
                                                 "quantity": packable_count,
                                             }
                                         ],
@@ -187,6 +197,7 @@ def get_suitable_pallets(bok_2s, pallets):
                                 palletized.append(
                                     {
                                         "pallet_index": line["smallest_pallet"],
+                                        "pallet_obj": pallets[line["smallest_pallet"]],
                                         "remaining_space": pallets_data[
                                             line["smallest_pallet"]
                                         ]["available_cubic"]
@@ -194,6 +205,7 @@ def get_suitable_pallets(bok_2s, pallets):
                                         "lines": [
                                             {
                                                 "line_index": index,
+                                                "line_obj": bok_2s[index],
                                                 "quantity": packable_count,
                                             }
                                         ],
@@ -205,8 +217,28 @@ def get_suitable_pallets(bok_2s, pallets):
 
         else:
             continue
-    
+
+    # check duplicated items
+    reformatted_palletized = []
+    for item in palletized:
+        same_pallet_exists = False
+        for sorted_item in reformatted_palletized:
+            is_equal = True
+            if item['pallet_index'] == sorted_item['pallet_index'] and item['remaining_space'] == sorted_item['remaining_space']:
+                for index, line in enumerate(item['lines']):
+                    if line['line_index'] != sorted_item[index]['line_index'] or line['quantity'] != sorted_item[index]['line_index']:
+                        is_equal = False
+            else:
+                is_equal = False
+
+            same_pallet_exists = same_pallet_exists or is_equal
+            if is_equal:
+                sorted_item['quantity'] += 1
+        if not same_pallet_exists:
+            item['quantity'] = 1
+            reformatted_palletized.append(item)
+
     return {
-        'palletized': palletized,
+        'palletized': reformatted_palletized,
         'non_palletized': non_palletized
     }
