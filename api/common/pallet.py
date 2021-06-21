@@ -215,27 +215,32 @@ def get_palletized_by_ai(bok_2s, pallets):
                             }
                         )
 
-    # # check duplicated items
-    # reformatted_palletized = []
-    # for item in palletized:
-    #     same_pallet_exists = False
-    #     for sorted_item in reformatted_palletized:
-    #         is_equal = True
-    #         if item["pallet_index"] == sorted_item["pallet_index"]:
-    #             for index, line in enumerate(item["lines"]):
-    #                 if (
-    #                     line["line_index"] != sorted_item[index]["line_index"]
-    #                     or line["quantity"] != sorted_item[index]["line_index"]
-    #                 ):
-    #                     is_equal = False
-    #         else:
-    #             is_equal = False
+    # check duplicated Pallets
+    reformatted_palletized = []
+    for item in palletized:
+        same_pallet_exists = False
+        for sorted_item in reformatted_palletized:
+            is_equal = True
+            if (
+                item["pallet_index"] == sorted_item["pallet_index"]
+                and item["remaining_space"] == sorted_item["remaining_space"]
+            ):
+                for index, line in enumerate(item["lines"]):
+                    if (
+                        line["line_index"] != sorted_item[index]["line_index"]
+                        or sorted_item[index]["quantity"] % line["quantity"] != 0
+                    ):
+                        is_equal = False
+            else:
+                is_equal = False
 
-    #         same_pallet_exists = same_pallet_exists or is_equal
-    #         if is_equal:
-    #             sorted_item["quantity"] += 1
-    #     if not same_pallet_exists:
-    #         item["quantity"] = 1
-    #         reformatted_palletized.append(item)
+            same_pallet_exists = same_pallet_exists or is_equal
+            if is_equal:
+                sorted_item["quantity"] += 1
+                for line_index, line in enumerate(sorted_item["lines"]):
+                    line["quantity"] += item["lines"][line_index]["quantity"]
+        if not same_pallet_exists:
+            item["quantity"] = 1
+            reformatted_palletized.append(item)
 
-    return palletized, non_palletized
+    return reformatted_palletized, non_palletized
