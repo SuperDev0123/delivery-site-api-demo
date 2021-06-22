@@ -6,7 +6,7 @@ from api.utils import get_eta_pu_by, get_eta_de_by
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        print("----- Populating category from status... -----")
+        # print("----- Populating category from status... -----")
         bookings = (
             Bookings.objects.select_related("api_booking_quote")
             .filter(b_dateBookedDate__isnull=False, api_booking_quote_id__isnull=False)
@@ -28,9 +28,9 @@ class Command(BaseCommand):
                 booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                     booking, booking.api_booking_quote
                 )
-                print(
-                    f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.pu_PickUp_By_Date}, {booking.s_06_Latest_Delivery_Date_TimeSet}"
-                )
+                # print(
+                #     f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.pu_PickUp_By_Date}, {booking.s_06_Latest_Delivery_Date_TimeSet}"
+                # )
                 booking.save()
 
-        print("\n----- Finished! -----")
+        # print("\n----- Finished! -----")
