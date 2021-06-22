@@ -495,7 +495,9 @@ def push_boks(payload, client, username, method):
             for _iter in palletized_item["lines"]:
                 line_in_pallet = _iter["line_obj"]
                 total_weight += (
-                    line_in_pallet.l_009_weight_per_each * line_in_pallet.l_002_qty
+                    line_in_pallet.l_009_weight_per_each
+                    * _iter["quantity"]
+                    / palletized_item["quantity"]
                 )
 
             new_line = {}
