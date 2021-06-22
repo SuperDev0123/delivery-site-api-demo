@@ -71,7 +71,7 @@ def get_picked_items(order_num, sscc):
     return [
         {
             "dimensions": {"height": 0.11, "length": 0.48, "unit": "m", "width": 0.17},
-            "is_repacked": true,
+            "is_repacked": True,
             "items": [{"qty": 1, "sequence": 1}],
             "package_type": "CTN",
             "sscc": "312345600000436270",
@@ -80,7 +80,7 @@ def get_picked_items(order_num, sscc):
         },
         {
             "dimensions": {"height": 0.4, "length": 0.01, "unit": "m", "width": 0.01},
-            "is_repacked": true,
+            "is_repacked": True,
             "items": [{"qty": 1, "sequence": 2}],
             "package_type": "CTN",
             "sscc": "312345600000436270",
