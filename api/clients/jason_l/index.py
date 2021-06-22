@@ -1184,8 +1184,8 @@ def scanned(payload, client):
                 new_line.e_dimLength,
                 new_line.e_dimWidth,
                 new_line.e_dimHeight,
-                new_line.e_qty,
                 new_line.e_dimUOM,
+                new_line.e_qty,
             )
             new_line.is_deleted = False
             new_line.zbl_102_text_2 = None
