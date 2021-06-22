@@ -3437,7 +3437,7 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -4453,7 +4453,7 @@ class PricingRulesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"result": None}, status=400)
 
 
@@ -4845,7 +4845,7 @@ class ChartsViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": deliveries_reports})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])

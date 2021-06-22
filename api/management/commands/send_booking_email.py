@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 )
             )
         else:
-            print(
-                f"Test sending booking email - Booking ID: {booking_id}, Email Type: {email_type}"
-            )
+            # print(
+            #     f"Test sending booking email - Booking ID: {booking_id}, Email Type: {email_type}"
+            # )
             send_booking_status_email(booking_id, email_type, "TESTER")
