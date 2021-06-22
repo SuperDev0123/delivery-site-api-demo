@@ -238,7 +238,7 @@ class UserViewSet(viewsets.ViewSet):
                     "username": request.user.username,
                     "clientname": client.company_name,
                     "clientId": client.dme_account_num,
-                    "clientPK": client.pk_id_dme_client
+                    "clientPK": client.pk_id_dme_client,
                 }
             )
 
@@ -412,7 +412,7 @@ class UserViewSet(viewsets.ViewSet):
                 "name_first": client_employee.name_first,
                 "name_last": client_employee.name_last,
                 "email": client_employee.email,
-                "company_name": company_name,
+                "company_name": client_employee.fk_id_dme_client.company_name,
             }
             results.append(result)
 
@@ -4524,7 +4524,7 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee:
-            client = self.request.query_params.get('clientId')
+            client = self.request.query_params.get("clientId")
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -4535,20 +4535,21 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
 
         return client
 
-
     def list(self, request, *args, **kwargs):
         client = self.get_client_id()
-        client_products = Client_Products.objects.filter(fk_id_dme_client=client).order_by("id")
+        client_products = Client_Products.objects.filter(
+            fk_id_dme_client=client
+        ).order_by("id")
         serializer = ClientProductsSerializer(client_products, many=True)
 
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
-        id = self.kwargs['pk']
+        id = self.kwargs["pk"]
         try:
             Client_Products.objects.filter(id=id).delete()
         except Exception as e:
-            return Response({'msg': f'{e}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({id})
 
