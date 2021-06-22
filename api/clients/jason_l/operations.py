@@ -66,7 +66,28 @@ def get_picked_items(order_num, sscc):
 
     logger.info(f"@328 {LOG_ID} Finish reading CSV! Count: {len(filtered_lines)}")
     logger.info(f"@329 {LOG_ID} {json.dumps(filtered_lines, indent=2, sort_keys=True)}")
-    return filtered_lines
+    # return filtered_lines
+
+    return [
+        {
+            "dimensions": {"height": 0.11, "length": 0.48, "unit": "m", "width": 0.17},
+            "is_repacked": true,
+            "items": [{"qty": 1, "sequence": 1}],
+            "package_type": "CTN",
+            "sscc": "312345600000436270",
+            "timestamp": "2021-06-22 15:31:36",
+            "weight": {"unit": "kg", "weight": 3.0},
+        },
+        {
+            "dimensions": {"height": 0.4, "length": 0.01, "unit": "m", "width": 0.01},
+            "is_repacked": true,
+            "items": [{"qty": 1, "sequence": 2}],
+            "package_type": "CTN",
+            "sscc": "312345600000436270",
+            "timestamp": "2021-06-22 15:31:36",
+            "weight": {"unit": "kg", "weight": 3.0},
+        },
+    ]
 
 
 def update_when_no_quote_required(old_bok_1, old_bok_2s, bok_1, bok_2s):
