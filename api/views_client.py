@@ -317,7 +317,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             identifier = request.data["identifier"]
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
-            bok_1.quote_id = cost_id
+            quote = API_booking_quotes.objects.get(pk=cost_id)
+            bok_1.b_001_b_freight_provider = quote.freight_provider
+            bok_1.b_003_b_service_name = quote.service_name
+            bok_1.vx_serviceType_XXX = quote.service_code
+            bok_1.quote = quote
             bok_1.save()
 
             # Send quote info back to Pronto
