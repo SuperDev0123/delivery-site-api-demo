@@ -221,7 +221,7 @@ def get_book_payload(booking, fp_name):
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
             }
 
@@ -553,7 +553,7 @@ def get_getlabel_payload(booking, fp_name):
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
                 "description": ", ".join(descriptions)[:20],
                 "gapRa": ", ".join(gaps)[:15],
@@ -851,7 +851,7 @@ def get_pricing_payload(
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
                 "description": line.e_item,
             }
