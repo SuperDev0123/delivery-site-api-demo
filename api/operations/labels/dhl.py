@@ -712,9 +712,9 @@ def build_label(booking):
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        print(dir(exc_type), fname, exc_tb.tb_lineno)
+        # print(dir(exc_type), fname, exc_tb.tb_lineno)
         # print("Error: unable to fecth data")
-        print("Error1: " + str(e))
+        # print("Error1: " + str(e))
 
     logger.info(
         f"#119 [DHL LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
