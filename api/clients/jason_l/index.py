@@ -49,6 +49,7 @@ from api.clients.jason_l.operations import (
     update_when_no_quote_required,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
+from api.helpers.cubic import get_cubic_meter
 
 
 logger = logging.getLogger(__name__)
@@ -1168,7 +1169,7 @@ def scanned(payload, client):
             new_line.fk_booking_id = pk_booking_id
             new_line.pk_booking_lines_id = str(uuid.uuid4())
             new_line.e_type_of_packaging = first_item.get("package_type")
-            new_line.e_qty = 1
+            new_line.e_qty = picked_item["items"][0]["qty"]
             new_line.zbl_121_integer_1 = 0
             new_line.e_item = "Picked Item"
             new_line.e_item_type = None
@@ -1178,6 +1179,14 @@ def scanned(payload, client):
             new_line.e_dimHeight = first_item["dimensions"]["height"]
             new_line.e_weightUOM = first_item["weight"]["unit"]
             new_line.e_weightPerEach = first_item["weight"]["weight"]
+            new_line.e_Total_KG_weight = new_line.e_weightPerEach * new_line.e_qty
+            new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
+                new_line.e_dimLength,
+                new_line.e_dimWidth,
+                new_line.e_dimHeight,
+                new_line.e_qty,
+                new_line.e_dimUOM,
+            )
             new_line.is_deleted = False
             new_line.zbl_102_text_2 = None
             new_line.sscc = first_item["sscc"]
