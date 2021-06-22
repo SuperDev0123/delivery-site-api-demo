@@ -70,7 +70,7 @@ def get_picked_items(order_num, sscc):
 
     return [
         {
-            "dimensions": {"height": 0.11, "length": 0.48, "unit": "m", "width": 0.17},
+            "dimensions": {"height": 0.13, "length": 0.48, "unit": "m", "width": 0.16},
             "is_repacked": True,
             "items": [{"qty": 1, "sequence": 1}],
             "package_type": "CTN",

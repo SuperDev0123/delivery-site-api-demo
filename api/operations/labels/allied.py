@@ -664,11 +664,14 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                             booking_line.e_dimWidth or "",
                             booking_line.e_dimHeight or "",
                             booking_line.e_dimLength or "",
-                            get_cubic_meter(
-                                booking_line.e_dimLength,
-                                booking_line.e_dimWidth,
-                                booking_line.e_dimHeight,
-                                booking_line.e_dimUOM,
+                            round(
+                                get_cubic_meter(
+                                    booking_line.e_dimLength,
+                                    booking_line.e_dimWidth,
+                                    booking_line.e_dimHeight,
+                                    booking_line.e_dimUOM,
+                                ),
+                                5,
                             )
                             or "",
                         ),
