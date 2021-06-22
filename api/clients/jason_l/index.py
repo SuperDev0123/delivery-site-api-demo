@@ -1179,13 +1179,18 @@ def scanned(payload, client):
             new_line.e_dimHeight = first_item["dimensions"]["height"]
             new_line.e_weightUOM = first_item["weight"]["unit"]
             new_line.e_weightPerEach = first_item["weight"]["weight"]
-            new_line.e_Total_KG_weight = new_line.e_weightPerEach * new_line.e_qty
-            new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
-                new_line.e_dimLength,
-                new_line.e_dimWidth,
-                new_line.e_dimHeight,
-                new_line.e_dimUOM,
-                new_line.e_qty,
+            new_line.e_Total_KG_weight = round(
+                new_line.e_weightPerEach * new_line.e_qty, 5
+            )
+            new_line.e_1_Total_dimCubicMeter = round(
+                get_cubic_meter(
+                    new_line.e_dimLength,
+                    new_line.e_dimWidth,
+                    new_line.e_dimHeight,
+                    new_line.e_dimUOM,
+                    new_line.e_qty,
+                ),
+                5,
             )
             new_line.is_deleted = False
             new_line.zbl_102_text_2 = None

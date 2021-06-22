@@ -399,7 +399,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            "AEO" + str(booking.b_bookingID_Visual) + str(j).zfill(3)
+                            "DME" + str(booking.b_bookingID_Visual) + str(j).zfill(3)
                             or "",
                         ),
                         style_left,
@@ -462,7 +462,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_parcelId = [
                 [
                     Paragraph(
-                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AEO%s%s</b></font>"
+                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DME%s%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
                             booking.b_bookingID_Visual or "",
