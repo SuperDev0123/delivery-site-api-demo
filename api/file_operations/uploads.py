@@ -245,7 +245,7 @@ def upload_client_products_file(user_id, username, client_id, file):
         Client_Products.objects.filter(fk_id_dme_client=dme_client).delete()
         delete_status = 'success'
     except Exception as e:
-        print(f"{e}")
+        # print(f"{e}")
         delete_status = 'failed'
 
     success_count = 0
@@ -277,7 +277,7 @@ def upload_client_products_file(user_id, username, client_id, file):
                 created_products.append(model_to_dict(created))
                 import_success_results.append(r)
             except Exception as e:
-                print(f"{e}")
+                # print(f"{e}")
                 failure_count = failure_count + 1
                 wrong_type_rows.append(r)
         else:

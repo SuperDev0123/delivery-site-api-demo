@@ -9,13 +9,13 @@ class Command(BaseCommand):
         parser.add_argument("bok_1_pk")
 
     def handle(self, *args, **options):
-        print("----- Sending order info to Paperless... -----")
+        # print("----- Sending order info to Paperless... -----")
         bok_1_pk = options["bok_1_pk"]
         bok_1 = BOK_1_headers.objects.filter(pk=bok_1_pk).first()
 
         if not bok_1:
-            print(f"@100 Error: There is no BOK_1 with given pk{bok_1_pk}")
+            # print(f"@100 Error: There is no BOK_1 with given pk{bok_1_pk}")
 
         result = paperless.send_order_info(bok_1)
-        print("@101 Result: ", result)
-        print("\n----- Finished! -----")
+        # print("@101 Result: ", result)
+        # print("\n----- Finished! -----")
