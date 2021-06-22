@@ -412,7 +412,7 @@ class UserViewSet(viewsets.ViewSet):
                 "name_first": client_employee.name_first,
                 "name_last": client_employee.name_last,
                 "email": client_employee.email,
-                "company_name": client_employee.fk_id_dme_client_id.company_name.lower(),
+                "company_name": client_employee.fk_id_dme_client.company_name.lower(),
             }
             results.append(result)
 
