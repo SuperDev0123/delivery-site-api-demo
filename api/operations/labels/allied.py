@@ -399,7 +399,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            "DME" + str(booking.b_bookingID_Visual) + str(j).zfill(3)
+                            booking.b_client_order_num
                             or "",
                         ),
                         style_left,
@@ -408,7 +408,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking_line.sscc or "N/A",
+                            booking_line.sscc or sscc,
                         ),
                         style_left,
                     ),
