@@ -660,6 +660,13 @@ def get_delivery_status(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        status_history = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).order_by("-z_createdTimeStamp")
+
+        if status_history:
+            last_updated = status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S") if status_history.first().event_time_stamp else ''
+        else:
+            last_updated = ''
+
         booking = {
             "uid": booking.pk,
             "b_bookingID_Visual": booking.b_bookingID_Visual,
@@ -685,6 +692,7 @@ def get_delivery_status(request):
             "b_061_b_del_contact_full_name": booking.de_to_Contact_F_LName,
             "b_063_b_del_email": booking.de_Email,
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
+            "b_000_3_consignment_number": booking.v_FPBookingNumber
         }
         json_quote = None
 
@@ -709,6 +717,7 @@ def get_delivery_status(request):
             {
                 "step": step,
                 "status": b_status,
+                "last_updated": last_updated,
                 "quote": json_quote,
                 "booking": booking,
             }
@@ -727,6 +736,13 @@ def get_delivery_status(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    status_history = Dme_status_history.objects.filter(fk_booking_id=bok_1.pk_header_id).order_by("-z_createdTimeStamp")
+
+    if status_history:
+        last_updated = status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S") if status_history.first().event_time_stamp else ''
+    else:
+        last_updated = ''
 
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     booking = {
@@ -753,6 +769,7 @@ def get_delivery_status(request):
         "b_061_b_del_contact_full_name": bok_1.b_061_b_del_contact_full_name,
         "b_063_b_del_email": bok_1.b_063_b_del_email,
         "b_064_b_del_phone_main": bok_1.b_064_b_del_phone_main,
+        "b_000_3_consignment_number": bok_1.b_000_3_consignment_number
     }
     quote = bok_1.quote
     json_quote = None
@@ -764,5 +781,11 @@ def get_delivery_status(request):
 
     status = "Processing"
     return Response(
-        {"step": 1, "status": status, "quote": json_quote, "booking": booking}
+        {
+            "step": 1, 
+            "status": status,
+            "last_updated": last_updated,
+            "quote": json_quote, 
+            "booking": booking
+        }
     )
