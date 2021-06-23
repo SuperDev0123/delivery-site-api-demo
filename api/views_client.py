@@ -310,6 +310,33 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             )
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def send_email(self, request):
+        # Send `picking slip printed` email from DME itself
+
+        LOG_ID = "[MANUAL PICKING SLIP EMAIL SENDER]"
+        identifier = request.GET["identifier"]
+        logger.info(f"@840 {LOG_ID} Identifier: {identifier}")
+
+        if not identifier:
+            message = f"Wrong identifier: {identifier}"
+            logger.info(f"@841 {LOG_ID} message")
+            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from api.operations.email_senders import send_picking_slip_printed_email
+
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            send_picking_slip_printed_email(bok_1.b_client_order_num)
+            logger.info(f"@842 {LOG_ID} Success to send email: {identifier}")
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(
+                f"@843 {LOG_ID} Failed to send email: {identifier}, reason: {str(e)}"
+            )
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
         try:
