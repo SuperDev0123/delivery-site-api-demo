@@ -393,8 +393,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_client_order_num
-                            or "",
+                            booking_line.sscc or sscc,
                         ),
                         style_left,
                     ),
@@ -402,7 +401,8 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking_line.sscc or sscc,
+                            booking.b_client_order_num
+                            or "",
                         ),
                         style_left,
                     ),
@@ -510,7 +510,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Weight: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            str(booking_line.e_Total_KG_weight) + "Kg" or "",
+                            str(booking_line.e_Total_KG_weight) + "KG" or "",
                         ),
                         style_left,
                     ),

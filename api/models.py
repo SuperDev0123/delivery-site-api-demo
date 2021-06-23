@@ -1604,7 +1604,7 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
-    client_overrided_quote = models.FloatField(blank=True, default=None, null=True)
+    # client_overrided_quote = models.FloatField(blank=True, default=None, null=True)
     z_label_url = models.CharField(
         verbose_name=_("PDF Url"), max_length=255, blank=True, null=True, default=None
     )
@@ -1801,9 +1801,9 @@ class Bookings(models.Model):
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     de_to_sufficient_space = models.BooleanField(default=True, null=True)
-    booking_type = models.CharField(
-        max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
-    )
+    # booking_type = models.CharField(
+    #     max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
+    # )
 
     class Meta:
         db_table = "dme_bookings"
@@ -2080,9 +2080,9 @@ class Booking_lines(models.Model):
     zbl_121_integer_1 = models.IntegerField(
         blank=True, null=True, default=None
     )  # JasonL - Sequence
-    zbl_102_text_2 = models.CharField(
-        max_length=64, blank=True, null=True, default=None
-    )  # JasonL - ProductCode
+    # zbl_102_text_2 = models.CharField(
+    #     max_length=64, blank=True, null=True, default=None
+    # )  # JasonL - ProductCode
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
