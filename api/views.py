@@ -238,6 +238,7 @@ class UserViewSet(viewsets.ViewSet):
                     "username": request.user.username,
                     "clientname": client.company_name,
                     "clientId": client.dme_account_num,
+                    "clientPK": client.pk_id_dme_client,
                 }
             )
 
@@ -387,6 +388,7 @@ class UserViewSet(viewsets.ViewSet):
             client_employees = Client_employees.objects.filter(
                 email__isnull=False
             ).order_by("name_first")
+            company_name = "dme"
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -401,6 +403,7 @@ class UserViewSet(viewsets.ViewSet):
                 .prefetch_related("fk_id_dme_client")
                 .order_by("name_first")
             )
+            company_name = client_employee.fk_id_dme_client.company_name
 
         results = []
         for client_employee in client_employees:
@@ -461,6 +464,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 end_date_str = column_filter.split("-")[1]
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
                 end_date = datetime.strptime(end_date_str, "%d/%m/%y")
+                end_date = end_date.replace(hour=23, minute=59, second=59)
                 queryset = queryset.filter(
                     b_dateBookedDate__range=(
                         convert_to_UTC_tz(start_date),
@@ -482,10 +486,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
                 end_date = datetime.strptime(end_date_str, "%d/%m/%y")
                 queryset = queryset.filter(
-                    puPickUpAvailFrom_Date__range=(
-                        convert_to_UTC_tz(start_date),
-                        convert_to_UTC_tz(end_date),
-                    )
+                    puPickUpAvailFrom_Date__range=(start_date, end_date)
                 )
             elif column_filter and not "-" in column_filter:
                 date = datetime.strptime(column_filter, "%d/%m/%y")
@@ -1996,7 +1997,8 @@ class BookingViewSet(viewsets.ViewSet):
                 for booking_line in booking_lines:
                     e_qty_total += booking_line.e_qty or 0
 
-                if not client_customer_mark_up:
+                client_customer_mark_up = 0
+                if not client_customer_mark_up and booking.kf_client_id:
                     client = DME_clients.objects.get(
                         dme_account_num=booking.kf_client_id
                     )
@@ -2561,6 +2563,7 @@ class BookingViewSet(viewsets.ViewSet):
             Bookings.objects.filter(b_client_booking_ref_num=b_client_booking_ref_num)
             .only(
                 "id",
+                "pk_booking_id",
                 "b_bookingID_Visual",
                 "b_client_name",
                 "b_client_order_num",
@@ -2580,66 +2583,75 @@ class BookingViewSet(viewsets.ViewSet):
 
         logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
 
-        booking_lines = (
-            booking.lines()
-            .filter(is_deleted=False)
-            .only(
-                "pk_lines_id",
-                "sscc",
-                "e_item",
-                "e_item_type",
-                "e_qty",
-                "e_type_of_packaging",
-            )
+        lines = booking.lines().only(
+            "pk_lines_id",
+            "pk_booking_lines_id",
+            "sscc",
+            "e_item",
+            "e_item_type",
+            "e_qty",
+            "e_type_of_packaging",
         )
+        line_datas = booking.line_datas().only(
+            "pk_id_lines_data", "quantity", "itemDescription", "clientRefNumber"
+        )
+
         sscc_arr = []
         result_with_sscc = {}
 
-        for booking_line in booking_lines:
-            if booking_line.sscc and not booking_line.sscc in sscc_arr:
-                sscc_arr.append(booking_line.sscc)
+        for line in lines:
+            if line.sscc and not line.sscc in sscc_arr:
+                sscc_arr.append(line.sscc)
 
         for sscc in sscc_arr:
             result_with_sscc[str(sscc)] = []
 
-            for booking_line in booking_lines:
-                if booking_line.sscc == sscc:
-                    label_url = None
-                    is_available = False
+            for line_data in line_datas:
+                if line_data.clientRefNumber != sscc:
+                    continue
 
-                    # For TNT orders, DME builds label for each SSCC
-                    # if booking.vx_freight_provider == "TNT":
-                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
-                    file_name = (
-                        booking.pu_Address_State
-                        + "_"
-                        + str(booking.b_bookingID_Visual)
-                        + "_"
-                        + str(booking_line.sscc)
-                        + ".pdf"
-                    )
-                    is_available = doesFileExist(file_path, file_name)
-                    label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+                original_line = None
+                for line in lines:
+                    if (
+                        not line.sscc
+                        and line.e_item_type == line_data.modelNumber
+                        and str(line.zbl_121_integer_1) == line_data.itemSerialNumbers
+                    ):
+                        original_line = line
+                        break
 
-                    with open(f"{file_path}{file_name}"[:-4] + ".zpl", "rb") as zpl:
-                        zpl_data = str(b64encode(zpl.read()))[2:-1]
+                label_url = None
+                is_available = False
 
-                    # For Hunter orders, DME builds label for entire Booking
-                    # elif booking.vx_freight_provider == "Hunter":
+                # For TNT orders, DME builds label for each SSCC
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
+                file_name = (
+                    booking.pu_Address_State
+                    + "_"
+                    + str(booking.b_bookingID_Visual)
+                    + "_"
+                    + str(sscc)
+                    + ".pdf"
+                )
+                is_available = doesFileExist(file_path, file_name)
+                label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                    result_with_sscc[str(sscc)].append(
-                        {
-                            "pk_lines_id": booking_line.pk_lines_id,
-                            "sscc": booking_line.sscc,
-                            "e_item": booking_line.e_item,
-                            "e_item_type": booking_line.e_item_type,
-                            "e_qty": booking_line.e_qty,
-                            "e_type_of_packaging": booking_line.e_type_of_packaging,
-                            "is_available": is_available,
-                            "url": label_url,
-                            "zpl": zpl_data,
-                        }
-                    )
+                with open(f"{file_path}{file_name}", "rb") as file:
+                    pdf_data = str(b64encode(file.read()))[2:-1]
+
+                result_with_sscc[str(sscc)].append(
+                    {
+                        "pk_lines_id": original_line.pk_lines_id,
+                        "sscc": sscc,
+                        "e_item": original_line.e_item,
+                        "e_item_type": original_line.e_item_type,
+                        "e_qty": line_data.quantity,
+                        "e_type_of_packaging": original_line.e_type_of_packaging,
+                        "is_available": is_available,
+                        "url": label_url,
+                        "pdf": pdf_data,
+                    }
+                )
 
         result = {
             "id": booking.pk,
@@ -3031,6 +3043,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # print("Exception: ", e)
+            logger.error(f"@902 - save_status_history: {str(e)}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
@@ -3424,7 +3437,7 @@ class EmailTemplatesViewSet(viewsets.ViewSet):
             )
             return JsonResponse({"results": return_data})
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["post"])
@@ -3628,14 +3641,14 @@ class FPStoreBookingLog(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
-        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id).first()
+        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id)
 
-        if dme_employee is not None:
+        if dme_employee:
             user_type = "DME"
             fields_to_exclude = []
         else:
             user_type = "CLIENT"
-            fields_to_exclude = ["fee", "mu_percentage_fuel_levy"]
+            fields_to_exclude = ["fee", "client_mark_up_percent", "fuel_levy_base"]
 
         fk_booking_id = request.GET["fk_booking_id"]
         booking = Bookings.objects.get(pk_booking_id=fk_booking_id)
@@ -3646,11 +3659,18 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             .exclude(service_name="Air Freight")
             .order_by("client_mu_1_minimum_values")
         )
+
+        client = booking.get_client()
+        context = {
+            "booking": booking,
+            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+        }
+
         serializer = ApiBookingQuotesSerializer(
             queryset,
             many=True,
             fields_to_exclude=fields_to_exclude,
-            context={"booking": booking},
+            context=context,
         )
         return Response(serializer.data)
 
@@ -3946,9 +3966,9 @@ def get_manifest(request):
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
 
-    bookings = Bookings.objects.filter(pk__in=booking_ids).only(
-        "id", "vx_freight_provider"
-    )
+    bookings = Bookings.objects.filter(
+        pk__in=booking_ids, b_dateBookedDate__isnull=True
+    ).only("id", "vx_freight_provider")
     fps = {}
 
     for booking in bookings:
@@ -4274,6 +4294,7 @@ class FileUploadView(views.APIView):
         username = request.user.username
         file = request.FILES["file"]
         upload_option = request.POST.get("uploadOption", None)
+        client_id = request.POST.get("clientId", None)
 
         if upload_option == "import":
             uploader = request.POST["uploader"]
@@ -4292,8 +4313,12 @@ class FileUploadView(views.APIView):
             file_name = upload_lib.upload_pricing_rule_file(
                 user_id, username, file, upload_option, rule_type
             )
+        elif upload_option == "client-products":
+            import_results = upload_lib.upload_client_products_file(
+                user_id, username, client_id, file
+            )
 
-        return Response(file_name)
+        return Response(import_results)
 
 
 @permission_classes((IsAuthenticated,))
@@ -4428,7 +4453,7 @@ class PricingRulesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            print("@Exception", e)
+            # print("@Exception", e)
             return JsonResponse({"result": None}, status=400)
 
 
@@ -4492,13 +4517,14 @@ class ClientEmployeesViewSet(viewsets.ModelViewSet):
 
 class ClientProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ClientProductsSerializer
+    queryset = Client_Products.objects.all()
 
-    def get_queryset(self):
+    def get_client_id(self):
         user_id = int(self.request.user.id)
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
 
         if dme_employee:
-            client_employees = Client_employees.objects.filter(email__isnull=False)
+            client = self.request.query_params.get("clientId")
         else:
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user_id
@@ -4506,9 +4532,26 @@ class ClientProductsViewSet(viewsets.ModelViewSet):
             client = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
             ).first()
-            client_products = Client_Products.objects.filter(fk_id_dme_client=client)
 
-        return client_products.order_by("id")
+        return client
+
+    def list(self, request, *args, **kwargs):
+        client = self.get_client_id()
+        client_products = Client_Products.objects.filter(
+            fk_id_dme_client=client
+        ).order_by("id")
+        serializer = ClientProductsSerializer(client_products, many=True)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        id = self.kwargs["pk"]
+        try:
+            Client_Products.objects.filter(id=id).delete()
+        except Exception as e:
+            return Response({"msg": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({id})
 
 
 class ClientRasViewSet(viewsets.ModelViewSet):
@@ -4803,7 +4846,7 @@ class ChartsViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": deliveries_reports})
         except Exception as e:
-            print(f"Error #102: {e}")
+            # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
 
     @action(detail=False, methods=["get"])

@@ -2,6 +2,7 @@ import math
 import logging
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.models import Booking_lines
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +19,13 @@ def get_number_of_pallets(booking_lines, pallet):
     pallet_height = 2.1
     pallet_weight = 500
     m3_to_kg_factor = 250
-    pallet_dims = [pallet.length / 1000, pallet.width / 1000, pallet_height]
-    pallet_dims.sort()
-    pallet_cube = pallet_dims[0] * pallet_dims[1] * pallet_dims[2] * 0.8
+    pallet_length = max(pallet.length, pallet.width) / 1000
+    pallet_width = min(pallet.length, pallet.width) / 1000
+    pallet_cube = pallet_length * pallet_width * pallet_height * 0.8
 
     (
         palletized_lines,
-        unpalletized_lines,
+        unpalletized_line_pks,
         line_dimensions,
         sum_cube,
         unpalletized_dead_weight,
@@ -32,21 +33,21 @@ def get_number_of_pallets(booking_lines, pallet):
     ) = ([], [], [], 0, 0, 0)
 
     for item in booking_lines:
-        length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
-        width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+        line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        length = max(line_length, line_width)
+        width = min(line_length, line_width)
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
-        line_dimensions = [length, width, height]
-        line_dimensions.sort()
 
         if (
-            line_dimensions[0] <= pallet_dims[0]
-            and line_dimensions[1] <= pallet_dims[1]
-            and line_dimensions[2] <= pallet_dims[2]
+            length <= pallet_length
+            and width <= pallet_width
+            and height <= pallet_height
         ):
             palletized_lines.append(item)
             sum_cube += width * height * length * item.l_002_qty
         else:
-            unpalletized_lines.append(item)
+            unpalletized_line_pks.append(item.pk)
             unpalletized_dead_weight += (
                 item.l_002_qty
                 * item.l_009_weight_per_each
@@ -58,4 +59,189 @@ def get_number_of_pallets(booking_lines, pallet):
     number_of_pallets_for_unpalletized = math.ceil(unpalletized_weight / pallet_weight)
     number_of_pallets_for_palletized = math.ceil(sum_cube / pallet_cube)
 
-    return number_of_pallets_for_palletized + number_of_pallets_for_unpalletized
+    return number_of_pallets_for_palletized, unpalletized_line_pks
+
+
+def get_palletized_by_ai(bok_2s, pallets):
+    # occupied pallet space percent in case of packing different line items in one pallet
+    available_percent = 80
+
+    # prepare pallets data
+    pallets_data = []
+    for pallet in pallets:
+        length = max(pallet.length, pallet.width) / 1000
+        width = min(pallet.length, pallet.width) / 1000
+        height = pallet.height / 1000
+        total_cubic = length * width * height
+        available_cubic = total_cubic * available_percent / 100
+        pallets_data.append(
+            {
+                "length": length,
+                "width": width,
+                "height": height,
+                "total_cubic": total_cubic,
+                "available_cubic": available_cubic,
+            }
+        )
+
+    # prepare lines data
+    lines_data = []
+    for item in bok_2s:
+        line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+        line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+        length = max(line_length, line_width)
+        width = min(line_length, line_width)
+        height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+        cubic = length * width * height
+
+        available_pallets, min_pallet_cubic, smallest_pallet = [], None, None
+        for index, pallet in enumerate(pallets_data):
+            if (
+                pallet["length"] >= length
+                and pallet["width"] >= width
+                and pallet["height"] >= height
+            ):
+                if min_pallet_cubic is None or pallet["total_cubic"] < min_pallet_cubic:
+                    min_pallet_cubic = pallet["total_cubic"]
+                    smallest_pallet = index
+                available_pallets.append(index)
+
+        lines_data.append(
+            {
+                "line_obj": item,
+                "length": length,
+                "width": width,
+                "height": height,
+                "quantity": item.l_002_qty,
+                "cubic": cubic,
+                "available_pallets": available_pallets,
+                "smallest_pallet": smallest_pallet,
+                "pallet_objs": pallets,
+            }
+        )
+
+    # sort lines data in descending order of greater of length and width
+    sorted(lines_data, key=lambda k: k["length"], reverse=True)
+
+    palletized, non_palletized = [], []
+    for index, line in enumerate(lines_data):
+        if not line["quantity"]:
+            continue
+
+        # check if there is suitable pallet
+        if not line["smallest_pallet"]:
+            non_palletized.append(
+                {
+                    "line_index": index,
+                    "line_obj": line["line_obj"],
+                    "quantity": line["quantity"],
+                }
+            )
+        else:
+            for pallet_item in palletized:
+                # check if items can be packed in previously packed pallets
+                if (
+                    pallet_item["pallet_index"] in line["available_pallets"]
+                    and pallet_item["remaining_space"] > line["cubic"]
+                    and line["quantity"]
+                ):
+                    packable_count = min(
+                        math.floor(pallet_item["remaining_space"] / line["cubic"]),
+                        line["quantity"],
+                    )
+                    pallet_item["remaining_space"] -= packable_count * line["cubic"]
+                    pallet_item["lines"].append(
+                        {
+                            "line_index": index,
+                            "line_obj": line["line_obj"],
+                            "quantity": packable_count,
+                        }
+                    )
+                    line["quantity"] -= packable_count
+
+            # check if new pallet needs to be used
+            if line["quantity"]:
+                for i in iter(int, 1):
+                    if not line["quantity"]:
+                        break
+
+                    packable_count = min(
+                        math.floor(
+                            pallets_data[line["smallest_pallet"]]["total_cubic"]
+                            / line["cubic"]
+                        ),
+                        line["quantity"],
+                    )
+                    line["quantity"] -= packable_count
+                    needed_space = packable_count * line["cubic"]
+
+                    # check if pallet is packed with items of same line
+                    if (
+                        needed_space
+                        > pallets_data[line["smallest_pallet"]]["available_cubic"]
+                        and needed_space
+                        <= pallets_data[line["smallest_pallet"]]["total_cubic"]
+                    ):
+                        palletized.append(
+                            {
+                                "pallet_index": line["smallest_pallet"],
+                                "pallet_obj": pallets[line["smallest_pallet"]],
+                                "remaining_space": 0,
+                                "lines": [
+                                    {
+                                        "line_index": index,
+                                        "line_obj": line["line_obj"],
+                                        "quantity": packable_count,
+                                    }
+                                ],
+                            }
+                        )
+                    else:
+                        palletized.append(
+                            {
+                                "pallet_index": line["smallest_pallet"],
+                                "pallet_obj": pallets[line["smallest_pallet"]],
+                                "remaining_space": pallets_data[
+                                    line["smallest_pallet"]
+                                ]["available_cubic"]
+                                - needed_space,
+                                "lines": [
+                                    {
+                                        "line_index": index,
+                                        "line_obj": line["line_obj"],
+                                        "quantity": packable_count,
+                                    }
+                                ],
+                            }
+                        )
+
+    # check duplicated Pallets
+    reformatted_palletized = []
+    for item in palletized:
+        same_pallet_exists = False
+        for sorted_item in reformatted_palletized:
+            is_equal = True
+            if (
+                item["pallet_index"] == sorted_item["pallet_index"]
+                and item["remaining_space"] == sorted_item["remaining_space"]
+            ):
+                for index, line in enumerate(item["lines"]):
+                    if (
+                        line["line_index"] != sorted_item["lines"][index]["line_index"]
+                        or sorted_item["lines"][index]["quantity"] % line["quantity"]
+                        != 0
+                    ):
+                        is_equal = False
+            else:
+                is_equal = False
+
+            same_pallet_exists = same_pallet_exists or is_equal
+            if is_equal:
+                sorted_item["quantity"] += 1
+                for line_index, line in enumerate(sorted_item["lines"]):
+                    line["quantity"] += item["lines"][line_index]["quantity"]
+        if not same_pallet_exists:
+            item["quantity"] = 1
+            reformatted_palletized.append(item)
+
+    return reformatted_palletized, non_palletized

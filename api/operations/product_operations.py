@@ -4,21 +4,23 @@ from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
 from api.models import Client_Products
+from api.clients.jason_l.constants import DIM_BY_GROUP_CODE as JASONL_DIM_BY_GROUP_CODE
 
 logger = logging.getLogger(__name__)
 
 
-def _append_line(results, line, qty):
+def _append_line(results, line, qty, is_bundle_by_model_number):
     """
     if same e_item_type(model_number), then merge both
     """
     is_new = True
 
-    for index, result in enumerate(results):
-        if result["e_item_type"] == line["e_item_type"]:
-            results[index]["qty"] += line["qty"]
-            is_new = False
-            break
+    if is_bundle_by_model_number:
+        for index, result in enumerate(results):
+            if result["e_item_type"] == line["e_item_type"]:
+                results[index]["qty"] += line["qty"]
+                is_new = False
+                break
 
     if is_new:
         results.append(line)
@@ -26,7 +28,7 @@ def _append_line(results, line, qty):
     return results
 
 
-def get_product_items(bok_2s, client, is_web=False):
+def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=True):
     """
     get all items from array of "model_number" and "qty"
     """
@@ -44,6 +46,9 @@ def get_product_items(bok_2s, client, is_web=False):
             raise ValidationError(
                 "'model_number' and 'qty' are required for each booking_line"
             )
+
+        if model_number in ["ZROUND", "ZROUNDDISC", "ZSHORTSHIP", "ZDISCOUNT"]:
+            continue
 
         products = Client_Products.objects.filter(
             Q(parent_model_number=model_number) | Q(child_model_number=model_number)
@@ -71,11 +76,12 @@ def get_product_items(bok_2s, client, is_web=False):
                     "e_dimWidth": product.e_dimWidth,
                     "e_dimHeight": product.e_dimHeight,
                     "e_weightPerEach": product.e_weightPerEach,
-                    "zbl_121_integer_1": zbl_121_integer_1,
-                    "zbl_102_text_2": zbl_102_text_2,
+                    "zbl_121_integer_1": zbl_121_integer_1,  # Sequence
+                    "zbl_102_text_2": zbl_102_text_2,  # ProductGroupCode
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
-                results = _append_line(results, line, qty)
+
+                results = _append_line(results, line, qty, is_bundle_by_model_number)
         else:  # Biz - Sap/b1, Pronto
             has_product = False
             for product in products:
@@ -100,7 +106,26 @@ def get_product_items(bok_2s, client, is_web=False):
                     "zbl_102_text_2": zbl_102_text_2,
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
-                results = _append_line(results, line, qty)
+
+                results = _append_line(results, line, qty, is_bundle_by_model_number)
+
+    # Jason L: populate DIMs by ProductGroupCode
+    for result in results:
+        if (
+            result["zbl_102_text_2"]
+            and result["e_dimLength"] == 1
+            and result["e_dimWidth"] == 1
+            and result["e_dimHeight"] == 1
+        ):
+            if result["zbl_102_text_2"] in JASONL_DIM_BY_GROUP_CODE:
+                logger.info(
+                    f"[GET PRODUCT ITEMS] Dims with GroupCode: {result['zbl_102_text_2']}, ItemCode: {result['e_item_type']}"
+                )
+                dims = JASONL_DIM_BY_GROUP_CODE[result["zbl_102_text_2"]]
+                result["e_dimLength"] = dims["length"]
+                result["e_dimWidth"] = dims["width"]
+                result["e_dimHeight"] = dims["height"]
+                result["e_weightPerEach"] = dims["weight"]
 
     logger.info(f"[GET PRODUCT ITEMS] {results}")
     return results

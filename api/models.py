@@ -499,9 +499,11 @@ class API_booking_quotes(models.Model):
     mu_percentage_fuel_levy = models.FloatField(
         verbose_name=_("Mu Percentage Fuel Levy"), blank=True, null=True
     )
+    fuel_levy_base = models.FloatField(blank=True, null=True, default=0)
+    client_mark_up_percent = models.FloatField(blank=True, null=True, default=0)
     client_mu_1_minimum_values = models.FloatField(
         verbose_name=_("Client MU 1 Minimum Value"), blank=True, null=True
-    )
+    )  # fee * (1 + mu_percentage_fuel_levy)
     x_price_per_UOM = models.IntegerField(
         verbose_name=_("Price per UOM"), blank=True, null=True
     )
@@ -526,9 +528,9 @@ class API_booking_quotes(models.Model):
     x_fk_pricin_id = models.IntegerField(
         verbose_name=_("Pricin ID"), blank=True, null=True
     )
-    x_price_surcharge = models.IntegerField(
+    x_price_surcharge = models.FloatField(
         verbose_name=_("Price Surcharge"), blank=True, null=True
-    )
+    )  # Total of surcharges
     x_minumum_charge = models.IntegerField(
         verbose_name=_("Minimum Charge"), blank=True, null=True
     )
@@ -605,6 +607,10 @@ class Bookings(models.Model):
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
     )
+
+    DMEM = "DMEM"
+    DMEA = "DMEA"
+    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"))
 
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
@@ -1795,6 +1801,9 @@ class Bookings(models.Model):
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     de_to_sufficient_space = models.BooleanField(default=True, null=True)
+    booking_type = models.CharField(
+        max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
+    )
 
     class Meta:
         db_table = "dme_bookings"
@@ -1849,6 +1858,9 @@ class Bookings(models.Model):
 
     def lines(self):
         return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
+
+    def line_datas(self):
+        return Booking_lines_data.objects.filter(fk_booking_id=self.pk_booking_id)
 
     def get_total_lines_qty(self):
         try:
@@ -1936,7 +1948,11 @@ class Bookings(models.Model):
                     elif service_etd.fp_service_time_uom.lower() == "hours":
                         return service_etd.fp_03_delivery_hours, "hours"
 
-        return None, None
+    def get_client(self):
+        try:
+            return DME_clients.objects.get(dme_account_num=self.kf_client_id)
+        except:
+            return None
 
 
 @receiver(pre_save, sender=Bookings)
@@ -2304,6 +2320,10 @@ class BOK_1_headers(models.Model):
         (ESCALATOR, "Escalator"),
         (STAIRS, "Stairs"),
     )
+
+    DMEM = "DMEM"
+    DMEA = "DMEA"
+    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"))
 
     pk_auto_id = models.AutoField(primary_key=True)
     quote = models.OneToOneField(
@@ -2719,6 +2739,10 @@ class BOK_1_headers(models.Model):
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     b_081_b_pu_auto_pack = models.BooleanField(default=None, null=True)
+    b_091_send_quote_to_pronto = models.BooleanField(default=False, null=True)
+    b_092_booking_type = models.CharField(
+        max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
+    )
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
@@ -4793,3 +4817,16 @@ class PostalCode(models.Model):
 
     class Meta:
         db_table = "postal_code"
+
+
+class Surcharge(models.Model):
+    id = models.AutoField(primary_key=True)
+    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=255, default=None, null=True)
+    amount = models.FloatField(null=True, default=None)
+    line_id = models.CharField(max_length=36, default=None, null=True)  # Line/BOK_2 pk
+    qty = models.IntegerField(blank=True, null=True, default=0)  # Line/BOK_2 qty
+
+    class Meta:
+        db_table = "dme_surcharge"

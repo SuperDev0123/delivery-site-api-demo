@@ -27,7 +27,7 @@ from rest_framework.decorators import (
     action,
 )
 from api.serializers_client import *
-from api.serializers import SimpleQuoteSerializer
+from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
 from api.models import *
 from api.common import (
     trace_error,
@@ -35,13 +35,16 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
-from api.common.booking_quote import migrate_quote_info_to_booking
 from api.fp_apis.utils import get_status_category_from_status
-from api.fp_apis.operations.surcharge.index import get_available_surcharge_opts
+from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
+from api.operations.pronto_xi.index import (
+    send_info_back,
+    update_note as update_pronto_note,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -146,9 +149,23 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_1.b_076_b_pu_service = request.data.get("b_076_b_pu_service")
             bok_1.b_077_b_del_service = request.data.get("b_077_b_del_service")
             bok_1.b_081_b_pu_auto_pack = request.data.get("b_081_b_pu_auto_pack")
+            # bok_1.b_091_send_quote_to_pronto = request.data.get(
+            #     "b_091_send_quote_to_pronto", False
+            # )
             bok_1.save()
-            res_json = {"success": True, "message": "Freigth options are updated."}
 
+            # Re-Gen Surcharges
+            quotes = API_booking_quotes.objects.filter(
+                fk_booking_id=bok_1.pk_header_id, is_used=False
+            )
+            bok_2s = BOK_2_lines.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
+
+            for quote in quotes:
+                gen_surcharges(bok_1, bok_2s, quote, "bok_1")
+
+            res_json = {"success": True, "message": "Freigth options are updated."}
             return Response(res_json, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(
@@ -190,32 +207,6 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             result["pricings"] = []
             best_quotes = quote_set
 
-            # Build `Booking` and `Lines` for Surcharge
-            booking = {
-                "pu_Address_Type": bok_1.b_027_b_pu_address_type,
-                "de_To_AddressType": bok_1.b_053_b_del_address_type,
-                "de_To_Address_State": bok_1.b_057_b_del_address_state,
-                "de_To_Address_City": bok_1.b_058_b_del_address_suburb,
-                "pu_tail_lift": bok_1.b_019_b_pu_tail_lift,
-                "del_tail_lift": bok_1.b_041_b_del_tail_lift,
-            }
-
-            lines = []
-            for bok_2 in bok_2s:
-                bok_2_line = {
-                    "e_type_of_packaging": bok_2.l_001_type_of_packaging,
-                    "e_qty": int(bok_2.l_002_qty),
-                    "e_item": bok_2.l_003_item,
-                    "e_dimUOM": bok_2.l_004_dim_UOM,
-                    "e_dimLength": bok_2.l_005_dim_length,
-                    "e_dimWidth": bok_2.l_006_dim_width,
-                    "e_dimHeight": bok_2.l_007_dim_height,
-                    "e_weightUOM": bok_2.l_008_weight_UOM,
-                    "e_weightPerEach": bok_2.l_009_weight_per_each,
-                    "e_dangerousGoods": False,
-                }
-                lines.append(bok_2_line)
-
             if best_quotes:
                 context = {"client_customer_mark_up": client.client_customer_mark_up}
                 json_results = SimpleQuoteSerializer(
@@ -233,11 +224,10 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                         if _quote.pk == json_result["cost_id"]:
                             quote = _quote
 
-                    booking["vx_serviceName"] = quote.service_name
-                    booking["vx_freight_provider"] = quote.freight_provider
-                    json_result["surcharges"] = get_available_surcharge_opts(
-                        booking, lines
-                    )
+                    context = {"client_mark_up_percent": client.client_mark_up_percent}
+                    json_result["surcharges"] = SurchargeSerializer(
+                        get_surcharges(quote), context=context, many=True
+                    ).data
 
                 result["pricings"] = json_results
 
@@ -320,18 +310,52 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             )
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def send_email(self, request):
+        # Send `picking slip printed` email from DME itself
+
+        LOG_ID = "[MANUAL PICKING SLIP EMAIL SENDER]"
+        identifier = request.GET["identifier"]
+        logger.info(f"@840 {LOG_ID} Identifier: {identifier}")
+
+        if not identifier:
+            message = f"Wrong identifier: {identifier}"
+            logger.info(f"@841 {LOG_ID} message")
+            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from api.operations.email_senders import send_picking_slip_printed_email
+
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            send_picking_slip_printed_email(bok_1.b_client_order_num)
+            logger.info(f"@842 {LOG_ID} Success to send email: {identifier}")
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(
+                f"@843 {LOG_ID} Failed to send email: {identifier}, reason: {str(e)}"
+            )
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
-        if settings.ENV == "local":
-            t.sleep(2)
-
         try:
             cost_id = request.data["costId"]
             identifier = request.data["identifier"]
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
-            bok_1.quote_id = cost_id
+            quote = API_booking_quotes.objects.get(pk=cost_id)
+            bok_1.b_001_b_freight_provider = quote.freight_provider
+            bok_1.b_003_b_service_name = quote.service_name
+            bok_1.vx_serviceType_XXX = quote.service_code
+            bok_1.quote = quote
             bok_1.save()
+
+            # Send quote info back to Pronto
+            # send_info_back(bok_1, bok_1.quote)
+
+            # Update Pronto Note
+            update_pronto_note(bok_1.quote, bok_1, [], "bok")
 
             fc_log = (
                 FC_Log.objects.filter(client_booking_id=bok_1.client_booking_id)
@@ -637,6 +661,7 @@ def get_delivery_status(request):
             )
 
         booking = {
+            "uid": booking.pk,
             "b_bookingID_Visual": booking.b_bookingID_Visual,
             "b_client_order_num": booking.b_client_order_num,
             "b_client_sales_inv_num": booking.b_client_sales_inv_num,
@@ -705,6 +730,7 @@ def get_delivery_status(request):
 
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     booking = {
+        "b_bookingID_Visual": None,
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
         "b_028_b_pu_company": bok_1.b_028_b_pu_company,

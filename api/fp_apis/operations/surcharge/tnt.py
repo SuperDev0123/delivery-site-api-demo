@@ -1,22 +1,31 @@
+jason_l_surcharges = {"rsd": 2.37, "os0": 8.23}
+
+
 def dgre(param):
-    if param["has_dangerous_item"] and param.vx_service_name == "Road Express":
+    if (
+        param["has_dangerous_item"]
+        and param["vx_service_name"].lower() == "road express"
+    ):
         return {
             "name": "Dangerous Goods (Road Express)",
             "description": "Surcharge per consignment. In addition, the MHP Fee will apply per item to each and all items consigned under the same consignment note where that consignment "
             + "contains Dangerous Goods, including any non-Dangerous Goods items consigned under that consignment note. (Dangerous Goods consignment notes are to contain Dangerous Goods items only.)",
-            "value": 60 * param["total_qty"],
+            "value": 60,
         }
     else:
         return None
 
 
 def dgere(param):
-    if param["has_dangerous_item"] and param.vx_service_name != "Road Express":
+    if (
+        param["has_dangerous_item"]
+        and param["vx_service_name"].lower() != "road express"
+    ):
         return {
-            "name": "Dangerous Goods (Road Express)",
+            "name": "Dangerous Goods (excluding Road Express)",
             "description": "Surcharge per consignment. In addition, the MHP Fee will apply per item to each and all items consigned under the same consignment note where that consignment "
             + "contains Dangerous Goods, including any non-Dangerous Goods items consigned under that consignment note. (Dangerous Goods consignment notes are to contain Dangerous Goods items only.)",
-            "value": 200 * param["total_qty"],
+            "value": 200,
         }
     else:
         return None
@@ -45,7 +54,7 @@ def dgere(param):
 
 
 def rsp(param):
-    if param["pu_address_type"] == "residential":
+    if param["pu_address_type"].lower() == "residential":
         return {
             "name": "Residential Pickup (RSP)",
             "description": "Fee per consignment for pick up from a residential address4.",
@@ -57,7 +66,7 @@ def rsp(param):
 
 def rsp30(param):
     if (
-        param["pu_address_type"] == "residential"
+        param["pu_address_type"].lower() == "residential"
         and param["max_weight"] >= 30
         and param["max_weight"] < 100
     ):
@@ -73,7 +82,7 @@ def rsp30(param):
 
 
 def rsp100(param):
-    if param["pu_address_type"] == "residential" and param["max_weight"] >= 100:
+    if param["pu_address_type"].lower() == "residential" and param["max_weight"] >= 100:
         return {
             "name": "Heavyweight Residential Pickup (RSP100)",
             "description": "Fee per consignment for pick up from a residential address4 with a chargeable weight5 of 100kg and over."
@@ -86,11 +95,11 @@ def rsp100(param):
 
 
 def rsd(param):
-    if param["de_to_address_type"] == "residential":
+    if param["de_to_address_type"].lower() == "residential":
         return {
             "name": "Residential Delivery (RSD)",
-            "description": "Fee per consignment for delivery to a residential address4. ",
-            "value": 5,
+            "description": "Fee per consignment for delivery to a residential address4.",
+            "value": jason_l_surcharges["rsd"] if param["is_jason_l"] else 5,
         }
     else:
         return None
@@ -98,7 +107,7 @@ def rsd(param):
 
 def rsd30(param):
     if (
-        param["de_to_address_type"] == "residential"
+        param["de_to_address_type"].lower() == "residential"
         and param["max_weight"] >= 30
         and param["max_weight"] < 100
     ):
@@ -114,7 +123,10 @@ def rsd30(param):
 
 
 def rsd100(param):
-    if param["de_to_address_type"] == "residential" and param["max_weight"] >= 100:
+    if (
+        param["de_to_address_type"].lower() == "residential"
+        and param["max_weight"] >= 100
+    ):
         return {
             "name": "Heavyweight Residential Delivery (RSD100)",
             "description": "Fee per consignment for delivery from a residential address4 with a chargeable weight5 of 100kg and over."
@@ -136,7 +148,7 @@ def os0(param):
         return {
             "name": "Oversize Freight (OS0)",
             "description": "Oversize freight where any one dimension (length, height or width) exceeds 1.49 metres.",
-            "value": 10,
+            "value": jason_l_surcharges["os0"] if param["is_jason_l"] else 10,
         }
     else:
         return None
@@ -197,41 +209,45 @@ def os5(param):
         return None
 
 
-def lr(param):
-    if (
-        param["de_to_address_state"].lower() == "wa"
-        and param["de_to_address_city"] != "Perth"
-        and param["vx_service_name"]
-        in ["Road Express", "Fashion Express", "Technology Express"]
-    ):
-        return {
-            "name": "Western Australia Regional Surcharge(LR)",
-            "description": "10% - Surcharge effective 06/01/2013 (where applicable)"
-            + "For all shipments travelling to Western Australia regional/country locations, excluding Perth and applicable to the following services:"
-            + "Road Express (XPDD) Fashion Express (FASH) Technology Express (COMP) Examples Sydney (SYD) to Tom Price (TPR) - Surcharge applies Brisbane (BNE) to Perth (PTH) - Surcharge doesn't apply "
-            + "Perth (PTH) to Albany (ABY) - Surcharge applies Albany (ABY) t Perth (PTH) - Surcharge applies Perth (PTH) to Perth (PTH) - Surcharge doesn't apply "
-            + "Perth (PTH) to Melbourne (MEL) - Surcharge doesn't apply",
-            "value": "10%",
-        }
-    else:
-        return None
+# def lr(param):
+#     if (
+#         param["de_to_address_state"].lower() == "wa"
+#         and param["de_to_address_city"] != "Perth"
+#         and param["vx_service_name"].lower()
+#         in ["road express", "fashion express", "technology express"]
+#     ):
+#         return {
+#             "name": "Western Australia Regional Surcharge(LR)",
+#             "description": "10% - Surcharge effective 06/01/2013 (where applicable)"
+#             + "For all shipments travelling to Western Australia regional/country locations, excluding Perth and applicable to the following services:"
+#             + "Road Express (XPDD) Fashion Express (FASH) Technology Express (COMP) Examples Sydney (SYD) to Tom Price (TPR) - Surcharge applies Brisbane (BNE) to Perth (PTH) - Surcharge doesn't apply "
+#             + "Perth (PTH) to Albany (ABY) - Surcharge applies Albany (ABY) t Perth (PTH) - Surcharge applies Perth (PTH) to Perth (PTH) - Surcharge doesn't apply "
+#             + "Perth (PTH) to Melbourne (MEL) - Surcharge doesn't apply",
+#             "value": "10%",
+#         }
+#     else:
+#         return None
 
 
 def tnt():
-    return [
-        dgre,
-        dgere,
-        rsp,
-        rsp30,
-        rsp100,
-        rsd,
-        rsd30,
-        rsd100,
-        os0,
-        os1,
-        os2,
-        os3,
-        os4,
-        os5,
-        lr,
-    ]
+    return {
+        "order": [
+            dgre,
+            dgere,
+            rsp,
+            rsp30,
+            rsp100,
+            rsd,
+            rsd30,
+            rsd100,
+            # lr,
+        ],
+        "line": [
+            os0,
+            os1,
+            os2,
+            os3,
+            os4,
+            os5,
+        ],
+    }

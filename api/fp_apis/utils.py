@@ -5,6 +5,7 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
+from api.common.booking_quote import set_booking_quote
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
@@ -103,7 +104,7 @@ def get_etd_in_hour(pricing):
 
             return etd.fp_03_delivery_hours
         except Exception as e:
-            message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+            message = f"#810 [get_etd_in_hour] Missing ETD - {pricing.freight_provider}, {pricing.service_name}, {pricing.etd}"
             logger.info(message)
             # raise Exception(message)
             return None
@@ -200,7 +201,7 @@ def select_best_options(pricings):
     if lowest_pricing.pk == fastest_pricing.pk:
         return [lowest_pricing]
     else:
-        return [fastest_pricing, lowest_pricing]
+        return [lowest_pricing, fastest_pricing]
 
 
 def auto_select_pricing(booking, pricings, auto_select_type):
@@ -236,25 +237,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
-        booking.api_booking_quote = filtered_pricing
-        booking.vx_freight_provider = filtered_pricing.freight_provider
-        booking.vx_account_code = filtered_pricing.account_code
-        booking.vx_serviceName = filtered_pricing.service_name
-        booking.inv_cost_quoted = filtered_pricing.fee * (
-            1 + filtered_pricing.mu_percentage_fuel_levy
-        )
-        booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
-
-        fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing.freight_provider
-        )
-
-        if fp and fp.service_cutoff_time:
-            booking.s_02_Booking_Cutoff_Time = fp.service_cutoff_time
-        else:
-            booking.s_02_Booking_Cutoff_Time = "12:00:00"
-
-        booking.save()
+        set_booking_quote(booking, filtered_pricing)
         return True
     else:
         logger.info("#855 - Could not find proper pricing")

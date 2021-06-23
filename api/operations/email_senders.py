@@ -510,6 +510,27 @@ def send_status_update_email(booking, status, sender, status_url):
     )
 
 
+def send_picking_slip_printed_email(b_client_order_num):
+    """
+    Only used for `Jason L` client's orders
+
+    Example of subject:
+    JasonL | 1034525- | picking slip printed
+    """
+
+    _b_client_order_num = (
+        b_client_order_num if "-" in b_client_order_num else f"{b_client_order_num}-"
+    )
+    subject = f"JasonL | {_b_client_order_num} | picking slip printed"
+    message = "Sent from DME platform"
+    to_emails = ["data.deliver-me@outlook.com", "goldj@deliver-me.com.au"]
+
+    # if settings.ENV != "prod":
+    #     to_emails.append("goldj@deliver-me.com.au")
+
+    send_email(to_emails, [], subject, message)
+
+
 def send_email_to_admins(subject, message):
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"

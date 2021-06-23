@@ -525,6 +525,12 @@ def get_label(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         _fp_name = fp_name.lower()
 
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L:
+            error_msg = "JasonL order label should be built by built-in module."
+            return JsonResponse(
+                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         error_msg = pre_check_label(booking)
         if error_msg:
             return JsonResponse(
@@ -561,8 +567,7 @@ def get_label(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = s0
-                _set_error(booking, error_msg)
+                _set_error(booking, str(e))
                 return JsonResponse(
                     {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
                 )
@@ -573,6 +578,7 @@ def get_label(request, fp_name):
             logger.info(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
+            z_label_url = None
 
             while (
                 json_data is None
@@ -991,6 +997,7 @@ def pricing(request):
         is_pricing_only = True
 
     booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
+    client = booking.get_client()
 
     if not success:
         return JsonResponse(
@@ -998,12 +1005,23 @@ def pricing(request):
         )
 
     json_results = ApiBookingQuotesSerializer(
-        results, many=True, context={"booking": booking}
+        results,
+        many=True,
+        context={
+            "booking": booking,
+            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+        },
     ).data
 
     if is_pricing_only:
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
     else:
+        if booking.booking_type == "DMEM":
+            results = results.filter(
+                freight_provider__iexact=booking.vx_freight_provider,
+                service_name=booking.vx_serviceName,
+            )
+
         auto_select_pricing(booking, results, auto_select_type)
 
     res_json = {"success": True, "message": message, "results": json_results}

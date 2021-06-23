@@ -1,12 +1,11 @@
 import logging
-from datetime import datetime
+from datetime import datetime, date
 
 from rest_framework.exceptions import ValidationError
 
 from django.conf import settings
 from api.models import *
-from api.common import common_times
-from api.common import common_times
+from api.common import common_times as dme_time_lib
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
@@ -47,7 +46,10 @@ def get_account_detail(booking, fp_name):
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
     if _fp_name in ["allied"]:
-        account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+        if settings.ENV != "prod":
+            account_detail = FP_CREDENTIALS["allied"]["test"]["test_bed_1"]
+        else:
+            account_detail = FP_CREDENTIALS["allied"]["dme"]["live_0"]
 
     if not account_detail:
         booking.b_errorCapture = f"Couldn't find Account Detail"
@@ -85,7 +87,12 @@ def get_tracking_payload(booking, fp_name):
     try:
         payload = {}
         consignmentDetails = []
-        consignmentDetails.append({"consignmentNumber": booking.v_FPBookingNumber})
+        consignmentDetails.append(
+            {
+                "consignmentNumber": booking.v_FPBookingNumber,
+                "de_to_address_postcode": booking.de_To_Address_PostalCode,
+            }
+        )
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
@@ -139,7 +146,7 @@ def get_book_payload(booking, fp_name):
     payload["bookedBy"] = "DME"
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": "   " or booking.pu_Contact_F_L_Name,
+        "contact": booking.pu_Contact_F_L_Name or " ",
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -165,7 +172,7 @@ def get_book_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": "   " or booking.de_to_Contact_F_LName,
+        "contact": booking.de_to_Contact_F_LName or " ",
         "emailAddress": "" or de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -214,7 +221,7 @@ def get_book_payload(booking, fp_name):
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
             }
 
@@ -276,7 +283,10 @@ def get_book_payload(booking, fp_name):
 
     # Detail for each FP
     if fp_name == "allied":
-        payload["serviceType"] = "C"
+        payload["serviceType"] = "R"
+        payload["docketNumber"] = gen_consignment_num(
+            "allied", booking.b_bookingID_Visual
+        )
     if fp_name == "hunter":
         if booking.vx_serviceName == "Road Freight":
             payload["serviceType"] = "RF"
@@ -453,10 +463,8 @@ def get_getlabel_payload(booking, fp_name):
         de_To_Address_Street_2 = booking.de_To_Address_Street_2
 
     payload["pickupAddress"] = {
-        "companyName": "" if puCompany is None else puCompany,
-        "contact": "   "
-        if booking.pu_Contact_F_L_Name is None
-        else booking.pu_Contact_F_L_Name,
+        "companyName": puCompany or "",
+        "contact": booking.pu_Contact_F_L_Name or " ",
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -484,7 +492,7 @@ def get_getlabel_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": "  " or booking.de_to_Contact_F_LName,
+        "contact": booking.de_to_Contact_F_LName or " ",
         "emailAddress": "" or de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -545,7 +553,7 @@ def get_getlabel_payload(booking, fp_name):
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
                 "description": ", ".join(descriptions)[:20],
                 "gapRa": ", ".join(gaps)[:15],
@@ -737,7 +745,7 @@ def get_pricing_payload(
     booking,
     fp_name,
     account_detail,
-    booking_lines=None,
+    booking_lines,
     service_code=None,
 ):
     payload = {}
@@ -749,7 +757,14 @@ def get_pricing_payload(
 
     payload["spAccountDetails"] = account_detail
     payload["serviceProvider"] = get_service_provider(fp_name)
-    payload["readyDate"] = "" or str(booking.puPickUpAvailFrom_Date)[:10]
+
+    # Check puPickUpAvailFrom_Date
+    pu_avail_from = booking.puPickUpAvailFrom_Date
+    if not pu_avail_from or pu_avail_from < date.today():
+        booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
+        booking.save()
+
+    payload["readyDate"] = "" or str(pu_avail_from)[:10]
     payload["referenceNumber"] = "" or booking.b_clientReference_RA_Numbers
 
     client_process = None
@@ -785,7 +800,7 @@ def get_pricing_payload(
 
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": "  " or booking.pu_Contact_F_L_Name,
+        "contact": booking.pu_Contact_F_L_Name or " ",
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "phoneNumber": "0267651109" or booking.pu_Phone_Main,
@@ -802,7 +817,7 @@ def get_pricing_payload(
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": "  " or booking.de_to_Contact_F_LName,
+        "contact": booking.de_to_Contact_F_LName or " ",
         "emailAddress": "" or de_Email,
         "instruction": "",
         "phoneNumber": "" or booking.de_to_Phone_Main,
@@ -817,11 +832,6 @@ def get_pricing_payload(
         "suburb": "" or booking.de_To_Address_Suburb,
         "sortCode": "" or booking.de_To_Address_PostalCode,
     }
-
-    if not booking_lines:
-        booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, is_deleted=False
-        )
 
     items = []
     for line in booking_lines:
@@ -841,7 +851,7 @@ def get_pricing_payload(
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "{0:.3f}".format(width * height * length / 1000000),
+                "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
                 "description": line.e_item,
             }
@@ -924,7 +934,7 @@ def get_etd_payload(booking, fp_name):
 
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": "  " or booking.pu_Contact_F_L_Name,
+        "contact": booking.pu_Contact_F_L_Name or " ",
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "phoneNumber": "0267651109" or booking.pu_Phone_Main,
@@ -941,7 +951,7 @@ def get_etd_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": "  " or booking.de_to_Contact_F_LName,
+        "contact": booking.de_to_Contact_F_LName or " ",
         "emailAddress": "" or de_Email,
         "instruction": "",
         "phoneNumber": "" or booking.de_to_Phone_Main,
