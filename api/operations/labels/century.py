@@ -676,7 +676,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
-                            "PORT MELBORUNE",
+                            booking.de_To_Address_PostalCode,
                         ),
                         style_left,
                     ),
