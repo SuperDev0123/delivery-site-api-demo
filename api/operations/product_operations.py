@@ -4,7 +4,10 @@ from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
 from api.models import Client_Products
-from api.clients.jason_l.constants import DIM_BY_GROUP_CODE as JASONL_DIM_BY_GROUP_CODE
+from api.clients.jason_l.constants import (
+    DIM_BY_GROUP_CODE as JASONL_DIM_BY_GROUP_CODE,
+    ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 "'model_number' and 'qty' are required for each booking_line"
             )
 
-        if model_number in ["ZROUND", "ZROUNDDISC", "ZSHORTSHIP", "ZDISCOUNT"]:
+        if model_number in JASONL_ITEM_CODES_TO_BE_IGNORED:
             continue
 
         products = Client_Products.objects.filter(
