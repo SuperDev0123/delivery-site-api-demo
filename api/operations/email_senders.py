@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from email.utils import COMMASPACE, formatdate
 
@@ -12,6 +13,8 @@ from api.models import (
     DME_Options,
 )
 from api.outputs.email import send_email
+
+logger = logging.getLogger(__name__)
 
 
 def send_booking_status_email(bookingId, emailName, sender):
@@ -528,7 +531,12 @@ def send_picking_slip_printed_email(b_client_order_num):
     # if settings.ENV != "prod":
     #     to_emails.append("goldj@deliver-me.com.au")
 
-    send_email(to_emails, [], subject, message)
+    if settings.ENV in ["dev", "local"]:
+        logger.info(
+            f"@109 [send_picking_slip_printed_email] DEV MODE --- subject: {subject}"
+        )
+    else:
+        send_email(to_emails, [], subject, message)
 
 
 def send_email_to_admins(subject, message):

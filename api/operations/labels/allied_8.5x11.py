@@ -86,7 +86,6 @@ def myLaterPages(canvas, doc):
 def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
-
     return f"DME{visual_id}{item_index}"
 
 
@@ -401,8 +400,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_client_order_num
-                            or "",
+                            booking.b_client_order_num or "",
                         ),
                         style_left,
                     ),
