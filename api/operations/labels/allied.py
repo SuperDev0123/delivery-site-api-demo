@@ -407,7 +407,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_client_order_num or ""
+                            booking.b_client_order_num or "",
                         ),
                         style_left,
                     ),
@@ -685,7 +685,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
-                            "PORT MELBORUNE",
+                            booking.de_To_Address_Suburb,
                         ),
                         style_left,
                     ),
