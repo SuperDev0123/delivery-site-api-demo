@@ -87,7 +87,7 @@ def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
 
-    return f"AEO{visual_id}{item_index}"
+    return f"DME{visual_id}{item_index}"
 
 
 def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
