@@ -50,7 +50,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 "'model_number' and 'qty' are required for each booking_line"
             )
 
-        if model_number in JASONL_ITEM_CODES_TO_BE_IGNORED:
+        if model_number and model_number.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
             continue
 
         products = Client_Products.objects.filter(
