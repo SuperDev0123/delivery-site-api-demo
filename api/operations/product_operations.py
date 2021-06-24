@@ -4,10 +4,7 @@ from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
 from api.models import Client_Products
-from api.clients.jason_l.constants import (
-    DIM_BY_GROUP_CODE as JASONL_DIM_BY_GROUP_CODE,
-    ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
-)
+from api.clients.jason_l.constants import DIM_BY_GROUP_CODE as JASONL_DIM_BY_GROUP_CODE
 
 logger = logging.getLogger(__name__)
 

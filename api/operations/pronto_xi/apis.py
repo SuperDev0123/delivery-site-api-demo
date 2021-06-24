@@ -186,7 +186,7 @@ def parse_order_xml(response, token):
     SalesOrderLines = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SalesOrderLines")
 
     for SalesOrderLine in SalesOrderLines:
-        ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode")
+        ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode").text
         OrderedQty = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}OrderedQty")
         SequenceNo = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}SequenceNo")
         UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
@@ -194,10 +194,10 @@ def parse_order_xml(response, token):
         if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
             continue
 
-        ProductGroupCode = get_product_group_code(ItemCode.text, token)
+        ProductGroupCode = get_product_group_code(ItemCode, token)
 
         line = {
-            "model_number": ItemCode.text,
+            "model_number": ItemCode,
             "qty": int(float(OrderedQty.text)),
             "sequence": int(float(SequenceNo.text)),
             "UOMCode": UOMCode.text,
