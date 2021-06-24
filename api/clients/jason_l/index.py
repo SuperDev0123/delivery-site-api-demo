@@ -1169,7 +1169,7 @@ def scanned(payload, client):
             new_line.fk_booking_id = pk_booking_id
             new_line.pk_booking_lines_id = str(uuid.uuid4())
             new_line.e_type_of_packaging = first_item.get("package_type")
-            new_line.e_qty = picked_item["items"][0]["qty"]
+            new_line.e_qty = 1
             new_line.zbl_121_integer_1 = 0
             new_line.e_item = "Picked Item"
             new_line.e_item_type = None
