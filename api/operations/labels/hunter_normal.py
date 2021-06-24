@@ -13,6 +13,7 @@ import redis
 import urllib, requests
 import pymysql, pymysql.cursors
 import json
+import logging
 
 import time
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
@@ -47,6 +48,8 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 from api.models import Booking_lines, FPRouting, Fp_freight_providers
 
 from api.fp_apis.utils import gen_consignment_num
+
+logger = logging.getLogger("dme_api")
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -120,9 +123,9 @@ class RotatedImage(Image):
 
 
 def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
-    logger.info(
-        f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
-    )
+    # logger.info(
+    #     f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+    # )
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
@@ -219,13 +222,16 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     de_postcode = booking.de_To_Address_PostalCode
     de_state = booking.de_To_Address_State
     fp_routing = FPRouting.objects.filter(
-        suburb=de_suburb, post_code=de_postcode, state=de_state
+        suburb=de_suburb, dest_postcode=de_postcode, state=de_state
     )
-    if fp_routing[0]:
-        head_port = fp_routing[0].head_port
-        port_code = fp_routing[0].port_code
+    if fp_routing[0] and fp_routing[0].orig_depot:
+        head_port = fp_routing[0].orig_depot 
     else:
         head_port = ""
+
+    if fp_routing[0] and fp_routing[0].gateway:
+        port_code = fp_routing[0].gateway     
+    else:
         port_code = ""
 
     totalQty = 0
@@ -293,9 +299,9 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>Consignment: %s</b></font>"
                         % (
                             label_settings["font_size_large"],
-                            (booking.v_FPBookingNumber)
-                            if (booking.v_FPBookingNumber)
-                            else "",
+                            gen_consignment_num(
+                                booking.vx_freight_provider, booking.b_bookingID_Visual
+                            ),
                         ),
                         style_left,
                     ),
@@ -459,7 +465,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>Cubic:%s</font>"
+                        "<font size=%s>Cubic: %s M<super rise=4 size=4>3</super></font>"
                         % (
                             label_settings["font_size_medium"],
                             (line.e_1_Total_dimCubicMeter)
@@ -471,7 +477,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>Total Cubic: %s</font>"
+                        "<font size=%s>Total Cubic: %s M<super rise=4 size=4>3</super></font>"
                         % (label_settings["font_size_medium"], totalCubic),
                         style_left,
                     )
