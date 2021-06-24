@@ -5,6 +5,7 @@ ITEM_CODES_TO_BE_IGNORED = [
     "ZDISCOUNT",
     "NOTE",
     "MEMO",
+    "CHARGES TYPE 1",
 ]
 
 NEED_PALLET_GROUP_CODES = [
