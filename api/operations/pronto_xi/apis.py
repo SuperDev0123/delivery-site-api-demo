@@ -115,6 +115,8 @@ def get_product_group_code(ItemCode, token):
 
 
 def parse_order_xml(response, token):
+    LOG_ID = "[PRONTO PARSE ORDER XML]"
+
     xml_str = response.content.decode("utf-8")
     # xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n<SalesOrderGetSalesOrdersResponse xmlns="http://www.pronto.net/so/1.0.0"><APIResponseStatus><Code>OK</Code></APIResponseStatus><SalesOrders><SalesOrder><Address1></Address1><Address2>690 Ann Street</Address2><Address3>Fortitude Valley</Address3><Address4>QLD</Address4><Address5></Address5><Address6></Address6><AddressName>Roman Shrestha</AddressName><AddressPostcode>4006</AddressPostcode><CustomerEmail>dark23shadow@gmail.com</CustomerEmail><DeliveryDate>2020-01-29</DeliveryDate><Packages>1</Packages><SOOrderNo>20176</SOOrderNo><SalesOrderLines><SalesOrderLine><ItemCode>HC028</ItemCode><OrderedQty>3.0000</OrderedQty></SalesOrderLine><SalesOrderLine><ItemCode>MY-M-06.LHS</ItemCode><OrderedQty>1.0000</OrderedQty></SalesOrderLine></SalesOrderLines><Warehouse>Botany</Warehouse></SalesOrder></SalesOrders></SalesOrderGetSalesOrdersResponse>\n'
     root = ET.fromstring(xml_str)
@@ -192,6 +194,8 @@ def parse_order_xml(response, token):
         UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
 
         if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
+            message = f"@6410 {LOG_ID} IGNORED --- itemCode: {ItemCode}"
+            logger.info(message)
             continue
 
         ProductGroupCode = get_product_group_code(ItemCode, token)
