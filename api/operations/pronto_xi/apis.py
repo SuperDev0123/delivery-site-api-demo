@@ -7,6 +7,9 @@ from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
 from api.fp_apis.operations.surcharge.index import get_surcharges_total
+from api.clients.jason_l.constants import (
+    ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +190,10 @@ def parse_order_xml(response, token):
         OrderedQty = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}OrderedQty")
         SequenceNo = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}SequenceNo")
         UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
+
+        if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
+            continue
+
         ProductGroupCode = get_product_group_code(ItemCode.text, token)
 
         line = {
