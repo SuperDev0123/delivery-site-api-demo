@@ -43,6 +43,10 @@ def get_address(order_num):
     else:
         file_path = "/home/ubuntu/jason_l/address/src/del.csv"
 
+    csv_file = open(file_path)
+    logger.info(f"@320 {LOG_ID} File({file_path}) opened!")
+    filtered_lines = []
+
     address = {"phone": "", "email": ""}
     for i, line in enumerate(csv_file):
         line_items = line_items
