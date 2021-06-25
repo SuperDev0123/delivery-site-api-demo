@@ -27,12 +27,15 @@ def get_address(order_num):
 
     if settings.ENV != "local":  # Only on DEV or PROD
         logger.info(f"@351 {LOG_ID} Running .sh script...")
-        cmd_dir = "/home/ubuntu/jason_l/address/src"
-        cmd_file = os.path.join(
-            cmd_dir,
-            f'run.sh --context_param param1="{_order_num}" --context_param param2="{suffix}"',
+        subprocess.run(
+            [
+                "/home/ubuntu/jason_l/address/src/run.sh",
+                "--context_param",
+                f'"{_order_num}"',
+                "--context_param",
+                f'"{suffix}"',
+            ]
         )
-        subprocess.call([cmd_file], cwd=cmd_dir)
         logger.info(f"@352 {LOG_ID} Finish running .sh")
 
     if settings.ENV == "local":
@@ -62,9 +65,7 @@ def get_picked_items(order_num, sscc):
 
     if settings.ENV != "local":  # Only on DEV or PROD
         logger.info(f"@301 {LOG_ID} Running .sh script...")
-        cmd_dir = "/home/ubuntu/jason_l/sscc/src"
-        cmd_file = os.path.join(cmd_dir, "run.sh")
-        subprocess.call([cmd_file], cwd=cmd_dir)
+        subprocess.run(["/home/ubuntu/jason_l/sscc/src/run.sh"])
         logger.info(f"@302 {LOG_ID} Finish running .sh")
 
     if settings.ENV == "local":
