@@ -477,7 +477,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         '<font size=%s color="white"><b>%s</b> </font>'
                         % (
                             label_settings["font_size_large"],
-                            booking.vx_serviceName or "ROAD",
+                            booking.vx_serviceName or "",
                         ),
                         style_back_black,
                     ),
@@ -669,7 +669,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
-                            booking.de_To_Address_PostalCode,
+                            booking.de_To_Address_Suburb,
                         ),
                         style_left,
                     ),
@@ -757,8 +757,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            # booking.vx_account_code or "", //test
-                            "DELVME",
+                            booking.vx_account_code or "",
                         ),
                         style_left,
                     ),
