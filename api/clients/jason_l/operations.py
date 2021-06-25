@@ -8,6 +8,53 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
+def get_address(order_num):
+    """
+    used to build LABEL
+    """
+    LOG_ID = "[ADDRESS CSV READER]"
+
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+
+    message = f"@350 {LOG_ID} OrderNum: {_order_num}, Suffix: {suffix}"
+    logger.info(message)
+    # ---
+
+    if settings.ENV != "local":  # Only on DEV or PROD
+        logger.info(f"@351 {LOG_ID} Running .sh script...")
+        cmd_dir = "/home/ubuntu/jason_l/address/src"
+        cmd_file = os.path.join(
+            cmd_dir,
+            f'run.sh --context_param param1="{_order_num}" --context_param param2="{suffix}"',
+        )
+        subprocess.call([cmd_file], cwd=cmd_dir)
+        logger.info(f"@352 {LOG_ID} Finish running .sh")
+
+    if settings.ENV == "local":
+        file_path = "/Users/juli/Desktop/del.csv"
+    else:
+        file_path = "/home/ubuntu/jason_l/address/src/del.csv"
+
+    address = {"phone": "", "email": ""}
+    for i, line in enumerate(csv_file):
+        line_items = line_items
+        type = line_items[4]
+
+        if type not in ["DA"]:
+            continue
+
+        if type == "DA":
+            address["phone"] = line_items[14]
+
+    logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
+    return address
+
+
 def get_picked_items(order_num, sscc):
     """
     used to build LABEL
@@ -17,7 +64,7 @@ def get_picked_items(order_num, sscc):
 
     if settings.ENV != "local":  # Only on DEV or PROD
         logger.info(f"@301 {LOG_ID} Running .sh script...")
-        cmd_dir = "/home/ubuntu/jason_l/JasonU01_part/src"
+        cmd_dir = "/home/ubuntu/jason_l/sscc/src"
         cmd_file = os.path.join(cmd_dir, "run.sh")
         subprocess.call([cmd_file], cwd=cmd_dir)
         logger.info(f"@302 {LOG_ID} Finish running .sh")
@@ -25,42 +72,43 @@ def get_picked_items(order_num, sscc):
     if settings.ENV == "local":
         file_path = "/Users/juli/Desktop/sscc.csv"
     else:
-        file_path = "/home/ubuntu/jason_l/JasonU01_part/src/sscc.csv"
+        file_path = "/home/ubuntu/jason_l/sscc/src/sscc.csv"
 
     csv_file = open(file_path)
     logger.info(f"@320 {LOG_ID} File({file_path}) opened!")
     filtered_lines = []
 
     for i, line in enumerate(csv_file):
-        order_num_csv = line.split("|")[2].strip()
-        suffix_csv = line.split("|")[3].strip()
+        line_items = line_items
+        order_num_csv = line_items[2].strip()
+        suffix_csv = line_items[3].strip()
 
         if len(suffix_csv) > 0:
             order_num_csv = f"{order_num_csv}-{suffix_csv}"
 
         if str(order_num) == order_num_csv:
-            if sscc and sscc != line.split("|")[1].strip():
+            if sscc and sscc != line_items[1].strip():
                 continue
 
             filtered_lines.append(
                 {
-                    "sscc": line.split("|")[1].strip(),
-                    "timestamp": line.split("|")[10][:19],
+                    "sscc": line_items[1].strip(),
+                    "timestamp": line_items[10][:19],
                     "is_repacked": True,
-                    "package_type": line.split("|")[9][:3],
+                    "package_type": line_items[9][:3],
                     "items": [
                         {
-                            "sequence": int(float(line.split("|")[0])),
-                            "qty": int(float(line.split("|")[4])),
+                            "sequence": int(float(line_items[0])),
+                            "qty": int(float(line_items[4])),
                         }
                     ],
                     "dimensions": {
-                        "width": float(line.split("|")[6]),
-                        "height": float(line.split("|")[7]),
-                        "length": float(line.split("|")[5]),
+                        "width": float(line_items[6]),
+                        "height": float(line_items[7]),
+                        "length": float(line_items[5]),
                         "unit": "m",
                     },
-                    "weight": {"weight": float(line.split("|")[8]), "unit": "kg"},
+                    "weight": {"weight": float(line_items[8]), "unit": "kg"},
                 }
             )
 

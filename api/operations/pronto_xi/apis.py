@@ -10,6 +10,7 @@ from api.fp_apis.operations.surcharge.index import get_surcharges_total
 from api.clients.jason_l.constants import (
     ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
 )
+from api.clients.jason_l.operations import get_address as jasonl_get_address
 
 logger = logging.getLogger(__name__)
 
@@ -136,8 +137,9 @@ def parse_order_xml(response, token):
     b_060 = "Australia"
     b_061 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressName").text
     b_063 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}CustomerEmail").text
-    b_064 = "0297009511"  # Not provided
-    b_066 = "Email"  # Not provided
+    address = jasonl_get_address()  # get address by using `Talend` .sh script
+    b_064 = address["phone"]
+    b_066 = address["email"]
     b_067 = 0  # Not provided
     b_068 = "Drop at Door / Warehouse Dock"  # Not provided
     b_069 = 1  # Not provided
