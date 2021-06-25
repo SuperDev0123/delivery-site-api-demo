@@ -672,7 +672,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_data2 = [
                 [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
                             booking.de_To_Address_Suburb,
