@@ -30,8 +30,10 @@ def get_address(order_num):
         subprocess.run(
             [
                 "/home/ubuntu/jason_l/address/src/run.sh",
-                f'--context_param param1="{_order_num}"',
-                f'--context_param param2="{suffix}"',
+                "--context_param",
+                f"param1={_order_num}",
+                "--context_param",
+                f"param2={suffix}",
             ]
         )
         logger.info(f"@352 {LOG_ID} Finish running .sh")
