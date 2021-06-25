@@ -55,10 +55,15 @@ def get_address(order_num):
         line_items = line.split("|")
         type = line_items[4]
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
+        DA_phone = None
+
+        if type == "DA":
+            DA_phone = line_items[4]
 
         if type == "E":
             address["email"] = line_items[5]
 
+    address["phone"] = DA_phone if DA_phone else address["phone"]
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
 
