@@ -545,7 +545,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     Paragraph(
                         "<font size=%s>To: %s</font>"
                         % (
-                            label_settings["font_size_medium"],
+                            label_settings["line_height_extra_large"],
                             booking.deToCompanyName or "",
                         ),
                         style_left,
@@ -572,7 +572,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     Paragraph(
                         "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s %s, %s</font>"
                         % (
-                            label_settings["font_size_medium"],
+                            label_settings["line_height_extra_large"],
                             booking.de_to_Contact_F_LName or "",
                             booking.de_To_Address_Street_1 or "",
                             booking.de_To_Address_Street_2 or "",
@@ -773,7 +773,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.vx_account_code or "", 
+                            booking.vx_account_code or "",
                         ),
                         style_left,
                     ),
