@@ -506,8 +506,24 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_package = [
                 [
                     Paragraph(
-                        "<font size=%s>Package: %s of %s</font>"
-                        % (label_settings["font_size_medium"], j, totalQty),
+                        "<font size=%s>Item %s: %s x %s x %s = %s M<super rise=4 size=4>3</super></font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            j,
+                            booking_line.e_dimWidth or "",
+                            booking_line.e_dimHeight or "",
+                            booking_line.e_dimLength or "",
+                            round(
+                                get_cubic_meter(
+                                    booking_line.e_dimLength,
+                                    booking_line.e_dimWidth,
+                                    booking_line.e_dimHeight,
+                                    booking_line.e_dimUOM,
+                                ),
+                                5,
+                            )
+                            or "",
+                        ),
                         style_left,
                     ),
                     Paragraph(
@@ -526,9 +542,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             shell_table = Table(
                 data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (3 / 12) * mm,
+                    float(label_settings["label_image_size_length"]) * (4 / 12) * mm,
+                    float(label_settings["label_image_size_length"]) * (5 / 12) * mm,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -599,7 +615,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
                             booking.de_To_Address_State or "",
@@ -615,7 +631,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
-                            carrier,
+                            carrier or "",
                         ),
                         style_left,
                     ),
@@ -635,11 +651,11 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 ]
             ]
 
-            data = [[tbl_data1, tbl_data2, tbl_data3]]
+            data = [[tbl_data1, tbl_data3, tbl_data2]]
 
             t1_w = float(label_settings["label_image_size_length"]) * (1 / 6) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
-            t3_w = float(label_settings["label_image_size_length"]) * (1 / 12) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (1 / 12) * mm
+            t3_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
 
             shell_table = Table(
                 data,
@@ -653,32 +669,6 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 ],
             )
 
-            tbl_data1 = [
-                [
-                    Paragraph(
-                        "<font size=%s>Item %s: %s x %s x %s = %s M<super rise=4 size=4>3</super></font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            j,
-                            booking_line.e_dimWidth or "",
-                            booking_line.e_dimHeight or "",
-                            booking_line.e_dimLength or "",
-                            round(
-                                get_cubic_meter(
-                                    booking_line.e_dimLength,
-                                    booking_line.e_dimWidth,
-                                    booking_line.e_dimHeight,
-                                    booking_line.e_dimUOM,
-                                ),
-                                5,
-                            )
-                            or "",
-                        ),
-                        style_left,
-                    )
-                ]
-            ]
-
             tbl_data2 = [
                 [
                     Paragraph(
@@ -690,18 +680,16 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         style_left,
                     ),
                 ],
-                [Spacer(1, 10)],
                 [shell_table],
             ]
 
-            data = [[tbl_data1, tbl_data2]]
+            data = [[tbl_data2]]
 
-            t1_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+            t1_w = float(label_settings["label_image_size_length"]) * mm
 
             shell_table = Table(
                 data,
-                colWidths=(t1_w, t2_w),
+                colWidths=(t1_w),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -710,7 +698,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 5))
 
             tbl_data1 = [
                 [
