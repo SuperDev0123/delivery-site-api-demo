@@ -543,7 +543,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s>To: %s</font>"
+                        "<font size=%s>To: <b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
                             booking.deToCompanyName or "",
@@ -570,7 +570,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s %s, %s</font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
                         % (
                             label_settings["line_height_extra_large"],
                             booking.de_to_Contact_F_LName or "",
