@@ -49,7 +49,7 @@ def get_address(order_num):
 
     address = {"phone": "", "email": ""}
     for i, line in enumerate(csv_file):
-        line_items = line_items
+        line_items = line.split("|")
         type = line_items[4]
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
 
@@ -82,7 +82,7 @@ def get_picked_items(order_num, sscc):
     filtered_lines = []
 
     for i, line in enumerate(csv_file):
-        line_items = line_items
+        line_items = line.split("|")
         order_num_csv = line_items[2].strip()
         suffix_csv = line_items[3].strip()
 
