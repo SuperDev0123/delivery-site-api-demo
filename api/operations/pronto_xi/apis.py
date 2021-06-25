@@ -155,6 +155,12 @@ def parse_order_xml(response, token):
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "
     )
     addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address2").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address3").text or " "
+    )
+    addresses.append(
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text or " "
     )
     addresses.append(
