@@ -49,6 +49,9 @@ def get_address(order_num):
 
     address = {"phone": "", "email": ""}
     for i, line in enumerate(csv_file):
+        if i == 0:
+            continue
+
         line_items = line.split("|")
         type = line_items[4]
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
