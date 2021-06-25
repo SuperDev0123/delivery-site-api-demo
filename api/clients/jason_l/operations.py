@@ -44,12 +44,10 @@ def get_address(order_num):
     for i, line in enumerate(csv_file):
         line_items = line_items
         type = line_items[4]
+        address["phone"] = line_items[14] if line_items[14] else address["phone"]
 
-        if type not in ["DA"]:
-            continue
-
-        if type == "DA":
-            address["phone"] = line_items[14]
+        if type == "E":
+            address["email"] = line_items[5]
 
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
