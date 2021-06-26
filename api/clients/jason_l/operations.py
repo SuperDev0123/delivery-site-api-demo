@@ -86,6 +86,9 @@ def get_address(order_num):
             DA_state = line_items[11]
             DA_postal_code = line_items[12]
             DA_phone = line_items[14]
+            logger.info(
+                f"@358 {LOG_ID} DA street_1: {DA_street_1}, suburb: {DA_suburb}, state: {DA_state}, postal_code: {DA_postal_code}, phone: {DA_phone}"
+            )
 
         if type == "E":
             address["email"] = line_items[5]
