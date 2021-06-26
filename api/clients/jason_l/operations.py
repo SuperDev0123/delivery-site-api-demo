@@ -61,7 +61,8 @@ def get_address(order_num):
             continue
 
         line_items = line.split("|")
-        type = line_items[4]
+        type = line_items[0]
+        na_type = line_items[4]
         address["company_name"] = (
             line_items[5] if line_items[5] else address["company_name"]
         )
@@ -79,7 +80,7 @@ def get_address(order_num):
         DA_suburb = None
         DA_state = None
         DA_postal_code = None
-        if type == "DA":  # `Delivery Address` row
+        if type == "SO" and na_type == "DA":  # `Delivery Address` row
             DA_company_name = line_items[5]
             DA_street_1 = line_items[6]
             DA_suburb = line_items[10]
@@ -90,7 +91,7 @@ def get_address(order_num):
                 f"@358 {LOG_ID} DA street_1: {DA_street_1}, suburb: {DA_suburb}, state: {DA_state}, postal_code: {DA_postal_code}, phone: {DA_phone}"
             )
 
-        if type == "E":
+        if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
     address["phone"] = DA_phone if DA_phone else address["phone"]
