@@ -56,6 +56,12 @@ def get_address(order_num):
         "state": "",
         "postal_code": "",
     }
+    DA_phone = None
+    DA_company_name = None
+    DA_street_1 = None
+    DA_suburb = None
+    DA_state = None
+    DA_postal_code = None
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -74,12 +80,6 @@ def get_address(order_num):
         )
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
 
-        DA_phone = None
-        DA_company_name = None
-        DA_street_1 = None
-        DA_suburb = None
-        DA_state = None
-        DA_postal_code = None
         if type == "SO" and na_type == "DA":  # `Delivery Address` row
             DA_company_name = line_items[5]
             DA_street_1 = line_items[6]
