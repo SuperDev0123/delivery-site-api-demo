@@ -196,6 +196,7 @@ def parse_order_xml(response, token):
 
     lines = []
     SalesOrderLines = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SalesOrderLines")
+    ignored_items = []
 
     for SalesOrderLine in SalesOrderLines:
         ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode").text
@@ -204,11 +205,17 @@ def parse_order_xml(response, token):
         UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
 
         if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
-            message = f"@6410 {LOG_ID} IGNORED --- itemCode: {ItemCode}"
+            ignored_items.append(ItemCode)
+            message = f"@6410 {LOG_ID} IGNORED (LISTED ITEM) --- itemCode: {ItemCode}"
             logger.info(message)
             continue
 
         ProductGroupCode = get_product_group_code(ItemCode, token)
+        if not ProductGroupCode:
+            ignored_items.append(ItemCode)
+            message = f"@6410 {LOG_ID} IGNORED (MISSING ITEM) --- itemCode: {ItemCode}"
+            logger.info(message)
+            continue
 
         line = {
             "model_number": ItemCode,
@@ -218,6 +225,9 @@ def parse_order_xml(response, token):
             "ProductGroupCode": ProductGroupCode,
         }
         lines.append(line)
+
+    if ignored_items:
+        order["b_010_b_notes"] = ", ".join(ignored_items)
 
     return order, lines
 
