@@ -47,24 +47,61 @@ def get_address(order_num):
     logger.info(f"@320 {LOG_ID} File({file_path}) opened!")
     filtered_lines = []
 
-    address = {"phone": "", "email": ""}
+    address = {
+        "phone": "",
+        "email": "",
+        "company_name": "",
+        "street_1": "",
+        "suburb": "",
+        "state": "",
+        "postal_code": "",
+    }
     for i, line in enumerate(csv_file):
-        if i == 0:
+        if i == 0:  # Ignore first header row
             continue
 
         line_items = line.split("|")
         type = line_items[4]
+        address["company_name"] = (
+            line_items[5] if line_items[5] else address["company_name"]
+        )
+        address["street_1"] = line_items[6] if line_items[6] else address["street_1"]
+        address["suburb"] = line_items[10] if line_items[10] else address["suburb"]
+        address["state"] = line_items[11] if line_items[11] else address["state"]
+        address["postal_code"] = (
+            line_items[12] if line_items[12] else address["postal_code"]
+        )
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
-        DA_phone = None
 
-        if type == "DA":
-            DA_phone = line_items[4]
+        DA_phone = None
+        DA_company_name = None
+        DA_street_1 = None
+        DA_suburb = None
+        DA_state = None
+        DA_postal_code = None
+        if type == "DA":  # `Delivery Address` row
+            DA_company_name = line_items[5]
+            DA_street_1 = line_items[6]
+            DA_suburb = line_items[10]
+            DA_state = line_items[11]
+            DA_postal_code = line_items[12]
+            DA_phone = line_items[14]
 
         if type == "E":
             address["email"] = line_items[5]
 
     address["phone"] = DA_phone if DA_phone else address["phone"]
+    address["company_name"] = (
+        DA_company_name if DA_company_name else address["company_name"]
+    )
+    address["street_1"] = DA_street_1 if DA_street_1 else address["street_1"]
+    address["suburb"] = DA_suburb if DA_suburb else address["suburb"]
+    address["state"] = DA_state if DA_state else address["state"]
+    address["postal_code"] = (
+        DA_postal_code if DA_postal_code else address["postal_code"]
+    )
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
+
     return address
 
 

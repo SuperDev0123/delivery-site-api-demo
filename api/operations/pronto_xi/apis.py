@@ -128,18 +128,18 @@ def parse_order_xml(response, token):
 
     SalesOrder = SalesOrders[0]
     order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
+    address = jasonl_get_address(order_num)  # get address by using `Talend` .sh script
     b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
-    b_055 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address2").text
-    b_056 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address3").text
+    b_055 = address["street_1"]
+    b_056 = ""  # Not provided
     b_057 = ""  # SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text
     b_058 = ""  # Not provided
     b_059 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressPostcode").text
     b_060 = "Australia"
     b_061 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressName").text
-    b_063 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}CustomerEmail").text
-    address = jasonl_get_address(order_num)  # get address by using `Talend` .sh script
+    b_063 = address["email"]
     b_064 = address["phone"]
-    b_066 = address["email"]
+    b_066 = "phone"  # Not provided
     b_067 = 0  # Not provided
     b_068 = "Drop at Door / Warehouse Dock"  # Not provided
     b_069 = 1  # Not provided
@@ -169,6 +169,8 @@ def parse_order_xml(response, token):
     addresses.append(
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
     )
+    addresses.append(addresses["suburb"])
+    addresses.append(addresses["state"])
     b_058 = "||".join(addresses)[:40].lower()
 
     order = {
