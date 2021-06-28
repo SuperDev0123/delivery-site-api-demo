@@ -510,9 +510,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             j,
+                            booking_line.e_dimLength or "",
                             booking_line.e_dimWidth or "",
                             booking_line.e_dimHeight or "",
-                            booking_line.e_dimLength or "",
                             round(
                                 get_cubic_meter(
                                     booking_line.e_dimLength,
