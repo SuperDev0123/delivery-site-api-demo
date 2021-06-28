@@ -746,7 +746,7 @@ def auto_repack(payload, client):
         bok_2s.filter(l_003_item="Auto repacked item").delete()
         bok_3s.delete()
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
-            zbl_102_text_2__in=SERVICE_GROUP_CODES
+            zbl_102_text_2__in=SERVICE_GROUP_CODES, l_003_item__icontains="(ignored)"
         )
 
         # Get Pallet
