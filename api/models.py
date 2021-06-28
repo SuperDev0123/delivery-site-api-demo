@@ -4556,6 +4556,7 @@ class Client_Products(models.Model):
     e_weightPerEach = models.FloatField(
         verbose_name=_("Weight Per Each"), blank=True, null=True
     )
+    is_ignored = models.BooleanField(blank=True, null=True, default=False)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

@@ -52,9 +52,26 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
         ).filter(fk_id_dme_client=client)
 
         if products.count() == 0:
-            raise ValidationError(
-                f"Can't find Product with provided 'model_number'({model_number})."
-            )
+            # raise ValidationError(
+            #     f"Can't find Product with provided 'model_number'({model_number})."
+            # )
+
+            line = {
+                "e_item_type": model_number,
+                "description": "(Ignored)",
+                "qty": qty,
+                "e_dimUOM": "m",
+                "e_weightUOM": "kg",
+                "e_dimLength": 0.5,
+                "e_dimWidth": 0.5,
+                "e_dimHeight": 0.5,
+                "e_weightPerEach": 0.5,
+                "zbl_121_integer_1": zbl_121_integer_1,
+                "zbl_102_text_2": "(Ignored)",
+                "e_type_of_packaging": e_type_of_packaging or "Carton",
+            }
+
+            results = _append_line(results, line, qty, is_bundle_by_model_number)
         elif is_web:  # Web - Magento, Shopify
             for product in products:
                 if (
@@ -91,7 +108,9 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 product = products.first()
                 line = {
                     "e_item_type": product.child_model_number,
-                    "description": product.description,
+                    "description": product.description
+                    if not product.is_ignored
+                    else f"{product.description} (Ignored)",
                     "qty": product.qty * qty,
                     "e_dimUOM": product.e_dimUOM,
                     "e_weightUOM": product.e_weightUOM,

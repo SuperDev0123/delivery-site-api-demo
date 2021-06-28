@@ -39,6 +39,7 @@ from api.fp_apis.utils import get_status_category_from_status
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
+from api.clients.jason_l.operations import do_quote as jasonL_do_quote
 from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
 from api.operations.pronto_xi.index import (
@@ -368,6 +369,78 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             return Response({"success": True}, status.HTTP_200_OK)
         except:
             trace_error.print()
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    def update_item_product(self, request):
+        """
+        Used for "Jason L" only
+        """
+        LOG_ID = "[update_item_product]"
+
+        try:
+            logger.info(f"{LOG_ID} {request.data}")
+            line_id = request.data["line_id"]
+            product = request.data["product"]
+
+            client_products = Client_Products.objects.filter(
+                fk_id_dme_client_id=21, parent_model_number=product["e_item_type"]
+            )
+            client_product = client_products.first()
+            bok_2 = BOK_2_lines.objects.get(pk=line_id)
+            # bok_1 = BOK_1_headers.objects.get(pk_header_id=bok_2.fk_header_id)
+
+            with transaction.atomic():
+                if client_products:
+                    client_product.fk_id_dme_client_id = 21
+                    client_product.parent_model_number = product["e_item_type"]
+                    client_product.child_model_number = product["e_item_type"]
+                    client_product.description = product["e_item"]
+                    client_product.qty = 1
+                    client_product.e_dimUOM = product["e_dimUOM"]
+                    client_product.e_dimLength = product["e_dimLength"]
+                    client_product.e_dimWidth = product["e_dimWidth"]
+                    client_product.e_dimHeight = product["e_dimHeight"]
+                    client_product.e_weightUOM = product["e_weightUOM"]
+                    client_product.e_weightPerEach = product["e_weightPerEach"]
+                    client_product.is_ignored = product["is_ignored"]
+                    client_product.save()
+                else:
+                    client_product = Client_Products()
+                    client_product.fk_id_dme_client_id = 21
+                    client_product.parent_model_number = product["e_item_type"]
+                    client_product.child_model_number = product["e_item_type"]
+                    client_product.description = product["e_item"]
+                    client_product.qty = 1
+                    client_product.e_dimUOM = product["e_dimUOM"]
+                    client_product.e_dimLength = product["e_dimLength"]
+                    client_product.e_dimWidth = product["e_dimWidth"]
+                    client_product.e_dimHeight = product["e_dimHeight"]
+                    client_product.e_weightUOM = product["e_weightUOM"]
+                    client_product.e_weightPerEach = product["e_weightPerEach"]
+                    client_product.is_ignored = product["is_ignored"]
+                    client_product.save()
+
+                bok_2.l_003_item = (
+                    product["e_item"]
+                    if not product["is_ignored"]
+                    else f'{product["e_item"]} (Ignored)'
+                )
+                bok_2.l_004_dim_UOM = product["e_dimUOM"]
+                bok_2.l_005_dim_length = product["e_dimLength"]
+                bok_2.l_006_dim_width = product["e_dimWidth"]
+                bok_2.l_007_dim_height = product["e_dimHeight"]
+                bok_2.l_008_weight_UOM = product["e_weightUOM"]
+                bok_2.l_009_weight_per_each = product["e_weightPerEach"]
+                bok_2.save()
+
+            # Get quote again
+            jasonL_do_quote(bok_2.fk_header_id)
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} error: {str(e)}")
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
 

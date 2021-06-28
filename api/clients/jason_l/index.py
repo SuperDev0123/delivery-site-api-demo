@@ -424,6 +424,7 @@ def push_boks(payload, client, username, method):
     items = product_oper.get_product_items(bok_2s, client, is_web, False)
     new_bok_2s = []
     bok_2_objs = []
+    has_unknown_lines = False
 
     with transaction.atomic():
         for index, item in enumerate(items):
@@ -450,7 +451,10 @@ def push_boks(payload, client, username, method):
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
 
-                if not line["is_deleted"]:
+                if "(Ignored)" in line["l_003_item"]:
+                    has_unknown_lines = True
+
+                if not line["is_deleted"] and not "(Ignored)" in line["l_003_item"]:
                     bok_2_objs.append(bok_2_obj)
                     line["pk_lines_id"] = bok_2_obj.pk
                     new_bok_2s.append({"booking_line": line})
@@ -478,7 +482,7 @@ def push_boks(payload, client, username, method):
             )
             break
 
-    if carton_cnt > 2 or need_palletize:
+    if not has_unknown_lines and (carton_cnt > 2 or need_palletize):
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
         bok_2s = []
@@ -666,7 +670,7 @@ def push_boks(payload, client, username, method):
         # Send quote info back to Pronto
         # result = send_info_back(bok_1_obj, best_quote)
     else:
-        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
         logger.error(message)
 
         if bok_1["b_client_order_num"]:
@@ -1035,7 +1039,7 @@ def auto_repack(payload, client):
             fc_log.new_quote = best_quotes[0]
             fc_log.save()
     else:
-        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1.pk_header_id}"
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1.pk_header_id}\nOrder Number: {bok_1.b_client_order_num}"
         logger.error(message)
 
         if bok_1.b_client_order_num:

@@ -13,7 +13,7 @@ from api.clients.jason_l.constants import (
 from api.clients.jason_l.operations import get_address as jasonl_get_address
 
 logger = logging.getLogger(__name__)
-
+IS_TESTING = True
 
 # Constants
 PORT = "8443"
@@ -118,8 +118,13 @@ def get_product_group_code(ItemCode, token):
 def parse_order_xml(response, token):
     LOG_ID = "[PRONTO PARSE ORDER XML]"
 
-    xml_str = response.content.decode("utf-8")
-    # xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n<SalesOrderGetSalesOrdersResponse xmlns="http://www.pronto.net/so/1.0.0"><APIResponseStatus><Code>OK</Code></APIResponseStatus><SalesOrders><SalesOrder><Address1></Address1><Address2>690 Ann Street</Address2><Address3>Fortitude Valley</Address3><Address4>QLD</Address4><Address5></Address5><Address6></Address6><AddressName>Roman Shrestha</AddressName><AddressPostcode>4006</AddressPostcode><CustomerEmail>dark23shadow@gmail.com</CustomerEmail><DeliveryDate>2020-01-29</DeliveryDate><Packages>1</Packages><SOOrderNo>20176</SOOrderNo><SalesOrderLines><SalesOrderLine><ItemCode>HC028</ItemCode><OrderedQty>3.0000</OrderedQty></SalesOrderLine><SalesOrderLine><ItemCode>MY-M-06.LHS</ItemCode><OrderedQty>1.0000</OrderedQty></SalesOrderLine></SalesOrderLines><Warehouse>Botany</Warehouse></SalesOrder></SalesOrders></SalesOrderGetSalesOrdersResponse>\n'
+    # Test Usage #
+    if IS_TESTING:
+        xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n<SalesOrderGetSalesOrdersResponse xmlns="http://www.pronto.net/so/1.0.0"><APIResponseStatus><Code>OK</Code></APIResponseStatus><SalesOrders><SalesOrder><Address1>Level 9</Address1><Address2>16 O Connel St</Address2><Address3></Address3><Address4>Sydney</Address4><Address5>NSW</Address5><Address6></Address6><AddressName>2 Discover Recruitment Pty Ltd</AddressName><AddressPostcode>2000</AddressPostcode><CustomerEmail>jodyc@2discover.com.au</CustomerEmail><DeliveryDate>2021-06-22</DeliveryDate><Packages>35</Packages><SOOrderNo>1034326</SOOrderNo><SalesOrderLines><SalesOrderLine><ItemCode>8931</ItemCode><OrderedQty>2.0000</OrderedQty><ProductGroupCode></ProductGroupCode><SequenceNo>7.00</SequenceNo><TypeCode>SN</TypeCode><UOMCode>PAIR</UOMCode></SalesOrderLine><SalesOrderLine><ItemCode>8963</ItemCode><OrderedQty>8.0000</OrderedQty><ProductGroupCode></ProductGroupCode><SequenceNo>8.00</SequenceNo><TypeCode>SN</TypeCode><UOMCode>EACH</UOMCode></SalesOrderLine><SalesOrderLine><ItemCode>8934</ItemCode><OrderedQty>16.0000</OrderedQty><ProductGroupCode></ProductGroupCode><SequenceNo>9.00</SequenceNo><TypeCode>SN</TypeCode><UOMCode>EACH</UOMCode></SalesOrderLine><SalesOrderLine><ItemCode>HC124M</ItemCode><OrderedQty>8.0000</OrderedQty><ProductGroupCode></ProductGroupCode><SequenceNo>10.00</SequenceNo><TypeCode>SN</TypeCode><UOMCode>EACH</UOMCode></SalesOrderLine><SalesOrderLine><ItemCode>S068</ItemCode><OrderedQty>1.0000</OrderedQty><ProductGroupCode></ProductGroupCode><SequenceNo>11.00</SequenceNo><TypeCode>SN</TypeCode><UOMCode>EACH</UOMCode></SalesOrderLine><SalesOrderLine><ItemCode>AAA001</ItemCode><OrderedQty>5.0000</OrderedQty><ProductGroupCode></ProductGroupCode><SequenceNo>12.00</SequenceNo><TypeCode>SN</TypeCode><UOMCode>EACH</UOMCode></SalesOrderLine></SalesOrderLines><WarehouseCode>BOT</WarehouseCode></SalesOrder></SalesOrders></SalesOrderGetSalesOrdersResponse>\n'
+    else:
+        xml_str = response.content.decode("utf-8")
+    ##############
+
     root = ET.fromstring(xml_str)
     SalesOrders = root.find("{http://www.pronto.net/so/1.0.0}SalesOrders")
 
@@ -128,7 +133,21 @@ def parse_order_xml(response, token):
 
     SalesOrder = SalesOrders[0]
     order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
-    address = jasonl_get_address(order_num)  # get address by using `Talend` .sh script
+
+    # Test Usage #
+    if IS_TESTING:
+        address = {
+            "phone": "0490001222",
+            "email": "aaa@email.com",
+            "street_1": "690 Ann Street",
+            "suburb": "Fortitude Valley",
+            "state": "QLD",
+        }
+    else:
+        # get address by using `Talend` .sh script
+        address = jasonl_get_address(order_num)
+    ##############
+
     b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
     b_055 = address["street_1"]
     b_056 = ""  # Not provided
@@ -208,14 +227,14 @@ def parse_order_xml(response, token):
             ignored_items.append(ItemCode)
             message = f"@6410 {LOG_ID} IGNORED (LISTED ITEM) --- itemCode: {ItemCode}"
             logger.info(message)
-            continue
+            # continue
 
         ProductGroupCode = get_product_group_code(ItemCode, token)
         if not ProductGroupCode:
             ignored_items.append(ItemCode)
             message = f"@6410 {LOG_ID} IGNORED (MISSING ITEM) --- itemCode: {ItemCode}"
             logger.info(message)
-            continue
+            # continue
 
         line = {
             "model_number": ItemCode,
@@ -247,6 +266,12 @@ def get_order(order_num):
     # ---
 
     token = get_token()
+
+    # Test usage #
+    order, lines = parse_order_xml(None, token)
+    return order, lines
+    ##############
+
     url = f"{API_URL}/api/SalesOrderGetSalesOrders"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
