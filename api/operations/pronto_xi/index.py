@@ -21,8 +21,8 @@ def populate_bok(bok_1):
     # if order["b_client_order_num"] != bok_1["b_client_order_num"]:
     #     raise Exception({"success": False, "message": "Wrong Order is feched."})
 
-    for property in bok_1:
-        order[property] = bok_1[property]
+    for prop in bok_1:
+        order[prop] = bok_1[prop]
 
     logger.info(f"@629 {LOG_ID} Finished!\n result: {order}")
     return order, lines

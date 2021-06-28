@@ -7,6 +7,10 @@ from api.models import BOK_1_headers, BOK_2_lines, Log, DME_clients
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
 from api.fp_apis.operations.surcharge.index import get_surcharges_total
+from api.clients.jason_l.constants import (
+    ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
+)
+from api.clients.jason_l.operations import get_address as jasonl_get_address
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +116,8 @@ def get_product_group_code(ItemCode, token):
 
 
 def parse_order_xml(response, token):
+    LOG_ID = "[PRONTO PARSE ORDER XML]"
+
     xml_str = response.content.decode("utf-8")
     # xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n<SalesOrderGetSalesOrdersResponse xmlns="http://www.pronto.net/so/1.0.0"><APIResponseStatus><Code>OK</Code></APIResponseStatus><SalesOrders><SalesOrder><Address1></Address1><Address2>690 Ann Street</Address2><Address3>Fortitude Valley</Address3><Address4>QLD</Address4><Address5></Address5><Address6></Address6><AddressName>Roman Shrestha</AddressName><AddressPostcode>4006</AddressPostcode><CustomerEmail>dark23shadow@gmail.com</CustomerEmail><DeliveryDate>2020-01-29</DeliveryDate><Packages>1</Packages><SOOrderNo>20176</SOOrderNo><SalesOrderLines><SalesOrderLine><ItemCode>HC028</ItemCode><OrderedQty>3.0000</OrderedQty></SalesOrderLine><SalesOrderLine><ItemCode>MY-M-06.LHS</ItemCode><OrderedQty>1.0000</OrderedQty></SalesOrderLine></SalesOrderLines><Warehouse>Botany</Warehouse></SalesOrder></SalesOrders></SalesOrderGetSalesOrdersResponse>\n'
     root = ET.fromstring(xml_str)
@@ -122,17 +128,18 @@ def parse_order_xml(response, token):
 
     SalesOrder = SalesOrders[0]
     order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
+    address = jasonl_get_address(order_num)  # get address by using `Talend` .sh script
     b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
-    b_055 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address2").text
-    b_056 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address3").text
+    b_055 = address["street_1"]
+    b_056 = ""  # Not provided
     b_057 = ""  # SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text
     b_058 = ""  # Not provided
     b_059 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressPostcode").text
     b_060 = "Australia"
     b_061 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressName").text
-    b_063 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}CustomerEmail").text
-    b_064 = "094857273"  # Not provided
-    b_066 = "Email"  # Not provided
+    b_063 = address["email"]
+    b_064 = address["phone"]
+    b_066 = "phone"  # Not provided
     b_067 = 0  # Not provided
     b_068 = "Drop at Door / Warehouse Dock"  # Not provided
     b_069 = 1  # Not provided
@@ -148,6 +155,12 @@ def parse_order_xml(response, token):
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "
     )
     addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address2").text or " "
+    )
+    addresses.append(
+        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address3").text or " "
+    )
+    addresses.append(
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text or " "
     )
     addresses.append(
@@ -156,6 +169,8 @@ def parse_order_xml(response, token):
     addresses.append(
         SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
     )
+    addresses.append(address["suburb"])
+    addresses.append(address["state"])
     b_058 = "||".join(addresses)[:40].lower()
 
     order = {
@@ -181,22 +196,38 @@ def parse_order_xml(response, token):
 
     lines = []
     SalesOrderLines = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SalesOrderLines")
+    ignored_items = []
 
     for SalesOrderLine in SalesOrderLines:
-        ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode")
+        ItemCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}ItemCode").text
         OrderedQty = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}OrderedQty")
         SequenceNo = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}SequenceNo")
         UOMCode = SalesOrderLine.find("{http://www.pronto.net/so/1.0.0}UOMCode")
-        ProductGroupCode = get_product_group_code(ItemCode.text, token)
+
+        if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
+            ignored_items.append(ItemCode)
+            message = f"@6410 {LOG_ID} IGNORED (LISTED ITEM) --- itemCode: {ItemCode}"
+            logger.info(message)
+            continue
+
+        ProductGroupCode = get_product_group_code(ItemCode, token)
+        if not ProductGroupCode:
+            ignored_items.append(ItemCode)
+            message = f"@6410 {LOG_ID} IGNORED (MISSING ITEM) --- itemCode: {ItemCode}"
+            logger.info(message)
+            continue
 
         line = {
-            "model_number": ItemCode.text,
+            "model_number": ItemCode,
             "qty": int(float(OrderedQty.text)),
             "sequence": int(float(SequenceNo.text)),
             "UOMCode": UOMCode.text,
             "ProductGroupCode": ProductGroupCode,
         }
         lines.append(line)
+
+    if ignored_items:
+        order["b_010_b_notes"] = ", ".join(ignored_items)
 
     return order, lines
 

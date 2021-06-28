@@ -1,3 +1,13 @@
+ITEM_CODES_TO_BE_IGNORED = [
+    "ZROUND",
+    "ZROUNDDISC",
+    "ZSHORTSHIP",
+    "ZDISCOUNT",
+    "NOTE",
+    "MEMO",
+    "CHARGES",
+]
+
 NEED_PALLET_GROUP_CODES = [
     "2101",
     "2102",
