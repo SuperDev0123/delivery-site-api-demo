@@ -227,7 +227,7 @@ def parse_order_xml(response, token):
             ignored_items.append(ItemCode)
             message = f"@6410 {LOG_ID} IGNORED (LISTED ITEM) --- itemCode: {ItemCode}"
             logger.info(message)
-            # continue
+            continue
 
         ProductGroupCode = get_product_group_code(ItemCode, token)
         if not ProductGroupCode:
