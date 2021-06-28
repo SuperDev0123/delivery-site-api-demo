@@ -13,7 +13,7 @@ from api.clients.jason_l.constants import (
 from api.clients.jason_l.operations import get_address as jasonl_get_address
 
 logger = logging.getLogger(__name__)
-IS_TESTING = True
+IS_TESTING = False
 
 # Constants
 PORT = "8443"
