@@ -424,7 +424,6 @@ def push_boks(payload, client, username, method):
     items = product_oper.get_product_items(bok_2s, client, is_web, False)
     new_bok_2s = []
     bok_2_objs = []
-    has_unknown_lines = False
 
     with transaction.atomic():
         for index, item in enumerate(items):
@@ -450,9 +449,6 @@ def push_boks(payload, client, username, method):
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
-
-                if "(Ignored)" in line["l_003_item"]:
-                    has_unknown_lines = True
 
                 if not line["is_deleted"] and not "(Ignored)" in line["l_003_item"]:
                     bok_2_objs.append(bok_2_obj)
@@ -482,7 +478,7 @@ def push_boks(payload, client, username, method):
             )
             break
 
-    if not has_unknown_lines and (carton_cnt > 2 or need_palletize):
+    if carton_cnt > 2 or need_palletize:
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
         bok_2s = []
@@ -740,7 +736,9 @@ def auto_repack(payload, client):
         .filter(client_booking_id=client_booking_id)
         .first()
     )
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
+        l_003_item__icontains="(ignored)"
+    )
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
     if repack_status:  # repack
