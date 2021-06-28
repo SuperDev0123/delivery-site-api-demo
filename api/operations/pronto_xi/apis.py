@@ -268,8 +268,9 @@ def get_order(order_num):
     token = get_token()
 
     # Test usage #
-    order, lines = parse_order_xml(None, token)
-    return order, lines
+    if IS_TESTING:
+        order, lines = parse_order_xml(None, token)
+        return order, lines
     ##############
 
     url = f"{API_URL}/api/SalesOrderGetSalesOrders"
