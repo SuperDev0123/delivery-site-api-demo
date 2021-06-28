@@ -133,11 +133,29 @@ def get_picked_items(order_num, sscc):
     used to build LABEL
     """
     LOG_ID = "[SSCC CSV READER]"
-    logger.info(f"@300 {LOG_ID} Order: {order_num}")
+
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+
+    message = f"@300 {LOG_ID} OrderNum: {_order_num}, Suffix: {suffix}"
+    logger.info(message)
+    # ---
 
     if settings.ENV != "local":  # Only on DEV or PROD
         logger.info(f"@301 {LOG_ID} Running .sh script...")
-        subprocess.run(["/home/ubuntu/jason_l/sscc/src/run.sh"])
+        subprocess.run(
+            [
+                "/home/ubuntu/jason_l/sscc/src/run.sh",
+                "--context_param",
+                f"param1={_order_num}",
+                "--context_param",
+                f"param2={suffix}",
+            ]
+        )
         logger.info(f"@302 {LOG_ID} Finish running .sh")
 
     if settings.ENV == "local":
