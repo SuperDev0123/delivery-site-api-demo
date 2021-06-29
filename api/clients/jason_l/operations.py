@@ -91,7 +91,7 @@ def get_address(order_num):
         address["company_name"] = (
             line_items[5] if line_items[5] else address["company_name"]
         )
-        address["street_1"] = line_items[6] if line_items[6] else address["street_1"]
+        address["street_1"] = line_items[7] if line_items[7] else address["street_1"]
         address["suburb"] = line_items[10] if line_items[10] else address["suburb"]
         address["state"] = line_items[11] if line_items[11] else address["state"]
         address["postal_code"] = (
@@ -101,7 +101,7 @@ def get_address(order_num):
 
         if type == "SO" and na_type == "DA":  # `Delivery Address` row
             DA_company_name = line_items[5]
-            DA_street_1 = line_items[6]
+            DA_street_1 = line_items[7]
             DA_suburb = line_items[10]
             DA_state = line_items[11]
             DA_postal_code = line_items[12]
