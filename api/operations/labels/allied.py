@@ -589,20 +589,35 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
 
-            tbl_data1 = [
-                [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            booking.de_to_Contact_F_LName or "",
-                            booking.de_To_Address_Street_1 or "",
-                            booking.de_To_Address_Street_2 or "",
+            if booking.de_to_Contact_F_LName != booking.deToCompanyName
+                tbl_data1 = [
+                    [
+                        Paragraph(
+                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
+                            % (
+                                label_settings["line_height_extra_large"],
+                                booking.de_to_Contact_F_LName or "",
+                                booking.de_To_Address_Street_1 or "",
+                                booking.de_To_Address_Street_2 or "",
+                            ),
+                            style_left,
                         ),
-                        style_left,
-                    ),
+                    ]
                 ]
-            ]
+            else:
+                tbl_data1 = [
+                    [
+                        Paragraph(
+                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
+                            % (
+                                label_settings["line_height_extra_large"],
+                                booking.de_To_Address_Street_1 or "",
+                                booking.de_To_Address_Street_2 or "",
+                            ),
+                            style_left,
+                        ),
+                    ]
+                ]
 
             shell_table = Table(
                 tbl_data1,
