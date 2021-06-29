@@ -490,7 +490,13 @@ def push_boks(payload, client, username, method):
         logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
 
         # Create one PAL bok_2
-        for palletized_item in palletized:
+        for item in non_palletized:  # Non Palletized
+            for new_bok_2 in new_bok_2s:
+                if new_bok_2 == item["line_obj"]:
+                    new_bok_2.l_002_qty = item["quantity"]
+                    bok_2.append(new_bok_2)
+
+        for palletized_item in palletized:  # Palletized
             pallet = pallets[palletized_item["pallet_index"]]
 
             total_weight = 0
@@ -752,14 +758,20 @@ def auto_repack(payload, client):
         )
 
         # Get Pallet
-        if pallet_id == -1:
+        if pallet_id == -1:  # Use DME AI for Palletizing
             # Select suitable pallet and get required pallets count
             pallets = Pallet.objects.all()
             palletized, non_palletized = get_palletized_by_ai(bok_2s, pallets)
             logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
 
             # Create one PAL bok_2
-            for palletized_item in palletized:
+            for item in non_palletized:  # Non-Palletized
+                for bok_2 in bok_2s:
+                    if bok_2 == item["line_obj"]:
+                        bok_2.l_002_qty = item["quantity"]
+                        new_bok_2s.append(bok_2)
+
+            for palletized_item in palletized:  # Palletized
                 pallet = pallets[palletized_item["pallet_index"]]
 
                 total_weight = 0
@@ -837,7 +849,7 @@ def auto_repack(payload, client):
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8135 {LOG_ID} {message}")
                     raise Exception(message)
-        else:
+        else:  # Select a Pallet
             pallet = Pallet.objects.get(pk=pallet_id)
             number_of_pallets, unpalletized_line_pks = get_number_of_pallets(
                 bok_2s, pallet
@@ -853,6 +865,11 @@ def auto_repack(payload, client):
                 total_weight += bok_2.l_009_weight_per_each * bok_2.l_002_qty
 
             # Create new *1* Pallet Bok_2
+            for line_pk in unpalletized_line_pks:  # Non-Palletized
+                for bok_2 in bok_2s:
+                    if bok_2.pk == line_pk:
+                        new_bok_2s.append(bok_2)
+
             if number_of_pallets:
                 line = {}
                 line["fk_header_id"] = bok_1.pk_header_id
