@@ -1279,7 +1279,7 @@ def scanned(payload, client):
             set_booking_quote(booking, None)
 
     # Build label with SSCC - one sscc should have one page label
-    for sscc in sscc_list:
+    for index, sscc in enumerate(sscc_list):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -1289,9 +1289,10 @@ def scanned(payload, client):
             booking=booking,
             file_path=file_path,
             lines=sscc_lines[sscc],
-            label_index=0,
+            label_index=index,
             sscc=sscc,
             one_page_label=True,
+            sscc_cnt=len(sscc_list),
         )
 
         # Convert label into ZPL format
