@@ -1312,9 +1312,13 @@ def scanned(payload, client):
     message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     logger.info(message)
 
-    res_json = {
-        "labelUrl": f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
-    }
+    booking.z_label_url = (
+        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+    )
+    booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+    booking.save()
+
+    res_json = {"labelUrl": booking.z_label_url}
     return res_json
 
 
