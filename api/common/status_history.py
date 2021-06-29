@@ -25,7 +25,7 @@ def create(booking, status, username, event_timestamp=None):
         last_status_history = None
 
     if not last_status_history or (
-        last_status_history and last_status_history.status_last != status
+        last_status_history and status and last_status_history.status_last != status
     ):
         dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
         notes = f"{str(booking.b_status)} ---> {str(status)}"

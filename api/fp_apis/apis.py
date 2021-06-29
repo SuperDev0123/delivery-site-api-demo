@@ -67,7 +67,7 @@ def tracking(request, fp_name):
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         # disabled on 2021-06-24
-        logger.info(f"### Response ({fp_name} tracking): {s0}")
+        # logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
