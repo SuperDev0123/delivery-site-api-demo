@@ -3,6 +3,7 @@ import logging
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.models import Booking_lines
+from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +68,25 @@ def get_palletized_by_ai(bok_2s, pallets):
     available_percent = 80
 
     # prepare pallets data
-    pallets_data = []
-    for pallet in pallets:
+    pallets_data, max_pallet_cubic, biggest_pallet = [], 0, 0
+    for index, pallet in enumerate(pallets):
         length = max(pallet.length, pallet.width) / 1000
         width = min(pallet.length, pallet.width) / 1000
         height = pallet.height / 1000
         total_cubic = length * width * height
         available_cubic = total_cubic * available_percent / 100
+
+        if available_cubic > max_pallet_cubic:
+            max_pallet_cubic = available_cubic
+            biggest_pallet = {
+                "index": index,
+                "pallet_obj": pallet,
+                "length": length,
+                "width": width,
+                "height": height,
+                "total_cubic": total_cubic,
+                "available_cubic": available_cubic,
+            }
         pallets_data.append(
             {
                 "length": length,
@@ -85,14 +98,17 @@ def get_palletized_by_ai(bok_2s, pallets):
         )
 
     # prepare lines data
-    lines_data = []
-    for item in bok_2s:
+    lines_data, small_line_indexes = [], []
+    for index, item in enumerate(bok_2s):
         line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
         line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
         length = max(line_length, line_width)
         width = min(line_length, line_width)
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
         cubic = length * width * height
+
+        if length < 0.5 and width < 0.5 and height < 0.5:
+            small_line_indexes.append(index)
 
         available_pallets, min_pallet_cubic, smallest_pallet = [], None, None
         for index, pallet in enumerate(pallets_data):
@@ -108,20 +124,21 @@ def get_palletized_by_ai(bok_2s, pallets):
 
         lines_data.append(
             {
+                "index": index,
                 "line_obj": item,
                 "length": length,
                 "width": width,
                 "height": height,
                 "quantity": item.l_002_qty,
                 "cubic": cubic,
+                "group_code": item.zbl_102_text_2,
                 "available_pallets": available_pallets,
                 "smallest_pallet": smallest_pallet,
-                "pallet_objs": pallets,
             }
         )
 
     # sort lines data in descending order of greater of length and width
-    sorted(lines_data, key=lambda k: k["length"], reverse=True)
+    lines_data.sort(key=lambda k: k["length"], reverse=True)
 
     palletized, non_palletized = [], []
     for index, line in enumerate(lines_data):
@@ -129,14 +146,51 @@ def get_palletized_by_ai(bok_2s, pallets):
             continue
 
         # check if there is suitable pallet
-        if not line["smallest_pallet"]:
-            non_palletized.append(
-                {
-                    "line_index": index,
-                    "line_obj": line["line_obj"],
-                    "quantity": line["quantity"],
-                }
-            )
+        if line["smallest_pallet"] is None:
+            if  line["group_code"] not in NEED_PALLET_GROUP_CODES:
+                non_palletized.append(
+                    {
+                        "line_index": line['index'],
+                        "line_obj": line["line_obj"],
+                        "quantity": line["quantity"],
+                    }
+                )
+            else:
+                pallet_count = math.floor(line["cubic"] * line["quantity"] / biggest_pallet["available_cubic"])
+                remaining_space = biggest_pallet["available_cubic"] * (pallet_count + 1) - (line["cubic"] * line["quantity"])
+                
+                palletized.append(
+                    {
+                        "pallet_index": biggest_pallet["index"],
+                        "pallet_obj": biggest_pallet["pallet_obj"],
+                        "total_space": biggest_pallet["total_cubic"],
+                        "remaining_space": 0,
+                        "quantity": pallet_count,
+                        "lines": [
+                            {
+                                "line_index": line['index'],
+                                "line_obj": line["line_obj"],
+                                "quantity": line["quantity"],
+                            }
+                        ],
+                    }
+                )
+                palletized.append(
+                    {
+                        "pallet_index": biggest_pallet["index"],
+                        "pallet_obj": biggest_pallet["pallet_obj"],
+                        "total_space": biggest_pallet["total_cubic"],
+                        "remaining_space": remaining_space,
+                        "quantity": 1,
+                        "lines": [
+                            {
+                                "line_index": line['index'],
+                                "line_obj": line["line_obj"],
+                                "quantity": 0,
+                            }
+                        ],
+                    }
+                )
         else:
             for pallet_item in palletized:
                 # check if items can be packed in previously packed pallets
@@ -152,7 +206,7 @@ def get_palletized_by_ai(bok_2s, pallets):
                     pallet_item["remaining_space"] -= packable_count * line["cubic"]
                     pallet_item["lines"].append(
                         {
-                            "line_index": index,
+                            "line_index": line['index'],
                             "line_obj": line["line_obj"],
                             "quantity": packable_count,
                         }
@@ -186,10 +240,12 @@ def get_palletized_by_ai(bok_2s, pallets):
                             {
                                 "pallet_index": line["smallest_pallet"],
                                 "pallet_obj": pallets[line["smallest_pallet"]],
+                                "total_space": pallets_data[line["smallest_pallet"]]["total_cubic"],
                                 "remaining_space": 0,
+                                "quantity": 1,
                                 "lines": [
                                     {
-                                        "line_index": index,
+                                        "line_index": line['index'],
                                         "line_obj": line["line_obj"],
                                         "quantity": packable_count,
                                     }
@@ -201,13 +257,15 @@ def get_palletized_by_ai(bok_2s, pallets):
                             {
                                 "pallet_index": line["smallest_pallet"],
                                 "pallet_obj": pallets[line["smallest_pallet"]],
+                                "total_space": pallets_data[line["smallest_pallet"]]["total_cubic"],
                                 "remaining_space": pallets_data[
                                     line["smallest_pallet"]
                                 ]["available_cubic"]
                                 - needed_space,
+                                "quantity": 1, 
                                 "lines": [
                                     {
-                                        "line_index": index,
+                                        "line_index": line['index'],
                                         "line_obj": line["line_obj"],
                                         "quantity": packable_count,
                                     }
@@ -241,7 +299,17 @@ def get_palletized_by_ai(bok_2s, pallets):
                 for line_index, line in enumerate(sorted_item["lines"]):
                     line["quantity"] += item["lines"][line_index]["quantity"]
         if not same_pallet_exists:
-            item["quantity"] = 1
             reformatted_palletized.append(item)
 
-    return reformatted_palletized, non_palletized
+    final_palletized = []
+    for item in reformatted_palletized:
+        is_all_small = True
+        for line in item['lines']:
+            if line['line_index'] not in small_line_indexes:
+                is_all_small = False
+        if is_all_small and item["remaining_space"] / item["total_space"] > 0.5:
+            non_palletized.extend(item["lines"])
+        else:
+            final_palletized.append(item)
+
+    return final_palletized, non_palletized
