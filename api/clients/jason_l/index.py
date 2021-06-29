@@ -1291,8 +1291,8 @@ def scanned(payload, client):
             lines=sscc_lines[sscc],
             label_index=index,
             sscc=sscc,
-            one_page_label=True,
             sscc_cnt=len(sscc_list),
+            one_page_label=True,
         )
 
         # Convert label into ZPL format
