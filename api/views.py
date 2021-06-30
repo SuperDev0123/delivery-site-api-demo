@@ -1158,7 +1158,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "Cancelled",
                 ]:
                     # Jason L
-                    if client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+                    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
                         if not booking.b_dateBookedDate:
                             to_manifest += 1
                     else:
