@@ -35,7 +35,7 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
-from api.fp_apis.utils import get_status_category_from_status
+from api.fp_apis.utils import get_status_category_from_status, get_status_time_from_category
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
@@ -787,7 +787,8 @@ def get_delivery_status(request):
             context = {"client_customer_mark_up": client.client_customer_mark_up}
             quote_data = SimpleQuoteSerializer(quote, context=context).data
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
-
+        
+        last_milestone = "Delivered"
         if category == "Booked":
             step = 2
         elif category == "Transit":
@@ -796,11 +797,30 @@ def get_delivery_status(request):
             step = 4
         elif category == "Complete":
             step = 5
-        elif category == "Hold":
-            step = 6
+        elif category == "Futile":
+            step = 5
+            last_milestone = "Futile"
+        elif category == "Returned":
+            step = 5
+            last_milestone = "Returned"
         else:
             step = 1
             b_status = "Processing"
+
+        steps = [
+            'Processing',
+            'Booked',
+            'Transit',
+            'On Board for Delivery',
+            last_milestone
+        ]
+
+        timestamps = []
+        for index, item in enumerate(steps):
+            if index == 1 or index >= step:
+                timestamps.append('')
+            else:
+                timestamps.append(get_status_time_from_category(booking.pk_booking_id, item))
 
         if step == 1:
             eta = (booking.puPickUpAvailFrom_Date + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if json_quote and booking.puPickUpAvailFrom_Date else ''
@@ -815,7 +835,9 @@ def get_delivery_status(request):
                 "quote": json_quote,
                 "booking": booking_dict,
                 "lines": lines,
-                "eta_date": eta
+                "eta_date": eta,
+                "last_milestone": last_milestone,
+                "timestamps": timestamps
             }
         )
 
@@ -899,6 +921,8 @@ def get_delivery_status(request):
             "last_updated": last_updated,
             "quote": json_quote, 
             "booking": booking_dict,
-            "eta_date": eta
+            "eta_date": eta,
+            "last_milestone": "Delivered",
+            "timestamps": ['', '', '', '', '']
         }
     )
