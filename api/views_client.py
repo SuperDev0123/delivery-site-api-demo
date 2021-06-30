@@ -5,7 +5,7 @@ import json
 import logging
 import requests
 import zipfile
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from base64 import b64decode, b64encode
 
 from django.conf import settings
@@ -740,7 +740,11 @@ def get_delivery_status(request):
         else:
             last_updated = ''
 
-        booking = {
+        lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
+
+        booking_dict = {
             "uid": booking.pk,
             "b_bookingID_Visual": booking.b_bookingID_Visual,
             "b_client_order_num": booking.b_client_order_num,
@@ -767,6 +771,16 @@ def get_delivery_status(request):
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
             "b_000_3_consignment_number": booking.v_FPBookingNumber
         }
+
+        def line_to_dict(line):
+            return {
+                'e_item_type': line.e_item_type,
+                'l_003_item': line.e_item,
+                'l_002_qty': line.e_qty
+            }
+
+        lines = map(line_to_dict, lines)
+
         json_quote = None
 
         if quote:
@@ -778,13 +792,20 @@ def get_delivery_status(request):
             step = 2
         elif category == "Transit":
             step = 3
-        elif category == "Complete":
+        elif category == "On Board for Delivery":
             step = 4
-        elif category == "Hold":
+        elif category == "Complete":
             step = 5
+        elif category == "Hold":
+            step = 6
         else:
             step = 1
             b_status = "Processing"
+
+        if step == 1:
+            eta = (booking.puPickUpAvailFrom_Date + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if json_quote and booking.puPickUpAvailFrom_Date else ''
+        else: 
+            eta = (booking.b_dateBookedDate + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if json_quote and booking.b_dateBookedDate else ''
 
         return Response(
             {
@@ -792,7 +813,9 @@ def get_delivery_status(request):
                 "status": b_status,
                 "last_updated": last_updated,
                 "quote": json_quote,
-                "booking": booking,
+                "booking": booking_dict,
+                "lines": lines,
+                "eta_date": eta
             }
         )
 
@@ -810,6 +833,11 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    
+    lines = BOK_2_lines.objects.filter(
+        fk_header_id=bok_1.pk_header_id, is_deleted=False
+    )
+
     status_history = Dme_status_history.objects.filter(fk_booking_id=bok_1.pk_header_id).order_by("-z_createdTimeStamp")
 
     if status_history:
@@ -818,7 +846,7 @@ def get_delivery_status(request):
         last_updated = ''
 
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
-    booking = {
+    booking_dict = {
         "b_bookingID_Visual": None,
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
@@ -844,13 +872,24 @@ def get_delivery_status(request):
         "b_064_b_del_phone_main": bok_1.b_064_b_del_phone_main,
         "b_000_3_consignment_number": bok_1.b_000_3_consignment_number
     }
+
+    def line_to_dict(line):
+        return {
+            'e_item_type': line.e_item_type,
+            'l_003_item': line.e_item,
+            'l_002_qty': line.e_qty
+        }
+
+    lines = map(line_to_dict, lines)
+
     quote = bok_1.quote
-    json_quote = None
+    json_quote, eta = None, None
 
     if quote:
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
+        eta = (booking.b_021_b_pu_avail_from_date + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if  json_quote and booking.b_021_b_pu_avail_from_date else ''
 
     status = "Processing"
     return Response(
@@ -859,6 +898,7 @@ def get_delivery_status(request):
             "status": status,
             "last_updated": last_updated,
             "quote": json_quote, 
-            "booking": booking
+            "booking": booking_dict,
+            "eta_date": eta
         }
     )
