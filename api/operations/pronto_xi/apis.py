@@ -12,7 +12,7 @@ from api.clients.jason_l.constants import (
 )
 
 logger = logging.getLogger(__name__)
-IS_TESTING = True
+IS_TESTING = False
 
 # Constants
 PORT = "8443"
