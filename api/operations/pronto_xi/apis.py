@@ -10,6 +10,7 @@ from api.fp_apis.operations.surcharge.index import get_surcharges_total
 from api.clients.jason_l.constants import (
     ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
 )
+from api.clients.jason_l.operations import get_address as jasonl_get_address
 
 logger = logging.getLogger(__name__)
 IS_TESTING = False
