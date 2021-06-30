@@ -44,17 +44,17 @@ def _extract_address(addrs):
             postal_code = _addr
 
     if not postal_code:
-        error_msg = "Postal code is missing"
+        error_msg = "Missing Postal Code"
         return error_msg, state, postal_code, suburb
 
     _state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
     if not state or not suburb:
-        error_msg = "State and Suburb is not matching"
+        error_msg = "State and Suburb mismatch"
         return error_msg, state, postal_code, suburb
 
     if _state != state:
-        error_msg = "State and Postal code not matching"
+        error_msg = "State and Postal code mismatch"
         return error_msg, state, postal_code, suburb
 
     return None, state, postal_code, suburb
