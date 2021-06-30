@@ -115,7 +115,7 @@ def get_address(order_num):
     DA_suburb = None
     DA_state = None
     DA_postal_code = None
-    error_msg = None
+    error = None
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -143,7 +143,7 @@ def get_address(order_num):
         if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
-    address["error_msg"] = error_msg
+    address["error"] = error_msg
     address["company_name"] = DA_company_name
     address["street_1"] = DA_street_1
     address["suburb"] = DA_suburb
