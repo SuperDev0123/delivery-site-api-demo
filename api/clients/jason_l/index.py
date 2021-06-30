@@ -199,7 +199,7 @@ def push_boks(payload, client, username, method):
             }
         }
     """
-    LOG_ID = "[PB Jason L]"  # PB - PUSH BOKS
+    LOG_ID = "[PUSH Jason L]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
     bok_2s = []
     client_name = None
@@ -406,12 +406,6 @@ def push_boks(payload, client, username, method):
     if not bok_1.get("b_054_b_del_company"):
         bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
-    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
-    de_state, de_suburb = get_suburb_state(
-        de_postal_code, bok_1["b_058_b_del_address_suburb"]
-    )
-    bok_1["b_057_b_del_address_state"] = de_state.upper()
-    bok_1["b_058_b_del_address_suburb"] = de_suburb
     bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
 
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
@@ -444,7 +438,9 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = item["e_weightUOM"].upper()
             line["e_item_type"] = item["e_item_type"]
             line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
-            line["zbl_102_text_2"] = item["zbl_102_text_2"]
+            line["zbl_102_text_2"] = (
+                item["zbl_102_text_2"] if item["zbl_102_text_2"] else "_"
+            )
             line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
 
             bok_2_serializer = BOK_2_Serializer(data=line)
@@ -577,6 +573,17 @@ def push_boks(payload, client, username, method):
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+
+    # Do not get pricing when there is issue
+    if bok_1.get("zb_105_text_5"):
+        logger.info(
+            f"#515 {LOG_ID} Skip Pricing due to address issue: {bok_1.get('zb_105_text_5')}"
+        )
+
+        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+        result = {"success": True, "pricePageUrl": url}
+        logger.info(f"@8837 {LOG_ID} success: True, 201_created --- SKIP QUOTE!")
+        return result
 
     # Get Pricings
     booking = {

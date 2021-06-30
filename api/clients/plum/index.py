@@ -229,7 +229,7 @@ def push_boks(payload, client, username, method):
         ]
     }
     """
-    LOG_ID = "[PB Plum]"  # PB - PUSH BOKS
+    LOG_ID = "[PUSH Plum]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
     bok_1["pk_header_id"] = str(uuid.uuid4())
     bok_2s = payload["booking_lines"]

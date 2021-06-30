@@ -129,6 +129,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
     for result in results:
         if (
             result["zbl_102_text_2"]
+            and not "(Ignored)" in result["zbl_102_text_2"]
             and result["e_dimLength"] == 1
             and result["e_dimWidth"] == 1
             and result["e_dimHeight"] == 1

@@ -2748,6 +2748,7 @@ class BOK_1_headers(models.Model):
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_103_text_3 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_104_text_4 = models.CharField(max_length=64, blank=True, null=True, default=None)
+    # b_errorCapture
     zb_105_text_5 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_121_integer_1 = models.IntegerField(blank=True, default=0, null=True)
     zb_122_integer_2 = models.IntegerField(blank=True, default=0, null=True)
