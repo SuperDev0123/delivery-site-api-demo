@@ -1195,9 +1195,13 @@ class BookingsViewSet(viewsets.ViewSet):
                     client_employee_role == "company"
                     and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
                 ):
-                    queryset = queryset.filter(
-                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                    ).filter(b_dateBookedDate__isnull=True)
+                    queryset = (
+                        queryset.filter(
+                            Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                        )
+                        .filter(b_dateBookedDate__isnull=True)
+                        .exclude(b_status__in=["Cancelled", "Closed"])
+                    )
                 else:
                     queryset = (
                         queryset.filter(b_status__iexact="Booked")
