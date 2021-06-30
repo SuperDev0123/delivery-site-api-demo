@@ -1196,7 +1196,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 ):
                     queryset = queryset.filter(
                         Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                    )
+                    ).filter(b_dateBookedDate__isnull=True)
                 else:
                     queryset = (
                         queryset.filter(b_status__iexact="Booked")
