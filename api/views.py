@@ -4295,30 +4295,36 @@ class FileUploadView(views.APIView):
         file = request.FILES["file"]
         upload_option = request.POST.get("uploadOption", None)
         client_id = request.POST.get("clientId", None)
+        result = None
 
         if upload_option == "import":
             uploader = request.POST["uploader"]
             file_name = upload_lib.upload_import_file(user_id, file, uploader)
+            result = file_name
         elif upload_option in ["pod", "label", "attachment"]:
             booking_id = request.POST.get("bookingId", None)
             file_name = upload_lib.upload_attachment_file(
                 user_id, file, booking_id, upload_option
             )
+            result = file_name
         elif upload_option == "pricing-only":
             file_name = upload_lib.upload_pricing_only_file(
                 user_id, username, file, upload_option
             )
+            result = file_name
         elif upload_option == "pricing-rule":
             rule_type = request.POST.get("ruleType", None)
             file_name = upload_lib.upload_pricing_rule_file(
                 user_id, username, file, upload_option, rule_type
             )
+            result = file_name
         elif upload_option == "client-products":
             import_results = upload_lib.upload_client_products_file(
                 user_id, username, client_id, file
             )
+            result = import_results
 
-        return Response(import_results)
+        return Response(result)
 
 
 @permission_classes((IsAuthenticated,))

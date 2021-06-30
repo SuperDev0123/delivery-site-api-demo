@@ -90,7 +90,9 @@ def gen_barcode(booking, item_no=0):
     return f"DME{visual_id}{item_index}"
 
 
-def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -217,6 +219,10 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             booking_line.e_dimHeight,
             booking_line.e_dimUOM,
         )
+
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
@@ -510,9 +516,9 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             j,
+                            booking_line.e_dimLength or "",
                             booking_line.e_dimWidth or "",
                             booking_line.e_dimHeight or "",
-                            booking_line.e_dimLength or "",
                             round(
                                 get_cubic_meter(
                                     booking_line.e_dimLength,
@@ -583,20 +589,35 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
 
-            tbl_data1 = [
-                [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            booking.de_to_Contact_F_LName or "",
-                            booking.de_To_Address_Street_1 or "",
-                            booking.de_To_Address_Street_2 or "",
+            if booking.de_to_Contact_F_LName != booking.deToCompanyName:
+                tbl_data1 = [
+                    [
+                        Paragraph(
+                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
+                            % (
+                                label_settings["line_height_extra_large"],
+                                booking.de_to_Contact_F_LName or "",
+                                booking.de_To_Address_Street_1 or "",
+                                booking.de_To_Address_Street_2 or "",
+                            ),
+                            style_left,
                         ),
-                        style_left,
-                    ),
+                    ]
                 ]
-            ]
+            else:
+                tbl_data1 = [
+                    [
+                        Paragraph(
+                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
+                            % (
+                                label_settings["line_height_extra_large"],
+                                booking.de_To_Address_Street_1 or "",
+                                booking.de_To_Address_Street_2 or "",
+                            ),
+                            style_left,
+                        ),
+                    ]
+                ]
 
             shell_table = Table(
                 tbl_data1,

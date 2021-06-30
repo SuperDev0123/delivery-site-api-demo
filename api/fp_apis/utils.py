@@ -51,11 +51,19 @@ def gen_consignment_num(fp_name, booking_visual_id):
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
     try:
-        status_info = Dme_utl_fp_statuses.objects.get(
-            fp_name__iexact=fp_name, fp_lookup_status=b_status_API
-        )
+        if fp_name.lower() == "allied":
+            status_info = None
+            rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)
+
+            for rule in rules:
+                if rule.fp_lookup_status in b_status_API:
+                    status_info = rule
+        else:
+            status_info = Dme_utl_fp_statuses.objects.get(
+                fp_name__iexact=fp_name, fp_lookup_status=b_status_API
+            )
         return status_info.dme_status
-    except Dme_utl_fp_statuses.DoesNotExist:
+    except:
         message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
         logger.error(message)
         send_email_to_admins("New FP status", message)

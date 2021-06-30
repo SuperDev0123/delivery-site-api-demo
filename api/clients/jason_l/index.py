@@ -7,6 +7,7 @@ from base64 import b64encode
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 
 from api.models import (
@@ -450,7 +451,7 @@ def push_boks(payload, client, username, method):
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
 
-                if not line["is_deleted"]:
+                if not line["is_deleted"] and not "(Ignored)" in line["l_003_item"]:
                     bok_2_objs.append(bok_2_obj)
                     line["pk_lines_id"] = bok_2_obj.pk
                     new_bok_2s.append({"booking_line": line})
@@ -489,7 +490,13 @@ def push_boks(payload, client, username, method):
         logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
 
         # Create one PAL bok_2
-        for palletized_item in palletized:
+        for item in non_palletized:  # Non Palletized
+            for new_bok_2 in new_bok_2s:
+                if new_bok_2 == item["line_obj"]:
+                    new_bok_2.l_002_qty = item["quantity"]
+                    bok_2.append(new_bok_2)
+
+        for palletized_item in palletized:  # Palletized
             pallet = pallets[palletized_item["pallet_index"]]
 
             total_weight = 0
@@ -666,7 +673,7 @@ def push_boks(payload, client, username, method):
         # Send quote info back to Pronto
         # result = send_info_back(bok_1_obj, best_quote)
     else:
-        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}"
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
         logger.error(message)
 
         if bok_1["b_client_order_num"]:
@@ -736,7 +743,9 @@ def auto_repack(payload, client):
         .filter(client_booking_id=client_booking_id)
         .first()
     )
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
+        l_003_item__icontains="(ignored)"
+    )
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
     if repack_status:  # repack
@@ -744,18 +753,25 @@ def auto_repack(payload, client):
         bok_2s.filter(l_003_item="Auto repacked item").delete()
         bok_3s.delete()
         bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
-            zbl_102_text_2__in=SERVICE_GROUP_CODES
+            Q(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+            | Q(l_003_item__icontains="(ignored)")
         )
 
         # Get Pallet
-        if pallet_id == -1:
+        if pallet_id == -1:  # Use DME AI for Palletizing
             # Select suitable pallet and get required pallets count
             pallets = Pallet.objects.all()
             palletized, non_palletized = get_palletized_by_ai(bok_2s, pallets)
             logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
 
             # Create one PAL bok_2
-            for palletized_item in palletized:
+            for item in non_palletized:  # Non-Palletized
+                for bok_2 in bok_2s:
+                    if bok_2 == item["line_obj"]:
+                        bok_2.l_002_qty = item["quantity"]
+                        new_bok_2s.append(bok_2)
+
+            for palletized_item in palletized:  # Palletized
                 pallet = pallets[palletized_item["pallet_index"]]
 
                 total_weight = 0
@@ -833,7 +849,7 @@ def auto_repack(payload, client):
                     message = f"Serialiser Error - {bok_2_serializer.errors}"
                     logger.info(f"@8135 {LOG_ID} {message}")
                     raise Exception(message)
-        else:
+        else:  # Select a Pallet
             pallet = Pallet.objects.get(pk=pallet_id)
             number_of_pallets, unpalletized_line_pks = get_number_of_pallets(
                 bok_2s, pallet
@@ -849,6 +865,11 @@ def auto_repack(payload, client):
                 total_weight += bok_2.l_009_weight_per_each * bok_2.l_002_qty
 
             # Create new *1* Pallet Bok_2
+            for line_pk in unpalletized_line_pks:  # Non-Palletized
+                for bok_2 in bok_2s:
+                    if bok_2.pk == line_pk:
+                        new_bok_2s.append(bok_2)
+
             if number_of_pallets:
                 line = {}
                 line["fk_header_id"] = bok_1.pk_header_id
@@ -1035,7 +1056,7 @@ def auto_repack(payload, client):
             fc_log.new_quote = best_quotes[0]
             fc_log.save()
     else:
-        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1.pk_header_id}"
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1.pk_header_id}\nOrder Number: {bok_1.b_client_order_num}"
         logger.error(message)
 
         if bok_1.b_client_order_num:
@@ -1258,7 +1279,7 @@ def scanned(payload, client):
             set_booking_quote(booking, None)
 
     # Build label with SSCC - one sscc should have one page label
-    for sscc in sscc_list:
+    for index, sscc in enumerate(sscc_list):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -1268,8 +1289,9 @@ def scanned(payload, client):
             booking=booking,
             file_path=file_path,
             lines=sscc_lines[sscc],
-            label_index=0,
+            label_index=index,
             sscc=sscc,
+            sscc_cnt=len(sscc_list),
             one_page_label=True,
         )
 
@@ -1290,9 +1312,13 @@ def scanned(payload, client):
     message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     logger.info(message)
 
-    res_json = {
-        "labelUrl": f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
-    }
+    booking.z_label_url = (
+        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+    )
+    booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+    booking.save()
+
+    res_json = {"labelUrl": booking.z_label_url}
     return res_json
 
 
