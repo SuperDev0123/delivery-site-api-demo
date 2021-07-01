@@ -575,7 +575,7 @@ def push_boks(payload, client, username, method):
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
 
     # Do not get pricing when there is issue
-    if bok_1.get("zb_105_text_5"):
+    if bok_1.get("zb_105_text_5") and "Error" in bok_1.get("zb_105_text_5"):
         logger.info(
             f"#515 {LOG_ID} Skip Pricing due to address issue: {bok_1.get('zb_105_text_5')}"
         )

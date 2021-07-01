@@ -44,17 +44,17 @@ def _extract_address(addrs):
             postal_code = _addr
 
     if not postal_code:
-        error_msg = "Missing Postal Code"
+        error_msg = "Stop Error: Delivery postal code missing"
         return error_msg, state, postal_code, suburb
 
     _state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
     if not state or not suburb:
-        error_msg = "State and Suburb mismatch"
+        error_msg = "Stop Error: Delivery state missing or misspelled"
         return error_msg, state, postal_code, suburb
 
     if _state != state:
-        error_msg = "State and Postal code mismatch"
+        error_msg = "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
         return error_msg, state, postal_code, suburb
 
     return None, state, postal_code, suburb
@@ -62,7 +62,51 @@ def _extract_address(addrs):
 
 def get_address(order_num):
     """
-    used to build LABEL
+    Get address for JasonL
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup postal code and suburb mismatch. (Hint perform a Google search for the correct match)
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup postal code missing
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup suburb missing or misspelled
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup state missing or misspelled
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery postal code missing
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery suburb missing or misspelled
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery state missing or misspelled
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery address contact telephone no is a standard requirement for freight providers
+
+    Warning
+    Delivery address
+    Warning: Missing email for delivery address, used to advise booking status*
+
+    Warning
+    Delivery address
+    Warning: Missing mobile number for delivery address, used to text booking status**
     """
     LOG_ID = "[ADDRESS CSV READER]"
 
@@ -150,8 +194,18 @@ def get_address(order_num):
     address["state"] = DA_state
     address["postal_code"] = DA_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
-    logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
 
+    if not address["error"] and address["phone"]:
+        address[
+            "error"
+        ] = "Warning: Missing mobile number for delivery address, used to text booking status**"
+
+    if not address["error"] and address["email"]:
+        address[
+            "error"
+        ] = "Warning: Missing email for delivery address, used to advise booking status*"
+
+    logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
 
 
