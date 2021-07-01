@@ -35,7 +35,10 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
-from api.fp_apis.utils import get_status_category_from_status, get_status_time_from_category
+from api.fp_apis.utils import (
+    get_status_category_from_status,
+    get_status_time_from_category,
+)
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
@@ -733,12 +736,18 @@ def get_delivery_status(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        status_history = Dme_status_history.objects.filter(fk_booking_id=booking.pk_booking_id).order_by("-z_createdTimeStamp")
+        status_history = Dme_status_history.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).order_by("-z_createdTimeStamp")
 
         if status_history:
-            last_updated = status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S") if status_history.first().event_time_stamp else ''
+            last_updated = (
+                status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                if status_history.first().event_time_stamp
+                else ""
+            )
         else:
-            last_updated = ''
+            last_updated = ""
 
         lines = Booking_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_deleted=False
@@ -769,14 +778,14 @@ def get_delivery_status(request):
             "b_061_b_del_contact_full_name": booking.de_to_Contact_F_LName,
             "b_063_b_del_email": booking.de_Email,
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
-            "b_000_3_consignment_number": booking.v_FPBookingNumber
+            "b_000_3_consignment_number": booking.v_FPBookingNumber,
         }
 
         def line_to_dict(line):
             return {
-                'e_item_type': line.e_item_type,
-                'l_003_item': line.e_item,
-                'l_002_qty': line.e_qty
+                "e_item_type": line.e_item_type,
+                "l_003_item": line.e_item,
+                "l_002_qty": line.e_qty,
             }
 
         lines = map(line_to_dict, lines)
@@ -787,7 +796,7 @@ def get_delivery_status(request):
             context = {"client_customer_mark_up": client.client_customer_mark_up}
             quote_data = SimpleQuoteSerializer(quote, context=context).data
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
-        
+
         last_milestone = "Delivered"
         if category == "Booked":
             step = 2
@@ -808,26 +817,46 @@ def get_delivery_status(request):
             b_status = "Processing"
 
         steps = [
-            'Processing',
-            'Booked',
-            'Transit',
-            'On Board for Delivery',
-            last_milestone
+            "Processing",
+            "Booked",
+            "Transit",
+            "On Board for Delivery",
+            last_milestone,
         ]
 
         timestamps = []
         for index, item in enumerate(steps):
             if index == 0:
-                timestamps.append(booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M:%S") if booking and booking.z_CreatedTimestamp else '')
+                timestamps.append(
+                    booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M:%S")
+                    if booking and booking.z_CreatedTimestamp
+                    else ""
+                )
             elif index >= step:
-                timestamps.append('')
+                timestamps.append("")
             else:
-                timestamps.append(get_status_time_from_category(booking.pk_booking_id, item))
+                timestamps.append(
+                    get_status_time_from_category(booking.pk_booking_id, item)
+                )
 
         if step == 1:
-            eta = (booking.puPickUpAvailFrom_Date + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if json_quote and booking.puPickUpAvailFrom_Date else ''
-        else: 
-            eta = (booking.b_dateBookedDate + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if json_quote and booking.b_dateBookedDate else ''
+            eta = (
+                (
+                    booking.puPickUpAvailFrom_Date
+                    + timedelta(days=int(json_quote["eta"].split()[0]))
+                ).strftime("%Y-%m-%d")
+                if json_quote and booking.puPickUpAvailFrom_Date
+                else ""
+            )
+        else:
+            eta = (
+                (
+                    booking.b_dateBookedDate
+                    + timedelta(days=int(json_quote["eta"].split()[0]))
+                ).strftime("%Y-%m-%d")
+                if json_quote and booking.b_dateBookedDate
+                else ""
+            )
 
         return Response(
             {
@@ -839,7 +868,7 @@ def get_delivery_status(request):
                 "lines": lines,
                 "eta_date": eta,
                 "last_milestone": last_milestone,
-                "timestamps": timestamps
+                "timestamps": timestamps,
             }
         )
 
@@ -857,17 +886,22 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    
     lines = BOK_2_lines.objects.filter(
         fk_header_id=bok_1.pk_header_id, is_deleted=False
     )
 
-    status_history = Dme_status_history.objects.filter(fk_booking_id=bok_1.pk_header_id).order_by("-z_createdTimeStamp")
+    status_history = Dme_status_history.objects.filter(
+        fk_booking_id=bok_1.pk_header_id
+    ).order_by("-z_createdTimeStamp")
 
     if status_history:
-        last_updated = status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S") if status_history.first().event_time_stamp else ''
+        last_updated = (
+            status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+            if status_history.first().event_time_stamp
+            else ""
+        )
     else:
-        last_updated = ''
+        last_updated = ""
 
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     booking_dict = {
@@ -894,14 +928,14 @@ def get_delivery_status(request):
         "b_061_b_del_contact_full_name": bok_1.b_061_b_del_contact_full_name,
         "b_063_b_del_email": bok_1.b_063_b_del_email,
         "b_064_b_del_phone_main": bok_1.b_064_b_del_phone_main,
-        "b_000_3_consignment_number": bok_1.b_000_3_consignment_number
+        "b_000_3_consignment_number": bok_1.b_000_3_consignment_number,
     }
 
     def line_to_dict(line):
         return {
-            'e_item_type': line.e_item_type,
-            'l_003_item': line.e_item,
-            'l_002_qty': line.e_qty
+            "e_item_type": line.e_item_type,
+            "l_003_item": line.e_item,
+            "l_002_qty": line.e_qty,
         }
 
     lines = map(line_to_dict, lines)
@@ -913,24 +947,33 @@ def get_delivery_status(request):
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
-        eta = (booking.b_021_b_pu_avail_from_date + timedelta(days=int(json_quote['eta'].split()[0]))).strftime('%Y-%m-%d') if  json_quote and booking.b_021_b_pu_avail_from_date else ''
+        eta = (
+            (
+                booking.b_021_b_pu_avail_from_date
+                + timedelta(days=int(json_quote["eta"].split()[0]))
+            ).strftime("%Y-%m-%d")
+            if json_quote and booking.b_021_b_pu_avail_from_date
+            else ""
+        )
 
     status = "Processing"
     return Response(
         {
-            "step": 1, 
+            "step": 1,
             "status": status,
             "last_updated": last_updated,
-            "quote": json_quote, 
+            "quote": json_quote,
             "booking": booking_dict,
             "eta_date": eta,
             "last_milestone": "Delivered",
             "timestamps": [
-                bok_1.date_processed.strftime("%Y-%m-%d %H:%M:%S") if bok_1 and bok_1.date_processed else '', 
-                '', 
-                '', 
-                '', 
-                ''
-            ]
+                bok_1.date_processed.strftime("%Y-%m-%d %H:%M:%S")
+                if bok_1 and bok_1.date_processed
+                else "",
+                "",
+                "",
+                "",
+                "",
+            ],
         }
     )
