@@ -62,13 +62,8 @@ def get_number_of_pallets(booking_lines, pallet):
 
     return number_of_pallets_for_palletized, unpalletized_line_pks
 
-
-def get_palletized_by_ai(bok_2s, pallets):
-    # occupied pallet space percent in case of packing different line items in one pallet
-    available_percent = 80
-
-    # prepare pallets data
-    pallets_data, max_pallet_cubic, biggest_pallet = [], 0, 0
+def pallet_to_dict(pallets, available_percent):
+    pallets_data, max_pallet_cubic, biggest_pallet = [], 0, None
     for index, pallet in enumerate(pallets):
         length = max(pallet.length, pallet.width) / 1000
         width = min(pallet.length, pallet.width) / 1000
@@ -96,8 +91,9 @@ def get_palletized_by_ai(bok_2s, pallets):
                 "available_cubic": available_cubic,
             }
         )
+    return pallets_data, biggest_pallet
 
-    # prepare lines data
+def lines_to_dict(pallets_data, bok_2s, small_size_limit):
     lines_data, small_line_indexes = [], []
     for index, item in enumerate(bok_2s):
         line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
@@ -107,11 +103,11 @@ def get_palletized_by_ai(bok_2s, pallets):
         height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
         cubic = length * width * height
 
-        if length < 0.5 and width < 0.5 and height < 0.5:
+        if length < small_size_limit and width < small_size_limit and height < small_size_limit:
             small_line_indexes.append(index)
 
         available_pallets, min_pallet_cubic, smallest_pallet = [], None, None
-        for index, pallet in enumerate(pallets_data):
+        for pallet_index, pallet in enumerate(pallets_data):
             if (
                 pallet["length"] >= length
                 and pallet["width"] >= width
@@ -119,8 +115,8 @@ def get_palletized_by_ai(bok_2s, pallets):
             ):
                 if min_pallet_cubic is None or pallet["total_cubic"] < min_pallet_cubic:
                     min_pallet_cubic = pallet["total_cubic"]
-                    smallest_pallet = index
-                available_pallets.append(index)
+                    smallest_pallet = pallet_index
+                available_pallets.append(pallet_index)
 
         lines_data.append(
             {
@@ -136,10 +132,9 @@ def get_palletized_by_ai(bok_2s, pallets):
                 "smallest_pallet": smallest_pallet,
             }
         )
+    return lines_data, small_line_indexes
 
-    # sort lines data in descending order of greater of length and width
-    lines_data.sort(key=lambda k: k["length"], reverse=True)
-
+def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
     palletized, non_palletized = [], []
     for index, line in enumerate(lines_data):
         if not line["quantity"]:
@@ -147,6 +142,7 @@ def get_palletized_by_ai(bok_2s, pallets):
 
         # check if there is suitable pallet
         if line["smallest_pallet"] is None:
+            # check group code to confirm line should be palletized even if no suitable pallet
             if  line["group_code"] not in NEED_PALLET_GROUP_CODES:
                 non_palletized.append(
                     {
@@ -159,6 +155,7 @@ def get_palletized_by_ai(bok_2s, pallets):
                 pallet_count = math.floor(line["cubic"] * line["quantity"] / biggest_pallet["available_cubic"])
                 remaining_space = biggest_pallet["available_cubic"] * (pallet_count + 1) - (line["cubic"] * line["quantity"])
                 
+                # pallets with same items
                 palletized.append(
                     {
                         "pallet_index": biggest_pallet["index"],
@@ -175,6 +172,8 @@ def get_palletized_by_ai(bok_2s, pallets):
                         ],
                     }
                 )
+
+                # pallet packed partially
                 palletized.append(
                     {
                         "pallet_index": biggest_pallet["index"],
@@ -273,7 +272,10 @@ def get_palletized_by_ai(bok_2s, pallets):
                             }
                         )
 
-    # check duplicated Pallets
+    return palletized, non_palletized
+
+def refine_pallets(palletized, non_palletized, small_line_indexes, small_space_limit):
+    # find same pallets and increase quantity
     reformatted_palletized = []
     for item in palletized:
         same_pallet_exists = False
@@ -301,15 +303,41 @@ def get_palletized_by_ai(bok_2s, pallets):
         if not same_pallet_exists:
             reformatted_palletized.append(item)
 
+    # find pallet with only small items and move to non pallet
     final_palletized = []
     for item in reformatted_palletized:
         is_all_small = True
         for line in item['lines']:
             if line['line_index'] not in small_line_indexes:
                 is_all_small = False
-        if is_all_small and item["remaining_space"] / item["total_space"] > 0.5:
+        if is_all_small and item["remaining_space"] / item["total_space"] > small_space_limit / 100:
             non_palletized.extend(item["lines"])
         else:
             final_palletized.append(item)
+    
+    return final_palletized, non_palletized
+
+def get_palletized_by_ai(bok_2s, pallets):
+    # occupied pallet space percent in case of packing different line items in one pallet
+    available_percent = 80
+
+    # size limit and space percent limit for small items that can't be palletized alone
+    small_size_limit = 0.5
+    small_space_limit = 50
+
+    # prepare pallets data
+    pallets_data, biggest_pallet = pallet_to_dict(pallets, available_percent)
+
+    # prepare lines data
+    lines_data, small_line_indexes = lines_to_dict(pallets_data, bok_2s, small_size_limit)
+    
+    # sort lines data in descending order of greater of length and width
+    lines_data.sort(key=lambda k: k["length"], reverse=True)
+
+    # pack lines
+    palletized, non_palletized = lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets)
+    
+    # check duplicated Pallets and non palletizable ones with only small items
+    final_palletized, non_palletized = refine_pallets(palletized, non_palletized, small_line_indexes, small_space_limit)
 
     return final_palletized, non_palletized

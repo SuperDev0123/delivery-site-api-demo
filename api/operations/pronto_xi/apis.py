@@ -137,11 +137,13 @@ def parse_order_xml(response, token):
     # Test Usage #
     if IS_TESTING:
         address = {
+            "error": "Postal Code and Suburb mismatch",
             "phone": "0490001222",
             "email": "aaa@email.com",
             "street_1": "690 Ann Street",
-            "suburb": "Fortitude Valley",
-            "state": "QLD",
+            "suburb": "DEE WHY",
+            "state": "NSW",
+            "postal_code": "2099",
         }
     else:
         # get address by using `Talend` .sh script
@@ -151,14 +153,14 @@ def parse_order_xml(response, token):
     b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
     b_055 = address["street_1"]
     b_056 = ""  # Not provided
-    b_057 = ""  # SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text
-    b_058 = ""  # Not provided
-    b_059 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressPostcode").text
+    b_057 = address["state"]
+    b_058 = address["suburb"]
+    b_059 = address["postal_code"]
     b_060 = "Australia"
     b_061 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressName").text
     b_063 = address["email"]
     b_064 = address["phone"]
-    b_066 = "phone"  # Not provided
+    b_066 = "Phone"  # Not provided
     b_067 = 0  # Not provided
     b_068 = "Drop at Door / Warehouse Dock"  # Not provided
     b_069 = 1  # Not provided
@@ -167,30 +169,6 @@ def parse_order_xml(response, token):
     warehouse_code = SalesOrder.find(
         "{http://www.pronto.net/so/1.0.0}WarehouseCode"
     ).text
-
-    # For `clue` param of `get_suburb_state()`
-    addresses = []
-    addresses.append(
-        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address1").text or " "
-    )
-    addresses.append(
-        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address2").text or " "
-    )
-    addresses.append(
-        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address3").text or " "
-    )
-    addresses.append(
-        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address4").text or " "
-    )
-    addresses.append(
-        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address5").text or " "
-    )
-    addresses.append(
-        SalesOrder.find("{http://www.pronto.net/so/1.0.0}Address6").text or " "
-    )
-    addresses.append(address["suburb"])
-    addresses.append(address["state"])
-    b_058 = "||".join(addresses)[:40].lower()
 
     order = {
         "b_client_order_num": order_num,
@@ -211,6 +189,7 @@ def parse_order_xml(response, token):
         "b_070_b_del_floor_access_by": b_070,
         "b_071_b_del_sufficient_space": b_071,
         "warehouse_code": warehouse_code,
+        "zb_105_text_5": address["error"],
     }
 
     lines = []

@@ -16,6 +16,7 @@ from api.models import (
 )
 from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
 from api.common import trace_error, common_times as dme_time_lib
+from api.common.constants import AU_STATE_ABBRS
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import (
     select_best_options,
@@ -23,13 +24,89 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )
+from api.clients.operations.index import get_suburb_state
 
 logger = logging.getLogger(__name__)
 
 
+def _extract_address(addrs):
+    state, postal_code, suburb = "", "", ""
+
+    _addrs = []
+    for addr in addrs:
+        _addr = addr.strip()
+        _addrs.append(_addr)
+
+        if _addr in AU_STATE_ABBRS:
+            state = _addr
+
+        if len(_addr) in [3, 4] and _addr.isdigit():
+            postal_code = _addr
+
+    if not postal_code:
+        error_msg = "Stop Error: Delivery postal code missing"
+        return error_msg, state, postal_code, suburb
+
+    _state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
+
+    if not state or not suburb:
+        error_msg = "Stop Error: Delivery state missing or misspelled"
+        return error_msg, state, postal_code, suburb
+
+    if _state != state:
+        error_msg = "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
+        return error_msg, state, postal_code, suburb
+
+    return None, state, postal_code, suburb
+
+
 def get_address(order_num):
     """
-    used to build LABEL
+    Get address for JasonL
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup postal code and suburb mismatch. (Hint perform a Google search for the correct match)
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup postal code missing
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup suburb missing or misspelled
+
+    Stop Error
+    Pickup address
+    Stop Error: Pickup state missing or misspelled
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery postal code missing
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery suburb missing or misspelled
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery state missing or misspelled
+
+    Stop Error
+    Delivery address
+    Stop Error: Delivery address contact telephone no is a standard requirement for freight providers
+
+    Warning
+    Delivery address
+    Warning: Missing email for delivery address, used to advise booking status*
+
+    Warning
+    Delivery address
+    Warning: Missing mobile number for delivery address, used to text booking status**
     """
     LOG_ID = "[ADDRESS CSV READER]"
 
@@ -63,10 +140,11 @@ def get_address(order_num):
         file_path = "/home/ubuntu/jason_l/address/src/del.csv"
 
     csv_file = open(file_path)
-    logger.info(f"@320 {LOG_ID} File({file_path}) opened!")
+    logger.info(f"@350 {LOG_ID} File({file_path}) opened!")
     filtered_lines = []
 
     address = {
+        "error": "",
         "phone": "",
         "email": "",
         "company_name": "",
@@ -81,6 +159,7 @@ def get_address(order_num):
     DA_suburb = None
     DA_state = None
     DA_postal_code = None
+    error = None
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -88,43 +167,45 @@ def get_address(order_num):
         line_items = line.split("|")
         type = line_items[0]
         na_type = line_items[4]
-        address["company_name"] = (
-            line_items[5] if line_items[5] else address["company_name"]
-        )
-        address["street_1"] = line_items[7] if line_items[7] else address["street_1"]
-        address["suburb"] = line_items[10] if line_items[10] else address["suburb"]
-        address["state"] = line_items[11] if line_items[11] else address["state"]
-        address["postal_code"] = (
-            line_items[12] if line_items[12] else address["postal_code"]
-        )
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
 
         if type == "SO" and na_type == "DA":  # `Delivery Address` row
+            logger.info(f"@351 {LOG_ID} DA: {line}")
+
             DA_company_name = line_items[5]
-            DA_street_1 = line_items[7]
-            DA_suburb = line_items[10]
-            DA_state = line_items[11]
-            DA_postal_code = line_items[12]
+            DA_street_1 = line_items[6]
             DA_phone = line_items[14]
-            logger.info(
-                f"@358 {LOG_ID} DA street_1: {DA_street_1}, suburb: {DA_suburb}, state: {DA_state}, postal_code: {DA_postal_code}, phone: {DA_phone}"
-            )
+
+            try:
+                error_msg, DA_state, DA_postal_code, DA_suburb = _extract_address(
+                    line_items[7:]
+                )
+            except Exception as e:
+                logger.info(f"@352 {LOG_ID} Error: {str(e)}")
+                error_msg = "Missing or misspelled suburb"
 
         if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
+    address["error"] = error_msg
+    address["company_name"] = DA_company_name
+    address["street_1"] = DA_street_1
+    address["suburb"] = DA_suburb
+    address["state"] = DA_state
+    address["postal_code"] = DA_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
-    address["company_name"] = (
-        DA_company_name if DA_company_name else address["company_name"]
-    )
-    address["street_1"] = DA_street_1 if DA_street_1 else address["street_1"]
-    address["suburb"] = DA_suburb if DA_suburb else address["suburb"]
-    address["state"] = DA_state if DA_state else address["state"]
-    address["postal_code"] = (
-        DA_postal_code if DA_postal_code else address["postal_code"]
-    )
-    logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
 
+    if not address["error"] and address["phone"]:
+        address[
+            "error"
+        ] = "Warning: Missing mobile number for delivery address, used to text booking status**"
+
+    if not address["error"] and address["email"]:
+        address[
+            "error"
+        ] = "Warning: Missing email for delivery address, used to advise booking status*"
+
+    logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
 
 

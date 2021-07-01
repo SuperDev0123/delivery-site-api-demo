@@ -50,6 +50,7 @@ def get_suburb_state(postal_code, clue=""):
     clue: String which may contains Suburb and State
     """
     LOG_ID = "[GET ADDRESS]"
+    logger.info(f"{LOG_ID} postal_code: {postal_code}, clue: {clue}")
 
     if not postal_code:
         message = "Delivery postal code is required."
@@ -64,16 +65,19 @@ def get_suburb_state(postal_code, clue=""):
         raise Exception(message)
 
     selected_address = None
-    for address in addresses:
-        if clue and address.suburb.lower() in clue:
-            if not selected_address:
-                selected_address = address
-            elif selected_address and len(address.suburb) > len(
-                selected_address.suburb
-            ):
-                selected_address = address
+    if clue:
+        for address in addresses:
+            if address.suburb.lower() in clue.lower():
+                if not selected_address:
+                    selected_address = address
+                elif selected_address and len(address.suburb) > len(
+                    selected_address.suburb
+                ):
+                    selected_address = address
 
-    if not selected_address:
+    if not selected_address and not clue:
         selected_address = addresses[0]
+    elif not selected_address and clue:
+        return None, None
 
     return selected_address.state, selected_address.suburb
