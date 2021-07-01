@@ -51,7 +51,11 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
             Q(parent_model_number=model_number) | Q(child_model_number=model_number)
         ).filter(fk_id_dme_client=client)
 
-        if products.count() == 0:
+        # JasonL
+        if (
+            products.count() == 0
+            and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        ):
             # raise ValidationError(
             #     f"Can't find Product with provided 'model_number'({model_number})."
             # )
