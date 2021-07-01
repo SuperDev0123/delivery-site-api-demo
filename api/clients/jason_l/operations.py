@@ -195,12 +195,12 @@ def get_address(order_num):
     address["postal_code"] = DA_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
 
-    if not address["error"] and address["phone"]:
+    if not address["error"] and not address["phone"]:
         address[
             "error"
         ] = "Warning: Missing mobile number for delivery address, used to text booking status**"
 
-    if not address["error"] and address["email"]:
+    if not address["error"] and not address["email"]:
         address[
             "error"
         ] = "Warning: Missing email for delivery address, used to advise booking status*"
