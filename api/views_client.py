@@ -799,7 +799,7 @@ def get_delivery_status(request):
             step = 5
         elif category == "Futile":
             step = 5
-            last_milestone = "Futile"
+            last_milestone = "Futile Delivery"
         elif category == "Returned":
             step = 5
             last_milestone = "Returned"
@@ -817,7 +817,9 @@ def get_delivery_status(request):
 
         timestamps = []
         for index, item in enumerate(steps):
-            if index == 1 or index >= step:
+            if index == 0:
+                timestamps.append(booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M:%S") if booking and booking.z_CreatedTimestamp else '')
+            elif index >= step:
                 timestamps.append('')
             else:
                 timestamps.append(get_status_time_from_category(booking.pk_booking_id, item))
@@ -923,6 +925,12 @@ def get_delivery_status(request):
             "booking": booking_dict,
             "eta_date": eta,
             "last_milestone": "Delivered",
-            "timestamps": ['', '', '', '', '']
+            "timestamps": [
+                bok_1.date_processed.strftime("%Y-%m-%d %H:%M:%S") if bok_1 and bok_1.date_processed else '', 
+                '', 
+                '', 
+                '', 
+                ''
+            ]
         }
     )
