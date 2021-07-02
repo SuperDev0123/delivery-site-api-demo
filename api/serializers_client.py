@@ -126,7 +126,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
 
 
 class BOK_2_Serializer(serializers.ModelSerializer):
-    l_002_qty = serializers.FloatField(validators=[should_have_positive_value])
+    # l_002_qty = serializers.FloatField(validators=[should_have_positive_value])
     l_005_dim_length = serializers.FloatField(validators=[should_have_positive_value])
     l_006_dim_width = serializers.FloatField(validators=[should_have_positive_value])
     l_007_dim_height = serializers.FloatField(validators=[should_have_positive_value])
