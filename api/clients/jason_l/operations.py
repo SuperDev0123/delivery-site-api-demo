@@ -197,7 +197,6 @@ def get_address(order_num):
 
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing")
-        return errors, state, postal_code, suburb
 
     if not address["error"] and not address["phone"]:
         errors.append(
