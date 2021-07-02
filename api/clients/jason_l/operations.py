@@ -44,10 +44,6 @@ def _extract_address(addrs):
         if len(_addr) in [3, 4] and _addr.isdigit():
             postal_code = _addr
 
-    if not postal_code:
-        errors.append("Stop Error: Delivery postal code missing")
-        return errors, state, postal_code, suburb
-
     _state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
     if not state or not suburb:
@@ -198,6 +194,10 @@ def get_address(order_num):
     address["state"] = DA_state
     address["postal_code"] = DA_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
+
+    if not address["postal_code"]:
+        errors.append("Stop Error: Delivery postal code missing")
+        return errors, state, postal_code, suburb
 
     if not address["error"] and not address["phone"]:
         errors.append(
