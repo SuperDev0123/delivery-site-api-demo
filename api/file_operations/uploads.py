@@ -234,9 +234,11 @@ def upload_client_products_file(user_id, username, client_id, file):
             'parent_model_number', 'child_model_number', 'description', 'qty'
         ]
         for key in data:
-            if key in not_empty_cols and data[key] == None:
+            if key in not_empty_cols and (data[key] == '' or data[key] == 'NULL'):
                 return False
-        return True
+            elif key not in not_empty_cols and data[key] == 'NULL':
+                data[key] = None
+        return data
 
     import_success_results = []
     empty_field_rows = []
@@ -267,17 +269,18 @@ def upload_client_products_file(user_id, username, client_id, file):
             'z_createdByAccount': username,
         }
 
-        if (check_data(data)):
+        valid_data = check_data(data)
+        if (valid_data):
             try:
                 created = Client_Products.objects.create(
-                    **data
+                    **valid_data
                 )
                 created.save()
                 success_count = success_count + 1
                 created_products.append(model_to_dict(created))
                 import_success_results.append(r)
             except Exception as e:
-                # print(f"{e}")
+                print(f"{e}")
                 failure_count = failure_count + 1
                 wrong_type_rows.append(r)
         else:
