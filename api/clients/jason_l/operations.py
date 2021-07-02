@@ -33,6 +33,7 @@ def _extract_address(addrs):
     state, postal_code, suburb = "", "", ""
 
     _addrs = []
+    errors = []
     for addr in addrs:
         _addr = addr.strip()
         _addrs.append(_addr)
@@ -44,18 +45,20 @@ def _extract_address(addrs):
             postal_code = _addr
 
     if not postal_code:
-        error_msg = "Stop Error: Delivery postal code missing"
-        return error_msg, state, postal_code, suburb
+        errors.append("Stop Error: Delivery postal code missing")
+        return errors, state, postal_code, suburb
 
     _state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
     if not state or not suburb:
-        error_msg = "Stop Error: Delivery state missing or misspelled"
-        return error_msg, state, postal_code, suburb
+        errors.append("Stop Error: Delivery state missing or misspelled")
+        return errors, state, postal_code, suburb
 
     if _state != state:
-        error_msg = "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
-        return error_msg, state, postal_code, suburb
+        errors.append(
+            "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
+        )
+        return errors, state, postal_code, suburb
 
     return None, state, postal_code, suburb
 
@@ -159,7 +162,7 @@ def get_address(order_num):
     DA_suburb = None
     DA_state = None
     DA_postal_code = None
-    error = None
+    errors = []
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -177,17 +180,18 @@ def get_address(order_num):
             DA_phone = line_items[14]
 
             try:
-                error_msg, DA_state, DA_postal_code, DA_suburb = _extract_address(
+                errors, DA_state, DA_postal_code, DA_suburb = _extract_address(
                     line_items[7:]
                 )
             except Exception as e:
                 logger.info(f"@352 {LOG_ID} Error: {str(e)}")
-                error_msg = "Missing or misspelled suburb"
+                errors.append(
+                    "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
+                )
 
         if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
-    address["error"] = error_msg
     address["company_name"] = DA_company_name
     address["street_1"] = DA_street_1
     address["suburb"] = DA_suburb
@@ -196,15 +200,16 @@ def get_address(order_num):
     address["phone"] = DA_phone if DA_phone else address["phone"]
 
     if not address["error"] and not address["phone"]:
-        address[
-            "error"
-        ] = "Warning: Missing mobile number for delivery address, used to text booking status**"
+        errors.append(
+            "Warning: Missing mobile number for delivery address, used to text booking status**"
+        )
 
     if not address["error"] and not address["email"]:
-        address[
-            "error"
-        ] = "Warning: Missing email for delivery address, used to advise booking status*"
+        errors.append(
+            "Warning: Missing email for delivery address, used to advise booking status*"
+        )
 
+    address["error"] = "&&&".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
 
