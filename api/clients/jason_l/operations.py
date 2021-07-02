@@ -139,12 +139,13 @@ def get_address(order_num):
         "state": "",
         "postal_code": "",
     }
+
+    DA_company_name, CUS_company_name = None, None
+    DA_street_1, CUS_street_1 = None, None
+    DA_suburb, CUS_suburb = None, None
+    DA_state, CUS_state = None, None
+    DA_postal_code, CUS_postal_code = None, None
     DA_phone = None
-    DA_company_name = None
-    DA_street_1 = None
-    DA_suburb = None
-    DA_state = None
-    DA_postal_code = None
     errors = []
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
@@ -168,18 +169,29 @@ def get_address(order_num):
                 )
             except Exception as e:
                 logger.info(f"@352 {LOG_ID} Error: {str(e)}")
-                errors.append(
-                    "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
+                pass
+        if type == "CUS" and na_type == "C":  # `Customer Contract` row
+            logger.info(f"@353 {LOG_ID} CUS: {line}")
+
+            CUS_company_name = line_items[5]
+            CUS_street_1 = line_items[6]
+
+            try:
+                errors, CUS_state, CUS_postal_code, CUS_suburb = _extract_address(
+                    line_items[7:]
                 )
+            except Exception as e:
+                logger.info(f"@354 {LOG_ID} Error: {str(e)}")
+                pass
 
         if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
-    address["company_name"] = DA_company_name
-    address["street_1"] = DA_street_1
-    address["suburb"] = DA_suburb
-    address["state"] = DA_state
-    address["postal_code"] = DA_postal_code
+    address["company_name"] = DA_company_name or CUS_company_name
+    address["street_1"] = DA_street_1 or CUS_street_1
+    address["suburb"] = DA_suburb or CUS_suburb
+    address["state"] = DA_state or CUS_state
+    address["postal_code"] = DA_postal_code or CUS_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
 
     if not address["street_1"]:
