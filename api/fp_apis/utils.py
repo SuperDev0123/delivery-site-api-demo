@@ -104,7 +104,7 @@ def get_status_time_from_category(booking_id, category):
             'event_time_stamp',
             flat=True
         )
-        return status_times[0].strftime("%Y-%m-%d %H:%M:%S") if status_times and status_times[0] else None
+        return status_times[0].strftime("%Y-%m-%d %H:%M") if status_times and status_times[0] else None
     except Exception as e:
         message = f"#819 Timestamp not found with this category: {category}"
         logger.error(message)

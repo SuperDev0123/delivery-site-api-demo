@@ -895,11 +895,7 @@ def get_delivery_status(request):
     ).order_by("-z_createdTimeStamp")
 
     if status_history:
-        last_updated = (
-            status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S")
-            if status_history.first().event_time_stamp
-            else ""
-        )
+        last_updated = status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M") if status_history.first().event_time_stamp else ''
     else:
         last_updated = ""
 
