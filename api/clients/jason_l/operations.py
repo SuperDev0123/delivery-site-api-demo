@@ -38,23 +38,10 @@ def _extract_address(addrs):
         _addr = addr.strip()
         _addrs.append(_addr)
 
-        if _addr in AU_STATE_ABBRS:
-            state = _addr
-
         if len(_addr) in [3, 4] and _addr.isdigit():
             postal_code = _addr
 
-    _state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
-
-    if not state or not suburb:
-        errors.append("Stop Error: Delivery state missing or misspelled")
-        return errors, state, postal_code, suburb
-
-    if _state != state:
-        errors.append(
-            "Stop Error: Delivery postal code and suburb mismatch. (Hint perform a Google search for the correct match)"
-        )
-        return errors, state, postal_code, suburb
+    state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
     return errors, state, postal_code, suburb
 
@@ -195,8 +182,14 @@ def get_address(order_num):
     address["postal_code"] = DA_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
 
+    if not address["state"]:
+        errors.append("Stop Error: Delivery state missing")
+
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing")
+
+    if not address["suburb"]:
+        errors.append("Stop Error: Delivery suburb missing")
 
     if not address["error"] and not address["phone"]:
         errors.append(
