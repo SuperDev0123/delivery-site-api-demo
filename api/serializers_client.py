@@ -21,9 +21,9 @@ class BOK_1_Serializer(serializers.ModelSerializer):
     fk_client_id = serializers.CharField(validators=[should_have_value])
     b_client_warehouse_code = serializers.CharField(validators=[should_have_value])
     b_clientPU_Warehouse = serializers.CharField(validators=[should_have_value])
-    b_059_b_del_address_postalcode = serializers.CharField(
-        validators=[should_have_value]
-    )
+    # b_059_b_del_address_postalcode = serializers.CharField(
+    #     validators=[should_have_value]
+    # )
     success = serializers.CharField(validators=[should_have_value])
     b_client_name = serializers.SerializerMethodField(read_only=True)
 
