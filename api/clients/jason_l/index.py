@@ -244,6 +244,7 @@ def push_boks(payload, client, username, method):
             raise ValidationError(message)
 
     # Check duplicated push with `b_client_order_num`
+    selected_quote = None
     if method == "POST":
         if is_biz:
             bok_1_objs = BOK_1_headers.objects.filter(
@@ -287,10 +288,17 @@ def push_boks(payload, client, username, method):
                         old_bok_1, old_bok_2s, bok_1, bok_2s
                     )
 
-                    if not is_updated:
+                    if old_bok_1.quote:
+                        old_quote = old_bok_1.quote
+
+                    # if not is_updated:
+                    if True:
                         logger.info(
                             f"@8850 {LOG_ID} Order {bok_1['b_client_order_num']} requires new quotes."
                         )
+                        if old_bok_1.b_092_booking_type == "DMEM" and old_bok_1.quote:
+                            selected_quote = old_bok_1.quote
+
                         quotes.delete()
                         old_bok_3s.delete()
                         old_bok_2s.delete()
@@ -646,7 +654,7 @@ def push_boks(payload, client, username, method):
         old_quote__isnull=True,
         new_quote__isnull=True,
     )
-    fc_log.old_quote = old_quote
+    # fc_log.old_quote = old_quote
     body = {"booking": booking, "booking_lines": booking_lines}
     _, success, message, quote_set = pricing_oper(
         body=body,
@@ -658,6 +666,12 @@ def push_boks(payload, client, username, method):
     )
 
     # Select best quotes(fastest, lowest)
+    if selected_quote:
+        quote_set = quote_set.filter(
+            freight_provider=selected_quote.freight_provider,
+            service_name=selected_quote.service_name,
+        )
+
     if quote_set.exists() and quote_set.count() > 0:
         auto_select_pricing_4_bok(bok_1_obj, quote_set)
         best_quotes = select_best_options(pricings=quote_set)
@@ -1284,6 +1298,12 @@ def scanned(payload, client):
             new_fc_log.save()
         else:
             set_booking_quote(booking, None)
+    else:
+        message = f"#521 {LOG_ID} SCAN with No Pricing! Order Number: {booking.b_client_order_num}"
+        logger.error(message)
+
+        if booking.b_client_order_num:
+            send_email_to_admins("No FC result", message)
 
     # Build label with SSCC - one sscc should have one page label
     for index, sscc in enumerate(sscc_list):
