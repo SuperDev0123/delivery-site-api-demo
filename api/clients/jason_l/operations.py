@@ -201,7 +201,7 @@ def get_address(order_num):
             "Warning: Missing email for delivery address, used to advise booking status*"
         )
 
-    address["error"] = "&&&".join(errors)
+    address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
 
