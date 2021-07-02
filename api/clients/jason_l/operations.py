@@ -182,21 +182,24 @@ def get_address(order_num):
     address["postal_code"] = DA_postal_code
     address["phone"] = DA_phone if DA_phone else address["phone"]
 
+    if not address["street_1"]:
+        errors.append("Stop Error: Delivery street 1 missing or misspelled")
+
     if not address["state"]:
-        errors.append("Stop Error: Delivery state missing")
+        errors.append("Stop Error: Delivery state missing or misspelled")
 
     if not address["postal_code"]:
-        errors.append("Stop Error: Delivery postal code missing")
+        errors.append("Stop Error: Delivery postal code missing or misspelled")
 
     if not address["suburb"]:
-        errors.append("Stop Error: Delivery suburb missing")
+        errors.append("Stop Error: Delivery suburb missing or misspelled")
 
-    if not address["error"] and not address["phone"]:
+    if not address["phone"]:
         errors.append(
             "Warning: Missing mobile number for delivery address, used to text booking status**"
         )
 
-    if not address["error"] and not address["email"]:
+    if not address["email"]:
         errors.append(
             "Warning: Missing email for delivery address, used to advise booking status*"
         )
