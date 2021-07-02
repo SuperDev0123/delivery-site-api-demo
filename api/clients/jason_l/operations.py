@@ -60,7 +60,7 @@ def _extract_address(addrs):
         )
         return errors, state, postal_code, suburb
 
-    return None, state, postal_code, suburb
+    return errors, state, postal_code, suburb
 
 
 def get_address(order_num):

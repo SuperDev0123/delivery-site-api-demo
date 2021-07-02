@@ -43,6 +43,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
         zbl_102_text_2 = bok_2.get("ProductGroupCode")
 
         if not model_number or not qty:
+            logger.info(f"[GET PRODUCT ITEMS] model_number: {model_number} qty: {qty}")
             raise ValidationError(
                 "'model_number' and 'qty' are required for each booking_line"
             )
