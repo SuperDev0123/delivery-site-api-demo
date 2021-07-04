@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 import subprocess
@@ -146,7 +147,9 @@ def get_address(order_num):
     DA_state, CUS_state = None, None
     DA_postal_code, CUS_postal_code = None, None
     DA_phone = None
+    DA_email = None
     errors = []
+    has_DA = False
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -157,12 +160,18 @@ def get_address(order_num):
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
 
         if type == "SO" and na_type == "DA":  # `Delivery Address` row
+            has_DA = True
             logger.info(f"@351 {LOG_ID} DA: {line}")
 
             DA_company_name = line_items[5]
             DA_street_1 = line_items[6]
             DA_phone = line_items[14]
 
+            for item in line_items:
+                _item = item.strip()
+
+                if re.match(r"[^@]+@[^@]+\.[^@]+", _item):
+                    DA_email = _item
             try:
                 errors, DA_state, DA_postal_code, DA_suburb = _extract_address(
                     line_items[7:]
@@ -187,12 +196,21 @@ def get_address(order_num):
         if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
-    address["company_name"] = DA_company_name or CUS_company_name
-    address["street_1"] = DA_street_1 or CUS_street_1
-    address["suburb"] = DA_suburb or CUS_suburb
-    address["state"] = DA_state or CUS_state
-    address["postal_code"] = DA_postal_code or CUS_postal_code
-    address["phone"] = DA_phone if DA_phone else address["phone"]
+    if not has_DA:
+        address["company_name"] = CUS_company_name
+        address["street_1"] = CUS_street_1
+        address["suburb"] = CUS_suburb
+        address["state"] = CUS_state
+        address["postal_code"] = CUS_postal_code
+        address["phone"] = address["phone"]
+    else:
+        address["company_name"] = DA_company_name
+        address["street_1"] = DA_street_1
+        address["suburb"] = DA_suburb
+        address["state"] = DA_state
+        address["postal_code"] = DA_postal_code
+        address["phone"] = DA_phone
+        address["email"] = DA_email
 
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
