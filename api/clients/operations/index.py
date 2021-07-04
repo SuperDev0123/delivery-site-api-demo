@@ -99,6 +99,6 @@ def get_similar_suburb(postal_code, clues):
             _clue_iter = _clue_iter.strip()
 
             if similarity(address.suburb.lower(), _clue_iter) > 0.8:
-                similar_suburb = addresses.suburb
+                similar_suburb = address.suburb
 
     return similar_suburb
