@@ -91,7 +91,7 @@ def get_similar_suburb(postal_code, clues):
     logger.info(f"{LOG_ID} postal_code: {postal_code}, clues: {clues}")
 
     similar_suburb = None
-    addresses = Utl_suburbs.objects.filter(postal_code=postal_code)
+    addresses = Utl_suburbs.objects.all().only("suburb")
 
     for address in addresses:
         for clue_iter in clues:
