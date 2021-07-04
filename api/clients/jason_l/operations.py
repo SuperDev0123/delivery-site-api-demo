@@ -275,9 +275,14 @@ def get_address(order_num):
             )
 
     if not address["email"]:
-        errors.append(
-            "Warning: Missing email for delivery address, used to advise booking status"
-        )
+        if clue_DA or clue_CUS:
+            for clue in clue_DA or clue_CUS:
+                if "@" in clue:
+                    errors.append("Warning: Email misspelled")
+                else:
+                    errors.append(
+                        "Warning: Missing email for delivery address, used to advise booking status"
+                    )
 
     address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
