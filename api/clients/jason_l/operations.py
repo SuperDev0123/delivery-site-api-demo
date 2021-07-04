@@ -180,8 +180,9 @@ def get_address(order_num):
 
             for item in line_items:
                 _item = item.strip()
+                email_regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
 
-                if re.match(r"[^@]+@[^@]+\.[^@]+", _item):
+                if re.match(email_regex, _item):
                     DA_email = _item
             try:
                 errors, DA_state, DA_postal_code, DA_suburb = _extract_address(
