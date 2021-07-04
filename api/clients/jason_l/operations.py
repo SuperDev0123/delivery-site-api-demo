@@ -147,13 +147,14 @@ def get_address(order_num):
 
     address = {
         "error": "",
-        "phone": "",
-        "email": "",
         "company_name": "",
         "street_1": "",
+        "street_2": "",
         "suburb": "",
         "state": "",
         "postal_code": "",
+        "phone": "",
+        "email": "",
     }
 
     DA_company_name, CUS_company_name = None, None
@@ -215,20 +216,20 @@ def get_address(order_num):
             address["email"] = line_items[5]
 
     if not has_DA:
-        address["company_name"] = CUS_company_name
-        address["street_1"] = CUS_street_1
-        address["suburb"] = CUS_suburb
-        address["state"] = CUS_state
-        address["postal_code"] = CUS_postal_code
-        address["phone"] = address["phone"]
+        address["company_name"] = CUS_company_name or ""
+        address["street_1"] = CUS_street_1 or ""
+        address["suburb"] = CUS_suburb or ""
+        address["state"] = CUS_state or ""
+        address["postal_code"] = CUS_postal_code or ""
+        address["phone"] = address["phone"] or ""
     else:
-        address["company_name"] = DA_company_name
-        address["street_1"] = DA_street_1
-        address["suburb"] = DA_suburb
-        address["state"] = DA_state
-        address["postal_code"] = DA_postal_code
-        address["phone"] = DA_phone
-        address["email"] = DA_email
+        address["company_name"] = DA_company_name or ""
+        address["street_1"] = DA_street_1 or ""
+        address["suburb"] = DA_suburb or ""
+        address["state"] = DA_state or ""
+        address["postal_code"] = DA_postal_code or ""
+        address["phone"] = DA_phone or ""
+        address["email"] = DA_email or ""
 
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
@@ -284,6 +285,7 @@ def get_address(order_num):
                 "Warning: Missing mobile number for delivery address, used to text booking status"
             )
 
+    # Email
     if not address["email"]:
         if clue_DA or clue_CUS:
             for clue in clue_DA or clue_CUS:
@@ -296,6 +298,20 @@ def get_address(order_num):
             errors.append(
                 "Warning: Missing email for delivery address, used to advise booking status"
             )
+
+    # Street 2
+    for clue in clue_DA or clue_CUS:
+        if (
+            clue
+            and clue.strip().upper() == address["company_name"].upper()
+            and clue.strip().upper() == address["street_1"].upper()
+            and clue.strip().upper() == address["state"].upper()
+            and clue.strip().upper() == address["suburb"].upper()
+            and clue.strip().upper() == address["postal_code"].upper()
+            and clue.strip().upper() == address["phone"].upper()
+            and clue.strip().upper() == address["email"].upper()
+        ):
+            address["street_2"] = clue
 
     address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")

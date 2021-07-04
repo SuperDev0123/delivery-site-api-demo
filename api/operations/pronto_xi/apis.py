@@ -152,7 +152,7 @@ def parse_order_xml(response, token):
 
     b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
     b_055 = address["street_1"]
-    b_056 = ""  # Not provided
+    b_056 = address["street_2"]
     b_057 = address["state"]
     b_058 = address["suburb"]
     b_059 = address["postal_code"] or " "
