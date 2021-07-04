@@ -102,3 +102,15 @@ def get_similar_suburb(postal_code, clues):
                 similar_suburb = clue_iter
 
     return similar_suburb
+
+
+def is_postalcode_in_state(state, postal_code):
+    """
+    check if postal_code is in state
+    """
+    LOG_ID = "[CHECK STATE HAS POSTAL]"
+    logger.info(f"{LOG_ID} state: {state}, postal_code: {postal_code}")
+
+    addresses = Utl_suburbs.objects.filter(state=state, postal_code=postal_code)
+
+    return addresses.exists()

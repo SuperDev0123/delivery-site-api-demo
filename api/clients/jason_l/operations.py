@@ -25,7 +25,11 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )
-from api.clients.operations.index import get_suburb_state, get_similar_suburb
+from api.clients.operations.index import (
+    get_suburb_state,
+    get_similar_suburb,
+    is_postalcode_in_state,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +235,12 @@ def get_address(order_num):
 
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
+
+    if address["state"] and address["postal_code"]:
+        if not is_postalcode_in_state(address["state"], address["postal_code"]):
+            errors.append(
+                "Stop Error: Delivery state and postal code mismatch (Hint perform a Google search for the correct match)"
+            )
 
     if not address["suburb"] and address["postal_code"]:
         suburb = get_similar_suburb(address["postal_code"], clue_DA or clue_CUS)
