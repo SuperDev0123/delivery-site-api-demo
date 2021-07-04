@@ -234,7 +234,9 @@ def get_address(order_num):
         _phone = _phone.replace("+61", "")
         _phone = _phone.replace("+", "")
 
-        if len(_phone) == 10 and _phone[0] == "0" and _phone[0] == "4":
+        if (len(_phone) == 10 and _phone[0] == "0" and _phone[0] == "4") or (
+            len(_phone) == 9 and _phone[0] == "4"
+        ):
             errors.append(
                 "Warning: Missing mobile number for delivery address, used to text booking status"
             )
