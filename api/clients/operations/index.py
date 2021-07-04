@@ -67,7 +67,7 @@ def get_suburb_state(postal_code, clue=""):
     selected_address = None
     if clue:
         for address in addresses:
-            for clue_iter in clue:
+            for clue_iter in clue.split("|"):
                 _clue_iter = clue_iter.lower()
                 _clue_iter = _clue_iter.strip()
 

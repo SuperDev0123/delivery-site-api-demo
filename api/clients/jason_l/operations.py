@@ -242,7 +242,7 @@ def get_address(order_num):
         _phone = _phone.replace("+61", "")
         _phone = _phone.replace("+", "")
 
-        if re.match("\d{6,10}", _phone):
+        if not re.match("\d{6,10}", _phone):
             errors.append("Warning: Wrong phone number")
         elif "+61" in address["phone"] and len(_phone) != 9:
             errors.append("Warning: Wrong phone number")
