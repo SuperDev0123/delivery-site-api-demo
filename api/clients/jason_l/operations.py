@@ -31,10 +31,11 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_address(addrs):
+    errors = []
     state, postal_code, suburb = "", "", ""
 
     _addrs = []
-    errors = []
+    _state = None
     for addr in addrs:
         _addr = addr.strip()
         _addrs.append(_addr)
@@ -42,9 +43,17 @@ def _extract_address(addrs):
         if len(_addr) in [3, 4] and _addr.isdigit():
             postal_code = _addr
 
+        if _addr.upper() in AU_STATE_ABBRS:
+            _state = _addr.upper()
+
     state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
-    return errors, state, postal_code, suburb
+    if not _state:
+        errors.append("Stop Error: Delivery state missing or misspelled")
+    elif _state != state:
+        errors.append("Stop Error: Delivery state and suburb mistmatch")
+
+    return errors, _state, postal_code, suburb
 
 
 def get_address(order_num):
@@ -215,9 +224,6 @@ def get_address(order_num):
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
-    if not address["state"]:
-        errors.append("Stop Error: Delivery state missing or misspelled")
-
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
 
@@ -234,9 +240,25 @@ def get_address(order_num):
         _phone = _phone.replace("+61", "")
         _phone = _phone.replace("+", "")
 
-        if (len(_phone) == 10 and _phone[0] == "0" and _phone[0] == "4") or (
-            len(_phone) == 9 and _phone[0] == "4"
+        if re.match("\d{6,10}", _phone):
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in address["phone"] and len(_phone) != 9:
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in address["phone"] and len(_phone) == 9 and _phone[0] != "4":
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+        elif not "+61" in address["phone"] and len(_phone) not in [6, 10]:
+            errors.append("Warning: Wrong phone number")
+        elif (
+            not "+61" in address["phone"]
+            and len(_phone) == 10
+            and (_phone[0] != "0" or _phone[1] != "4")
         ):
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+        elif not "+61" in address["phone"] and len(_phone) == 6:
             errors.append(
                 "Warning: Missing mobile number for delivery address, used to text booking status"
             )

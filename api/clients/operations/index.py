@@ -67,12 +67,11 @@ def get_suburb_state(postal_code, clue=""):
     selected_address = None
     if clue:
         for address in addresses:
-            if address.suburb.lower() in clue.lower():
-                if not selected_address:
-                    selected_address = address
-                elif selected_address and len(address.suburb) > len(
-                    selected_address.suburb
-                ):
+            for clue_iter in clue:
+                _clue_iter = clue_iter.lower()
+                _clue_iter = _clue_iter.strip()
+
+                if address.suburb.lower() == _clue_iter:
                     selected_address = address
 
     if not selected_address and not clue:
