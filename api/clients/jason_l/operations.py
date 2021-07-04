@@ -51,7 +51,9 @@ def _extract_address(addrs):
     if not _state:
         errors.append("Stop Error: Delivery state missing or misspelled")
     elif _state != state:
-        errors.append("Stop Error: Delivery state and suburb mistmatch")
+        errors.append(
+            "Stop Error: Delivery state and suburb mistmatch (Hint perform a Google search for the correct match)"
+        )
 
     return errors, _state, postal_code, suburb
 
