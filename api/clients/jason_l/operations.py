@@ -289,7 +289,7 @@ def get_address(order_num):
             for clue in clue_DA or clue_CUS:
                 if "@" in clue:
                     address["email"] = clue.strip()
-                    errors.append("Warning: Email misspelled")
+                    errors.append("Warning: Email is formatted incorrectly")
                     break
 
         if not address["email"]:
