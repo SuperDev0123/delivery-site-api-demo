@@ -234,8 +234,12 @@ def get_address(order_num):
 
     if not address["suburb"] and address["postal_code"]:
         suburb = get_similar_suburb(address["postal_code"], clue_DA or clue_CUS)
-        address["suburb"] = suburb
-        errors.append("Stop Error: Delivery suburb missing or misspelled")
+
+        if suburb:
+            address["suburb"] = suburb
+            errors.append("Stop Error: Delivery suburb misspelled")
+        else:
+            errors.append("Stop Error: Delivery suburb missing")
 
     if not address["phone"]:
         errors.append(
