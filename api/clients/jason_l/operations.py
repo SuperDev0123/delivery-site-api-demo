@@ -303,6 +303,7 @@ def get_address(order_num):
     if clue_DA or clue_CUS:
         street_2 = []
         for clue in clue_DA or clue_CUS:
+            print("@1 - ", clue)
             if (
                 clue
                 and clue.strip().upper() != address["company_name"].upper()
