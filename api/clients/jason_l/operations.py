@@ -301,6 +301,7 @@ def get_address(order_num):
 
     # Street 2
     if clue_DA or clue_CUS:
+        street_2 = []
         for clue in clue_DA or clue_CUS:
             if (
                 clue
@@ -312,7 +313,10 @@ def get_address(order_num):
                 and clue.strip().upper() != address["phone"].upper()
                 and clue.strip().upper() != address["email"].upper()
             ):
-                address["street_2"] = clue
+                street_2.append(clue.strip())
+
+        if street_2:
+            address["street_2"] = ", ".join(street_2)
 
     address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
