@@ -208,12 +208,12 @@ def get_address(order_num):
 
     if not address["phone"]:
         errors.append(
-            "Warning: Missing mobile number for delivery address, used to text booking status**"
+            "Warning: Missing mobile number for delivery address, used to text booking status"
         )
 
     if not address["email"]:
         errors.append(
-            "Warning: Missing email for delivery address, used to advise booking status*"
+            "Warning: Missing email for delivery address, used to advise booking status"
         )
 
     address["error"] = "***".join(errors)
