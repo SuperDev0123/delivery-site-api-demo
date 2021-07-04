@@ -229,16 +229,15 @@ def get_address(order_num):
             "Warning: Missing phone number, if SMS status is desired please submit mobile number"
         )
     else:
-        _phone = address['phone']
+        _phone = address["phone"]
         _phone = _phone.replace(" ", "")
         _phone = _phone.replace("+61", "")
         _phone = _phone.replace("+", "")
 
-        if len(_phone) == 10 and _phone[0] = '0' and _phone[0] = '4':
+        if len(_phone) == 10 and _phone[0] == "0" and _phone[0] == "4":
             errors.append(
                 "Warning: Missing mobile number for delivery address, used to text booking status"
             )
-
 
     if not address["email"]:
         errors.append(
