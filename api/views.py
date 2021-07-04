@@ -71,7 +71,7 @@ from api.utils import (
 from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
-from api.operations.labels.index import build_label
+from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
@@ -3918,7 +3918,7 @@ def get_csv(request):
 
                 if vx_freight_provider == "state transport":
                     file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
-                    file_path, file_name = build_label(booking, file_path)
+                    file_path, file_name = build_label_oper(booking, file_path)
                     booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
                     booking.save()
 
@@ -4045,6 +4045,76 @@ def get_pdf(request):
     except Exception as e:
         # print('get_pdf error: ', e)
         return JsonResponse({"error": "error"})
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
+def build_label(request):
+    LOG_ID = "[DME LABEL BUILD]"
+
+    body = literal_eval(request.body.decode("utf8"))
+    booking_id = body["booking_id"]
+    logger.info(f"{LOG_ID} Booking pk: {booking_id}")
+
+    try:
+        booking = Bookings.objects.get(pk=booking_id)
+        lines = booking.lines().filter(is_deleted=False)
+        line_datas = booking.line_datas()
+
+        # Prerequisite
+        sscc_list = []
+        sscc_lines = {}
+
+        for line_data in line_datas:
+            if line_data.clientRefNumber in sscc_list:
+                continue
+
+            sscc_list.append(line_data.clientRefNumber)
+
+            for line in lines:
+                if line.pk_booking_lines_id == line_data.fk_booking_lines_id:
+                    sscc_lines[line_data.clientRefNumber] = [line]
+                    break
+
+        # Build label with SSCC - one sscc should have one page label
+        for index, sscc in enumerate(sscc_list):
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+
+            logger.info(f"@368 - building label with SSCC...")
+            file_path, file_name = build_label_oper(
+                booking=booking,
+                file_path=file_path,
+                lines=sscc_lines[sscc],
+                label_index=index,
+                sscc=sscc,
+                sscc_cnt=len(sscc_list),
+                one_page_label=True,
+            )
+
+        message = f"#379 {LOG_ID} - Successfully build label. Booking Id: {booking.b_bookingID_Visual}"
+        logger.info(message)
+
+        if not booking.b_client_booking_ref_num:
+            booking.b_client_booking_ref_num = (
+                f"{booking.b_bookingID_Visual}_{str(uuid.uuid4())}"
+            )
+
+        booking.z_label_url = (
+            f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+        )
+        booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+        booking.save()
+    except Exception as e:
+        trace_error.print()
+        logger.error(f"{LOG_ID} Error: {str(e)}")
+        return JsonResponse(
+            {"success": "failure", "message": "Label operation get failed!"}
+        )
+
+    return JsonResponse(
+        {"success": "success", "message": "Label is successfully built!"}
+    )
 
 
 @api_view(["GET"])

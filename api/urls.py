@@ -86,6 +86,7 @@ urlpatterns += [
     url(r"^get-xml/", get_xml),  # build & download XML
     url(r"^get-pdf/", get_pdf),  # build & download PDF
     url(r"^get-manifest/", get_manifest),  # build & download Manifest
+    url(r"^build-label/", build_label),  # build Label
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),

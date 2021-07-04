@@ -12,8 +12,8 @@ def build_label(
     lines=[],
     label_index=0,
     sscc=None,
-    one_page_label=False,
     sscc_cnt=1,
+    one_page_label=False,
 ):
     fp_name = booking.vx_freight_provider.lower()
 
