@@ -190,7 +190,7 @@ def get_address(order_num):
                 email_regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
 
                 if re.match(email_regex, _item):
-                    DA_email = _item9
+                    DA_email = _item
             try:
                 clue_DA = line_items[7:]
                 errors, DA_state, DA_postal_code, DA_suburb = _extract_address(clue_DA)
