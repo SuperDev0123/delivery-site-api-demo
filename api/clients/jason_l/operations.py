@@ -304,13 +304,13 @@ def get_address(order_num):
         for clue in clue_DA or clue_CUS:
             if (
                 clue
-                and clue.strip().upper() == address["company_name"].upper()
-                and clue.strip().upper() == address["street_1"].upper()
-                and clue.strip().upper() == address["state"].upper()
-                and clue.strip().upper() == address["suburb"].upper()
-                and clue.strip().upper() == address["postal_code"].upper()
-                and clue.strip().upper() == address["phone"].upper()
-                and clue.strip().upper() == address["email"].upper()
+                and clue.strip().upper() != address["company_name"].upper()
+                and clue.strip().upper() != address["street_1"].upper()
+                and clue.strip().upper() != address["state"].upper()
+                and clue.strip().upper() != address["suburb"].upper()
+                and clue.strip().upper() != address["postal_code"].upper()
+                and clue.strip().upper() != address["phone"].upper()
+                and clue.strip().upper() != address["email"].upper()
             ):
                 address["street_2"] = clue
 
