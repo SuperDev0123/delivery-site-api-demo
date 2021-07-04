@@ -1,6 +1,7 @@
 import logging
 
 from api.models import Client_employees, Client_warehouses, Utl_suburbs
+from api.helpers.string import similarity
 
 logger = logging.getLogger(__name__)
 
@@ -80,3 +81,24 @@ def get_suburb_state(postal_code, clue=""):
         return None, None
 
     return selected_address.state, selected_address.suburb
+
+
+def get_similar_suburb(postal_code, clue):
+    """
+    get similar(>0.8) suburb from clue - clue has ", "
+    """
+    LOG_ID = "[GET SIMILAR SUBURB]"
+    logger.info(f"{LOG_ID} postal_code: {postal_code}, clue: {clue}")
+
+    similar_suburb = None
+    addresses = Utl_suburbs.objects.filter(postal_code=postal_code)
+
+    for address in addresses:
+        for clue_iter in clue.split(", "):
+            _clue_iter = clue_iter.lower()
+            _clue_iter = _clue_iter.strip()
+
+            if similarity(address.suburb.lower(), _clue_iter) > 0.8:
+                similar_suburb = addresses.suburb
+
+    return similar_suburb

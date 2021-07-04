@@ -25,7 +25,7 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )
-from api.clients.operations.index import get_suburb_state
+from api.clients.operations.index import get_suburb_state, get_similar_suburb
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +161,8 @@ def get_address(order_num):
     DA_email = None
     errors = []
     has_DA = False
+    clue_DA = ""
+    clue_CUS = ""
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -183,11 +185,10 @@ def get_address(order_num):
                 email_regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
 
                 if re.match(email_regex, _item):
-                    DA_email = _item
+                    DA_email = _item9
             try:
-                errors, DA_state, DA_postal_code, DA_suburb = _extract_address(
-                    line_items[7:]
-                )
+                clue_DA = line_items[7:]
+                errors, DA_state, DA_postal_code, DA_suburb = _extract_address(clue_DA)
             except Exception as e:
                 logger.info(f"@352 {LOG_ID} Error: {str(e)}")
                 pass
@@ -198,8 +199,9 @@ def get_address(order_num):
             CUS_street_1 = line_items[6]
 
             try:
+                clue_CUS = line_items[7:]
                 errors, CUS_state, CUS_postal_code, CUS_suburb = _extract_address(
-                    line_items[7:]
+                    clue_CUS
                 )
             except Exception as e:
                 logger.info(f"@354 {LOG_ID} Error: {str(e)}")
@@ -230,7 +232,9 @@ def get_address(order_num):
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
 
-    if not address["suburb"]:
+    if not address["suburb"] and address["postal_code"]:
+        suburb = get_similar_suburb(address["postal_code"], clue_DA or clue_CUS)
+        address["suburb"] = suburb
         errors.append("Stop Error: Delivery suburb missing or misspelled")
 
     if not address["phone"]:
