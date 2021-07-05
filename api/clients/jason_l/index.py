@@ -90,6 +90,7 @@ def partial_pricing(payload, client, warehouse):
         "pu_Address_PostalCode": warehouse.postal_code,
         "pu_Address_State": warehouse.state,
         "pu_Address_Suburb": warehouse.suburb,
+        "pu_Address_Type": bok_1.get("b_027_b_pu_address_type") or "residential",
         "deToCompanyName": "initial_DE_company",
         "de_to_Contact_F_LName": "initial_DE_contact",
         "de_Email": "de@email.com",
@@ -100,6 +101,9 @@ def partial_pricing(payload, client, warehouse):
         "de_To_Address_PostalCode": de_postal_code,
         "de_To_Address_State": de_state.upper(),
         "de_To_Address_Suburb": de_suburb,
+        "de_To_AddressType": bok_1.get("b_053_b_del_address_type") or "residential",
+        "b_booking_tail_lift_pickup": bok_1.get("b_019_b_pu_tail_lift") or 0,
+        "b_booking_tail_lift_deliver": bok_1.get("b_041_b_del_tail_lift") or 0,
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
@@ -119,8 +123,9 @@ def partial_pricing(payload, client, warehouse):
 
     items = product_oper.get_product_items(bok_2s, client, True, False)
 
-    for item in items:
+    for index, item in enumerate(items):
         booking_line = {
+            "pk_lines_id": index,
             "e_type_of_packaging": "Carton" or item["e_type_of_packaging"],
             "fk_booking_id": bok_1["pk_header_id"],
             "e_qty": item["qty"],

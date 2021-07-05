@@ -30,8 +30,12 @@ def get_warehouse(client, code=None):
     LOG_ID = "[GET WHSE]"
 
     try:
-        if code:
+        if code:  # JasonL with code
             warehouse = Client_warehouses.objects.get(client_warehouse_code=code)
+        elif client.company_name == "Jason L":  # JasonL without code
+            warehouse = Client_warehouses.objects.filter(
+                fk_id_dme_client=client
+            ).first()
         else:
             warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
 
