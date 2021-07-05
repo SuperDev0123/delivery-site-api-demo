@@ -67,7 +67,9 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     # Sort by timestamp
     _consignmentStatuses = consignmentStatuses
     if fp_name.lower() == "allied":
-        _consignmentStatuses = sorted(consignmentStatuses, key=lambda x: x.statusUpdate)
+        _consignmentStatuses = sorted(
+            consignmentStatuses, key=lambda x: x["statusUpdate"]
+        )
         print("@1 - ", _consignmentStatuses)
 
     # Get actual_pickup_timestamp
