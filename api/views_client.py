@@ -797,7 +797,7 @@ def get_delivery_status(request):
             quote_data = SimpleQuoteSerializer(quote, context=context).data
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
-        last_milestone = "Delivered"
+        last_milestone = "Complete"
         if category == "Booked":
             step = 2
         elif category == "Transit":

@@ -99,13 +99,13 @@ def get_status_time_from_category(booking_id, category):
         ).values_list("dme_delivery_status", flat=True)
         status_times = (
             Dme_status_history.objects.filter(
-                **{"fk_booking_id": booking_id, "status_last__in": statuses}
+                fk_booking_id=booking_id, status_last__in=statuses
             )
             .order_by("event_time_stamp")
             .values_list("event_time_stamp", flat=True)
         )
         return (
-            status_times[0].strftime("%Y-%m-%d %H:%M")
+            status_times[0].strftime("%d/%m/%Y %H:%M")
             if status_times and status_times[0]
             else None
         )
