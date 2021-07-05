@@ -79,13 +79,14 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         for _consignmentStatus in _consignmentStatuses:
             if _consignmentStatus["status"] == "DEL":
                 has_delivered_status = True
+                break
 
         if has_delivered_status and last_consignmentStatus["status"] != "DEL":
             _consignmentStatuses.append(
                 {
                     "status": "PARTDEL",
                     "statusDescription": "Partially Delivered",
-                    "statusDate": last_consignmentStatus["statusDate"],
+                    "statusUpdate": last_consignmentStatus["statusUpdate"],
                 }
             )
 
