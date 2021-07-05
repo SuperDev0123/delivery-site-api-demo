@@ -88,28 +88,33 @@ def get_status_category_from_status(status):
         send_email_to_admins("Category for Status not Found", message)
         return None
 
+
 def get_status_time_from_category(booking_id, category):
     if not category:
         return None
-    
+
     try:
-        statuses = Utl_dme_status.objects.filter(dme_delivery_status_category=category).values_list(
-            'dme_delivery_status',
-            flat=True
+        statuses = Utl_dme_status.objects.filter(
+            dme_delivery_status_category=category
+        ).values_list("dme_delivery_status", flat=True)
+        status_times = (
+            Dme_status_history.objects.filter(
+                **{"fk_booking_id": booking_id, "status_last__in": statuses}
+            )
+            .order_by("event_time_stamp")
+            .values_list("event_time_stamp", flat=True)
         )
-        status_times = Dme_status_history.objects.filter(**{
-            'fk_booking_id': booking_id,
-            'status_old__in': statuses
-        }).order_by('event_time_stamp').values_list(
-            'event_time_stamp',
-            flat=True
+        return (
+            status_times[0].strftime("%Y-%m-%d %H:%M")
+            if status_times and status_times[0]
+            else None
         )
-        return status_times[0].strftime("%Y-%m-%d %H:%M") if status_times and status_times[0] else None
     except Exception as e:
         message = f"#819 Timestamp not found with this category: {category}"
         logger.error(message)
         send_email_to_admins("Timestamp for Category not Found", message)
         return None
+
 
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
