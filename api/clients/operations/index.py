@@ -83,14 +83,12 @@ def get_suburb_state(postal_code, clue=""):
     return selected_address.state, selected_address.suburb
 
 
-def get_similar_suburb(postal_code, clues):
+def get_similar_suburb(clues):
     """
     get similar(>0.8) suburb from clues
     """
     LOG_ID = "[GET SIMILAR SUBURB]"
-    logger.info(f"{LOG_ID} postal_code: {postal_code}, clues: {clues}")
-
-    similar_suburb = None
+    logger.info(f"{LOG_ID} clues: {clues}")
     addresses = Utl_suburbs.objects.all().only("suburb")
 
     for address in addresses:
@@ -99,9 +97,7 @@ def get_similar_suburb(postal_code, clues):
             _clue_iter = _clue_iter.strip()
 
             if similarity(address.suburb.lower(), _clue_iter) > 0.8:
-                similar_suburb = clue_iter
-
-    return similar_suburb
+                return clue_iter
 
 
 def is_postalcode_in_state(state, postal_code):
