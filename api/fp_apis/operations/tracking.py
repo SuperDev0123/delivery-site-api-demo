@@ -70,7 +70,6 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         _consignmentStatuses = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
-        print("@1 - ", _consignmentStatuses)
 
     # Get actual_pickup_timestamp
     if not booking.s_20_Actual_Pickup_TimeStamp:
