@@ -64,12 +64,30 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         logger.info(msg)
         return False
 
-    # Sort by timestamp
+    # Allied
     _consignmentStatuses = consignmentStatuses
     if fp_name.lower() == "allied":
+        # Sort by timestamp
         _consignmentStatuses = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
+
+        # Check partial delivered
+        has_delivered_status = False
+        last_consignmentStatus = _consignmentStatuses[len(_consignmentStatuses) - 1]
+
+        for _consignmentStatus in _consignmentStatuses:
+            if _consignmentStatus["status"] == "DEL":
+                has_delivered_status = True
+
+        if has_delivered_status and last_consignmentStatus["status"] != "DEL":
+            _consignmentStatuses.append(
+                {
+                    "status": "PARTDEL",
+                    "statusDescription": "Partially Delivered",
+                    "statusDate": last_consignmentStatus["statusDate"],
+                }
+            )
 
     # Get actual_pickup_timestamp
     if not booking.s_20_Actual_Pickup_TimeStamp:
