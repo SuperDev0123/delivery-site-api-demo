@@ -221,7 +221,6 @@ def get_address(order_num):
         address["suburb"] = CUS_suburb or ""
         address["state"] = CUS_state or ""
         address["postal_code"] = CUS_postal_code or ""
-        address["phone"] = address["phone"] or ""
     else:
         clue_CUS = []
         address["company_name"] = DA_company_name or ""
@@ -229,8 +228,9 @@ def get_address(order_num):
         address["suburb"] = DA_suburb or ""
         address["state"] = DA_state or ""
         address["postal_code"] = DA_postal_code or ""
-        address["phone"] = DA_phone or ""
-        address["email"] = DA_email or ""
+
+    address["phone"] = DA_phone or address["phone"]
+    address["email"] = DA_email or address["email"]
 
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
