@@ -223,6 +223,7 @@ def get_address(order_num):
         address["postal_code"] = CUS_postal_code or ""
         address["phone"] = address["phone"] or ""
     else:
+        clue_CUS = []
         address["company_name"] = DA_company_name or ""
         address["street_1"] = DA_street_1 or ""
         address["suburb"] = DA_suburb or ""
@@ -297,7 +298,7 @@ def get_address(order_num):
             )
 
     # Street 1
-    if not address["street_1"] and clue_DA or clue_CUS:
+    if not address["street_1"] and (clue_DA or clue_CUS):
         for clue in clue_DA or clue_CUS:
             if (
                 clue
