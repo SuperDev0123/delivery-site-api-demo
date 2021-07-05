@@ -231,9 +231,6 @@ def get_address(order_num):
         address["phone"] = DA_phone or ""
         address["email"] = DA_email or ""
 
-    if not address["street_1"]:
-        errors.append("Stop Error: Delivery street 1 missing or misspelled")
-
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
 
@@ -331,6 +328,9 @@ def get_address(order_num):
 
         if street_2:
             address["street_2"] = ", ".join(street_2)
+
+    if not address["street_1"]:
+        errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
     address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
