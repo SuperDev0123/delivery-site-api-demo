@@ -217,9 +217,11 @@ def push_boks(payload, client, username, method):
     is_web = "_websys" in username
 
     # Strip data
-    bok_1["b_client_order_num"] = bok_1["b_client_order_num"].strip()
-    bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
-    bok_1["shipping_type"] = bok_1["shipping_type"].strip()
+    if is_biz:
+        bok_1["b_client_order_num"] = bok_1["b_client_order_num"].strip()
+        bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
+        bok_1["shipping_type"] = bok_1["shipping_type"].strip()
+
     bok_1["b_053_b_del_address_type"] = (
         bok_1["b_053_b_del_delivery_type"].strip().lower()
     )
@@ -245,6 +247,11 @@ def push_boks(payload, client, username, method):
             message = (
                 "'b_053_b_del_address_type' should be `business` or `residential`."
             )
+            logger.info(f"{LOG_ID} {message}")
+            raise ValidationError(message)
+    else:
+        if not bok_1.get("client_booking_id"):
+            message = "'client_booking_id' is required."
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 

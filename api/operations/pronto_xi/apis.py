@@ -115,7 +115,7 @@ def get_product_group_code(ItemCode, token):
     return GroupCode
 
 
-def parse_order_xml(response, token):
+def parse_order_xml(response, order_num, token):
     LOG_ID = "[PRONTO PARSE ORDER XML]"
 
     # Test Usage #
@@ -132,7 +132,7 @@ def parse_order_xml(response, token):
         return {}
 
     SalesOrder = SalesOrders[0]
-    order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
+    # order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
 
     # Test Usage #
     if IS_TESTING:
@@ -307,7 +307,7 @@ def get_order(order_num):
         logger.error(f"@632 [PRONTO GET ORDER] Failed")
         return False
 
-    order, lines = parse_order_xml(response, token)
+    order, lines = parse_order_xml(response, order_num, token)
     logger.info(f"@649 [PRONTO GET ORDER] Finish \norder: {order}\nlines: {lines}")
 
     return order, lines
