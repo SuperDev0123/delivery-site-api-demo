@@ -299,6 +299,20 @@ def get_address(order_num):
                 "Warning: Missing email for delivery address, used to advise booking status"
             )
 
+    # Street 1
+    if not address["street_1"] and clue_DA or clue_CUS:
+        for clue in clue_DA or clue_CUS:
+            if (
+                clue
+                and clue.strip().upper() != address["company_name"].upper()
+                and clue.strip().upper() != address["state"].upper()
+                and clue.strip().upper() != address["suburb"].upper()
+                and clue.strip().upper() != address["postal_code"].upper()
+                and clue.strip().upper() != address["phone"].upper()
+                and clue.strip().upper() != address["email"].upper()
+            ):
+                address["street_1"] = clue
+
     # Street 2
     if clue_DA or clue_CUS:
         street_2 = []
