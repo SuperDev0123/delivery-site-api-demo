@@ -1,7 +1,15 @@
 import logging
 
 from api.models import Bookings, Fp_freight_providers
-from api.operations.labels import ship_it, dhl, hunter, hunter_thermal, tnt, allied
+from api.operations.labels import (
+    ship_it,
+    dhl,
+    hunter,
+    hunter_normal,
+    hunter_thermal,
+    tnt,
+    allied,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +31,7 @@ def build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
         elif fp_name == "hunter":
-            file_path, file_name = hunter_thermal.build_label(
+            file_path, file_name = hunter_normal.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
         elif fp_name == "tnt":

@@ -14,8 +14,8 @@ import urllib, requests
 import pymysql, pymysql.cursors
 import json
 import logging
-
 import time
+
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.pdfbase.pdfmetrics import registerFont, registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
@@ -74,11 +74,11 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 
-def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
+def gen_barcode(booking, booking_lines, j=0, label_index=0):
     consignment_num = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
     )
-    item_index = str(label_index + line_index + 1).zfill(3)
+    item_index = str(label_index + j + 1).zfill(3)
     items_count = str(len(booking_lines)).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
@@ -122,20 +122,22 @@ class RotatedImage(Image):
         Image.draw(self)
 
 
-def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
-    # logger.info(
-    #     f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
-    # )
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
+    logger.info(
+        f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+    )
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    if not os.path.exists(file_path):
-        os.makedirs(file_path)
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
 
     if lines:
         if sscc:
-            file_name = (
+            filename = (
                 booking.pu_Address_State
                 + "_"
                 + str(booking.b_bookingID_Visual)
@@ -144,7 +146,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 + ".pdf"
             )
         else:
-            file_name = (
+            filename = (
                 booking.pu_Address_State
                 + "_"
                 + str(booking.b_bookingID_Visual)
@@ -153,7 +155,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 + ".pdf"
             )
     else:
-        file_name = (
+        filename = (
             booking.pu_Address_State
             + "_"
             + v_FPBookingNumber
@@ -174,7 +176,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
         backColor=f"#{fp_color_code}",
     )
 
-    file = open(file_path + file_name, "w")
+    file = open(f"{filepath}/{filename}", "w")
 
     date = datetime.datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
 
@@ -204,7 +206,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     width = float(label_settings["label_dimension_length"]) * mm
     height = float(label_settings["label_dimension_width"]) * mm
     doc = SimpleDocTemplate(
-        file_path + file_name,
+        filepath + filename,
         pagesize=(width, height),
         rightMargin=float(label_settings["margin_h"]) * mm,
         leftMargin=float(label_settings["margin_h"]) * mm,
@@ -225,16 +227,25 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
         suburb=de_suburb, dest_postcode=de_postcode, state=de_state
     )
     if fp_routing[0] and fp_routing[0].orig_depot:
-        head_port = fp_routing[0].orig_depot 
+        head_port = fp_routing[0].orig_depot
     else:
         head_port = ""
 
     if fp_routing[0] and fp_routing[0].gateway:
-        port_code = fp_routing[0].gateway     
+        port_code = fp_routing[0].gateway
     else:
         port_code = ""
 
+    j = 1
+
     totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
     totalWeight = 0
     totalCubic = 0
     if one_page_label:
@@ -244,11 +255,13 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
         totalCubic = lines[0].e_1_Total_dimCubicMeter
     else:
         for line in lines:
-            totalQty = totalQty + line.e_qty
             totalWeight = totalWeight + line.e_Total_KG_weight
             totalCubic = totalCubic + line.e_1_Total_dimCubicMeter
 
-    line_index = 0
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
+
     for line in lines:
         for k in range(line.e_qty):
             if one_page_label and k > 0:
@@ -289,7 +302,9 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s><b>Date: %s</b></font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y"),
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                            if booking.b_dateBookedDate
+                            else "",
                         ),
                         style_left,
                     ),
@@ -401,7 +416,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s><b>%s of %s</b></font>"
-                        % (label_settings["font_size_large"], line_index + 1, totalQty),
+                        % (label_settings["font_size_large"], j + 1, totalQty),
                         style_left,
                     )
                 ],
@@ -530,7 +545,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 ],
             )
 
-            barcode = gen_barcode(booking, lines, line_index, label_index)
+            barcode = gen_barcode(booking, lines, j, label_index)
 
             d = Drawing(100, 100)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
@@ -729,10 +744,10 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
 
             Story.append(PageBreak())
 
-            line_index += 1
+            j += 1
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
 
     # end writting data into pdf file
     file.close()
-    return file_path, file_name
+    return filepath, filename
