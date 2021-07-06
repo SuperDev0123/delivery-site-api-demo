@@ -42,7 +42,7 @@ def _apply_mu(quote, fp, client):
     # Apply FP MU for Quotes with DME credentials
     # if client.gap_percent:
     if _is_used_client_credential(
-        fp_name, quote.fk_client_id.lower(), quote.account_code
+        quote.freight_provider, quote.fk_client_id.lower(), quote.account_code
     ):
         fp_mu = 0
     else:  # FP MU(Fuel Levy)
