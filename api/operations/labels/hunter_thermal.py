@@ -72,7 +72,9 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
     v_FPBookingNumber = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
     )
@@ -82,14 +84,14 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     )
 
     # start check if pdfs folder exists
-    if not os.path.exists(file_path):
-        os.makedirs(file_path)
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
     # end check if pdfs folder exists
 
     # start pdf file name using naming convention
     if lines:
         if sscc:
-            file_name = (
+            filename = (
                 booking.pu_Address_State
                 + "_"
                 + str(booking.b_bookingID_Visual)
@@ -98,7 +100,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 + ".pdf"
             )
         else:
-            file_name = (
+            filename = (
                 booking.pu_Address_State
                 + "_"
                 + str(booking.b_bookingID_Visual)
@@ -107,29 +109,21 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                 + ".pdf"
             )
     else:
-        file_name = (
+        filename = (
             booking.pu_Address_State
             + "_"
-            + booking.v_FPBookingNumber
+            + v_FPBookingNumber
             + "_"
             + str(booking.b_bookingID_Visual)
             + ".pdf"
         )
 
-    file = open(f"{file_path}/{file_name}", "w")
-    logger.info(f"#111 [HUNTER THERMAL LABEL] File full path: {file_path}/{file_name}")
+    file = open(f"{filepath}/{filename}", "w")
+    logger.info(f"#111 [HUNTER THERMAL LABEL] File full path: {filepath}/{filename}")
     # end pdf file name using naming convention
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-    totalQty = 0
-    if one_page_label:
-        lines = [lines[0]]
-        totalQty = 1
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
 
     label_settings = {
         "font_family": "Verdana",
@@ -152,7 +146,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     }
 
     doc = SimpleDocTemplate(
-        f"{file_path}/{file_name}",
+        f"{filepath}/{filename}",
         pagesize=(
             float(label_settings["label_dimension_length"]) * mm,
             float(label_settings["label_dimension_width"]) * mm,
@@ -181,7 +175,30 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
     document = []
 
     Story = []
-    line_index = 1
+    j = 1
+
+    totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
+    totalWeight = 0
+    totalCubic = 0
+    for booking_line in lines:
+        totalWeight = totalWeight + booking_line.e_qty * booking_line.e_weightPerEach
+        totalCubic = totalCubic + get_cubic_meter(
+            booking_line.e_dimLength,
+            booking_line.e_dimWidth,
+            booking_line.e_dimHeight,
+            booking_line.e_dimUOM,
+        )
+
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
 
     for line in lines:
         for k in range(line.e_qty):
@@ -379,7 +396,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Item %s/%s Weight %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            line_index,
+                            j,
                             totalQty,
                             line.e_Total_KG_weight or "",
                             line.e_weightUOM or "",
@@ -431,7 +448,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
 
             Story.append(shell_table)
 
-            barcode = gen_barcode(booking, lines, line_index, label_index)
+            barcode = gen_barcode(booking, lines, j, label_index)
 
             tbl_data = [
                 [
@@ -539,7 +556,7 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Item %s/%s Weight %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            line_index,
+                            j,
                             totalQty,
                             line.e_Total_KG_weight or "",
                             line.e_weightUOM or "",
@@ -709,11 +726,11 @@ def build_label(booking, file_path, lines, label_index, sscc, one_page_label):
 
             Story.append(PageBreak())
 
-            line_index += 1
+            j += 1
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
     logger.info(
         f"#119 [HUNTER LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
-    return file_path, file_name
+    return filepath, filename

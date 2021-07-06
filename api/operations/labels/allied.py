@@ -155,14 +155,6 @@ def build_label(
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 0
-    if one_page_label:
-        lines = [lines[0]]
-        totalQty = 1
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
-
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
         "font_family": "Verdana",
@@ -208,10 +200,16 @@ def build_label(
     j = 1
 
     totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
     totalWeight = 0
     totalCubic = 0
     for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
         totalWeight = totalWeight + booking_line.e_qty * booking_line.e_weightPerEach
         totalCubic = totalCubic + get_cubic_meter(
             booking_line.e_dimLength,

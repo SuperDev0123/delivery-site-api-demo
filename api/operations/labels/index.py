@@ -34,7 +34,7 @@ def build_label(
             file_path, file_name = allied.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
-        else:  # "auspost", "startrack", "State Transport"
+        else:  # "Century", auspost", "startrack", "State Transport"
             file_path, file_name = allied.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )

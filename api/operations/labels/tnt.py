@@ -79,7 +79,9 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
-def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -128,13 +130,6 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-    totalQty = 1
-    if one_page_label:
-        lines = [lines[0]]
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -241,9 +236,21 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
         )
 
+    totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
     e_Total_KG_weight = 0
     for booking_line in lines:
         e_Total_KG_weight += booking_line.e_weightPerEach * booking_line.e_qty
+
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
 
     for booking_line in lines:
         for j_index in range(booking_line.e_qty):

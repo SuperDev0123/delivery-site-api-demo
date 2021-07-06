@@ -90,7 +90,9 @@ def gen_barcode(booking, item_no=0):
     return f"AA{visual_id}{item_index}"
 
 
-def build_label(booking, filepath, lines=[], label_index=0):
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -105,14 +107,24 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     # start pdf file name using naming convention
     if lines:
-        filename = (
-            booking.pu_Address_State
-            + "_"
-            + str(booking.b_bookingID_Visual)
-            + "_"
-            + str(lines[0].pk)
-            + ".pdf"
-        )
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
+            )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
     else:
         filename = (
             booking.pu_Address_State
@@ -129,10 +141,6 @@ def build_label(booking, filepath, lines=[], label_index=0):
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-    totalQty = 0
-    for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -179,12 +187,22 @@ def build_label(booking, filepath, lines=[], label_index=0):
     j = 1
 
     totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
     totalWeight = 0
     totalCubic = 0
     for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
         totalWeight = totalWeight + booking_line.e_Total_KG_weight
         totalCubic = totalCubic + booking_line.e_1_Total_dimCubicMeter
+
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
