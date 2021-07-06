@@ -229,7 +229,6 @@ def push_boks(payload, client, username, method):
     if bok_1["b_053_b_del_address_type"] == "":
         bok_1["b_053_b_del_address_type"] == "business"
         bok_1["shipping_type"] = "DMEM"
-    print("@! - ", bok_1["b_053_b_del_address_type"])
 
     del bok_1["b_053_b_del_delivery_type"]
 
