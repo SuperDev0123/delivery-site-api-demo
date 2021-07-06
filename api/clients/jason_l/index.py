@@ -226,7 +226,7 @@ def push_boks(payload, client, username, method):
         bok_1.get("b_053_b_del_delivery_type", "business").strip().lower()
     )
 
-    if bok_1["b_053_b_del_address_type"] == "":
+    if not bok_1["b_053_b_del_address_type"] in ["business", "residential"]:
         bok_1["b_053_b_del_address_type"] == "business"
         bok_1["shipping_type"] = "DMEM"
 
@@ -245,13 +245,6 @@ def push_boks(payload, client, username, method):
 
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
-
-        if not bok_1["b_053_b_del_address_type"] in ["business", "residential"]:
-            message = (
-                "'b_053_b_del_address_type' should be `business` or `residential`."
-            )
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
     else:
