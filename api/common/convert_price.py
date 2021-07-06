@@ -23,7 +23,7 @@ def _is_used_client_credential(fp_name, client_name, account_code):
         for client_key in client_credentials:
             if (
                 client_credentials[client_key]["accountCode"] == account_code
-                and _client_name == client_name
+                and _client_name == client_name.lower()
             ):
                 return True
 
@@ -37,14 +37,13 @@ def _apply_mu(quote, fp, client):
     params:
         * quote: api_booking_quote object
     """
-
     logger.info(f"[FP $ -> DME $] Start quote: {quote}")
 
-    # # Apply FP MU only when used DME's credential
-    # if _is_used_client_credential(fp_name, client_name, quote.account_code):
-
-    # Apply FP MU when only Client doesn't have any FP credential
-    if client.gap_percent:
+    # Apply FP MU for Quotes with DME credentials
+    # if client.gap_percent:
+    if _is_used_client_credential(
+        fp_name, quote.fk_client_id.lower(), quote.account_code
+    ):
         fp_mu = 0
     else:  # FP MU(Fuel Levy)
         fp_mu = fp.fp_markupfuel_levy_percent
@@ -78,7 +77,7 @@ def _apply_mu(quote, fp, client):
             quoted_dollar = cost + client_min
 
     logger.info(f"[FP $ -> DME $] Finish quoted $: {quoted_dollar} FP_MU: {fp_mu}")
-    return quoted_dollar, fuel_levy_base
+    return quoted_dollar, fuel_levy_base, fp_mu
 
 
 def apply_markups(quotes):
@@ -101,9 +100,9 @@ def apply_markups(quotes):
     for quote in quotes:
         fp_name = quote.freight_provider.lower()
         fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-        client_mu_1_minimum_values, fuel_levy_base = _apply_mu(quote, fp, client)
+        client_mu_1_minimum_values, fuel_levy_base, fp_mu = _apply_mu(quote, fp, client)
         quote.client_mu_1_minimum_values = client_mu_1_minimum_values
-        quote.mu_percentage_fuel_levy = fp.fp_markupfuel_levy_percent
+        quote.mu_percentage_fuel_levy = fp_mu
         quote.fuel_levy_base = fuel_levy_base
         quote.client_mark_up_percent = client.client_mark_up_percent
         quote.save()
