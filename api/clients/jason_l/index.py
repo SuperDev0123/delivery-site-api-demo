@@ -253,6 +253,11 @@ def push_boks(payload, client, username, method):
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 
+        if not payload.get("booking_lines"):
+            message = "'booking_lines' is required."
+            logger.info(f"{LOG_ID} {message}")
+            raise ValidationError(message)
+
     # Check duplicated push with `b_client_order_num`
     selected_quote = None
     if method == "POST":
@@ -327,7 +332,7 @@ def push_boks(payload, client, username, method):
                     return json_res
 
     # Prepare population
-    if not bok_2s:
+    if is_biz and not bok_2s:
         bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
 
         warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
@@ -335,6 +340,26 @@ def push_boks(payload, client, username, method):
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["b_clientPU_Warehouse"] = warehouse.name
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+
+    if is_web:
+        for index, line in enumerate(payload.get("booking_lines")):
+            bok_2s.append(
+                {
+                    "model_number": line["model_number"],
+                    "qty": line["qty"],
+                    "sequence": 1,
+                    "UOMCode": "EACH",
+                    "ProductGroupCode": "----",
+                }
+            )
+
+        warehouse = get_warehouse(client)
+        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+        bok_1["b_clientPU_Warehouse"] = warehouse.name
+        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+
+        next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+        bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
 
     bok_1["pk_header_id"] = str(uuid.uuid4())
 
@@ -704,11 +729,14 @@ def push_boks(payload, client, username, method):
         # Send quote info back to Pronto
         # result = send_info_back(bok_1_obj, best_quote)
     else:
-        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
-        logger.error(message)
+        b_client_order_num = bok_1.get("b_client_order_num")
 
-        if bok_1["b_client_order_num"]:
-            send_email_to_admins("No FC result", message)
+        if b_client_order_num:
+            message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
+            logger.error(message)
+
+            if bok_1["b_client_order_num"]:
+                send_email_to_admins("No FC result", message)
 
     # Set Express or Standard
     if len(json_results) == 1:
