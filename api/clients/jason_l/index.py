@@ -225,6 +225,11 @@ def push_boks(payload, client, username, method):
     bok_1["b_053_b_del_address_type"] = (
         bok_1.get("b_053_b_del_delivery_type", "business").strip().lower()
     )
+
+    if bok_1["b_053_b_del_address_type"] == "":
+        bok_1["b_053_b_del_address_type"] == "business"
+        bok_1["shipping_type"] = "DMEM"
+
     del bok_1["b_053_b_del_delivery_type"]
 
     # Check required fields
