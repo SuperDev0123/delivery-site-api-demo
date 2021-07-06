@@ -2926,7 +2926,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_packagetypes(self, request, pk=None):
-        packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
+        packageTypes = Dme_package_types.objects.all().order_by("id")
 
         return_datas = []
         if not packageTypes.exists():
