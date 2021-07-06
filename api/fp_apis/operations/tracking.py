@@ -74,21 +74,28 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
         # Check Partially Delivered
         has_delivered_status = False
+        delivered_status_cnt = 0
         last_consignmentStatus = _consignmentStatuses[len(_consignmentStatuses) - 1]
 
         for _consignmentStatus in _consignmentStatuses:
             if _consignmentStatus["status"] == "DEL":
                 has_delivered_status = True
-                break
+                delivered_status_cnt += 1
 
-        if has_delivered_status and last_consignmentStatus["status"] != "DEL":
-            _consignmentStatuses.append(
-                {
-                    "status": "PARTDEL",
-                    "statusDescription": "Partially Delivered",
-                    "statusUpdate": last_consignmentStatus["statusUpdate"],
-                }
-            )
+        if has_delivered_status:
+            lines = booking.lines().filter(is_deleted=False)
+
+            if delivered_status_cnt < lines.count():
+                logger.info(
+                    f"#382 [TRACKING] Allied Partially Delivered BookingId: {booking.b_bookingID_Visual}, statuses: {_consignmentStatuses}"
+                )
+                _consignmentStatuses.append(
+                    {
+                        "status": "PARTDEL",
+                        "statusDescription": "Partially Delivered",
+                        "statusUpdate": last_consignmentStatus["statusUpdate"],
+                    }
+                )
 
     # Get actual_pickup_timestamp
     if not booking.s_20_Actual_Pickup_TimeStamp:
@@ -123,6 +130,6 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     # booking.b_booking_Notes = status_desc
     booking.save()
 
-    msg = f"#381 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
+    msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
     logger.info(msg)
     return True
