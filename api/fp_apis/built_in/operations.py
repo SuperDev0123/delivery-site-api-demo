@@ -162,42 +162,57 @@ def find_vehicle_ids(booking_lines, fp):
         #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
         # )
 
-        if (
-            booking_lines.first().e_type_of_packaging
-            and booking_lines.first().e_type_of_packaging.lower() in PALLETS
-        ):
-            for vehicle in vehicles:
-                vmax_width = (
-                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
-                )
-                vmax_height = (
-                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
-                )
-                vmax_length = (
-                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
-                )
+        # 2021-07-07 Century only charge per vehicle
+        # if (
+        #     booking_lines.first().e_type_of_packaging
+        #     and booking_lines.first().e_type_of_packaging.lower() in PALLETS
+        # ):
+        #     for vehicle in vehicles:
+        #         vmax_width = (
+        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
+        #         )
+        #         vmax_height = (
+        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
+        #         )
+        #         vmax_length = (
+        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
+        #         )
 
-                if (
-                    vmax_width >= max_width
-                    and max_height >= max_height
-                    and vmax_length >= max_length
-                    and vehicle.pallets >= len(booking_lines)
-                ):
-                    vehicle_ids.append(vehicle.id)
-        else:
-            for vehicle in vehicles:
-                vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-                vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-                vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-                vehicle_cube = vmax_width * vmax_height * vmax_length
+        #         if (
+        #             vmax_width >= max_width
+        #             and max_height >= max_height
+        #             and vmax_length >= max_length
+        #             and vehicle.pallets >= len(booking_lines)
+        #         ):
+        #             vehicle_ids.append(vehicle.id)
+        # else:
+        #     for vehicle in vehicles:
+        #         vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+        #         vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+        #         vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+        #         vehicle_cube = vmax_width * vmax_height * vmax_length
 
-                if (
-                    vmax_width >= max_width
-                    and max_height >= max_height
-                    and vmax_length >= max_length
-                    and vehicle_cube * 0.8 >= sum_cube
-                ):
-                    vehicle_ids.append(vehicle.id)
+        #         if (
+        #             vmax_width >= max_width
+        #             and max_height >= max_height
+        #             and vmax_length >= max_length
+        #             and vehicle_cube * 0.8 >= sum_cube
+        #         ):
+        #             vehicle_ids.append(vehicle.id)
+
+        for vehicle in vehicles:
+            vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+            vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+            vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+            vehicle_cube = vmax_width * vmax_height * vmax_length
+
+            if (
+                vmax_width >= max_width
+                and max_height >= max_height
+                and vmax_length >= max_length
+                and vehicle_cube * 0.8 >= sum_cube
+            ):
+                vehicle_ids.append(vehicle.id)
 
         return vehicle_ids
     except Exception as e:
