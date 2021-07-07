@@ -80,7 +80,7 @@ def _apply_mu(quote, fp, client):
     logger.info(
         f"[FP $ -> DME $] Finish quoted $: {quoted_dollar} FP_MU: {fp_mu}, Client_MU: {client_mu}"
     )
-    return quoted_dollar, fuel_levy_base
+    return quoted_dollar, fuel_levy_base, client_mu
 
 
 def apply_markups(quotes):
@@ -103,11 +103,13 @@ def apply_markups(quotes):
     for quote in quotes:
         fp_name = quote.freight_provider.lower()
         fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-        client_mu_1_minimum_values, fuel_levy_base = _apply_mu(quote, fp, client)
+        client_mu_1_minimum_values, fuel_levy_base, client_mu = _apply_mu(
+            quote, fp, client
+        )
         quote.client_mu_1_minimum_values = client_mu_1_minimum_values
         quote.mu_percentage_fuel_levy = fp.fp_markupfuel_levy_percent
         quote.fuel_levy_base = fuel_levy_base
-        quote.client_mark_up_percent = client.client_mark_up_percent
+        quote.client_mark_up_percent = client_mu
         quote.save()
 
     logger.info(f"[APPLY MU] Finished")
