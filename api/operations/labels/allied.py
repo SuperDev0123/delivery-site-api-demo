@@ -780,7 +780,7 @@ def build_label(
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.vx_account_code or "",
+                            booking.vx_account_code or "", 
                         ),
                         style_left,
                     ),

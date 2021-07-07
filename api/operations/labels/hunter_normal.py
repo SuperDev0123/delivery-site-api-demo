@@ -206,7 +206,7 @@ def build_label(
     width = float(label_settings["label_dimension_length"]) * mm
     height = float(label_settings["label_dimension_width"]) * mm
     doc = SimpleDocTemplate(
-        filepath + filename,
+        f"{filepath}/{filename}",
         pagesize=(width, height),
         rightMargin=float(label_settings["margin_h"]) * mm,
         leftMargin=float(label_settings["margin_h"]) * mm,
@@ -259,7 +259,7 @@ def build_label(
             totalCubic = totalCubic + line.e_1_Total_dimCubicMeter
 
     if sscc:
-        j = 1 + label_index
+        j = label_index
         totalQty = sscc_cnt
 
     for line in lines:
