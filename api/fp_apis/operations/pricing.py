@@ -312,7 +312,9 @@ async def _built_in_pricing_worker_builder(
     _fp_name, booking, booking_lines, is_pricing_only
 ):
     results = get_self_pricing(_fp_name, booking, booking_lines, is_pricing_only)
-    logger.info(f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results)}")
+    logger.info(
+        f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results)}, Results: {results}"
+    )
     parse_results = parse_pricing_response(results, _fp_name, booking, True)
 
     for parse_result in parse_results:

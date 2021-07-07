@@ -4387,7 +4387,7 @@ class VehiclesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
+            logger.error(f"Vehicle Add error: {str(e)}")
             return JsonResponse({"result": None}, status=400)
 
 
