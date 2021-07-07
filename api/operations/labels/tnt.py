@@ -23,7 +23,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting
+from api.models import Booking_lines, FPRouting, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
@@ -207,6 +207,7 @@ def build_label(
         routing_group=routing_group,
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
+    routing = None
     if crecords.exists():
         drecord = (
             FPRouting.objects.filter(
@@ -217,7 +218,6 @@ def build_label(
             .only("orig_depot")
             .first()
         )
-        routing = None
 
         if drecord:
             for crecord in crecords:
@@ -892,7 +892,6 @@ def build_label(
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 3),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("BOX", (1, 0), (-1, -1), 0.5, colors.black),
                 ],
             )
 
@@ -1008,6 +1007,7 @@ def build_label(
                     ("LEFTPADDING", (0, 0), (-1, -1), 3),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("BOX", (0, 0), (-1, -1), 0.5, colors.black),
+                    ("LINEBEFORE", (1, 0), (-1, -1), 0.5, colors.black),
                 ],
             )
 
@@ -1033,14 +1033,46 @@ def build_label(
             Story.append(t1)
             # Story.append(Spacer(1, 5))
 
-            tbl_data1 = [[tnt_img]]
+            fp_color_code = (
+                Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
+                or "808080"
+            )
+
+            tbl_data1 = [
+                [tnt_img], 
+                ['']
+            ]
 
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
                 ),
-                rowHeights=(float(label_settings["line_height_large"]) * mm),
+                rowHeights=(
+                    float(label_settings["line_height_large"]) * mm,
+                    float(label_settings["line_height_large"]) * 1 / 2 * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ('BACKGROUND', (0,1), (-1,-1), f"#{fp_color_code}"),
+                ],
+            )
+
+            tbl_data1 = [[dme_img, '', t1]]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 8) * mm,
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm
+                ),
+                rowHeights=(float(label_settings["line_height_large"]) * 3 / 2 * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
