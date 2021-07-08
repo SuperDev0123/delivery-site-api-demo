@@ -41,9 +41,9 @@ def build_csv(booking_ids):
         elif vx_freight_provider == "dhl":
             f = open(f"/dme_sftp/cope_au/pickup_ext/dhl_au/{csv_name}", "w")
         elif vx_freight_provider == "state transport":
-            f = open(f"/dme_sftp/state_transport_au/csv/{csv_name}", "w")
+            f = open(f"/dme_sftp/state_transport_au/book_csv/outdata/{csv_name}", "w")
         elif vx_freight_provider == "century":
-            f = open(f"/dme_sftp/century_au/csv/{csv_name}", "w")
+            f = open(f"/dme_sftp/century_au/book_csv/outdata/{csv_name}", "w")
     else:
         local_path = f"{settings.STATIC_PUBLIC}/csvs/"
         if not os.path.exists(local_path):
