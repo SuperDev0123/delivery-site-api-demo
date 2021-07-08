@@ -161,12 +161,15 @@ def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
                         "pallet_index": biggest_pallet["index"],
                         "pallet_obj": biggest_pallet["pallet_obj"],
                         "total_space": biggest_pallet["total_cubic"],
+                        "packed_space": biggest_pallet["available_cubic"],
+                        "max_height": biggest_pallet["height"],
                         "remaining_space": 0,
                         "quantity": pallet_count,
                         "lines": [
                             {
                                 "line_index": line['index'],
                                 "line_obj": line["line_obj"],
+                                "height": line["height"],
                                 "quantity": line["quantity"],
                             }
                         ],
@@ -179,12 +182,15 @@ def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
                         "pallet_index": biggest_pallet["index"],
                         "pallet_obj": biggest_pallet["pallet_obj"],
                         "total_space": biggest_pallet["total_cubic"],
+                        "packed_space": biggest_pallet["available_cubic"] - remaining_space,
+                        "max_height": biggest_pallet["height"],
                         "remaining_space": remaining_space,
                         "quantity": 1,
                         "lines": [
                             {
                                 "line_index": line['index'],
                                 "line_obj": line["line_obj"],
+                                "height": line["height"],
                                 "quantity": 0,
                             }
                         ],
@@ -203,10 +209,12 @@ def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
                         line["quantity"],
                     )
                     pallet_item["remaining_space"] -= packable_count * line["cubic"]
+                    pallet_item["packed_space"] += packable_count * line["cubic"]
                     pallet_item["lines"].append(
                         {
                             "line_index": line['index'],
                             "line_obj": line["line_obj"],
+                            "height": line["height"],
                             "quantity": packable_count,
                         }
                     )
@@ -240,12 +248,15 @@ def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
                                 "pallet_index": line["smallest_pallet"],
                                 "pallet_obj": pallets[line["smallest_pallet"]],
                                 "total_space": pallets_data[line["smallest_pallet"]]["total_cubic"],
+                                "packed_space": needed_space,
+                                "max_height": pallets_data[line["smallest_pallet"]]["height"],
                                 "remaining_space": 0,
                                 "quantity": 1,
                                 "lines": [
                                     {
                                         "line_index": line['index'],
                                         "line_obj": line["line_obj"],
+                                        "height": line["height"],
                                         "quantity": packable_count,
                                     }
                                 ],
@@ -257,6 +268,8 @@ def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
                                 "pallet_index": line["smallest_pallet"],
                                 "pallet_obj": pallets[line["smallest_pallet"]],
                                 "total_space": pallets_data[line["smallest_pallet"]]["total_cubic"],
+                                "packed_space": needed_space,
+                                "max_height": pallets_data[line["smallest_pallet"]]["height"],
                                 "remaining_space": pallets_data[
                                     line["smallest_pallet"]
                                 ]["available_cubic"]
@@ -266,6 +279,7 @@ def lines_to_pallet(lines_data, pallets_data, biggest_pallet, pallets):
                                     {
                                         "line_index": line['index'],
                                         "line_obj": line["line_obj"],
+                                        "height": line["height"],
                                         "quantity": packable_count,
                                     }
                                 ],
@@ -303,16 +317,20 @@ def refine_pallets(palletized, non_palletized, small_line_indexes, small_space_l
         if not same_pallet_exists:
             reformatted_palletized.append(item)
 
-    # find pallet with only small items and move to non pallet
+    # find pallet with only small items and move to non pallet, add pallet height
     final_palletized = []
     for item in reformatted_palletized:
         is_all_small = True
+        max_height = 0
         for line in item['lines']:
             if line['line_index'] not in small_line_indexes:
                 is_all_small = False
+            if line['height'] > max_height:
+                max_height = line['height']
         if is_all_small and item["remaining_space"] / item["total_space"] > small_space_limit / 100:
             non_palletized.extend(item["lines"])
         else:
+            item["packed_height"] = max(max_height, item["packed_space"] / item["total_space"] * item["max_height"])
             final_palletized.append(item)
     
     return final_palletized, non_palletized
