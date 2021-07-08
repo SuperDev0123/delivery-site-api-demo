@@ -214,6 +214,31 @@ def find_vehicle_ids(booking_lines, fp):
             ):
                 vehicle_ids.append(vehicle.id)
 
+        # Century
+        if fp.fp_company_name.upper() == "CENTURY":
+            """
+            The load maybe on a pallet but the 1.5m length does not apply to the pallets.
+            A pallet larger than the standard 1.2m x 1.2m must booked as a 1 tonne job.
+            """
+            has_pallet = False
+            _vehicle_ids = []
+
+            for line in booking_lines:
+                if (
+                    line.e_type_of_packaging
+                    and line.e_type_of_packaging.lower() in PALLETS
+                    and max_length > 1.2
+                    and max_width > 1.2
+                ):
+                    has_pallet = True
+                    break
+
+            for vehicle_id in vehicle_ids:
+                if not vehicle_id in [1, 2, 3, 22, 23, 24, 25]:
+                    _vehicle_ids.append(vehicle_id)
+
+            vehicle_ids = _vehicle_ids
+
         return vehicle_ids
     except Exception as e:
         trace_error.print()
