@@ -379,13 +379,9 @@ def dim_filter(booking, booking_lines, rules, fp):
 
     if fp.rule_type.rule_type_code in ["rule_type_01"]:  # Vehicle
         vehicle_ids = find_vehicle_ids(booking_lines, fp)
-        print("@! - ", vehicle_ids)
 
         if vehicle_ids:
             rules = rules.filter(vehicle_id__in=vehicle_ids)
-
-            for rule in rules:
-                print("@1 - ", rule.pk, rule.service_type, rule.cost.per_UOM_charge)
 
             filtered_rules = rules
     elif fp.rule_type.rule_type_code in ["rule_type_02"]:  # Over size & Normal size
