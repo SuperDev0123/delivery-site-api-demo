@@ -2,11 +2,11 @@ import logging
 
 from api.models import FP_zones, FP_vehicles
 from api.common.ratio import _get_dim_amount, _get_weight_amount
-
 from api.common import trace_error
+from api.common.constants import PALLETS
+
 
 logger = logging.getLogger(__name__)
-PALLETS = ["pallet", "plt"]
 
 
 def get_zone(fp, state, postal_code, suburb):
