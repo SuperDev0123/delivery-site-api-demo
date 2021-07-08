@@ -233,7 +233,7 @@ def find_vehicle_ids(booking_lines, fp):
                     break
 
             for vehicle_id in vehicle_ids:
-                if not vehicle_id in [1, 2, 3, 22, 23, 24, 25]:
+                if not vehicle_id in [1, 2, 3, 22, 23, 24, 25, 46]:
                     _vehicle_ids.append(vehicle_id)
 
             vehicle_ids = _vehicle_ids
