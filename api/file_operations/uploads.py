@@ -234,7 +234,7 @@ def upload_client_products_file(user_id, username, client_id, file):
             'parent_model_number', 'child_model_number', 'description', 'qty'
         ]
         for key in data:
-            if key in not_empty_cols and (data[key] == '' or data[key] == 'NULL'):
+            if key in not_empty_cols and (data[key] == None or data[key] == 'NULL'):
                 return False
             elif key not in not_empty_cols and data[key] == 'NULL':
                 data[key] = None
@@ -247,7 +247,6 @@ def upload_client_products_file(user_id, username, client_id, file):
         Client_Products.objects.filter(fk_id_dme_client=dme_client).delete()
         delete_status = 'success'
     except Exception as e:
-        # print(f"{e}")
         delete_status = 'failed'
 
     success_count = 0
@@ -260,8 +259,8 @@ def upload_client_products_file(user_id, username, client_id, file):
             'child_model_number': ws.cell(row = r, column = 2).value,
             'description': ws.cell(row = r, column = 3).value,
             'qty': ws.cell(row = r, column = 4).value,
-            'e_dimUOM': ws.cell(row = r, column = 5).value.lower(),
-            'e_weightUOM': ws.cell(row = r, column = 6).value.lower(),
+            'e_dimUOM': str(ws.cell(row = r, column = 5).value).lower(),
+            'e_weightUOM': str(ws.cell(row = r, column = 6).value).lower(),
             'e_dimLength': ws.cell(row = r, column = 7).value,
             'e_dimWidth': ws.cell(row = r, column = 8).value,
             'e_dimHeight': ws.cell(row = r, column = 9).value,
@@ -280,7 +279,6 @@ def upload_client_products_file(user_id, username, client_id, file):
                 created_products.append(model_to_dict(created))
                 import_success_results.append(r)
             except Exception as e:
-                print(f"{e}")
                 failure_count = failure_count + 1
                 wrong_type_rows.append(r)
         else:
