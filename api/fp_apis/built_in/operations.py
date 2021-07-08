@@ -214,7 +214,7 @@ def find_vehicle_ids(booking_lines, fp):
             ):
                 vehicle_ids.append(vehicle.id)
 
-        # Century
+        # Century Exceptional Rule #1
         if fp.fp_company_name.upper() == "CENTURY":
             """
             The load maybe on a pallet but the 1.5m length does not apply to the pallets.
