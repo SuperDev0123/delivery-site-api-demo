@@ -280,6 +280,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.b_001_b_freight_provider = bok_1.quote.freight_provider
                 bok_1.b_003_b_service_name = bok_1.quote.service_name
                 bok_1.vx_serviceType_XXX = bok_1.quote.service_code
+                bok_1.b_002_b_vehicle_type = (
+                    bok_1.quote.vehicle.description if bok_1.quote.vehicle else None
+                )
                 bok_1.save()
 
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")

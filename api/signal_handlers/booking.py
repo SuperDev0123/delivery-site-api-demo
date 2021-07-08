@@ -130,6 +130,7 @@ def post_save_handler(instance):
         instance.v_service_Type = quote.service_code
         instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
         instance.inv_sell_quoted = quote.client_mu_1_minimum_values
+        instance.v_vehicle_Type = quote.vehicle.description if quote.vehicle else None
         instance.api_booking_quote = quote
 
         # Build Label

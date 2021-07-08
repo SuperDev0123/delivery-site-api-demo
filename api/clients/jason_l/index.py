@@ -745,6 +745,9 @@ def push_boks(payload, client, username, method):
         best_quote = best_quotes[0]
         bok_1_obj.b_003_b_service_name = best_quote.service_name
         bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+        bok_1_obj.b_002_b_vehicle_type = (
+            best_quote.vehicle.description if best_quote.vehicle else None
+        )
         bok_1_obj.save()
         fc_log.new_quote = best_quotes[0]
         fc_log.save()
@@ -1134,6 +1137,9 @@ def auto_repack(payload, client):
             best_quote = best_quotes[0]
             bok_1_obj.b_003_b_service_name = best_quote.service_name
             bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+            bok_1_obj.b_002_b_vehicle_type = (
+                best_quote.vehicle.description if best_quote.vehicle else None
+            )
             bok_1_obj.save()
             fc_log.new_quote = best_quotes[0]
             fc_log.save()

@@ -357,6 +357,55 @@ class Fp_freight_providers(models.Model):
         return self.fp_company_name
 
 
+class FP_vehicles(models.Model):
+    id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    description = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    dim_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    max_length = models.FloatField(default=0, null=True, blank=True)
+    max_width = models.FloatField(default=0, null=True, blank=True)
+    max_height = models.FloatField(default=0, null=True, blank=True)
+    mass_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    max_mass = models.IntegerField(default=0, null=True, blank=True)
+    pallets = models.IntegerField(default=0, null=True, blank=True)
+    pallet_UOM = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    max_pallet_length = models.FloatField(default=0, null=True, blank=True)
+    max_pallet_width = models.FloatField(default=0, null=True, blank=True)
+    max_pallet_height = models.FloatField(default=0, null=True, blank=True)
+    base_charge = models.IntegerField(default=0, null=True, blank=True)
+    min_charge = models.IntegerField(default=0, null=True, blank=True)
+    limited_state = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    category = models.CharField(max_length=16, null=True, default=None)
+
+    class Meta:
+        db_table = "fp_vehicles"
+
+
 class DME_Service_Codes(models.Model):
     id = models.AutoField(primary_key=True)
     service_code = models.CharField(max_length=32, blank=True, null=True, default=None)
@@ -565,6 +614,9 @@ class API_booking_quotes(models.Model):
         verbose_name=_("Selected Timestamp"), default=timezone.now
     )
     is_used = models.BooleanField(default=False)
+    vehicle = models.ForeignKey(
+        FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -4087,55 +4139,6 @@ class FP_Store_Booking_Log(models.Model):
 
     class Meta:
         db_table = "fp_store_booking_log"
-
-
-class FP_vehicles(models.Model):
-    id = models.AutoField(primary_key=True)
-    freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
-    description = models.CharField(
-        max_length=64,
-        blank=True,
-        null=True,
-        default=None,
-    )
-    dim_UOM = models.CharField(
-        max_length=16,
-        blank=True,
-        null=True,
-        default=None,
-    )
-    max_length = models.FloatField(default=0, null=True, blank=True)
-    max_width = models.FloatField(default=0, null=True, blank=True)
-    max_height = models.FloatField(default=0, null=True, blank=True)
-    mass_UOM = models.CharField(
-        max_length=16,
-        blank=True,
-        null=True,
-        default=None,
-    )
-    max_mass = models.IntegerField(default=0, null=True, blank=True)
-    pallets = models.IntegerField(default=0, null=True, blank=True)
-    pallet_UOM = models.CharField(
-        max_length=16,
-        blank=True,
-        null=True,
-        default=None,
-    )
-    max_pallet_length = models.FloatField(default=0, null=True, blank=True)
-    max_pallet_width = models.FloatField(default=0, null=True, blank=True)
-    max_pallet_height = models.FloatField(default=0, null=True, blank=True)
-    base_charge = models.IntegerField(default=0, null=True, blank=True)
-    min_charge = models.IntegerField(default=0, null=True, blank=True)
-    limited_state = models.CharField(
-        max_length=16,
-        blank=True,
-        null=True,
-        default=None,
-    )
-    category = models.CharField(max_length=16, null=True, default=None)
-
-    class Meta:
-        db_table = "fp_vehicles"
 
 
 class Pallet(models.Model):
