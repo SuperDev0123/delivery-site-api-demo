@@ -146,7 +146,7 @@ def find_vehicle_ids(booking_lines, fp):
         max_length = 0
         max_width = 0
         max_height = 0
-        vehicle_ids = []
+        lines_cnt = 0
 
         for item in booking_lines:
             length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
@@ -157,6 +157,7 @@ def find_vehicle_ids(booking_lines, fp):
             max_width = width if max_width < width else max_width
             max_height = height if max_height < height else max_height
             sum_cube += width * height * length * item.e_qty
+            lines_cnt += 1
 
         # print(
         #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
@@ -200,6 +201,8 @@ def find_vehicle_ids(booking_lines, fp):
         #         ):
         #             vehicle_ids.append(vehicle.id)
 
+        vehicle_ids = []
+        cubic_ratio = 1 if lines_cnt == 1 else 0.8
         for vehicle in vehicles:
             vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
             vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
@@ -210,7 +213,7 @@ def find_vehicle_ids(booking_lines, fp):
                 vmax_width >= max_width
                 and max_height >= max_height
                 and vmax_length >= max_length
-                and vehicle_cube * 0.8 >= sum_cube
+                and vehicle_cube * cubic_ratio >= sum_cube
             ):
                 vehicle_ids.append(vehicle.id)
 
