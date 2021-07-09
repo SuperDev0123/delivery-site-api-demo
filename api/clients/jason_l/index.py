@@ -306,9 +306,6 @@ def push_boks(payload, client, username, method):
                     warehouse = get_warehouse(
                         client, code=f"JASON_L_{bok_1['warehouse_code']}"
                     )
-                    warehouse = get_warehouse(
-                        client, code=f"JASON_L_{bok_1['warehouse_code']}"
-                    )
                     del bok_1["warehouse_code"]
                     bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
                     bok_1["b_clientPU_Warehouse"] = warehouse.name

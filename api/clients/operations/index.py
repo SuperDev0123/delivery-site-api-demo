@@ -28,6 +28,7 @@ def get_warehouse(client, code=None):
     get Client's Warehouse
     """
     LOG_ID = "[GET WHSE]"
+    logger.info(f"{LOG_ID} client: {client}, code: {code}")
 
     try:
         if code:  # JasonL with code
