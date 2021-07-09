@@ -196,6 +196,19 @@ def build_label(
     allied_logo = "./static/assets/allied_logo.png"
     allied_img = Image(allied_logo, 30 * mm, 7.7 * mm)
 
+    fp_color_code = (
+        Fp_freight_providers.objects.get(fp_company_name="Allied").hex_color_code
+        or "808080"
+    )
+
+    style_center_bg = ParagraphStyle(
+        name="right",
+        parent=styles["Normal"],
+        alignment=TA_CENTER,
+        leading=16,
+        backColor=f"#{fp_color_code}",
+    )
+
     Story = []
     j = 1
 
