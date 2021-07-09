@@ -376,7 +376,7 @@ def get_bok_by_talend(order_num):
     if settings.ENV == "local":
         file_path = "/Users/juli/Documents/talend_sample_data/solines.csv"
     else:
-        file_path = "/home/ubuntu/jason_l/address/src/solines.csv"
+        file_path = "/home/ubuntu/jason_l/solines/src/solines.csv"
 
     csv_file = open(file_path)
     logger.info(f"@383 {LOG_ID} File({file_path}) opened!")
