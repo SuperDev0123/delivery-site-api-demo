@@ -97,6 +97,16 @@ def pre_save_handler(instance):
             ):
                 update_pronto_note(quote, instance, [], "booking")
 
+        if (
+            instance.api_booking_quote_id
+            and old.api_booking_quote_id != instance.api_booking_quote_id
+            and instance.api_booking_quote_id.vehicle
+        ):
+            quote = instance.api_booking_quote
+            instance.v_vehicle_Type = (
+                quote.vehicle.description if quote.vehicle else None
+            )
+
 
 def post_save_handler(instance):
     LOG_ID = "[BOOKING POST SAVE]"
