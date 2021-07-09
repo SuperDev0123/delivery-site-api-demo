@@ -408,7 +408,7 @@ def get_bok_by_talend(order_num):
         logger.info(f"@384 {LOG_ID} No enough information!")
         return None, None
 
-    b_021 = first_line[1]
+    b_021 = datetime.strptime(first_line.split("|")[1], "%d-%b-%Y")
     b_055 = address["street_1"]
     b_056 = address["street_2"]
     b_057 = address["state"]
@@ -424,7 +424,7 @@ def get_bok_by_talend(order_num):
     b_069 = 1  # Not provided
     b_070 = "Escalator"  # Not provided
     b_071 = 1  # Not provided
-    warehouse_code = first_line[8]
+    warehouse_code = first_line.split("|")[8]
 
     order = {
         "b_client_order_num": order_num,
