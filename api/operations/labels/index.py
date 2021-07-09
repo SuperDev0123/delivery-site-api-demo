@@ -9,6 +9,7 @@ from api.operations.labels import (
     hunter_thermal,
     tnt,
     allied,
+    century
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,10 @@ def build_label(
             )
         elif fp_name == "allied":
             file_path, file_name = allied.build_label(
+                booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
+            )
+        elif fp_name == "century":
+            file_path, file_name = century.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
         else:  # "Century", auspost", "startrack", "State Transport"
