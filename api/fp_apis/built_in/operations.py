@@ -379,6 +379,7 @@ def dim_filter(booking, booking_lines, rules, fp):
 
     if fp.rule_type.rule_type_code in ["rule_type_01"]:  # Vehicle
         vehicle_ids = find_vehicle_ids(booking_lines, fp)
+        logger.info(f"#820 DIM FILTER vehicles: {vehicle_ids}")
 
         if vehicle_ids:
             rules = rules.filter(vehicle_id__in=vehicle_ids)
