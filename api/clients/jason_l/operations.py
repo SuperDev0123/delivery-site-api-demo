@@ -30,8 +30,14 @@ from api.clients.operations.index import (
     get_similar_suburb,
     is_postalcode_in_state,
 )
+from api.clients.jason_l.constants import (
+    ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
+)
 
 logger = logging.getLogger(__name__)
+
+IS_TESTING = True  # Used for Testing
+# IS_TESTING = False
 
 
 def _extract_address(addrs):
@@ -339,6 +345,8 @@ def get_address(order_num):
 
 
 def get_bok_by_talend(order_num):
+    from api.operations.pronto_xi.apis import get_product_group_code, get_token
+
     LOG_ID = "[FETCH BOK BY TALEND]"
 
     # - Split `order_num` and `suffix` -
@@ -373,9 +381,113 @@ def get_bok_by_talend(order_num):
     csv_file = open(file_path)
     logger.info(f"@383 {LOG_ID} File({file_path}) opened!")
 
+    # Test Usage #
+    if IS_TESTING:
+        address = {
+            "error": "Postal Code and Suburb mismatch",
+            "phone": "0490001222",
+            "email": "aaa@email.com",
+            "street_1": "690 Ann Street",
+            "street_2": "",
+            "suburb": "DEE WHY",
+            "state": "NSW",
+            "postal_code": "2099",
+        }
+    else:
+        # get address by using `Talend` .sh script
+        address = get_address(order_num)
+    ##############
+
+    line_cnt = 0
+    first_line = 0
+    for line in csv_file:
+        first_line = line
+        line_cnt += 1
+
+    if line_cnt < 2:
+        logger.info(f"@384 {LOG_ID} No enough information!")
+        return None, None
+
+    b_021 = first_line[1]
+    b_055 = address["street_1"]
+    b_056 = address["street_2"]
+    b_057 = address["state"]
+    b_058 = address["suburb"]
+    b_059 = address["postal_code"] or " "
+    b_060 = "Australia"
+    b_061 = ""
+    b_063 = address["email"]
+    b_064 = address["phone"]
+    b_066 = "Phone"  # Not provided
+    b_067 = 0  # Not provided
+    b_068 = "Drop at Door / Warehouse Dock"  # Not provided
+    b_069 = 1  # Not provided
+    b_070 = "Escalator"  # Not provided
+    b_071 = 1  # Not provided
+    warehouse_code = first_line[8]
+
+    order = {
+        "b_client_order_num": order_num,
+        "b_021_b_pu_avail_from_date": b_021,
+        "b_055_b_del_address_street_1": b_055,
+        "b_056_b_del_address_street_2": b_056,
+        "b_057_b_del_address_state": b_057,
+        "b_058_b_del_address_suburb": b_058,
+        "b_059_b_del_address_postalcode": b_059,
+        "b_060_b_del_address_country": b_060,
+        "b_061_b_del_contact_full_name": b_061,
+        "b_063_b_del_email": b_063,
+        "b_064_b_del_phone_main": b_064,
+        "b_066_b_del_communicate_via": b_066,
+        "b_067_assembly_required": b_067,
+        "b_068_b_del_location": b_068,
+        "b_069_b_del_floor_number": b_069,
+        "b_070_b_del_floor_access_by": b_070,
+        "b_071_b_del_sufficient_space": b_071,
+        "warehouse_code": warehouse_code,
+        "zb_105_text_5": address["error"],
+    }
+
+    lines = []
+    ignored_items = []
+    token = get_token()
+    csv_file = open(file_path)
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
+
+        iters = line.split("|")
+        ItemCode = iters[13]
+        OrderedQty = iters[17]
+        SequenceNo = iters[2]
+        UOMCode = iters[15]
+
+        if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
+            ignored_items.append(ItemCode)
+            message = f"@6410 {LOG_ID} IGNORED (LISTED ITEM) --- itemCode: {ItemCode}"
+            logger.info(message)
+            continue
+
+        ProductGroupCode = get_product_group_code(ItemCode, token)
+        if not ProductGroupCode:
+            ignored_items.append(ItemCode)
+            message = f"@6410 {LOG_ID} IGNORED (MISSING ITEM) --- itemCode: {ItemCode}"
+            logger.info(message)
+            # continue
+
+        line = {
+            "model_number": ItemCode,
+            "qty": int(float(OrderedQty)),
+            "sequence": int(float(SequenceNo)),
+            "UOMCode": UOMCode,
+            "ProductGroupCode": ProductGroupCode,
+        }
+        lines.append(line)
+
+    if ignored_items:
+        order["b_010_b_notes"] = ", ".join(ignored_items)
+
+    return order, lines
 
 
 def get_picked_items(order_num, sscc):

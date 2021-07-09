@@ -305,7 +305,7 @@ def get_order(order_num):
 
     if response.status_code != 200:
         logger.error(f"@632 [PRONTO GET ORDER] Failed")
-        return False
+        return None, None
 
     order, lines = parse_order_xml(response, order_num, token)
     logger.info(f"@649 [PRONTO GET ORDER] Finish \norder: {order}\nlines: {lines}")
