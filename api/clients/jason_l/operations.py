@@ -415,7 +415,7 @@ def get_bok_by_talend(order_num):
     b_058 = address["suburb"]
     b_059 = address["postal_code"] or " "
     b_060 = "Australia"
-    b_061 = ""
+    b_061 = address["company_name"]
     b_063 = address["email"]
     b_064 = address["phone"]
     b_066 = "Phone"  # Not provided
