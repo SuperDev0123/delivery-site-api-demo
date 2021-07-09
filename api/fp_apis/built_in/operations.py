@@ -232,11 +232,12 @@ def find_vehicle_ids(booking_lines, fp):
                     has_pallet = True
                     break
 
-            for vehicle_id in vehicle_ids:
-                if not vehicle_id in [1, 2, 3, 22, 23, 24, 25]:
-                    _vehicle_ids.append(vehicle_id)
+            if has_pallet:
+                for vehicle_id in vehicle_ids:
+                    if not vehicle_id in [1, 2, 3, 22, 23, 24, 25]:
+                        _vehicle_ids.append(vehicle_id)
 
-            vehicle_ids = _vehicle_ids
+                vehicle_ids = _vehicle_ids
 
         return vehicle_ids
     except Exception as e:
