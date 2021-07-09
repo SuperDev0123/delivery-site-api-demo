@@ -36,8 +36,8 @@ from api.clients.jason_l.constants import (
 
 logger = logging.getLogger(__name__)
 
-IS_TESTING = True  # Used for Testing
-# IS_TESTING = False
+# IS_TESTING = True  # Used for Testing
+IS_TESTING = False
 
 
 def _extract_address(addrs):
