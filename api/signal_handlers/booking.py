@@ -98,9 +98,9 @@ def pre_save_handler(instance):
                 update_pronto_note(quote, instance, [], "booking")
 
         if (
-            instance.api_booking_quote_id
+            instance.api_booking_quote
             and old.api_booking_quote_id != instance.api_booking_quote_id
-            and instance.api_booking_quote_id.vehicle
+            and instance.api_booking_quote.vehicle
         ):
             logger.info(f"#506 {LOG_ID} vehicle changed!")
             quote = instance.api_booking_quote
