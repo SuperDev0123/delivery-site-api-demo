@@ -35,6 +35,7 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
+from api.common.common_times import convert_to_AU_SYDNEY_tz
 from api.fp_apis.utils import (
     get_status_category_from_status,
     get_status_time_from_category,
@@ -745,7 +746,9 @@ def get_delivery_status(request):
 
         if status_history:
             last_updated = (
-                status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M:%S")
+                convert_to_AU_SYDNEY_tz(
+                    status_history.first().event_time_stamp
+                ).strftime("%Y-%m-%d %H:%M:%S")
                 if status_history.first().event_time_stamp
                 else ""
             )
@@ -831,21 +834,27 @@ def get_delivery_status(request):
         for index, item in enumerate(steps):
             if index == 0:
                 timestamps.append(
-                    booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M:%S")
+                    convert_to_AU_SYDNEY_tz(booking.z_CreatedTimestamp).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
                     if booking and booking.z_CreatedTimestamp
                     else ""
                 )
             elif index > step:
                 timestamps.append("")
             else:
+                status_time = get_status_time_from_category(booking.pk_booking_id, item)
+
                 timestamps.append(
-                    get_status_time_from_category(booking.pk_booking_id, item)
+                    convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
+                    if status_time
+                    else None
                 )
 
         if step == 1:
             eta = (
                 (
-                    booking.puPickUpAvailFrom_Date
+                    convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date)
                     + timedelta(days=int(json_quote["eta"].split()[0]))
                 ).strftime("%Y-%m-%d")
                 if json_quote and booking.puPickUpAvailFrom_Date
@@ -854,7 +863,7 @@ def get_delivery_status(request):
         else:
             eta = (
                 (
-                    booking.b_dateBookedDate
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
                     + timedelta(days=int(json_quote["eta"].split()[0]))
                 ).strftime("%Y-%m-%d")
                 if json_quote and booking.b_dateBookedDate
@@ -899,7 +908,9 @@ def get_delivery_status(request):
 
     if status_history:
         last_updated = (
-            status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M")
+            convert_to_AU_SYDNEY_tz(status_history.first().event_time_stamp).strftime(
+                "%Y-%m-%d %H:%M"
+            )
             if status_history.first().event_time_stamp
             else ""
         )
@@ -952,7 +963,7 @@ def get_delivery_status(request):
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
         eta = (
             (
-                booking.b_021_b_pu_avail_from_date
+                convert_to_AU_SYDNEY_tz(booking.b_021_b_pu_avail_from_date)
                 + timedelta(days=int(json_quote["eta"].split()[0]))
             ).strftime("%Y-%m-%d")
             if json_quote and booking.b_021_b_pu_avail_from_date
@@ -970,7 +981,9 @@ def get_delivery_status(request):
             "eta_date": eta,
             "last_milestone": "Delivered",
             "timestamps": [
-                bok_1.date_processed.strftime("%Y-%m-%d %H:%M:%S")
+                convert_to_AU_SYDNEY_tz(bok_1.date_processed).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
                 if bok_1 and bok_1.date_processed
                 else "",
                 "",
