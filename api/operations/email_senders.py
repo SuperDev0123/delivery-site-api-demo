@@ -13,6 +13,7 @@ from api.models import (
     DME_Options,
 )
 from api.outputs.email import send_email
+from api.common.common_times import convert_to_AU_SYDNEY_tz
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +57,8 @@ def send_booking_status_email(bookingId, emailName, sender):
 
     files = []
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
-    BOOKEDDATE = booking.b_dateBookedDate
-    DELIVERYDATE = booking.s_21_Actual_Delivery_TimeStamp
+    BOOKEDDATE = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate) or ""
+    DELIVERYDATE = convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp) or ""
     TOADDRESSCONTACT = f" {booking.pu_Contact_F_L_Name}"
     FUTILEREASON = booking.vx_futile_Booking_Notes
     BOOKING_NUMBER = booking.b_bookingID_Visual
@@ -80,8 +81,12 @@ def send_booking_status_email(bookingId, emailName, sender):
         pass
 
     SERVICE = booking.vx_serviceName
-    LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
-    LATEST_DELIVERY_TIME = booking.s_06_Latest_Delivery_Date_TimeSet
+    LATEST_PICKUP_TIME = (
+        convert_to_AU_SYDNEY_tz(booking.s_05_Latest_Pick_Up_Date_TimeSet) or ""
+    )
+    LATEST_DELIVERY_TIME = (
+        convert_to_AU_SYDNEY_tz(booking.s_06_Latest_Delivery_Date_TimeSet) or ""
+    )
     DELIVERY_ETA = booking.z_calculated_ETA
     INSTRUCTIONS = booking.b_handling_Instructions
 
