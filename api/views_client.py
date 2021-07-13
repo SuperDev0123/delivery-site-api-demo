@@ -797,7 +797,7 @@ def get_delivery_status(request):
             last_updated = ""
 
         lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, is_deleted=False
+            fk_booking_id=booking.pk_booking_id, is_deleted=True
         )
 
         booking_dict = {
@@ -940,7 +940,7 @@ def get_delivery_status(request):
         )
 
     lines = BOK_2_lines.objects.filter(
-        fk_header_id=bok_1.pk_header_id, is_deleted=False
+        fk_header_id=bok_1.pk_header_id, is_deleted=True
     )
 
     status_history = Dme_status_history.objects.filter(
