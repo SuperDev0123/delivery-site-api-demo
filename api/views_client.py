@@ -43,7 +43,10 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
-from api.clients.jason_l.operations import do_quote as jasonL_do_quote
+from api.clients.jason_l.operations import (
+    do_quote as jasonL_do_quote,
+    create_or_update_product as jasonL_create_or_update_product,
+)
 from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
 from api.operations.pronto_xi.index import (
@@ -379,67 +382,105 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
-    def update_item_product(self, request):
+    def add_bok_line(self, request):
         """
         Used for "Jason L" only
         """
-        LOG_ID = "[update_item_product]"
+        LOG_ID = "[add_bok_line]"
+
+        try:
+            logger.info(f"{LOG_ID} {request.data}")
+            line = request.data["line"]
+
+            with transaction.atomic():
+                if line.get("apply_to_product"):
+                    jasonL_create_or_update_product(line)
+
+                bok_2 = BOK_2_lines()
+                bok_2.fk_header_id = line["fk_header_id"]
+                bok_2.pk_booking_lines_id = str(uuid.uuid4())
+                bok_2.l_001_type_of_packaging = line.get("l_001_type_of_packaging")
+                bok_2.zbl_121_integer_1 = line.get("zbl_121_integer_1")
+                bok_2.e_item_type = line.get("e_item_type")
+                bok_2.l_002_qty = line.get("e_qty")
+                bok_2.l_003_item = (
+                    line.get("e_item")
+                    if not line.get("is_ignored")
+                    else f'{line.get("e_item")} (Ignored)'
+                )
+                bok_2.l_004_dim_UOM = line.get("e_dimUOM")
+                bok_2.l_005_dim_length = line.get("e_dimLength")
+                bok_2.l_006_dim_width = line.get("e_dimWidth")
+                bok_2.l_007_dim_height = line.get("e_dimHeight")
+                bok_2.l_008_weight_UOM = line.get("e_weightUOM")
+                bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
+                bok_2.save()
+
+            # Get quote again
+            jasonL_do_quote(bok_2.fk_header_id)
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} error: {str(e)}")
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["put"], permission_classes=[AllowAny])
+    def update_bok_line(self, request):
+        """
+        Used for "Jason L" only
+        """
+        LOG_ID = "[update_bok_line]"
 
         try:
             logger.info(f"{LOG_ID} {request.data}")
             line_id = request.data["line_id"]
-            product = request.data["product"]
+            line = request.data["line"]
 
-            client_products = Client_Products.objects.filter(
-                fk_id_dme_client_id=21, parent_model_number=product["e_item_type"]
-            )
-            client_product = client_products.first()
             bok_2 = BOK_2_lines.objects.get(pk=line_id)
-            # bok_1 = BOK_1_headers.objects.get(pk_header_id=bok_2.fk_header_id)
 
             with transaction.atomic():
-                if client_products:
-                    client_product.fk_id_dme_client_id = 21
-                    client_product.parent_model_number = product["e_item_type"]
-                    client_product.child_model_number = product["e_item_type"]
-                    client_product.description = product["e_item"]
-                    client_product.qty = 1
-                    client_product.e_dimUOM = product["e_dimUOM"]
-                    client_product.e_dimLength = product["e_dimLength"]
-                    client_product.e_dimWidth = product["e_dimWidth"]
-                    client_product.e_dimHeight = product["e_dimHeight"]
-                    client_product.e_weightUOM = product["e_weightUOM"]
-                    client_product.e_weightPerEach = product["e_weightPerEach"]
-                    client_product.is_ignored = product["is_ignored"]
-                    client_product.save()
-                else:
-                    client_product = Client_Products()
-                    client_product.fk_id_dme_client_id = 21
-                    client_product.parent_model_number = product["e_item_type"]
-                    client_product.child_model_number = product["e_item_type"]
-                    client_product.description = product["e_item"]
-                    client_product.qty = 1
-                    client_product.e_dimUOM = product["e_dimUOM"]
-                    client_product.e_dimLength = product["e_dimLength"]
-                    client_product.e_dimWidth = product["e_dimWidth"]
-                    client_product.e_dimHeight = product["e_dimHeight"]
-                    client_product.e_weightUOM = product["e_weightUOM"]
-                    client_product.e_weightPerEach = product["e_weightPerEach"]
-                    client_product.is_ignored = product["is_ignored"]
-                    client_product.save()
+                if line.get("apply_to_product"):
+                    jasonL_create_or_update_product(line)
 
+                bok_2.l_001_type_of_packaging = line.get("l_001_type_of_packaging")
+                bok_2.zbl_121_integer_1 = line.get("zbl_121_integer_1")
+                bok_2.e_item_type = line.get("e_item_type")
+                bok_2.l_002_qty = line.get("e_qty")
                 bok_2.l_003_item = (
-                    product["e_item"]
-                    if not product["is_ignored"]
-                    else f'{product["e_item"]} (Ignored)'
+                    line.get("e_item")
+                    if not line.get("is_ignored")
+                    else f'{line.get("e_item")} (Ignored)'
                 )
-                bok_2.l_004_dim_UOM = product["e_dimUOM"]
-                bok_2.l_005_dim_length = product["e_dimLength"]
-                bok_2.l_006_dim_width = product["e_dimWidth"]
-                bok_2.l_007_dim_height = product["e_dimHeight"]
-                bok_2.l_008_weight_UOM = product["e_weightUOM"]
-                bok_2.l_009_weight_per_each = product["e_weightPerEach"]
+                bok_2.l_004_dim_UOM = line.get("e_dimUOM")
+                bok_2.l_005_dim_length = line.get("e_dimLength")
+                bok_2.l_006_dim_width = line.get("e_dimWidth")
+                bok_2.l_007_dim_height = line.get("e_dimHeight")
+                bok_2.l_008_weight_UOM = line.get("e_weightUOM")
+                bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
                 bok_2.save()
+
+            # Get quote again
+            jasonL_do_quote(bok_2.fk_header_id)
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} error: {str(e)}")
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
+    def delete_bok_line(self, request):
+        """
+        Used for "Jason L" only
+        """
+        LOG_ID = "[delete_bok_line]"
+
+        try:
+            logger.info(f"{LOG_ID} {request.data}")
+            line_id = request.data["line_id"]
+            bok_2 = BOK_2_lines.objects.get(pk=line_id)
+            bok_2.delete()
 
             # Get quote again
             jasonL_do_quote(bok_2.fk_header_id)

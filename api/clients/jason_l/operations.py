@@ -6,6 +6,7 @@ import subprocess
 from datetime import datetime, date
 
 from django.conf import settings
+from django.db import transaction
 
 from api.models import (
     FC_Log,
@@ -14,6 +15,7 @@ from api.models import (
     Pallet,
     API_booking_quotes,
     DME_clients,
+    Client_Products,
 )
 from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
 from api.common import trace_error, common_times as dme_time_lib
@@ -813,3 +815,35 @@ def do_quote(pk_header_id):
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8889 {LOG_ID} {message}")
+
+
+def create_or_update_product(new_product):
+    LOG_ID = "[JASON_L PRODUCT]"
+
+    products = Client_Products.objects.filter(
+        fk_id_dme_client_id=21, parent_model_number=new_product["e_item_type"]
+    )
+
+    with transaction.atomic():
+        if products:
+            logger.info("@190 - New Product!")
+            product = products.first()
+        else:
+            logger.info("@190 - Existing Product!")
+            product = Client_Products()
+
+        product.fk_id_dme_client_id = 21
+        product.parent_model_number = new_product["e_item_type"]
+        product.child_model_number = new_product["e_item_type"]
+        product.description = new_product["e_item"]
+        product.qty = 1
+        product.e_dimUOM = new_product["e_dimUOM"]
+        product.e_dimLength = new_product["e_dimLength"]
+        product.e_dimWidth = new_product["e_dimWidth"]
+        product.e_dimHeight = new_product["e_dimHeight"]
+        product.e_weightUOM = new_product["e_weightUOM"]
+        product.e_weightPerEach = new_product["e_weightPerEach"]
+        product.is_ignored = new_product["is_ignored"]
+        product.save()
+
+    return product
