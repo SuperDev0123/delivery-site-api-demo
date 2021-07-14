@@ -49,7 +49,6 @@ from api.clients.jason_l.operations import (
     get_picked_items,
     update_when_no_quote_required,
     get_bok_by_talend,
-    populate_product_desc,
     sucso_handler,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
@@ -294,18 +293,18 @@ def push_boks(payload, client, username, method):
                     )
 
                     # Check new Order info
-                    try:
-                        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-                    except Exception as e:
-                        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
-                        logger.error(
-                            f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-                        )
-                        logger.info(
-                            f"@888 Now trying to get Order by Talend App (for Archived Order)"
-                        )
+                    # try:
+                    #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+                    # except Exception as e:
+                    #     bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+                    #     logger.error(
+                    #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
+                    #     )
+                    #     logger.info(
+                    #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
+                    #     )
+                    bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
                     bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
-                    bok_2s = populate_product_desc(bok_2s)
 
                     warehouse = get_warehouse(
                         client, code=f"JASON_L_{bok_1['warehouse_code']}"
@@ -348,18 +347,18 @@ def push_boks(payload, client, username, method):
 
     # Prepare population
     if is_biz and not bok_2s:
-        try:
-            bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-        except Exception as e:
-            bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
-            logger.error(
-                f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-            )
-            logger.info(
-                f"@888 Now trying to get Order by Talend App (for Archived Order)"
-            )
+        # try:
+        #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+        # except Exception as e:
+        #     bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+        #     logger.error(
+        #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
+        #     )
+        #     logger.info(
+        #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
+        #     )
+        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
         bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
-        bok_2s = populate_product_desc(bok_2s)
 
         warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
         del bok_1["warehouse_code"]
@@ -524,10 +523,10 @@ def push_boks(payload, client, username, method):
                 or line["l_007_dim_height"] == 0
                 or line["l_009_weight_per_each"] == 0
             ):
-                line["l_005_dim_length"] = line["l_005_dim_length"] or 0.01
-                line["l_006_dim_width"] = line["l_006_dim_width"] or 0.01
-                line["l_007_dim_height"] = line["l_007_dim_height"] or 0.01
-                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 0.01
+                line["l_005_dim_length"] = line["l_005_dim_length"] or 1.11
+                line["l_006_dim_width"] = line["l_006_dim_width"] or 1.11
+                line["l_007_dim_height"] = line["l_007_dim_height"] or 1.11
+                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 1.11
                 line["l_003_item"] = "(Ignored)"
 
             bok_2_serializer = BOK_2_Serializer(data=line)

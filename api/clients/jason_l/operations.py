@@ -549,22 +549,20 @@ def sucso_handler(order_num, lines):
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
-        UnitCode = iters[4]
-        length = float(iters[5]) if iters[5] else 0.01
-        width = float(iters[6]) if iters[5] else 0.01
-        height = float(iters[7]) if iters[5] else 0.01
-        weight = float(iters[8]) if iters[5] else 0.01
+        ProductGroupCode = iters[4].strip()
+        Description = iters[5].strip()
+        UnitCode = iters[6]
+        length = float(iters[7])
+        width = float(iters[8])
+        height = float(iters[9])
+        weight = float(iters[10])
 
         for line in lines:
             model_number = line.get("model_number") or line.get("e_item_type")
 
             if model_number == ItemCode:
-                if line.get("model_number"):
-                    line["e_item_type"] = model_number
-                    line["zbl_121_integer_1"] = line["sequence"]
-                    line["zbl_102_text_2"] = line["ProductGroupCode"]
-                    line["e_type_of_packaging"] = line["UOMCode"]
-
+                line["description"] = Description
+                line["zbl_102_text_2"] = ProductGroupCode
                 line["e_dimLength"] = length
                 line["e_dimWidth"] = width
                 line["e_dimHeight"] = height
@@ -575,33 +573,6 @@ def sucso_handler(order_num, lines):
 
     logger.info(f"@319 {LOG_ID} result: {new_lines}")
     return new_lines
-
-
-def populate_product_desc(bok_2s):
-    """
-    Populate `description` for each line (since sucso doens't have ProductDescription column)
-    """
-
-    LOG_ID = "[JASONL POPULATE DESC]"
-    logger.info(f"@320 {LOG_ID} bok_2s: {bok_2s}")
-    new_bok_2s = []
-    model_numbers = []
-
-    for bok_2 in bok_2s:
-        model_numbers.append(bok_2["e_item_type"])
-
-    products = Client_Products.objects.filter(
-        fk_id_dme_client_id=21, parent_model_number__in=model_numbers
-    ).only("parent_model_number", "description")
-
-    for product in products:
-        for bok_2 in bok_2s:
-            if bok_2["e_item_type"] == product.parent_model_number:
-                bok_2["description"] = product.description
-                new_bok_2s.append(bok_2)
-
-    logger.info(f"@329 {LOG_ID} result: {new_bok_2s}")
-    return new_bok_2s
 
 
 def get_picked_items(order_num, sscc):
