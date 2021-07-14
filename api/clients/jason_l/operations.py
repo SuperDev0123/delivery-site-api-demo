@@ -250,7 +250,7 @@ def get_address(order_num):
             )
 
     if not address["suburb"] and address["postal_code"]:
-        suburb = get_similar_suburb(address["postal_code"], clue_DA or clue_CUS)
+        suburb = get_similar_suburb(clue_DA or clue_CUS)
 
         if suburb:
             address["suburb"] = suburb
