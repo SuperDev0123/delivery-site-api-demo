@@ -303,7 +303,7 @@ def push_boks(payload, client, username, method):
                     #     logger.info(
                     #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
                     #     )
-                    bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+                    bok_1, bok_2s = get_bok_by_talend(bok_1)
                     bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
 
                     warehouse = get_warehouse(
@@ -357,7 +357,7 @@ def push_boks(payload, client, username, method):
         #     logger.info(
         #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
         #     )
-        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+        bok_1, bok_2s = get_bok_by_talend(bok_1)
         bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
 
         warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
@@ -475,7 +475,6 @@ def push_boks(payload, client, username, method):
         bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
     bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
-    print("#@1 -0 ", bok_1)
 
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 

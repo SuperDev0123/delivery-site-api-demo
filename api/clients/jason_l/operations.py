@@ -347,10 +347,11 @@ def get_address(order_num):
     return address
 
 
-def get_bok_by_talend(order_num):
+def get_bok_by_talend(bok_1):
     from api.operations.pronto_xi.apis import get_product_group_code, get_token
 
     LOG_ID = "[FETCH BOK BY TALEND]"
+    order_num = bok_1["b_client_order_num"]
 
     # - Split `order_num` and `suffix` -
     _order_num, suffix = order_num, ""
@@ -490,6 +491,9 @@ def get_bok_by_talend(order_num):
 
     if ignored_items:
         order["b_010_b_notes"] = ", ".join(ignored_items)
+
+    for prop in bok_1:
+        order[prop] = bok_1[prop]
 
     return order, lines
 
