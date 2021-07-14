@@ -550,7 +550,7 @@ def sucso_handler(order_num, lines):
             continue
 
         iters = line.split("|")
-        SequenceNo = int(iters[2])
+        SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
         UnitCode = iters[4]
         length = float(iters[5])
