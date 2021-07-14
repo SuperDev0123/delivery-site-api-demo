@@ -558,9 +558,7 @@ def sucso_handler(order_num, lines):
         weight = float(iters[10])
 
         for line in lines:
-            model_number = line.get("model_number") or line.get("e_item_type")
-
-            if model_number == ItemCode:
+            if line.get("e_item_type") == ItemCode:
                 line["description"] = Description
                 line["zbl_102_text_2"] = ProductGroupCode
                 line["e_dimLength"] = length
@@ -723,7 +721,7 @@ def update_when_no_quote_required(old_bok_1, old_bok_2s, bok_1, bok_2s):
         is_found = False
 
         for bok_2 in bok_2s:
-            if old_bok_2.e_item_type == bok_2["model_number"]:
+            if old_bok_2.e_item_type == bok_2["e_item_type"]:
                 is_found = True
 
                 if old_bok_2.l_002_qty != bok_2["qty"]:
