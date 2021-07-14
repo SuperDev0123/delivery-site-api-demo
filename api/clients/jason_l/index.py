@@ -524,10 +524,10 @@ def push_boks(payload, client, username, method):
                 or line["l_007_dim_height"] == 0
                 or line["l_009_weight_per_each"] == 0
             ):
-                line["l_005_dim_length"] = 0.01
-                line["l_006_dim_width"] = 0.01
-                line["l_007_dim_height"] = 0.01
-                line["l_009_weight_per_each"] = 0.01
+                line["l_005_dim_length"] = line["l_005_dim_length"] or 0.01
+                line["l_006_dim_width"] = line["l_006_dim_width"] or 0.01
+                line["l_007_dim_height"] = line["l_007_dim_height"] or 0.01
+                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 0.01
                 line["l_003_item"] = "(Ignored)"
 
             bok_2_serializer = BOK_2_Serializer(data=line)
