@@ -63,6 +63,9 @@ def _extract_address(addrs):
     if not _state:
         errors.append("Stop Error: Delivery state missing or misspelled")
     elif _state != state:
+        logger.error(
+            f"[_extract_address] State dismatch! state: ({_state}, {state}), suburb: suburb"
+        )
         errors.append(
             "Stop Error: Delivery state and suburb mistmatch (Hint perform a Google search for the correct match)"
         )
