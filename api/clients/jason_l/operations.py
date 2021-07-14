@@ -559,7 +559,7 @@ def sucso_handler(order_num, lines):
         weight = float(iters[8])
 
         for line in lines:
-            if line["model_number"] == ItemCode:
+            if line["e_item_type"] == ItemCode:
                 line["e_dimLength"] = length
                 line["e_dimWidth"] = width
                 line["e_dimHeight"] = height
