@@ -570,6 +570,32 @@ def sucso_handler(order_num, lines):
     return new_lines
 
 
+def populate_product_desc(bok_2s):
+    """
+    Populate `description` for each line (since sucso doens't have ProductDescription column)
+    """
+
+    LOG_ID = "[JASONL POPULATE DESC]"
+    logger.info(f"@320 {LOG_ID} bok_2s: {bok_2s}")
+    new_bok_2s = []
+    model_numbers = []
+
+    for bok_2 in bok_2s:
+        model_numbers = bok_2["e_item_type"]
+
+    products = Client_Products.objects.filter(
+        fk_id_dme_client_id=21, parent_model_number__in=model_numbers
+    ).only("parent_model_number", "description")
+
+    for product in products:
+        for bok_2 in bok_2s:
+            if bok_2["e_item_type"] == product.parent_model_number:
+                bok_2["description"] = product.description
+
+    logger.info(f"@329 {LOG_ID} result: {bok_2s}")
+    return bok_2s
+
+
 def get_picked_items(order_num, sscc):
     """
     used to build LABEL

@@ -49,6 +49,7 @@ from api.clients.jason_l.operations import (
     get_picked_items,
     update_when_no_quote_required,
     get_bok_by_talend,
+    populate_product_desc,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
@@ -302,6 +303,7 @@ def push_boks(payload, client, username, method):
                     #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
                     #     )
                     bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+                    bok_2s = populate_product_desc(bok_2s)
 
                     warehouse = get_warehouse(
                         client, code=f"JASON_L_{bok_1['warehouse_code']}"
@@ -354,6 +356,7 @@ def push_boks(payload, client, username, method):
         #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
         #     )
         bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+        bok_2s = populate_product_desc(bok_2s)
 
         warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
         del bok_1["warehouse_code"]
