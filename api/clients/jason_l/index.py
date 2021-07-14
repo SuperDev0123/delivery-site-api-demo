@@ -527,7 +527,9 @@ def push_boks(payload, client, username, method):
                 line["l_006_dim_width"] = line["l_006_dim_width"] or 999
                 line["l_007_dim_height"] = line["l_007_dim_height"] or 999
                 line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 999
-                line["l_003_item"] = "(Ignored)"
+                line[
+                    "l_003_item"
+                ] = "(Ignored) reason: 0 dimention - replaced with 999 automatically"
 
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
