@@ -485,7 +485,7 @@ def get_bok_by_talend(order_num):
             "zbl_102_text_2": "_",
             "e_dimUOM": "M",
             "e_weightUOM": "KG",
-            "e_type_of_packaging": "UOMCode",
+            "e_type_of_packaging": UOMCode,
         }
         lines.append(line)
 
@@ -558,7 +558,15 @@ def sucso_handler(order_num, lines):
         weight = float(iters[8]) if iters[5] else 0
 
         for line in lines:
-            if line["e_item_type"] == ItemCode:
+            mode_number = line.get("model_number") or line.get("e_item_type")
+
+            if mode_number == ItemCode:
+                if line.get("model_number"):
+                    line["e_item_type"] = model_number
+                    line["zbl_121_integer_1"] = line["sequence"]
+                    line["zbl_102_text_2"] = line["ProductGroupCode"]
+                    line["e_type_of_packaging"] = line["UOMCode"]
+
                 line["e_dimLength"] = length
                 line["e_dimWidth"] = width
                 line["e_dimHeight"] = height
