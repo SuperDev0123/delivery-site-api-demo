@@ -225,7 +225,7 @@ def push_boks(payload, client, username, method):
         bok_1["shipping_type"] = bok_1.get("shipping_type", "DMEM").strip()
 
     bok_1["b_053_b_del_address_type"] = (
-        bok_1.get("b_053_b_del_delivery_type", "business").strip().lower()
+        bok_1.get("b_053_b_del_delivery_type", "").strip().lower()
     )
 
     if not bok_1["b_053_b_del_address_type"] in ["business", "residential"]:
