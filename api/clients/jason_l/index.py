@@ -513,6 +513,12 @@ def push_boks(payload, client, username, method):
             )
             line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
 
+            if line["is_deleted"] and line["l_005_dim_length"] == 0:
+                line["l_005_dim_length"] = 0.01
+                line["l_006_dim_width"] = 0.01
+                line["l_007_dim_height"] = 0.01
+                line["l_009_weight_per_each"] = 0.01
+
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
