@@ -223,9 +223,6 @@ def get_palletized_by_ai(bok_2s, pallets):
 
 
 def get_pallets():
-    import requests
-    import json
-
     payload = {
         "bins": [
             {"w": 5, "h": 5, "d": 5, "max_wg": 0, "id": "Bin1"},
@@ -262,5 +259,3 @@ def get_pallets():
 
     content = response.content.decode("utf8")
     json_data = json.loads(content)
-
-    print("response", json_data)
