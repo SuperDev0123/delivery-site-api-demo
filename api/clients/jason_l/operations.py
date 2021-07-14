@@ -478,18 +478,96 @@ def get_bok_by_talend(order_num):
             # continue
 
         line = {
-            "model_number": ItemCode,
+            "e_item_type": ItemCode,
+            "description": "",
             "qty": int(float(OrderedQty)),
-            "sequence": int(float(SequenceNo)),
-            "UOMCode": UOMCode,
-            "ProductGroupCode": ProductGroupCode,
+            "zbl_121_integer_1": int(float(SequenceNo)),
+            "e_dimUOM": "M",
+            "e_weightUOM": "KG",
+            "e_type_of_packaging": "UOMCode",
         }
         lines.append(line)
 
     if ignored_items:
         order["b_010_b_notes"] = ", ".join(ignored_items)
 
+    lines = sucso_handler(order_num, lines)
+
     return order, lines
+
+
+def sucso_handler(order_num, lines):
+    """
+    sucso talend app handler
+    It will retrieve all the `lines` info of an `Order`
+
+    Sample Data:
+        so_order_no|so_bo_suffix|sol_line_seq|stock_code|stk_unit_desc|sopk_length|sopk_width|sopk_height|sopk_weight
+        1034241|  |1.0|08663                         |EACH|0.37|0.69|0.61|14.000
+        1034241|  |2.0|ASSEM                         |EACH|0.00|0.00|0.00|0.000
+        1034241|  |2.0|ASSEM                         |EACH|0.00|0.00|0.00|0.000
+        1034241|  |3.0|S068                          |EACH|0.00|0.00|0.00|0.000
+        1034241|  |3.0|S068                          |EACH|0.00|0.00|0.00|0.000
+    """
+
+    LOG_ID = "[TALEND SUCSO]"
+
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+
+    message = f"@310 {LOG_ID} OrderNum: {_order_num}, Suffix: {suffix}"
+    logger.info(message)
+    # ---
+
+    if settings.ENV != "local":  # Only on DEV or PROD
+        logger.info(f"@311 {LOG_ID} Running .sh script...")
+        subprocess.run(
+            [
+                "/home/ubuntu/jason_l/sucso/src/run.sh",
+                "--context_param",
+                f"param1={_order_num}",
+                "--context_param",
+                f"param2={suffix}",
+            ]
+        )
+        logger.info(f"@312 {LOG_ID} Finish running .sh")
+
+    if settings.ENV == "local":
+        file_path = "/Users/juli/Documents/talend_sample_data/sucso.csv"
+    else:
+        file_path = "/home/ubuntu/jason_l/sucso/src/sucso.csv"
+
+    csv_file = open(file_path)
+    logger.info(f"@313 {LOG_ID} File({file_path}) opened!")
+
+    new_lines = []
+    for i, line in enumerate(csv_file):
+        if i == 0:  # Ignore first header row
+            continue
+
+        iters = line.split("|")
+        SequenceNo = int(iters[2])
+        ItemCode = iters[3].strip()
+        UnitCode = iters[4]
+        length = float(iters[5])
+        width = float(iters[6])
+        height = float(iters[7])
+        weight = float(iters[8])
+
+        for line in lines:
+            if line["model_number"] == ItemCode:
+                line["e_dimLength"] = length
+                line["e_dimWidth"] = width
+                line["e_dimHeight"] = height
+                line["e_weightPerEach"] = weight
+                new_lines.append(line)
+
+    logger.info(f"@319 {LOG_ID} result: {new_lines}")
+    return new_lines
 
 
 def get_picked_items(order_num, sscc):

@@ -292,16 +292,16 @@ def push_boks(payload, client, username, method):
                     )
 
                     # Check new Order info
-                    try:
-                        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-                    except Exception as e:
-                        logger.error(
-                            f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-                        )
-                        logger.info(
-                            f"@888 Now trying to get Order by Talend App (for Archived Order)"
-                        )
-                        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+                    # try:
+                    #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+                    # except Exception as e:
+                    #     logger.error(
+                    #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
+                    #     )
+                    #     logger.info(
+                    #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
+                    #     )
+                    bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
 
                     warehouse = get_warehouse(
                         client, code=f"JASON_L_{bok_1['warehouse_code']}"
@@ -344,16 +344,16 @@ def push_boks(payload, client, username, method):
 
     # Prepare population
     if is_biz and not bok_2s:
-        try:
-            bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-        except Exception as e:
-            logger.error(
-                f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-            )
-            logger.info(
-                f"@888 Now trying to get Order by Talend App (for Archived Order)"
-            )
-            bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+        # try:
+        #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+        # except Exception as e:
+        #     logger.error(
+        #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
+        #     )
+        #     logger.info(
+        #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
+        #     )
+        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
 
         warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
         del bok_1["warehouse_code"]
@@ -479,7 +479,8 @@ def push_boks(payload, client, username, method):
         raise Exception(message)
 
     # Save bok_2s (Product & Child items)
-    items = product_oper.get_product_items(bok_2s, client, is_web, False)
+    # items = product_oper.get_product_items(bok_2s, client, is_web, False)
+    items = bok_2s
     new_bok_2s = []
     bok_2_objs = []
 
