@@ -1226,7 +1226,6 @@ def auto_repack(payload, client):
         logger.info(f"@8839 {LOG_ID} {message}")
 
         result = {"success": True, "results": json_results}
-        result["pricePageUrl"] = url
         logger.info(f"@8837 {LOG_ID} success: True, 201_created")
         return result
 
