@@ -550,10 +550,10 @@ def sucso_handler(order_num, lines):
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
         UnitCode = iters[4]
-        length = float(iters[5]) if iters[5] else 0
-        width = float(iters[6]) if iters[5] else 0
-        height = float(iters[7]) if iters[5] else 0
-        weight = float(iters[8]) if iters[5] else 0
+        length = float(iters[5]) if iters[5] else 0.01
+        width = float(iters[6]) if iters[5] else 0.01
+        height = float(iters[7]) if iters[5] else 0.01
+        weight = float(iters[8]) if iters[5] else 0.01
 
         for line in lines:
             model_number = line.get("model_number") or line.get("e_item_type")
