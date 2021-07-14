@@ -482,6 +482,7 @@ def get_bok_by_talend(order_num):
             "description": "",
             "qty": int(float(OrderedQty)),
             "zbl_121_integer_1": int(float(SequenceNo)),
+            "zbl_102_text_2": "_",
             "e_dimUOM": "M",
             "e_weightUOM": "KG",
             "e_type_of_packaging": "UOMCode",
@@ -490,8 +491,6 @@ def get_bok_by_talend(order_num):
 
     if ignored_items:
         order["b_010_b_notes"] = ", ".join(ignored_items)
-
-    lines = sucso_handler(order_num, lines)
 
     return order, lines
 

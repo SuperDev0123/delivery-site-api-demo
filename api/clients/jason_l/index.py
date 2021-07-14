@@ -50,6 +50,7 @@ from api.clients.jason_l.operations import (
     update_when_no_quote_required,
     get_bok_by_talend,
     populate_product_desc,
+    sucso_handler,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
@@ -293,17 +294,20 @@ def push_boks(payload, client, username, method):
                     )
 
                     # Check new Order info
-                    # try:
-                    #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-                    # except Exception as e:
-                    #     logger.error(
-                    #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-                    #     )
-                    #     logger.info(
-                    #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
-                    #     )
-                    bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
-                    bok_2s = populate_product_desc(bok_2s)
+                    try:
+                        bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+                    except Exception as e:
+                        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+                        bok_2s = populate_product_desc(
+                            bok_1["b_client_order_num"], bok_2s
+                        )
+                        logger.error(
+                            f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
+                        )
+                        logger.info(
+                            f"@888 Now trying to get Order by Talend App (for Archived Order)"
+                        )
+                    bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
 
                     warehouse = get_warehouse(
                         client, code=f"JASON_L_{bok_1['warehouse_code']}"
@@ -346,17 +350,18 @@ def push_boks(payload, client, username, method):
 
     # Prepare population
     if is_biz and not bok_2s:
-        # try:
-        #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-        # except Exception as e:
-        #     logger.error(
-        #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-        #     )
-        #     logger.info(
-        #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
-        #     )
-        bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
-        bok_2s = populate_product_desc(bok_2s)
+        try:
+            bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
+        except Exception as e:
+            bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
+            bok_2s = populate_product_desc(bok_2s)
+            logger.error(
+                f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
+            )
+            logger.info(
+                f"@888 Now trying to get Order by Talend App (for Archived Order)"
+            )
+        bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
 
         warehouse = get_warehouse(client, code=f"JASON_L_{bok_1['warehouse_code']}")
         del bok_1["warehouse_code"]
