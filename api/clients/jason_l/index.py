@@ -475,6 +475,7 @@ def push_boks(payload, client, username, method):
         bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
     bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+    print("#@1 -0 ", bok_1)
 
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
