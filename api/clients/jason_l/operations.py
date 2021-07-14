@@ -598,9 +598,10 @@ def populate_product_desc(bok_2s):
         for bok_2 in bok_2s:
             if bok_2["e_item_type"] == product.parent_model_number:
                 bok_2["description"] = product.description
+                new_bok_2s.append(bok_2)
 
-    logger.info(f"@329 {LOG_ID} result: {bok_2s}")
-    return bok_2s
+    logger.info(f"@329 {LOG_ID} result: {new_bok_2s}")
+    return new_bok_2s
 
 
 def get_picked_items(order_num, sscc):
