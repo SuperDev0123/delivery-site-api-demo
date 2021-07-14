@@ -558,9 +558,9 @@ def sucso_handler(order_num, lines):
         weight = float(iters[8]) if iters[5] else 0
 
         for line in lines:
-            mode_number = line.get("model_number") or line.get("e_item_type")
+            model_number = line.get("model_number") or line.get("e_item_type")
 
-            if mode_number == ItemCode:
+            if model_number == ItemCode:
                 if line.get("model_number"):
                     line["e_item_type"] = model_number
                     line["zbl_121_integer_1"] = line["sequence"]
