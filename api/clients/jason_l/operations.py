@@ -541,11 +541,15 @@ def sucso_handler(order_num, lines):
     csv_file = open(file_path)
     logger.info(f"@313 {LOG_ID} File({file_path}) opened!")
 
-    new_lines = []
+    csv_lines = []
     for i, csv_line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
 
+        csv_lines.append(csv_line)
+
+    new_lines = []
+    for csv_line in reversed(csv_lines):
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
@@ -559,6 +563,19 @@ def sucso_handler(order_num, lines):
 
         for line in lines:
             if line.get("e_item_type") == ItemCode:
+                already_checked = False
+
+                for new_line in new_lines:
+                    if (
+                        new_line["e_item_type"] == ItemCode
+                        and new_line["zbl_121_integer_1"] == SequenceNo
+                    ):
+                        already_checked = True
+                        break
+
+                if already_checked:
+                    continue
+
                 line["description"] = Description
                 line["zbl_102_text_2"] = ProductGroupCode
                 line["e_dimLength"] = length
