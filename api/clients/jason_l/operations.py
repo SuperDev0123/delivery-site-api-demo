@@ -588,7 +588,7 @@ def populate_product_desc(bok_2s):
     model_numbers = []
 
     for bok_2 in bok_2s:
-        model_numbers = bok_2["e_item_type"]
+        model_numbers.append(bok_2["e_item_type"])
 
     products = Client_Products.objects.filter(
         fk_id_dme_client_id=21, parent_model_number__in=model_numbers
