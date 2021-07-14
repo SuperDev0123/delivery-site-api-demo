@@ -834,7 +834,14 @@ def push_boks(payload, client, username, method):
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
-        return message
+
+        # Show price page either DMEA and DMEM
+        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+
+        result = {"success": True, "results": json_results}
+        result["pricePageUrl"] = url
+        logger.info(f"@8837 {LOG_ID} success: True, 201_created")
+        return result
 
 
 def auto_repack(payload, client):
@@ -1204,7 +1211,11 @@ def auto_repack(payload, client):
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
-        return message
+
+        result = {"success": True, "results": json_results}
+        result["pricePageUrl"] = url
+        logger.info(f"@8837 {LOG_ID} success: True, 201_created")
+        return result
 
 
 def scanned(payload, client):
