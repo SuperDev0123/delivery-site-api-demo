@@ -38,9 +38,9 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
         model_number = bok_2.get("model_number")
         qty = bok_2.get("qty")
         # "Jason L"
-        # zbl_121_integer_1 = bok_2.get("sequence")
-        # e_type_of_packaging = bok_2.get("UOMCode")
-        # zbl_102_text_2 = bok_2.get("ProductGroupCode")
+        zbl_121_integer_1 = bok_2.get("sequence")
+        e_type_of_packaging = bok_2.get("UOMCode")
+        zbl_102_text_2 = bok_2.get("ProductGroupCode")
 
         if not model_number:
             logger.info(f"[GET PRODUCT ITEMS] model_number: {model_number} qty: {qty}")
