@@ -518,7 +518,12 @@ def push_boks(payload, client, username, method):
                 line["l_006_dim_width"] = 0.01
                 line["l_007_dim_height"] = 0.01
                 line["l_009_weight_per_each"] = 0.01
-            elif not line["is_deleted"] and line["l_005_dim_length"] == 0:
+            elif not line["is_deleted"] and (
+                line["l_005_dim_length"] == 0
+                or line["l_006_dim_width"] == 0
+                or line["l_007_dim_height"] == 0
+                or line["l_009_weight_per_each"] == 0
+            ):
                 line["l_005_dim_length"] = 0.01
                 line["l_006_dim_width"] = 0.01
                 line["l_007_dim_height"] = 0.01
