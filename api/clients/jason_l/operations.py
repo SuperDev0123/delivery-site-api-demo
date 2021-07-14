@@ -62,13 +62,6 @@ def _extract_address(addrs):
 
     if not _state:
         errors.append("Stop Error: Delivery state missing or misspelled")
-    elif _state != state:
-        logger.error(
-            f"[_extract_address] State dismatch! state: ({_state}, {state}), suburb: suburb"
-        )
-        errors.append(
-            "Stop Error: Delivery state and suburb mistmatch (Hint perform a Google search for the correct match)"
-        )
 
     return errors, _state, postal_code, suburb
 
@@ -251,6 +244,11 @@ def get_address(order_num):
             errors.append(
                 "Stop Error: Delivery state and postal code mismatch (Hint perform a Google search for the correct match)"
             )
+
+    if address["state"] and not address["suburb"]:
+        errors.append(
+            "Stop Error: Delivery state and suburb mistmatch (Hint perform a Google search for the correct match)"
+        )
 
     if not address["suburb"] and address["postal_code"]:
         suburb = get_similar_suburb(clue_DA or clue_CUS)
