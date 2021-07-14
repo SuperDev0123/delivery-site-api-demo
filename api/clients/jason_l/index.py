@@ -523,10 +523,10 @@ def push_boks(payload, client, username, method):
                 or line["l_007_dim_height"] == 0
                 or line["l_009_weight_per_each"] == 0
             ):
-                line["l_005_dim_length"] = line["l_005_dim_length"] or 1.11
-                line["l_006_dim_width"] = line["l_006_dim_width"] or 1.11
-                line["l_007_dim_height"] = line["l_007_dim_height"] or 1.11
-                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 1.11
+                line["l_005_dim_length"] = line["l_005_dim_length"] or 999
+                line["l_006_dim_width"] = line["l_006_dim_width"] or 999
+                line["l_007_dim_height"] = line["l_007_dim_height"] or 999
+                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 999
                 line["l_003_item"] = "(Ignored)"
 
             bok_2_serializer = BOK_2_Serializer(data=line)
@@ -734,23 +734,26 @@ def push_boks(payload, client, username, method):
     )
     # fc_log.old_quote = old_quote
     body = {"booking": booking, "booking_lines": booking_lines}
-    _, success, message, quote_set = pricing_oper(
-        body=body,
-        booking_id=None,
-        is_pricing_only=True,
-    )
-    logger.info(
-        f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
-    )
+    quote_set = None
 
-    # Select best quotes(fastest, lowest)
-    if selected_quote:
-        quote_set = quote_set.filter(
-            freight_provider=selected_quote.freight_provider,
-            service_name=selected_quote.service_name,
+    if booking_lines:
+        _, success, message, quote_set = pricing_oper(
+            body=body,
+            booking_id=None,
+            is_pricing_only=True,
+        )
+        logger.info(
+            f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-    if quote_set.exists() and quote_set.count() > 0:
+        # Select best quotes(fastest, lowest)
+        if selected_quote:
+            quote_set = quote_set.filter(
+                freight_provider=selected_quote.freight_provider,
+                service_name=selected_quote.service_name,
+            )
+
+    if quote_set and quote_set.exists() and quote_set.count() > 0:
         auto_select_pricing_4_bok(bok_1_obj, quote_set)
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
@@ -787,7 +790,7 @@ def push_boks(payload, client, username, method):
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
-    else:
+    elif len(json_results) > 1:
         if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
             json_results[0]["service_name"] = "Express"
             json_results[1]["service_name"] = "Standard"
@@ -1129,19 +1132,22 @@ def auto_repack(payload, client):
         new_quote__isnull=True,
     )
     fc_log.old_quote = bok_1.quote
-    body = {"booking": booking, "booking_lines": booking_lines}
-    _, success, message, quote_set = pricing_oper(
-        body=body,
-        booking_id=None,
-        is_pricing_only=True,
-    )
-    logger.info(
-        f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
-    )
-    json_results = []
+    quote_set = None
+
+    if booking_lines:
+        body = {"booking": booking, "booking_lines": booking_lines}
+        _, success, message, quote_set = pricing_oper(
+            body=body,
+            booking_id=None,
+            is_pricing_only=True,
+        )
+        logger.info(
+            f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+        )
 
     # Select best quotes(fastest, lowest)
-    if quote_set.exists() and quote_set.count() > 0:
+    json_results = []
+    if quote_set and quote_set.exists() and quote_set.count() > 0:
         bok_1_obj = bok_1
         auto_select_pricing_4_bok(bok_1_obj, quote_set)
         best_quotes = select_best_options(pricings=quote_set)
