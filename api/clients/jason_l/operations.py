@@ -553,8 +553,8 @@ def sucso_handler(order_num, lines):
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
-        LineType = iters[3].strip()
-        ChargeType = iters[3].strip()
+        LineType = iters[4].strip()
+        ChargeType = iters[5].strip()
         ProductGroupCode = iters[6].strip()
         Description = iters[7].strip()
         UnitCode = iters[8]
