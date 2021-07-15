@@ -614,7 +614,7 @@ def push_boks(payload, client, username, method):
             new_line["l_004_dim_UOM"] = "mm"
             new_line["l_005_dim_length"] = pallet.length
             new_line["l_006_dim_width"] = pallet.width
-            new_line["l_007_dim_height"] = pallet.height
+            new_line["l_007_dim_height"] = palletized_item["packed_height"]
             new_line["l_009_weight_per_each"] = round(total_weight, 2)
             new_line["l_008_weight_UOM"] = "KG"
             new_line["is_deleted"] = False
@@ -920,7 +920,7 @@ def auto_repack(payload, client):
                 new_line["l_004_dim_UOM"] = "mm"
                 new_line["l_005_dim_length"] = pallet.length
                 new_line["l_006_dim_width"] = pallet.width
-                new_line["l_007_dim_height"] = pallet.height
+                new_line["l_007_dim_height"] = palletized_item["packed_height"]
                 new_line["l_009_weight_per_each"] = round(total_weight, 2)
                 new_line["l_008_weight_UOM"] = "KG"
                 new_line["is_deleted"] = False
