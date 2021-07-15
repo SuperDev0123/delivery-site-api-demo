@@ -1,6 +1,11 @@
 from zplgrf import GRF
 from base64 import b64decode, b64encode
 
+try:
+    from PyPDF2 import PdfFileReader, PdfFileWriter
+except ImportError:
+    from pyPdf import PdfFileReader, PdfFileWriter
+
 from api.operations.email_senders import send_email_to_admins
 
 
@@ -46,3 +51,31 @@ def pdf_to_zpl(pdf_path, zpl_path):
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
         send_email_to_admins("PDF covertion error", error_msg)
         return False
+
+
+def pdf_merge(input_files, output_file_url):
+    input_streams = []
+    output_stream = open(output_file_url, "w+b")
+
+    try:
+        # First open all the files, then produce the output file, and
+        # finally close the input files. This is necessary because
+        # the data isn't read from the input files until the write
+        # operation. Thanks to
+        # https://stackoverflow.com/questions/6773631/problem-with-closing-python-pypdf-writing-getting-a-valueerror-i-o-operation/6773733#6773733
+        writer = PdfFileWriter()
+
+        for input_file in input_files:
+            print("@1 - ", input_file, output_file_url)
+            input_streams.append(open(input_file, "rb"))
+
+        for reader in map(PdfFileReader, input_streams):
+            for n in range(reader.getNumPages()):
+                writer.addPage(reader.getPage(n))
+
+        writer.write(output_stream)
+    finally:
+        for f in input_streams:
+            f.close()
+
+        output_stream.close()

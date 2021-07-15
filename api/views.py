@@ -87,6 +87,7 @@ from api.file_operations import (
 )
 from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
+from api.convertors.pdf import pdf_merge
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -2584,6 +2585,9 @@ class BookingViewSet(viewsets.ViewSet):
             raise ValidationError({"message": message})
 
         logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
 
         lines = booking.lines().only(
             "pk_lines_id",
@@ -2607,12 +2611,13 @@ class BookingViewSet(viewsets.ViewSet):
 
         for sscc in sscc_arr:
             result_with_sscc[str(sscc)] = []
+            original_line = None
+            selected_line_data = None
 
             for line_data in line_datas:
                 if line_data.clientRefNumber != sscc:
                     continue
 
-                original_line = None
                 for line in lines:
                     if (
                         not line.sscc
@@ -2620,40 +2625,59 @@ class BookingViewSet(viewsets.ViewSet):
                         and str(line.zbl_121_integer_1) == line_data.itemSerialNumbers
                     ):
                         original_line = line
+                        selected_line_data = line_data
                         break
 
-                label_url = None
-                is_available = False
+            # For manually populated lines
+            if not original_line:
+                for line in lines:
+                    if line.sscc == sscc:
+                        original_line = line
+                        break
 
-                # For TNT orders, DME builds label for each SSCC
-                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
-                file_name = (
-                    booking.pu_Address_State
-                    + "_"
-                    + str(booking.b_bookingID_Visual)
-                    + "_"
-                    + str(sscc)
-                    + ".pdf"
-                )
-                is_available = doesFileExist(file_path, file_name)
-                label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+            label_url = None
+            is_available = False
 
-                with open(f"{file_path}{file_name}", "rb") as file:
-                    pdf_data = str(b64encode(file.read()))[2:-1]
+            # For TNT orders, DME builds label for each SSCC
+            file_name = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
+            )
+            is_available = doesFileExist(file_path, file_name)
+            label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                result_with_sscc[str(sscc)].append(
-                    {
-                        "pk_lines_id": original_line.pk_lines_id,
-                        "sscc": sscc,
-                        "e_item": original_line.e_item,
-                        "e_item_type": original_line.e_item_type,
-                        "e_qty": line_data.quantity,
-                        "e_type_of_packaging": original_line.e_type_of_packaging,
-                        "is_available": is_available,
-                        "url": label_url,
-                        "pdf": pdf_data,
-                    }
-                )
+            with open(f"{file_path}/{file_name}", "rb") as file:
+                pdf_data = str(b64encode(file.read()))[2:-1]
+
+            result_with_sscc[str(sscc)].append(
+                {
+                    "pk_lines_id": original_line.pk_lines_id,
+                    "sscc": sscc,
+                    "e_item": original_line.e_item,
+                    "e_item_type": original_line.e_item_type,
+                    "e_qty": selected_line_data.quantity
+                    if selected_line_data
+                    else original_line.e_qty,
+                    "e_type_of_packaging": original_line.e_type_of_packaging,
+                    "is_available": is_available,
+                    "url": label_url,
+                    "pdf": pdf_data,
+                }
+            )
+
+        # Get full PDF
+        try:
+            pdf_data = None
+            file_name = f"DME{booking.b_bookingID_Visual}.pdf"
+
+            with open(f"{file_path}/{file_name}", "rb") as file:
+                pdf_data = str(b64encode(file.read()))[2:-1]
+        except:
+            pass
 
         result = {
             "id": booking.pk,
@@ -2665,6 +2689,7 @@ class BookingViewSet(viewsets.ViewSet):
             "vx_freight_provider": booking.vx_freight_provider,
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
+            "pdf": pdf_data,
             "sscc_obj": result_with_sscc,
         }
 
@@ -3916,7 +3941,10 @@ def get_csv(request):
                 booking.b_status = "Booked"
                 booking.save()
 
-                if vx_freight_provider == "state transport" or vx_freight_provider == "century":
+                if (
+                    vx_freight_provider == "state transport"
+                    or vx_freight_provider == "century"
+                ):
                     file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
                     file_path, file_name = build_label_oper(booking, file_path)
                     booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
@@ -4056,31 +4084,39 @@ def build_label(request):
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
     logger.info(f"{LOG_ID} Booking pk: {booking_id}")
+    booking = Bookings.objects.get(pk=booking_id)
+    lines = booking.lines().filter(is_deleted=False)
+    line_datas = booking.line_datas()
+    label_urls = []
 
     try:
-        booking = Bookings.objects.get(pk=booking_id)
-        lines = booking.lines().filter(is_deleted=False)
-        line_datas = booking.line_datas()
+        # Populate SSCC if doesn't exist
+        for line in lines:
+            if not line.sscc:
+                line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
+                line.save()
 
         # Prerequisite
         sscc_list = []
         sscc_lines = {}
 
-        for line_data in line_datas:
-            if line_data.clientRefNumber in sscc_list:
-                continue
+        for line in lines:
+            if line.sscc not in sscc_list:
+                sscc_list.append(line.sscc)
+                _lines = []
 
-            sscc_list.append(line_data.clientRefNumber)
+                for line1 in lines:
+                    if line1.sscc == line.sscc:
+                        _lines.append(line1)
 
-            for line in lines:
-                if line.pk_booking_lines_id == line_data.fk_booking_lines_id:
-                    sscc_lines[line_data.clientRefNumber] = [line]
-                    break
+                sscc_lines[line.sscc] = _lines
 
         # Build label with SSCC - one sscc should have one page label
-        for index, sscc in enumerate(sscc_list):
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
 
+        for index, sscc in enumerate(sscc_list):
             logger.info(f"@368 - building label with SSCC...")
             file_path, file_name = build_label_oper(
                 booking=booking,
@@ -4091,6 +4127,11 @@ def build_label(request):
                 sscc_cnt=len(sscc_list),
                 one_page_label=True,
             )
+            label_urls.append(f"{file_path}/{file_name}")
+
+        if label_urls:
+            entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+            pdf_merge(label_urls, entire_label_url)
 
         message = f"#379 {LOG_ID} - Successfully build label. Booking Id: {booking.b_bookingID_Visual}"
         logger.info(message)

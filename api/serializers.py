@@ -429,6 +429,7 @@ class BookingLineSerializer(serializers.ModelSerializer):
             "e_qty_scanned_fp",
             "is_scanned",
             "picked_up_timestamp",
+            "sscc",
         )
 
 
