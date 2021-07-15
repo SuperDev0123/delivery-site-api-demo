@@ -939,9 +939,7 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    lines = BOK_2_lines.objects.filter(
-        fk_header_id=bok_1.pk_header_id, is_deleted=True
-    )
+    lines = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id, is_deleted=True)
 
     status_history = Dme_status_history.objects.filter(
         fk_booking_id=bok_1.pk_header_id
@@ -1004,10 +1002,10 @@ def get_delivery_status(request):
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
         eta = (
             (
-                convert_to_AU_SYDNEY_tz(booking.b_021_b_pu_avail_from_date)
+                convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date)
                 + timedelta(days=int(json_quote["eta"].split()[0]))
             ).strftime("%Y-%m-%d")
-            if json_quote and booking.b_021_b_pu_avail_from_date
+            if json_quote and bok_1.b_021_b_pu_avail_from_date
             else ""
         )
 
