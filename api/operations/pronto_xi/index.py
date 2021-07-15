@@ -51,6 +51,10 @@ def update_note(quote, booking, lines=[], type="bok"):
         f"@630 {LOG_ID} orderNum: {booking.b_client_order_num}, quote ID: {quote.pk}"
     )
 
+    if not booking.b_client_order_num:
+        logger.info(f"@631 {LOG_ID} Wrong orderNum: {booking.b_client_order_num}")
+        return True
+
     consignment_num = "---                    "
     total_cost = 0
     booking_status = "Picking"

@@ -131,23 +131,23 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 results = _append_line(results, line, qty, is_bundle_by_model_number)
 
     # Jason L: populate DIMs by ProductGroupCode
-    for result in results:
-        if (
-            result["zbl_102_text_2"]
-            and not "(Ignored)" in result["zbl_102_text_2"]
-            and result["e_dimLength"] == 1
-            and result["e_dimWidth"] == 1
-            and result["e_dimHeight"] == 1
-        ):
-            if result["zbl_102_text_2"] in JASONL_DIM_BY_GROUP_CODE:
-                logger.info(
-                    f"[GET PRODUCT ITEMS] Dims with GroupCode: {result['zbl_102_text_2']}, ItemCode: {result['e_item_type']}"
-                )
-                dims = JASONL_DIM_BY_GROUP_CODE[result["zbl_102_text_2"]]
-                result["e_dimLength"] = dims["length"]
-                result["e_dimWidth"] = dims["width"]
-                result["e_dimHeight"] = dims["height"]
-                result["e_weightPerEach"] = dims["weight"]
+    # for result in results:
+    #     if (
+    #         result["zbl_102_text_2"]
+    #         and not "(Ignored)" in result["zbl_102_text_2"]
+    #         and result["e_dimLength"] == 1
+    #         and result["e_dimWidth"] == 1
+    #         and result["e_dimHeight"] == 1
+    #     ):
+    #         if result["zbl_102_text_2"] in JASONL_DIM_BY_GROUP_CODE:
+    #             logger.info(
+    #                 f"[GET PRODUCT ITEMS] Dims with GroupCode: {result['zbl_102_text_2']}, ItemCode: {result['e_item_type']}"
+    #             )
+    #             dims = JASONL_DIM_BY_GROUP_CODE[result["zbl_102_text_2"]]
+    #             result["e_dimLength"] = dims["length"]
+    #             result["e_dimWidth"] = dims["width"]
+    #             result["e_dimHeight"] = dims["height"]
+    #             result["e_weightPerEach"] = dims["weight"]
 
     logger.info(f"[GET PRODUCT ITEMS] {results}")
     return results

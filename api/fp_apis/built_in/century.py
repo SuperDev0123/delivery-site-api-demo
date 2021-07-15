@@ -57,6 +57,7 @@ def get_pricing(fp_name, booking, booking_lines):
             "totalTaxes": 0,
             "serviceName": f"{rule.service_timing_code}",
             "etd": rule.etd.fp_delivery_time_description,
+            "vehicle": rule.vehicle.pk,
         }
         pricies.append(price)
 
