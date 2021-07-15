@@ -2670,7 +2670,7 @@ class BookingViewSet(viewsets.ViewSet):
             )
 
         # Get full PDF
-        full_label_url = None
+        full_label_name = ""
 
         try:
             pdf_data = None
@@ -2679,9 +2679,9 @@ class BookingViewSet(viewsets.ViewSet):
             with open(f"{file_path}/{file_name}", "rb") as file:
                 pdf_data = str(b64encode(file.read()))[2:-1]
 
-            file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au"
-            full_label_url = f"{file_path}/{file_name}"
+            full_label_name = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
         except:
+            full_label_name = ""
             pass
 
         result = {
@@ -2695,7 +2695,7 @@ class BookingViewSet(viewsets.ViewSet):
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
             "pdf": pdf_data,
-            "full_label_url": full_label_url,
+            "full_label_name": full_label_url,
             "sscc_obj": result_with_sscc,
         }
 
