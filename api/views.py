@@ -2695,7 +2695,7 @@ class BookingViewSet(viewsets.ViewSet):
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
             "pdf": pdf_data,
-            "full_label_name": full_label_url,
+            "full_label_name": full_label_name,
             "sscc_obj": result_with_sscc,
         }
 
