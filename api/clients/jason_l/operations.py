@@ -33,7 +33,9 @@ from api.clients.operations.index import (
     is_postalcode_in_state,
 )
 from api.clients.jason_l.constants import (
-    ITEM_CODES_TO_BE_IGNORED as JASONL_ITEM_CODES_TO_BE_IGNORED,
+    ITEM_CODES_TO_BE_IGNORED,
+    LINE_TYPE_TO_BE_IGNORED,
+    CHARGE_TYPE_TO_BE_IGNORED,
 )
 
 logger = logging.getLogger(__name__)
@@ -466,18 +468,11 @@ def get_bok_by_talend(bok_1):
         SequenceNo = iters[2]
         UOMCode = iters[15]
 
-        if ItemCode and ItemCode.upper() in JASONL_ITEM_CODES_TO_BE_IGNORED:
+        if ItemCode and ItemCode.upper() in ITEM_CODES_TO_BE_IGNORED:
             ignored_items.append(ItemCode)
             message = f"@6410 {LOG_ID} IGNORED (LISTED ITEM) --- itemCode: {ItemCode}"
             logger.info(message)
             continue
-
-        ProductGroupCode = get_product_group_code(ItemCode, token)
-        if not ProductGroupCode:
-            ignored_items.append(ItemCode)
-            message = f"@6410 {LOG_ID} IGNORED (MISSING ITEM) --- itemCode: {ItemCode}"
-            logger.info(message)
-            # continue
 
         line = {
             "e_item_type": ItemCode,
@@ -558,13 +553,25 @@ def sucso_handler(order_num, lines):
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
-        ProductGroupCode = iters[4].strip()
-        Description = iters[5].strip()
-        UnitCode = iters[6]
-        length = float(iters[7])
-        width = float(iters[8])
-        height = float(iters[9])
-        weight = float(iters[10])
+        LineType = iters[3].strip()
+        ChargeType = iters[3].strip()
+        ProductGroupCode = iters[6].strip()
+        Description = iters[7].strip()
+        UnitCode = iters[8]
+        length = float(iters[9])
+        width = float(iters[10])
+        height = float(iters[11])
+        weight = float(iters[12])
+
+        if LineType and LineType.upper() in LINE_TYPE_TO_BE_IGNORED:
+            message = f"@6410 {LOG_ID} IGNORED (LINE_TYPE) --- ItemCode: {ItemCode}, LineType: {LineType}"
+            logger.info(message)
+            continue
+
+        if ChargeType and ChargeType.upper() in CHARGE_TYPE_TO_BE_IGNORED:
+            message = f"@6410 {LOG_ID} IGNORED (LINE_TYPE) --- ItemCode: {ItemCode}, ChargeType: {ChargeType}"
+            logger.info(message)
+            continue
 
         for line in lines:
             if line.get("e_item_type") == ItemCode:
@@ -582,6 +589,9 @@ def sucso_handler(order_num, lines):
                 if already_checked:
                     continue
 
+                line["description"] = Description
+                line["line_type"] = LineType
+                line["charge_type"] = ChargeType
                 line["description"] = Description
                 line["zbl_102_text_2"] = ProductGroupCode
                 line["e_dimLength"] = length
