@@ -2613,7 +2613,10 @@ class BookingViewSet(viewsets.ViewSet):
             result_with_sscc[str(sscc)] = []
             original_line = None
             selected_line_data = None
+            label_url = None
+            is_available = False
 
+            # Auto populated lines
             for line_data in line_datas:
                 if line_data.clientRefNumber != sscc:
                     continue
@@ -2628,48 +2631,77 @@ class BookingViewSet(viewsets.ViewSet):
                         selected_line_data = line_data
                         break
 
-            # For manually populated lines
+                if original_line:
+                    # For TNT orders, DME builds label for each SSCC
+                    file_name = (
+                        booking.pu_Address_State
+                        + "_"
+                        + str(booking.b_bookingID_Visual)
+                        + "_"
+                        + str(sscc)
+                        + ".pdf"
+                    )
+                    is_available = doesFileExist(file_path, file_name)
+                    label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+
+                    with open(f"{file_path}/{file_name}", "rb") as file:
+                        pdf_data = str(b64encode(file.read()))[2:-1]
+
+                    result_with_sscc[str(sscc)].append(
+                        {
+                            "pk_lines_id": original_line.pk_lines_id,
+                            "sscc": sscc,
+                            "e_item": original_line.e_item,
+                            "e_item_type": original_line.e_item_type,
+                            "e_qty": selected_line_data.quantity
+                            if selected_line_data
+                            else original_line.e_qty,
+                            "e_type_of_packaging": original_line.e_type_of_packaging,
+                            "is_available": is_available,
+                            "url": label_url,
+                            "pdf": pdf_data,
+                        }
+                    )
+
+            # Manually populated lines
             if not original_line:
                 for line in lines:
                     if line.sscc == sscc:
                         original_line = line
                         break
 
-            label_url = None
-            is_available = False
+                # For TNT orders, DME builds label for each SSCC
+                file_name = (
+                    booking.pu_Address_State
+                    + "_"
+                    + str(booking.b_bookingID_Visual)
+                    + "_"
+                    + str(sscc)
+                    + ".pdf"
+                )
+                is_available = doesFileExist(file_path, file_name)
+                label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-            # For TNT orders, DME builds label for each SSCC
-            file_name = (
-                booking.pu_Address_State
-                + "_"
-                + str(booking.b_bookingID_Visual)
-                + "_"
-                + str(sscc)
-                + ".pdf"
-            )
-            is_available = doesFileExist(file_path, file_name)
-            label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+                with open(f"{file_path}/{file_name}", "rb") as file:
+                    pdf_data = str(b64encode(file.read()))[2:-1]
 
-            with open(f"{file_path}/{file_name}", "rb") as file:
-                pdf_data = str(b64encode(file.read()))[2:-1]
+                result_with_sscc[str(sscc)].append(
+                    {
+                        "pk_lines_id": original_line.pk_lines_id,
+                        "sscc": sscc,
+                        "e_item": original_line.e_item,
+                        "e_item_type": original_line.e_item_type,
+                        "e_qty": selected_line_data.quantity
+                        if selected_line_data
+                        else original_line.e_qty,
+                        "e_type_of_packaging": original_line.e_type_of_packaging,
+                        "is_available": is_available,
+                        "url": label_url,
+                        "pdf": pdf_data,
+                    }
+                )
 
-            result_with_sscc[str(sscc)].append(
-                {
-                    "pk_lines_id": original_line.pk_lines_id,
-                    "sscc": sscc,
-                    "e_item": original_line.e_item,
-                    "e_item_type": original_line.e_item_type,
-                    "e_qty": selected_line_data.quantity
-                    if selected_line_data
-                    else original_line.e_qty,
-                    "e_type_of_packaging": original_line.e_type_of_packaging,
-                    "is_available": is_available,
-                    "url": label_url,
-                    "pdf": pdf_data,
-                }
-            )
-
-        # Get full PDF
+        # Full PDF
         full_label_name = ""
 
         try:
