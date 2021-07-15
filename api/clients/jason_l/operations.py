@@ -574,6 +574,7 @@ def sucso_handler(order_num, lines):
                     if (
                         new_line["e_item_type"] == ItemCode
                         and new_line["zbl_121_integer_1"] == SequenceNo
+                        and not length
                     ):
                         already_checked = True
                         break
