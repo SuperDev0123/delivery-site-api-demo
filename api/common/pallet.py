@@ -71,17 +71,20 @@ def pallet_to_dict(pallets):
     for index, pallet in enumerate(pallets):
         pallets_data.append(
             {
-                "w": pallet.length / 1000,
-                "h": pallet.width / 1000,
-                "d": pallet.height / 1000,
+                "w": pallet.width / 1000,
+                "h": pallet.height / 1000,
+                "d": pallet.length / 1000,
                 "max_wg": pallet.max_weight if pallet.max_weight else 0,
                 "id": index,
             }
         )
+
     return pallets_data
 
 
 def lines_to_dict(bok_2s):
+    dim_min_limit = 0.2
+    dim_max_limit = 0.5
     lines_data = []
     for index, item in enumerate(bok_2s):
         item_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
@@ -92,17 +95,37 @@ def lines_to_dict(bok_2s):
         )
         item_quantity = item.l_002_qty
 
-        lines_data.append(
-            {
-                "w": item_length,
-                "h": item_width,
-                "d": item_height,
-                "q": item_quantity,
-                "vr": 1,
-                "wg": item_weight,
-                "id": index,
-            }
-        )
+        dims = [
+            item_length,
+            item_width,
+            item_height
+        ]
+        dims.sort()
+        if dims[0] <= dim_min_limit and dims[2] >= dim_max_limit:
+            lines_data.append(
+                {
+                    "w": dims[1],
+                    "h": dims[0],
+                    "d": dims[2],
+                    "q": item_quantity,
+                    "vr": 0,
+                    "wg": item_weight,
+                    "id": index,
+                }
+            )
+        else:
+            lines_data.append(
+                {
+                    "w": item_width,
+                    "h": item_height,
+                    "d": item_length,
+                    "q": item_quantity,
+                    "vr": 1,
+                    "wg": item_weight,
+                    "id": index,
+                }
+            )
+
     return lines_data
 
 
@@ -145,8 +168,8 @@ def refine_pallets(packed_results, original_pallets, original_lines):
     for pallet in packed_results["bins_packed"]:
         packed_height, items = 0, []
         for item in pallet["items"]:
-            if item["coordinates"]["z2"] > packed_height:
-                packed_height = item["coordinates"]["z2"]
+            if item["coordinates"]["y2"] > packed_height:
+                packed_height = item["coordinates"]["y2"]
 
             try:
                 index = [each["line_index"] for each in items].index(item["id"])
