@@ -66,7 +66,6 @@ def pdf_merge(input_files, output_file_url):
         writer = PdfFileWriter()
 
         for input_file in input_files:
-            print("@1 - ", input_file, output_file_url)
             input_streams.append(open(input_file, "rb"))
 
         for reader in map(PdfFileReader, input_streams):
