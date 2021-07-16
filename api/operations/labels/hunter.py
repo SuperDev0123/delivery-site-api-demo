@@ -684,9 +684,9 @@ def buildSenderSection(
                 "<font size=%s>Item Dimensions: %s x %s x %s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    int(booking_line.e_dimWidth),
-                    int(booking_line.e_dimHeight),
-                    int(booking_line.e_dimLength),
+                    float(booking_line.e_dimWidth),
+                    float(booking_line.e_dimHeight),
+                    float(booking_line.e_dimLength),
                 ),
                 style_left,
             ),
@@ -1400,9 +1400,9 @@ def buildReceiverSection(
                 "<font size=%s>Item Dimensions: %s x %s x %s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    int(booking_line.e_dimWidth),
-                    int(booking_line.e_dimHeight),
-                    int(booking_line.e_dimLength),
+                    float(booking_line.e_dimWidth),
+                    float(booking_line.e_dimHeight),
+                    float(booking_line.e_dimLength),
                 ),
                 style_left,
             ),
@@ -2161,9 +2161,9 @@ def buildPodSection(
                 "<font size=%s>Item Dimensions: %s x %s x %s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    int(booking_line.e_dimWidth),
-                    int(booking_line.e_dimHeight),
-                    int(booking_line.e_dimLength),
+                    float(booking_line.e_dimWidth),
+                    float(booking_line.e_dimHeight),
+                    float(booking_line.e_dimLength),
                 ),
                 style_left,
             ),
