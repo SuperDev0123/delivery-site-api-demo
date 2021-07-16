@@ -546,6 +546,8 @@ def sucso_handler(order_num, lines):
         if index == 0:  # Skip header row
             continue
 
+        print("@1 - ", csv_line)
+
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
@@ -584,6 +586,8 @@ def sucso_handler(order_num, lines):
                 and new_line.get("zbl_121_integer_1") == SequenceNo
             ):
                 selected_new_line_index = i
+
+        print("@2 - ", selected_line, new_lines, selected_new_line_index)
 
         if selected_line:
             if selected_new_line_index:
