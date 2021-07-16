@@ -267,6 +267,8 @@ def build_label(
             if one_page_label and k > 0:
                 continue
 
+            print("@1 - ", line.e_dimWidth, line.e_dimWidth)
+
             data = [
                 [
                     dme_img,
