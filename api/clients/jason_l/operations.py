@@ -569,10 +569,9 @@ def sucso_handler(order_num, lines):
             logger.info(message)
             continue
 
+        can_skip = False
         for line in lines:
             if line.get("e_item_type") == ItemCode:
-                can_skip = False
-
                 for new_line in new_lines:
                     if (
                         new_line["e_item_type"] == ItemCode
@@ -585,21 +584,21 @@ def sucso_handler(order_num, lines):
                         can_skip = True
                         break
 
-                if can_skip:
-                    continue
+            if can_skip:
+                continue
 
-                line["description"] = Description
-                line["line_type"] = LineType
-                line["charge_type"] = ChargeType
-                line["description"] = Description
-                line["zbl_102_text_2"] = ProductGroupCode
-                line["e_dimLength"] = length
-                line["e_dimWidth"] = width
-                line["e_dimHeight"] = height
-                line["e_weightPerEach"] = weight
-                line["e_dimUOM"] = "M"
-                line["e_weightUOM"] = "KG"
-                new_lines.append(line)
+            line["description"] = Description
+            line["line_type"] = LineType
+            line["charge_type"] = ChargeType
+            line["description"] = Description
+            line["zbl_102_text_2"] = ProductGroupCode
+            line["e_dimLength"] = length
+            line["e_dimWidth"] = width
+            line["e_dimHeight"] = height
+            line["e_weightPerEach"] = weight
+            line["e_dimUOM"] = "M"
+            line["e_weightUOM"] = "KG"
+            new_lines.append(line)
 
     logger.info(f"@319 {LOG_ID} result: {new_lines}")
     return new_lines
