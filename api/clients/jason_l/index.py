@@ -1368,7 +1368,10 @@ def scanned(payload, client):
                     if line.zbl_121_integer_1 == picked_item["items"][0]["sequence"]:
                         original_line = line
 
-                if original_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                if (
+                    not original_line
+                    or original_line.zbl_102_text_2 in SERVICE_GROUP_CODES
+                ):
                     continue
 
                 line_data = Booking_lines_data()
