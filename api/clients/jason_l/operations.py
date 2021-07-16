@@ -541,7 +541,10 @@ def sucso_handler(order_num, lines):
     csv_file = open(file_path)
     logger.info(f"@313 {LOG_ID} File({file_path}) opened!")
 
-    for csv_line in csv_file:
+    for index, csv_line in enumerate(csv_file):
+        if index == 0:  # Skip header row
+            continue
+
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
