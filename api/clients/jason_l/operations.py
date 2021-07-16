@@ -571,26 +571,31 @@ def sucso_handler(order_num, lines):
 
         selected_line = None
         for line in lines:
-            if line.get("e_item_type") == ItemCode:
+            if (
+                line.get("e_item_type") == ItemCode
+                and line.get("zbl_121_integer_1") == SequenceNo
+            ):
                 selected_line = line
 
+        selected_new_line = None
+        for new_line in new_lines:
+            if (
+                new_line.get("e_item_type") == ItemCode
+                and new_line.get("zbl_121_integer_1") == SequenceNo
+            ):
+                selected_new_line = new_line
+
         if selected_line:
-            can_skip = False
-
-            for new_line in new_lines:
+            if selected_new_line:
                 if (
-                    new_line["e_item_type"] == ItemCode
-                    and new_line["zbl_121_integer_1"] == SequenceNo
-                    and new_line["e_dimLength"]
-                    and new_line["e_dimWidth"]
-                    and new_line["e_dimHeight"]
-                    and new_line["e_weightPerEach"]
+                    selected_new_line["length"]
+                    and selected_new_line["width"]
+                    and selected_new_line["height"]
+                    and selected_new_line["weight"]
                 ):
-                    can_skip = True
-                    break
-
-            if can_skip:
-                continue
+                    continue
+                else:
+                    selected_line = selected_new_line
 
             selected_line["description"] = Description
             selected_line["line_type"] = LineType
