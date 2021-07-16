@@ -596,7 +596,7 @@ def sucso_handler(order_num, lines):
                     continue
                 else:
                     selected_line = new_lines[selected_new_line_index]
-                    new_lines.pop(new_lines[selected_new_line_index])
+                    new_lines.pop(selected_new_line_index)
 
             selected_line["description"] = Description
             selected_line["line_type"] = LineType
