@@ -569,36 +569,41 @@ def sucso_handler(order_num, lines):
             logger.info(message)
             continue
 
+        # selected_line = None
+        # for line in lines:
+        #     if line.get("e_item_type") == ItemCode:
+        #         selected_line = line
+
+        # if selected_line:
         can_skip = False
-        for line in lines:
-            if line.get("e_item_type") == ItemCode:
-                for new_line in new_lines:
-                    if (
-                        new_line["e_item_type"] == ItemCode
-                        and new_line["zbl_121_integer_1"] == SequenceNo
-                        and new_line["e_dimLength"]
-                        and new_line["e_dimWidth"]
-                        and new_line["e_dimHeight"]
-                        and new_line["e_weightPerEach"]
-                    ):
-                        can_skip = True
-                        break
 
-            if can_skip:
-                continue
+        for new_line in new_lines:
+            if (
+                new_line["e_item_type"] == ItemCode
+                and new_line["zbl_121_integer_1"] == SequenceNo
+                and new_line["e_dimLength"]
+                and new_line["e_dimWidth"]
+                and new_line["e_dimHeight"]
+                and new_line["e_weightPerEach"]
+            ):
+                can_skip = True
+                break
 
-            line["description"] = Description
-            line["line_type"] = LineType
-            line["charge_type"] = ChargeType
-            line["description"] = Description
-            line["zbl_102_text_2"] = ProductGroupCode
-            line["e_dimLength"] = length
-            line["e_dimWidth"] = width
-            line["e_dimHeight"] = height
-            line["e_weightPerEach"] = weight
-            line["e_dimUOM"] = "M"
-            line["e_weightUOM"] = "KG"
-            new_lines.append(line)
+        if can_skip:
+            continue
+
+        line["description"] = Description
+        line["line_type"] = LineType
+        line["charge_type"] = ChargeType
+        line["description"] = Description
+        line["zbl_102_text_2"] = ProductGroupCode
+        line["e_dimLength"] = length
+        line["e_dimWidth"] = width
+        line["e_dimHeight"] = height
+        line["e_weightPerEach"] = weight
+        line["e_dimUOM"] = "M"
+        line["e_weightUOM"] = "KG"
+        new_lines.append(line)
 
     logger.info(f"@319 {LOG_ID} result: {new_lines}")
     return new_lines
