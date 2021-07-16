@@ -53,6 +53,7 @@ from api.operations.pronto_xi.index import (
     send_info_back,
     update_note as update_pronto_note,
 )
+from api.clients.jason_l.constants import SERVICE_GROUP_CODES
 
 
 logger = logging.getLogger(__name__)
@@ -797,8 +798,10 @@ def get_delivery_status(request):
             last_updated = ""
 
         lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, is_deleted=True
-        )
+            fk_booking_id=booking.pk_booking_id,
+            is_deleted=True,
+            e_item_type__isnull=False,
+        ).exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
 
         booking_dict = {
             "uid": booking.pk,
@@ -939,7 +942,9 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    lines = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id, is_deleted=True)
+    lines = BOK_2_lines.objects.filter(
+        fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
+    ).exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
 
     status_history = Dme_status_history.objects.filter(
         fk_booking_id=bok_1.pk_header_id
