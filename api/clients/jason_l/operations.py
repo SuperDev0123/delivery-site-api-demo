@@ -541,6 +541,7 @@ def sucso_handler(order_num, lines):
     csv_file = open(file_path)
     logger.info(f"@313 {LOG_ID} File({file_path}) opened!")
 
+    new_lines = []
     for index, csv_line in enumerate(csv_file):
         if index == 0:  # Skip header row
             continue
@@ -568,7 +569,6 @@ def sucso_handler(order_num, lines):
             logger.info(message)
             continue
 
-        new_lines = []
         for line in lines:
             if line.get("e_item_type") == ItemCode:
                 can_skip = False
