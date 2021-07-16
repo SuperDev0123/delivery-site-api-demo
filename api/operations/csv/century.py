@@ -151,7 +151,7 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h33 = str(booking.v_vehicle_Type)
 
-        h34 = "13:00"
+        h34 = ""
 
         # if booking.vx_serviceName == "Standard":
         #     h35 = "4"
@@ -159,7 +159,7 @@ def build_csv(fileHandler, bookings, booking_lines):
         #     h35 = "3"
         # elif booking.vx_serviceName == "Priority":
         #     h35 = "2"
-        h35 = "15:00"
+        h35 = ""
 
         if booking.b_client_warehouse_code is None:
             h36 = ""
