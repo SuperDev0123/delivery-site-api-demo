@@ -588,10 +588,10 @@ def sucso_handler(order_num, lines):
         if selected_line:
             if selected_new_line:
                 if (
-                    selected_new_line["length"]
-                    and selected_new_line["width"]
-                    and selected_new_line["height"]
-                    and selected_new_line["weight"]
+                    selected_new_line["e_dimLength"]
+                    and selected_new_line["e_dimWidth"]
+                    and selected_new_line["e_dimHeight"]
+                    and selected_new_line["e_weightPerEach"]
                 ):
                     continue
                 else:
