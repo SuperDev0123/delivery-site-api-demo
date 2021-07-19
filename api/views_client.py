@@ -790,7 +790,7 @@ def get_delivery_status(request):
             last_updated = (
                 convert_to_AU_SYDNEY_tz(
                     status_history.first().event_time_stamp
-                ).strftime("%Y-%m-%d %H:%M:%S")
+                ).strftime("%Y-%m-%d %H:%M")
                 if status_history.first().event_time_stamp
                 else ""
             )
@@ -879,7 +879,7 @@ def get_delivery_status(request):
             if index == 0:
                 timestamps.append(
                     convert_to_AU_SYDNEY_tz(booking.z_CreatedTimestamp).strftime(
-                        "%Y-%m-%d %H:%M:%S"
+                        "%Y-%m-%d %H:%M"
                     )
                     if booking and booking.z_CreatedTimestamp
                     else ""
