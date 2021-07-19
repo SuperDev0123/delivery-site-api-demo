@@ -91,9 +91,38 @@ def bdra3(param):
         return None
 
 
+def ptl(param):
+    if param['pu_tail_lift']:
+        return {
+            "name": "Tail-Lift Truck8(pickup)",
+            "description": "",
+            "value": 60,
+        }
+    else:
+        return None
+
+
+def dtl(param):
+    if param['de_tail_lift']:
+        return {
+            "name": "Tail-Lift Truck8(delivery)",
+            "description": "",
+            "value": 60,
+        }
+    else:
+        return None
+
+
 def hunter():
     return {
-        "order": [bdra0, bdra1, bdra2, bdra3],
+        "order": [
+            bdra0, 
+            bdra1, 
+            bdra2, 
+            bdra3, 
+            ptl, 
+            dtl
+        ],
         "line": [
             el0,
             el1,
