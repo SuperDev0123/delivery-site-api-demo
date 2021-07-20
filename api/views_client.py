@@ -797,11 +797,21 @@ def get_delivery_status(request):
         else:
             last_updated = ""
 
-        lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            is_deleted=True,
-            e_item_type__isnull=False,
-        ).exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+        has_deleted_lines = lines.filter(is_deleted=True).exists()
+
+        if has_deleted_lines:
+            lines = (
+                lines.filter(is_deleted=True, e_item_type__isnull=False)
+                .exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+                .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
+            )
+        else:
+            lines = (
+                lines.filter(is_deleted=False)
+                .exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+                .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
+            )
 
         booking_dict = {
             "uid": booking.pk,
