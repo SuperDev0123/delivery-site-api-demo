@@ -88,7 +88,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 line = {
                     "e_item_type": product.child_model_number,
                     "description": product.description,
-                    "qty": product.qty * qty,
+                    "qty": qty,
                     "e_dimUOM": product.e_dimUOM,
                     "e_weightUOM": product.e_weightUOM,
                     "e_dimLength": product.e_dimLength,
@@ -116,7 +116,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                     "description": product.description
                     if not product.is_ignored
                     else f"{product.description} (Ignored)",
-                    "qty": product.qty * qty,
+                    "qty": qty,
                     "e_dimUOM": product.e_dimUOM,
                     "e_weightUOM": product.e_weightUOM,
                     "e_dimLength": product.e_dimLength,
