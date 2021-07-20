@@ -339,7 +339,7 @@ def get_address(order_num):
                 street_2.append(clue.strip())
 
         if street_2:
-            address["street_2"] = ", ".join(street_2)
+            address["street_2"] = ", ".join(street_2)[:25]
 
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
