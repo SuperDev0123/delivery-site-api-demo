@@ -801,17 +801,14 @@ def get_delivery_status(request):
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
         if has_deleted_lines:
-            lines = (
-                lines.filter(is_deleted=True, e_item_type__isnull=False)
-                .exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
-                .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
-            )
+            lines = lines.filter(is_deleted=True)
+            # lines.filter(is_deleted=True, e_item_type__isnull=False)
         else:
-            lines = (
-                lines.filter(is_deleted=False)
-                .exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
-                .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
-            )
+            lines = lines.filter(is_deleted=False)
+
+        lines = lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES).only(
+            "pk_lines_id", "e_qty", "e_item", "e_item_type"
+        )
 
         booking_dict = {
             "uid": booking.pk,
