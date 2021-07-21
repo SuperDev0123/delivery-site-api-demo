@@ -721,24 +721,24 @@ def send_status_update_email(booking, status, sender, status_url):
             cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
-    print('hhhhhhhhhhhhhhhhhhhhhh', html)
-    # send_email(
-    #     to_emails,
-    #     cc_emails,
-    #     subject,
-    #     html,
-    #     [],
-    #     mime_type,
-    # )
 
-    # EmailLogs.objects.create(
-    #     booking_id=booking.pk,
-    #     emailName="Status Update",
-    #     to_emails=COMMASPACE.join(to_emails),
-    #     cc_emails=COMMASPACE.join(cc_emails),
-    #     z_createdTimeStamp=str(datetime.now()),
-    #     z_createdByAccount=sender,
-    # )
+    send_email(
+        to_emails,
+        cc_emails,
+        subject,
+        html,
+        [],
+        mime_type,
+    )
+
+    EmailLogs.objects.create(
+        booking_id=booking.pk,
+        emailName="Status Update",
+        to_emails=COMMASPACE.join(to_emails),
+        cc_emails=COMMASPACE.join(cc_emails),
+        z_createdTimeStamp=str(datetime.now()),
+        z_createdByAccount=sender,
+    )
 
 def send_picking_slip_printed_email(b_client_order_num):
     """
