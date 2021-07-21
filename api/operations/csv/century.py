@@ -1,3 +1,6 @@
+from datetime import timedelta
+from api.utils import get_sydney_now_time
+
 def filter_booking_lines(booking, booking_lines):
     _booking_lines = []
 
@@ -73,12 +76,12 @@ def build_csv(fileHandler, bookings, booking_lines):
         if booking.pu_PickUp_Avail_From_Date_DME is None:
             h08 = ""
         else:
-            h08 = wrap_in_quote(booking.pu_PickUp_Avail_From_Date_DME)
+            h08 = wrap_in_quote(booking.pu_PickUp_Avail_From_Date_DME.strftime('%d/%m/%Y'))
 
         if booking.pu_PickUp_Avail_Time_Hours_DME is None:
             h09 = ""
         else:
-            h09 = str(booking.pu_PickUp_Avail_Time_Hours_DME)
+            h09 = f'{booking.pu_PickUp_Avail_Time_Hours_DME}:00'
 
         if booking.deToCompanyName is None:
             h10 = ""
@@ -125,10 +128,10 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h18 = str(booking.b_client_order_num)
 
-        if booking.v_FPBookingNumber is None:
+        if booking.b_bookingID_Visual is None:
             h19 = ""
         else:
-            h19 = str(booking.v_FPBookingNumber)
+            h19 = f'DME{booking.b_bookingID_Visual}'
 
         if booking.de_to_PickUp_Instructions_Address is None:
             h20 = ""
@@ -140,18 +143,19 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h24 = str(booking.b_client_name)
 
-        # if booking.vx_serviceName is None:
-        #     h32 = ""
-        # else:
-        #     h32 = str(booking.vx_serviceName)
-        h32 = "Standard"
+        if booking.v_service_Type is None:
+            h32 = ""
+        else:
+            h32 = str(booking.v_service_Type)
 
         if booking.v_vehicle_Type is None:
             h33 = ""
         else:
             h33 = str(booking.v_vehicle_Type)
 
-        h34 = "13:00"
+        sydney_time = get_sydney_now_time(return_type='datetime')
+
+        h34 = sydney_time.strftime('%H:%M')
 
         # if booking.vx_serviceName == "Standard":
         #     h35 = "4"
@@ -159,7 +163,8 @@ def build_csv(fileHandler, bookings, booking_lines):
         #     h35 = "3"
         # elif booking.vx_serviceName == "Priority":
         #     h35 = "2"
-        h35 = "15:00"
+
+        h35 = (sydney_time + timedelta(hours=4)).strftime('%H:%M')
 
         if booking.b_client_warehouse_code is None:
             h36 = ""
