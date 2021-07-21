@@ -1425,6 +1425,9 @@ def scanned(payload, client):
             send_email_to_admins("No FC result", message)
 
     # Build label with SSCC - one sscc should have one page label
+    if booking.vx_freight_provider.lower() == "tnt":  # Do not get Label for TNT for now
+        sscc_list = []
+
     for index, sscc in enumerate(sscc_list):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
