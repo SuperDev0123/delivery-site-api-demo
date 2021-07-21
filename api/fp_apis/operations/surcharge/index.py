@@ -230,6 +230,8 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         "vx_service_name": booking["vx_serviceName"],
         "has_dangerous_item": has_dangerous_item,
         "is_tail_lift": booking["pu_tail_lift"] or booking["del_tail_lift"],
+        "pu_tail_lift": booking["pu_tail_lift"],
+        "de_tail_lift": booking["del_tail_lift"],
         "is_jason_l": booking["client_id"] == "1af6bcd2-6148-11eb-ae93-0242ac130002",
     }
 
