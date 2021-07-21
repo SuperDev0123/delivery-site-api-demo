@@ -27,6 +27,8 @@ SURCHARGE_NAME_DESC = {
         "Bulk Delivery to Residential Address - Average dead or cubic weight per item 50-74kg": "",
         "Bulk Delivery to Residential Address - Average dead or cubic weight per item 75-99kg": "",
         "Bulk Delivery to Residential Address - Average dead or cubic weight per item 100kg or greater": "",
+        "Tail-Lift Truck8(pickup)": "",
+        "Tail-Lift Truck8(delivery)": "",
     },
     "TNT": {
         "Dangerous Goods (Road Express)": "Surcharge per consignment. In addition, the MHP Fee will apply per item to each and all items consigned under the same consignment note where that consignment contains Dangerous Goods, including any non-Dangerous Goods items consigned under that consignment note. (Dangerous Goods consignment notes are to contain Dangerous Goods items only.)",
