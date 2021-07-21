@@ -2,4 +2,7 @@ import os
 
 
 def doesFileExist(path, name):
-    return os.path.exists(path + name)
+    if path[:-1] == "/":
+        return os.path.exists(path + name)
+    else:
+        return os.path.exists(path + "/" + name)

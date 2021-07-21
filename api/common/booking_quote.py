@@ -10,6 +10,7 @@ def set_booking_quote(booking, quote=None):
         booking.inv_cost_quoted = None
         booking.inv_sell_quoted = None
         booking.s_02_Booking_Cutoff_Time = None
+        booking.v_vehicle_Type = ""
     else:
         booking.api_booking_quote = quote
         booking.vx_freight_provider = quote.freight_provider
@@ -17,6 +18,7 @@ def set_booking_quote(booking, quote=None):
         booking.vx_serviceName = quote.service_name
         booking.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
         booking.inv_sell_quoted = quote.client_mu_1_minimum_values
+        booking.v_vehicle_Type = quote.vehicle.description if quote.vehicle else None
 
         fp = Fp_freight_providers.objects.get(
             fp_company_name__iexact=quote.freight_provider

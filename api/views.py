@@ -71,7 +71,7 @@ from api.utils import (
 from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
-from api.operations.labels.index import build_label
+from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
 from api.fp_apis.utils import get_status_category_from_status
 from api.outputs import tempo
@@ -87,6 +87,7 @@ from api.file_operations import (
 )
 from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
+from api.convertors.pdf import pdf_merge
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -1192,13 +1193,9 @@ class BookingsViewSet(viewsets.ViewSet):
                     client_employee_role == "company"
                     and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
                 ):
-                    queryset = (
-                        queryset.filter(
-                            Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                        )
-                        .filter(b_dateBookedDate__isnull=True)
-                        .exclude(b_status__in=["Cancelled", "Closed"])
-                    )
+                    queryset = queryset.filter(
+                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                    ).exclude(b_status__in=["Cancelled", "Closed"])
                 else:
                     queryset = (
                         queryset.filter(b_status__iexact="Booked")
@@ -2584,6 +2581,9 @@ class BookingViewSet(viewsets.ViewSet):
             raise ValidationError({"message": message})
 
         logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
 
         lines = booking.lines().only(
             "pk_lines_id",
@@ -2607,12 +2607,16 @@ class BookingViewSet(viewsets.ViewSet):
 
         for sscc in sscc_arr:
             result_with_sscc[str(sscc)] = []
+            original_line = None
+            selected_line_data = None
+            label_url = None
+            is_available = False
 
+            # Auto populated lines
             for line_data in line_datas:
                 if line_data.clientRefNumber != sscc:
                     continue
 
-                original_line = None
                 for line in lines:
                     if (
                         not line.sscc
@@ -2620,13 +2624,49 @@ class BookingViewSet(viewsets.ViewSet):
                         and str(line.zbl_121_integer_1) == line_data.itemSerialNumbers
                     ):
                         original_line = line
+                        selected_line_data = line_data
                         break
 
-                label_url = None
-                is_available = False
+                if original_line:
+                    # For TNT orders, DME builds label for each SSCC
+                    file_name = (
+                        booking.pu_Address_State
+                        + "_"
+                        + str(booking.b_bookingID_Visual)
+                        + "_"
+                        + str(sscc)
+                        + ".pdf"
+                    )
+                    is_available = doesFileExist(file_path, file_name)
+                    label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+
+                    with open(f"{file_path}/{file_name}", "rb") as file:
+                        pdf_data = str(b64encode(file.read()))[2:-1]
+
+                    result_with_sscc[str(sscc)].append(
+                        {
+                            "pk_lines_id": original_line.pk_lines_id,
+                            "sscc": sscc,
+                            "e_item": original_line.e_item,
+                            "e_item_type": original_line.e_item_type,
+                            "e_qty": selected_line_data.quantity
+                            if selected_line_data
+                            else original_line.e_qty,
+                            "e_type_of_packaging": original_line.e_type_of_packaging,
+                            "is_available": is_available,
+                            "url": label_url,
+                            "pdf": pdf_data,
+                        }
+                    )
+
+            # Manually populated lines
+            if not original_line:
+                for line in lines:
+                    if line.sscc == sscc:
+                        original_line = line
+                        break
 
                 # For TNT orders, DME builds label for each SSCC
-                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/"
                 file_name = (
                     booking.pu_Address_State
                     + "_"
@@ -2638,7 +2678,7 @@ class BookingViewSet(viewsets.ViewSet):
                 is_available = doesFileExist(file_path, file_name)
                 label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                with open(f"{file_path}{file_name}", "rb") as file:
+                with open(f"{file_path}/{file_name}", "rb") as file:
                     pdf_data = str(b64encode(file.read()))[2:-1]
 
                 result_with_sscc[str(sscc)].append(
@@ -2647,13 +2687,30 @@ class BookingViewSet(viewsets.ViewSet):
                         "sscc": sscc,
                         "e_item": original_line.e_item,
                         "e_item_type": original_line.e_item_type,
-                        "e_qty": line_data.quantity,
+                        "e_qty": selected_line_data.quantity
+                        if selected_line_data
+                        else original_line.e_qty,
                         "e_type_of_packaging": original_line.e_type_of_packaging,
                         "is_available": is_available,
                         "url": label_url,
                         "pdf": pdf_data,
                     }
                 )
+
+        # Full PDF
+        full_label_name = ""
+
+        try:
+            pdf_data = None
+            file_name = f"DME{booking.b_bookingID_Visual}.pdf"
+
+            with open(f"{file_path}/{file_name}", "rb") as file:
+                pdf_data = str(b64encode(file.read()))[2:-1]
+
+            full_label_name = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
+        except:
+            full_label_name = ""
+            pass
 
         result = {
             "id": booking.pk,
@@ -2665,6 +2722,8 @@ class BookingViewSet(viewsets.ViewSet):
             "vx_freight_provider": booking.vx_freight_provider,
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
+            "pdf": pdf_data,
+            "full_label_name": full_label_name,
             "sscc_obj": result_with_sscc,
         }
 
@@ -2926,7 +2985,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 class PackageTypesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_packagetypes(self, request, pk=None):
-        packageTypes = Dme_package_types.objects.all().order_by("dmePackageTypeDesc")
+        packageTypes = Dme_package_types.objects.all().order_by("id")
 
         return_datas = []
         if not packageTypes.exists():
@@ -3909,16 +3968,19 @@ def get_csv(request):
                         )
                         api_booking_confirmation_line.save()
                         index = index + 1
-            elif vx_freight_provider in ["dhl", "state transport"]:
+            elif vx_freight_provider in ["dhl", "state transport", "century"]:
                 booking.b_dateBookedDate = get_sydney_now_time(return_type="datetime")
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 status_history.create(booking, "Booked", request.user.username)
                 booking.b_status = "Booked"
                 booking.save()
 
-                if vx_freight_provider == "state transport":
+                if (
+                    vx_freight_provider == "state transport"
+                    or vx_freight_provider == "century"
+                ):
                     file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
-                    file_path, file_name = build_label(booking, file_path)
+                    file_path, file_name = build_label_oper(booking, file_path)
                     booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
                     booking.save()
 
@@ -3968,9 +4030,11 @@ def get_manifest(request):
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
 
-    bookings = Bookings.objects.filter(
-        pk__in=booking_ids, b_dateBookedDate__isnull=True
-    ).only("id", "vx_freight_provider")
+    bookings = (
+        Bookings.objects.filter(pk__in=booking_ids)
+        .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact=""))
+        .only("id", "vx_freight_provider")
+    )
     fps = {}
 
     for booking in bookings:
@@ -3998,8 +4062,9 @@ def get_manifest(request):
                 booking.z_manifest_url = f"startrack_au/{filename}"
                 booking.manifest_timestamp = now
 
-                if "jason" in request.user.username:  # Jason L
-                    # Create new statusHistory
+                if (
+                    "jason" in request.user.username and not booking.b_dateBookedDate
+                ):  # Jason L: Create new statusHistory
                     status_history.create(booking, "Ready for Despatch", username)
                     booking.b_status = "Ready for Despatch"
 
@@ -4045,6 +4110,89 @@ def get_pdf(request):
     except Exception as e:
         # print('get_pdf error: ', e)
         return JsonResponse({"error": "error"})
+
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
+def build_label(request):
+    LOG_ID = "[DME LABEL BUILD]"
+
+    body = literal_eval(request.body.decode("utf8"))
+    booking_id = body["booking_id"]
+    logger.info(f"{LOG_ID} Booking pk: {booking_id}")
+    booking = Bookings.objects.get(pk=booking_id)
+    lines = booking.lines().filter(is_deleted=False)
+    line_datas = booking.line_datas()
+    label_urls = []
+
+    try:
+        # Populate SSCC if doesn't exist
+        for line in lines:
+            if not line.sscc:
+                line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
+                line.save()
+
+        # Prerequisite
+        sscc_list = []
+        sscc_lines = {}
+
+        for line in lines:
+            if line.sscc not in sscc_list:
+                sscc_list.append(line.sscc)
+                _lines = []
+
+                for line1 in lines:
+                    if line1.sscc == line.sscc:
+                        _lines.append(line1)
+
+                sscc_lines[line.sscc] = _lines
+
+        # Build label with SSCC - one sscc should have one page label
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
+
+        for index, sscc in enumerate(sscc_list):
+            logger.info(f"@368 - building label with SSCC...")
+            file_path, file_name = build_label_oper(
+                booking=booking,
+                file_path=file_path,
+                lines=sscc_lines[sscc],
+                label_index=index,
+                sscc=sscc,
+                sscc_cnt=len(sscc_list),
+                one_page_label=True,
+            )
+            label_urls.append(f"{file_path}/{file_name}")
+
+        if label_urls:
+            entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+            pdf_merge(label_urls, entire_label_url)
+
+        message = f"#379 {LOG_ID} - Successfully build label. Booking Id: {booking.b_bookingID_Visual}"
+        logger.info(message)
+
+        if not booking.b_client_booking_ref_num:
+            booking.b_client_booking_ref_num = (
+                f"{booking.b_bookingID_Visual}_{str(uuid.uuid4())}"
+            )
+
+        booking.z_label_url = (
+            f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+        )
+        booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+        booking.save()
+    except Exception as e:
+        trace_error.print()
+        logger.error(f"{LOG_ID} Error: {str(e)}")
+        return JsonResponse(
+            {"success": "failure", "message": "Label operation get failed!"}
+        )
+
+    return JsonResponse(
+        {"success": "success", "message": "Label is successfully built!"}
+    )
 
 
 @api_view(["GET"])
@@ -4387,7 +4535,7 @@ class VehiclesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
+            logger.error(f"Vehicle Add error: {str(e)}")
             return JsonResponse({"result": None}, status=400)
 
 

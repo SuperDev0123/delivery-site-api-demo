@@ -115,7 +115,7 @@ def get_product_group_code(ItemCode, token):
     return GroupCode
 
 
-def parse_order_xml(response, token):
+def parse_order_xml(response, order_num, token):
     LOG_ID = "[PRONTO PARSE ORDER XML]"
 
     # Test Usage #
@@ -132,7 +132,7 @@ def parse_order_xml(response, token):
         return {}
 
     SalesOrder = SalesOrders[0]
-    order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
+    # order_num = SalesOrder.find("{http://www.pronto.net/so/1.0.0}SOOrderNo").text
 
     # Test Usage #
     if IS_TESTING:
@@ -152,10 +152,10 @@ def parse_order_xml(response, token):
 
     b_021 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}DeliveryDate").text
     b_055 = address["street_1"]
-    b_056 = ""  # Not provided
+    b_056 = address["street_2"]
     b_057 = address["state"]
     b_058 = address["suburb"]
-    b_059 = address["postal_code"]
+    b_059 = address["postal_code"] or " "
     b_060 = "Australia"
     b_061 = SalesOrder.find("{http://www.pronto.net/so/1.0.0}AddressName").text
     b_063 = address["email"]
@@ -305,9 +305,9 @@ def get_order(order_num):
 
     if response.status_code != 200:
         logger.error(f"@632 [PRONTO GET ORDER] Failed")
-        return False
+        return None, None
 
-    order, lines = parse_order_xml(response, token)
+    order, lines = parse_order_xml(response, order_num, token)
     logger.info(f"@649 [PRONTO GET ORDER] Finish \norder: {order}\nlines: {lines}")
 
     return order, lines
@@ -421,6 +421,11 @@ def update_pronto_note(order_num, note):
     # ---
 
     token = get_token()
+
+    if not token:
+        message = f"@6401 [PRONTO UPDATE NOTE] Failed to get token"
+        return
+
     url = f"{API_URL}/api/SalesOrderPostOrderNotes"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",

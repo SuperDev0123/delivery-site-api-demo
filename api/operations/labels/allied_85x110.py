@@ -44,13 +44,6 @@ style_center = ParagraphStyle(
     alignment=TA_CENTER,
     leading=15,
 )
-style_center_bg = ParagraphStyle(
-    name="right",
-    parent=styles["Normal"],
-    alignment=TA_CENTER,
-    leading=24,
-    backColor="#64a1fc",
-)
 style_uppercase = ParagraphStyle(
     name="uppercase",
     parent=styles["Normal"],
@@ -199,6 +192,19 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
 
     allied_logo = "./static/assets/allied_logo.png"
     allied_img = Image(allied_logo, 60 * mm, 12 * mm)
+
+    fp_color_code = (
+        Fp_freight_providers.objects.get(fp_company_name="Allied").hex_color_code
+        or "808080"
+    )
+
+    style_center_bg = ParagraphStyle(
+        name="right",
+        parent=styles["Normal"],
+        alignment=TA_CENTER,
+        leading=16,
+        backColor=f"#{fp_color_code}",
+    )
 
     Story = []
     j = 1

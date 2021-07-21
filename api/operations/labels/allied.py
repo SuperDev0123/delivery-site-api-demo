@@ -155,14 +155,6 @@ def build_label(
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    totalQty = 0
-    if one_page_label:
-        lines = [lines[0]]
-        totalQty = 1
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
-
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
         "font_family": "Verdana",
@@ -204,14 +196,33 @@ def build_label(
     allied_logo = "./static/assets/allied_logo.png"
     allied_img = Image(allied_logo, 30 * mm, 7.7 * mm)
 
+    fp_color_code = (
+        Fp_freight_providers.objects.get(fp_company_name="Allied").hex_color_code
+        or "808080"
+    )
+
+    style_center_bg = ParagraphStyle(
+        name="right",
+        parent=styles["Normal"],
+        alignment=TA_CENTER,
+        leading=16,
+        backColor=f"#{fp_color_code}",
+    )
+
     Story = []
     j = 1
 
     totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
     totalWeight = 0
     totalCubic = 0
     for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
         totalWeight = totalWeight + booking_line.e_qty * booking_line.e_weightPerEach
         totalCubic = totalCubic + get_cubic_meter(
             booking_line.e_dimLength,
@@ -782,7 +793,7 @@ def build_label(
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.vx_account_code or "",
+                            booking.vx_account_code or "", 
                         ),
                         style_left,
                     ),

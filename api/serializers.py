@@ -63,6 +63,14 @@ class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
             "name",
             "client_warehouse_code",
             "client_company_name",
+            "address1",
+            "address2",
+            "state",
+            "suburb",
+            "phone_main",
+            "postal_code",
+            "contact_name",
+            "contact_email",
         )
 
 
@@ -429,6 +437,7 @@ class BookingLineSerializer(serializers.ModelSerializer):
             "e_qty_scanned_fp",
             "is_scanned",
             "picked_up_timestamp",
+            "sscc",
         )
 
 
