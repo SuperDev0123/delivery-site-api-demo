@@ -94,7 +94,7 @@ def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
     logger.info(
-        f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+        f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
     v_FPBookingNumber = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
@@ -105,7 +105,7 @@ def build_label(
         os.makedirs(filepath)
     # end check if pdfs folder exists
 
-    fp_id = Fp_freight_providers.objects.get(fp_company_name="Allied").id
+    fp_id = Fp_freight_providers.objects.get(fp_company_name=booking.vx_freight_provider).id
     try:
         carrier = FP_zones.objects.get(
             state=booking.de_To_Address_State,
@@ -116,7 +116,7 @@ def build_label(
     except FP_zones.DoesNotExist:
         carrier = ""
     except Exception as e:
-        logger.info(f"#110 [ALLIED LABEL] Error: {str(e)}")
+        logger.info(f"#110 [{booking.vx_freight_provider} LABEL] Error: {str(e)}")
 
     # start pdf file name using naming convention
     if lines:
@@ -149,7 +149,7 @@ def build_label(
         )
 
     file = open(f"{filepath}/{filename}", "w")
-    logger.info(f"#111 [ALLIED LABEL] File full path: {filepath}/{filename}")
+    logger.info(f"#111 [{booking.vx_freight_provider} LABEL] File full path: {filepath}/{filename}")
     # end pdf file name using naming convention
 
     if not lines:
@@ -193,11 +193,8 @@ def build_label(
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
-    allied_logo = "./static/assets/allied_logo.png"
-    allied_img = Image(allied_logo, 30 * mm, 7.7 * mm)
-
     fp_color_code = (
-        Fp_freight_providers.objects.get(fp_company_name="Century").hex_color_code
+        Fp_freight_providers.objects.get(fp_company_name=booking.vx_freight_provider).hex_color_code
         or "808080"
     )
 
@@ -535,7 +532,7 @@ def build_label(
                                     booking_line.e_dimHeight,
                                     booking_line.e_dimUOM,
                                 ),
-                                5,
+                                3,
                             )
                             or "",
                         ),
@@ -926,6 +923,6 @@ def build_label(
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
     logger.info(
-        f"#119 [ALLIED LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
+        f"#119 [{booking.vx_freight_provider} LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
     return filepath, filename
