@@ -39,6 +39,10 @@ def build_label(
             file_path, file_name = tnt.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
+        elif fp_name == "allied":
+            file_path, file_name = allied.build_label(
+                booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
+            )
         else:  # "Century", "ATC", "JasonL In house"
             file_path, file_name = default.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
