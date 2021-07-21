@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from email.utils import COMMASPACE, formatdate
 
 from django.conf import settings
@@ -11,11 +12,95 @@ from api.models import (
     Booking_lines_data,
     EmailLogs,
     DME_Options,
+    DME_clients,
+    Utl_dme_status,
+    Dme_status_history,
+    API_booking_quotes
 )
+
+from rest_framework import serializers
+
 from api.outputs.email import send_email
 
 logger = logging.getLogger(__name__)
 
+def get_etd(quote, client):
+    """
+    beautify eta as Days,
+    i.e:
+        3.51 -> 4 Days
+        3.00 -> 3 Days
+    """
+    if not quote.etd:
+        return ''
+
+    etd_str = quote.etd.lower()
+    if 'days' in etd_str:
+        max_val = 0
+        for item in etd_str.split(' '):
+            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
+                max_val = float(item)
+        etd = math.ceil(max_val)
+
+    elif 'hours' in etd_str:
+        max_val = 0
+        for item in etd_str.split(' '):
+            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
+                max_val = float(item)
+        etd = math.ceil(max_val / 24)
+    else:
+        max_val = 0
+        for item in etd_str.split(','):
+            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
+                max_val = float(item)
+
+        if max_val == 0:
+            etd = 1
+        else:
+            etd = math.ceil(max_val)
+
+    if client.company_name == "Plum Products Australia Ltd":
+        etd += 1
+
+    return etd
+
+
+def get_status_category_from_status(status):
+    if not status:
+        return None
+
+    try:
+        utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
+        return utl_dme_status.dme_delivery_status_category
+    except Exception as e:
+        message = f"#819 Category not found with this status: {status}"
+        logger.error(message)
+        send_email_to_admins("Category for Status not Found", message)
+        return None
+
+def get_status_time_from_category(booking_id, category):
+    if not category:
+        return None
+    
+    try:
+        statuses = Utl_dme_status.objects.filter(dme_delivery_status_category=category).values_list(
+            'dme_delivery_status',
+            flat=True
+        )
+        status_times = Dme_status_history.objects.filter(**{
+            'fk_booking_id': booking_id,
+            'status_old__in': statuses
+        }).order_by('event_time_stamp').values_list(
+            'event_time_stamp',
+            flat=True
+        )
+        return status_times[0].strftime("%d %H:%M") if status_times and status_times[0] else None
+        
+    except Exception as e:
+        message = f"#819 Timestamp not found with this category: {category}"
+        logger.error(message)
+        send_email_to_admins("Timestamp for Category not Found", message)
+        return None
 
 def send_booking_status_email(bookingId, emailName, sender):
     """
@@ -445,27 +530,166 @@ def send_status_update_email(booking, status, sender, status_url):
     When 'Plum Products Australia Ltd' bookings status is updated
     """
 
+    client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
+    b_status = booking.b_status
+    quote = booking.api_booking_quote
+    category = get_status_category_from_status(b_status)
+
+    if not category:
+        logger.info(
+            f"#301 - status_update_email - unknown_status - client_booking_id={booking.client_booking_id}, status={b_status}"
+        )
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+
+    status_history = Dme_status_history.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).order_by("-z_createdTimeStamp")
+
+    if status_history:
+        last_updated = (
+            status_history.first().event_time_stamp.strftime("%d/%m/%Y %H:%M")
+            if status_history.first().event_time_stamp
+            else ""
+        )
+    else:
+        last_updated = ""
+
+    json_quote = None
+
+    if quote:
+        etd = get_etd(quote, client)
+    else:
+        etd = None
+
+    last_milestone = "Delivered"
+    if category == "Booked":
+        step = 2
+    elif category == "Transit":
+        step = 3
+    elif category == "On Board for Delivery":
+        step = 4
+    elif category == "Complete":
+        step = 5
+    elif category == "Futile":
+        step = 5
+        last_milestone = "Futile Delivery"
+    elif category == "Returned":
+        step = 5
+        last_milestone = "Returned"
+    else:
+        step = 1
+        b_status = "Processing"
+
+    steps = [
+        "Processing",
+        "Booked",
+        "Transit",
+        "On Board for Delivery",
+        last_milestone,
+    ]
+
+    timestamps = []
+    for index, item in enumerate(steps):
+        if index == 0:
+            timestamps.append(
+                booking.z_CreatedTimestamp.strftime("%d/%m/%Y %H:%M")
+                if booking and booking.z_CreatedTimestamp
+                else ""
+            )
+        elif index >= step:
+            timestamps.append("")
+        else:
+            timestamps.append(
+                get_status_time_from_category(booking.pk_booking_id, item)
+            )
+
+    # if step == 1:
+    eta = (
+        (
+            booking.puPickUpAvailFrom_Date
+            + timedelta(days=etd)
+        ).strftime("%d/%m/%Y")
+        if etd and booking.puPickUpAvailFrom_Date
+        else ""
+    )
+    # else:
+    #     eta = (
+    #         (
+    #             booking.b_dateBookedDate
+    #             + timedelta(days=etd)
+    #         ).strftime("%Y-%m-%d")
+    #         if etd and booking.b_dateBookedDate
+    #         else ""
+    #     )
+
+
     cc_emails = []
+
+    templates = DME_Email_Templates.objects.filter(emailName="Status Update")
+    emailVarList = {
+        "STATUS": b_status,
+        "FP_NAME": quote.freight_provider if quote and quote.freight_provider else "",
+        "DE_TO_ADDRESS": f"{booking.de_to_Contact_F_LName}<br />{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' if booking.de_To_Address_Street_2 else ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}",
+        "LAST_UPDATED_TIME": last_updated,
+        "IS_PROCESSING": "checked" if step >= 1 else "",
+        "IS_BOOKED": "checked" if step >= 2 else "",
+        "IS_TRANSIT": "checked" if step >= 3 else "",
+        "IS_ON_BOARD": "checked" if step >= 4 else "",
+        "IS_DELIVERED": "checked" if step >= 5 else "",
+        "LAST_MILESTONE": last_milestone,
+        "PROCESSING_TIME": timestamps[0],
+        "BOOKING_TIME": timestamps[1],
+        "TRANSIT_TIME": timestamps[2],
+        "ON_BOARD_TIME": timestamps[3],
+        "DELIVERED_TIME": timestamps[4],
+        "CUSTOMER_NAME": booking.de_to_Contact_F_LName,
+        "ORDER_NUMBER": booking.b_client_order_num,
+        "SHIPMENT_NUMBER": booking.v_FPBookingNumber,
+        "DME_NUMBER": booking.b_bookingID_Visual,
+        "ETA": f"{eta}({etd} days)" if etd else '',
+        "BODY_REPEAT": "",
+    }
+
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
 
-    templates = DME_Email_Templates.objects.filter(emailName="Status Update")
-    emailVarList = {
-        "FULLNAME": booking.de_to_Contact_F_LName,
-        "ORDER_INVOICE_NO": booking.b_client_order_num
-        if not booking.inv_dme_invoice_no
-        else booking.inv_dme_invoice_no,
-        "BODYREPEAT": "",
-    }
+    lines_data = []
+    for booking_line in booking_lines:
+        lines_data.append(
+            {
+                'ITEM_NUMBER': booking_line.e_item_type,
+                'ITEM_DESCRIPTION': booking_line.e_item,
+                'ITEM_QUANTITY': booking_line.e_qty
+            }
+        )
+
     html = ""
 
     for template in templates:
         emailBody = template.emailBody
+        emailBodyRepeatOdd = template.emailBodyRepeatOdd
+        emailBodyRepeatEven = template.emailBodyRepeatEven
         emailVarList["USERNAME"] = sender
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
-        emailVarList["STATUS"] = status
+        # emailVarList["STATUS"] = status
         emailVarList["STATUS_URL"] = status_url
+
+        body_repeat = ""
+        for idx, line_data in enumerate(lines_data):
+            if idx % 2 == 0:
+                repeat_part = emailBodyRepeatEven
+            else:
+                repeat_part = emailBodyRepeatOdd
+
+            for key in line_data:
+                repeat_part = repeat_part.replace(
+                    "{" + str(key) + "}",
+                    str(line_data[key]) if line_data[key] else "",
+                )
+            body_repeat += repeat_part
+
+        emailVarList["BODY_REPEAT"] = body_repeat
 
         for key in emailVarList.keys():
             emailBody = emailBody.replace(
@@ -516,7 +740,6 @@ def send_status_update_email(booking, status, sender, status_url):
         z_createdTimeStamp=str(datetime.now()),
         z_createdByAccount=sender,
     )
-
 
 def send_picking_slip_printed_email(b_client_order_num):
     """
