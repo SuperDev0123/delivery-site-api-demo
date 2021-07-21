@@ -128,10 +128,10 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h18 = str(booking.b_client_order_num)
 
-        if booking.v_FPBookingNumber is None:
+        if booking.b_bookingID_Visual is None:
             h19 = ""
         else:
-            h19 = str(booking.v_FPBookingNumber)
+            h19 = f'DME{booking.b_bookingID_Visual}'
 
         if booking.de_to_PickUp_Instructions_Address is None:
             h20 = ""
