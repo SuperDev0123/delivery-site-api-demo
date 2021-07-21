@@ -421,6 +421,11 @@ def update_pronto_note(order_num, note):
     # ---
 
     token = get_token()
+
+    if not token:
+        message = f"@6401 [PRONTO UPDATE NOTE] Failed to get token"
+        return
+
     url = f"{API_URL}/api/SalesOrderPostOrderNotes"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",

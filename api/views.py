@@ -1193,13 +1193,9 @@ class BookingsViewSet(viewsets.ViewSet):
                     client_employee_role == "company"
                     and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
                 ):
-                    queryset = (
-                        queryset.filter(
-                            Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                        )
-                        .filter(b_dateBookedDate__isnull=True)
-                        .exclude(b_status__in=["Cancelled", "Closed"])
-                    )
+                    queryset = queryset.filter(
+                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
+                    ).exclude(b_status__in=["Cancelled", "Closed"])
                 else:
                     queryset = (
                         queryset.filter(b_status__iexact="Booked")
@@ -4034,9 +4030,11 @@ def get_manifest(request):
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
 
-    bookings = Bookings.objects.filter(
-        pk__in=booking_ids, b_dateBookedDate__isnull=True
-    ).only("id", "vx_freight_provider")
+    bookings = (
+        Bookings.objects.filter(pk__in=booking_ids)
+        .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact=""))
+        .only("id", "vx_freight_provider")
+    )
     fps = {}
 
     for booking in bookings:
@@ -4064,8 +4062,9 @@ def get_manifest(request):
                 booking.z_manifest_url = f"startrack_au/{filename}"
                 booking.manifest_timestamp = now
 
-                if "jason" in request.user.username:  # Jason L
-                    # Create new statusHistory
+                if (
+                    "jason" in request.user.username and not booking.b_dateBookedDate
+                ):  # Jason L: Create new statusHistory
                     status_history.create(booking, "Ready for Despatch", username)
                     booking.b_status = "Ready for Despatch"
 

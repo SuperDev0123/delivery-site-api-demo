@@ -339,7 +339,7 @@ def get_address(order_num):
                 street_2.append(clue.strip())
 
         if street_2:
-            address["street_2"] = ", ".join(street_2)
+            address["street_2"] = ", ".join(street_2)[:25]
 
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
@@ -541,15 +541,11 @@ def sucso_handler(order_num, lines):
     csv_file = open(file_path)
     logger.info(f"@313 {LOG_ID} File({file_path}) opened!")
 
-    csv_lines = []
-    for i, csv_line in enumerate(csv_file):
-        if i == 0:  # Ignore first header row
+    new_lines = []
+    for index, csv_line in enumerate(csv_file):
+        if index == 0:  # Skip header row
             continue
 
-        csv_lines.append(csv_line)
-
-    new_lines = []
-    for csv_line in reversed(csv_lines):
         iters = csv_line.split("|")
         SequenceNo = int(float(iters[2]))
         ItemCode = iters[3].strip()
@@ -573,34 +569,47 @@ def sucso_handler(order_num, lines):
             logger.info(message)
             continue
 
+        selected_line = None
         for line in lines:
-            if line.get("e_item_type") == ItemCode:
-                already_checked = False
+            if (
+                line.get("e_item_type") == ItemCode
+                and line.get("zbl_121_integer_1") == SequenceNo
+            ):
+                selected_line = line
 
-                for new_line in new_lines:
-                    if (
-                        new_line["e_item_type"] == ItemCode
-                        and new_line["zbl_121_integer_1"] == SequenceNo
-                        and not length
-                    ):
-                        already_checked = True
-                        break
+        selected_new_line_index = -1
+        for i, new_line in enumerate(new_lines):
+            if (
+                new_line.get("e_item_type") == ItemCode
+                and new_line.get("zbl_121_integer_1") == SequenceNo
+            ):
+                selected_new_line_index = i
 
-                if already_checked:
+        if selected_line:
+            if selected_new_line_index != -1:
+                if (
+                    new_lines[selected_new_line_index]["e_dimLength"]
+                    and new_lines[selected_new_line_index]["e_dimWidth"]
+                    and new_lines[selected_new_line_index]["e_dimHeight"]
+                    and new_lines[selected_new_line_index]["e_weightPerEach"]
+                ):
                     continue
+                else:
+                    selected_line = new_lines[selected_new_line_index]
+                    new_lines.pop(selected_new_line_index)
 
-                line["description"] = Description
-                line["line_type"] = LineType
-                line["charge_type"] = ChargeType
-                line["description"] = Description
-                line["zbl_102_text_2"] = ProductGroupCode
-                line["e_dimLength"] = length
-                line["e_dimWidth"] = width
-                line["e_dimHeight"] = height
-                line["e_weightPerEach"] = weight
-                line["e_dimUOM"] = "M"
-                line["e_weightUOM"] = "KG"
-                new_lines.append(line)
+            selected_line["description"] = Description
+            selected_line["line_type"] = LineType
+            selected_line["charge_type"] = ChargeType
+            selected_line["description"] = Description
+            selected_line["zbl_102_text_2"] = ProductGroupCode
+            selected_line["e_dimLength"] = length
+            selected_line["e_dimWidth"] = width
+            selected_line["e_dimHeight"] = height
+            selected_line["e_weightPerEach"] = weight
+            selected_line["e_dimUOM"] = "M"
+            selected_line["e_weightUOM"] = "KG"
+            new_lines.append(selected_line)
 
     logger.info(f"@319 {LOG_ID} result: {new_lines}")
     return new_lines

@@ -461,9 +461,9 @@ def build_label(
                         "<font size=%s>Dims: %s x %s x %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            int(line.e_dimWidth),
-                            int(line.e_dimHeight),
-                            int(line.e_dimLength),
+                            float(line.e_dimWidth),
+                            float(line.e_dimHeight),
+                            float(line.e_dimLength),
                         ),
                         style_left,
                     ),

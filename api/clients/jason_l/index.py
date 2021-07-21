@@ -1368,7 +1368,10 @@ def scanned(payload, client):
                     if line.zbl_121_integer_1 == picked_item["items"][0]["sequence"]:
                         original_line = line
 
-                if original_line.zbl_102_text_2 in SERVICE_GROUP_CODES:
+                if (
+                    not original_line
+                    or original_line.zbl_102_text_2 in SERVICE_GROUP_CODES
+                ):
                     continue
 
                 line_data = Booking_lines_data()
@@ -1422,6 +1425,9 @@ def scanned(payload, client):
             send_email_to_admins("No FC result", message)
 
     # Build label with SSCC - one sscc should have one page label
+    if booking.vx_freight_provider.lower() == "tnt":  # Do not get Label for TNT for now
+        sscc_list = []
+
     for index, sscc in enumerate(sscc_list):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"

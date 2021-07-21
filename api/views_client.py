@@ -53,6 +53,7 @@ from api.operations.pronto_xi.index import (
     send_info_back,
     update_note as update_pronto_note,
 )
+from api.clients.jason_l.constants import SERVICE_GROUP_CODES
 
 
 logger = logging.getLogger(__name__)
@@ -789,15 +790,24 @@ def get_delivery_status(request):
             last_updated = (
                 convert_to_AU_SYDNEY_tz(
                     status_history.first().event_time_stamp
-                ).strftime("%Y-%m-%d %H:%M:%S")
+                ).strftime("%Y-%m-%d %H:%M")
                 if status_history.first().event_time_stamp
                 else ""
             )
         else:
             last_updated = ""
 
-        lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, is_deleted=True
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+        has_deleted_lines = lines.filter(is_deleted=True).exists()
+
+        if has_deleted_lines:
+            lines = lines.filter(is_deleted=True)
+            # lines.filter(is_deleted=True, e_item_type__isnull=False)
+        else:
+            lines = lines.filter(is_deleted=False)
+
+        lines = lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES).only(
+            "pk_lines_id", "e_qty", "e_item", "e_item_type"
         )
 
         booking_dict = {
@@ -876,7 +886,7 @@ def get_delivery_status(request):
             if index == 0:
                 timestamps.append(
                     convert_to_AU_SYDNEY_tz(booking.z_CreatedTimestamp).strftime(
-                        "%Y-%m-%d %H:%M:%S"
+                        "%Y-%m-%d %H:%M"
                     )
                     if booking and booking.z_CreatedTimestamp
                     else ""
@@ -939,7 +949,9 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    lines = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id, is_deleted=True)
+    lines = BOK_2_lines.objects.filter(
+        fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
+    ).exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
 
     status_history = Dme_status_history.objects.filter(
         fk_booking_id=bok_1.pk_header_id
