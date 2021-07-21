@@ -415,6 +415,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_2.l_007_dim_height = line.get("e_dimHeight")
                 bok_2.l_008_weight_UOM = line.get("e_weightUOM")
                 bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
+                bok_2.v_client_pk_consigment_num = line.get("fk_header_id")
                 bok_2.save()
 
             # Get quote again
