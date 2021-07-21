@@ -45,13 +45,13 @@ def get_etd(quote, client):
     elif 'hours' in etd_str:
         max_val = 0
         for item in etd_str.split(' '):
-            if item.replace('.', '', 1).isdigi(t) and float(item) > max_val:
+            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
                 max_val = float(item)
         etd = math.ceil(max_val / 24)
     else:
         max_val = 0
         for item in etd_str.split(','):
-            if item.replace('.', '', 1).isdigi(t) and float(item) > max_val:
+            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
                 max_val = float(item)
 
         if max_val == 0:
@@ -531,7 +531,7 @@ def send_status_update_email(booking, status, sender, status_url):
 
     if not category:
         logger.info(
-            f"#301 - status_update_email - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
+            f"#301 - status_update_email - unknown_status - client_booking_id={booking.client_booking_id}, status={b_status}"
         )
         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
 
@@ -541,7 +541,7 @@ def send_status_update_email(booking, status, sender, status_url):
 
     if status_history:
         last_updated = (
-            status_history.first().event_time_stamp.strftime("%Y-%m-%d %H:%M")
+            status_history.first().event_time_stamp.strftime("%d/%m/%Y %H:%M")
             if status_history.first().event_time_stamp
             else ""
         )
@@ -552,6 +552,8 @@ def send_status_update_email(booking, status, sender, status_url):
 
     if quote:
         etd = get_etd(quote, client)
+    else:
+        etd = None
 
     last_milestone = "Delivered"
     if category == "Booked":
@@ -584,7 +586,7 @@ def send_status_update_email(booking, status, sender, status_url):
     for index, item in enumerate(steps):
         if index == 0:
             timestamps.append(
-                booking.z_CreatedTimestamp.strftime("%Y-%m-%d %H:%M")
+                booking.z_CreatedTimestamp.strftime("%d/%m/%Y %H:%M")
                 if booking and booking.z_CreatedTimestamp
                 else ""
             )
@@ -600,7 +602,7 @@ def send_status_update_email(booking, status, sender, status_url):
         (
             booking.puPickUpAvailFrom_Date
             + timedelta(days=etd)
-        ).strftime("%Y-%m-%d")
+        ).strftime("%d/%m/%Y")
         if etd and booking.puPickUpAvailFrom_Date
         else ""
     )
@@ -621,13 +623,13 @@ def send_status_update_email(booking, status, sender, status_url):
     emailVarList = {
         "STATUS": b_status,
         "FP_NAME": quote.freight_provider if quote and quote.freight_provider else "",
-        "DE_TO_ADDRESS": f"{booking.de_To_Address_Street_1}, {booking.de_To_Address_Suburb}, {booking.de_To_Address_State}, {booking.de_To_Address_PostalCode}",
+        "DE_TO_ADDRESS": f"{booking.de_to_Contact_F_LName}<br />{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' if booking.de_To_Address_Street_2 else ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}",
         "LAST_UPDATED_TIME": last_updated,
-        "IS_PROCESSING": "checked" if step == 1 else "",
-        "IS_BOOKED": "checked" if step == 2 else "",
-        "IS_TRANSIT": "checked" if step == 3 else "",
-        "IS_ON_BOARD": "checked" if step == 4 else "",
-        "IS_DELIVERED": "checked" if step == 5 else "",
+        "IS_PROCESSING": "checked" if step >= 1 else "",
+        "IS_BOOKED": "checked" if step >= 2 else "",
+        "IS_TRANSIT": "checked" if step >= 3 else "",
+        "IS_ON_BOARD": "checked" if step >= 4 else "",
+        "IS_DELIVERED": "checked" if step >= 5 else "",
         "LAST_MILESTONE": last_milestone,
         "PROCESSING_TIME": timestamps[0],
         "BOOKING_TIME": timestamps[1],
@@ -714,24 +716,24 @@ def send_status_update_email(booking, status, sender, status_url):
             cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
-    
-    send_email(
-        to_emails,
-        cc_emails,
-        subject,
-        html,
-        [],
-        mime_type,
-    )
+    print('hhhhhhhhhhhhhhhhhhhhhh', html)
+    # send_email(
+    #     to_emails,
+    #     cc_emails,
+    #     subject,
+    #     html,
+    #     [],
+    #     mime_type,
+    # )
 
-    EmailLogs.objects.create(
-        booking_id=booking.pk,
-        emailName="Status Update",
-        to_emails=COMMASPACE.join(to_emails),
-        cc_emails=COMMASPACE.join(cc_emails),
-        z_createdTimeStamp=str(datetime.now()),
-        z_createdByAccount=sender,
-    )
+    # EmailLogs.objects.create(
+    #     booking_id=booking.pk,
+    #     emailName="Status Update",
+    #     to_emails=COMMASPACE.join(to_emails),
+    #     cc_emails=COMMASPACE.join(cc_emails),
+    #     z_createdTimeStamp=str(datetime.now()),
+    #     z_createdByAccount=sender,
+    # )
 
 def send_picking_slip_printed_email(b_client_order_num):
     """
