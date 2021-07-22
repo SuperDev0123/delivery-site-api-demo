@@ -22,7 +22,7 @@ def build_csv(booking_ids):
     bookings = Bookings.objects.filter(pk__in=booking_ids)
     booking_lines = get_booking_lines(bookings)
     vx_freight_provider = bookings.first().vx_freight_provider.lower()
-    now_str = str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S"))
+    now_str = str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S_%f"))
 
     # Generate CSV name
     if vx_freight_provider == "cope":
