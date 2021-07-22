@@ -18,7 +18,6 @@ from api.models import (
     Dme_status_history,
     API_booking_quotes,
 )
-from api.fp_apis.utils import get_status_category_from_status
 from api.outputs.email import send_email
 
 logger = logging.getLogger(__name__)
@@ -520,6 +519,7 @@ def send_status_update_email(booking, status, sender, status_url):
     """
     When 'Plum Products Australia Ltd' bookings status is updated
     """
+    from api.fp_apis.utils import get_status_category_from_status
 
     client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
     b_status = booking.b_status
