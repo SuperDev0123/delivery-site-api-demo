@@ -66,13 +66,13 @@ def get_number_of_pallets(booking_lines, pallet):
     return number_of_pallets_for_palletized, unpalletized_line_pks
 
 
-def pallet_to_dict(pallets):
+def pallet_to_dict(pallets, pallet_self_height):
     pallets_data = []
     for index, pallet in enumerate(pallets):
         pallets_data.append(
             {
                 "w": pallet.width / 1000,
-                "h": pallet.height / 1000,
+                "h": (pallet.height - pallet_self_height) / 1000,
                 "d": pallet.length / 1000,
                 "max_wg": pallet.max_weight if pallet.max_weight else 0,
                 "id": index,
@@ -162,8 +162,7 @@ def lines_to_pallet(lines_data, pallets_data):
     return res_data
 
 
-def refine_pallets(packed_results, original_pallets, original_lines):
-
+def refine_pallets(packed_results, original_pallets, original_lines, pallet_self_height):
     formatted_pallets = []
     for pallet in packed_results["bins_packed"]:
         packed_height, items = 0, []
@@ -190,7 +189,7 @@ def refine_pallets(packed_results, original_pallets, original_lines):
         new_pallet = {
             "pallet_index": pallet["bin_data"]["id"],
             "pallet_obj": original_pallets[pallet["bin_data"]["id"]],
-            "packed_height": packed_height,
+            "packed_height": packed_height + (pallet_self_height / 1000),
             "quantity": 1,
             "lines": items,
         }
@@ -230,9 +229,11 @@ def refine_pallets(packed_results, original_pallets, original_lines):
 
 
 def get_palletized_by_ai(bok_2s, pallets):
+    # pallet self height
+    pallet_self_height = 150
 
     # prepare pallets data
-    pallets_data = pallet_to_dict(pallets)
+    pallets_data = pallet_to_dict(pallets, pallet_self_height)
 
     # prepare lines data
     lines_data = lines_to_dict(bok_2s)
@@ -240,7 +241,7 @@ def get_palletized_by_ai(bok_2s, pallets):
     packed_results = lines_to_pallet(lines_data, pallets_data)
 
     # check duplicated Pallets and non palletizable ones with only small items
-    palletized, non_palletized = refine_pallets(packed_results, pallets, bok_2s)
+    palletized, non_palletized = refine_pallets(packed_results, pallets, bok_2s, pallet_self_height)
 
     return palletized, non_palletized
 
