@@ -2982,24 +2982,21 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                 return queryset
 
 
-class PackageTypesViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["get"])
+class PackageTypesViewSet(viewsets.ModelViewSet):
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_packagetypes(self, request, pk=None):
         packageTypes = Dme_package_types.objects.all().order_by("id")
 
         return_datas = []
-        if not packageTypes.exists():
-            return JsonResponse({"packageTypes": []})
-        else:
-            for packageType in packageTypes:
-                return_data = {
-                    "id": packageType.id,
-                    "dmePackageTypeCode": packageType.dmePackageTypeCode,
-                    "dmePackageCategory": packageType.dmePackageCategory,
-                    "dmePackageTypeDesc": packageType.dmePackageTypeDesc,
-                }
-                return_datas.append(return_data)
-            return JsonResponse({"packageTypes": return_datas})
+        for packageType in packageTypes:
+            return_data = {
+                "id": packageType.id,
+                "dmePackageTypeCode": packageType.dmePackageTypeCode,
+                "dmePackageCategory": packageType.dmePackageCategory,
+                "dmePackageTypeDesc": packageType.dmePackageTypeDesc,
+            }
+            return_datas.append(return_data)
+        return JsonResponse({"packageTypes": return_datas})
 
 
 class BookingStatusViewSet(viewsets.ViewSet):

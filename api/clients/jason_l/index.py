@@ -53,6 +53,7 @@ from api.clients.jason_l.operations import (
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
+from api.convertors.pdf import pdf_merge
 
 
 logger = logging.getLogger(__name__)
@@ -1425,9 +1426,11 @@ def scanned(payload, client):
             send_email_to_admins("No FC result", message)
 
     # Build label with SSCC - one sscc should have one page label
-    if booking.vx_freight_provider.lower() == "tnt":  # Do not get Label for TNT for now
-        sscc_list = []
 
+    # if booking.vx_freight_provider.lower() == "tnt":  # Do not get Label for TNT for now
+    #     sscc_list = []
+
+    label_urls = []
     for index, sscc in enumerate(sscc_list):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -1449,6 +1452,7 @@ def scanned(payload, client):
             f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
         )
         label_url = f"{file_path}/{file_name}"
+        label_urls.append(label_url)
         result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
         if not result:
@@ -1457,6 +1461,10 @@ def scanned(payload, client):
 
         with open(label_url[:-4] + ".zpl", "rb") as zpl:
             zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+    if label_urls:
+        entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+        pdf_merge(label_urls, entire_label_url)
 
     message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     logger.info(message)
