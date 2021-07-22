@@ -23,7 +23,6 @@ from api.common.constants import AU_STATE_ABBRS
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import (
     select_best_options,
-    get_status_category_from_status,
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )

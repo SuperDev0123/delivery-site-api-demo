@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from email.utils import COMMASPACE, formatdate
 
 from django.conf import settings
+from rest_framework import serializers
 
 from api.models import (
     DME_Email_Templates,
@@ -15,14 +16,13 @@ from api.models import (
     DME_clients,
     Utl_dme_status,
     Dme_status_history,
-    API_booking_quotes
+    API_booking_quotes,
 )
-
-from rest_framework import serializers
-
+from api.fp_apis.utils import get_status_category_from_status
 from api.outputs.email import send_email
 
 logger = logging.getLogger(__name__)
+
 
 def get_etd(quote, client):
     """
@@ -32,26 +32,26 @@ def get_etd(quote, client):
         3.00 -> 3 Days
     """
     if not quote.etd:
-        return ''
+        return ""
 
     etd_str = quote.etd.lower()
-    if 'days' in etd_str:
+    if "days" in etd_str:
         max_val = 0
-        for item in etd_str.split(' '):
-            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
+        for item in etd_str.split(" "):
+            if item.replace(".", "", 1).isdigit() and float(item) > max_val:
                 max_val = float(item)
         etd = math.ceil(max_val)
 
-    elif 'hours' in etd_str:
+    elif "hours" in etd_str:
         max_val = 0
-        for item in etd_str.split(' '):
-            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
+        for item in etd_str.split(" "):
+            if item.replace(".", "", 1).isdigit() and float(item) > max_val:
                 max_val = float(item)
         etd = math.ceil(max_val / 24)
     else:
         max_val = 0
-        for item in etd_str.split(','):
-            if item.replace('.', '', 1).isdigit() and float(item) > max_val:
+        for item in etd_str.split(","):
+            if item.replace(".", "", 1).isdigit() and float(item) > max_val:
                 max_val = float(item)
 
         if max_val == 0:
@@ -65,42 +65,33 @@ def get_etd(quote, client):
     return etd
 
 
-def get_status_category_from_status(status):
-    if not status:
-        return None
-
-    try:
-        utl_dme_status = Utl_dme_status.objects.get(dme_delivery_status=status)
-        return utl_dme_status.dme_delivery_status_category
-    except Exception as e:
-        message = f"#819 Category not found with this status: {status}"
-        logger.error(message)
-        send_email_to_admins("Category for Status not Found", message)
-        return None
-
 def get_status_time_from_category(booking_id, category):
     if not category:
         return None
-    
+
     try:
-        statuses = Utl_dme_status.objects.filter(dme_delivery_status_category=category).values_list(
-            'dme_delivery_status',
-            flat=True
+        statuses = Utl_dme_status.objects.filter(
+            dme_delivery_status_category=category
+        ).values_list("dme_delivery_status", flat=True)
+        status_times = (
+            Dme_status_history.objects.filter(
+                **{"fk_booking_id": booking_id, "status_old__in": statuses}
+            )
+            .order_by("event_time_stamp")
+            .values_list("event_time_stamp", flat=True)
         )
-        status_times = Dme_status_history.objects.filter(**{
-            'fk_booking_id': booking_id,
-            'status_old__in': statuses
-        }).order_by('event_time_stamp').values_list(
-            'event_time_stamp',
-            flat=True
+        return (
+            status_times[0].strftime("%d %H:%M")
+            if status_times and status_times[0]
+            else None
         )
-        return status_times[0].strftime("%d %H:%M") if status_times and status_times[0] else None
-        
+
     except Exception as e:
         message = f"#819 Timestamp not found with this category: {category}"
         logger.error(message)
         send_email_to_admins("Timestamp for Category not Found", message)
         return None
+
 
 def send_booking_status_email(bookingId, emailName, sender):
     """
@@ -605,10 +596,7 @@ def send_status_update_email(booking, status, sender, status_url):
 
     # if step == 1:
     eta = (
-        (
-            booking.puPickUpAvailFrom_Date
-            + timedelta(days=etd)
-        ).strftime("%d/%m/%Y")
+        (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime("%d/%m/%Y")
         if etd and booking.puPickUpAvailFrom_Date
         else ""
     )
@@ -621,7 +609,6 @@ def send_status_update_email(booking, status, sender, status_url):
     #         if etd and booking.b_dateBookedDate
     #         else ""
     #     )
-
 
     cc_emails = []
 
@@ -646,7 +633,7 @@ def send_status_update_email(booking, status, sender, status_url):
         "ORDER_NUMBER": booking.b_client_order_num,
         "SHIPMENT_NUMBER": booking.v_FPBookingNumber,
         "DME_NUMBER": booking.b_bookingID_Visual,
-        "ETA": f"{eta}({etd} days)" if etd else '',
+        "ETA": f"{eta}({etd} days)" if etd else "",
         "BODY_REPEAT": "",
     }
 
@@ -658,9 +645,9 @@ def send_status_update_email(booking, status, sender, status_url):
     for booking_line in booking_lines:
         lines_data.append(
             {
-                'ITEM_NUMBER': booking_line.e_item_type,
-                'ITEM_DESCRIPTION': booking_line.e_item,
-                'ITEM_QUANTITY': booking_line.e_qty
+                "ITEM_NUMBER": booking_line.e_item_type,
+                "ITEM_DESCRIPTION": booking_line.e_item,
+                "ITEM_QUANTITY": booking_line.e_qty,
             }
         )
 
@@ -740,6 +727,7 @@ def send_status_update_email(booking, status, sender, status_url):
         z_createdTimeStamp=str(datetime.now()),
         z_createdByAccount=sender,
     )
+
 
 def send_picking_slip_printed_email(b_client_order_num):
     """

@@ -33,7 +33,6 @@ from api.common.pallet import get_number_of_pallets, get_palletized_by_ai
 from api.common.booking_quote import set_booking_quote
 from api.fp_apis.utils import (
     select_best_options,
-    get_status_category_from_status,
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )

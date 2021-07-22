@@ -21,7 +21,6 @@ from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.fp_apis.utils import (
     select_best_options,
-    get_status_category_from_status,
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )
