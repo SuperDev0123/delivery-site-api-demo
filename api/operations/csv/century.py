@@ -1,5 +1,7 @@
 from datetime import timedelta
+
 from api.utils import get_sydney_now_time
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 
 def filter_booking_lines(booking, booking_lines):
@@ -289,7 +291,10 @@ def build_csv(fileHandler, bookings, booking_lines):
                 if booking_line.e_weightPerEach is None:
                     h30 = ""
                 else:
-                    h30 = str(booking_line.e_weightPerEach)
+                    h30 = str(
+                        _get_weight_amount(booking.e_weightUOM)
+                        * booking_line.e_weightPerEach
+                    )
 
                 if booking_line.e_type_of_packaging is None:
                     h31 = ""
