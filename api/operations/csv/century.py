@@ -123,17 +123,17 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h16 = wrap_in_quote(booking.de_to_Contact_F_LName)
 
-        if booking.de_to_Phone_Main is None:
+        if booking.de_to_Phone_Main is None:  # dropPhone
             h17 = ""
         else:
             h17 = str(booking.de_to_Phone_Main)
 
-        if booking.b_client_order_num is None:
+        if booking.b_client_order_num is None:  # senderReference
             h18 = ""
         else:
             h18 = str(booking.b_client_order_num)
 
-        if booking.b_bookingID_Visual is None:
+        if booking.b_bookingID_Visual is None:  # reference1
             h19 = ""
         else:
             h19 = f"DME{booking.b_bookingID_Visual}"
@@ -273,19 +273,27 @@ def build_csv(fileHandler, bookings, booking_lines):
                     h27 = ""
                 else:  # Should be in `CM`
                     h27 = str(
-                        _get_dim_amount(booking_line.e_dimUOM) * e_dimLength * 100
+                        _get_dim_amount(booking_line.e_dimUOM)
+                        * booking_line.e_dimLength
+                        * 100
                     )
 
                 if booking_line.e_dimWidth is None:
                     h28 = ""
                 else:  # Should be in `CM`
-                    h28 = str(_get_dim_amount(booking_line.e_dimUOM) * e_dimWidth * 100)
+                    h28 = str(
+                        _get_dim_amount(booking_line.e_dimUOM)
+                        * booking_line.e_dimWidth
+                        * 100
+                    )
 
                 if booking_line.e_dimHeight is None:
                     h29 = ""
                 else:  # Should be in `CM`
                     h29 = str(
-                        _get_dim_amount(booking_line.e_dimUOM) * e_dimHeight * 100
+                        _get_dim_amount(booking_line.e_dimUOM)
+                        * booking_line.e_dimHeight
+                        * 100
                     )
 
                 if booking_line.e_weightPerEach is None:
