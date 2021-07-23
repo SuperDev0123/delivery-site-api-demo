@@ -300,7 +300,7 @@ def build_csv(fileHandler, bookings, booking_lines):
                     h30 = ""
                 else:
                     h30 = str(
-                        _get_weight_amount(booking.e_weightUOM)
+                        _get_weight_amount(booking_line.e_weightUOM)
                         * booking_line.e_weightPerEach
                     )
 
