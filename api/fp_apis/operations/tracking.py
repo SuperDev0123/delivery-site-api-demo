@@ -27,7 +27,7 @@ def _extract(fp_name, consignmentStatus):
         event_time = str(convert_to_UTC_tz(event_time))
     elif fp_name.lower() in ["hunter", "sendle", "allied"]:
         b_status_API = consignmentStatus["status"]
-        status_desc = consignmentStatus["statusDescription"]
+        status_desc = consignmentStatus.get("statusDescription")
         event_time = consignmentStatus["statusUpdate"]
         event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
         event_time = str(convert_to_UTC_tz(event_time))
