@@ -56,6 +56,7 @@ def get_pricing(fp_name, booking, booking_lines):
             "netPrice": net_price,
             "totalTaxes": 0,
             "serviceName": f"{rule.service_timing_code}",
+            "serviceType": service_type,
             "etd": rule.etd.fp_delivery_time_description,
             "vehicle": rule.vehicle.pk,
         }

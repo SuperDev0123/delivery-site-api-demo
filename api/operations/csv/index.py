@@ -8,6 +8,8 @@ from api.operations.csv.cope import build_csv as build_COPE_csv
 from api.operations.csv.dhl import build_csv as build_DHL_csv
 from api.operations.csv.state_transport import build_csv as build_STATE_TRANSPORT_csv
 from api.operations.csv.century import build_csv as build_CENTURY_csv
+from api.fp_apis.utils import gen_consignment_num
+from api.utils import get_sydney_now_time
 
 
 def get_booking_lines(bookings):
@@ -22,17 +24,31 @@ def build_csv(booking_ids):
     bookings = Bookings.objects.filter(pk__in=booking_ids)
     booking_lines = get_booking_lines(bookings)
     vx_freight_provider = bookings.first().vx_freight_provider.lower()
-    now_str = str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S_%f"))
+    now_str = str(get_sydney_now_time("datetime").strftime("%d-%m-%Y__%H_%M_%S_%f"))
 
     # Generate CSV name
-    if vx_freight_provider == "cope":
-        csv_name = f"SEATEMP__{str(len(booking_ids))}__{now_str}.csv"
-    elif vx_freight_provider == "dhl":
-        csv_name = f"Seaway-Tempo-Aldi__{str(len(booking_ids))}__{now_str}.csv"
-    elif vx_freight_provider == "state transport":
-        csv_name = f"State-Transport__{str(len(booking_ids))}__{now_str}.csv"
-    elif vx_freight_provider == "century":
-        csv_name = f"Century__{str(len(booking_ids))}__{now_str}.csv"
+    if len(booking_ids) == 1:
+        consignment_num = gen_consignment_num(
+            bookings[0].vx_freight_provider, bookings[0].b_bookingID_Visual
+        )
+
+        if vx_freight_provider == "cope":
+            csv_name = f"SEATEMP__{consignment_num}__{now_str}.csv"
+        elif vx_freight_provider == "dhl":
+            csv_name = f"Seaway-Tempo-Aldi__{consignment_num}__{now_str}.csv"
+        elif vx_freight_provider == "state transport":
+            csv_name = f"State-Transport__{consignment_num}__{now_str}.csv"
+        elif vx_freight_provider == "century":
+            csv_name = f"Century__{consignment_num}__{now_str}.csv"
+    else:
+        if vx_freight_provider == "cope":
+            csv_name = f"SEATEMP__{str(len(booking_ids))}__{now_str}.csv"
+        elif vx_freight_provider == "dhl":
+            csv_name = f"Seaway-Tempo-Aldi__{str(len(booking_ids))}__{now_str}.csv"
+        elif vx_freight_provider == "state transport":
+            csv_name = f"State-Transport__{str(len(booking_ids))}__{now_str}.csv"
+        elif vx_freight_provider == "century":
+            csv_name = f"Century__{str(len(booking_ids))}__{now_str}.csv"
 
     # Open CSV file
     if settings.ENV == "prod":

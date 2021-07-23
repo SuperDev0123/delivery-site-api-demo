@@ -198,6 +198,9 @@ def parse_pricing_response(
                 result["service_name"] = (
                     price["serviceName"] if "serviceName" in price else None
                 )
+                result["service_code"] = (
+                    price["serviceType"] if "serviceType" in price else None
+                )
                 result["vehicle"] = price.get("vehicle")
                 results.append(result)
 
