@@ -555,7 +555,7 @@ def get_getlabel_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": round(width * height * length / 1000000, 5),
                 "weight": 0 or weight,
-                "description": ", ".join(descriptions)[:20],
+                "description": ", ".join(descriptions)[:20] if descriptions else "_",
                 "gapRa": ", ".join(gaps)[:15],
             }
 
