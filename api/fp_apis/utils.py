@@ -51,8 +51,8 @@ def gen_consignment_num(fp_name, uid):
         return prefix + str(uid)[-digit_len:].zfill(digit_len)
     elif _fp_name == "tnt":
         return f"DME{str(uid).zfill(9)}"
-    elif _fp_name == "century":
-        return f"D_jasonl_{str(uid)}"
+    # elif _fp_name == "century": # Deactivated
+    #     return f"D_jasonl_{str(uid)}"
     else:
         return f"DME{str(uid)}"
 
