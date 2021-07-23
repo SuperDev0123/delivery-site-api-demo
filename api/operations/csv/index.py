@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime
 
 from django.conf import settings
@@ -11,6 +12,8 @@ from api.operations.csv.century import build_csv as build_CENTURY_csv
 from api.fp_apis.utils import gen_consignment_num
 from api.utils import get_sydney_now_time
 
+logger = logging.getLogger(__name__)
+
 
 def get_booking_lines(bookings):
     pk_booking_ids = bookings.values_list("pk_booking_id", flat=True)
@@ -21,6 +24,9 @@ def get_booking_lines(bookings):
 
 
 def build_csv(booking_ids):
+    LOG_ID = "[CSV BOOK]"
+    logger.error(f"{LOG_ID} booking_ids: {booking_ids}")
+
     bookings = Bookings.objects.filter(pk__in=booking_ids)
     booking_lines = get_booking_lines(bookings)
     vx_freight_provider = bookings.first().vx_freight_provider.lower()
@@ -28,8 +34,13 @@ def build_csv(booking_ids):
 
     # Generate CSV name
     if len(booking_ids) == 1:
+        if not bookings[0].b_client_order_num:
+            error_msg = f"{LOG_ID} Error: OrderNum is missing."
+            logger.error(error_msg)
+            return error_msg
+
         consignment_num = gen_consignment_num(
-            bookings[0].vx_freight_provider, bookings[0].b_bookingID_Visual
+            bookings[0].vx_freight_provider, bookings[0].b_client_order_num
         )
 
         if vx_freight_provider == "cope":

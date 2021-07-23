@@ -25,7 +25,13 @@ def _convert_UOM(value, uom, type, fp_name):
         raise Exception(message)
 
 
-def gen_consignment_num(fp_name, booking_visual_id):
+def gen_consignment_num(fp_name, uid):
+    """
+    generate consignment
+
+    uid: can be `booking_visual_id` or `b_client_order_num`
+    """
+
     _fp_name = fp_name.lower()
 
     if _fp_name == "hunter":
@@ -37,16 +43,18 @@ def gen_consignment_num(fp_name, booking_visual_id):
 
         limiter = int(limiter)
 
-        prefix_index = int(int(booking_visual_id) / limiter) + 1
+        prefix_index = int(int(uid) / limiter) + 1
         prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
             ((prefix_index - 1) % 26) + 65
         )
 
-        return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+        return prefix + str(uid)[-digit_len:].zfill(digit_len)
     elif _fp_name == "tnt":
-        return f"DME{str(booking_visual_id).zfill(9)}"
+        return f"DME{str(uid).zfill(9)}"
+    elif _fp_name == "century":
+        return f"D_jasonl_{str(uid)}"
     else:
-        return f"DME{str(booking_visual_id)}"
+        return f"DME{str(uid)}"
 
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
