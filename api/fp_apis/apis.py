@@ -526,9 +526,8 @@ def get_label(request, fp_name):
         _fp_name = fp_name.lower()
 
         if (
-            booking.kf_client_id
-            == "1af6bcd2-6148-11eb-ae93-0242ac130002"
-            # and booking.vx_freight_provider.lower() != "tnt"
+            booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+            and booking.vx_freight_provider.lower() != "tnt"
         ):  # Jason L:
             error_msg = "JasonL order label should be built by built-in module."
             return JsonResponse(
