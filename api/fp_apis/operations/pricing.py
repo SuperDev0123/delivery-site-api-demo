@@ -44,13 +44,22 @@ def _confirm_visible(booking, booking_lines, quotes):
         if quote.freight_provider == "Allied":
             for line in booking_lines:
                 width = _convert_UOM(
-                    line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower()
+                    line.e_dimWidth,
+                    line.e_dimUOM,
+                    "dim",
+                    quote.freight_provider.lower(),
                 )
                 height = _convert_UOM(
-                    line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower()
+                    line.e_dimHeight,
+                    line.e_dimUOM,
+                    "dim",
+                    quote.freight_provider.lower(),
                 )
                 length = _convert_UOM(
-                    line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower()
+                    line.e_dimLength,
+                    line.e_dimUOM,
+                    "dim",
+                    quote.freight_provider.lower(),
                 )
 
                 if width > 120 or height > 120 or length > 120:
