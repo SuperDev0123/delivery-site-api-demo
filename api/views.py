@@ -2791,6 +2791,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             "total_2_cubic_mass_factor_calc": booking_line.total_2_cubic_mass_factor_calc,
             "z_createdTimeStamp": datetime.now(),
             "z_modifiedTimeStamp": None,
+            "packed_status": booking_line.packed_status,
         }
         serializer = BookingLineSerializer(data=newbooking_line)
 

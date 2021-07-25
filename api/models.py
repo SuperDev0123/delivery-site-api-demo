@@ -2022,6 +2022,15 @@ def post_save_booking(sender, instance, **kwargs):
 
 
 class Booking_lines(models.Model):
+    ORIGINAL = "original"
+    AUTO_PACK = "auto"
+    MANUAL_PACK = "manual"
+    PACKED_STATUS_CHOICES = (
+        (ORIGINAL, "original"),
+        (AUTO_PACK, "auto"),
+        (MANUAL_PACK, "manual"),
+    )
+
     pk_lines_id = models.AutoField(primary_key=True)
     fk_booking_id = models.CharField(
         verbose_name=_("FK Booking Id"), max_length=64, blank=True, null=True
@@ -2128,6 +2137,9 @@ class Booking_lines(models.Model):
         null=True,
         blank=True,
         default=None,
+    )
+    packed_status = models.CharField(
+        max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
     )
     zbl_121_integer_1 = models.IntegerField(
         blank=True, null=True, default=None
