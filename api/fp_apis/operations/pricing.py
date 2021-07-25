@@ -63,7 +63,7 @@ def _confirm_visible(booking, booking_lines, quotes):
                 )
 
                 if width > 120 or height > 120 or length > 120:
-                    quote.is_deleted = True
+                    quote.is_used = True
                     quote.save()
 
 
