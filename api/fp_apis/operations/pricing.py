@@ -33,9 +33,29 @@ from api.fp_apis.constants import (
     DME_LEVEL_API_URL,
     AVAILABLE_FPS_4_FC,
 )
+from api.fp_apis.utils import _convert_UOM
 
 
 logger = logging.getLogger(__name__)
+
+
+def _confirm_visible(booking, booking_lines, quotes):
+    for quote in quotes:
+        if quote.freight_provider == "Allied":
+            for line in booking_lines:
+                width = _convert_UOM(
+                    line.e_dimWidth, line.e_dimUOM, "dim", fp_name.lower()
+                )
+                height = _convert_UOM(
+                    line.e_dimHeight, line.e_dimUOM, "dim", fp_name.lower()
+                )
+                length = _convert_UOM(
+                    line.e_dimLength, line.e_dimUOM, "dim", fp_name.lower()
+                )
+
+                if width > 120 or height > 120 or length > 120:
+                    quote.is_deleted = True
+                    quote.save()
 
 
 def pricing(body, booking_id, is_pricing_only=False):
@@ -106,6 +126,9 @@ def pricing(body, booking_id, is_pricing_only=False):
 
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes)
+
+        # Confirm visible
+        _confirm_visible(booking, booking_lines, quotes)
 
     return booking, True, "Retrieved all Pricing info", quotes
 
