@@ -65,7 +65,7 @@ def _confirm_visible(booking, booking_lines, quotes):
                 if width > 120 or height > 120 or length > 120:
                     quote.is_used = True
                     quote.save()
-                    return quotes.exclude(is_used=False)
+                    return quotes.filter(is_used=False)
 
 
 def pricing(body, booking_id, is_pricing_only=False):
