@@ -2942,6 +2942,44 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             logger.error(f"#331 - booking lines data delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLineDetail"})
 
+    @action(detail=False, methods=["post"])
+    def bulk_move(self, request):
+        """
+        bulk move LineData(s) to other Line
+        """
+
+        LOG_ID = "[BULK MOVE LINE DATA]"
+        line_id = request.data["lineId"]
+        line_detail_ids = request.data["lineDetailIds"]
+        moved_line_detail_ids = []
+        logger.info(f"{LOG_ID} Request payload: {request.data}")
+
+        try:
+            line = Booking_lines.objects.get(pk=line_id)
+            line_details = Booking_lines_data.objects.filter(
+                pk__in=line_detail_ids
+            ).only("pk", "fk_booking_lines_id")
+
+            for line_detail in line_details:
+                line_detail.fk_booking_lines_id = line.pk_booking_lines_id
+                line_detail.save()
+                moved_line_detail_ids.append(line_detail.pk)
+
+            logger.info(f"{LOG_ID} Success. Moved Id(s):{moved_line_detail_ids}")
+            return JsonResponse(
+                {
+                    "message": "LineDetails are successfully moved",
+                    "result": moved_line_detail_ids,
+                }
+            )
+        except Exception as e:
+            trace_error.print()
+            logger.error(f"{LOG_ID} Error: str{e}")
+            return JsonResponse(
+                {"error": "Can not move BookingLineDetails"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class WarehouseViewSet(viewsets.ModelViewSet):
     serializer_class = WarehouseSerializer
