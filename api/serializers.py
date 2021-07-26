@@ -454,6 +454,7 @@ class BookingLineSerializer(serializers.ModelSerializer):
             "is_scanned",
             "picked_up_timestamp",
             "sscc",
+            "packed_status",
         )
 
 
