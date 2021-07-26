@@ -724,7 +724,7 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>Senders Ref:</b> %s</font>"
-                        % (8, booking_line.gap_ras),
+                        % (8, booking_line.gap_ras if booking_line.gap_ras else booking.b_client_order_num),
                         style_left,
                     )
                 ]
