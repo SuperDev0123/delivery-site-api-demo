@@ -759,13 +759,15 @@ def push_boks(payload, client, username, method):
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-        # Select best quotes(fastest, lowest)
-        if selected_quote:
+        if booking.booking_type == "DMEM" and selected_quote:
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
             )
+        else:
+            quote_set = quote_set.exclude(freight_provider="Sendle")
 
+    # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
         auto_select_pricing_4_bok(bok_1_obj, quote_set)
         best_quotes = select_best_options(pricings=quote_set)
@@ -1407,6 +1409,8 @@ def scanned(payload, client):
                 freight_provider__iexact=booking.vx_freight_provider,
                 service_name=booking.vx_serviceName,
             )
+        else:
+            quotes = quotes.exclude(freight_provider="Sendle")
 
         best_quotes = select_best_options(pricings=quotes)
         logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
@@ -1472,6 +1476,7 @@ def scanned(payload, client):
         f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
     )
     booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+    booking.status = "picked"
     booking.save()
 
     res_json = {"labelUrl": booking.z_label_url}
