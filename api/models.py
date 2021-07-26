@@ -1844,15 +1844,28 @@ class Bookings(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     delivery_booking = models.DateField(default=None, blank=True, null=True)
-    de_to_assembly_required = models.BooleanField(default=False, null=True)
+    pu_location = models.CharField(
+        max_length=64, default=None, null=True, choices=LOCATION_CHOICES
+    )
     de_to_location = models.CharField(
         max_length=64, default=None, null=True, choices=LOCATION_CHOICES
     )
-    de_to_floor_number = models.IntegerField(default=0, null=True)
+    pu_floor_number = models.IntegerField(default=0, null=True)
+    de_floor_number = models.IntegerField(default=0, null=True)
+    pu_floor_access_by = models.CharField(
+        max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
+    )
     de_to_floor_access_by = models.CharField(
         max_length=32, default=None, null=True, choices=FLOOR_ACCESS_BY_CHOICES
     )
     de_to_sufficient_space = models.BooleanField(default=True, null=True)
+    de_to_assembly_required = models.BooleanField(default=False, null=True)
+    pu_no_of_assists = models.IntegerField(default=0, null=True)
+    de_no_of_assists = models.IntegerField(default=0, null=True)
+    pu_access = models.CharField(max_length=32, default=None, null=True)
+    de_access = models.CharField(max_length=32, default=None, null=True)
+    pu_service = models.CharField(max_length=32, default=None, null=True)
+    de_service = models.CharField(max_length=32, default=None, null=True)
     booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
