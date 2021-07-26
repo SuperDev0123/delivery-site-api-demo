@@ -74,6 +74,8 @@ def _confirm_visible(booking, booking_lines, quotes):
                     quote.save()
                     return quotes.filter(is_used=False)
 
+    return quotes
+
 
 def pricing(body, booking_id, is_pricing_only=False):
     """
