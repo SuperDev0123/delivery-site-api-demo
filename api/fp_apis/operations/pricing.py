@@ -40,6 +40,9 @@ logger = logging.getLogger(__name__)
 
 
 def _confirm_visible(booking, booking_lines, quotes):
+    """
+    `Allied` - if 2+ Line dim is over 1.2m, then hide it
+    """
     for quote in quotes:
         if quote.freight_provider == "Allied":
             for line in booking_lines:
@@ -62,7 +65,11 @@ def _confirm_visible(booking, booking_lines, quotes):
                     quote.freight_provider.lower(),
                 )
 
-                if width > 120 or height > 120 or length > 120:
+                if (
+                    (width > 120 and height > 120)
+                    or (width > 120 and length > 120)
+                    or (height > 120 and length > 120)
+                ):
                     quote.is_used = True
                     quote.save()
                     return quotes.filter(is_used=False)
