@@ -131,7 +131,7 @@ def build_csv(fileHandler, bookings, booking_lines):
         if booking.b_client_order_num is None:  # senderReference
             h18 = ""
         else:
-            h18 = str(booking.b_client_order_num)
+            h18 = f"D_jasonl_{str(booking.b_client_order_num)}"
 
         if booking.b_bookingID_Visual is None:  # reference1
             h19 = ""
