@@ -95,7 +95,7 @@ def pre_save_handler(instance):
                 )
                 or (old.api_booking_quote_id != instance.api_booking_quote_id)  # Quote
             ):
-                update_pronto_note(quote, instance, [], "booking")
+                asyncio.create_task(update_pronto_note(quote, instance, [], "booking"))
 
         if (
             instance.api_booking_quote

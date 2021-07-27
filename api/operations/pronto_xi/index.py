@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from asgiref.sync import sync_to_async
 
 from api.models import DME_clients, Booking_lines, BOK_2_lines
 from api.operations.pronto_xi.apis import (
@@ -38,6 +39,7 @@ def send_info_back(bok_1, quote):
     return result
 
 
+@sync_to_async
 def update_note(quote, booking, lines=[], type="bok"):
     """
     quote: API_booking_quotes object

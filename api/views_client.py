@@ -5,6 +5,7 @@ import json
 import logging
 import requests
 import zipfile
+import asyncio
 from datetime import datetime, date, timedelta
 from base64 import b64decode, b64encode
 
@@ -367,7 +368,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             # send_info_back(bok_1, bok_1.quote)
 
             # Update Pronto Note
-            update_pronto_note(bok_1.quote, bok_1, [], "bok")
+            asyncio.create_task(update_pronto_note(bok_1.quote, bok_1, [], "bok"))
 
             fc_log = (
                 FC_Log.objects.filter(client_booking_id=bok_1.client_booking_id)
