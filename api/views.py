@@ -4215,6 +4215,11 @@ def build_label(request):
             f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
         )
         booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+
+        # Jason L
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            status_history.create(booking, "Picked", request.user.username)
+
         booking.save()
     except Exception as e:
         trace_error.print()
