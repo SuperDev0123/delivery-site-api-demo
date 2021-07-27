@@ -4218,6 +4218,7 @@ def build_label(request):
 
         # Jason L
         if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            booking.status = "Picked"
             status_history.create(booking, "Picked", request.user.username)
 
         booking.save()
