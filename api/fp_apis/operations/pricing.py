@@ -41,10 +41,13 @@ logger = logging.getLogger(__name__)
 
 def _confirm_visible(booking, booking_lines, quotes):
     """
-    `Allied` - if 2+ Line dim is over 1.2m, then hide it
+    `Allied` - if DE address_type is `residential` and 2+ Line dim is over 1.2m, then hide it
     """
     for quote in quotes:
-        if quote.freight_provider == "Allied":
+        if (
+            quote.freight_provider == "Allied"
+            and booking.pu_Address_Type == "residential"
+        ):
             for line in booking_lines:
                 width = _convert_UOM(
                     line.e_dimWidth,
