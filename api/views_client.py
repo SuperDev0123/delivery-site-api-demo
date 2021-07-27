@@ -808,8 +808,10 @@ def get_delivery_status(request):
         else:
             lines = lines.filter(is_deleted=False)
 
-        lines = lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES).only(
-            "pk_lines_id", "e_qty", "e_item", "e_item_type"
+        lines = (
+            lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+            .exclude(e_item__icontains="(Ignored)")
+            .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
         )
 
         booking_dict = {
@@ -951,9 +953,13 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    lines = BOK_2_lines.objects.filter(
-        fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
-    ).exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+    lines = (
+        BOK_2_lines.objects.filter(
+            fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
+        )
+        .exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+        .exclude(l_003_item__icontains="(Ignored")
+    )
 
     status_history = Dme_status_history.objects.filter(
         fk_booking_id=bok_1.pk_header_id
