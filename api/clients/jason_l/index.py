@@ -1476,8 +1476,11 @@ def scanned(payload, client):
         f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
     )
     booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
+
+    if booking.b_status != "Picked":
+        status_history.create(booking, "Picked", "jason_l")
+
     booking.b_status = "Picked"
-    status_history.create(booking, "Picked", "jason_l")
     booking.save()
 
     res_json = {"labelUrl": booking.z_label_url}
