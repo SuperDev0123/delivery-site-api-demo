@@ -45,6 +45,7 @@ def update_note(quote, booking, lines=[], type="bok"):
     lines: Array of BookingLines/BOK_2_lines object
     type: `bok` or `booking`
     """
+    return None
 
     LOG_ID = "[PUN]"  # PRONTO UPDATE NOTE
     logger.info(
