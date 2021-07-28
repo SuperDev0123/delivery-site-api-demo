@@ -29,7 +29,7 @@ AVAILABLE_FPS_4_FC = [
 ]
 
 BUILT_IN_PRICINGS = {
-    "century": {"service_types": ["standard", "vip", "premium"]},
+    "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
     # "allied": {
