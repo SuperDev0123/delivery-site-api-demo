@@ -486,12 +486,31 @@ class BookingsViewSet(viewsets.ViewSet):
                 end_date_str = column_filter.split("-")[1]
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
                 end_date = datetime.strptime(end_date_str, "%d/%m/%y")
+                end_date = end_date.replace(hour=23, minute=59, second=59)
                 queryset = queryset.filter(
                     puPickUpAvailFrom_Date__range=(start_date, end_date)
                 )
             elif column_filter and not "-" in column_filter:
                 date = datetime.strptime(column_filter, "%d/%m/%y")
                 queryset = queryset.filter(puPickUpAvailFrom_Date=date)
+        except KeyError:
+            column_filter = ""
+
+        try:
+            column_filter = column_filters["manifest_timestamp"]  # MMDDYY-MMDDYY
+
+            if column_filter and "-" in column_filter:
+                start_date_str = column_filter.split("-")[0]
+                end_date_str = column_filter.split("-")[1]
+                start_date = datetime.strptime(start_date_str, "%d/%m/%y")
+                end_date = datetime.strptime(end_date_str, "%d/%m/%y")
+                end_date = end_date.replace(hour=23, minute=59, second=59)
+                queryset = queryset.filter(
+                    manifest_timestamp__range=(start_date, end_date)
+                )
+            elif column_filter and not "-" in column_filter:
+                date = datetime.strptime(column_filter, "%d/%m/%y")
+                queryset = queryset.filter(manifest_timestamp=date)
         except KeyError:
             column_filter = ""
 
