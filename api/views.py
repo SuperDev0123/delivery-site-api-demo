@@ -4590,6 +4590,7 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
     def add(self, request, pk=None):
         try:
             request.data.pop("id", None)
+            logger.info(f"Availability Create payload: {request.data}")
             resultObject = FP_availabilities.objects.get_or_create(**request.data)
 
             return JsonResponse(
@@ -4600,7 +4601,7 @@ class AvailabilitiesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
+            logger.error(f"Availabilities Add error: {str(e)}")
             return JsonResponse({"result": None}, status=400)
 
 

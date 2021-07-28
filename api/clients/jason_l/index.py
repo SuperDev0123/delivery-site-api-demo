@@ -151,7 +151,7 @@ def partial_pricing(payload, client, warehouse):
     )
 
     # Select best quotes(fastest, lowest)
-    if quote_set.count() > 0:
+    if quote_set and quote_set.exists() and quote_set.count() > 0:
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
@@ -167,7 +167,7 @@ def partial_pricing(payload, client, warehouse):
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
-    else:
+    elif len(json_results) > 1:
         if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
             json_results[0]["service_name"] = "Express"
             json_results[1]["service_name"] = "Standard"
@@ -259,6 +259,11 @@ def push_boks(payload, client, username, method):
             message = "'booking_lines' is required."
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
+
+        # Temporary population
+        bok_1["b_068_b_del_location"] = "Pickup at Door / Warehouse Dock"
+        bok_1["b_069_b_del_floor_number"] = 0
+        bok_1["b_072_b_pu_no_of_assists"] = 0
 
     # Check duplicated push with `b_client_order_num`
     selected_quote = None
