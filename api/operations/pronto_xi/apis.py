@@ -72,8 +72,11 @@ def parse_product_group_code(response):
     return GroupCode
 
 
-def get_product_group_code(ItemCode, token):
+def get_product_group_code(ItemCode, token=None):
     logger.info(f"@640 [PRONTO GET ITEM INFO] Start! ItemCode: {ItemCode}")
+
+    if not token:
+        token = get_token()
 
     url = f"{API_URL}/api/InvGetItems"
     headers = {

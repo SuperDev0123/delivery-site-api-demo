@@ -4217,7 +4217,7 @@ def build_label(request):
         booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
         # Jason L
-        if booking.b_status != "Picked":
+        if not booking.b_dateBookedDate and booking.b_status != "Picked":
             status_history.create(booking, "Picked", request.user.username)
 
         booking.b_status = "Picked"

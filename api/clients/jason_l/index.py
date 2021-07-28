@@ -377,11 +377,13 @@ def push_boks(payload, client, username, method):
                 {
                     "model_number": line["model_number"],
                     "qty": line["qty"],
-                    "sequence": 1,
+                    "sequence": index + 1,
                     "UOMCode": "EACH",
                     "ProductGroupCode": "----",
                 }
             )
+
+        bok_2s = product_oper.get_product_items(bok_2s, client, is_web, False)
 
         warehouse = get_warehouse(client)
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
@@ -489,7 +491,6 @@ def push_boks(payload, client, username, method):
         raise Exception(message)
 
     # Save bok_2s (Product & Child items)
-    # items = product_oper.get_product_items(bok_2s, client, is_web, False)
     items = bok_2s
     new_bok_2s = []
     bok_2_objs = []
@@ -1482,7 +1483,7 @@ def scanned(payload, client):
     )
     booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
-    if booking.b_status != "Picked":
+    if not booking.b_dateBookedDate and booking.b_status != "Picked":
         status_history.create(booking, "Picked", "jason_l")
 
     booking.b_status = "Picked"
