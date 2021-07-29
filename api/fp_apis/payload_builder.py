@@ -517,9 +517,20 @@ def get_getlabel_payload(booking, fp_name):
             "instruction"
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
+    de_street_1 = "" or de_To_Address_Street_1 or de_To_Address_Street_2
+    de_street_2 = "" or de_To_Address_Street_2
+
+    if not de_street_1 and not de_street_2:
+        message = f"DE street info is required. BookingId: {booking.b_bookingID_Visual}"
+        logger.error(message)
+        raise Exception(message)
+
+    if de_street_1 == de_street_2:
+        de_street_2 = ""
+
     payload["dropAddress"]["postalAddress"] = {
-        "address1": "" or de_To_Address_Street_1,
-        "address2": "" or de_To_Address_Street_2,
+        "address1": de_street_1,
+        "address2": de_street_2 if de_street_1 != de_street_2 else "_",
         "country": "" or booking.de_To_Address_Country,
         "postCode": "" or booking.de_To_Address_PostalCode,
         "state": "" or booking.de_To_Address_State,
