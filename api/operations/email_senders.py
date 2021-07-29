@@ -447,19 +447,14 @@ def send_booking_status_email(bookingId, emailName, sender):
     )
 
 
-def send_status_update_email(booking, status, sender, status_url):
+def send_status_update_email(booking, category, eta, sender, status_url):
     """
     When 'Plum Products Australia Ltd' bookings status is updated
     """
-    from api.fp_apis.utils import (
-        get_status_time_from_category,
-        get_status_category_from_status,
-    )
+    from api.fp_apis.utils import get_status_time_from_category
 
-    client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
     b_status = booking.b_status
     quote = booking.api_booking_quote
-    category = get_status_category_from_status(b_status)
 
     if not category:
         logger.info(
@@ -479,13 +474,6 @@ def send_status_update_email(booking, status, sender, status_url):
         )
     else:
         last_updated = ""
-
-    json_quote = None
-
-    if quote:
-        etd = get_etd(quote, client)
-    else:
-        etd = None
 
     last_milestone = "Delivered"
     if category == "Booked":
@@ -526,24 +514,8 @@ def send_status_update_email(booking, status, sender, status_url):
             timestamps.append("")
         else:
             timestamps.append(
-                get_status_time_from_category(booking.pk_booking_id, item)
+                get_status_time_from_category(booking.pk_booking_id, item).strftime("%d/%m/%Y %H:%M") if get_status_time_from_category(booking.pk_booking_id, item) else ''
             )
-
-    # if step == 1:
-    eta = (
-        (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime("%d/%m/%Y")
-        if etd and booking.puPickUpAvailFrom_Date
-        else ""
-    )
-    # else:
-    #     eta = (
-    #         (
-    #             booking.b_dateBookedDate
-    #             + timedelta(days=etd)
-    #         ).strftime("%Y-%m-%d")
-    #         if etd and booking.b_dateBookedDate
-    #         else ""
-    #     )
 
     cc_emails = []
 
@@ -568,7 +540,7 @@ def send_status_update_email(booking, status, sender, status_url):
         "ORDER_NUMBER": booking.b_client_order_num,
         "SHIPMENT_NUMBER": booking.v_FPBookingNumber,
         "DME_NUMBER": booking.b_bookingID_Visual,
-        "ETA": f"{eta}({etd} days)" if etd else "",
+        "ETA": eta,
         "BODY_REPEAT": "",
     }
 
@@ -594,7 +566,6 @@ def send_status_update_email(booking, status, sender, status_url):
         emailBodyRepeatEven = template.emailBodyRepeatEven
         emailVarList["USERNAME"] = sender
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
-        # emailVarList["STATUS"] = status
         emailVarList["STATUS_URL"] = status_url
 
         body_repeat = ""
