@@ -541,7 +541,7 @@ def get_getlabel_payload(booking, fp_name):
         gaps = []
         for line_data in booking_lines_data:
             if line_data.itemDescription:
-                descriptions.append(line_data.itemDescription)
+                descriptions.append(line_data.itemDescription[:19])
 
             if line_data.gap_ra:
                 gaps.append(line_data.gap_ra)
