@@ -378,7 +378,11 @@ def build_label(
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (16, booking.vx_serviceName),
+                        "<font size=%s><b>%s</b></font>"
+                        % (
+                            16 if len(booking.vx_serviceName) < 12 else 9,
+                            booking.vx_serviceName,
+                        ),
                         style_left,
                     ),
                     Paragraph(
@@ -724,7 +728,12 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>Senders Ref:</b> %s</font>"
-                        % (8, booking_line.gap_ras if booking_line.gap_ras else booking.b_client_order_num),
+                        % (
+                            8,
+                            booking_line.gap_ras
+                            if booking_line.gap_ras
+                            else booking.b_client_order_num,
+                        ),
                         style_left,
                     )
                 ]
@@ -1038,10 +1047,7 @@ def build_label(
                 or "808080"
             )
 
-            tbl_data1 = [
-                [tnt_img], 
-                ['']
-            ]
+            tbl_data1 = [[tnt_img], [""]]
 
             t1 = Table(
                 tbl_data1,
@@ -1050,7 +1056,7 @@ def build_label(
                 ),
                 rowHeights=(
                     float(label_settings["line_height_large"]) * mm,
-                    float(label_settings["line_height_large"]) * 1 / 2 * mm
+                    float(label_settings["line_height_large"]) * 1 / 2 * mm,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -1059,18 +1065,18 @@ def build_label(
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ('BACKGROUND', (0,1), (-1,-1), f"#{fp_color_code}"),
+                    ("BACKGROUND", (0, 1), (-1, -1), f"#{fp_color_code}"),
                 ],
             )
 
-            tbl_data1 = [[dme_img, '', t1]]
+            tbl_data1 = [[dme_img, "", t1]]
 
             t1 = Table(
                 tbl_data1,
                 colWidths=(
                     float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
                     float(label_settings["label_image_size_length"]) * (2 / 8) * mm,
-                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
                 ),
                 rowHeights=(float(label_settings["line_height_large"]) * 3 / 2 * mm),
                 style=[
