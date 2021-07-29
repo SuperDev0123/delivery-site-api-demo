@@ -1272,9 +1272,10 @@ def scanned(payload, client):
         logger.info(f"@350 {LOG_ID} Booking: {booking}")
         raise ValidationError(message)
 
-    if not booking.api_booking_quote:
-        logger.info(f"@351 {LOG_ID} No quote! Booking: {booking}")
-        raise Exception("Booking doens't have quote.")
+    # Commented on 2021-07-29
+    # if not booking.api_booking_quote:
+    #     logger.info(f"@351 {LOG_ID} No quote! Booking: {booking}")
+    #     raise Exception("Booking doens't have quote.")
 
     # Fetch SSCC data by using `Talend` app
     picked_items = get_picked_items(b_client_order_num, sscc)
@@ -1290,7 +1291,6 @@ def scanned(payload, client):
 
     # Fetch original data
     pk_booking_id = booking.pk_booking_id
-    fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
     original_lines = lines.exclude(e_item="Auto repacked item").filter(
