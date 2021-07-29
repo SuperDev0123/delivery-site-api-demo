@@ -350,8 +350,6 @@ def get_address(order_num):
 
 
 def get_bok_by_talend(bok_1):
-    from api.operations.pronto_xi.apis import get_product_group_code, get_token
-
     LOG_ID = "[FETCH BOK BY TALEND]"
     order_num = bok_1["b_client_order_num"]
 
@@ -456,7 +454,6 @@ def get_bok_by_talend(bok_1):
 
     lines = []
     ignored_items = []
-    token = get_token()
     csv_file = open(file_path)
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
