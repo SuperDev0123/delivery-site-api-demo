@@ -792,7 +792,7 @@ def get_delivery_status(request):
             last_updated = (
                 convert_to_AU_SYDNEY_tz(
                     status_history.first().event_time_stamp
-                ).strftime("%Y-%m-%d %H:%M")
+                ).strftime("%d/%m/%Y %H:%M")
                 if status_history.first().event_time_stamp
                 else ""
             )
@@ -890,7 +890,7 @@ def get_delivery_status(request):
             if index == 0:
                 timestamps.append(
                     convert_to_AU_SYDNEY_tz(booking.z_CreatedTimestamp).strftime(
-                        "%Y-%m-%d %H:%M"
+                        "%d/%m/%Y %H:%M"
                     )
                     if booking and booking.z_CreatedTimestamp
                     else ""
@@ -911,7 +911,7 @@ def get_delivery_status(request):
                 (
                     convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date)
                     + timedelta(days=int(json_quote["eta"].split()[0]))
-                ).strftime("%Y-%m-%d")
+                ).strftime("%d/%m/%Y")
                 if json_quote and booking.puPickUpAvailFrom_Date
                 else ""
             )
@@ -920,7 +920,7 @@ def get_delivery_status(request):
                 (
                     convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
                     + timedelta(days=int(json_quote["eta"].split()[0]))
-                ).strftime("%Y-%m-%d")
+                ).strftime("%d/%m/%Y")
                 if json_quote and booking.b_dateBookedDate
                 else ""
             )
@@ -968,7 +968,7 @@ def get_delivery_status(request):
     if status_history:
         last_updated = (
             convert_to_AU_SYDNEY_tz(status_history.first().event_time_stamp).strftime(
-                "%Y-%m-%d %H:%M"
+                "%d/%m/%Y %H:%M"
             )
             if status_history.first().event_time_stamp
             else ""
@@ -1024,7 +1024,7 @@ def get_delivery_status(request):
             (
                 convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date)
                 + timedelta(days=int(json_quote["eta"].split()[0]))
-            ).strftime("%Y-%m-%d")
+            ).strftime("%d/%m/%Y")
             if json_quote and bok_1.b_021_b_pu_avail_from_date
             else ""
         )
@@ -1041,7 +1041,7 @@ def get_delivery_status(request):
             "last_milestone": "Delivered",
             "timestamps": [
                 convert_to_AU_SYDNEY_tz(bok_1.date_processed).strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                    "%d/%m/%Y %H:%M:%S"
                 )
                 if bok_1 and bok_1.date_processed
                 else "",
