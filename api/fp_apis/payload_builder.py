@@ -417,6 +417,12 @@ def get_book_payload(booking, fp_name):
                 raise Exception(error_msg)
         else:
             payload["clientType"] = "***"
+    elif fp_name == "sendle":  # Sendle
+        if payload["pickupAddress"]["instruction"] == " ":
+            payload["pickupAddress"]["instruction"] = "_"
+
+        if payload["dropAddress"]["instruction"] == " ":
+            payload["dropAddress"]["instruction"] = "_"
 
     return payload
 
