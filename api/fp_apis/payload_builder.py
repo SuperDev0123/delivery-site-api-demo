@@ -146,7 +146,7 @@ def get_book_payload(booking, fp_name):
     payload["bookedBy"] = "DME"
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": booking.pu_Contact_F_L_Name or " ",
+        "contact": (booking.pu_Contact_F_L_Name or " ")[:19],
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -172,7 +172,7 @@ def get_book_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": booking.de_to_Contact_F_LName or " ",
+        "contact": (booking.de_to_Contact_F_LName or " ")[:19],
         "emailAddress": "" or de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -472,7 +472,7 @@ def get_getlabel_payload(booking, fp_name):
 
     payload["pickupAddress"] = {
         "companyName": puCompany or "",
-        "contact": booking.pu_Contact_F_L_Name or " ",
+        "contact": (booking.pu_Contact_F_L_Name or " ")[:19],
         "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -500,7 +500,7 @@ def get_getlabel_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": booking.de_to_Contact_F_LName or " ",
+        "contact": (booking.de_to_Contact_F_LName or " ")[:19],
         "emailAddress": "" or de_Email,
         "instruction": "",
         "contactPhoneAreaCode": "0",
@@ -808,7 +808,7 @@ def get_pricing_payload(
 
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": booking.pu_Contact_F_L_Name or " ",
+        "contact": ((booking.pu_Contact_F_L_Name or " ")[:19])[:19],
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "phoneNumber": "0267651109" or booking.pu_Phone_Main,
@@ -825,7 +825,7 @@ def get_pricing_payload(
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": booking.de_to_Contact_F_LName or " ",
+        "contact": (booking.de_to_Contact_F_LName or " ")[:19],
         "emailAddress": "" or de_Email,
         "instruction": "",
         "phoneNumber": "" or booking.de_to_Phone_Main,
@@ -942,7 +942,7 @@ def get_etd_payload(booking, fp_name):
 
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": booking.pu_Contact_F_L_Name or " ",
+        "contact": (booking.pu_Contact_F_L_Name or " ")[:19],
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "phoneNumber": "0267651109" or booking.pu_Phone_Main,
@@ -959,7 +959,7 @@ def get_etd_payload(booking, fp_name):
     }
     payload["dropAddress"] = {
         "companyName": "" or deToCompanyName,
-        "contact": booking.de_to_Contact_F_LName or " ",
+        "contact": (booking.de_to_Contact_F_LName or " ")[:19],
         "emailAddress": "" or de_Email,
         "instruction": "",
         "phoneNumber": "" or booking.de_to_Phone_Main,
