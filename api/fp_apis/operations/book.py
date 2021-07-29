@@ -50,6 +50,7 @@ def book(fp_name, booking, booker):
         booking.b_dateBookedDate = datetime.now()
         booking.b_status = "Booked"
         booking.b_error_Capture = None
+        status_history.create(booking, "Booked", booker)
         booking.save()
 
         message = f"Successfully booked({booking.v_FPBookingNumber})"
