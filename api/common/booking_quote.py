@@ -4,7 +4,7 @@ from api.models import Fp_freight_providers
 def set_booking_quote(booking, quote=None):
     if not quote:
         booking.api_booking_quote = None
-        booking.vx_freight_provider = None
+        # booking.vx_freight_provider = None
         booking.vx_account_code = None
         booking.vx_serviceName = None
         booking.inv_cost_quoted = None
