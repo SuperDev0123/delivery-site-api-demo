@@ -40,6 +40,21 @@ def book(fp_name, booking, booker):
         error_msg = f"Error while build payload {str(e)}"
         return False, error_msg
 
+    if booking.b_client_warehouse_code == "JASON_L_BOT":
+        # JasonL Botany warehouse doesn't need any trucks from TNT
+        booking.v_FPBookingNumber = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+        booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+            booking, booking.api_booking_quote
+        )
+        booking.b_dateBookedDate = datetime.now()
+        booking.b_status = "Booked"
+        booking.b_error_Capture = None
+        booking.save()
+
+        message = f"Successfully booked({booking.v_FPBookingNumber})"
+        return True, message
+
     logger.info(f"### Payload ({fp_name} book): {payload}")
     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
     response = requests.post(url, params={}, json=payload)

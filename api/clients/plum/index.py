@@ -106,7 +106,7 @@ def partial_pricing(payload, client, warehouse):
         missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s, client)
 
         if missing_model_numbers:
-            missing_model_numbers_str = {", ".join(missing_model_numbers)}
+            missing_model_numbers_str = ", ".join(missing_model_numbers)
             message = f"System is missing model numbers - {missing_model_numbers_str}"
             logger.info(f"@816 {LOG_ID} {message}")
             raise Exception(message)
