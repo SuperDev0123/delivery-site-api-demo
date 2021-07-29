@@ -124,6 +124,8 @@ def tracking(request, fp_name):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def book(request, fp_name):
+    LOG_ID = "[FP BOOK]"
+
     try:
         username = request.user.username
         body = literal_eval(request.body.decode("utf8"))
@@ -143,6 +145,7 @@ def book(request, fp_name):
         if success:
             return JsonResponse(res_json)
         else:
+            logger.info(f"{LOG_ID} Failed. BookingId: {booking.b_bookingID_Visual}")
             return JsonResponse(res_json, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         trace_error.print()
