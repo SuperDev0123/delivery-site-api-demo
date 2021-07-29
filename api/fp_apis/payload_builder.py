@@ -627,6 +627,12 @@ def get_getlabel_payload(booking, fp_name):
     elif fp_name.lower() == "sendle":
         payload["consignmentNumber"] = booking.fk_fp_pickup_id
 
+        if payload["pickupAddress"]["instruction"] == " ":
+            payload["pickupAddress"]["instruction"] = "_"
+
+        if payload["dropAddress"]["instruction"] == " ":
+            payload["dropAddress"]["instruction"] = "_"
+
     return payload
 
 
