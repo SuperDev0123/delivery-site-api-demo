@@ -344,6 +344,10 @@ def get_book_payload(booking, fp_name):
         else:
             payload["collectionDateTime"] += "T00:00:00"
 
+        if booking.b_client_warehouse_code != "JASON_L_BOT":
+            # JasonL Botany warehouse doesn't need any trucks from TNT
+            payload["collectionDateTime"] = ""
+
         if booking.pu_PickUp_By_Time_Hours:
             payload["collectionCloseTime"] = str(booking.pu_PickUp_By_Time_Hours).zfill(
                 2
