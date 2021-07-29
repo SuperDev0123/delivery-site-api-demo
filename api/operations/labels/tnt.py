@@ -622,7 +622,7 @@ def build_label(
             data = [[t1, t2]]
 
             t1_w = 30
-            t2_w = float(label_settings["label_image_size_length"]) * mm - 30
+            t2_w = float(label_settings["label_image_size_length"]) * mm - 15
 
             shell_table = Table(
                 data,
@@ -696,7 +696,7 @@ def build_label(
 
             t2 = Table(
                 tbl_data2,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm - 30),
+                colWidths=(float(label_settings["label_image_size_length"]) * mm - 15),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -710,7 +710,7 @@ def build_label(
             data = [[t1, t2]]
 
             t1_w = 30
-            t2_w = float(label_settings["label_image_size_length"]) * mm - 30
+            t2_w = float(label_settings["label_image_size_length"]) * mm - 15
 
             shell_table = Table(
                 data,
