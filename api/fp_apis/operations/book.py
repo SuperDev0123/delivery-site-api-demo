@@ -137,9 +137,9 @@ def book(fp_name, booking, booker):
             # Save Label for Hunter
             is_get_label = True  # Flag to decide if need to get label from response
 
-            if (
-                booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
-            ):  # Jason L:
+            # JasonL
+            if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+                # JasonL never get label from FP
                 is_get_label = False
 
             create_dir(f"{S3_URL}/pdfs/{_fp_name}_au")

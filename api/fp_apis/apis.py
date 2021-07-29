@@ -650,7 +650,11 @@ def get_label(request, fp_name):
                 file_path, file_name = build_label(booking, file_path)
                 z_label_url = f"{_fp_name}_au/{file_name}"
 
-            booking.z_label_url = z_label_url
+            # JasonL
+            if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+                # JasonL never get Label from FP
+                booking.z_label_url = z_label_url
+
             booking.b_error_Capture = None
             booking.save()
 
