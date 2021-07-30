@@ -14,7 +14,7 @@ AU_STATES = [
     "Victoria",
     "Western Australia",
 ]
-AU_STATE_ABBRS = ["NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"]
+AU_STATE_ABBRS = ["NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA", "ACT"]
 
 # Package types
 PALLETS = ["PALLET", "PLT", "PAL"]
