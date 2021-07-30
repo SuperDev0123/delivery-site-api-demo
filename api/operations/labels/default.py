@@ -87,7 +87,11 @@ def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
 
-    return f"DME{visual_id}{item_index}"
+    return (
+        f"DME{visual_id}{item_index}"
+        if not booking.v_FPBookingNumber
+        else f"{booking.v_FPBookingNumber}{item_index}"
+    )
 
 
 def build_label(
@@ -105,7 +109,9 @@ def build_label(
         os.makedirs(filepath)
     # end check if pdfs folder exists
 
-    fp_id = Fp_freight_providers.objects.get(fp_company_name=booking.vx_freight_provider).id
+    fp_id = Fp_freight_providers.objects.get(
+        fp_company_name=booking.vx_freight_provider
+    ).id
     try:
         carrier = FP_zones.objects.get(
             state=booking.de_To_Address_State,
@@ -149,7 +155,9 @@ def build_label(
         )
 
     file = open(f"{filepath}/{filename}", "w")
-    logger.info(f"#111 [{booking.vx_freight_provider} LABEL] File full path: {filepath}/{filename}")
+    logger.info(
+        f"#111 [{booking.vx_freight_provider} LABEL] File full path: {filepath}/{filename}"
+    )
     # end pdf file name using naming convention
 
     if not lines:
@@ -194,7 +202,9 @@ def build_label(
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
     fp_color_code = (
-        Fp_freight_providers.objects.get(fp_company_name=booking.vx_freight_provider).hex_color_code
+        Fp_freight_providers.objects.get(
+            fp_company_name=booking.vx_freight_provider
+        ).hex_color_code
         or "808080"
     )
 
@@ -473,10 +483,12 @@ def build_label(
             tbl_parcelId = [
                 [
                     Paragraph(
-                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DME%s%s</b></font>"
+                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_bookingID_Visual or "",
+                            booking.v_FPBookingNumber
+                            or f"DME{booking.b_bookingID_Visual}"
+                            or "",
                             str(j).zfill(3),
                         ),
                         style_left,
@@ -788,7 +800,7 @@ def build_label(
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.vx_account_code or "", 
+                            booking.vx_account_code or "",
                         ),
                         style_left,
                     ),
