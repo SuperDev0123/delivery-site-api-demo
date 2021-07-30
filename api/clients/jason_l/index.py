@@ -597,7 +597,7 @@ def push_boks(payload, client, username, method):
             for new_bok_2 in new_bok_2s:
                 if new_bok_2 == item["line_obj"]:
                     new_bok_2.l_002_qty = item["quantity"]
-                    bok_2.append(new_bok_2)
+                    bok_2s.append(new_bok_2)
 
         for palletized_item in palletized:  # Palletized
             pallet = pallets[palletized_item["pallet_index"]]
