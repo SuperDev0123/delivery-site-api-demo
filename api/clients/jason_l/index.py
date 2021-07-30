@@ -594,7 +594,7 @@ def push_boks(payload, client, username, method):
 
         # Create one PAL bok_2
         for item in non_palletized:  # Non Palletized
-            new_bok_2 == item["line_obj"]:
+            new_bok_2 == item["line_obj"]
             new_bok_2.l_002_qty = item["quantity"]
             bok_2s.append({"booking_line": new_bok_2})
 
