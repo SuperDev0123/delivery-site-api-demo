@@ -46,53 +46,6 @@ def create(booking, status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
-        # booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
-        category_new = get_status_category_from_status(dme_status_history.status_last)
-        category_old = get_status_category_from_status(dme_status_history.status_old)
-
-        if category_new in ['Transit', 'On Board for Delivery', 'Complete', 'Futile', 'Returned'] and category_new != category_old:
-            url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
-
-            quote = booking.api_booking_quote
-            if quote:
-                etd, unit = get_etd(quote.etd)
-                if unit == 'Hours':
-                    etd = math.ceil(etd / 24)
-            else:
-                etd, unit = None, None
-
-            eta = (
-                (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime("%d/%m/%Y")
-                if etd and booking.puPickUpAvailFrom_Date
-                else ""
-            )
-
-            eta_etd = f"{eta}({etd} days)" if eta else ""
-
-            if "Email" in booking.de_To_Comm_Delivery_Communicate_Via:
-                send_status_update_email(booking, category_new, eta_etd, username, url)
-            if "SMS" in booking.de_To_Comm_Delivery_Communicate_Via:
-                # pu_name = booking.pu_Contact_F_L_Name if booking.pu_Contact_F_L_Name else booking.puCompany
-                de_name = booking.de_to_Contact_F_LName if booking.de_to_Contact_F_LName else booking.deToCompanyName
-                # send_status_update_sms(
-                #     booking.pu_Phone_Mobile,
-                #     pu_name,
-                #     booking.b_bookingID_Visual,
-                #     booking.v_FPBookingNumber,
-                #     category_new,
-                #     eta,
-                #     url
-                # )
-                send_status_update_sms(
-                    booking.de_to_Phone_Mobile,
-                    de_name,
-                    booking.b_bookingID_Visual,
-                    booking.v_FPBookingNumber,
-                    category_new,
-                    eta,
-                    url
-                )
-
         if status.lower() == "delivered":
             if event_timestamp:
                 booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
@@ -101,6 +54,80 @@ def create(booking, status, username, event_timestamp=None):
             booking.z_api_issue_update_flag_500 = 0
             booking.z_lock_status = 1
             booking.save()
+
+        # JasonL and Plum
+        if booking.kf_client_id in [
+            "461162D2-90C7-BF4E-A905-000000000004",
+            "1af6bcd2-6148-11eb-ae93-0242ac130002",
+        ]:
+            category_new = get_status_category_from_status(
+                dme_status_history.status_last
+            )
+            category_old = get_status_category_from_status(
+                dme_status_history.status_old
+            )
+
+            if (
+                category_new
+                in [
+                    "Transit",
+                    "On Board for Delivery",
+                    "Complete",
+                    "Futile",
+                    "Returned",
+                ]
+                and category_new != category_old
+            ):
+                url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
+
+                quote = booking.api_booking_quote
+                if quote:
+                    etd, unit = get_etd(quote.etd)
+                    if unit == "Hours":
+                        etd = math.ceil(etd / 24)
+                else:
+                    etd, unit = None, None
+
+                eta = (
+                    (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime(
+                        "%d/%m/%Y"
+                    )
+                    if etd and booking.puPickUpAvailFrom_Date
+                    else ""
+                )
+
+                eta_etd = f"{eta}({etd} days)" if eta else ""
+
+                if booking.de_Email:
+                    send_status_update_email(
+                        booking, category_new, eta_etd, username, url
+                    )
+
+                if booking.de_to_Phone_Main:
+                    # pu_name = booking.pu_Contact_F_L_Name if booking.pu_Contact_F_L_Name else booking.puCompany
+                    de_name = (
+                        booking.de_to_Contact_F_LName
+                        if booking.de_to_Contact_F_LName
+                        else booking.deToCompanyName
+                    )
+                    # send_status_update_sms(
+                    #     booking.pu_Phone_Mobile,
+                    #     pu_name,
+                    #     booking.b_bookingID_Visual,
+                    #     booking.v_FPBookingNumber,
+                    #     category_new,
+                    #     eta,
+                    #     url
+                    # )
+                    send_status_update_sms(
+                        booking.de_to_Phone_Mobile,
+                        de_name,
+                        booking.b_bookingID_Visual,
+                        booking.v_FPBookingNumber,
+                        category_new,
+                        eta,
+                        url,
+                    )
 
     tempo.push_via_api(booking)
 
