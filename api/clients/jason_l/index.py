@@ -727,6 +727,7 @@ def push_boks(payload, client, username, method):
     }
 
     booking_lines = []
+    logger.info("@1 - ", bok_2s)
     for bok_2 in bok_2s:
         _bok_2 = bok_2["booking_line"]
 
