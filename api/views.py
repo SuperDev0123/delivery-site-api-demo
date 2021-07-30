@@ -4238,8 +4238,8 @@ def build_label(request):
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":
             status_history.create(booking, "Picked", request.user.username)
+            booking.b_status = "Picked"
 
-        booking.b_status = "Picked"
         booking.save()
     except Exception as e:
         trace_error.print()
