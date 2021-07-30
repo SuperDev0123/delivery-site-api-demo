@@ -594,10 +594,23 @@ def push_boks(payload, client, username, method):
 
         # Create one PAL bok_2
         for item in non_palletized:  # Non Palletized
-            for new_bok_2 in new_bok_2s:
-                if new_bok_2["booking_line"]["pk_lines_id"] == item["line_obj"].pk:
-                    new_bok_2.l_002_qty = item["quantity"]
-                    bok_2s.append({"booking_line": new_bok_2})
+            line_obj = item["line_obj"]
+            line = {}
+            line["fk_header_id"] = line_obj.pk
+            line["v_client_pk_consigment_num"] = line_obj.pk_header_id
+            line["pk_booking_lines_id"] = line_obj.pk_booking_lines_id
+            line["success"] = line_obj.success
+            line["l_001_type_of_packaging"] = line_obj.l_001_type_of_packaging
+            line["l_002_qty"] = item["quantity"]
+            line["l_003_item"] = line_obj.l_003_item
+            line["l_004_dim_UOM"] = line_obj.l_004_dim_UOM
+            line["l_005_dim_length"] = line_obj.l_005_dim_length
+            line["l_006_dim_width"] = line_obj.l_006_dim_width
+            line["l_007_dim_height"] = line_obj.l_007_dim_height
+            line["l_009_weight_per_each"] = line_obj.l_009_weight_per_each
+            line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
+            line["is_deleted"] = line_obj.is_deleted
+            bok_2s.append({"booking_line": new_bok_2})
 
         for palletized_item in palletized:  # Palletized
             pallet = pallets[palletized_item["pallet_index"]]
