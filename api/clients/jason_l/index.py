@@ -266,6 +266,8 @@ def push_boks(payload, client, username, method):
         bok_1["b_069_b_del_floor_number"] = 0
         bok_1["b_072_b_pu_no_of_assists"] = 0
         bok_1["b_070_b_del_floor_access_by"] = "Elevator"
+        bok_1["b_027_b_pu_address_type"] = bok_1["b_027_b_pu_address_type"].lower()
+        bok_1["b_053_b_del_delivery_type"] = bok_1["b_053_b_del_delivery_type"].lower()
 
     # Check duplicated push with `b_client_order_num`
     selected_quote = None
