@@ -594,10 +594,9 @@ def push_boks(payload, client, username, method):
 
         # Create one PAL bok_2
         for item in non_palletized:  # Non Palletized
-            for new_bok_2 in new_bok_2s:
-                if new_bok_2 == item["line_obj"]:
-                    new_bok_2.l_002_qty = item["quantity"]
-                    bok_2s.append({"booking_line": new_bok_2})
+            new_bok_2 == item["line_obj"]:
+            new_bok_2.l_002_qty = item["quantity"]
+            bok_2s.append({"booking_line": new_bok_2})
 
         for palletized_item in palletized:  # Palletized
             pallet = pallets[palletized_item["pallet_index"]]
@@ -727,7 +726,6 @@ def push_boks(payload, client, username, method):
     }
 
     booking_lines = []
-    print("@1 - ", bok_2s)
     for bok_2 in bok_2s:
         _bok_2 = bok_2["booking_line"]
 
