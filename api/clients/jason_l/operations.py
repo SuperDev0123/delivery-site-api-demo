@@ -341,6 +341,11 @@ def get_address(order_num):
         if street_2:
             address["street_2"] = ", ".join(street_2)[:25]
 
+    # Switch street_1 and _2
+    if not address["street_1"] and address["street_2"]:
+        address["street_1"] = address["street_2"]
+        address["street_2"] = ""
+
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
