@@ -46,6 +46,9 @@ def create(booking, status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
+        booking.b_status = status
+        booking.save()
+
         if status.lower() == "delivered":
             if event_timestamp:
                 booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
@@ -66,7 +69,7 @@ def create(booking, status, username, event_timestamp=None):
             category_old = get_status_category_from_status(
                 dme_status_history.status_old
             )
-
+            print("@! - ", category_new, category_old)
             if (
                 category_new
                 in [
@@ -104,12 +107,8 @@ def create(booking, status, username, event_timestamp=None):
                     )
 
                 if booking.de_to_Phone_Main:
-                    # pu_name = booking.pu_Contact_F_L_Name if booking.pu_Contact_F_L_Name else booking.puCompany
-                    de_name = (
-                        booking.de_to_Contact_F_LName
-                        if booking.de_to_Contact_F_LName
-                        else booking.deToCompanyName
-                    )
+                    pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
+                    de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
                     # send_status_update_sms(
                     #     booking.pu_Phone_Mobile,
                     #     pu_name,

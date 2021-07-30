@@ -3120,45 +3120,53 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 #     booking.delivery_booking = str(datetime.now())
                 #     booking.save()
 
-                status_category = get_status_category_from_status(
-                    request.data["status_last"]
+                # status_category = get_status_category_from_status(
+                #     request.data["status_last"]
+                # )
+
+                # if status_category == "Transit":
+                #     booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                #         "event_time_stamp"
+                #     ]
+
+                #     if booking.s_20_Actual_Pickup_TimeStamp:
+                #         z_calculated_ETA = datetime.strptime(
+                #             booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                #         ) + timedelta(days=booking.delivery_kpi_days)
+                #     else:
+                #         z_calculated_ETA = datetime.now() + timedelta(
+                #             days=booking.delivery_kpi_days
+                #         )
+
+                #     if not booking.b_given_to_transport_date_time:
+                #         booking.b_given_to_transport_date_time = datetime.now()
+
+                #     booking.z_calculated_ETA = datetime.strftime(
+                #         z_calculated_ETA, "%Y-%m-%d"
+                #     )
+                # elif status_category == "Complete":
+                #     booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                #         "event_time_stamp"
+                #     ]
+                #     booking.delivery_booking = request.data["event_time_stamp"][:10]
+                #     booking.z_api_issue_update_flag_500 = 0
+
+                # booking.b_status = request.data["status_last"]
+                # booking.save()
+                # tempo.push_via_api(booking)
+                # serializer.save()
+
+                status_history.create(
+                    booking,
+                    request.data["status_last"],
+                    request.user.username,
+                    request.data["event_time_stamp"],
                 )
 
-                if status_category == "Transit":
-                    booking.s_20_Actual_Pickup_TimeStamp = request.data[
-                        "event_time_stamp"
-                    ]
-
-                    if booking.s_20_Actual_Pickup_TimeStamp:
-                        z_calculated_ETA = datetime.strptime(
-                            booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
-                        ) + timedelta(days=booking.delivery_kpi_days)
-                    else:
-                        z_calculated_ETA = datetime.now() + timedelta(
-                            days=booking.delivery_kpi_days
-                        )
-
-                    if not booking.b_given_to_transport_date_time:
-                        booking.b_given_to_transport_date_time = datetime.now()
-
-                    booking.z_calculated_ETA = datetime.strftime(
-                        z_calculated_ETA, "%Y-%m-%d"
-                    )
-                elif status_category == "Complete":
-                    booking.s_21_Actual_Delivery_TimeStamp = request.data[
-                        "event_time_stamp"
-                    ]
-                    booking.delivery_booking = request.data["event_time_stamp"][:10]
-                    booking.z_api_issue_update_flag_500 = 0
-
-                booking.b_status = request.data["status_last"]
-                booking.save()
-                tempo.push_via_api(booking)
-                serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print("Exception: ", e)
+            trace_error.print()
             logger.error(f"@902 - save_status_history: {str(e)}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
