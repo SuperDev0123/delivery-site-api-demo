@@ -59,74 +59,74 @@ def create(booking, status, username, event_timestamp=None):
             booking.save()
 
         # JasonL and Plum
-        if booking.kf_client_id in [
-            "461162D2-90C7-BF4E-A905-000000000004",
-            "1af6bcd2-6148-11eb-ae93-0242ac130002",
-        ]:
-            category_new = get_status_category_from_status(
-                dme_status_history.status_last
-            )
-            category_old = get_status_category_from_status(
-                dme_status_history.status_old
-            )
+        # if booking.kf_client_id in [
+        #     "461162D2-90C7-BF4E-A905-000000000004",
+        #     "1af6bcd2-6148-11eb-ae93-0242ac130002",
+        # ]:
+        #     category_new = get_status_category_from_status(
+        #         dme_status_history.status_last
+        #     )
+        #     category_old = get_status_category_from_status(
+        #         dme_status_history.status_old
+        #     )
 
-            if (
-                category_new
-                in [
-                    "Transit",
-                    "On Board for Delivery",
-                    "Complete",
-                    "Futile",
-                    "Returned",
-                ]
-                and category_new != category_old
-            ):
-                url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
+        #     if (
+        #         category_new
+        #         in [
+        #             "Transit",
+        #             "On Board for Delivery",
+        #             "Complete",
+        #             "Futile",
+        #             "Returned",
+        #         ]
+        #         and category_new != category_old
+        #     ):
+        #         url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
 
-                quote = booking.api_booking_quote
-                if quote:
-                    etd, unit = get_etd(quote.etd)
-                    if unit == "Hours":
-                        etd = math.ceil(etd / 24)
-                else:
-                    etd, unit = None, None
+        #         quote = booking.api_booking_quote
+        #         if quote:
+        #             etd, unit = get_etd(quote.etd)
+        #             if unit == "Hours":
+        #                 etd = math.ceil(etd / 24)
+        #         else:
+        #             etd, unit = None, None
 
-                eta = (
-                    (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime(
-                        "%d/%m/%Y"
-                    )
-                    if etd and booking.puPickUpAvailFrom_Date
-                    else ""
-                )
+        #         eta = (
+        #             (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime(
+        #                 "%d/%m/%Y"
+        #             )
+        #             if etd and booking.puPickUpAvailFrom_Date
+        #             else ""
+        #         )
 
-                eta_etd = f"{eta}({etd} days)" if eta else ""
+        #         eta_etd = f"{eta}({etd} days)" if eta else ""
 
-                if booking.de_Email:
-                    send_status_update_email(
-                        booking, category_new, eta_etd, username, url
-                    )
+        #         if booking.de_Email:
+        #             send_status_update_email(
+        #                 booking, category_new, eta_etd, username, url
+        #             )
 
-                if booking.de_to_Phone_Main:
-                    pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
-                    de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
-                    # send_status_update_sms(
-                    #     booking.pu_Phone_Mobile,
-                    #     pu_name,
-                    #     booking.b_bookingID_Visual,
-                    #     booking.v_FPBookingNumber,
-                    #     category_new,
-                    #     eta,
-                    #     url
-                    # )
-                    send_status_update_sms(
-                        booking.de_to_Phone_Mobile,
-                        de_name,
-                        booking.b_bookingID_Visual,
-                        booking.v_FPBookingNumber,
-                        category_new,
-                        eta,
-                        url,
-                    )
+        #         if booking.de_to_Phone_Main:
+        #             pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
+        #             de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
+        #             # send_status_update_sms(
+        #             #     booking.pu_Phone_Mobile,
+        #             #     pu_name,
+        #             #     booking.b_bookingID_Visual,
+        #             #     booking.v_FPBookingNumber,
+        #             #     category_new,
+        #             #     eta,
+        #             #     url
+        #             # )
+        #             send_status_update_sms(
+        #                 booking.de_to_Phone_Mobile,
+        #                 de_name,
+        #                 booking.b_bookingID_Visual,
+        #                 booking.v_FPBookingNumber,
+        #                 category_new,
+        #                 eta,
+        #                 url,
+        #             )
 
     tempo.push_via_api(booking)
 
