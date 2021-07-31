@@ -69,7 +69,7 @@ def create(booking, status, username, event_timestamp=None):
             category_old = get_status_category_from_status(
                 dme_status_history.status_old
             )
-            print("@! - ", category_new, category_old)
+
             if (
                 category_new
                 in [
