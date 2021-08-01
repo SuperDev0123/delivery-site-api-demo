@@ -496,7 +496,7 @@ def get_getlabel_payload(booking, fp_name):
         ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": "" or pu_Address_Street_1,
+        "address1": ("" or pu_Address_Street_1)[:29],
         "address2": "" or pu_Address_street_2,
         "country": "" or booking.pu_Address_Country,
         "postCode": "" or booking.pu_Address_PostalCode,
@@ -535,7 +535,7 @@ def get_getlabel_payload(booking, fp_name):
         de_street_2 = ""
 
     payload["dropAddress"]["postalAddress"] = {
-        "address1": de_street_1,
+        "address1": de_street_1[:29],
         "address2": de_street_2 if de_street_1 != de_street_2 else "_",
         "country": "" or booking.de_To_Address_Country,
         "postCode": "" or booking.de_To_Address_PostalCode,
