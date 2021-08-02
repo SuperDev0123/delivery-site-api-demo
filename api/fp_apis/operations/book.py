@@ -63,9 +63,15 @@ def book(fp_name, booking, booker):
         response.content.decode("utf8").replace("'t", " not").replace("'", '"')
     )
     json_data = json.loads(res_content)
-    s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)  # Just for visual
-    # logger.info(f"### Response ({fp_name} book): {s0}")
-    logger.info(f"### Response ({fp_name} book): {response.status_code}")
+
+    try:
+        s0 = json.dumps(
+            json_data, indent=2, sort_keys=True, default=str
+        )  # Just for visual
+        # logger.info(f"### Response ({fp_name} book): {s0}")
+        logger.info(f"### Response ({fp_name} book): {response.status_code}")
+    except Exception as e:
+        logger.error(f"[FP BOOK] error while dump json response. response: {json_data}")
 
     if (
         response.status_code == 500

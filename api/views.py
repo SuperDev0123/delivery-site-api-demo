@@ -3997,7 +3997,9 @@ def get_csv(request):
     has_error = build_csv(booking_ids)
 
     if has_error:
-        return JsonResponse({"status": "Failed to create CSV"}, status=400)
+        return JsonResponse(
+            {"status": False, "message": "Failed to create CSV"}, status=400
+        )
     else:
         for booking in bookings:
             if vx_freight_provider == "cope":
@@ -4054,7 +4056,9 @@ def get_csv(request):
                         booking.pk, email_template_name, request.user.username
                     )
 
-        return JsonResponse({"status": "Created CSV successfully"}, status=200)
+        return JsonResponse(
+            {"success": True, "message": "Created CSV successfully"}, status=200
+        )
 
 
 @api_view(["POST"])
