@@ -492,6 +492,7 @@ def get_bok_by_talend(bok_1):
     for prop in bok_1:
         order[prop] = bok_1[prop]
 
+    logger.info(f"@321 {LOG_ID} result: {lines}")
     return order, lines
 
 
