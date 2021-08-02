@@ -465,10 +465,10 @@ def get_bok_by_talend(bok_1):
             continue
 
         iters = line.split("|")
-        ItemCode = iters[13]
-        OrderedQty = iters[17]
+        ItemCode = iters[14]
+        OrderedQty = iters[18]
         SequenceNo = iters[2]
-        UOMCode = iters[15]
+        UOMCode = iters[16]
 
         if ItemCode and ItemCode.upper() in ITEM_CODES_TO_BE_IGNORED:
             ignored_items.append(ItemCode)
