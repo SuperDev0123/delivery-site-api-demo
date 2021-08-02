@@ -453,6 +453,10 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     """
     from api.fp_apis.utils import get_status_time_from_category
 
+    LOG_ID = "[STATUS UPDATE EMAIL]"
+    logger.info(
+        f"{LOG_ID} BookingID: {booking.b_bookingID_Visual}, OrderNum: {booking.b_client_order_num}, New Status: {booking.b_status}"
+    )
     b_status = booking.b_status
     quote = booking.api_booking_quote
 
@@ -514,7 +518,11 @@ def send_status_update_email(booking, category, eta, sender, status_url):
             timestamps.append("")
         else:
             timestamps.append(
-                get_status_time_from_category(booking.pk_booking_id, item).strftime("%d/%m/%Y %H:%M") if get_status_time_from_category(booking.pk_booking_id, item) else ''
+                get_status_time_from_category(booking.pk_booking_id, item).strftime(
+                    "%d/%m/%Y %H:%M"
+                )
+                if get_status_time_from_category(booking.pk_booking_id, item)
+                else ""
             )
 
     cc_emails = []
