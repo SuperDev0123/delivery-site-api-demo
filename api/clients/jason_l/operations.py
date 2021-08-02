@@ -45,6 +45,7 @@ IS_TESTING = False
 
 
 def _extract_address(addrs):
+    logger.info(f"[_extract_address] clue: {addrs}")
     errors = []
     state, postal_code, suburb = "", "", ""
 
@@ -240,6 +241,9 @@ def get_address(order_num):
 
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
+
+    if not address["state"]:
+        errors.append("Stop Error: Delivery state missing or misspelled")
 
     if address["state"] and address["postal_code"]:
         if not is_postalcode_in_state(address["state"], address["postal_code"]):
