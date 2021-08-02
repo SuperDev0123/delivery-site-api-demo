@@ -1,5 +1,9 @@
+import logging
+
 from api.models import DME_SMS_Templates
 from api.outputs.sms import send_sms
+
+logger = logging.getLogger(__name__)
 
 
 def send_status_update_sms(
