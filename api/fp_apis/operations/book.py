@@ -71,6 +71,7 @@ def book(fp_name, booking, booker):
         # logger.info(f"### Response ({fp_name} book): {s0}")
         logger.info(f"### Response ({fp_name} book): {response.status_code}")
     except Exception as e:
+        s0 = str(json_data)
         logger.error(f"[FP BOOK] error while dump json response. response: {json_data}")
 
     if (
