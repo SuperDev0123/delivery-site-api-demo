@@ -110,7 +110,7 @@ def create(booking, status, username, event_timestamp=None):
                     pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
                     de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
                     # send_status_update_sms(
-                    #     booking.pu_Phone_Mobile,
+                    #     booking.pu_Phone_Main,
                     #     pu_name,
                     #     booking.b_bookingID_Visual,
                     #     booking.v_FPBookingNumber,
@@ -119,7 +119,7 @@ def create(booking, status, username, event_timestamp=None):
                     #     url
                     # )
                     send_status_update_sms(
-                        booking.de_to_Phone_Mobile,
+                        booking.de_to_Phone_Main,
                         de_name,
                         booking.b_bookingID_Visual,
                         booking.v_FPBookingNumber,
