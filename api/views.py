@@ -4680,7 +4680,7 @@ class PricingRulesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
-            # print("@Exception", e)
+            logger.error(f"[FP_RULE ADD] {str(e)}, payload: {request.data}")
             return JsonResponse({"result": None}, status=400)
 
 
