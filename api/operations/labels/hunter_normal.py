@@ -585,7 +585,7 @@ def build_label(
                                 font_size,
                                 booking.deToCompanyName or "",
                             ),
-                            style_uppercase,
+                            style_left,
                         )
                     ]
                 )
@@ -598,7 +598,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_1 or "",
                         ),
-                        style_uppercase,
+                        style_left,
                     )
                 ]
             )
@@ -610,7 +610,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_2 or "",
                         ),
-                        style_uppercase,
+                        style_left,
                     )
                 ]
             )
@@ -623,7 +623,7 @@ def build_label(
                             booking.de_To_Address_Suburb or "",
                             booking.de_To_Address_PostalCode or "",
                         ),
-                        style_uppercase,
+                        style_left,
                     ),
                 ]
             )
