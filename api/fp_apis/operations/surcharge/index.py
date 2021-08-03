@@ -69,7 +69,6 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
             "vx_freight_provider": quote_obj.freight_provider,
             "client_id": booking_obj.kf_client_id,
         }
-        print("@1 - ", booking["pu_tail_lift"], booking["del_tail_lift"])
 
         for line_obj in line_objs:
             line = {
