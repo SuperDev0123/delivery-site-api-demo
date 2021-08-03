@@ -63,10 +63,10 @@ def _extract_address(addrs):
 
     state, suburb = get_suburb_state(postal_code, ", ".join(_addrs))
 
-    if not _state:
+    if not _state and not state:
         errors.append("Stop Error: Delivery state missing or misspelled")
 
-    return errors, _state, postal_code, suburb
+    return errors, _state or state, postal_code, suburb
 
 
 def get_address(order_num):
