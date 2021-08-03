@@ -3777,9 +3777,8 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         fk_booking_id = request.GET["fk_booking_id"]
         booking = Bookings.objects.get(pk_booking_id=fk_booking_id)
         queryset = (
-            API_booking_quotes.objects.filter(
-                fk_booking_id=fk_booking_id, is_used=False
-            )
+            API_booking_quotes.objects.prefetch_related("vehicle")
+            .filter(fk_booking_id=fk_booking_id, is_used=False)
             .exclude(service_name="Air Freight")
             .order_by("client_mu_1_minimum_values")
         )

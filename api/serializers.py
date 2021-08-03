@@ -508,6 +508,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     surcharges = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
+    vehicle_name = serializers.SerializerMethodField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -568,6 +569,11 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     def get_fuel_levy_base_cl(self, obj):
         return obj.fuel_levy_base * (1 + obj.client_mark_up_percent)
 
+    def get_vehicle_name(self, obj):
+        if obj.vehicle_id:
+            return obj.vehicle.description
+        return ""
+
     class Meta:
         model = API_booking_quotes
         fields = "__all__"
@@ -582,6 +588,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     surcharge_total = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
+    vehicle_name = serializers.SerializerMethodField(read_only=True)
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -608,6 +615,11 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
 
     def get_fuel_levy_base_cl(self, obj):
         return obj.fuel_levy_base * (1 + obj.client_mark_up_percent)
+
+    def get_vehicle_name(self, obj):
+        if obj.vehicle_id:
+            return obj.vehicle.description
+        return ""
 
     class Meta:
         model = API_booking_quotes
