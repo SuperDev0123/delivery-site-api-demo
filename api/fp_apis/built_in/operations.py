@@ -214,10 +214,10 @@ def find_vehicle_ids(booking_lines, fp):
 
             if (
                 vmax_width >= max_width
-                and max_height >= max_height
+                and vmax_height >= max_height
                 and vmax_length >= max_length
                 and vehicle_cube * cubic_ratio >= sum_cube
-                and total_weight < vehicle.max_mass
+                and vehicle.max_mass >= total_weight
             ):
                 vehicle_ids.append(vehicle.id)
 
