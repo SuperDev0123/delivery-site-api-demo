@@ -584,7 +584,9 @@ def build_label(
                 ]
             )
 
-            if booking.deToCompanyName != booking.de_to_Contact_F_LName:
+            if (booking.deToCompanyName or "").lower() != (
+                booking.de_to_Contact_F_LName or ""
+            ).lower():
                 tbl_data2.append(
                     [
                         Paragraph(

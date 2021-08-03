@@ -607,7 +607,9 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
 
-            if booking.de_to_Contact_F_LName != booking.deToCompanyName:
+            if (booking.de_to_Contact_F_LName or "").lower() != (
+                booking.deToCompanyName or ""
+            ).lower():
                 tbl_data1 = [
                     [
                         Paragraph(

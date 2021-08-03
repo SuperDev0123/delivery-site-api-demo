@@ -600,7 +600,9 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
 
-            if booking.de_to_Contact_F_LName != booking.deToCompanyName:
+            if (booking.de_to_Contact_F_LName or "").lower() != (
+                booking.deToCompanyName or ""
+            ).lower():
                 tbl_data1 = [
                     [
                         Paragraph(
@@ -793,7 +795,7 @@ def build_label(
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.vx_account_code or "", 
+                            booking.vx_account_code or "",
                         ),
                         style_left,
                     ),

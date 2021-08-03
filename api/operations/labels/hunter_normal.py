@@ -571,59 +571,61 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 5))
 
-            tbl_data1 = [
+            tbl_data1 = []
+
+            if (booking.deToCompanyName or "").lower() != (
+                booking.de_to_Contact_F_LName or ""
+            ).lower():
+                tbl_data1.append(
+                    [
+                        Paragraph(
+                            "<font size=%s><b>%s</b></font>"
+                            % (
+                                font_size,
+                                booking.deToCompanyName or "",
+                            ),
+                            style_uppercase,
+                        )
+                    ]
+                )
+
+            tbl_data1.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_to_Contact_F_LName,
+                            font_size,
+                            booking.de_To_Address_Street_1 or "",
                         ),
-                        style_left,
+                        style_uppercase,
                     )
-                ],
+                ]
+            )
+            tbl_data1.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["font_size_extra_large"],
-                            booking.deToCompanyName if booking.deToCompanyName else "",
+                            font_size,
+                            booking.de_To_Address_Street_2 or "",
                         ),
-                        style_left,
+                        style_uppercase,
                     )
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_To_Address_Street_1,
-                        ),
-                        style_left,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font> "
-                        % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_To_Address_Street_2,
-                        ),
-                        style_left,
-                    ),
-                ],
+                ]
+            )
+            tbl_data1.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s %s</b></font> "
                         % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_To_Address_Suburb,
-                            booking.de_To_Address_PostalCode,
+                            font_size,
+                            booking.de_To_Address_Suburb or "",
+                            booking.de_To_Address_PostalCode or "",
                         ),
-                        style_left,
+                        style_uppercase,
                     ),
-                ],
-            ]
+                ]
+            )
 
             t1 = Table(
                 tbl_data1,
