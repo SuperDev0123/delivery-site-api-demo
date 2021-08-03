@@ -59,10 +59,7 @@ def create(booking, status, username, event_timestamp=None):
             booking.save()
 
         # JasonL and Plum
-        if booking.kf_client_id in [
-            "461162D2-90C7-BF4E-A905-000000000004",
-            "1af6bcd2-6148-11eb-ae93-0242ac130002",
-        ]:
+        if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
             category_new = get_status_category_from_status(
                 dme_status_history.status_last
             )
@@ -106,7 +103,7 @@ def create(booking, status, username, event_timestamp=None):
                         booking, category_new, eta_etd, username, url
                     )
 
-                if booking.de_to_Phone_Main:
+                if booking.de_to_Phone_Main or booking.de_to_Phone_Mobile:
                     pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
                     de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
                     # send_status_update_sms(
@@ -119,7 +116,7 @@ def create(booking, status, username, event_timestamp=None):
                     #     url
                     # )
                     send_status_update_sms(
-                        booking.de_to_Phone_Main,
+                        booking.de_to_Phone_Main or booking.de_to_Phone_Mobile,
                         de_name,
                         booking.b_bookingID_Visual,
                         booking.v_FPBookingNumber,
@@ -127,6 +124,18 @@ def create(booking, status, username, event_timestamp=None):
                         eta,
                         url,
                     )
+
+                    if not settings.ENV in ["local", "dev"]:
+                        # Send SMS to Plum agent
+                        send_status_update_sms(
+                            "+61411608093",
+                            de_name,
+                            booking.b_bookingID_Visual,
+                            booking.v_FPBookingNumber,
+                            category_new,
+                            eta,
+                            url,
+                        )
 
     tempo.push_via_api(booking)
 

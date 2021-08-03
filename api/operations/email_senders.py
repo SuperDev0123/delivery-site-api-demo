@@ -624,6 +624,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
 
+        # Plum agent
+        cc_emails.append("JManiquis@plumproducts.com")
+
     send_email(
         to_emails,
         cc_emails,
