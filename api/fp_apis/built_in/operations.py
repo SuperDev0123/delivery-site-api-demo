@@ -147,12 +147,15 @@ def find_vehicle_ids(booking_lines, fp):
         max_width = 0
         max_height = 0
         lines_cnt = 0
+        total_weight = 0
 
         for item in booking_lines:
             length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
             width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
             height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+            weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
 
+            total_weight += weight
             max_length = length if max_length < length else max_length
             max_width = width if max_width < width else max_width
             max_height = height if max_height < height else max_height
@@ -214,6 +217,7 @@ def find_vehicle_ids(booking_lines, fp):
                 and max_height >= max_height
                 and vmax_length >= max_length
                 and vehicle_cube * cubic_ratio >= sum_cube
+                and total_weight < vehicle.max_mass
             ):
                 vehicle_ids.append(vehicle.id)
 
@@ -237,7 +241,9 @@ def find_vehicle_ids(booking_lines, fp):
 
             if has_pallet:
                 for vehicle_id in vehicle_ids:
-                    if not vehicle_id in [1, 2, 3, 22, 23, 24, 25]:
+                    non_pallet_ids = [22, 23, 24, 25, 63, 64, 65, 66, 67, 68, 69, 70]
+
+                    if not vehicle_id in non_pallet_ids:
                         _vehicle_ids.append(vehicle_id)
 
                 vehicle_ids = _vehicle_ids
