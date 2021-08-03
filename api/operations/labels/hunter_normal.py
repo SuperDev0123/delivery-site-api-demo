@@ -572,6 +572,7 @@ def build_label(
             Story.append(Spacer(1, 5))
 
             tbl_data1 = []
+            font_size = 12
 
             if (booking.deToCompanyName or "").lower() != (
                 booking.de_to_Contact_F_LName or ""
