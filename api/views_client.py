@@ -402,7 +402,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_2.fk_header_id = line["fk_header_id"]
                 bok_2.pk_booking_lines_id = str(uuid.uuid4())
                 bok_2.l_001_type_of_packaging = line.get("l_001_type_of_packaging")
-                bok_2.zbld_131_decimal_1 = line.get("zbld_131_decimal_1")
+                bok_2.zbl_131_decimal_1 = line.get("zbl_131_decimal_1")
                 bok_2.e_item_type = line.get("e_item_type")
                 bok_2.l_002_qty = line.get("e_qty")
                 bok_2.l_003_item = (
@@ -447,7 +447,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                     jasonL_create_or_update_product(line)
 
                 bok_2.l_001_type_of_packaging = line.get("l_001_type_of_packaging")
-                bok_2.zbld_131_decimal_1 = line.get("zbld_131_decimal_1")
+                bok_2.zbl_131_decimal_1 = line.get("zbl_131_decimal_1")
                 bok_2.e_item_type = line.get("e_item_type")
                 bok_2.l_002_qty = line.get("e_qty")
                 bok_2.l_003_item = (

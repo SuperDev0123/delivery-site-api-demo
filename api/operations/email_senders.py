@@ -555,7 +555,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
-    deleted_lines_cnt = booking_lines.filter(is_deleted=True)
+    deleted_lines_cnt = booking_lines.filter(is_deleted=True).count()
 
     if deleted_lines_cnt > 0:
         booking_lines = booking_lines.filter(e_item_type__isnull=False, is_deleted=True)

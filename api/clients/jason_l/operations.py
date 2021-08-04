@@ -484,7 +484,7 @@ def get_bok_by_talend(bok_1):
             "e_item_type": ItemCode,
             "description": "",
             "qty": int(float(OrderedQty)),
-            "zbld_131_decimal_1": float(SequenceNo),
+            "zbl_131_decimal_1": float(SequenceNo),
             "zbl_102_text_2": "_",
             "e_type_of_packaging": UOMCode,
         }
@@ -580,7 +580,7 @@ def sucso_handler(order_num, lines):
         for line in lines:
             if (
                 line.get("e_item_type") == ItemCode
-                and line.get("zbld_131_decimal_1") == SequenceNo
+                and line.get("zbl_131_decimal_1") == SequenceNo
             ):
                 selected_line = line
 
@@ -588,7 +588,7 @@ def sucso_handler(order_num, lines):
         for i, new_line in enumerate(new_lines):
             if (
                 new_line.get("e_item_type") == ItemCode
-                and new_line.get("zbld_131_decimal_1") == SequenceNo
+                and new_line.get("zbl_131_decimal_1") == SequenceNo
             ):
                 selected_new_line_index = i
 
