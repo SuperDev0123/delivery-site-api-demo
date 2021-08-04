@@ -118,6 +118,7 @@ def create(booking, status, username, event_timestamp=None):
                     send_status_update_sms(
                         booking.de_to_Phone_Main or booking.de_to_Phone_Mobile,
                         de_name,
+                        booking.b_client_name,
                         booking.b_bookingID_Visual,
                         booking.v_FPBookingNumber,
                         category_new,
