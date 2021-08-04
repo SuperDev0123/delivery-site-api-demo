@@ -503,7 +503,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         "Booked",
         "Transit",
         "On Board for Delivery",
-        last_milestone,
+        "Complete",
     ]
 
     timestamps = []
