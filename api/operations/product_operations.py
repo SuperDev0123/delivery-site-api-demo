@@ -38,7 +38,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
         model_number = bok_2.get("model_number")
         qty = bok_2.get("qty")
         # "Jason L"
-        zbl_121_integer_1 = bok_2.get("sequence")
+        zbld_131_decimal_1 = bok_2.get("sequence")
         e_type_of_packaging = bok_2.get("UOMCode")
         zbl_102_text_2 = bok_2.get("ProductGroupCode")
 
@@ -71,7 +71,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 "e_dimWidth": 0.5,
                 "e_dimHeight": 0.5,
                 "e_weightPerEach": 0.5,
-                "zbl_121_integer_1": zbl_121_integer_1,
+                "zbld_131_decimal_1": zbld_131_decimal_1,
                 "zbl_102_text_2": "(Ignored)",
                 "e_type_of_packaging": e_type_of_packaging or "Carton",
             }
@@ -95,7 +95,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                     "e_dimWidth": product.e_dimWidth,
                     "e_dimHeight": product.e_dimHeight,
                     "e_weightPerEach": product.e_weightPerEach,
-                    "zbl_121_integer_1": zbl_121_integer_1,  # Sequence
+                    "zbld_131_decimal_1": zbld_131_decimal_1,  # Sequence
                     "zbl_102_text_2": zbl_102_text_2,  # ProductGroupCode
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }
@@ -123,7 +123,7 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                     "e_dimWidth": product.e_dimWidth,
                     "e_dimHeight": product.e_dimHeight,
                     "e_weightPerEach": product.e_weightPerEach,
-                    "zbl_121_integer_1": zbl_121_integer_1,
+                    "zbld_131_decimal_1": zbld_131_decimal_1,
                     "zbl_102_text_2": zbl_102_text_2,
                     "e_type_of_packaging": e_type_of_packaging or "Carton",
                 }

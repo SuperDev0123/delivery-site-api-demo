@@ -2640,7 +2640,7 @@ class BookingViewSet(viewsets.ViewSet):
                     if (
                         not line.sscc
                         and line.e_item_type == line_data.modelNumber
-                        and str(line.zbl_121_integer_1) == line_data.itemSerialNumbers
+                        and line.zbld_131_decimal_1 == line_data.itemSerialNumbers
                     ):
                         original_line = line
                         selected_line_data = line_data

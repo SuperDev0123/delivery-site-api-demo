@@ -135,7 +135,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     )
     fk_header_id = serializers.CharField(validators=[should_have_value])
     success = serializers.CharField(validators=[should_have_value])
-    zbl_121_integer_1 = serializers.IntegerField(required=False)  # Sequence
+    zbl_131_decimal_1 = serializers.FloatField(required=False)  # Sequence
     zbl_102_text_2 = serializers.CharField(required=False)  # ProductGroupCode
     pallet_cubic_meter = serializers.SerializerMethodField(read_only=True)
 
@@ -167,7 +167,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",
             "e_item_type",
-            "zbl_121_integer_1",  # Sequence
+            "zbl_131_decimal_1",  # Sequence
             "zbl_102_text_2",  # ProductGroupCode
             "pallet_cubic_meter",
         )

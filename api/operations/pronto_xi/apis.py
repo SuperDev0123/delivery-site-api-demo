@@ -367,7 +367,7 @@ def send_info_back_to_pronto(bok_1, quote):
     }
     body = f'<SalesOrderPostLineQtyOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
                 <SalesOrderLines> \
-                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
+                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbld_131_decimal_1}"> \
                         <OrderedQty>1</OrderedQty> \
                     </SalesOrderLine> \
                 </SalesOrderLines> \
@@ -387,7 +387,7 @@ def send_info_back_to_pronto(bok_1, quote):
     url = f"{API_URL}/api/SalesOrderPostLinePriceOverride"
     body = f'<SalesOrderPostLinePriceOverrideRequest xmlns="http://www.pronto.net/so/1.0.0"> \
                 <SalesOrderLines> \
-                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbl_121_integer_1}"> \
+                    <SalesOrderLine SOOrderNo="{bok_1.b_client_order_num}" SOBOSuffix=" " SequenceNo="{bok_2.zbld_131_decimal_1}"> \
                         <ItemPrice>{item_price}</ItemPrice> \
                         <PriceOverrideFlag>Y</PriceOverrideFlag> \
                         <PriceRule>D</PriceRule> \
