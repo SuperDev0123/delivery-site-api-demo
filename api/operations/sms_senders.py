@@ -40,5 +40,4 @@ def send_status_update_sms(
             TRACKING_URL=status_url,
         )
 
-        print('mmmmmmmmmmmmm\n', message)
-        # send_sms(phone_number, message)
+        send_sms(phone_number, message)
