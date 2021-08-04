@@ -635,6 +635,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "cost_dollar",
             "fuel_levy_base_cl",
             "mu_percentage_fuel_levy",
+            "vehicle_name",
         )
 
 
