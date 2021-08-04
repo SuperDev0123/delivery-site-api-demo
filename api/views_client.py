@@ -882,7 +882,7 @@ def get_delivery_status(request):
             "Booked",
             "Transit",
             "On Board for Delivery",
-            last_milestone,
+            "Complete",
         ]
 
         timestamps = []
