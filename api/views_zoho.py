@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from datetime import datetime, date, timedelta
 
 from django.conf import settings
@@ -126,20 +126,37 @@ def get_all_zoho_tickets(request):
 
     if get_tickets.status_code == 200:
         data = Tokens.objects.filter(type="access_token")
+        # for ticket in get_tickets.json()["data"]:
+        #     headers_for_single_ticket = {
+        #         "content-type": "application/json",
+        #         "orgId": settings.ORG_ID,
+        #         "Authorization": "Zoho-oauthtoken " + data[0].value,
+        #     }
+        #     ticket_data = requests.get(
+        #         "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
+        #         data={},
+        #         headers=headers_for_single_ticket,
+        #     ).json()
+
+        #     if ticket_data["customFields"]["DME Id/Consignment No."] == dmeid:
+        #         get_ticket.append(ticket_data)
         for ticket in get_tickets.json()["data"]:
             headers_for_single_ticket = {
                 "content-type": "application/json",
                 "orgId": settings.ORG_ID,
                 "Authorization": "Zoho-oauthtoken " + data[0].value,
             }
-            ticket_data = requests.get(
-                "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
-                data={},
-                headers=headers_for_single_ticket,
-            ).json()
+            
+            if dmeid in ticket['subject']:
+                ticket_data = requests.get(
+                    "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
+                    data={},
+                    headers=headers_for_single_ticket,
+                ).json()
+                print('tttttttttttttt', ticket_data)
 
-            if ticket_data["customFields"]["DME Id/Consignment No."] == dmeid:
                 get_ticket.append(ticket_data)
+
         if not get_ticket:
             return JsonResponse(
                 {
@@ -160,3 +177,53 @@ def get_all_zoho_tickets(request):
     else:
         final_ticket = {"status": "success", "tickets": get_ticket}
         return JsonResponse(final_ticket)
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def update_zoho_ticket(request):
+    params = request.data
+    data = Tokens.objects.filter(type="access_token")
+    tz_info = data[0].z_expiryTimeStamp.tzinfo
+    present_time = datetime.now(tz_info)
+
+    if data[0].z_expiryTimeStamp > present_time:
+        headers_for_tickets = {
+            "content-type": "application/json",
+            "orgId": settings.ORG_ID,
+            "Authorization": "Zoho-oauthtoken " + data[0].value,
+        }
+        updated_ticket = requests.patch(
+            "https://desk.zoho.com.au/api/v1/tickets/" + params['id'],
+            data=json.dumps(params['data']),
+            headers=headers_for_tickets,
+        )
+    else:
+        data = Tokens.objects.filter(type="refresh_token")
+        response = requests.post(
+            "https://accounts.zoho.com.au/oauth/v2/token?refresh_token="
+            + data[0].value
+            + "&grant_type=refresh_token&client_id="
+            + settings.CLIENT_ID_ZOHO
+            + "&client_secret="
+            + settings.CLIENT_SECRET_ZOHO
+            + "&redirect_uri="
+            + settings.REDIRECT_URI_ZOHO
+            + "&prompt=consent&access_type=offline"
+        ).json()
+        updatedata = Tokens.objects.get(type="access_token")
+        updatedata.value = response["access_token"]
+        updatedata.z_createdTimeStamp = datetime.utcnow()
+        updatedata.z_expiryTimeStamp = datetime.utcnow() + timedelta(hours=1)
+        updatedata.save()
+        headers_for_tickets = {
+            "content-type": "application/json",
+            "orgId": settings.ORG_ID,
+            "Authorization": "Zoho-oauthtoken " + response["access_token"],
+        }
+        updated_ticket = requests.patch(
+            "https://desk.zoho.com.au/api/v1/tickets/" + params['id'],
+            data=json.dumps(params['data']),
+            headers=headers_for_tickets,
+        )
+
+    return JsonResponse(json.loads(updated_ticket.text))
