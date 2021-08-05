@@ -869,7 +869,9 @@ def push_boks(payload, client, username, method):
             result = {"success": True, "results": json_results}
             return result
     else:
-        message = "Pricing cannot be returned due to incorrect address information."
+        message = (
+            "Pricing cannot be returned due to incorrect address/lines information."
+        )
         logger.info(f"@8839 {LOG_ID} {message}")
 
         # Show price page either DMEA and DMEM
