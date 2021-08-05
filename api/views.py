@@ -1179,7 +1179,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 ]:
                     # Jason L
                     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
-                        if not booking.b_dateBookedDate:
+                        if booking.b_status == "Picked":
                             to_manifest += 1
                     else:
                         if booking.b_status == "Booked":
@@ -1214,7 +1214,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 ):
                     queryset = queryset.filter(
                         Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                    ).exclude(b_status__in=["Cancelled", "Closed"])
+                    ).filter(b_status="Picked")
                 else:
                     queryset = (
                         queryset.filter(b_status__iexact="Booked")
