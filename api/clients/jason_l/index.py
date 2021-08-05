@@ -515,7 +515,7 @@ def push_boks(payload, client, username, method):
             line["l_009_weight_per_each"] = item["e_weightPerEach"]
             line["l_008_weight_UOM"] = item["e_weightUOM"].upper()
             line["e_item_type"] = item["e_item_type"]
-            line["zbl_121_integer_1"] = item["zbl_121_integer_1"]
+            line["zbl_131_decimal_1"] = item["zbl_131_decimal_1"]
             line["zbl_102_text_2"] = (
                 item["zbl_102_text_2"] if item["zbl_102_text_2"] else "_"
             )
@@ -653,13 +653,13 @@ def push_boks(payload, client, username, method):
                     bok_3["success"] = line.success
                     bok_3[
                         "ld_005_item_serial_number"
-                    ] = line.zbl_121_integer_1  # Sequence
+                    ] = line.zbl_131_decimal_1  # Sequence
                     bok_3["ld_001_qty"] = line.l_002_qty
                     bok_3["ld_003_item_description"] = line.l_003_item
                     bok_3["ld_002_model_number"] = line.e_item_type
-                    bok_3["zbld_121_integer_1"] = line.zbl_121_integer_1  # Sequence
+                    bok_3["zbld_121_integer_1"] = line.zbl_131_decimal_1  # Sequence
                     bok_3["zbld_122_integer_2"] = _iter["quantity"]
-                    bok_3["zbld_131_decimal_1"] = line.l_005_dim_length
+                    bok_3["zbl_131_decimal_1"] = line.l_005_dim_length
                     bok_3["zbld_132_decimal_2"] = line.l_006_dim_width
                     bok_3["zbld_133_decimal_3"] = line.l_007_dim_height
                     bok_3["zbld_134_decimal_4"] = round(line.l_009_weight_per_each, 2)
@@ -965,13 +965,13 @@ def auto_repack(payload, client):
                         bok_3["success"] = line.success
                         bok_3[
                             "ld_005_item_serial_number"
-                        ] = line.zbl_121_integer_1  # Sequence
+                        ] = line.zbl_131_decimal_1  # Sequence
                         bok_3["ld_001_qty"] = line.l_002_qty
                         bok_3["ld_003_item_description"] = line.l_003_item
                         bok_3["ld_002_model_number"] = line.e_item_type
-                        bok_3["zbld_121_integer_1"] = line.zbl_121_integer_1  # Sequence
+                        bok_3["zbld_121_integer_1"] = line.zbl_131_decimal_1  # Sequence
                         bok_3["zbld_122_integer_2"] = _iter["quantity"]
-                        bok_3["zbld_131_decimal_1"] = line.l_005_dim_length
+                        bok_3["zbl_131_decimal_1"] = line.l_005_dim_length
                         bok_3["zbld_132_decimal_2"] = line.l_006_dim_width
                         bok_3["zbld_133_decimal_3"] = line.l_007_dim_height
                         bok_3["zbld_134_decimal_4"] = round(
@@ -1063,13 +1063,13 @@ def auto_repack(payload, client):
                 bok_3["v_client_pk_consigment_num"] = bok_1.pk_header_id
                 bok_3["fk_booking_lines_id"] = line["pk_booking_lines_id"]
                 bok_3["success"] = bok_1.success
-                bok_3["ld_005_item_serial_number"] = bok_2.zbl_121_integer_1  # Sequence
+                bok_3["ld_005_item_serial_number"] = bok_2.zbl_131_decimal_1  # Sequence
                 bok_3["ld_001_qty"] = bok_2.l_002_qty
                 bok_3["ld_003_item_description"] = bok_2.l_003_item
                 bok_3["ld_002_model_number"] = bok_2.e_item_type
-                bok_3["zbld_121_integer_1"] = bok_2.zbl_121_integer_1  # Sequence
+                bok_3["zbld_121_integer_1"] = bok_2.zbl_131_decimal_1  # Sequence
                 bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
-                bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
+                bok_3["zbl_131_decimal_1"] = bok_2.l_005_dim_length
                 bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
                 bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
                 bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
@@ -1352,7 +1352,7 @@ def scanned(payload, client):
             new_line.pk_booking_lines_id = str(uuid.uuid4())
             new_line.e_type_of_packaging = first_item.get("package_type")
             new_line.e_qty = 1
-            new_line.zbl_121_integer_1 = 0
+            new_line.zbl_131_decimal_1 = 0
             new_line.e_item = "Picked Item"
             new_line.e_item_type = None
             new_line.e_dimUOM = first_item["dimensions"]["unit"]
@@ -1389,7 +1389,7 @@ def scanned(payload, client):
 
                 original_line = None
                 for line in original_lines:
-                    if line.zbl_121_integer_1 == picked_item["items"][0]["sequence"]:
+                    if line.zbl_131_decimal_1 == picked_item["items"][0]["sequence"]:
                         original_line = line
 
                 if (
@@ -1405,7 +1405,7 @@ def scanned(payload, client):
                 line_data.itemDescription = original_line.e_item
                 line_data.modelNumber = original_line.e_item_type
                 line_data.clientRefNumber = sscc
-                line_data.itemSerialNumbers = original_line.zbl_121_integer_1
+                line_data.itemSerialNumbers = original_line.zbl_131_decimal_1
                 line_data.save()
 
     # Should get pricing again

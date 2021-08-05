@@ -2156,7 +2156,10 @@ class Booking_lines(models.Model):
     )
     zbl_121_integer_1 = models.IntegerField(
         blank=True, null=True, default=None
-    )  # JasonL - Sequence
+    )  # JasonL - OLD Sequence
+    zbl_131_decimal_1 = models.FloatField(
+        blank=True, null=True, default=None
+    )  # JasonL - NEW Sequence
     zbl_102_text_2 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )  # JasonL - ProductCode
@@ -2987,11 +2990,13 @@ class BOK_2_lines(models.Model):
     zbl_105_text_5 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
+    # JasonL OLD sequence
     zbl_121_integer_1 = models.IntegerField(blank=True, default=0, null=True)
     zbl_122_integer_2 = models.IntegerField(blank=True, default=0, null=True)
     zbl_123_integer_3 = models.IntegerField(blank=True, default=0, null=True)
     zbl_124_integer_4 = models.IntegerField(blank=True, default=0, null=True)
     zbl_125_integer_5 = models.IntegerField(blank=True, default=0, null=True)
+    # JasonL NEW sequence
     zbl_131_decimal_1 = models.FloatField(blank=True, default=0, null=True)
     zbl_132_decimal_2 = models.FloatField(blank=True, default=0, null=True)
     zbl_133_decimal_3 = models.FloatField(blank=True, default=0, null=True)

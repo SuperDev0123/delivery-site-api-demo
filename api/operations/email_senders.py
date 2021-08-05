@@ -555,6 +555,10 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
+    deleted_lines_cnt = booking_lines.filter(is_deleted=True).count()
+
+    if deleted_lines_cnt > 0:
+        booking_lines = booking_lines.filter(e_item_type__isnull=False, is_deleted=True)
 
     lines_data = []
     for booking_line in booking_lines:
@@ -625,7 +629,8 @@ def send_status_update_email(booking, category, eta, sender, status_url):
             cc_emails.append(booking.booking_Created_For_Email)
 
         # Plum agent
-        cc_emails.append("JManiquis@plumproducts.com")
+        if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
+            cc_emails.append("JManiquis@plumproducts.com")
 
     send_email(
         to_emails,
