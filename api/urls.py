@@ -113,9 +113,16 @@ urlpatterns += [
     url(r"^fp-api/pricing/", fp_apis.pricing),
     # External apis
     url(r"^get_booking_status_by_consignment/", get_booking_status_by_consignment),
-    url(r"^get_all_zoho_tickets/", get_all_zoho_tickets),
     url(r"^get_auth_zoho_tickets/", get_auth_zoho_tickets),
+    url(r"^get_zoho_tickets_with_booking_id/", get_zoho_tickets_with_booking_id),
+    url(r"^get_all_zoho_tickets/", get_all_zoho_tickets),
+    url(r"^merge_zoho_tickets/", merge_zoho_tickets),
+    url(r"^close_zoho_ticket/", close_zoho_ticket),
     url(r"^update_zoho_ticket/", update_zoho_ticket),
+    url(r"^get_zoho_ticket_details/", get_zoho_ticket_details),
+    url(r"^get_zoho_ticket_conversations/", get_zoho_ticket_conversations),
+    url(r"^get_zoho_ticket_thread/", get_zoho_ticket_thread),
+    url(r"^send_zoho_ticket_reply/", send_zoho_ticket_reply),
     # DE Status
     url(r"^get_delivery_status/", get_delivery_status),
 ]

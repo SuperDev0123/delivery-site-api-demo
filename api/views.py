@@ -225,7 +225,10 @@ class UserViewSet(viewsets.ViewSet):
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
         if dme_employee is not None:
             return JsonResponse(
-                {"username": request.user.username, "clientname": "dme"}
+                {
+                    "username": request.user.username, 
+                    "clientname": "dme",
+                }
             )
         else:
             client_employee = Client_employees.objects.filter(
