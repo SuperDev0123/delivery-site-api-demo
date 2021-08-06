@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def send_status_update_sms(
-    phone_number, sender, client, bookingNo, trackingNo, category, eta, status_url
+    phone_number, sender, client, bookingNo, trackingNo, category, eta, status_url, de_company, de_address, delivered_time
 ):
     LOG_ID = "[STATUS UPDATE SMS]"
 
@@ -38,6 +38,9 @@ def send_status_update_sms(
             TRACKING_NO=trackingNo,
             ETA=eta,
             TRACKING_URL=status_url,
+            DELIVER_TO_COMPANY=de_company,
+            DELIVER_TO_ADDRESS=de_address,
+            DELIVERED_TIME=delivered_time
         )
 
         send_sms(phone_number, message)

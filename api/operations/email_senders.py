@@ -517,13 +517,20 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         elif index >= step:
             timestamps.append("")
         else:
-            timestamps.append(
-                get_status_time_from_category(booking.pk_booking_id, item).strftime(
-                    "%d/%m/%Y %H:%M"
+            if category == 'Complete':
+                timestamps.append(
+                    booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
                 )
-                if get_status_time_from_category(booking.pk_booking_id, item)
-                else ""
-            )
+            else:
+                timestamps.append(
+                    get_status_time_from_category(booking.pk_booking_id, item).strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
+                    if get_status_time_from_category(booking.pk_booking_id, item)
+                    else ""
+                )
 
     cc_emails = []
 

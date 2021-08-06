@@ -115,6 +115,11 @@ def create(booking, status, username, event_timestamp=None):
                     #     eta,
                     #     url
                     # )
+                    de_company = booking.deToCompanyName
+                    de_address = f"{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' if booking.de_To_Address_Street_2 else ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}"
+                    delivery_time = booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
                     send_status_update_sms(
                         booking.de_to_Phone_Main or booking.de_to_Phone_Mobile,
                         de_name,
@@ -124,6 +129,9 @@ def create(booking, status, username, event_timestamp=None):
                         category_new,
                         eta,
                         url,
+                        de_company,
+                        de_address,
+                        delivery_time
                     )
 
                     if not settings.ENV in ["local", "dev"]:
