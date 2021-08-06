@@ -898,13 +898,19 @@ def get_delivery_status(request):
             elif index > step:
                 timestamps.append("")
             else:
-                status_time = get_status_time_from_category(booking.pk_booking_id, item)
-
-                timestamps.append(
-                    convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
-                    if status_time
-                    else None
-                )
+                if category == "Complete":
+                    timestamps.append(
+                        booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    )
+                else:
+                    status_time = get_status_time_from_category(booking.pk_booking_id, item)
+                    timestamps.append(
+                        convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
+                        if status_time
+                        else None
+                    )
 
         if step == 1:
             eta = (
