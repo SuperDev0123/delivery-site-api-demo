@@ -88,6 +88,7 @@ from api.file_operations import (
 from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
+from api.common.booking_quote import set_booking_quote
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -1299,11 +1300,37 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_booking(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
+        lowest_pricing = None
+
+        # Check if `booking_type` changes
+        if (
+            booking.b_client_name == "Jason L"
+            and booking.booking_type != request.data.get("booking_type")
+        ):
+            if request.data.get("booking_type") == Bookings.DMEP:
+                request.data["inv_cost_quoted"] = 0
+                request.data["inv_sell_quoted"] = 0
+            elif (
+                request.data.get("booking_type") == Bookings.DMEA
+                and booking.api_booking_quote
+            ):
+                lowest_pricing = (
+                    API_booking_quotes.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    )
+                    .order_by("client_mu_1_minimum_values")
+                    .first()
+                )
+
         serializer = BookingSerializer(booking, data=request.data)
 
         try:
             if serializer.is_valid():
                 serializer.save()
+
+                if lowest_pricing:
+                    set_booking_quote(booking, lowest_pricing)
+
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:

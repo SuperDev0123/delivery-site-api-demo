@@ -2404,7 +2404,8 @@ class BOK_1_headers(models.Model):
 
     DMEM = "DMEM"
     DMEA = "DMEA"
-    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"))
+    DMEP = "DMEP"  # Pickup
+    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"), (DMEP, "DMEP"))
 
     pk_auto_id = models.AutoField(primary_key=True)
     quote = models.OneToOneField(
