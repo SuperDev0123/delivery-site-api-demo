@@ -59,7 +59,10 @@ def create(booking, status, username, event_timestamp=None):
             booking.save()
 
         # JasonL and Plum
-        if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
+        if booking.kf_client_id in [
+            "461162D2-90C7-BF4E-A905-000000000004",
+            "1af6bcd2-6148-11eb-ae93-0242ac130002",
+        ]:
             category_new = get_status_category_from_status(
                 dme_status_history.status_last
             )
@@ -131,7 +134,7 @@ def create(booking, status, username, event_timestamp=None):
                         url,
                         de_company,
                         de_address,
-                        delivery_time
+                        delivery_time,
                     )
 
                     if not settings.ENV in ["local", "dev"]:
