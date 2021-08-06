@@ -605,17 +605,13 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         html += emailBody
 
     mime_type = "html"
-    subject = "Order status has been updated"
+    subject = f"Your {booking.b_client_name} Order status has been updated"
 
     if settings.ENV in ["local", "dev"]:
-        to_emails = [
-            "petew@deliver-me.com.au",
-            "goldj@deliver-me.com.au",
-            "greatroyalone@outlook.com",
-        ]
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
-        to_emails = ["bookings@deliver-me.com.au"]
+        to_emails = ["petew@deliver-me.com.au", "bookings@deliver-me.com.au"]
 
         if booking.pu_Email:
             to_emails.append(booking.pu_Email)

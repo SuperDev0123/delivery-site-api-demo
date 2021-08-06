@@ -660,9 +660,10 @@ class Bookings(models.Model):
         (STAIRS, "Stairs"),
     )
 
-    DMEM = "DMEM"
-    DMEA = "DMEA"
-    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"))
+    DMEM = "DMEM"  # Manual
+    DMEA = "DMEA"  # Auto
+    DMEP = "DMEP"  # Pickup
+    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"), (DMEP, "DMEP"))
 
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
