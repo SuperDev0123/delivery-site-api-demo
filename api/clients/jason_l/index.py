@@ -342,13 +342,13 @@ def push_boks(payload, client, username, method):
                         old_bok_1.delete()
                     else:
                         # Return price page url
-                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_objs.first().client_booking_id}/"
+                        url = f"{settings.WEB_SITE_URL}/price/{bok_1_objs.first().client_booking_id}/"
                         json_res["pricePageUrl"] = url
                         logger.info(f"@885 {LOG_ID} Response: {json_res}")
                         return json_res
                 else:
                     # Return status page url
-                    url = f"http://{settings.WEB_SITE_IP}/status/{bok_1_objs.first().client_booking_id}/"
+                    url = f"{settings.WEB_SITE_URL}/status/{bok_1_objs.first().client_booking_id}/"
                     json_res["pricePageUrl"] = url
                     logger.info(f"@886 {LOG_ID} Response: {json_res}")
                     return json_res
@@ -701,7 +701,7 @@ def push_boks(payload, client, username, method):
             f"#515 {LOG_ID} Skip Pricing due to address issue: {bok_1.get('zb_105_text_5')}"
         )
 
-        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+        url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
         result = {"success": True, "pricePageUrl": url}
         logger.info(f"@8837 {LOG_ID} success: True, 201_created --- SKIP QUOTE!")
         return result
@@ -853,13 +853,13 @@ def push_boks(payload, client, username, method):
             # Commented (2021-06-18)
             # if bok_1["shipping_type"] == "DMEM":
             #     url = (
-            #         f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+            #         f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
             #     )
             # elif bok_1["shipping_type"] == "DMEA":
-            #     url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+            #     url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
 
             # Show price page either DMEA and DMEM
-            url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+            url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
@@ -875,7 +875,7 @@ def push_boks(payload, client, username, method):
         logger.info(f"@8839 {LOG_ID} {message}")
 
         # Show price page either DMEA and DMEM
-        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+        url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
         result = {"success": True, "results": json_results}
         result["pricePageUrl"] = url
@@ -1497,7 +1497,7 @@ def scanned(payload, client):
     logger.info(message)
 
     booking.z_label_url = (
-        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+        f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
     )
     booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 

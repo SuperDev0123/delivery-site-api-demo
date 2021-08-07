@@ -327,9 +327,9 @@ def push_boks(payload, client, username, method):
                     paperless.send_order_info(bok_1_obj)
 
             if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
-                url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_obj.client_booking_id}/"
+                url = f"{settings.WEB_SITE_URL}/price/{bok_1_obj.client_booking_id}/"
             else:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1_obj.client_booking_id}/"
+                url = f"{settings.WEB_SITE_URL}/status/{bok_1_obj.client_booking_id}/"
 
             return {"success": True, "results": [], "pricePageUrl": url}
 
@@ -721,11 +721,9 @@ def push_boks(payload, client, username, method):
             url = None
 
             if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
-                url = (
-                    f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                )
+                url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
             elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+                url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")

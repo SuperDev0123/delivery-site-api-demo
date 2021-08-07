@@ -81,7 +81,7 @@ def create(booking, status, username, event_timestamp=None):
                 ]
                 and category_new != category_old
             ):
-                url = f"http://{settings.WEB_SITE_IP}/status/{booking.b_client_booking_ref_num}/"
+                url = f"{settings.WEB_SITE_URL}/status/{booking.b_client_booking_ref_num}/"
 
                 quote = booking.api_booking_quote
                 if quote:

@@ -104,12 +104,12 @@ logger = logging.getLogger(__name__)
 def password_reset_token_created(
     sender, instance, reset_password_token, *args, **kwargs
 ):
-    url = f"http://{settings.WEB_SITE_IP}"
     context = {
         "current_user": reset_password_token.user,
         "username": reset_password_token.user.username,
         "email": reset_password_token.user.email,
-        "reset_password_url": f"{url}/reset-password?token=" + reset_password_token.key,
+        "reset_password_url": f"{settings.WEB_SITE_URL}/reset-password?token="
+        + reset_password_token.key,
     }
 
     try:
@@ -227,7 +227,7 @@ class UserViewSet(viewsets.ViewSet):
         if dme_employee is not None:
             return JsonResponse(
                 {
-                    "username": request.user.username, 
+                    "username": request.user.username,
                     "clientname": "dme",
                 }
             )
@@ -4272,7 +4272,7 @@ def build_label(request):
             )
 
         booking.z_label_url = (
-            f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+            f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
         )
         booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
