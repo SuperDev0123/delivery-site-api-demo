@@ -1503,8 +1503,8 @@ def scanned(payload, client):
 
     if not booking.b_dateBookedDate and booking.b_status != "Picked":
         status_history.create(booking, "Picked", "jason_l")
+        booking.b_status = "Picked"
 
-    booking.b_status = "Picked"
     booking.save()
 
     res_json = {"labelUrl": booking.z_label_url}
