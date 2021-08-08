@@ -517,11 +517,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         elif index >= step:
             timestamps.append("")
         else:
-            if category == 'Complete':
+            if category == "Complete":
                 timestamps.append(
-                    booking.s_21_Actual_Delivery_TimeStamp.strftime(
-                        "%d/%m/%Y %H:%M"
-                    )
+                    booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
                 )
             else:
                 timestamps.append(
@@ -612,7 +610,10 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         html += emailBody
 
     mime_type = "html"
-    subject = f"Your {booking.b_client_name} Order status has been updated"
+    client_name = (
+        "Jason.l" if booking.b_client_name == "Jason L" else booking.b_client_name
+    )
+    subject = f"Your {client_name} Order status has been updated"
 
     if settings.ENV in ["local", "dev"]:
         to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
