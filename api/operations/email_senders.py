@@ -517,7 +517,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         elif index >= step:
             timestamps.append("")
         else:
-            if category == "Complete":
+            if category == 'Complete' and index == 4:
                 timestamps.append(
                     booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
                 )
