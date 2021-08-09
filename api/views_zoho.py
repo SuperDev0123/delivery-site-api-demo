@@ -146,10 +146,11 @@ def get_zoho_tickets_with_booking_id(request):
     dmeid = request.GET.get("dmeid")
     booking = Bookings.objects.filter(b_bookingID_Visual=dmeid)
     if booking:
-        order_num = booking[0].b_client_order_num
+        # order_num = booking[0].b_client_order_num
         invoice_num = booking[0].b_client_sales_inv_num
     else:
-        order_num, invoice_num = None, None
+        # order_num, invoice_num = None, None
+        invoice_num = None
     tickets = []
     if ticket_list.status_code == 200:
         data = Tokens.objects.filter(type="access_token")
@@ -169,7 +170,8 @@ def get_zoho_tickets_with_booking_id(request):
             if ticket_response.status_code == 200:
                 ticket_data = ticket_response.json()
                 to_be_checked = f"{ticket_data['subject'] or ''} {ticket_data['cf']['cf_dme_id_consignment_no'] or ''}"
-                if (dmeid and dmeid in to_be_checked) or (order_num and order_num in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
+                # if (dmeid and dmeid in to_be_checked) or (order_num and order_num in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
+                if (dmeid and dmeid in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
                     tickets.append(ticket_data)
 
         if not tickets:
