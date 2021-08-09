@@ -2629,7 +2629,13 @@ class BookingViewSet(viewsets.ViewSet):
             logger.info(f"#102 {LOG_ID} {message}")
             raise ValidationError({"message": message})
 
-        logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
+        quotes_cnt = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_used=False
+        ).count()
+
+        logger.info(
+            f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}, Quote Cnt: {quotes_cnt}"
+        )
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -2774,6 +2780,7 @@ class BookingViewSet(viewsets.ViewSet):
             "pdf": pdf_data,
             "full_label_name": full_label_name,
             "sscc_obj": result_with_sscc,
+            "quotes_cnt": quotes_cnt,
         }
 
         return JsonResponse({"success": True, "result": result})

@@ -820,9 +820,7 @@ def push_boks(payload, client, username, method):
         if b_client_order_num:
             message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
             logger.error(message)
-
-            if bok_1["b_client_order_num"]:
-                send_email_to_admins("No FC result", message)
+            send_email_to_admins("No FC result", message)
 
     # Set Express or Standard
     if len(json_results) == 1:
@@ -1288,7 +1286,11 @@ def scanned(payload, client):
     if not booking:
         message = "Order does not exist. 'HostOrderNumber' is invalid."
         logger.info(f"@350 {LOG_ID} Booking: {booking}")
-        raise ValidationError(message)
+        # raise ValidationError(message)
+
+        # Return `does not exist` url
+        res_json = {"labelUrl": f"{settings.WEB_SITE_URL}/label/does-not-exist/"}
+        return res_json
 
     # Commented on 2021-07-29
     # if not booking.api_booking_quote:
