@@ -895,10 +895,10 @@ def get_delivery_status(request):
                     if booking and booking.z_CreatedTimestamp
                     else ""
                 )
-            elif index > step:
+            elif index >= step:
                 timestamps.append("")
             else:
-                if category == "Complete":
+                if category == "Complete" and index == 4:
                     timestamps.append(
                         booking.s_21_Actual_Delivery_TimeStamp.strftime(
                             "%d/%m/%Y %H:%M"

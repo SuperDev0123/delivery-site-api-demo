@@ -138,7 +138,7 @@ def get_zoho_tickets_with_booking_id(request):
         "orgId": settings.ORG_ID,
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
-    get_tickets = requests.get(
+    ticket_list = requests.get(
         "https://desk.zoho.com.au/api/v1/tickets",
         headers=headers_for_tickets,
     )
@@ -148,45 +148,49 @@ def get_zoho_tickets_with_booking_id(request):
     if booking:
         order_num = booking[0].b_client_order_num
         invoice_num = booking[0].b_client_sales_inv_num
-    get_ticket = []
-    if get_tickets.status_code == 200:
+    else:
+        order_num, invoice_num = None, None
+    tickets = []
+    if ticket_list.status_code == 200:
         data = Tokens.objects.filter(type="access_token")
-        for ticket in get_tickets.json()["data"]:
+        for ticket in ticket_list.json()["data"]:
             headers_for_single_ticket = {
                 "content-type": "application/json",
                 "orgId": settings.ORG_ID,
                 "Authorization": "Zoho-oauthtoken " + data[0].value,
             }
             
-            ticket_data = requests.get(
+            ticket_response = requests.get(
                 "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
                 data={},
                 headers=headers_for_single_ticket,
-            ).json()
+            )
 
-            to_be_checked = f"{ticket_data['subject']} {ticket_data['cf']['cf_dme_id_consignment_no']}"
-            if (dmeid and dmeid in to_be_checked) or (order_num and order_num in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
-                get_ticket.append(ticket_data)
+            if ticket_response.status_code == 200:
+                ticket_data = ticket_response.json()
+                to_be_checked = f"{ticket_data['subject'] or ''} {ticket_data['cf']['cf_dme_id_consignment_no'] or ''}"
+                if (dmeid and dmeid in to_be_checked) or (order_num and order_num in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
+                    tickets.append(ticket_data)
 
-        if not get_ticket:
+        if not tickets:
             return JsonResponse(
                 {
                     "status": "No ticket with this DME Id is available.",
-                    "tickets": get_ticket,
+                    "tickets": tickets,
                 }
             )
         else:
-            final_ticket = {"status": "success", "tickets": get_ticket}
+            final_ticket = {"status": "success", "tickets": tickets}
             return JsonResponse(final_ticket)
-    elif get_tickets.status_code == 204:
+    elif ticket_list.status_code == 204:
         return JsonResponse(
             {
                 "status": "There are no tickets on zoho",
-                "tickets": get_ticket,
+                "tickets": tickets,
             }
         )
     else:
-        final_ticket = {"status": "success", "tickets": get_ticket}
+        final_ticket = {"status": "success", "tickets": tickets}
         return JsonResponse(final_ticket)
 
 
