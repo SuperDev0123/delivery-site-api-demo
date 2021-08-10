@@ -2226,7 +2226,7 @@ class Booking_lines(models.Model):
 
             for booking_line_data in booking_lines_data:
                 if booking_line_data.modelNumber:
-                    _gap_ras.append(booking_line_data.modelNumber)
+                    _modelNumbers.append(booking_line_data.modelNumber)
 
             return ", ".join(_modelNumbers)
         except Exception as e:
