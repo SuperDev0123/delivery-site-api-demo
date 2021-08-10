@@ -2217,6 +2217,22 @@ class Booking_lines(models.Model):
             logger.error(f"#562 gap_ras - {str(e)}")
             return ""
 
+    def modelNumbers(self):
+        try:
+            _modelNumbers = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_lines_id=self.pk_booking_lines_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.modelNumber:
+                    _gap_ras.append(booking_line_data.modelNumber)
+
+            return ", ".join(_modelNumbers)
+        except Exception as e:
+            logger.error(f"#563 modelNumbers - {str(e)}")
+            return ""
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         # Check if all other lines are picked at Warehouse
