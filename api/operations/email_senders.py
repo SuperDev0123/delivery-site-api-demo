@@ -517,7 +517,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         elif index >= step:
             timestamps.append("")
         else:
-            if category == 'Complete' and index == 4:
+            if category == "Complete" and index == 4:
                 timestamps.append(
                     booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
                 )
@@ -530,6 +530,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
                     else ""
                 )
 
+    to_emails = []
     cc_emails = []
 
     templates = DME_Email_Templates.objects.filter(emailName="Status Update")
@@ -619,7 +620,6 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
-        to_emails = ["petew@deliver-me.com.au", "bookings@deliver-me.com.au"]
 
         if booking.pu_Email:
             to_emails.append(booking.pu_Email)
@@ -631,6 +631,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
             cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
+
+        cc_emails.append("petew@deliver-me.com.au")
+        cc_emails.append("bookings@deliver-me.com.au")
 
         # Plum agent
         if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
