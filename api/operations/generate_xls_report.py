@@ -1661,27 +1661,32 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     date_format,
                 )
 
-            if (
-                booking.b_dateBookedDate is not None
-                and booking.b_status is not None
-                and "booked" in booking.b_status.lower()
-            ):
+            pickup_days_late = 0
+            if booking.b_dateBookedDate and booking.s_06_Latest_Delivery_Date_TimeSet:
                 pickup_days_late = (
-                    booking.b_dateBookedDate.date()
-                    + timedelta(days=2)
-                    - sydney_now.date()
+                    booking.s_06_Latest_Delivery_Date_TimeSet.date() - sydney_now.date()
                 ).days
 
-                if pickup_days_late < 0:
-                    cell_format = workbook.add_format({"font_color": "red"})
-                    worksheet.write(
-                        row,
-                        col + 2,
-                        "(" + str(pickup_days_late * -1) + ")",
-                        cell_format,
-                    )
-                else:
-                    worksheet.write(row, col + 2, pickup_days_late)
+            if (
+                booking.b_dateBookedDate
+                and not booking.s_06_Latest_Delivery_Date_TimeSet
+                and booking.api_booking_quote
+            ):
+                from api.utils import get_eta_pu_by, get_eta_de_by
+
+                s_06 = get_eta_de_by(booking, booking.api_booking_quote)
+                pickup_days_late = (s_06.date() - sydney_now.date()).days
+
+            if pickup_days_late < 0:
+                cell_format = workbook.add_format({"font_color": "red"})
+                worksheet.write(
+                    row,
+                    col + 2,
+                    f"({-pickup_days_late})",
+                    cell_format,
+                )
+            else:
+                worksheet.write(row, col + 2, pickup_days_late)
 
             if booking.b_status is not None and booking.b_dateBookedDate is not None:
                 delivery_kpi_days = 0
