@@ -5,8 +5,6 @@ import json
 import requests
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
-from api.models import Booking_lines
-from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +93,7 @@ def lines_to_dict(bok_2s):
         )
         item_quantity = item.l_002_qty
 
-        dims = [
-            item_length,
-            item_width,
-            item_height
-        ]
+        dims = [item_length, item_width, item_height]
         dims.sort()
         if dims[0] <= dim_min_limit and dims[2] >= dim_max_limit:
             lines_data.append(
@@ -162,7 +156,9 @@ def lines_to_pallet(lines_data, pallets_data):
     return res_data
 
 
-def refine_pallets(packed_results, original_pallets, original_lines, pallet_self_height):
+def refine_pallets(
+    packed_results, original_pallets, original_lines, pallet_self_height
+):
     formatted_pallets = []
     for pallet in packed_results["bins_packed"]:
         packed_height, items = 0, []
@@ -241,7 +237,9 @@ def get_palletized_by_ai(bok_2s, pallets):
     packed_results = lines_to_pallet(lines_data, pallets_data)
 
     # check duplicated Pallets and non palletizable ones with only small items
-    palletized, non_palletized = refine_pallets(packed_results, pallets, bok_2s, pallet_self_height)
+    palletized, non_palletized = refine_pallets(
+        packed_results, pallets, bok_2s, pallet_self_height
+    )
 
     return palletized, non_palletized
 

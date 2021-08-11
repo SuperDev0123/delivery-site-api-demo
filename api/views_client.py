@@ -803,8 +803,7 @@ def get_delivery_status(request):
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
         if has_deleted_lines:
-            lines = lines.filter(is_deleted=True)
-            # lines.filter(is_deleted=True, e_item_type__isnull=False)
+            lines = lines.filter(is_deleted=True, e_item_type__isnull=False)
         else:
             lines = lines.filter(is_deleted=False)
 
