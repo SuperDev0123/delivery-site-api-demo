@@ -1725,12 +1725,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 cell_format = workbook.add_format({"font_color": "red"})
                 worksheet.write(
                     row,
-                    col + 2,
+                    col + 3,
                     f"({-days_early_late})",
                     cell_format,
                 )
             else:
-                worksheet.write(row, col + 2, days_early_late)
+                worksheet.write(row, col + 3, days_early_late)
 
             query_with = ""
             if booking.dme_status_action is None or booking.dme_status_action == "":
