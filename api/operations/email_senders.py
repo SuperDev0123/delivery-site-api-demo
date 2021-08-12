@@ -634,7 +634,6 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
 
-        cc_emails.append("petew@deliver-me.com.au")
         cc_emails.append("bookings@deliver-me.com.au")
         cc_emails.append("dev.deliverme@gmail.com")
 
@@ -698,7 +697,6 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     to_emails = ["rejina@jasonl.com.au"]
     cc_emails = [
         "stephenm@deliver-me.com.au",
-        "petew@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
     send_email(to_emails, cc_emails, subject, message)
@@ -710,13 +708,10 @@ def send_email_to_admins(subject, message):
     ).first()
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
-        to_emails = [
-            "petew@deliver-me.com.au",
-            "goldj@deliver-me.com.au",
-            "dev.deliverme@gmail.com",
-        ]
+        to_emails = ["goldj@deliver-me.com.au"]
+        cc_emails = ["dev.deliverme@gmail.com"]
 
         if settings.ENV in ["prod"]:
             to_emails.append("bookings@deliver-me.com.au")
 
-        send_email(to_emails, [], subject, message)
+        send_email(to_emails, cc_emails, subject, message)
