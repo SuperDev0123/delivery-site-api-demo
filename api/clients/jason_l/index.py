@@ -39,7 +39,7 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import product_operations as product_oper
-from api.operations.email_senders import send_email_to_admins
+from api.operations.email_senders import send_email_to_admins, send_email_missing_dims
 from api.operations.labels.index import build_label, get_barcode
 
 # from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
@@ -521,6 +521,7 @@ def push_boks(payload, client, username, method):
             )
             line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
 
+            lines_missing_dims = []
             if line["is_deleted"] and line["l_005_dim_length"] == 0:
                 line["l_005_dim_length"] = 0.01
                 line["l_006_dim_width"] = 0.01
@@ -533,6 +534,7 @@ def push_boks(payload, client, username, method):
                 or line["l_009_weight_per_each"] == 0
             ):
                 zero_dims = []
+                lines_missing_dims.append(line["e_item_type"])
                 if not line["l_005_dim_length"]:
                     zero_dims.append("length")
 
@@ -566,6 +568,14 @@ def push_boks(payload, client, username, method):
 
         bok_2s = new_bok_2s
         bok_1_obj = bok_1_serializer.save()
+
+    # Send missing dims email
+    if len(lines_missing_dims) > 0:
+        send_email_missing_dims(
+            client.company_name,
+            bok_1["b_client_order_num"],
+            ", ".join(lines_missing_dims),
+        )
 
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
