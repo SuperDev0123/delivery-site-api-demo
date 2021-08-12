@@ -1661,9 +1661,53 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     date_format,
                 )
 
-            pickup_days_late = 0
-            if booking.b_dateBookedDate and booking.s_06_Latest_Delivery_Date_TimeSet:
+            if (
+                booking.b_dateBookedDate is not None
+                and booking.b_status is not None
+                and "booked" in booking.b_status.lower()
+            ):
                 pickup_days_late = (
+                    booking.b_dateBookedDate.date()
+                    + timedelta(days=2)
+                    - sydney_now.date()
+                ).days
+
+                if pickup_days_late < 0:
+                    cell_format = workbook.add_format({"font_color": "red"})
+                    worksheet.write(
+                        row,
+                        col + 2,
+                        "(" + str(pickup_days_late * -1) + ")",
+                        cell_format,
+                    )
+                else:
+                    worksheet.write(row, col + 2, pickup_days_late)
+
+            # if booking.b_status is not None and booking.b_dateBookedDate is not None:
+            #     delivery_kpi_days = 0
+            #     days_early_late = "None - not booked"
+
+            #     if booking.delivery_kpi_days is not None:
+            #         delivery_kpi_days = int(booking.delivery_kpi_days)
+
+            #     if booking.b_dateBookedDate is not None:
+            #         days_early_late = (
+            #             booking.b_dateBookedDate.date()
+            #             + timedelta(days=delivery_kpi_days)
+            #             - sydney_now.date()
+            #         ).days
+
+            #     if days_early_late < 0:
+            #         cell_format = workbook.add_format({"font_color": "red"})
+            #         worksheet.write(
+            #             row, col + 3, "(" + str(days_early_late * -1) + ")", cell_format
+            #         )
+            #     else:
+            #         worksheet.write(row, col + 3, days_early_late)
+
+            days_early_late = 0
+            if booking.b_dateBookedDate and booking.s_06_Latest_Delivery_Date_TimeSet:
+                days_early_late = (
                     booking.s_06_Latest_Delivery_Date_TimeSet.date() - sydney_now.date()
                 ).days
 
@@ -1675,40 +1719,18 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 from api.utils import get_eta_pu_by, get_eta_de_by
 
                 s_06 = get_eta_de_by(booking, booking.api_booking_quote)
-                pickup_days_late = (s_06.date() - sydney_now.date()).days
+                days_early_late = (s_06.date() - sydney_now.date()).days
 
-            if pickup_days_late < 0:
+            if days_early_late < 0:
                 cell_format = workbook.add_format({"font_color": "red"})
                 worksheet.write(
                     row,
                     col + 2,
-                    f"({-pickup_days_late})",
+                    f"({-days_early_late})",
                     cell_format,
                 )
             else:
-                worksheet.write(row, col + 2, pickup_days_late)
-
-            if booking.b_status is not None and booking.b_dateBookedDate is not None:
-                delivery_kpi_days = 0
-                days_early_late = "None - not booked"
-
-                if booking.delivery_kpi_days is not None:
-                    delivery_kpi_days = int(booking.delivery_kpi_days)
-
-                if booking.b_dateBookedDate is not None:
-                    days_early_late = (
-                        booking.b_dateBookedDate.date()
-                        + timedelta(days=delivery_kpi_days)
-                        - sydney_now.date()
-                    ).days
-
-                if days_early_late < 0:
-                    cell_format = workbook.add_format({"font_color": "red"})
-                    worksheet.write(
-                        row, col + 3, "(" + str(days_early_late * -1) + ")", cell_format
-                    )
-                else:
-                    worksheet.write(row, col + 3, days_early_late)
+                worksheet.write(row, col + 2, days_early_late)
 
             query_with = ""
             if booking.dme_status_action is None or booking.dme_status_action == "":
