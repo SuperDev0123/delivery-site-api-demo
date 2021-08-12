@@ -120,8 +120,9 @@ urlpatterns += [
     url(r"^close_zoho_ticket/", close_zoho_ticket),
     url(r"^update_zoho_ticket/", update_zoho_ticket),
     url(r"^get_zoho_ticket_details/", get_zoho_ticket_details),
-    url(r"^get_zoho_ticket_conversations/", get_zoho_ticket_conversations),
+    url(r"^get_zoho_ticket_conversation_list/", get_zoho_ticket_conversation_list),
     url(r"^get_zoho_ticket_thread/", get_zoho_ticket_thread),
+    url(r"^get_zoho_ticket_comment/", get_zoho_ticket_comment),
     url(r"^send_zoho_ticket_reply/", send_zoho_ticket_reply),
     # DE Status
     url(r"^get_delivery_status/", get_delivery_status),

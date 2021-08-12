@@ -139,7 +139,7 @@ def get_zoho_tickets_with_booking_id(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_list = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets",
+        "https://desk.zoho.com.au/api/v1/tickets?limit=50",
         headers=headers_for_tickets,
     )
 
@@ -261,7 +261,7 @@ def update_zoho_ticket(request):
         headers=headers_for_tickets,
     )
 
-    return JsonResponse(json.loads(updated_ticket.text))
+    return JsonResponse(updated_ticket.json())
 
 
 @api_view(["POST"])
@@ -279,16 +279,13 @@ def get_zoho_ticket_details(request):
         headers=headers_for_tickets,
     )
 
-    res = {
-        "status": ticket_details.status_code, 
-        "data": ticket_details.json()
-    }
+    res = ticket_details.json()
     return JsonResponse(res)
 
 
 @api_view(["POST"])
 @permission_classes((AllowAny,))
-def get_zoho_ticket_conversations(request):
+def get_zoho_ticket_conversation_list(request):
     data = request.data
     access_token = get_zoho_access_token(request)
     headers_for_tickets = {
@@ -300,11 +297,7 @@ def get_zoho_ticket_conversations(request):
         "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/conversations',
         headers=headers_for_tickets,
     )
-
-    res = {
-        "status": ticket_conversations.status_code, 
-        "data": ticket_conversations.json()
-    }
+    res = ticket_conversations.json()
     return JsonResponse(res)
 
 
@@ -318,15 +311,31 @@ def get_zoho_ticket_thread(request):
         "orgId": settings.ORG_ID,
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
-    ticket_threads = requests.post(
+    ticket_threads = requests.get(
         "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/threads/' + data['item'],
         headers=headers_for_tickets,
     )
 
-    res = {
-        "status": ticket_threads.status_code, 
-        "data": ticket_threads.json()
+    res = ticket_threads.json()
+    return JsonResponse(res)
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def get_zoho_ticket_comment(request):
+    data = request.data
+    access_token = get_zoho_access_token(request)
+    headers_for_tickets = {
+        "content-type": "application/json",
+        "orgId": settings.ORG_ID,
+        "Authorization": "Zoho-oauthtoken " + access_token,
     }
+    ticket_comments = requests.get(
+        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/comments/' + data['item'],
+        headers=headers_for_tickets,
+    )
+
+    res = ticket_comments.json()
     return JsonResponse(res)
 
 
@@ -354,8 +363,5 @@ def send_zoho_ticket_reply(request):
         headers=headers_for_tickets,
     )
 
-    res = {
-        "status": replied_result.status_code, 
-        "data": replied_result.json()
-    }
+    res = replied_result.json()
     return JsonResponse(res)
