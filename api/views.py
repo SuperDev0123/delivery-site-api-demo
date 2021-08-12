@@ -4165,8 +4165,17 @@ def get_manifest(request):
                 if (
                     "jason" in request.user.username and not booking.b_dateBookedDate
                 ):  # Jason L: Create new statusHistory
-                    status_history.create(booking, "Ready for Despatch", username)
-                    booking.b_status = "Ready for Despatch"
+                    if booking.vx_freight_provider in [
+                        "Line haul General",
+                        "Customer Pickup",
+                        "JasonL In house",
+                    ]:
+                        status_history.create(booking, "Booked", username)
+                        booking.b_status = "Booked"
+                        booking.b_dateBookedDate = datetime.now()
+                    else:
+                        status_history.create(booking, "Ready for Despatch", username)
+                        booking.b_status = "Ready for Despatch"
 
                 booking.save()
 
