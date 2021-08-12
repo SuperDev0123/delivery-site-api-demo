@@ -216,7 +216,7 @@ if ENV == "prod":
 # S3 url
 S3_URL = os.environ["S3_URL"]
 
-# WEB_SITE_URL = os.environ["WEB_SITE_URL"]
+WEB_SITE_URL = os.environ["WEB_SITE_URL"]
 STATIC_PUBLIC = os.environ["STATIC_PUBLIC"]
 STATIC_PRIVATE = os.environ["STATIC_PRIVATE"]
 
