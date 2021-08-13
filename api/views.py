@@ -1720,6 +1720,15 @@ class BookingsViewSet(viewsets.ViewSet):
                     else:
                         booking.z_label_url = "[REBUILD_REQUIRED]"
 
+                    # JasonL and 3 special FP
+                    if booking.b_client_name == "Jason L":
+                        if field_content in [
+                            "JasonL In house",
+                            "Customer Pickup",
+                            "Line haul General",
+                        ]:
+                            booking.booking_type = "DMEM"
+
                 booking.save()
             return JsonResponse(
                 {"message": "Bookings are updated successfully"}, status=200
