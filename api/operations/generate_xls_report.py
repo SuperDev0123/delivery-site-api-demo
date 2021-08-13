@@ -109,7 +109,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("S1", "dme_status_detail", bold)
             worksheet.write("T1", "dme_status_action", bold)
             worksheet.write("U1", "b_booking_Notes", bold)
-            worksheet.write("V1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("V1", "s_21_Actual_Delivery_TimeStamp", bold)
             worksheet.write("W1", "zc_pod_or_no_pod", bold)
             worksheet.write("X1", "z_pod_url", bold)
             worksheet.write("Y1", "z_pod_signed_url", bold)
@@ -298,13 +298,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 20, booking.b_booking_Notes, cell_format)
 
             if (
-                booking.s_21_ActualDeliveryTimeStamp
-                and booking.s_21_ActualDeliveryTimeStamp
+                booking.s_21_Actual_Delivery_TimeStamp
+                and booking.s_21_Actual_Delivery_TimeStamp
             ):
                 worksheet.write_datetime(
                     row,
                     col + 21,
-                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp),
                     date_format,
                 )
 
@@ -360,14 +360,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if (
                 booking.b_status is not None
                 and booking.b_status == "Delivered"
-                and booking.s_21_ActualDeliveryTimeStamp is not None
+                and booking.s_21_Actual_Delivery_TimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
                 worksheet.write(
                     row,
                     col + 26,
                     (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -376,7 +376,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     col + 27,
                     booking.delivery_kpi_days
                     - (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -822,7 +822,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("S1", "dme_status_detail", bold)
             worksheet.write("T1", "dme_status_action", bold)
             worksheet.write("U1", "b_booking_Notes", bold)
-            worksheet.write("V1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("V1", "s_21_Actual_Delivery_TimeStamp", bold)
             worksheet.write("W1", "zc_pod_or_no_pod", bold)
             worksheet.write("X1", "z_pod_url", bold)
             worksheet.write("Y1", "z_pod_signed_url", bold)
@@ -999,13 +999,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 20, booking.b_booking_Notes)
 
             if (
-                booking.s_21_ActualDeliveryTimeStamp
-                and booking.s_21_ActualDeliveryTimeStamp
+                booking.s_21_Actual_Delivery_TimeStamp
+                and booking.s_21_Actual_Delivery_TimeStamp
             ):
                 worksheet.write_datetime(
                     row,
                     col + 21,
-                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp),
                     date_format,
                 )
 
@@ -1061,14 +1061,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if (
                 booking.b_status is not None
                 and booking.b_status == "Delivered"
-                and booking.s_21_ActualDeliveryTimeStamp is not None
+                and booking.s_21_Actual_Delivery_TimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
                 worksheet.write(
                     row,
                     col + 26,
                     (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -1077,7 +1077,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     col + 27,
                     booking.delivery_kpi_days
                     - (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -1153,7 +1153,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("AD1", "dme_status_detail", bold)
             worksheet.write("AE1", "dme_status_action", bold)
             worksheet.write("AF1", "b_booking_Notes", bold)
-            worksheet.write("AG1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("AG1", "s_21_Actual_Delivery_TimeStamp", bold)
             worksheet.write("AH1", "zc_pod_or_no_pod", bold)
             worksheet.write("AI1", "z_pod_url", bold)
             worksheet.write("AJ1", "z_pod_signed_url", bold)
@@ -1362,13 +1362,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 31, booking.b_booking_Notes)
 
             if (
-                booking.s_21_ActualDeliveryTimeStamp
-                and booking.s_21_ActualDeliveryTimeStamp
+                booking.s_21_Actual_Delivery_TimeStamp
+                and booking.s_21_Actual_Delivery_TimeStamp
             ):
                 worksheet.write_datetime(
                     row,
                     col + 32,
-                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp),
                     date_format,
                 )
 
@@ -1424,14 +1424,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if (
                 booking.b_status is not None
                 and booking.b_status == "Delivered"
-                and booking.s_21_ActualDeliveryTimeStamp is not None
+                and booking.s_21_Actual_Delivery_TimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
                 worksheet.write(
                     row,
                     col + 37,
                     (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -1440,7 +1440,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     col + 38,
                     booking.delivery_kpi_days
                     - (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -1515,7 +1515,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("V1", "de_To_Address_State", bold)
             worksheet.write("W1", "de_To_Address_PostalCode", bold)
             worksheet.write("X1", "b_client_order_num", bold)
-            worksheet.write("U1", "s_21_ActualDeliveryTimeStamp", bold)
+            worksheet.write("Y1", "s_21_Actual_Delivery_TimeStamp", bold)
             worksheet.write("Z1", "zc_pod_or_no_pod", bold)
             worksheet.write("AA1", "z_pod_url", bold)
             worksheet.write("AB1", "z_pod_signed_url", bold)
@@ -1788,13 +1788,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 23, booking.b_client_order_num)
 
             if (
-                booking.s_21_ActualDeliveryTimeStamp
-                and booking.s_21_ActualDeliveryTimeStamp
+                booking.s_21_Actual_Delivery_TimeStamp
+                and booking.s_21_Actual_Delivery_TimeStamp
             ):
                 worksheet.write_datetime(
                     row,
                     col + 24,
-                    convert_to_AU_SYDNEY_tz(booking.s_21_ActualDeliveryTimeStamp),
+                    convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp),
                     date_format,
                 )
 
@@ -1850,14 +1850,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             if (
                 booking.b_status is not None
                 and booking.b_status == "Delivered"
-                and booking.s_21_ActualDeliveryTimeStamp is not None
+                and booking.s_21_Actual_Delivery_TimeStamp is not None
                 and booking.b_dateBookedDate is not None
             ):
                 worksheet.write(
                     row,
                     col + 29,
                     (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
@@ -1866,7 +1866,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     col + 30,
                     booking.delivery_kpi_days
                     - (
-                        booking.s_21_ActualDeliveryTimeStamp.date()
+                        booking.s_21_Actual_Delivery_TimeStamp.date()
                         - booking.b_dateBookedDate.date()
                     ).days,
                 )
