@@ -32,7 +32,8 @@ def push_boks(payload, client):
 
         if client.company_name == "Seaway-Tempo-Aldi":  # Seaway-Tempo-Aldi
             bok_1["b_001_b_freight_provider"] = "DHL"
-        elif client.company_name == "BioPak":  # BioPak
+        else:
+            # BioPak
             warehouse = Client_warehouses.objects.get(
                 client_warehouse_code=bok_1["b_client_warehouse_code"]
             )

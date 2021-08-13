@@ -222,6 +222,14 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                     if settings.ENV == "prod" and "test" in key:
                         continue
 
+                    # Allow test credential only Sendle+DEV
+                    if (
+                        settings.ENV == "dev"
+                        and _fp_name == "sendle"
+                        and "dme" == client_name
+                    ):
+                        continue
+
                     # Pricing only accounts can be used on pricing_only mode
                     if "pricingOnly" in account_detail and not is_pricing_only:
                         continue

@@ -19,7 +19,7 @@ def send_status_update_sms(
     de_address,
     delivered_time,
 ):
-    LOG_ID = "[STATUS UPDATE SMS]"
+    LOG_ID = "[SMS - STATUS UPDATE]"
 
     if not category in ["Transit", "On Board for Delivery", "Complete"]:
         return

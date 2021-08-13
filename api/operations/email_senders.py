@@ -435,6 +435,8 @@ def send_booking_status_email(bookingId, emailName, sender):
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
 
+        cc_emails.append("dev.deliverme@gmail.com")
+
     send_email(to_emails, cc_emails, subject, html, files, mime_type)
 
     EmailLogs.objects.create(
@@ -517,7 +519,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         elif index >= step:
             timestamps.append("")
         else:
-            if category == 'Complete' and index == 4:
+            if category == "Complete" and index == 4:
                 timestamps.append(
                     booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
                 )
@@ -530,6 +532,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
                     else ""
                 )
 
+    to_emails = []
     cc_emails = []
 
     templates = DME_Email_Templates.objects.filter(emailName="Status Update")
@@ -619,7 +622,6 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
-        to_emails = ["petew@deliver-me.com.au", "bookings@deliver-me.com.au"]
 
         if booking.pu_Email:
             to_emails.append(booking.pu_Email)
@@ -631,6 +633,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
             cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
+
+        cc_emails.append("bookings@deliver-me.com.au")
+        cc_emails.append("dev.deliverme@gmail.com")
 
         # Plum agent
         if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
@@ -681,15 +686,32 @@ def send_picking_slip_printed_email(b_client_order_num):
         send_email(to_emails, [], subject, message)
 
 
+def send_email_missing_dims(client_name, order_num, lines_missing_dims):
+    """
+    Only used for `Jason L` client's orders
+
+    When an Order has missing dims Lines, DME send this email.
+    """
+    subject = f"JasonL | {order_num}"
+    message = f"Hi Regina, Order({order_num}) has lines with missing dims: {lines_missing_dims}"
+    to_emails = ["rejina@jasonl.com.au"]
+    cc_emails = [
+        "stephenm@deliver-me.com.au",
+        "dev.deliverme@gmail.com",
+    ]
+    send_email(to_emails, cc_emails, subject, message)
+
+
 def send_email_to_admins(subject, message):
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"
     ).first()
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
-        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+        to_emails = ["goldj@deliver-me.com.au"]
+        cc_emails = ["dev.deliverme@gmail.com"]
 
         if settings.ENV in ["prod"]:
             to_emails.append("bookings@deliver-me.com.au")
 
-        send_email(to_emails, [], subject, message)
+        send_email(to_emails, cc_emails, subject, message)

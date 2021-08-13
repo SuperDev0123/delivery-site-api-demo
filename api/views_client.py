@@ -803,8 +803,7 @@ def get_delivery_status(request):
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
         if has_deleted_lines:
-            lines = lines.filter(is_deleted=True)
-            # lines.filter(is_deleted=True, e_item_type__isnull=False)
+            lines = lines.filter(is_deleted=True, e_item_type__isnull=False)
         else:
             lines = lines.filter(is_deleted=False)
 
@@ -898,14 +897,20 @@ def get_delivery_status(request):
             elif index >= step:
                 timestamps.append("")
             else:
-                if category == "Complete" and index == 4:
+                if (
+                    category == "Complete"
+                    and not booking.b_status in ["Closed", "Cancelled"]
+                    and index == 4
+                ):
                     timestamps.append(
                         booking.s_21_Actual_Delivery_TimeStamp.strftime(
                             "%d/%m/%Y %H:%M"
                         )
                     )
                 else:
-                    status_time = get_status_time_from_category(booking.pk_booking_id, item)
+                    status_time = get_status_time_from_category(
+                        booking.pk_booking_id, item
+                    )
                     timestamps.append(
                         convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
                         if status_time

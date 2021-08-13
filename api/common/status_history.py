@@ -134,13 +134,13 @@ def create(booking, status, username, event_timestamp=None):
                         url,
                         de_company,
                         de_address,
-                        delivered_time
+                        delivered_time,
                     )
 
                     if not settings.ENV in ["local", "dev"]:
                         # Send SMS to Plum agent
                         send_status_update_sms(
-                            "+61411608093",
+                            "0411608093",
                             de_name,
                             booking.b_client_name,
                             booking.b_bookingID_Visual,
@@ -150,7 +150,7 @@ def create(booking, status, username, event_timestamp=None):
                             url,
                             de_company,
                             de_address,
-                            delivered_time
+                            delivered_time,
                         )
 
     tempo.push_via_api(booking)
