@@ -1007,7 +1007,12 @@ def pricing(request):
         is_pricing_only = True
 
     booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
-    client = booking.get_client()
+
+    try:
+        client = booking.get_client()
+        client_customer_mark_up = client.client_customer_mark_up or 0
+    except:
+        client_customer_mark_up = 0
 
     if not success:
         return JsonResponse(
@@ -1019,7 +1024,7 @@ def pricing(request):
         many=True,
         context={
             "booking": booking,
-            "client_customer_mark_up": client.client_customer_mark_up if client else 0,
+            "client_customer_mark_up": client_customer_mark_up,
         },
     ).data
 
