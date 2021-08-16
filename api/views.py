@@ -2220,7 +2220,8 @@ class BookingViewSet(viewsets.ViewSet):
         serializer = BookingSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            booking = serializer.save()
+            serializer.data["id"] = booking.pk
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
