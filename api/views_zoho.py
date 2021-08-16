@@ -155,7 +155,7 @@ def get_zoho_tickets_with_booking_id(request):
     if ticket_list.status_code == 200:
         data = Tokens.objects.filter(type="access_token")
         for ticket in ticket_list.json()["data"]:
-            headers_for_single_ticket = {
+            headers = {
                 "content-type": "application/json",
                 "orgId": settings.ORG_ID,
                 "Authorization": "Zoho-oauthtoken " + data[0].value,
@@ -163,8 +163,7 @@ def get_zoho_tickets_with_booking_id(request):
             
             ticket_response = requests.get(
                 "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
-                data={},
-                headers=headers_for_single_ticket,
+                headers=headers,
             )
 
             if ticket_response.status_code == 200:
@@ -173,7 +172,32 @@ def get_zoho_tickets_with_booking_id(request):
                 # if (dmeid and dmeid in to_be_checked) or (order_num and order_num in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
                 if (dmeid and dmeid in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
                     tickets.append(ticket_data)
+                else:
+                    ticket_details = requests.get(
+                        "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"] + "/conversations",
+                        headers=headers,                    
+                    )
+                    if ticket_details.status_code == 200:
+                        for item in ticket_details.json()['data']:
+                            content = None
+                            if item['type'] == 'thread':
+                                thread = requests.get(
+                                    "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"] + "/threads/" + item['id'] + "?include=plainText",
+                                    headers=headers,                    
+                                )
+                                if thread.status_code == 200: 
+                                    content = thread.json()['plainText']
+                            else:
+                                comment = requests.get(
+                                    "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"] + "/comments/" + item['id'],
+                                    headers=headers,                    
+                                )
+                                if comment.status_code == 200: 
+                                    content = comment.json()['content']
 
+                            if dmeid in content or invoice_num in content:
+                                tickets.append(ticket_data)
+                                continue
         if not tickets:
             return JsonResponse(
                 {
@@ -343,25 +367,35 @@ def get_zoho_ticket_comment(request):
 @permission_classes((AllowAny,))
 def send_zoho_ticket_reply(request):
     data = request.data
-    access_token = get_zoho_access_token(request)
-    headers_for_tickets = {
-        "content-type": "application/json",
-        "orgId": settings.ORG_ID,
-        "Authorization": "Zoho-oauthtoken " + access_token,
-    }
-    replied_result = requests.post(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/sendReply',
-        data=json.dumps({
-            'channel': 'EMAIL',
-            'to': data['to'],
-            'fromEmailAddress': data['from'],
-            'contentType': 'plainText',
-            # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
-            'content': data['content'],
-            'isForward': True
-        }),
-        headers=headers_for_tickets,
-    )
+    # access_token = get_zoho_access_token(request)
+    # headers_for_tickets = {
+    #     "content-type": "application/json",
+    #     "orgId": settings.ORG_ID,
+    #     "Authorization": "Zoho-oauthtoken " + access_token,
+    # }
+    # replied_result = requests.post(
+    #     "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/sendReply',
+    #     data=json.dumps({
+    #         'channel': 'EMAIL',
+    #         'to': data['to'],
+    #         'fromEmailAddress': data['from'],
+    #         'contentType': 'plainText',
+    #         # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
+    #         'content': data['content'],
+    #         'isForward': True
+    #     }),
+    #     headers=headers_for_tickets,
+    # )
 
-    res = replied_result.json()
-    return JsonResponse(res)
+    # res = replied_result.json()
+    # return JsonResponse(res)
+    from django.core.mail import EmailMultiAlternatives
+
+    message = EmailMultiAlternatives(
+        'REPLY', 
+        data['content'], 
+        to=[data['to']],  # where you receive the contact emails  
+        from_email=data['from'],
+        reply_to=[data['to']]
+    )
+    message.send()
