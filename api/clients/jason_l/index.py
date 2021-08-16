@@ -497,6 +497,7 @@ def push_boks(payload, client, username, method):
     items = bok_2s
     new_bok_2s = []
     bok_2_objs = []
+    lines_missing_dims = []
 
     with transaction.atomic():
         for index, item in enumerate(items):
@@ -521,7 +522,6 @@ def push_boks(payload, client, username, method):
             )
             line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
 
-            lines_missing_dims = []
             if line["is_deleted"] and line["l_005_dim_length"] == 0:
                 line["l_005_dim_length"] = 0.01
                 line["l_006_dim_width"] = 0.01
