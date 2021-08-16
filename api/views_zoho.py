@@ -367,25 +367,35 @@ def get_zoho_ticket_comment(request):
 @permission_classes((AllowAny,))
 def send_zoho_ticket_reply(request):
     data = request.data
-    access_token = get_zoho_access_token(request)
-    headers_for_tickets = {
-        "content-type": "application/json",
-        "orgId": settings.ORG_ID,
-        "Authorization": "Zoho-oauthtoken " + access_token,
-    }
-    replied_result = requests.post(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/sendReply',
-        data=json.dumps({
-            'channel': 'EMAIL',
-            'to': data['to'],
-            'fromEmailAddress': data['from'],
-            'contentType': 'plainText',
-            # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
-            'content': data['content'],
-            'isForward': True
-        }),
-        headers=headers_for_tickets,
-    )
+    # access_token = get_zoho_access_token(request)
+    # headers_for_tickets = {
+    #     "content-type": "application/json",
+    #     "orgId": settings.ORG_ID,
+    #     "Authorization": "Zoho-oauthtoken " + access_token,
+    # }
+    # replied_result = requests.post(
+    #     "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/sendReply',
+    #     data=json.dumps({
+    #         'channel': 'EMAIL',
+    #         'to': data['to'],
+    #         'fromEmailAddress': data['from'],
+    #         'contentType': 'plainText',
+    #         # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
+    #         'content': data['content'],
+    #         'isForward': True
+    #     }),
+    #     headers=headers_for_tickets,
+    # )
 
-    res = replied_result.json()
-    return JsonResponse(res)
+    # res = replied_result.json()
+    # return JsonResponse(res)
+    from django.core.mail import EmailMultiAlternatives
+
+    message = EmailMultiAlternatives(
+        'REPLY', 
+        data['content'], 
+        to=[data['to']],  # where you receive the contact emails  
+        from_email=data['from'],
+        reply_to=[data['to']]
+    )
+    message.send()
