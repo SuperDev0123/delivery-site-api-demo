@@ -1864,7 +1864,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 if booking.api_booking_quote:
                     # KPI Deliver Days = The number of days we get from the pricing service table or provider API the service should take - e.g. 3 days
-                    etd_in_hour = get_etd_in_hour(quotes[index])
+                    etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
                     etd_in_days = f"{math.ceil(etd_in_hour / 24)}"
                     col_30 = etd_in_days
                     worksheet.write(row, col + 30, col_30)
