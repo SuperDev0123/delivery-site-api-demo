@@ -1478,6 +1478,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         shutil.move(filename, local_filepath + filename)
         logger.info("#375 Finished - `BookingsWithGaps` XLS")
     elif xls_type == "Whse":
+        from api.fp_apis.utils import get_etd_in_hour
+
         logger.info("#360 Get started to build `Whse` XLS")
         worksheet.set_column(7, 8, width=40)
         worksheet.set_column(9, 9, width=53)
@@ -1705,32 +1707,32 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             #     else:
             #         worksheet.write(row, col + 3, days_early_late)
 
-            days_early_late = 0
-            if booking.b_dateBookedDate and booking.s_06_Latest_Delivery_Date_TimeSet:
-                days_early_late = (
-                    booking.s_06_Latest_Delivery_Date_TimeSet.date() - sydney_now.date()
-                ).days
+            # days_early_late = 0
+            # if booking.b_dateBookedDate and booking.s_06_Latest_Delivery_Date_TimeSet:
+            #     days_early_late = (
+            #         booking.s_06_Latest_Delivery_Date_TimeSet.date() - sydney_now.date()
+            #     ).days
 
-            if (
-                booking.b_dateBookedDate
-                and not booking.s_06_Latest_Delivery_Date_TimeSet
-                and booking.api_booking_quote
-            ):
-                from api.utils import get_eta_pu_by, get_eta_de_by
+            # if (
+            #     booking.b_dateBookedDate
+            #     and not booking.s_06_Latest_Delivery_Date_TimeSet
+            #     and booking.api_booking_quote
+            # ):
+            #     from api.utils import get_eta_pu_by, get_eta_de_by
 
-                s_06 = get_eta_de_by(booking, booking.api_booking_quote)
-                days_early_late = (s_06.date() - sydney_now.date()).days
+            #     s_06 = get_eta_de_by(booking, booking.api_booking_quote)
+            #     days_early_late = (s_06.date() - sydney_now.date()).days
 
-            if days_early_late < 0:
-                cell_format = workbook.add_format({"font_color": "red"})
-                worksheet.write(
-                    row,
-                    col + 3,
-                    f"({-days_early_late})",
-                    cell_format,
-                )
-            else:
-                worksheet.write(row, col + 3, days_early_late)
+            # if days_early_late < 0:
+            #     cell_format = workbook.add_format({"font_color": "red"})
+            #     worksheet.write(
+            #         row,
+            #         col + 3,
+            #         f"({-days_early_late})",
+            #         cell_format,
+            #     )
+            # else:
+            #     worksheet.write(row, col + 3, days_early_late)
 
             query_with = ""
             if booking.dme_status_action is None or booking.dme_status_action == "":
@@ -1847,29 +1849,33 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write(row, col + 28, booking.delivery_kpi_days)
 
+            col_29, col_30 = None, None
             if (
-                booking.b_status is not None
+                booking.b_status
                 and booking.b_status == "Delivered"
-                and booking.s_21_Actual_Delivery_TimeStamp is not None
-                and booking.b_dateBookedDate is not None
+                and booking.b_dateBookedDate
+                and booking.s_21_Actual_Delivery_TimeStamp
             ):
-                worksheet.write(
-                    row,
-                    col + 29,
-                    (
-                        booking.s_21_Actual_Delivery_TimeStamp.date()
-                        - booking.b_dateBookedDate.date()
-                    ).days,
-                )
-                worksheet.write(
-                    row,
-                    col + 30,
-                    booking.delivery_kpi_days
-                    - (
-                        booking.s_21_Actual_Delivery_TimeStamp.date()
-                        - booking.b_dateBookedDate.date()
-                    ).days,
-                )
+                # Actual delivery days = Delivered Dated - Booked Date
+                col_29 = (
+                    booking.s_21_Actual_Delivery_TimeStamp - booking.b_dateBookedDate
+                ).days
+                worksheet.write(row, col + 29, col_29)
+
+                if booking.api_booking_quote:
+                    # KPI Deliver Days = The number of days we get from the pricing service table or provider API the service should take - e.g. 3 days
+                    etd_in_hour = get_etd_in_hour(quotes[index])
+                    etd_in_days = f"{math.ceil(etd_in_hour / 24)}"
+                    col_30 = etd_in_days
+                    worksheet.write(row, col + 30, col_30)
+
+            # Number of Days early / late - 1 above minus 2 above
+            if col_29 != None and col_30 != None:
+                if (col_29 - col_30) < 0:
+                    cell_format = workbook.add_format({"font_color": "red"})
+                    worksheet.write(row, col + 3, f"{col_30-col_29}", cell_format)
+                else:
+                    worksheet.write(row, col + 3, (col_29 - col_30))
 
             if booking.z_calculated_ETA:
                 worksheet.write_datetime(
