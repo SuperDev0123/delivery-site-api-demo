@@ -640,6 +640,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         # Plum agent
         if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
             cc_emails.append("JManiquis@plumproducts.com")
+            cc_emails.append("aushelpdesk@plumproducts.com")
 
     send_email(
         to_emails,
