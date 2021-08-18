@@ -137,7 +137,11 @@ def create(booking, status, username, event_timestamp=None):
                         delivered_time,
                     )
 
-                    if not settings.ENV in ["local", "dev"]:
+                    if (
+                        not settings.ENV in ["local", "dev"]
+                        and booking.kf_client_id
+                        == "461162D2-90C7-BF4E-A905-000000000004"
+                    ):
                         # Send SMS to Plum agent
                         send_status_update_sms(
                             "0411608093",
