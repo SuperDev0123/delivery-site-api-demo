@@ -195,7 +195,7 @@ def get_zoho_tickets_with_booking_id(request):
                                 if comment.status_code == 200: 
                                     content = comment.json()['content']
 
-                            if (dmeid in content) or (invoice_num in content):
+                            if (dmeid and dmeid in content) or (invoice_num and invoice_num in content):
                                 tickets.append(ticket_data)
                                 continue
         if not tickets:
