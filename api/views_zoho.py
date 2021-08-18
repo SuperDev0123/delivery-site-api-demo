@@ -379,7 +379,7 @@ def send_zoho_ticket_reply(request):
             'channel': 'EMAIL',
             'to': data['to'],
             'fromEmailAddress': data['from'],
-            'contentType': 'plainText',
+            'contentType': 'html',
             # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
             'content': data['content'],
             'isForward': True
