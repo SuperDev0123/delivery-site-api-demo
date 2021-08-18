@@ -122,7 +122,7 @@ def create(booking, status, username, event_timestamp=None):
                     de_address = f"{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' if booking.de_To_Address_Street_2 else ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}"
                     delivered_time = booking.s_21_Actual_Delivery_TimeStamp.strftime(
                         "%d/%m/%Y %H:%M"
-                    )
+                    ) if booking.s_21_Actual_Delivery_TimeStamp else ''
                     send_status_update_sms(
                         booking.de_to_Phone_Main or booking.de_to_Phone_Mobile,
                         de_name,
