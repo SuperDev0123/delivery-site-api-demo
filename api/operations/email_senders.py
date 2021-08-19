@@ -64,8 +64,16 @@ def send_booking_status_email(bookingId, emailName, sender):
 
     files = []
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
-    BOOKEDDATE = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate) if booking.b_dateBookedDate else ''
-    DELIVERYDATE = convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp) if booking.s_21_Actual_Delivery_TimeStamp else ''
+    BOOKEDDATE = (
+        convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
+        if booking.b_dateBookedDate
+        else ""
+    )
+    DELIVERYDATE = (
+        convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp)
+        if booking.s_21_Actual_Delivery_TimeStamp
+        else ""
+    )
     TOADDRESSCONTACT = f" {booking.pu_Contact_F_L_Name}"
     FUTILEREASON = booking.vx_futile_Booking_Notes
     BOOKING_NUMBER = booking.b_bookingID_Visual
@@ -89,10 +97,14 @@ def send_booking_status_email(bookingId, emailName, sender):
 
     SERVICE = booking.vx_serviceName
     LATEST_PICKUP_TIME = (
-        convert_to_AU_SYDNEY_tz(booking.s_05_Latest_Pick_Up_Date_TimeSet) if booking.s_05_Latest_Pick_Up_Date_TimeSet else ''
+        convert_to_AU_SYDNEY_tz(booking.s_05_Latest_Pick_Up_Date_TimeSet)
+        if booking.s_05_Latest_Pick_Up_Date_TimeSet
+        else ""
     )
     LATEST_DELIVERY_TIME = (
-        convert_to_AU_SYDNEY_tz(booking.s_06_Latest_Delivery_Date_TimeSet) if booking.s_06_Latest_Delivery_Date_TimeSet else ''
+        convert_to_AU_SYDNEY_tz(booking.s_06_Latest_Delivery_Date_TimeSet)
+        if booking.s_06_Latest_Delivery_Date_TimeSet
+        else ""
     )
     DELIVERY_ETA = booking.z_calculated_ETA
     INSTRUCTIONS = booking.b_handling_Instructions
@@ -521,7 +533,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         else:
             if category == "Complete" and index == 4:
                 timestamps.append(
-                    booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M") if booking.s_21_Actual_Delivery_TimeStamp else ''
+                    booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
+                    if booking.s_21_Actual_Delivery_TimeStamp
+                    else ""
                 )
             else:
                 timestamps.append(
@@ -623,10 +637,11 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         subject = f"FROM TEST SERVER - {subject}"
     else:
 
-        if booking.pu_Email:
-            to_emails.append(booking.pu_Email)
         if booking.de_Email:
-            cc_emails.append(booking.de_Email)
+            to_emails.append(booking.de_Email)
+        else:
+            to_emails.append("bookings@deliver-me.com.au")
+
         if booking.pu_email_Group:
             cc_emails = cc_emails + booking.pu_email_Group.split(",")
         if booking.de_Email_Group_Emails:
