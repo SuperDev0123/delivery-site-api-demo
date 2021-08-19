@@ -2259,6 +2259,20 @@ class BookingViewSet(viewsets.ViewSet):
                 "pu_email_Group": booking.de_Email_Group_Emails,
                 "de_Email_Group_Name": booking.pu_email_Group_Name,
                 "de_Email_Group_Emails": booking.pu_email_Group,
+                "pu_Address_Type": booking.pu_Address_Type,
+                "de_To_AddressType": booking.de_To_AddressType,
+                "pu_no_of_assists": booking.pu_no_of_assists,
+                "de_no_of_assists": booking.de_no_of_assists,
+                "pu_location": booking.pu_location,
+                "de_to_location": booking.de_to_location,
+                "pu_access": booking.pu_access,
+                "de_access": booking.de_access,
+                "pu_floor_number": booking.pu_floor_number,
+                "de_floor_number": booking.de_floor_number,
+                "pu_floor_access_by": booking.pu_floor_access_by,
+                "de_to_floor_access_by": booking.de_to_floor_access_by,
+                "pu_service": booking.pu_service,
+                "de_service": booking.de_service,
             }
         else:
             newBooking = {
@@ -2286,6 +2300,20 @@ class BookingViewSet(viewsets.ViewSet):
                 "pu_email_Group": booking.pu_email_Group,
                 "de_Email_Group_Name": booking.de_Email_Group_Name,
                 "de_Email_Group_Emails": booking.de_Email_Group_Emails,
+                "pu_Address_Type": booking.de_To_AddressType,
+                "de_To_AddressType": booking.pu_Address_Type,
+                "pu_no_of_assists": booking.de_no_of_assists,
+                "de_no_of_assists": booking.pu_no_of_assists,
+                "pu_location": booking.de_to_location,
+                "de_to_location": booking.pu_location,
+                "pu_access": booking.de_access,
+                "de_access": booking.pu_access,
+                "pu_floor_number": booking.de_floor_number,
+                "de_floor_number": booking.pu_floor_number,
+                "pu_floor_access_by": booking.de_to_floor_access_by,
+                "de_to_floor_access_by": booking.pu_floor_access_by,
+                "pu_service": booking.de_service,
+                "de_service": booking.pu_service,
             }
 
         newBooking["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
@@ -2306,6 +2334,7 @@ class BookingViewSet(viewsets.ViewSet):
         newBooking[
             "x_booking_Created_With"
         ] = f"Duped from #{booking.b_bookingID_Visual}"
+        newBooking["booking_type"] = booking.booking_type
 
         if dup_line_and_linedetail == "true":
             booking_lines = Booking_lines.objects.filter(
