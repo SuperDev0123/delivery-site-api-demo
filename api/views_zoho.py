@@ -109,10 +109,7 @@ def get_all_zoho_tickets(request):
     )
 
     if all_tickets.status_code == 200:
-        final_ticket = {
-            "status": "success", 
-            "tickets": all_tickets.json()['data']
-        }
+        final_ticket = {"status": "success", "tickets": all_tickets.json()["data"]}
         return JsonResponse(final_ticket)
     elif all_tickets.status_code == 204:
         return JsonResponse(
@@ -122,10 +119,7 @@ def get_all_zoho_tickets(request):
             }
         )
     else:
-        final_ticket = {
-            "status": all_tickets.status_code, 
-            "tickets": []
-        }
+        final_ticket = {"status": all_tickets.status_code, "tickets": []}
         return JsonResponse(final_ticket)
 
 
@@ -160,7 +154,7 @@ def get_zoho_tickets_with_booking_id(request):
                 "orgId": settings.ORG_ID,
                 "Authorization": "Zoho-oauthtoken " + data[0].value,
             }
-            
+
             ticket_response = requests.get(
                 "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"],
                 headers=headers,
@@ -170,32 +164,45 @@ def get_zoho_tickets_with_booking_id(request):
                 ticket_data = ticket_response.json()
                 to_be_checked = f"{ticket_data['subject'] or ''} {ticket_data['cf']['cf_dme_id_consignment_no'] or ''}"
                 # if (dmeid and dmeid in to_be_checked) or (order_num and order_num in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
-                if (dmeid and dmeid in to_be_checked) or (invoice_num and invoice_num in to_be_checked):
+                if (dmeid and dmeid in to_be_checked) or (
+                    invoice_num and invoice_num in to_be_checked
+                ):
                     tickets.append(ticket_data)
                 else:
                     ticket_details = requests.get(
-                        "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"] + "/conversations",
-                        headers=headers,                    
+                        "https://desk.zoho.com.au/api/v1/tickets/"
+                        + ticket["id"]
+                        + "/conversations",
+                        headers=headers,
                     )
                     if ticket_details.status_code == 200:
-                        for item in ticket_details.json()['data']:
+                        for item in ticket_details.json()["data"]:
                             content = None
-                            if item['type'] == 'thread':
+                            if item["type"] == "thread":
                                 thread = requests.get(
-                                    "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"] + "/threads/" + item['id'] + "?include=plainText",
-                                    headers=headers,                    
+                                    "https://desk.zoho.com.au/api/v1/tickets/"
+                                    + ticket["id"]
+                                    + "/threads/"
+                                    + item["id"]
+                                    + "?include=plainText",
+                                    headers=headers,
                                 )
-                                if thread.status_code == 200: 
-                                    content = thread.json()['plainText']
+                                if thread.status_code == 200:
+                                    content = thread.json()["plainText"]
                             else:
                                 comment = requests.get(
-                                    "https://desk.zoho.com.au/api/v1/tickets/" + ticket["id"] + "/comments/" + item['id'],
-                                    headers=headers,                    
+                                    "https://desk.zoho.com.au/api/v1/tickets/"
+                                    + ticket["id"]
+                                    + "/comments/"
+                                    + item["id"],
+                                    headers=headers,
                                 )
-                                if comment.status_code == 200: 
-                                    content = comment.json()['content']
+                                if comment.status_code == 200:
+                                    content = comment.json()["content"]
 
-                            if (dmeid and dmeid in content) or (invoice_num and invoice_num in content):
+                            if (dmeid and content and dmeid in content) or (
+                                invoice_num and content and invoice_num in content
+                            ):
                                 tickets.append(ticket_data)
                                 continue
         if not tickets:
@@ -231,18 +238,12 @@ def merge_zoho_tickets(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     merged_result = requests.post(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/merge',
-        data=json.dumps({
-            'ids': data['ids'],
-            'source': data['source']
-        }),
+        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"] + "/merge",
+        data=json.dumps({"ids": data["ids"], "source": data["source"]}),
         headers=headers_for_tickets,
     )
 
-    res = {
-        "status": merged_result.status_code, 
-        "result": merged_result.json()
-    }
+    res = {"status": merged_result.status_code, "result": merged_result.json()}
     return JsonResponse(res)
 
 
@@ -257,15 +258,12 @@ def close_zoho_ticket(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     closed_result = requests.patch(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'],
-        data=json.dumps({ 'status': 'Closed'}),
+        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"],
+        data=json.dumps({"status": "Closed"}),
         headers=headers_for_tickets,
     )
 
-    res = {
-        "status": closed_result.status_code, 
-        "result": closed_result.json()
-    }
+    res = {"status": closed_result.status_code, "result": closed_result.json()}
     return JsonResponse(res)
 
 
@@ -280,8 +278,8 @@ def update_zoho_ticket(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     updated_ticket = requests.patch(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'],
-        data=json.dumps(data['data']),
+        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"],
+        data=json.dumps(data["data"]),
         headers=headers_for_tickets,
     )
 
@@ -299,7 +297,7 @@ def get_zoho_ticket_details(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_details = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'],
+        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"],
         headers=headers_for_tickets,
     )
 
@@ -318,7 +316,7 @@ def get_zoho_ticket_conversation_list(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_conversations = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/conversations',
+        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"] + "/conversations",
         headers=headers_for_tickets,
     )
     res = ticket_conversations.json()
@@ -336,7 +334,11 @@ def get_zoho_ticket_thread(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_threads = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/threads/' + data['item'] + "?include=plainText",
+        "https://desk.zoho.com.au/api/v1/tickets/"
+        + data["id"]
+        + "/threads/"
+        + data["item"]
+        + "?include=plainText",
         headers=headers_for_tickets,
     )
 
@@ -355,7 +357,10 @@ def get_zoho_ticket_comment(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_comments = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/comments/' + data['item'],
+        "https://desk.zoho.com.au/api/v1/tickets/"
+        + data["id"]
+        + "/comments/"
+        + data["item"],
         headers=headers_for_tickets,
     )
 
@@ -374,16 +379,18 @@ def send_zoho_ticket_reply(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     replied_result = requests.post(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + '/sendReply',
-        data=json.dumps({
-            'channel': 'EMAIL',
-            'to': data['to'],
-            'fromEmailAddress': data['from'],
-            'contentType': 'html',
-            # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
-            'content': data['content'],
-            'isForward': True
-        }),
+        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"] + "/sendReply",
+        data=json.dumps(
+            {
+                "channel": "EMAIL",
+                "to": data["to"],
+                "fromEmailAddress": data["from"],
+                "contentType": "html",
+                # 'subject' : '#' +threadcontent.ticketNumber + ' ' + threadcontent.subject,
+                "content": data["content"],
+                "isForward": True,
+            }
+        ),
         headers=headers_for_tickets,
     )
 
