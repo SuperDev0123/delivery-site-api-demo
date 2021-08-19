@@ -1848,7 +1848,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         string=booking.z_pod_signed_url,
                     )
 
-            worksheet.write(row, col + 28, booking.delivery_kpi_days)
+            if booking.api_booking_quote:
+                etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
+                etd_in_days = math.ceil(etd_in_hour / 24)
+                worksheet.write(row, col + 28, etd_in_days)
+            else:
+                worksheet.write(row, col + 28, booking.delivery_kpi_days)
 
             col_29, col_30 = None, None
             if (
