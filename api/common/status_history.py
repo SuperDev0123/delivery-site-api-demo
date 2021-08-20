@@ -120,9 +120,13 @@ def create(booking, status, username, event_timestamp=None):
                     # )
                     de_company = booking.deToCompanyName
                     de_address = f"{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' if booking.de_To_Address_Street_2 else ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}"
-                    delivered_time = booking.s_21_Actual_Delivery_TimeStamp.strftime(
-                        "%d/%m/%Y %H:%M"
-                    ) if booking.s_21_Actual_Delivery_TimeStamp else ''
+                    delivered_time = (
+                        booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                        if booking.s_21_Actual_Delivery_TimeStamp
+                        else ""
+                    )
                     send_status_update_sms(
                         booking.de_to_Phone_Main or booking.de_to_Phone_Mobile,
                         de_name,
@@ -156,6 +160,21 @@ def create(booking, status, username, event_timestamp=None):
                             de_address,
                             delivered_time,
                         )
+
+                    # Send SMS to Stephen (A week period)
+                    send_status_update_sms(
+                        "0499776446",
+                        de_name,
+                        booking.b_client_name,
+                        booking.b_bookingID_Visual,
+                        booking.v_FPBookingNumber,
+                        category_new,
+                        eta,
+                        url,
+                        de_company,
+                        de_address,
+                        delivered_time,
+                    )
 
     tempo.push_via_api(booking)
 

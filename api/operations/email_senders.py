@@ -713,6 +713,7 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     to_emails = ["rejina@jasonl.com.au"]
     cc_emails = [
         "stephenm@deliver-me.com.au",
+        "petew@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
     send_email(to_emails, cc_emails, subject, message)
