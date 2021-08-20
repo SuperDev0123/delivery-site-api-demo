@@ -4794,6 +4794,11 @@ class BookingSetsViewSet(viewsets.ModelViewSet):
         request.data["status"] = "Created"
         request.data["z_createdByAccount"] = get_clientname(request)
         request.data["z_createdTimeStamp"] = str(datetime.now())
+
+        # prevent empty string
+        if not request.data["line_haul_date"]:
+            request.data["line_haul_date"] = None
+
         serializer = BookingSetsSerializer(data=request.data)
 
         if serializer.is_valid():
