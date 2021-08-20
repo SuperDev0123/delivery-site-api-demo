@@ -1374,7 +1374,6 @@ class BookingsViewSet(viewsets.ViewSet):
                         )
 
                     status_history.create(booking, status, request.user.username)
-                    booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
@@ -2416,7 +2415,6 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             status_history.create(booking, "Booked", request.user.username)
-            booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
             booking.save()
             serializer = BookingSerializer(booking)
@@ -4083,7 +4081,6 @@ def get_csv(request):
                 ############################################################################################
                 booking.b_dateBookedDate = get_sydney_now_time()
                 status_history.create(booking, "Booked", request.user.username)
-                booking.b_status = "Booked"
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 booking.save()
 
@@ -4112,7 +4109,6 @@ def get_csv(request):
                 booking.b_dateBookedDate = get_sydney_now_time(return_type="datetime")
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 status_history.create(booking, "Booked", request.user.username)
-                booking.b_status = "Booked"
                 booking.save()
 
                 if vx_freight_provider == "state transport":
@@ -4210,11 +4206,9 @@ def get_manifest(request):
                         "JasonL In house",
                     ]:
                         status_history.create(booking, "Booked", username)
-                        booking.b_status = "Booked"
                         booking.b_dateBookedDate = datetime.now()
                     else:
                         status_history.create(booking, "Ready for Despatch", username)
-                        booking.b_status = "Ready for Despatch"
 
                 booking.save()
 
@@ -4334,7 +4328,6 @@ def build_label(request):
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":
             status_history.create(booking, "Picked", request.user.username)
-            booking.b_status = "Picked"
 
         booking.save()
     except Exception as e:

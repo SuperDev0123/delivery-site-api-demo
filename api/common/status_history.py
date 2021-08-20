@@ -11,7 +11,7 @@ from api.operations.email_senders import send_status_update_email
 logger = logging.getLogger(__name__)
 
 # Create new status_history for Booking
-def create(booking, status, username, event_timestamp=None):
+def create(booking, new_status, username, event_timestamp=None):
 
     from api.fp_apis.utils import get_status_category_from_status
     from api.helpers.etd import get_etd
@@ -29,15 +29,17 @@ def create(booking, status, username, event_timestamp=None):
         last_status_history = None
 
     if not last_status_history or (
-        last_status_history and status and last_status_history.status_last != status
+        last_status_history
+        and new_status
+        and last_status_history.status_last != new_status
     ):
         dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
-        notes = f"{str(booking.b_status)} ---> {str(status)}"
+        notes = f"{str(booking.b_status)} ---> {str(new_status)}"
         logger.info(f"@700 New Status! {booking.b_bookingID_Visual}({notes})")
 
         dme_status_history.status_old = booking.b_status
         dme_status_history.notes = notes
-        dme_status_history.status_last = status
+        dme_status_history.status_last = new_status
         dme_status_history.event_time_stamp = (
             event_timestamp if event_timestamp else datetime.now()
         )
@@ -46,10 +48,10 @@ def create(booking, status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
-        booking.b_status = status
+        booking.b_status = new_status
         booking.save()
 
-        if status.lower() == "delivered":
+        if new_status.lower() == "delivered":
             if event_timestamp:
                 booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
                 booking.delivery_booking = event_timestamp[:10]
@@ -176,7 +178,7 @@ def create(booking, status, username, event_timestamp=None):
                         delivered_time,
                     )
 
-    tempo.push_via_api(booking)
+        tempo.push_via_api(booking)
 
 
 # Create new status_history for Bok

@@ -228,7 +228,7 @@ def rebook(request, fp_name):
                         + ")",
                         request.user.username,
                     )
-                    booking.b_status = "PU Rebooked"
+                    status_history.create(booking, "PU Rebooked", "jason_l")
                     booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
@@ -368,7 +368,7 @@ def edit_book(request, fp_name):
                 ]
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                 booking.b_dateBookedDate = datetime.now()
-                booking.b_status = "Booked"
+                status_history.create(booking, "Booked", "DME_API")
                 booking.b_error_Capture = None
                 booking.save()
 
@@ -445,7 +445,6 @@ def cancel_book(request, fp_name):
                 try:
                     if response.status_code == 200:
                         status_history.create(booking, "Closed", request.user.username)
-                        booking.b_status = "Closed"
                         booking.b_dateBookedDate = None
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"

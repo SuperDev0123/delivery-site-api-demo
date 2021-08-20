@@ -48,7 +48,6 @@ def book(fp_name, booking, booker):
             booking, booking.api_booking_quote
         )
         booking.b_dateBookedDate = datetime.now()
-        booking.b_status = "Booked"
         booking.b_error_Capture = None
         status_history.create(booking, "Booked", booker)
         booking.save()
@@ -126,7 +125,7 @@ def book(fp_name, booking, booker):
                 booking, booking.api_booking_quote
             )
             booking.b_dateBookedDate = datetime.now()
-            booking.b_status = "Booked"
+            status_history.create(booking, "Booked", booker)
             booking.b_error_Capture = None
             booking.save()
 
@@ -137,9 +136,6 @@ def book(fp_name, booking, booker):
                 response=res_content,
                 fk_booking_id=booking.id,
             ).save()
-
-            # Create new statusHistory
-            status_history.create(booking, "Booked", booker)
 
             # Save Label for Hunter
             is_get_label = True  # Flag to decide if need to get label from response

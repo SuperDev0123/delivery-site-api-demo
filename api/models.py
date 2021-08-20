@@ -2251,8 +2251,7 @@ class Booking_lines(models.Model):
                 ).count()
 
                 if booking_lines_cnt - 1 == picked_up_lines_cnt:
-                    booking.b_status = "Ready for Booking"
-                    booking.save()
+                    status_history.create(booking, "Ready for Booking", "DME_BE")
 
         return super(Booking_lines, self).save(*args, **kwargs)
 
@@ -4553,7 +4552,6 @@ class BookingSets(models.Model):
                     )
                     booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                     status_history.create(booking, "Booked", "DME_BE")
-                    booking.b_status = "Booked"
                     booking.save()
 
                     # Build Label and send booking email

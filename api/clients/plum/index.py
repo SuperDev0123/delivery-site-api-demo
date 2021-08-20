@@ -1145,7 +1145,7 @@ def scanned(payload, client):
         elif fp_name == "hunter" and booking.b_status == "Picking":
             next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
             booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-            booking.b_status = "Ready for Booking"
+            status_history.create(booking, "Ready for Booking", "jason_l")
             booking.save()
 
             success, message = book_oper(fp_name, booking, "DME_API")
@@ -1297,9 +1297,9 @@ def ready_boks(payload, client):
 
     # Update DB so that Booking can be BOOKED
     if booking.api_booking_quote:
-        booking.b_status = "Ready for Booking"
+        status_history.create(booking, "Ready for Booking", "jason_l")
     else:
-        booking.b_status = "On Hold"
+        status_history.create(booking, "On Hold", "jason_l")
         send_email_to_admins(
             f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
             f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
