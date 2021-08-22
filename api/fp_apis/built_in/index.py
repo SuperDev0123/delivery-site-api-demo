@@ -2,7 +2,7 @@ import random
 import logging
 
 from api.models import Booking_lines
-from api.fp_apis.built_in import century, camerons, toll, allied
+from api.fp_apis.built_in import century, camerons, toll, allied, atc
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,8 @@ def get_pricing(fp_name, booking, booking_lines=[], is_pricing_only=False):
             prices = toll.get_pricing(fp_name, booking, booking_lines)
         elif fp_name.lower() == "allied":
             prices = allied.get_pricing(fp_name, booking, booking_lines)
+        elif fp_name.lower() == "atc":
+            prices = atc.get_pricing(fp_name, booking, booking_lines)
     except Exception as e:
         message = f"@800 {LOG_ID} {str(e)}"
         logger.info(message)

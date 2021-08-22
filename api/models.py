@@ -4275,6 +4275,7 @@ class FP_costs(models.Model):
 class FP_pricing_rules(models.Model):
     id = models.AutoField(primary_key=True)
     freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    client = models.ForeignKey(DME_clients, on_delete=models.CASCADE, null=True)
     cost = models.ForeignKey(FP_costs, on_delete=models.CASCADE, null=True)
     etd = models.ForeignKey(FP_Service_ETDs, on_delete=models.CASCADE, null=True)
     vehicle = models.ForeignKey(

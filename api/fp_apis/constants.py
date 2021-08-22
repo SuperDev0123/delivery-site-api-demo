@@ -14,7 +14,7 @@ elif settings.ENV == "prod":
 
 PRICING_TIME = 10  # seconds
 
-# "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost"
+# "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost", "ATC"
 AVAILABLE_FPS_4_FC = [
     "Startrack",
     "AUSPost",
@@ -26,9 +26,11 @@ AVAILABLE_FPS_4_FC = [
     "Camerons",
     "Toll",
     "Century",
+    "ATC"
 ]
 
 BUILT_IN_PRICINGS = {
+    "atc": {"service_types": ["standard", "vip", "express"]},
     "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},

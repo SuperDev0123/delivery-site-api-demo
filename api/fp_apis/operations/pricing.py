@@ -368,7 +368,9 @@ async def _built_in_pricing_worker_builder(
     logger.info(
         f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results['price'])}, Results: {results['price']}"
     )
-    parse_results = parse_pricing_response(results, _fp_name, booking, True)
+    parse_results = parse_pricing_response(
+        results, _fp_name, booking, True, None, booking.get_client().company_name
+    )
 
     for parse_result in parse_results:
         if parse_results and not "error" in parse_results:
