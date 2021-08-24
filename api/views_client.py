@@ -839,6 +839,7 @@ def get_delivery_status(request):
             "b_063_b_del_email": booking.de_Email,
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
             "b_000_3_consignment_number": booking.v_FPBookingNumber,
+            "vx_freight_provider": booking.vx_freight_provider,
         }
 
         def line_to_dict(line):
