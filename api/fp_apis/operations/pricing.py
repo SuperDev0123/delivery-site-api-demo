@@ -369,7 +369,7 @@ async def _built_in_pricing_worker_builder(
         f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results['price'])}, Results: {results['price']}"
     )
     parse_results = parse_pricing_response(
-        results, _fp_name, booking, True, None, booking.get_client().company_name
+        results, _fp_name, booking, True, None, booking.b_client_name
     )
 
     for parse_result in parse_results:
