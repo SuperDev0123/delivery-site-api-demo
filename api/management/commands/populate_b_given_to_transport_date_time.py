@@ -51,7 +51,7 @@ class Command(BaseCommand):
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
-        for index, booking in enumerate(bookings[:20]):
+        for index, booking in enumerate(bookings):
             if index % 10 == 0:
                 print(f"    {index}/{bookings_cnt} processing...")
 
