@@ -67,6 +67,10 @@ class Command(BaseCommand):
                     print(
                         f"    {booking.b_bookingID_Visual}({booking.vx_freight_provider}): {str(transit_statuses[0]['event_time'])}"
                     )
+                    booking.b_given_to_transport_date_time = transit_statuses[0][
+                        "event_time"
+                    ]
+                    booking.save()
             except Exception as e:
                 print(
                     f"    Issue from Booking({booking.b_bookingID_Visual} - {booking.vx_freight_provider}), Error: {str(e)}"
