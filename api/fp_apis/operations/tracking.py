@@ -136,6 +136,6 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     # booking.b_booking_Notes = status_desc
     booking.save()
 
-    msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
-    logger.info(msg)
+    # msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
+    # logger.info(msg)
     return True
