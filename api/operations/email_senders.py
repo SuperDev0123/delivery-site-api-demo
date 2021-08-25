@@ -730,4 +730,4 @@ def send_email_to_admins(subject, message):
         if settings.ENV in ["prod"]:
             to_emails.append("bookings@deliver-me.com.au")
 
-        send_email(to_emails, cc_emails, subject, message)
+        send_email(to_emails, [], subject, message)

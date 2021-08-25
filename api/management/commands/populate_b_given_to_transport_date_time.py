@@ -17,6 +17,7 @@ class Command(BaseCommand):
         print("----- Populating `b_given_to_transport_date_time` ... -----")
         bookings = (
             Bookings.objects.filter(b_given_to_transport_date_time__isnull=True)
+            .filter(vx_freight_provider__in=["TNT", "HUNTER", "SENDLE", "ALLIED"])
             .exclude(
                 b_status__in=[
                     "Entered",
@@ -52,7 +53,7 @@ class Command(BaseCommand):
 
                 if transit_statuses:
                     print(
-                        f"    {booking.b_bookingID_Visual} - {str(transit_statuses[0])}"
+                        f"    {booking.b_bookingID_Visual} - {str(transit_statuses[0]['event_time'])}"
                     )
             except Exception as e:
                 print(
