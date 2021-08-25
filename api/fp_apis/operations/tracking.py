@@ -75,21 +75,35 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
     # Allied
     _consignmentStatuses = consignmentStatuses
+
     if fp_name.lower() == "allied":
+        _consignmentStatuses_0 = consignmentStatuses
+
         # Sort by timestamp
-        _consignmentStatuses = sorted(
+        _consignmentStatuses_0 = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
 
         # Check Partially Delivered
         has_delivered_status = False
         delivered_status_cnt = 0
-        last_consignmentStatus = _consignmentStatuses[len(_consignmentStatuses) - 1]
+        last_consignmentStatus = _consignmentStatuses_0[len(_consignmentStatuses_0) - 1]
 
-        for _consignmentStatus in _consignmentStatuses:
+        for _consignmentStatus in _consignmentStatuses_0:
             if _consignmentStatus["status"] == "DEL":
                 has_delivered_status = True
                 delivered_status_cnt += 1
+
+        # Take out status after `DEL`
+        if has_delivered_status:
+            del_index = 0
+
+            for index, _consignmentStatus in _consignmentStatuses_0:
+                if _consignmentStatus["status"] == "DEL":
+                    del_index = index
+
+                if del_index > 0:
+                    _consignmentStatuses.pop(index)
 
         if has_delivered_status:
             lines = booking.lines().filter(is_deleted=False)
