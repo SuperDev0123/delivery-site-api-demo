@@ -58,6 +58,6 @@ class Command(BaseCommand):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            console.log("@1 - ", consignmentStatuses)
+            print("@1 - ", consignmentStatuses)
 
         print("\n----- Finished! -----")
