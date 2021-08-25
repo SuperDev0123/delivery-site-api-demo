@@ -186,7 +186,7 @@ def create(booking, new_status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
-    post_new_status(booking, dme_status_history, new_status)
+        post_new_status(booking, dme_status_history, new_status)
 
 
 # Create new status_history for Bok
