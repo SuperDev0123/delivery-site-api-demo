@@ -11,7 +11,7 @@ from api.operations.email_senders import send_status_update_email
 logger = logging.getLogger(__name__)
 
 
-def notify_user_via_email_sms(booking, category_new, category_old):
+def notify_user_via_email_sms(booking, category_new, category_old, username):
     from api.helpers.etd import get_etd
 
     # JasonL and Plum
@@ -126,7 +126,7 @@ def notify_user_via_api(booking):
     tempo.push_via_api(booking)
 
 
-def post_new_status(booking, dme_status_history, new_status, event_timestamp):
+def post_new_status(booking, dme_status_history, new_status, event_timestamp, username):
     from api.fp_apis.utils import get_status_category_from_status
 
     category_new = get_status_category_from_status(dme_status_history.status_last)
@@ -150,7 +150,7 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp):
     booking.b_status = new_status
     booking.save()
 
-    notify_user_via_email_sms(booking, category_new, category_old)
+    notify_user_via_email_sms(booking, category_new, category_old, username)
     notify_user_via_api(booking)
 
 
@@ -187,7 +187,9 @@ def create(booking, new_status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
-        post_new_status(booking, dme_status_history, new_status, event_timestamp)
+        post_new_status(
+            booking, dme_status_history, new_status, event_timestamp, username
+        )
 
 
 # Create new status_history for Bok
