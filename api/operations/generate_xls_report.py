@@ -1593,15 +1593,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             actual_delivery_days, kpi_delivery_days = None, None
             if (
-                booking.b_status
-                and booking.b_status == "Delivered"
+                booking.b_status == "Delivered"
                 and booking.b_dateBookedDate
                 and booking.s_21_Actual_Delivery_TimeStamp
             ):
                 # Actual delivery days = Delivered Dated - Booked Date
-                actual_delivery_days = (
-                    booking.s_21_Actual_Delivery_TimeStamp - booking.b_dateBookedDate
-                ).days
+                actual_delivery_days = str(
+                    (
+                        booking.s_21_Actual_Delivery_TimeStamp
+                        - booking.b_dateBookedDate
+                    ).days
+                )
 
                 if booking.api_booking_quote:
                     # KPI Deliver Days = The number of days we get from the pricing service table or provider API the service should take - e.g. 3 days
@@ -1658,7 +1660,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 if pickup_days_late < 0:
                     cell_format = workbook.add_format({"font_color": "red"})
-                    value = f"(-{str(pickup_days_late)})"
+                    value = f"({str(abs(pickup_days_late))})"
                     row.append([value, cell_format])
                 else:
                     row.append([pickup_days_late, cell_format])
