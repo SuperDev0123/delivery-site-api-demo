@@ -725,9 +725,17 @@ def send_email_to_admins(subject, message):
     ).first()
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
-        to_emails = ["dev.deliverme@gmail.com"]
+        cc_emails = ["dev.deliverme@gmail.com"]
 
         if settings.ENV in ["prod"]:
             to_emails.append("bookings@deliver-me.com.au")
+            to_emails.append("stephenm@deliver-me.com.au")
 
-        send_email(to_emails, [], subject, message)
+            if subject == "New FP status":
+                if "FP name: ALLIED" in message:
+                    to_emails.append("betty.petrov@alliedexpress.com.au")
+        else:
+            subject = f"FROM TEST SERVER - {subject}"
+            to_emails.append("goldj@deliver-me.com.au")
+
+        send_email(to_emails, cc_emails, subject, message)
