@@ -38,7 +38,7 @@ class Command(BaseCommand):
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
-        for index, booking in enumerate(bookings[:3]):
+        for index, booking in enumerate(bookings[:20]):
             if index % 10 == 0:
                 print(f"    {index}/{bookings_cnt} processing...")
 
@@ -48,12 +48,15 @@ class Command(BaseCommand):
                     booking, consignmentStatuses
                 )
                 dme_statuses = get_dme_status(booking, consignmentStatuses)
-                print("@1 - ", dme_statuses)
                 transit_statuses = get_transit_infos(booking, dme_statuses)
-                print("@2 - ", transit_statuses)
+
+                if transit_statuses:
+                    print(
+                        f"    {booking.b_bookingID_Visual} - {str(transit_statuses[0])}"
+                    )
             except Exception as e:
                 print(
-                    f"    Issue from Booking({booking.b_bookingID_Visual} - {booking.vx_freight_provider})"
+                    f"    Issue from Booking({booking.b_bookingID_Visual} - {booking.vx_freight_provider}), Error: {str(e)}"
                 )
                 pass
 
