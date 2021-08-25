@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 def notify_user_via_email_sms(booking, category_new, category_old):
+    from api.helpers.etd import get_etd
+
     # JasonL and Plum
     if not booking.kf_client_id in [
         "461162D2-90C7-BF4E-A905-000000000004",
@@ -125,6 +127,8 @@ def notify_user_via_api(booking):
 
 
 def post_new_status(booking, dme_status_history, new_status):
+    from api.fp_apis.utils import get_status_category_from_status
+
     category_new = get_status_category_from_status(dme_status_history.status_last)
     category_old = get_status_category_from_status(dme_status_history.status_old)
 
@@ -152,10 +156,8 @@ def post_new_status(booking, dme_status_history, new_status):
 
 # Create new status_history for Booking
 def create(booking, new_status, username, event_timestamp=None):
-    from api.fp_apis.utils import get_status_category_from_status
-    from api.helpers.etd import get_etd
-
     if booking.z_lock_status:
+        logger.info(f"@699 Booking({booking.b_bookingID_Visual}) is locked!")
         return
 
     status_histories = Dme_status_history.objects.filter(
