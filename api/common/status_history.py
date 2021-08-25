@@ -126,7 +126,7 @@ def notify_user_via_api(booking):
     tempo.push_via_api(booking)
 
 
-def post_new_status(booking, dme_status_history, new_status):
+def post_new_status(booking, dme_status_history, new_status, event_timestamp):
     from api.fp_apis.utils import get_status_category_from_status
 
     category_new = get_status_category_from_status(dme_status_history.status_last)
@@ -187,7 +187,7 @@ def create(booking, new_status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
-        post_new_status(booking, dme_status_history, new_status)
+        post_new_status(booking, dme_status_history, new_status, event_timestamp)
 
 
 # Create new status_history for Bok
