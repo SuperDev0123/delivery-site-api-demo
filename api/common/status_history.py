@@ -48,6 +48,16 @@ def create(booking, new_status, username, event_timestamp=None):
         dme_status_history.z_createdByAccount = username
         dme_status_history.save()
 
+        category_new = get_status_category_from_status(dme_status_history.status_last)
+        category_old = get_status_category_from_status(dme_status_history.status_old)
+
+        if category_new == "Transit" and category_old != "Transit":
+            if not booking.b_given_to_transport_date_time:
+                booking.b_given_to_transport_date_time = datetime.now()
+
+            if not booking.s_20_Actual_Pickup_TimeStamp:
+                booking.s_20_Actual_Pickup_TimeStamp = datetime.now()
+
         booking.b_status = new_status
         booking.save()
 
@@ -65,13 +75,6 @@ def create(booking, new_status, username, event_timestamp=None):
             "461162D2-90C7-BF4E-A905-000000000004",
             "1af6bcd2-6148-11eb-ae93-0242ac130002",
         ]:
-            category_new = get_status_category_from_status(
-                dme_status_history.status_last
-            )
-            category_old = get_status_category_from_status(
-                dme_status_history.status_old
-            )
-
             if (
                 category_new
                 in [

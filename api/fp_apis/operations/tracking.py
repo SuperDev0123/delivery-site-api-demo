@@ -38,17 +38,23 @@ def _extract(fp_name, consignmentStatus):
 
 
 def _get_actual_timestamp(fp_name, consignmentStatuses, type):
-    if fp_name in ["tnt", "hunter", "sendle"]:
-        for consignmentStatus in consignmentStatuses:
-            b_status_API, status_desc, event_time = _extract(fp_name, consignmentStatus)
+    if fp_name in ["tnt", "hunter", "sendle", "allied"]:
+        try:
+            for consignmentStatus in consignmentStatuses:
+                b_status_API, status_desc, event_time = _extract(
+                    fp_name, consignmentStatus
+                )
 
-            b_status = get_dme_status_from_fp_status(fp_name, b_status_API)
-            status_category = get_status_category_from_status(b_status)
+                b_status = get_dme_status_from_fp_status(fp_name, b_status_API)
+                status_category = get_status_category_from_status(b_status)
 
-            if status_category == "Transit" and type == "pickup":
-                return event_time
-            elif status_category == "Complete" and type == "delivery":
-                return event_time
+                if status_category == "Transit" and type == "pickup":
+                    return event_time
+                elif status_category == "Complete" and type == "delivery":
+                    return event_time
+        except Exception as e:
+            logger.error(f"#480 Error: _get_actual_timestamp(), {str(e)}")
+            return None
 
     return None
 
