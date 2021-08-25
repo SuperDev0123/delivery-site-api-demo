@@ -601,7 +601,9 @@ def push_boks(payload, client, username, method):
         # Select suitable pallet and get required pallets count
         pallets = Pallet.objects.all()
         palletized, non_palletized = get_palletized_by_ai(bok_2_objs, pallets)
-        logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
+        logger.info(
+            f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
+        )
 
         # Create one PAL bok_2
         for item in non_palletized:  # Non Palletized

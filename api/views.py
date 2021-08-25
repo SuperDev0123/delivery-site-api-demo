@@ -89,6 +89,8 @@ from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
 from api.common.booking_quote import set_booking_quote
+from api.operations.packing.booking import auto_repack as booking_auto_repack
+from api.operations.packing.booking import manual_repack as booking_manual_repack
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -2821,6 +2823,26 @@ class BookingViewSet(viewsets.ViewSet):
         }
 
         return JsonResponse({"success": True, "result": result})
+
+    @action(detail=True, methods=["post"])
+    def repack(self, request, pk, format=None):
+        LOG_ID = "[REPACK LINES]"
+        body = literal_eval(request.body.decode("utf8"))
+        repack_status = body["repackStatus"]
+        # logger.info(f"@200 {LOG_ID}, BookingPk: {pk}, Repack Status: {repack_status}")
+
+        try:
+            booking = Bookings.objects.get(pk=pk)
+
+            if repack_status == "auto":
+                booking_auto_repack(booking, repack_status)
+            else:
+                booking_manual_repack(booking, repack_status)
+
+            return JsonResponse({"success": True})
+        except Exception as e:
+            logger.error(f"@204 {LOG_ID} Error: {str(e)}")
+            return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):

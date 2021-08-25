@@ -72,7 +72,7 @@ def pallet_to_dict(pallets, pallet_self_height):
                 "w": pallet.width / 1000,
                 "h": (pallet.height - pallet_self_height) / 1000,
                 "d": pallet.length / 1000,
-                "max_wg": pallet.max_weight if pallet.max_weight else 0,
+                "max_wg": pallet.max_weight or 0,
                 "id": index,
             }
         )
@@ -84,17 +84,26 @@ def lines_to_dict(bok_2s):
     dim_min_limit = 0.2
     dim_max_limit = 0.5
     lines_data = []
+
     for index, item in enumerate(bok_2s):
-        item_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
-        item_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
-        item_height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
-        item_weight = (
-            _get_weight_amount(item.l_008_weight_UOM) * item.l_009_weight_per_each
-        )
-        item_quantity = item.l_002_qty
+        try:
+            item_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+            item_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+            item_height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+            item_weight = (
+                _get_weight_amount(item.l_008_weight_UOM) * item.l_009_weight_per_each
+            )
+            item_quantity = item.l_002_qty
+        except AttributeError:
+            item_length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+            item_width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+            item_height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+            item_weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
+            item_quantity = item.e_qty
 
         dims = [item_length, item_width, item_height]
         dims.sort()
+
         if dims[0] <= dim_min_limit and dims[2] >= dim_max_limit:
             lines_data.append(
                 {
@@ -152,9 +161,9 @@ def lines_to_pallet(lines_data, pallets_data):
     url = os.environ["3D_PACKING_API_URL"]
     response = requests.post(url, data=json.dumps(data))
     res_data = response.json()["response"]
-    if res_data['status'] == -1:
-        msg = ''
-        for error in res_data['errors']:
+    if res_data["status"] == -1:
+        msg = ""
+        for error in res_data["errors"]:
             msg += f"{error['message']} \n"
             logger.info(f"Packing API Error: {msg}")
 
