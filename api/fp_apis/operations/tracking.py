@@ -102,7 +102,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
                 if _consignmentStatus["status"] == "DEL":
                     del_index = index
 
-                if del_index > 0:
+                if del_index > 0 and index > del_index:
                     _consignmentStatuses.pop(index)
 
         if has_delivered_status:
