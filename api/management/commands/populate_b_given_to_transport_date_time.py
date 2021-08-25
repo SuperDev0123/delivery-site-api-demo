@@ -11,29 +11,35 @@ from api.fp_apis.operations.tracking import _extract as extract_status
 
 logger = logging.getLogger(__name__)
 
+STATUS_TO_BE_EXCLUDED = [
+    "Entered",
+    "Ready for Despatch",
+    "Ready for Booking",
+    "Picking",
+    "Picked",
+    "Booked",
+    "Closed",
+    "Cancelled",
+]
+
+FPS_TO_BE_PROCESSED = ["TNT", "HUNTER", "SENDLE", "ALLIED"]
+
+# PLUM & JasonL
+CLIENTS_TO_BE_PROCESSED = [
+    "461162D2-90C7-BF4E-A905-000000000004",
+    "1af6bcd2-6148-11eb-ae93-0242ac130002",
+]
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("----- Populating `b_given_to_transport_date_time` ... -----")
+
         bookings = (
             Bookings.objects.filter(b_given_to_transport_date_time__isnull=True)
-            .filter(vx_freight_provider__in=["TNT", "HUNTER", "SENDLE", "ALLIED"])
-            .filter(
-                kf_client_id__in=[
-                    "461162D2-90C7-BF4E-A905-000000000004",
-                    "1af6bcd2-6148-11eb-ae93-0242ac130002",
-                ]
-            )
-            .exclude(
-                b_status__in=[
-                    "Entered",
-                    "Ready for Despatch",
-                    "Ready for Booking",
-                    "Picking",
-                    "Picked",
-                    "Booked",
-                ]
-            )
+            .filter(vx_freight_provider__in=FPS_TO_BE_PROCESSED)
+            .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
+            .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
             .only(
                 "id",
                 "b_bookingID_Visual",
