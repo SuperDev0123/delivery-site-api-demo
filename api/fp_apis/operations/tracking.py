@@ -34,6 +34,8 @@ def _extract(fp_name, consignmentStatus):
 
         if is_UTC:
             event_time = str(convert_to_UTC_tz(event_time))
+        else:
+            event_time = str(event_time)
     else:
         event_time = None
 
