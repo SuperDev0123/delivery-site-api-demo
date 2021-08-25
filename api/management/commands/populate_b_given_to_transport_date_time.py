@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
                 if transit_statuses:
                     print(
-                        f"    {booking.b_bookingID_Visual} - {str(transit_statuses[0]['event_time'])}"
+                        f"    {booking.b_bookingID_Visual}({booking.vx_freight_provider}): {str(transit_statuses[0]['event_time'])}"
                     )
             except Exception as e:
                 print(
