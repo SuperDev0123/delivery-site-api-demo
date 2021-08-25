@@ -149,7 +149,7 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
 
     booking.b_status = new_status
     booking.save()
-    booking.refres_from_db()
+    booking.refresh_from_db()
 
     notify_user_via_email_sms(booking, category_new, category_old, username)
     notify_user_via_api(booking)
