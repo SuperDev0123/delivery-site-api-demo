@@ -48,7 +48,9 @@ class Command(BaseCommand):
                     booking, consignmentStatuses
                 )
                 dme_statuses = get_dme_status(booking, consignmentStatuses)
-                print("@!!!!!", dme_statuses)
+                print("@1 - ", dme_statuses)
+                transit_statuses = get_transit_infos(booking, dme_statuses)
+                print("@2 - ", transit_statuses)
             except Exception as e:
                 print(
                     f"    Issue from Booking({booking.b_bookingID_Visual} - {booking.vx_freight_provider})"
@@ -58,7 +60,20 @@ class Command(BaseCommand):
         print("\n----- Finished! -----")
 
 
+def get_transit_infos(booking, dme_statuses):
+    _transit_infos = []
+
+    for status in dme_statuses:
+        if status["b_status_category"] == "Transit":
+            _transit_infos.append(status)
+
+    return _transit_infos
+
+
 def get_dme_status(booking, consignmentStatuses):
+    from api.fp_apis.utils import get_dme_status_from_fp_status
+    from api.fp_apis.utils import get_status_category_from_status
+
     dme_statuses = []
     fp_name = booking.vx_freight_provider.lower()
 
@@ -66,8 +81,12 @@ def get_dme_status(booking, consignmentStatuses):
         b_status_API, status_desc, event_time = extract_status(
             fp_name.lower(), consignmentStatuse
         )
+        b_status = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
+        dme_category = get_status_category_from_status(b_status)
         dme_statuses.append(
             {
+                "b_status": b_status,
+                "b_status_category": dme_category,
                 "b_status_API": b_status_API,
                 "status_desc": status_desc,
                 "event_time": event_time,
