@@ -129,7 +129,7 @@ def get_status_time_from_category(booking_id, category):
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
     try:
-        logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
+        # logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
         etd, unit = get_etd(pricing.etd)
 
         if unit == "Days":
