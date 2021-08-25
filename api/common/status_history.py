@@ -152,7 +152,6 @@ def post_new_status(booking, dme_status_history, new_status):
 
 # Create new status_history for Booking
 def create(booking, new_status, username, event_timestamp=None):
-
     from api.fp_apis.utils import get_status_category_from_status
     from api.helpers.etd import get_etd
 

@@ -64,22 +64,27 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
             rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)
 
             for rule in rules:
-                if rule.fp_lookup_status in b_status_API:
+                if "XXX" in rule.fp_lookup_status:
+                    fp_lookup_status = rule.fp_lookup_status.replace("XXX", "")
+
+                    if fp_lookup_status in b_status_API:
+                        status_info = rule
+                elif rule.fp_lookup_status == b_status_API:
                     status_info = rule
         else:
             status_info = Dme_utl_fp_statuses.objects.get(
                 fp_name__iexact=fp_name, fp_lookup_status=b_status_API
             )
+
         return status_info.dme_status
     except:
-        if fp_name.lower() != "allied":
-            message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
-            logger.error(message)
-            send_email_to_admins("New FP status", message)
+        message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
+        logger.error(message)
+        send_email_to_admins("New FP status", message)
 
-            if booking:
-                booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
-                booking.save()
+        if booking:
+            booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
+            booking.save()
 
         return None
 
