@@ -1598,12 +1598,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 and booking.s_21_Actual_Delivery_TimeStamp
             ):
                 # Actual delivery days = Delivered Dated - Booked Date
-                actual_delivery_days = str(
-                    (
-                        booking.s_21_Actual_Delivery_TimeStamp
-                        - booking.b_dateBookedDate
-                    ).days
-                )
+                actual_delivery_days = (
+                    booking.s_21_Actual_Delivery_TimeStamp - booking.b_dateBookedDate
+                ).days
 
                 if booking.api_booking_quote:
                     # KPI Deliver Days = The number of days we get from the pricing service table or provider API the service should take - e.g. 3 days
