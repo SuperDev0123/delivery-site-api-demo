@@ -85,6 +85,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         _consignmentStatuses_0 = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
+        _consignmentStatuses = _consignmentStatuses_0
 
         # Check Partially Delivered
         has_delivered_status = False
