@@ -4,7 +4,7 @@ import requests
 
 from django.core.management.base import BaseCommand
 
-from api.models import Bookings
+from api.models import Bookings, Dme_status_history
 from api.fp_apis.payload_builder import get_tracking_payload
 from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
 from api.fp_apis.operations.tracking import _extract as extract_status
@@ -21,6 +21,21 @@ STATUS_TO_BE_EXCLUDED = [
     "Closed",
     "Cancelled",
 ]
+
+TRANSIT_STATUSES = [
+    "In Transit",
+    "Returning",
+    "Futile",
+    "Partially Delivered",
+    "Partially In Transit",
+    "Delivery Delayed",
+    "Scanned into Depot",
+    "Carded",
+    "Insufficient Address",
+    "Picked Up",
+    "On-Forwarded",
+]
+
 
 FPS_TO_BE_PROCESSED = ["TNT", "HUNTER", "SENDLE", "ALLIED"]
 
@@ -42,6 +57,7 @@ class Command(BaseCommand):
             .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
             .only(
                 "id",
+                "pk_booking_id",
                 "b_bookingID_Visual",
                 "vx_freight_provider",
                 "b_status",
@@ -51,36 +67,55 @@ class Command(BaseCommand):
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
-        for index, booking in enumerate(bookings):
-            if index % 10 == 0:
-                print(f"    {index}/{bookings_cnt} processing...")
+        # Solution #2 (From statusHistory)
+        pk_booking_ids = []
+        for booking in bookings[:20]:
+            pk_booking_ids.append(booking.pk_booking_id)
 
-            try:
-                consignmentStatuses = get_tracking_info_from_FP(booking)
-                consignmentStatuses = sort_consignment_statuses(
-                    booking, consignmentStatuses
-                )
-                dme_statuses = get_dme_status(booking, consignmentStatuses)
-                transit_statuses = get_transit_infos(booking, dme_statuses)
-                print(
-                    f"    {booking.b_bookingID_Visual}({booking.vx_freight_provider})"
-                )
+        status_histories = Dme_status_history.objects.filter(
+            fk_booking_id__in=pk_booking_ids,
+            status_last__in=TRANSIT_STATUSES,
+        ).order_by("id")
 
-                if transit_statuses:
+        for booking in bookings[:20]:
+            print(f"    {booking.b_bookingID_Visual}({booking.vx_freight_provider})")
+            for status_history in status_histories:
+                if booking.pk_booking_id == status_history.fk_booking_id:
                     print(
-                        f"    Event timestamp: {str(transit_statuses[0]['event_time'])}"
+                        f"    Event timestamp: {str(status_history.event_time_stamp)}"
                     )
-                    booking.b_given_to_transport_date_time = transit_statuses[0][
-                        "event_time"
-                    ]
-                    booking.save()
-                else:
-                    print(f"    No transit status!")
-            except Exception as e:
-                print(
-                    f"    Issue from Booking({booking.b_bookingID_Visual} - {booking.vx_freight_provider}), Error: {str(e)}"
-                )
-                pass
+
+        # # Solution #1
+        # for index, booking in enumerate(bookings):
+        #     if index % 10 == 0:
+        #         print(f"    {index}/{bookings_cnt} processing...")
+
+        #     try:
+        #         consignmentStatuses = get_tracking_info_from_FP(booking)
+        #         consignmentStatuses = sort_consignment_statuses(
+        #             booking, consignmentStatuses
+        #         )
+        #         dme_statuses = get_dme_status(booking, consignmentStatuses)
+        #         transit_statuses = get_transit_infos(booking, dme_statuses)
+        #         print(
+        #             f"    {booking.b_bookingID_Visual}({booking.vx_freight_provider})"
+        #         )
+
+        #         if transit_statuses:
+        #             print(
+        #                 f"    Event timestamp: {str(transit_statuses[0]['event_time'])}"
+        #             )
+        #             booking.b_given_to_transport_date_time = transit_statuses[0][
+        #                 "event_time"
+        #             ]
+        #             booking.save()
+        #         else:
+        #             print(f"    No transit status!")
+        #     except Exception as e:
+        #         print(
+        #             f"    Issue from Booking({booking.b_bookingID_Visual} - {booking.vx_freight_provider}), Error: {str(e)}"
+        #         )
+        #         pass
 
         print("\n----- Finished! -----")
 
