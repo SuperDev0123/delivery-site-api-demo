@@ -598,7 +598,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_cost(self, obj):
-        cost = round(obj.client_mu_1_minimum_values, 2)
+        cost = obj.client_mu_1_minimum_values
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
 
         if client_customer_mark_up:
@@ -607,7 +607,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             if obj.tax_value_1:
                 cost += obj.tax_value_1
 
-        return cost
+        return round(cost, 2)
 
     def get_surcharge_total(self, obj):
         _result = obj.x_price_surcharge if obj.x_price_surcharge else 0
