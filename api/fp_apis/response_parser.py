@@ -68,7 +68,7 @@ def parse_pricing_response(
         elif fp_name == "sendle" and "price" in json_data:  # Sendle
             for price in json_data["price"]:
                 # Exclude "Premium" and "Easy" service on PROD
-                if settings.ENV == "prod" and (
+                if not settings.ENV == "local" and (
                     price["plan_name"] == "Premium" or price["plan_name"] == "Easy"
                 ):
                     continue
@@ -114,6 +114,26 @@ def parse_pricing_response(
                 result["service_code"] = service_code
                 result["service_name"] = service_name
                 results.append(result)
+        # Allied API
+        elif fp_name == "allied" and "netPrice" in json_data:
+            result = {}
+            result["account_code"] = account_code
+            result["api_results_id"] = json_data["requestId"]
+            result["fk_booking_id"] = booking.pk_booking_id
+            result["fk_client_id"] = dme_client.company_name
+            result["freight_provider"] = get_service_provider(fp_name, False)
+            result["fee"] = json_data["netPrice"]
+            result["service_name"] = "Road Express"
+            result["etd"] = 3  # TODO
+
+            # We do not get surcharge from Allied api
+            result["x_price_surcharge"] = 0
+            # result["x_price_surcharge"] = float(json_data["totalPrice"]) - float(
+            #     json_data["netPrice"]
+            # )  # set surchargeTotal
+            # Extra info - should be deleted before serialized
+            # result["surcharges"] = json_data["surcharges"]
+            results.append(result)
         elif fp_name == "fastway" and "price" in json_data:  # fastway
             price = json_data["price"]
             result = {}
@@ -160,7 +180,11 @@ def parse_pricing_response(
             result["service_name"] = min_serviceName
 
             results.append(result)
-        elif is_from_self and "price" in json_data:  # Built-in
+
+        if is_from_self and "price" in json_data:  # Built-in
+            msg = f"#510 Built-in result: {json_data}"
+            logger.info(msg)
+
             for price in json_data["price"]:
                 result = {}
                 result["account_code"] = account_code
@@ -174,6 +198,10 @@ def parse_pricing_response(
                 result["service_name"] = (
                     price["serviceName"] if "serviceName" in price else None
                 )
+                result["service_code"] = (
+                    price["serviceType"] if "serviceType" in price else None
+                )
+                result["vehicle"] = price.get("vehicle")
                 results.append(result)
 
         return results

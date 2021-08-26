@@ -25,22 +25,17 @@ def _extract(fp_name, consignmentStatus):
         event_time = consignmentStatus["statusDate"][0]
         event_time = datetime.strptime(event_time, "%d/%m/%Y")
         event_time = str(convert_to_UTC_tz(event_time))
-    elif fp_name.lower() in ["hunter"]:
+    elif fp_name.lower() in ["hunter", "sendle", "allied"]:
         b_status_API = consignmentStatus["status"]
-        status_desc = consignmentStatus["description"]
+        status_desc = consignmentStatus.get("statusDescription")
         event_time = consignmentStatus["statusUpdate"]
+        is_UTC = len(event_time) == 19
+        event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
 
-        if event_time:
-            event_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S")
+        if is_UTC:
             event_time = str(convert_to_UTC_tz(event_time))
         else:
-            event_time = None
-    elif fp_name.lower() == "sendle":
-        b_status_API = consignmentStatus["status"]
-        status_desc = consignmentStatus["statusDescription"]
-        event_time = consignmentStatus["statusUpdate"]
-        event_time = datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%SZ")
-        event_time = str(convert_to_UTC_tz(event_time))
+            event_time = str(event_time)
     else:
         event_time = None
 
@@ -48,17 +43,23 @@ def _extract(fp_name, consignmentStatus):
 
 
 def _get_actual_timestamp(fp_name, consignmentStatuses, type):
-    if fp_name in ["tnt", "hunter", "sendle"]:
-        for consignmentStatus in consignmentStatuses:
-            b_status_API, status_desc, event_time = _extract(fp_name, consignmentStatus)
+    if fp_name in ["tnt", "hunter", "sendle", "allied"]:
+        try:
+            for consignmentStatus in consignmentStatuses:
+                b_status_API, status_desc, event_time = _extract(
+                    fp_name, consignmentStatus
+                )
 
-            b_status = get_dme_status_from_fp_status(fp_name, b_status_API)
-            status_category = get_status_category_from_status(b_status)
+                b_status = get_dme_status_from_fp_status(fp_name, b_status_API)
+                status_category = get_status_category_from_status(b_status)
 
-            if status_category == "Transit" and type == "pickup":
-                return event_time
-            elif status_category == "Complete" and type == "delivery":
-                return event_time
+                if status_category == "Transit" and type == "pickup":
+                    return event_time
+                elif status_category == "Complete" and type == "delivery":
+                    return event_time
+        except Exception as e:
+            logger.error(f"#480 Error: _get_actual_timestamp(), {str(e)}")
+            return None
 
     return None
 
@@ -74,16 +75,66 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         logger.info(msg)
         return False
 
+    # Allied
+    _consignmentStatuses = consignmentStatuses
+
+    if fp_name.lower() == "allied":
+        _consignmentStatuses_0 = consignmentStatuses
+
+        # Sort by timestamp
+        _consignmentStatuses_0 = sorted(
+            consignmentStatuses, key=lambda x: x["statusUpdate"]
+        )
+        _consignmentStatuses = _consignmentStatuses_0
+
+        # Check Partially Delivered
+        has_delivered_status = False
+        delivered_status_cnt = 0
+        last_consignmentStatus = _consignmentStatuses_0[len(_consignmentStatuses_0) - 1]
+
+        for _consignmentStatus in _consignmentStatuses_0:
+            if _consignmentStatus["status"] == "DEL":
+                has_delivered_status = True
+                delivered_status_cnt += 1
+
+        # Take out status after `DEL`
+        if has_delivered_status:
+            del_index = 0
+
+            for index, _consignmentStatus in enumerate(_consignmentStatuses_0):
+                if _consignmentStatus["status"] == "DEL":
+                    del_index = index
+
+                if del_index > 0 and index > del_index:
+                    _consignmentStatuses.pop(index)
+
+        if has_delivered_status:
+            lines = booking.lines().filter(is_deleted=False)
+
+            if delivered_status_cnt < lines.count():
+                logger.info(
+                    f"#382 [TRACKING] Allied Partially Delivered BookingId: {booking.b_bookingID_Visual}, statuses: {_consignmentStatuses}"
+                )
+                _consignmentStatuses.append(
+                    {
+                        "status": "PARTDEL",
+                        "statusDescription": "Partially Delivered",
+                        "statusUpdate": last_consignmentStatus["statusUpdate"],
+                    }
+                )
+
     # Get actual_pickup_timestamp
     if not booking.s_20_Actual_Pickup_TimeStamp:
-        result = _get_actual_timestamp(fp_name.lower(), consignmentStatuses, "pickup")
+        result = _get_actual_timestamp(fp_name.lower(), _consignmentStatuses, "pickup")
 
         if result:
             booking.s_20_Actual_Pickup_TimeStamp = result
 
     # Get actual_delivery_timestamp
     if not booking.s_21_Actual_Delivery_TimeStamp:
-        result = _get_actual_timestamp(fp_name.lower(), consignmentStatuses, "delivery")
+        result = _get_actual_timestamp(
+            fp_name.lower(), _consignmentStatuses, "delivery"
+        )
 
         if result:
             booking.s_21_Actual_Delivery_TimeStamp = result
@@ -91,9 +142,9 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
     # Update booking's latest status
     if fp_name.lower() == "startrack":
-        last_consignmentStatus = consignmentStatuses[0]
+        last_consignmentStatus = _consignmentStatuses[0]
     else:
-        last_consignmentStatus = consignmentStatuses[len(consignmentStatuses) - 1]
+        last_consignmentStatus = _consignmentStatuses[len(_consignmentStatuses) - 1]
 
     b_status_API, status_desc, event_time = _extract(
         fp_name.lower(), last_consignmentStatus
@@ -101,10 +152,10 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     booking.b_status_API = b_status_API
     status_from_fp = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
     status_history.create(booking, status_from_fp, request.user.username, event_time)
-    booking.b_status = status_from_fp
+    # booking.b_status = status_from_fp
     # booking.b_booking_Notes = status_desc
     booking.save()
 
-    msg = f"#381 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
-    logger.info(msg)
+    # msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
+    # logger.info(msg)
     return True

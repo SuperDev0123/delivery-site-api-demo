@@ -7,6 +7,7 @@ from .models import (
     DME_clients,
 )
 from .validators import should_have_value, should_have_positive_value
+from api.helpers import cubic
 
 
 class BOK_0_Serializer(serializers.ModelSerializer):
@@ -20,9 +21,9 @@ class BOK_1_Serializer(serializers.ModelSerializer):
     fk_client_id = serializers.CharField(validators=[should_have_value])
     b_client_warehouse_code = serializers.CharField(validators=[should_have_value])
     b_clientPU_Warehouse = serializers.CharField(validators=[should_have_value])
-    b_059_b_del_address_postalcode = serializers.CharField(
-        validators=[should_have_value]
-    )
+    # b_059_b_del_address_postalcode = serializers.CharField(
+    #     validators=[should_have_value]
+    # )
     success = serializers.CharField(validators=[should_have_value])
     b_client_name = serializers.SerializerMethodField(read_only=True)
 
@@ -118,11 +119,14 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "quote_id",
             "b_client_order_num",
             "b_client_sales_inv_num",
+            "b_091_send_quote_to_pronto",
+            "b_092_booking_type",
+            "zb_105_text_5",  # b_error_Capture
         )
 
 
 class BOK_2_Serializer(serializers.ModelSerializer):
-    l_002_qty = serializers.FloatField(validators=[should_have_positive_value])
+    # l_002_qty = serializers.FloatField(validators=[should_have_positive_value])
     l_005_dim_length = serializers.FloatField(validators=[should_have_positive_value])
     l_006_dim_width = serializers.FloatField(validators=[should_have_positive_value])
     l_007_dim_height = serializers.FloatField(validators=[should_have_positive_value])
@@ -131,12 +135,23 @@ class BOK_2_Serializer(serializers.ModelSerializer):
     )
     fk_header_id = serializers.CharField(validators=[should_have_value])
     success = serializers.CharField(validators=[should_have_value])
-    # Sequence
-    zbl_121_integer_1 = serializers.IntegerField(required=False)
+    zbl_131_decimal_1 = serializers.FloatField(required=False)  # Sequence
+    zbl_102_text_2 = serializers.CharField(required=False)  # ProductGroupCode
+    pallet_cubic_meter = serializers.SerializerMethodField(read_only=True)
+
+    def get_pallet_cubic_meter(self, obj):
+        return cubic.get_cubic_meter(
+            obj.l_005_dim_length,
+            obj.l_006_dim_width,
+            obj.l_007_dim_height,
+            obj.l_004_dim_UOM,
+            obj.l_002_qty,
+        )
 
     class Meta:
         model = BOK_2_lines
         fields = (
+            "pk_lines_id",
             "l_001_type_of_packaging",
             "l_002_qty",
             "l_003_item",
@@ -147,16 +162,36 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "l_008_weight_UOM",
             "l_009_weight_per_each",
             "success",
+            "is_deleted",
             "fk_header_id",
             "v_client_pk_consigment_num",
             "pk_booking_lines_id",
             "e_item_type",
-            "zbl_121_integer_1",  # Sequence
+            "zbl_131_decimal_1",  # Sequence
+            "zbl_102_text_2",  # ProductGroupCode
+            "pallet_cubic_meter",
         )
 
 
 class BOK_3_Serializer(serializers.ModelSerializer):
     success = serializers.CharField(validators=[should_have_value])
+    cubic_meter = serializers.SerializerMethodField(read_only=True)
+
+    def get_cubic_meter(self, obj):
+        if (
+            not obj.zbld_131_decimal_1
+            or not obj.zbld_132_decimal_2
+            or not obj.zbld_133_decimal_3
+        ):
+            return 0
+
+        return cubic.get_cubic_meter(
+            obj.zbld_131_decimal_1,
+            obj.zbld_132_decimal_2,
+            obj.zbld_133_decimal_3,
+            obj.zbld_101_text_1,
+            obj.zbld_122_integer_2,
+        )
 
     class Meta:
         model = BOK_3_lines_data

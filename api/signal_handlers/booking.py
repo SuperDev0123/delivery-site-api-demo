@@ -1,27 +1,45 @@
 import logging
+import asyncio
 from datetime import datetime
 
-from api.models import Bookings, Booking_lines, Api_booking_confirmation_lines
+from django.conf import settings
+
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Api_booking_confirmation_lines,
+    API_booking_quotes,
+)
 from api.fp_apis.utils import get_status_category_from_status
+from api.operations.labels.index import build_label
+from api.operations.pronto_xi.index import update_note as update_pronto_note
+
 
 logger = logging.getLogger(__name__)
 
+if settings.ENV == "local":
+    S3_URL = "./static"
+elif settings.ENV == "dev":
+    S3_URL = "/opt/s3_public"
+elif settings.ENV == "prod":
+    S3_URL = "/opt/s3_public"
+
 
 def pre_save_handler(instance):
+    LOG_ID = "[BOOKING PRE SAVE]"
     if instance.id is None:  # new object will be created
         pass
 
     else:
-        previous = Bookings.objects.get(id=instance.id)
+        logger.info(f"{LOG_ID} Booking PK: {instance.id}")
+        old = Bookings.objects.get(id=instance.id)
 
-        if (
-            previous.dme_status_detail != instance.dme_status_detail
-        ):  # field will be updated
+        if old.dme_status_detail != instance.dme_status_detail:  # field will be updated
             instance.dme_status_detail_updated_by = "user"
-            instance.prev_dme_status_detail = previous.dme_status_detail
+            instance.prev_dme_status_detail = old.dme_status_detail
             instance.dme_status_detail_updated_at = datetime.now()
 
-        if previous.b_status != instance.b_status:
+        if old.b_status != instance.b_status:
             # Set Booking's status category
             instance.b_status_category = get_status_category_from_status(
                 instance.b_status
@@ -50,13 +68,130 @@ def pre_save_handler(instance):
 
                     instance.dme_status_detail = dme_status_detail
                     instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = previous.dme_status_detail
+                    instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
                 elif instance.b_status == "Delivered":
                     instance.dme_status_detail = ""
                     instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = previous.dme_status_detail
+                    instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
             except Exception as e:
-                logger.info(f"Error 515 {e}")
+                logger.info(f"#505 {LOG_ID} Error {e}")
                 pass
+
+        # JasonL
+        if instance.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            quote = instance.api_booking_quote
+
+            if quote and (
+                old.b_status != instance.b_status  # Status
+                or (
+                    instance.b_dateBookedDate
+                    and old.b_dateBookedDate != instance.b_dateBookedDate  # BookedDate
+                )
+                or (
+                    instance.v_FPBookingNumber
+                    and old.v_FPBookingNumber
+                    != instance.v_FPBookingNumber  # Consignment
+                )
+                or (old.api_booking_quote_id != instance.api_booking_quote_id)  # Quote
+            ):
+                update_pronto_note(quote, instance, [], "booking")
+
+        if (
+            instance.api_booking_quote
+            and old.api_booking_quote_id != instance.api_booking_quote_id
+            and instance.api_booking_quote.vehicle
+        ):
+            logger.info(f"#506 {LOG_ID} vehicle changed!")
+            quote = instance.api_booking_quote
+            instance.v_vehicle_Type = (
+                quote.vehicle.description if quote.vehicle else None
+            )
+
+
+def post_save_handler(instance):
+    LOG_ID = "[BOOKING POST SAVE]"
+    logger.info(f"{LOG_ID} Booking PK: {instance.id}")
+
+    if (
+        instance.vx_freight_provider
+        and instance.z_label_url
+        and "[REBUILD_REQUIRED]" in instance.z_label_url
+    ):
+        # Check if pricings exist for selected FP
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=instance.pk_booking_id,
+            freight_provider__iexact=instance.vx_freight_provider,
+            is_used=False,
+        ).order_by("fee")
+
+        if not quotes:
+            instance.b_error_Capture = "Quote doen't exist"
+
+            if instance.z_label_url:
+                instance.z_label_url = instance.z_label_url[18:]
+
+            instance.save()
+            return
+
+        # Mapping Pircing info to Booking
+        quote = quotes.first()
+        instance.vx_account_code = quote.account_code
+        instance.vx_serviceName = quote.service_name
+        instance.v_service_Type = quote.service_code
+        instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+        instance.inv_sell_quoted = quote.client_mu_1_minimum_values
+        instance.v_vehicle_Type = quote.vehicle.description if quote.vehicle else None
+        instance.api_booking_quote = quote
+
+        # Build Label
+        _fp_name = instance.vx_freight_provider.lower()
+        file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+
+        if instance.b_client_name == "Jason L":
+            lines = Booking_lines.objects.filter(
+                fk_booking_id=instance.pk_booking_id,
+                is_deleted=False,
+                sscc__isnull=False,
+            )
+
+            if lines.count() == 0:
+                instance.z_label_url = None
+                instance.save()
+                return
+
+            sscc_lines = {}
+
+            for line in lines:
+                if line.sscc not in sscc_lines:
+                    sscc_lines[line.sscc] = [line]
+                else:
+                    sscc_lines[line.sscc].append(line)
+
+            labeled_ssccs = []
+            for sscc in sscc_lines:
+                if sscc in labeled_ssccs:
+                    continue
+
+                file_path, file_name = build_label(
+                    booking=instance,
+                    file_path=file_path,
+                    lines=sscc_lines[sscc],
+                    label_index=0,
+                    sscc=sscc,
+                    one_page_label=True,
+                )
+
+                # Convert label into ZPL format
+                logger.info(
+                    f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
+                )
+                instance.z_label_url = f"{file_path}/{file_name}"
+                instance.save()
+        else:
+            _fp_name = instance.vx_freight_provider.lower()
+            file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+            file_path, file_name = build_label(booking=instance, file_path=file_path)
+            instance.z_label_url = f"{_fp_name}_au/{file_name}"
+            instance.save()

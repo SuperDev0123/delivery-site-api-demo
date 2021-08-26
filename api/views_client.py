@@ -5,7 +5,8 @@ import json
 import logging
 import requests
 import zipfile
-from datetime import datetime, date
+import asyncio
+from datetime import datetime, date, timedelta
 from base64 import b64decode, b64encode
 
 from django.conf import settings
@@ -27,7 +28,7 @@ from rest_framework.decorators import (
     action,
 )
 from api.serializers_client import *
-from api.serializers import SimpleQuoteSerializer
+from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
 from api.models import *
 from api.common import (
     trace_error,
@@ -35,12 +36,25 @@ from api.common import (
     status_history,
     common_times as dme_time_lib,
 )
-from api.common.booking_quote import migrate_quote_info_to_booking
-from api.fp_apis.utils import get_status_category_from_status
+from api.common.common_times import convert_to_AU_SYDNEY_tz
+from api.fp_apis.utils import (
+    get_status_category_from_status,
+    get_status_time_from_category,
+)
+from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
+from api.clients.jason_l.operations import (
+    do_quote as jasonL_do_quote,
+    create_or_update_product as jasonL_create_or_update_product,
+)
 from api.clients.standard import index as standard
 from api.clients.operations.index import get_client, get_warehouse
+from api.operations.pronto_xi.index import (
+    send_info_back,
+    update_note as update_pronto_note,
+)
+from api.clients.jason_l.constants import SERVICE_GROUP_CODES
 
 
 logger = logging.getLogger(__name__)
@@ -145,9 +159,23 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_1.b_076_b_pu_service = request.data.get("b_076_b_pu_service")
             bok_1.b_077_b_del_service = request.data.get("b_077_b_del_service")
             bok_1.b_081_b_pu_auto_pack = request.data.get("b_081_b_pu_auto_pack")
+            # bok_1.b_091_send_quote_to_pronto = request.data.get(
+            #     "b_091_send_quote_to_pronto", False
+            # )
             bok_1.save()
-            res_json = {"success": True, "message": "Freigth options are updated."}
 
+            # Re-Gen Surcharges
+            quotes = API_booking_quotes.objects.filter(
+                fk_booking_id=bok_1.pk_header_id, is_used=False
+            )
+            bok_2s = BOK_2_lines.objects.filter(
+                fk_header_id=bok_1.pk_header_id, is_deleted=False
+            )
+
+            for quote in quotes:
+                gen_surcharges(bok_1, bok_2s, quote, "bok_1")
+
+            res_json = {"success": True, "message": "Freigth options are updated."}
             return Response(res_json, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(
@@ -178,7 +206,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_3s = BOK_3_lines_data.objects.filter(
                 fk_header_id=bok_1.pk_header_id, is_deleted=False
             )
-            quote_set = API_booking_quotes.objects.filter(
+            quote_set = API_booking_quotes.objects.prefetch_related("vehicle").filter(
                 fk_booking_id=bok_1.pk_header_id, is_used=False
             )
             client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
@@ -197,6 +225,20 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 json_results = dme_time_lib.beautify_eta(
                     json_results, best_quotes, client
                 )
+
+                # Surcharge point
+                for json_result in json_results:
+                    quote = None
+
+                    for _quote in best_quotes:
+                        if _quote.pk == json_result["cost_id"]:
+                            quote = _quote
+
+                    context = {"client_mark_up_percent": client.client_mark_up_percent}
+                    json_result["surcharges"] = SurchargeSerializer(
+                        get_surcharges(quote), context=context, many=True
+                    ).data
+
                 result["pricings"] = json_results
 
             res_json = {"message": "Succesfully get bok and pricings.", "data": result}
@@ -244,6 +286,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.b_001_b_freight_provider = bok_1.quote.freight_provider
                 bok_1.b_003_b_service_name = bok_1.quote.service_name
                 bok_1.vx_serviceType_XXX = bok_1.quote.service_code
+                bok_1.b_002_b_vehicle_type = (
+                    bok_1.quote.vehicle.description if bok_1.quote.vehicle else None
+                )
                 bok_1.save()
 
             logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
@@ -278,18 +323,52 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             )
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def send_email(self, request):
+        # Send `picking slip printed` email from DME itself
+
+        LOG_ID = "[MANUAL PICKING SLIP EMAIL SENDER]"
+        identifier = request.GET["identifier"]
+        logger.info(f"@840 {LOG_ID} Identifier: {identifier}")
+
+        if not identifier:
+            message = f"Wrong identifier: {identifier}"
+            logger.info(f"@841 {LOG_ID} message")
+            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from api.operations.email_senders import send_picking_slip_printed_email
+
+            bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
+            send_picking_slip_printed_email(bok_1.b_client_order_num)
+            logger.info(f"@842 {LOG_ID} Success to send email: {identifier}")
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(
+                f"@843 {LOG_ID} Failed to send email: {identifier}, reason: {str(e)}"
+            )
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
-        if settings.ENV == "local":
-            t.sleep(2)
-
         try:
             cost_id = request.data["costId"]
             identifier = request.data["identifier"]
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
-            bok_1.quote_id = cost_id
+            quote = API_booking_quotes.objects.get(pk=cost_id)
+            bok_1.b_001_b_freight_provider = quote.freight_provider
+            bok_1.b_003_b_service_name = quote.service_name
+            bok_1.vx_serviceType_XXX = quote.service_code
+            bok_1.quote = quote
             bok_1.save()
+
+            # Send quote info back to Pronto
+            # send_info_back(bok_1, bok_1.quote)
+
+            # Update Pronto Note
+            update_pronto_note(bok_1.quote, bok_1, [], "bok")
 
             fc_log = (
                 FC_Log.objects.filter(client_booking_id=bok_1.client_booking_id)
@@ -302,6 +381,117 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             return Response({"success": True}, status.HTTP_200_OK)
         except:
             trace_error.print()
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    def add_bok_line(self, request):
+        """
+        Used for "Jason L" only
+        """
+        LOG_ID = "[add_bok_line]"
+
+        try:
+            logger.info(f"{LOG_ID} {request.data}")
+            line = request.data["line"]
+
+            with transaction.atomic():
+                if line.get("apply_to_product"):
+                    jasonL_create_or_update_product(line)
+
+                bok_2 = BOK_2_lines()
+                bok_2.fk_header_id = line["fk_header_id"]
+                bok_2.pk_booking_lines_id = str(uuid.uuid4())
+                bok_2.l_001_type_of_packaging = line.get("l_001_type_of_packaging")
+                bok_2.zbl_131_decimal_1 = line.get("zbl_131_decimal_1")
+                bok_2.e_item_type = line.get("e_item_type")
+                bok_2.l_002_qty = line.get("e_qty")
+                bok_2.l_003_item = (
+                    line.get("e_item")
+                    if not line.get("is_ignored")
+                    else f'{line.get("e_item")} (Ignored)'
+                )
+                bok_2.l_004_dim_UOM = line.get("e_dimUOM")
+                bok_2.l_005_dim_length = line.get("e_dimLength")
+                bok_2.l_006_dim_width = line.get("e_dimWidth")
+                bok_2.l_007_dim_height = line.get("e_dimHeight")
+                bok_2.l_008_weight_UOM = line.get("e_weightUOM")
+                bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
+                bok_2.v_client_pk_consigment_num = line.get("fk_header_id")
+                bok_2.save()
+
+            # Get quote again
+            jasonL_do_quote(bok_2.fk_header_id)
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} error: {str(e)}")
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["put"], permission_classes=[AllowAny])
+    def update_bok_line(self, request):
+        """
+        Used for "Jason L" only
+        """
+        LOG_ID = "[update_bok_line]"
+
+        try:
+            logger.info(f"{LOG_ID} {request.data}")
+            line_id = request.data["line_id"]
+            line = request.data["line"]
+
+            bok_2 = BOK_2_lines.objects.get(pk=line_id)
+
+            with transaction.atomic():
+                if line.get("apply_to_product"):
+                    jasonL_create_or_update_product(line)
+
+                bok_2.l_001_type_of_packaging = line.get("l_001_type_of_packaging")
+                bok_2.zbl_131_decimal_1 = line.get("zbl_131_decimal_1")
+                bok_2.e_item_type = line.get("e_item_type")
+                bok_2.l_002_qty = line.get("e_qty")
+                bok_2.l_003_item = (
+                    line.get("e_item")
+                    if not line.get("is_ignored")
+                    else f'{line.get("e_item")} (Ignored)'
+                )
+                bok_2.l_004_dim_UOM = line.get("e_dimUOM")
+                bok_2.l_005_dim_length = line.get("e_dimLength")
+                bok_2.l_006_dim_width = line.get("e_dimWidth")
+                bok_2.l_007_dim_height = line.get("e_dimHeight")
+                bok_2.l_008_weight_UOM = line.get("e_weightUOM")
+                bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
+                bok_2.save()
+
+            # Get quote again
+            jasonL_do_quote(bok_2.fk_header_id)
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} error: {str(e)}")
+            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
+    def delete_bok_line(self, request):
+        """
+        Used for "Jason L" only
+        """
+        LOG_ID = "[delete_bok_line]"
+
+        try:
+            logger.info(f"{LOG_ID} {request.data}")
+            line_id = request.data["line_id"]
+            bok_2 = BOK_2_lines.objects.get(pk=line_id)
+            bok_2.delete()
+
+            # Get quote again
+            jasonL_do_quote(bok_2.fk_header_id)
+
+            return Response({"success": True}, status.HTTP_200_OK)
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} error: {str(e)}")
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
 
 
@@ -594,7 +784,37 @@ def get_delivery_status(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        booking = {
+        status_history = Dme_status_history.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).order_by("-z_createdTimeStamp")
+
+        if status_history:
+            last_updated = (
+                convert_to_AU_SYDNEY_tz(
+                    status_history.first().event_time_stamp
+                ).strftime("%d/%m/%Y %H:%M")
+                if status_history.first().event_time_stamp
+                else ""
+            )
+        else:
+            last_updated = ""
+
+        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+        has_deleted_lines = lines.filter(is_deleted=True).exists()
+
+        if has_deleted_lines:
+            lines = lines.filter(is_deleted=True, e_item_type__isnull=False)
+        else:
+            lines = lines.filter(is_deleted=False)
+
+        lines = (
+            lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+            .exclude(e_item__icontains="(Ignored)")
+            .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
+        )
+
+        booking_dict = {
+            "uid": booking.pk,
             "b_bookingID_Visual": booking.b_bookingID_Visual,
             "b_client_order_num": booking.b_client_order_num,
             "b_client_sales_inv_num": booking.b_client_sales_inv_num,
@@ -618,7 +838,19 @@ def get_delivery_status(request):
             "b_061_b_del_contact_full_name": booking.de_to_Contact_F_LName,
             "b_063_b_del_email": booking.de_Email,
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
+            "b_000_3_consignment_number": booking.v_FPBookingNumber,
+            "vx_freight_provider": booking.vx_freight_provider,
         }
+
+        def line_to_dict(line):
+            return {
+                "e_item_type": line.e_item_type,
+                "l_003_item": line.e_item,
+                "l_002_qty": line.e_qty,
+            }
+
+        lines = map(line_to_dict, lines)
+
         json_quote = None
 
         if quote:
@@ -626,24 +858,96 @@ def get_delivery_status(request):
             quote_data = SimpleQuoteSerializer(quote, context=context).data
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
+        last_milestone = "Delivered"
         if category == "Booked":
             step = 2
         elif category == "Transit":
             step = 3
-        elif category == "Complete":
+        elif category == "On Board for Delivery":
             step = 4
-        elif category == "Hold":
+        elif category == "Complete":
             step = 5
+        elif category == "Futile":
+            step = 5
+            last_milestone = "Futile Delivery"
+        elif category == "Returned":
+            step = 5
+            last_milestone = "Returned"
         else:
             step = 1
             b_status = "Processing"
+
+        steps = [
+            "Processing",
+            "Booked",
+            "Transit",
+            "On Board for Delivery",
+            "Complete",
+        ]
+
+        timestamps = []
+        for index, item in enumerate(steps):
+            if index == 0:
+                timestamps.append(
+                    convert_to_AU_SYDNEY_tz(booking.z_CreatedTimestamp).strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
+                    if booking and booking.z_CreatedTimestamp
+                    else ""
+                )
+            elif index >= step:
+                timestamps.append("")
+            else:
+                if (
+                    category == "Complete"
+                    and not booking.b_status in ["Closed", "Cancelled"]
+                    and index == 4
+                ):
+                    timestamps.append(
+                        booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    )
+                else:
+                    status_time = get_status_time_from_category(
+                        booking.pk_booking_id, item
+                    )
+                    timestamps.append(
+                        convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
+                        if status_time
+                        else None
+                    )
+
+        if step == 1:
+            eta = (
+                (
+                    convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date)
+                    + timedelta(days=int(json_quote["eta"].split()[0]))
+                ).strftime("%d/%m/%Y")
+                if json_quote and booking.puPickUpAvailFrom_Date
+                else ""
+            )
+        else:
+            eta = (
+                (
+                    convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
+                    + timedelta(days=int(json_quote["eta"].split()[0]))
+                ).strftime("%d/%m/%Y")
+                if json_quote and booking.b_dateBookedDate
+                else ""
+            )
 
         return Response(
             {
                 "step": step,
                 "status": b_status,
+                "last_updated": last_updated,
                 "quote": json_quote,
-                "booking": booking,
+                "booking": booking_dict,
+                "lines": lines,
+                "eta_date": eta,
+                "last_milestone": last_milestone,
+                "timestamps": timestamps,
             }
         )
 
@@ -661,8 +965,32 @@ def get_delivery_status(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    lines = (
+        BOK_2_lines.objects.filter(
+            fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
+        )
+        .exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+        .exclude(l_003_item__icontains="(Ignored")
+    )
+
+    status_history = Dme_status_history.objects.filter(
+        fk_booking_id=bok_1.pk_header_id
+    ).order_by("-z_createdTimeStamp")
+
+    if status_history:
+        last_updated = (
+            convert_to_AU_SYDNEY_tz(status_history.first().event_time_stamp).strftime(
+                "%d/%m/%Y %H:%M"
+            )
+            if status_history.first().event_time_stamp
+            else ""
+        )
+    else:
+        last_updated = ""
+
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
-    booking = {
+    booking_dict = {
+        "b_bookingID_Visual": None,
         "b_client_order_num": bok_1.b_client_order_num,
         "b_client_sales_inv_num": bok_1.b_client_sales_inv_num,
         "b_028_b_pu_company": bok_1.b_028_b_pu_company,
@@ -685,16 +1013,54 @@ def get_delivery_status(request):
         "b_061_b_del_contact_full_name": bok_1.b_061_b_del_contact_full_name,
         "b_063_b_del_email": bok_1.b_063_b_del_email,
         "b_064_b_del_phone_main": bok_1.b_064_b_del_phone_main,
+        "b_000_3_consignment_number": bok_1.b_000_3_consignment_number,
     }
+
+    def line_to_dict(line):
+        return {
+            "e_item_type": line.e_item_type,
+            "l_003_item": line.e_item,
+            "l_002_qty": line.e_qty,
+        }
+
+    lines = map(line_to_dict, lines)
+
     quote = bok_1.quote
-    json_quote = None
+    json_quote, eta = None, None
 
     if quote:
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
+        eta = (
+            (
+                convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date)
+                + timedelta(days=int(json_quote["eta"].split()[0]))
+            ).strftime("%d/%m/%Y")
+            if json_quote and bok_1.b_021_b_pu_avail_from_date
+            else ""
+        )
 
     status = "Processing"
     return Response(
-        {"step": 1, "status": status, "quote": json_quote, "booking": booking}
+        {
+            "step": 1,
+            "status": status,
+            "last_updated": last_updated,
+            "quote": json_quote,
+            "booking": booking_dict,
+            "eta_date": eta,
+            "last_milestone": "Delivered",
+            "timestamps": [
+                convert_to_AU_SYDNEY_tz(bok_1.date_processed).strftime(
+                    "%d/%m/%Y %H:%M:%S"
+                )
+                if bok_1 and bok_1.date_processed
+                else "",
+                "",
+                "",
+                "",
+                "",
+            ],
+        }
     )

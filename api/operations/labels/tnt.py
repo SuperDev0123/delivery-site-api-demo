@@ -23,7 +23,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting
+from api.models import Booking_lines, FPRouting, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
@@ -79,7 +79,9 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
-def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -128,13 +130,6 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-    totalQty = 1
-    if one_page_label:
-        lines = [lines[0]]
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
 
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
@@ -212,6 +207,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
         routing_group=routing_group,
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
+    routing = None
     if crecords.exists():
         drecord = (
             FPRouting.objects.filter(
@@ -222,23 +218,39 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             .only("orig_depot")
             .first()
         )
-        routing = None
 
-        for crecord in crecords:
-            if crecord.orig_depot_except == drecord.orig_depot:
-                routing = crecord
-                break
+        if drecord:
+            for crecord in crecords:
+                if crecord.orig_depot_except == drecord.orig_depot:
+                    routing = crecord
+                    break
 
         if not routing:
             routing = crecords.first()
 
-    logger.info(
-        f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
-    )
+        logger.info(
+            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
+        )
+    else:
+        logger.info(
+            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
+        )
+
+    totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
 
     e_Total_KG_weight = 0
     for booking_line in lines:
         e_Total_KG_weight += booking_line.e_weightPerEach * booking_line.e_qty
+
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
 
     for booking_line in lines:
         for j_index in range(booking_line.e_qty):
@@ -366,7 +378,11 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (16, booking.vx_serviceName),
+                        "<font size=%s><b>%s</b></font>"
+                        % (
+                            16 if len(booking.vx_serviceName) < 12 else 9,
+                            booking.vx_serviceName,
+                        ),
                         style_left,
                     ),
                     Paragraph(
@@ -545,50 +561,82 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 ],
             )
 
-            tbl_data2 = [
+            tbl_data2 = []
+            font_size = 12
+
+            if (
+                len(booking.de_To_Address_Street_1 or "")
+                + len(booking.de_To_Address_Street_2 or "")
+                > 40
+            ):
+                font_size = 10
+
+            tbl_data2.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            12,
+                            font_size,
                             booking.de_to_Contact_F_LName or "",
                         ),
                         style_uppercase,
                     )
-                ],
+                ]
+            )
+
+            if (booking.deToCompanyName or "").lower() != (
+                booking.de_to_Contact_F_LName or ""
+            ).lower():
+                tbl_data2.append(
+                    [
+                        Paragraph(
+                            "<font size=%s><b>%s</b></font>"
+                            % (
+                                font_size,
+                                booking.deToCompanyName or "",
+                            ),
+                            style_uppercase,
+                        )
+                    ]
+                )
+
+            tbl_data2.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (12, booking.deToCompanyName or ""),
+                        % (
+                            font_size,
+                            booking.de_To_Address_Street_1 or "",
+                        ),
                         style_uppercase,
                     )
-                ],
+                ]
+            )
+            tbl_data2.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (12, booking.de_To_Address_Street_1 or ""),
+                        % (
+                            font_size,
+                            booking.de_To_Address_Street_2 or "",
+                        ),
                         style_uppercase,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font> "
-                        % (12, booking.de_To_Address_Street_2 or ""),
-                        style_uppercase,
-                    ),
-                ],
+                    )
+                ]
+            )
+            tbl_data2.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s %s</b></font> "
                         % (
-                            12,
+                            font_size,
                             booking.de_To_Address_Suburb or "",
                             booking.de_To_Address_PostalCode or "",
                         ),
                         style_uppercase,
                     ),
-                ],
-            ]
+                ]
+            )
 
             t2 = Table(
                 tbl_data2,
@@ -712,7 +760,12 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s><b>Senders Ref:</b> %s</font>"
-                        % (8, booking_line.gap_ras),
+                        % (
+                            8,
+                            booking_line.gap_ras
+                            if booking_line.gap_ras
+                            else booking.b_client_order_num,
+                        ),
                         style_left,
                     )
                 ]
@@ -880,7 +933,6 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 3),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("BOX", (1, 0), (-1, -1), 0.5, colors.black),
                 ],
             )
 
@@ -918,7 +970,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.deToCompanyName or "",
+                            booking.puCompany or "",
                         ),
                         style_uppercase,
                     )
@@ -976,7 +1028,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
@@ -996,6 +1048,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                     ("LEFTPADDING", (0, 0), (-1, -1), 3),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("BOX", (0, 0), (-1, -1), 0.5, colors.black),
+                    ("LINEBEFORE", (1, 0), (-1, -1), 0.5, colors.black),
                 ],
             )
 
@@ -1021,14 +1074,43 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             Story.append(t1)
             # Story.append(Spacer(1, 5))
 
-            tbl_data1 = [[tnt_img]]
+            fp_color_code = (
+                Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
+                or "808080"
+            )
+
+            tbl_data1 = [[tnt_img], [""]]
 
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 2) * mm
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
                 ),
-                rowHeights=(float(label_settings["line_height_large"]) * mm),
+                rowHeights=(
+                    float(label_settings["line_height_large"]) * mm,
+                    float(label_settings["line_height_large"]) * 1 / 2 * mm,
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("BACKGROUND", (0, 1), (-1, -1), f"#{fp_color_code}"),
+                ],
+            )
+
+            tbl_data1 = [[dme_img, "", t1]]
+
+            t1 = Table(
+                tbl_data1,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 8) * mm,
+                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
+                ),
+                rowHeights=(float(label_settings["line_height_large"]) * 3 / 2 * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),

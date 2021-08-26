@@ -40,6 +40,21 @@ def book(fp_name, booking, booker):
         error_msg = f"Error while build payload {str(e)}"
         return False, error_msg
 
+    if booking.b_client_warehouse_code == "JASON_L_BOT" and _fp_name == "tnt":
+        # JasonL Botany warehouse doesn't need any trucks from TNT
+        booking.v_FPBookingNumber = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+        booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+            booking, booking.api_booking_quote
+        )
+        booking.b_dateBookedDate = datetime.now()
+        booking.b_error_Capture = None
+        status_history.create(booking, "Booked", booker)
+        booking.save()
+
+        message = f"Successfully booked({booking.v_FPBookingNumber})"
+        return True, message
+
     logger.info(f"### Payload ({fp_name} book): {payload}")
     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
     response = requests.post(url, params={}, json=payload)
@@ -47,9 +62,16 @@ def book(fp_name, booking, booker):
         response.content.decode("utf8").replace("'t", " not").replace("'", '"')
     )
     json_data = json.loads(res_content)
-    s0 = json.dumps(json_data, indent=2, sort_keys=True, default=str)  # Just for visual
-    # logger.info(f"### Response ({fp_name} book): {s0}")
-    logger.info(f"### Response ({fp_name} book): {response.status_code}")
+
+    try:
+        s0 = json.dumps(
+            json_data, indent=2, sort_keys=True, default=str
+        )  # Just for visual
+        # logger.info(f"### Response ({fp_name} book): {s0}")
+        logger.info(f"### Response ({fp_name} book): {response.status_code}")
+    except Exception as e:
+        s0 = str(json_data)
+        logger.error(f"[FP BOOK] error while dump json response. response: {json_data}")
 
     if (
         response.status_code == 500
@@ -93,6 +115,9 @@ def book(fp_name, booking, booker):
                 )
             elif booking.vx_freight_provider.lower() == "sendle":
                 booking.v_FPBookingNumber = json_data["v_FPBookingNumber"]
+            elif booking.vx_freight_provider.lower() == "allied":
+                booking.v_FPBookingNumber = json_data["consignmentNumber"]
+                booking.jobNumber = json_data["jobNumber"]
 
             booking.fk_fp_pickup_id = json_data["consignmentNumber"]
             booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
@@ -100,7 +125,7 @@ def book(fp_name, booking, booker):
                 booking, booking.api_booking_quote
             )
             booking.b_dateBookedDate = datetime.now()
-            booking.b_status = "Booked"
+            status_history.create(booking, "Booked", booker)
             booking.b_error_Capture = None
             booking.save()
 
@@ -112,13 +137,17 @@ def book(fp_name, booking, booker):
                 fk_booking_id=booking.id,
             ).save()
 
-            # Create new statusHistory
-            status_history.create(booking, "Booked", booker)
+            # Save Label for Hunter
+            is_get_label = True  # Flag to decide if need to get label from response
 
-            # Save Label & POD for Hunter
+            # JasonL
+            if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+                # JasonL never get label from FP
+                is_get_label = False
+
             create_dir(f"{S3_URL}/pdfs/{_fp_name}_au")
-            if _fp_name == "hunter":
-                json_data = json.loads(response.content)
+            if _fp_name == "hunter" and is_get_label:
+                json_label_data = json.loads(response.content)
                 file_name = f"hunter_{str(booking.v_FPBookingNumber)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
@@ -153,7 +182,7 @@ def book(fp_name, booking, booker):
 
                 send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Capital
-            elif _fp_name == "capital":
+            elif _fp_name == "capital" and is_get_label:
                 json_label_data = json.loads(response.content)
                 file_name = f"capital_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
@@ -172,7 +201,7 @@ def book(fp_name, booking, booker):
 
                     send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Startrack and AusPost
-            elif _fp_name in ["startrack", "auspost"]:
+            elif _fp_name in ["startrack", "auspost"] and is_get_label:
                 Api_booking_confirmation_lines.objects.filter(
                     fk_booking_id=booking.pk_booking_id
                 ).delete()
@@ -183,7 +212,7 @@ def book(fp_name, booking, booker):
                         api_item_id=item["item_id"],
                     ).save()
             # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
-            elif _fp_name == "dhl":
+            elif _fp_name == "dhl" and is_get_label:
                 if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":
                     booking.v_FPBookingNumber = f"DME{booking.b_bookingID_Visual}"
                     booking.save()

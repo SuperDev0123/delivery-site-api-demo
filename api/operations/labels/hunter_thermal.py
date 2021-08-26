@@ -27,7 +27,7 @@ from api.models import Booking_lines, API_booking_quotes, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 
-logger = logging.getLogger("dme_api")
+logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -72,51 +72,58 @@ def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
 
-def build_label(booking, file_path, lines, label_index, one_page_label):
-    logger.info(
-        f"#110 [HUNTER THERMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
+    v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
     )
+
+    logger.info(
+        f"#110 [HUNTER THERMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines}, Con: {v_FPBookingNumber})"
+    )
+
+    # start check if pdfs folder exists
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+    # end check if pdfs folder exists
 
     # start pdf file name using naming convention
     if lines:
-        file_name = (
-            booking.pu_Address_State
-            + "_"
-            + str(booking.b_bookingID_Visual)
-            + "_"
-            + str(lines[0].pk)
-            + ".pdf"
-        )
-    else:
-        file_name = (
-            booking.pu_Address_State
-            + "_"
-            + gen_consignment_num(
-                booking.vx_freight_provider, booking.b_bookingID_Visual
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
             )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
+    else:
+        filename = (
+            booking.pu_Address_State
+            + "_"
+            + v_FPBookingNumber
             + "_"
             + str(booking.b_bookingID_Visual)
             + ".pdf"
         )
 
-    file = open(f"{file_path}/{file_name}", "w")
+    file = open(f"{filepath}/{filename}", "w")
+    logger.info(f"#111 [HUNTER THERMAL LABEL] File full path: {filepath}/{filename}")
     # end pdf file name using naming convention
 
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
-
-    totalQty = 0
-    if one_page_label:
-        lines = [lines[0]]
-        totalQty = 1
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
-
-    # start check if pdfs folder exists
-    if not os.path.exists(file_path):
-        os.makedirs(file_path)
-    # end check if pdfs folder exists
 
     label_settings = {
         "font_family": "Verdana",
@@ -139,7 +146,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
     }
 
     doc = SimpleDocTemplate(
-        file_path + file_name,
+        f"{filepath}/{filename}",
         pagesize=(
             float(label_settings["label_dimension_length"]) * mm,
             float(label_settings["label_dimension_width"]) * mm,
@@ -168,12 +175,37 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
     document = []
 
     Story = []
-    line_index = 1
+    j = 1
+
+    totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
+    totalWeight = 0
+    totalCubic = 0
+    for booking_line in lines:
+        totalWeight = totalWeight + booking_line.e_qty * booking_line.e_weightPerEach
+        totalCubic = totalCubic + get_cubic_meter(
+            booking_line.e_dimLength,
+            booking_line.e_dimWidth,
+            booking_line.e_dimHeight,
+            booking_line.e_dimUOM,
+        )
+
+    if sscc:
+        j = 1 + label_index
+        totalQty = sscc_cnt
 
     for line in lines:
         for k in range(line.e_qty):
             if one_page_label and k > 0:
                 continue
+
+            logger.info(f"#114 [HUNTER THERMAL LABEL] Adding: {line}")
 
             hr = HRFlowable(
                 width=(float(label_settings["label_image_size_length"]) * mm),
@@ -195,9 +227,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>To: %s</font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.deToCompanyName
-                            if booking.deToCompanyName
-                            else "",
+                            booking.deToCompanyName or "",
                         ),
                         style_left,
                     )
@@ -207,9 +237,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.de_To_Address_Street_1
-                            if booking.de_To_Address_Street_1
-                            else "",
+                            booking.de_To_Address_Street_1 or "",
                         ),
                         style_left,
                     ),
@@ -219,9 +247,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s><b>%s</b></font> "
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_To_Address_Street_2
-                            if booking.de_To_Address_Street_2
-                            else "",
+                            booking.de_To_Address_Street_2 or "",
                         ),
                         style_left,
                     ),
@@ -231,15 +257,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s><b>%s %s %s</b></font> "
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_To_Address_Suburb
-                            if booking.de_To_Address_Suburb
-                            else "",
-                            booking.de_To_Address_State
-                            if booking.de_To_Address_State
-                            else "",
-                            booking.de_To_Address_PostalCode
-                            if booking.de_To_Address_PostalCode
-                            else "",
+                            booking.de_To_Address_Suburb or "",
+                            booking.de_To_Address_State or "",
+                            booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
                     ),
@@ -250,9 +270,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             booking.de_to_Phone_Main or "",
-                            booking.de_to_Contact_F_LName
-                            if booking.de_to_Contact_F_LName
-                            else "",
+                            booking.de_to_Contact_F_LName or "",
                         ),
                         style_left,
                     )
@@ -263,7 +281,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "Ref:",
-                            line.sscc or "",
+                            line.sscc if line.sscc else "",
                         ),
                         style_left,
                     )
@@ -274,7 +292,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "Item Ref:",
-                            line.e_item if line.e_item else "null",
+                            line.e_item or "",
                         ),
                         style_left,
                     )
@@ -285,10 +303,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_large"],
                             "CONSIGNMENT:",
-                            gen_consignment_num(
-                                booking.vx_freight_provider, 
-                                booking.b_bookingID_Visual
-                            ),
+                            v_FPBookingNumber,
                         ),
                         style_left,
                     )
@@ -307,22 +322,24 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
             )
 
             try:
-                account_code = API_booking_quotes.objects.get(id=booking.api_booking_quote_id).account_code
+                account_code = API_booking_quotes.objects.get(
+                    id=booking.api_booking_quote_id
+                ).account_code
             except Exception as e:
                 account_code = ""
 
             de_suburb = booking.de_To_Address_Suburb
             de_postcode = booking.de_To_Address_PostalCode
             de_state = booking.de_To_Address_State
+            head_port = ""
+            port_code = ""
+
             fp_routing = FPRouting.objects.filter(
                 suburb=de_suburb, dest_postcode=de_postcode, state=de_state
             )
-            if fp_routing[0]:
+            if fp_routing:
                 head_port = fp_routing[0].orig_depot
                 port_code = fp_routing[0].gateway
-            else:
-                head_port = ""
-                port_code = ""
 
             tbl_data2 = [
                 [
@@ -366,7 +383,11 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s>%s %s</font>"
-                        % (label_settings["font_size_medium"], "Account:",  account_code),
+                        % (
+                            label_settings["font_size_medium"],
+                            "Account:",
+                            account_code,
+                        ),
                         style_center,
                     )
                 ],
@@ -375,10 +396,10 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>Item %s/%s Weight %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            line_index,
+                            j,
                             totalQty,
-                            line.e_Total_KG_weight if line.e_Total_KG_weight else "",
-                            line.e_weightUOM if line.e_weightUOM else "",
+                            line.e_Total_KG_weight or "",
+                            line.e_weightUOM or "",
                         ),
                         style_center,
                     )
@@ -386,7 +407,10 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b><br/></font>"
-                        % (label_settings["font_size_medium"], "Road Express"),
+                        % (
+                            label_settings["font_size_medium"],
+                            "Road Express",
+                        ),
                         style_center,
                     )
                 ],
@@ -424,7 +448,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
 
             Story.append(shell_table)
 
-            barcode = gen_barcode(booking, lines, line_index, label_index)
+            barcode = gen_barcode(booking, lines, j, label_index)
 
             tbl_data = [
                 [
@@ -479,7 +503,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "FROM:",
-                            booking.puCompany if booking.puCompany else "",
+                            booking.puCompany or "",
                         ),
                         style_left,
                     )
@@ -489,9 +513,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.pu_Address_Street_1
-                            if booking.pu_Address_Street_1
-                            else "",
+                            booking.pu_Address_Street_1 or "",
                         ),
                         style_left,
                     ),
@@ -501,9 +523,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_medium"],
-                            booking.pu_Address_street_2
-                            if booking.pu_Address_street_2
-                            else "",
+                            booking.pu_Address_street_2 or "",
                         ),
                         style_left,
                     ),
@@ -513,15 +533,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s><b>%s %s %s</b></font> "
                         % (
                             label_settings["font_size_medium"],
-                            booking.pu_Address_Suburb
-                            if booking.pu_Address_Suburb
-                            else "",
-                            booking.pu_Address_State
-                            if booking.pu_Address_State
-                            else "",
-                            booking.pu_Address_PostalCode
-                            if booking.pu_Address_PostalCode
-                            else "",
+                            booking.pu_Address_Suburb or "",
+                            booking.pu_Address_State or "",
+                            booking.pu_Address_PostalCode or "",
                         ),
                         style_left,
                     ),
@@ -532,9 +546,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             booking.pu_Phone_Main or "",
-                            booking.pu_Contact_F_L_Name
-                            if booking.pu_Contact_F_L_Name
-                            else "",
+                            booking.pu_Contact_F_L_Name or "",
                         ),
                         style_left,
                     ),
@@ -544,10 +556,10 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>Item %s/%s Weight %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            line_index,
+                            j,
                             totalQty,
-                            line.e_Total_KG_weight if line.e_Total_KG_weight else "",
-                            line.e_weightUOM if line.e_weightUOM else "",
+                            line.e_Total_KG_weight or "",
+                            line.e_weightUOM or "",
                         ),
                         style_left,
                     )
@@ -581,9 +593,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>To: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.deToCompanyName
-                            if booking.deToCompanyName
-                            else "",
+                            booking.deToCompanyName or "",
                         ),
                         style_left,
                     )
@@ -593,9 +603,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_To_Address_Street_1
-                            if booking.de_To_Address_Street_1
-                            else "",
+                            booking.de_To_Address_Street_1 or "",
                         ),
                         style_left,
                     ),
@@ -605,9 +613,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_To_Address_Street_2
-                            if booking.de_To_Address_Street_2
-                            else "",
+                            booking.de_To_Address_Street_2 or "",
                         ),
                         style_left,
                     ),
@@ -617,15 +623,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s><b>%s %s %s</b></font> "
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_To_Address_Suburb
-                            if booking.de_To_Address_Suburb
-                            else "",
-                            booking.de_To_Address_State
-                            if booking.de_To_Address_State
-                            else "",
-                            booking.de_To_Address_PostalCode
-                            if booking.de_To_Address_PostalCode
-                            else "",
+                            booking.de_To_Address_Suburb or "",
+                            booking.de_To_Address_State or "",
+                            booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
                     ),
@@ -636,9 +636,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             booking.de_to_Phone_Main or "",
-                            booking.de_to_Contact_F_LName
-                            if booking.de_to_Contact_F_LName
-                            else "",
+                            booking.de_to_Contact_F_LName or "",
                         ),
                         style_left,
                     )
@@ -649,9 +647,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "CON.",
-                            booking.v_FPBookingNumber
-                            if booking.v_FPBookingNumber
-                            else "",
+                            v_FPBookingNumber,
                         ),
                         style_left,
                     )
@@ -662,7 +658,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         % (
                             label_settings["font_size_medium"],
                             "Item Ref:",
-                            line.e_item if line.e_item else "null",
+                            line.e_item or "",
                         ),
                         style_left,
                     )
@@ -730,11 +726,11 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
 
             Story.append(PageBreak())
 
-            line_index += 1
+            j += 1
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
     file.close()
     logger.info(
         f"#119 [HUNTER LABEL] Finished building label... (Booking ID: {booking.b_bookingID_Visual})"
     )
-    return file_path, file_name
+    return filepath, filename

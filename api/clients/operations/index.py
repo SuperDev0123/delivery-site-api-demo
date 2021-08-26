@@ -1,6 +1,7 @@
 import logging
 
 from api.models import Client_employees, Client_warehouses, Utl_suburbs
+from api.helpers.string import similarity
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +23,23 @@ def get_client(user):
         raise Exception(message)
 
 
-def get_warehouse(client):
+def get_warehouse(client, code=None):
     """
     get Client's Warehouse
     """
     LOG_ID = "[GET WHSE]"
+    logger.info(f"{LOG_ID} client: {client}, code: {code}")
 
     try:
-        warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+        if code:  # JasonL with code
+            warehouse = Client_warehouses.objects.get(client_warehouse_code=code)
+        elif client.company_name == "Jason L":  # JasonL without code
+            warehouse = Client_warehouses.objects.filter(
+                fk_id_dme_client=client
+            ).first()
+        else:
+            warehouse = Client_warehouses.objects.get(fk_id_dme_client=client)
+
         logger.info(f"{LOG_ID} Warehouse: {warehouse}")
         return warehouse
     except Exception as e:
@@ -38,11 +48,15 @@ def get_warehouse(client):
         raise Exception(message)
 
 
-def get_suburb_state(postal_code):
+def get_suburb_state(postal_code, clue=""):
     """
     get `suburb` and `state` from postal_code
+
+    postal_code: PostalCode
+    clue: String which may contains Suburb and State
     """
     LOG_ID = "[GET ADDRESS]"
+    logger.info(f"{LOG_ID} postal_code: {postal_code}, clue: {clue}")
 
     if not postal_code:
         message = "Delivery postal code is required."
@@ -55,5 +69,49 @@ def get_suburb_state(postal_code):
         message = "Suburb and or postal code mismatch please check info and try again."
         logger.info(f"{LOG_ID} {message}")
         raise Exception(message)
-    else:
-        return addresses[0].state, addresses[0].suburb
+
+    selected_address = None
+    if clue:
+        for address in addresses:
+            for clue_iter in clue.split(", "):
+                _clue_iter = clue_iter.lower()
+                _clue_iter = _clue_iter.strip()
+
+                if address.suburb.lower() == _clue_iter:
+                    selected_address = address
+
+    if not selected_address and not clue:
+        selected_address = addresses[0]
+    elif not selected_address and clue:
+        return None, None
+
+    return selected_address.state, selected_address.suburb
+
+
+def get_similar_suburb(clues):
+    """
+    get similar(>0.8) suburb from clues
+    """
+    LOG_ID = "[GET SIMILAR SUBURB]"
+    logger.info(f"{LOG_ID} clues: {clues}")
+    addresses = Utl_suburbs.objects.all().only("suburb")
+
+    for address in addresses:
+        for clue_iter in clues:
+            _clue_iter = clue_iter.lower()
+            _clue_iter = _clue_iter.strip()
+
+            if similarity(address.suburb.lower(), _clue_iter) > 0.8:
+                return clue_iter
+
+
+def is_postalcode_in_state(state, postal_code):
+    """
+    check if postal_code is in state
+    """
+    LOG_ID = "[CHECK STATE HAS POSTAL]"
+    logger.info(f"{LOG_ID} state: {state}, postal_code: {postal_code}")
+
+    addresses = Utl_suburbs.objects.filter(state=state, postal_code=postal_code)
+
+    return addresses.exists()

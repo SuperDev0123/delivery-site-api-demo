@@ -2,9 +2,11 @@ import logging
 
 from api.models import FP_zones, FP_vehicles
 from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.common import trace_error
+from api.common.constants import PALLETS
+
 
 logger = logging.getLogger(__name__)
-PALLETS = ["pallet", "plt"]
 
 
 def get_zone(fp, state, postal_code, suburb):
@@ -144,62 +146,112 @@ def find_vehicle_ids(booking_lines, fp):
         max_length = 0
         max_width = 0
         max_height = 0
-        vehicle_ids = []
+        lines_cnt = 0
+        total_weight = 0
 
         for item in booking_lines:
             length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
             width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
             height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+            weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
 
+            total_weight += weight
             max_length = length if max_length < length else max_length
             max_width = width if max_width < width else max_width
             max_height = height if max_height < height else max_height
             sum_cube += width * height * length * item.e_qty
+            lines_cnt += 1
 
         # print(
         #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
         # )
 
-        if (
-            booking_lines.first().e_type_of_packaging
-            and booking_lines.first().e_type_of_packaging.lower() in PALLETS
-        ):
-            for vehicle in vehicles:
-                vmax_width = (
-                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
-                )
-                vmax_height = (
-                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
-                )
-                vmax_length = (
-                    _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
-                )
+        # 2021-07-07 Century only charge per vehicle
+        # if (
+        #     booking_lines.first().e_type_of_packaging
+        #     and booking_lines.first().e_type_of_packaging.lower() in PALLETS
+        # ):
+        #     for vehicle in vehicles:
+        #         vmax_width = (
+        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
+        #         )
+        #         vmax_height = (
+        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
+        #         )
+        #         vmax_length = (
+        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
+        #         )
 
-                if (
-                    vmax_width >= max_width
-                    and max_height >= max_height
-                    and vmax_length >= max_length
-                    and vehicle.pallets >= len(booking_lines)
-                ):
-                    vehicle_ids.append(vehicle.id)
-        else:
-            for vehicle in vehicles:
-                vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-                vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-                vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-                vehicle_cube = vmax_width * vmax_height * vmax_length
+        #         if (
+        #             vmax_width >= max_width
+        #             and max_height >= max_height
+        #             and vmax_length >= max_length
+        #             and vehicle.pallets >= len(booking_lines)
+        #         ):
+        #             vehicle_ids.append(vehicle.id)
+        # else:
+        #     for vehicle in vehicles:
+        #         vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+        #         vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+        #         vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+        #         vehicle_cube = vmax_width * vmax_height * vmax_length
 
+        #         if (
+        #             vmax_width >= max_width
+        #             and max_height >= max_height
+        #             and vmax_length >= max_length
+        #             and vehicle_cube * 0.8 >= sum_cube
+        #         ):
+        #             vehicle_ids.append(vehicle.id)
+
+        vehicle_ids = []
+        cubic_ratio = 1 if lines_cnt == 1 else 0.8
+        for vehicle in vehicles:
+            vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+            vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+            vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+            vehicle_cube = vmax_width * vmax_height * vmax_length
+
+            if (
+                vmax_width >= max_width
+                and vmax_height >= max_height
+                and vmax_length >= max_length
+                and vehicle_cube * cubic_ratio >= sum_cube
+                and vehicle.max_mass >= total_weight
+            ):
+                vehicle_ids.append(vehicle.id)
+
+        # Century Exceptional Rule #1
+        if fp.fp_company_name.upper() == "CENTURY":
+            """
+            The load maybe on a pallet but the 1.5m length does not apply to the pallets.
+            A pallet larger than the standard 1.2m x 1.2m must booked as a 1 tonne job.
+            """
+            has_pallet = False
+            _vehicle_ids = []
+
+            for line in booking_lines:
                 if (
-                    vmax_width >= max_width
-                    and max_height >= max_height
-                    and vmax_length >= max_length
-                    and vehicle_cube * 0.8 >= sum_cube
+                    line.e_type_of_packaging
+                    and line.e_type_of_packaging.lower() in PALLETS
+                    and (max_length > 1.2 or max_width > 1.2)
                 ):
-                    vehicle_ids.append(vehicle.id)
+                    has_pallet = True
+                    break
+
+            if has_pallet:
+                for vehicle_id in vehicle_ids:
+                    non_pallet_ids = [22, 23, 24, 25, 63, 64, 65, 66, 67, 68, 69, 70]
+
+                    if not vehicle_id in non_pallet_ids:
+                        _vehicle_ids.append(vehicle_id)
+
+                vehicle_ids = _vehicle_ids
 
         return vehicle_ids
     except Exception as e:
-        logger.info(f"@833 Rule Type 01 - error while find vehicle")
+        trace_error.print()
+        logger.info(f"@833 Rule Type 01 - error while find vehicle. Error: {str(e)}")
         return
 
 
@@ -337,9 +389,11 @@ def dim_filter(booking, booking_lines, rules, fp):
 
     if fp.rule_type.rule_type_code in ["rule_type_01"]:  # Vehicle
         vehicle_ids = find_vehicle_ids(booking_lines, fp)
+        logger.info(f"#820 DIM FILTER vehicles: {vehicle_ids}")
 
         if vehicle_ids:
             rules = rules.filter(vehicle_id__in=vehicle_ids)
+
             filtered_rules = rules
     elif fp.rule_type.rule_type_code in ["rule_type_02"]:  # Over size & Normal size
         rule_ids = find_rule_ids_by_dim(booking_lines, rules, fp)

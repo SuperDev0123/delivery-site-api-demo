@@ -1,8 +1,10 @@
+import math
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.utils import COMMASPACE, formatdate
 
 from django.conf import settings
+from rest_framework import serializers
 
 from api.models import (
     DME_Email_Templates,
@@ -11,8 +13,15 @@ from api.models import (
     Booking_lines_data,
     EmailLogs,
     DME_Options,
+    DME_clients,
+    Utl_dme_status,
+    Dme_status_history,
+    API_booking_quotes,
 )
 from api.outputs.email import send_email
+from api.helpers.etd import get_etd
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +30,7 @@ def send_booking_status_email(bookingId, emailName, sender):
     """
     When 'Tempo Pty Ltd' bookings status is updated
     """
+    from api.common.common_times import convert_to_AU_SYDNEY_tz
 
     if settings.ENV in ["local", "dev"]:
         logger.info("Email trigger is ignored on LOCAL & DEV.")
@@ -60,8 +70,16 @@ def send_booking_status_email(bookingId, emailName, sender):
 
     files = []
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
-    BOOKEDDATE = booking.b_dateBookedDate
-    DELIVERYDATE = booking.s_21_Actual_Delivery_TimeStamp
+    BOOKEDDATE = (
+        convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
+        if booking.b_dateBookedDate
+        else ""
+    )
+    DELIVERYDATE = (
+        convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp)
+        if booking.s_21_Actual_Delivery_TimeStamp
+        else ""
+    )
     TOADDRESSCONTACT = f" {booking.pu_Contact_F_L_Name}"
     FUTILEREASON = booking.vx_futile_Booking_Notes
     BOOKING_NUMBER = booking.b_bookingID_Visual
@@ -84,8 +102,16 @@ def send_booking_status_email(bookingId, emailName, sender):
         pass
 
     SERVICE = booking.vx_serviceName
-    LATEST_PICKUP_TIME = booking.s_05_Latest_Pick_Up_Date_TimeSet
-    LATEST_DELIVERY_TIME = booking.s_06_Latest_Delivery_Date_TimeSet
+    LATEST_PICKUP_TIME = (
+        convert_to_AU_SYDNEY_tz(booking.s_05_Latest_Pick_Up_Date_TimeSet)
+        if booking.s_05_Latest_Pick_Up_Date_TimeSet
+        else ""
+    )
+    LATEST_DELIVERY_TIME = (
+        convert_to_AU_SYDNEY_tz(booking.s_06_Latest_Delivery_Date_TimeSet)
+        if booking.s_06_Latest_Delivery_Date_TimeSet
+        else ""
+    )
     DELIVERY_ETA = booking.z_calculated_ETA
     INSTRUCTIONS = booking.b_handling_Instructions
 
@@ -427,6 +453,8 @@ def send_booking_status_email(bookingId, emailName, sender):
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
 
+        cc_emails.append("dev.deliverme@gmail.com")
+
     send_email(to_emails, cc_emails, subject, html, files, mime_type)
 
     EmailLogs.objects.create(
@@ -439,36 +467,162 @@ def send_booking_status_email(bookingId, emailName, sender):
     )
 
 
-def send_status_update_email(booking, status, sender, status_url):
+def send_status_update_email(booking, category, eta, sender, status_url):
     """
     When 'Plum Products Australia Ltd' bookings status is updated
     """
+    from api.fp_apis.utils import get_status_time_from_category
 
-    if settings.ENV in ["local", "dev"]:
-        logger.info("Email trigger is ignored on LOCAL & DEV.")
-        return
+    LOG_ID = "[STATUS UPDATE EMAIL]"
+    logger.info(
+        f"{LOG_ID} BookingID: {booking.b_bookingID_Visual}, OrderNum: {booking.b_client_order_num}, New Status: {booking.b_status}"
+    )
+    b_status = booking.b_status
+    quote = booking.api_booking_quote
 
-    cc_emails = []
-    booking_lines = Booking_lines.objects.filter(
+    if not category:
+        logger.info(
+            f"#301 - status_update_email - unknown_status - client_booking_id={booking.client_booking_id}, status={b_status}"
+        )
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+
+    status_history = Dme_status_history.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
 
+    if status_history:
+        last_updated = (
+            status_history.first().event_time_stamp.strftime("%d/%m/%Y %H:%M")
+            if status_history.first().event_time_stamp
+            else ""
+        )
+    else:
+        last_updated = ""
+
+    last_milestone = "Delivered"
+    if category == "Booked":
+        step = 2
+    elif category == "Transit":
+        step = 3
+    elif category == "On Board for Delivery":
+        step = 4
+    elif category == "Complete":
+        step = 5
+    elif category == "Futile":
+        step = 5
+        last_milestone = "Futile Delivery"
+    elif category == "Returned":
+        step = 5
+        last_milestone = "Returned"
+    else:
+        step = 1
+        b_status = "Processing"
+
+    steps = [
+        "Processing",
+        "Booked",
+        "Transit",
+        "On Board for Delivery",
+        "Complete",
+    ]
+
+    timestamps = []
+    for index, item in enumerate(steps):
+        if index == 0:
+            timestamps.append(
+                booking.z_CreatedTimestamp.strftime("%d/%m/%Y %H:%M")
+                if booking and booking.z_CreatedTimestamp
+                else ""
+            )
+        elif index >= step:
+            timestamps.append("")
+        else:
+            if category == "Complete" and index == 4:
+                timestamps.append(
+                    booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
+                    if booking.s_21_Actual_Delivery_TimeStamp
+                    else ""
+                )
+            else:
+                timestamps.append(
+                    get_status_time_from_category(booking.pk_booking_id, item).strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
+                    if get_status_time_from_category(booking.pk_booking_id, item)
+                    else ""
+                )
+
+    to_emails = []
+    cc_emails = []
+
     templates = DME_Email_Templates.objects.filter(emailName="Status Update")
     emailVarList = {
-        "FULLNAME": booking.de_to_Contact_F_LName,
-        "ORDER_INVOICE_NO": booking.b_client_order_num
-        if not booking.inv_dme_invoice_no
-        else booking.inv_dme_invoice_no,
-        "BODYREPEAT": "",
+        "STATUS": b_status,
+        "FP_NAME": quote.freight_provider if quote and quote.freight_provider else "",
+        "DE_TO_ADDRESS": f"{booking.de_to_Contact_F_LName}<br />{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' if booking.de_To_Address_Street_2 else ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}",
+        "LAST_UPDATED_TIME": last_updated,
+        "IS_PROCESSING": "checked" if step >= 1 else "",
+        "IS_BOOKED": "checked" if step >= 2 else "",
+        "IS_TRANSIT": "checked" if step >= 3 else "",
+        "IS_ON_BOARD": "checked" if step >= 4 else "",
+        "IS_DELIVERED": "checked" if step >= 5 else "",
+        "LAST_MILESTONE": last_milestone,
+        "PROCESSING_TIME": timestamps[0],
+        "BOOKING_TIME": timestamps[1],
+        "TRANSIT_TIME": timestamps[2],
+        "ON_BOARD_TIME": timestamps[3],
+        "DELIVERED_TIME": timestamps[4],
+        "CUSTOMER_NAME": booking.de_to_Contact_F_LName,
+        "ORDER_NUMBER": booking.b_client_order_num,
+        "SHIPMENT_NUMBER": booking.v_FPBookingNumber,
+        "DME_NUMBER": booking.b_bookingID_Visual,
+        "ETA": eta,
+        "BODY_REPEAT": "",
     }
+
+    booking_lines = Booking_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).order_by("-z_createdTimeStamp")
+    deleted_lines_cnt = booking_lines.filter(is_deleted=True).count()
+
+    if deleted_lines_cnt > 0:
+        booking_lines = booking_lines.filter(e_item_type__isnull=False, is_deleted=True)
+
+    lines_data = []
+    for booking_line in booking_lines:
+        lines_data.append(
+            {
+                "ITEM_NUMBER": booking_line.e_item_type,
+                "ITEM_DESCRIPTION": booking_line.e_item,
+                "ITEM_QUANTITY": booking_line.e_qty,
+            }
+        )
+
     html = ""
 
     for template in templates:
         emailBody = template.emailBody
+        emailBodyRepeatOdd = template.emailBodyRepeatOdd
+        emailBodyRepeatEven = template.emailBodyRepeatEven
         emailVarList["USERNAME"] = sender
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
-        emailVarList["STATUS"] = status
         emailVarList["STATUS_URL"] = status_url
+
+        body_repeat = ""
+        for idx, line_data in enumerate(lines_data):
+            if idx % 2 == 0:
+                repeat_part = emailBodyRepeatEven
+            else:
+                repeat_part = emailBodyRepeatOdd
+
+            for key in line_data:
+                repeat_part = repeat_part.replace(
+                    "{" + str(key) + "}",
+                    str(line_data[key]) if line_data[key] else "",
+                )
+            body_repeat += repeat_part
+
+        emailVarList["BODY_REPEAT"] = body_repeat
 
         for key in emailVarList.keys():
             emailBody = emailBody.replace(
@@ -479,28 +633,35 @@ def send_status_update_email(booking, status, sender, status_url):
         html += emailBody
 
     mime_type = "html"
-    subject = "Order status has been updated"
+    client_name = (
+        "Jason.l" if booking.b_client_name == "Jason L" else booking.b_client_name
+    )
+    subject = f"Your {client_name} Order status has been updated"
 
     if settings.ENV in ["local", "dev"]:
-        to_emails = [
-            "petew@deliver-me.com.au",
-            "goldj@deliver-me.com.au",
-            "greatroyalone@outlook.com",
-        ]
+        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
-        to_emails = ["bookings@deliver-me.com.au"]
 
-        if booking.pu_Email:
-            to_emails.append(booking.pu_Email)
         if booking.de_Email:
-            cc_emails.append(booking.de_Email)
+            to_emails.append(booking.de_Email)
+        else:
+            to_emails.append("bookings@deliver-me.com.au")
+
         if booking.pu_email_Group:
             cc_emails = cc_emails + booking.pu_email_Group.split(",")
         if booking.de_Email_Group_Emails:
             cc_emails = cc_emails + booking.de_Email_Group_Emails.split(",")
         if booking.booking_Created_For_Email:
             cc_emails.append(booking.booking_Created_For_Email)
+
+        cc_emails.append("bookings@deliver-me.com.au")
+        cc_emails.append("dev.deliverme@gmail.com")
+
+        # Plum agent
+        if booking.kf_client_id in ["461162D2-90C7-BF4E-A905-000000000004"]:
+            cc_emails.append("JManiquis@plumproducts.com")
+            cc_emails.append("aushelpdesk@plumproducts.com")
 
     send_email(
         to_emails,
@@ -521,6 +682,49 @@ def send_status_update_email(booking, status, sender, status_url):
     )
 
 
+def send_picking_slip_printed_email(b_client_order_num):
+    """
+    Only used for `Jason L` client's orders
+
+    Example of subject:
+    JasonL | 1034525- | picking slip printed
+    """
+
+    _b_client_order_num = (
+        b_client_order_num if "-" in b_client_order_num else f"{b_client_order_num}-"
+    )
+    subject = f"JasonL | {_b_client_order_num} | picking slip printed"
+    message = "Sent from DME platform"
+    to_emails = ["data.deliver-me@outlook.com", "goldj@deliver-me.com.au"]
+
+    # if settings.ENV != "prod":
+    #     to_emails.append("goldj@deliver-me.com.au")
+
+    if settings.ENV in ["dev", "local"]:
+        logger.info(
+            f"@109 [send_picking_slip_printed_email] DEV MODE --- subject: {subject}"
+        )
+    else:
+        send_email(to_emails, [], subject, message)
+
+
+def send_email_missing_dims(client_name, order_num, lines_missing_dims):
+    """
+    Only used for `Jason L` client's orders
+
+    When an Order has missing dims Lines, DME send this email.
+    """
+    subject = f"JasonL | {order_num}"
+    message = f"Hi Regina, Order({order_num}) has lines with missing dims: {lines_missing_dims}"
+    to_emails = ["rejina@jasonl.com.au"]
+    cc_emails = [
+        "stephenm@deliver-me.com.au",
+        "petew@deliver-me.com.au",
+        "dev.deliverme@gmail.com",
+    ]
+    send_email(to_emails, cc_emails, subject, message)
+
+
 def send_email_to_admins(subject, message):
     if settings.ENV in ["local", "dev"]:
         logger.info("Email trigger is ignored on LOCAL & DEV.")
@@ -531,9 +735,17 @@ def send_email_to_admins(subject, message):
     ).first()
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
-        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+        cc_emails = ["dev.deliverme@gmail.com"]
 
         if settings.ENV in ["prod"]:
             to_emails.append("bookings@deliver-me.com.au")
+            to_emails.append("stephenm@deliver-me.com.au")
 
-        send_email(to_emails, [], subject, message)
+            if subject == "New FP status":
+                if "FP name: ALLIED" in message:
+                    to_emails.append("betty.petrov@alliedexpress.com.au")
+        else:
+            subject = f"FROM TEST SERVER - {subject}"
+            to_emails.append("goldj@deliver-me.com.au")
+
+        send_email(to_emails, cc_emails, subject, message)

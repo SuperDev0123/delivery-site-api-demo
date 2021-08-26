@@ -51,12 +51,14 @@ def get_pricing(fp_name, booking, booking_lines):
         net_price = cost.per_UOM_charge
 
         logger.info(f"{LOG_ID} {fp_name.upper()} - final cost - {cost}")
-        rule = rules.get(cost_id=cost.id)
+        rule = rules.filter(cost_id=cost.id).first()
         price = {
             "netPrice": net_price,
             "totalTaxes": 0,
             "serviceName": f"{rule.service_timing_code}",
+            "serviceType": service_type,
             "etd": rule.etd.fp_delivery_time_description,
+            "vehicle": rule.vehicle.pk,
         }
         pricies.append(price)
 

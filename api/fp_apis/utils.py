@@ -5,6 +5,7 @@ from django.conf import settings
 
 from api.models import *
 from api.common import ratio
+from api.common.booking_quote import set_booking_quote
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
@@ -24,7 +25,13 @@ def _convert_UOM(value, uom, type, fp_name):
         raise Exception(message)
 
 
-def gen_consignment_num(fp_name, booking_visual_id):
+def gen_consignment_num(fp_name, uid):
+    """
+    generate consignment
+
+    uid: can be `booking_visual_id` or `b_client_order_num`
+    """
+
     _fp_name = fp_name.lower()
 
     if _fp_name == "hunter":
@@ -36,25 +43,41 @@ def gen_consignment_num(fp_name, booking_visual_id):
 
         limiter = int(limiter)
 
-        prefix_index = int(int(booking_visual_id) / limiter) + 1
+        prefix_index = int(int(uid) / limiter) + 1
         prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
             ((prefix_index - 1) % 26) + 65
         )
 
-        return prefix + str(booking_visual_id)[-digit_len:].zfill(digit_len)
+        return prefix + str(uid)[-digit_len:].zfill(digit_len)
     elif _fp_name == "tnt":
-        return f"DME{str(booking_visual_id).zfill(9)}"
+        return f"DME{str(uid).zfill(9)}"
+    # elif _fp_name == "century": # Deactivated
+    #     return f"D_jasonl_{str(uid)}"
     else:
-        return f"DME{str(booking_visual_id)}"
+        return f"DME{str(uid)}"
 
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
     try:
-        status_info = Dme_utl_fp_statuses.objects.get(
-            fp_name__iexact=fp_name, fp_lookup_status=b_status_API
-        )
+        if fp_name.lower() == "allied":
+            status_info = None
+            rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)
+
+            for rule in rules:
+                if "XXX" in rule.fp_lookup_status:
+                    fp_lookup_status = rule.fp_lookup_status.replace("XXX", "")
+
+                    if fp_lookup_status in b_status_API:
+                        status_info = rule
+                elif rule.fp_lookup_status == b_status_API:
+                    status_info = rule
+        else:
+            status_info = Dme_utl_fp_statuses.objects.get(
+                fp_name__iexact=fp_name, fp_lookup_status=b_status_API
+            )
+
         return status_info.dme_status
-    except Dme_utl_fp_statuses.DoesNotExist:
+    except:
         message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
         logger.error(message)
         send_email_to_admins("New FP status", message)
@@ -80,10 +103,33 @@ def get_status_category_from_status(status):
         return None
 
 
+def get_status_time_from_category(booking_id, category):
+    if not category:
+        return None
+
+    try:
+        statuses = Utl_dme_status.objects.filter(
+            dme_delivery_status_category=category
+        ).values_list("dme_delivery_status", flat=True)
+        status_times = (
+            Dme_status_history.objects.filter(
+                fk_booking_id=booking_id, status_last__in=statuses
+            )
+            .order_by("event_time_stamp")
+            .values_list("event_time_stamp", flat=True)
+        )
+        return status_times[0] if status_times else None
+    except Exception as e:
+        message = f"#819 Timestamp not found with this category: {category}"
+        logger.error(message)
+        send_email_to_admins("Timestamp for Category not Found", message)
+        return None
+
+
 # Get ETD of Pricing in `hours` unit
 def get_etd_in_hour(pricing):
     try:
-        logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
+        # logger.info(f"[GET_ETD_IN_HOUR] {pricing.etd}")
         etd, unit = get_etd(pricing.etd)
 
         if unit == "Days":
@@ -103,7 +149,7 @@ def get_etd_in_hour(pricing):
 
             return etd.fp_03_delivery_hours
         except Exception as e:
-            message = f"#810 [get_etd_in_hour] Missing ETD - {fp.fp_company_name}({fp.id}), {pricing.service_name}, {pricing.etd}"
+            message = f"#810 [get_etd_in_hour] Missing ETD - {pricing.freight_provider}, {pricing.service_name}, {pricing.etd}"
             logger.info(message)
             # raise Exception(message)
             return None
@@ -200,7 +246,7 @@ def select_best_options(pricings):
     if lowest_pricing.pk == fastest_pricing.pk:
         return [lowest_pricing]
     else:
-        return [fastest_pricing, lowest_pricing]
+        return [lowest_pricing, fastest_pricing]
 
 
 def auto_select_pricing(booking, pricings, auto_select_type):
@@ -236,25 +282,7 @@ def auto_select_pricing(booking, pricings, auto_select_type):
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
-        booking.api_booking_quote = filtered_pricing
-        booking.vx_freight_provider = filtered_pricing.freight_provider
-        booking.vx_account_code = filtered_pricing.account_code
-        booking.vx_serviceName = filtered_pricing.service_name
-        booking.inv_cost_quoted = filtered_pricing.fee * (
-            1 + filtered_pricing.mu_percentage_fuel_levy
-        )
-        booking.inv_sell_quoted = filtered_pricing.client_mu_1_minimum_values
-
-        fp = Fp_freight_providers.objects.get(
-            fp_company_name__iexact=filtered_pricing.freight_provider
-        )
-
-        if fp and fp.service_cutoff_time:
-            booking.s_02_Booking_Cutoff_Time = fp.service_cutoff_time
-        else:
-            booking.s_02_Booking_Cutoff_Time = "12:00:00"
-
-        booking.save()
+        set_booking_quote(booking, filtered_pricing)
         return True
     else:
         logger.info("#855 - Could not find proper pricing")

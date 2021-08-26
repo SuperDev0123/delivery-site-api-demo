@@ -8,10 +8,20 @@ from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
+from api.common.booking_quote import set_booking_quote
 from api.serializers import ApiBookingQuotesSerializer
-from api.models import Bookings, Log, API_booking_quotes, Client_FP, FP_Service_ETDs
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Log,
+    API_booking_quotes,
+    Client_FP,
+    FP_Service_ETDs,
+    Surcharge,
+)
 
 from api.fp_apis.operations.common import _set_error
+from api.fp_apis.operations.surcharge.index import gen_surcharges
 from api.fp_apis.built_in.index import get_pricing as get_self_pricing
 from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
@@ -23,9 +33,51 @@ from api.fp_apis.constants import (
     DME_LEVEL_API_URL,
     AVAILABLE_FPS_4_FC,
 )
+from api.fp_apis.utils import _convert_UOM
 
 
 logger = logging.getLogger(__name__)
+
+
+def _confirm_visible(booking, booking_lines, quotes):
+    """
+    `Allied` - if DE address_type is `residential` and 2+ Line dim is over 1.2m, then hide it
+    """
+    for quote in quotes:
+        if (
+            quote.freight_provider == "Allied"
+            and booking.pu_Address_Type == "residential"
+        ):
+            for line in booking_lines:
+                width = _convert_UOM(
+                    line.e_dimWidth,
+                    line.e_dimUOM,
+                    "dim",
+                    quote.freight_provider.lower(),
+                )
+                height = _convert_UOM(
+                    line.e_dimHeight,
+                    line.e_dimUOM,
+                    "dim",
+                    quote.freight_provider.lower(),
+                )
+                length = _convert_UOM(
+                    line.e_dimLength,
+                    line.e_dimUOM,
+                    "dim",
+                    quote.freight_provider.lower(),
+                )
+
+                if (
+                    (width > 120 and height > 120)
+                    or (width > 120 and length > 120)
+                    or (height > 120 and length > 120)
+                ):
+                    quote.is_used = True
+                    quote.save()
+                    return quotes.filter(is_used=False)
+
+    return quotes
 
 
 def pricing(body, booking_id, is_pricing_only=False):
@@ -46,14 +98,18 @@ def pricing(body, booking_id, is_pricing_only=False):
     if not is_pricing_only:
         booking = Bookings.objects.filter(id=booking_id).first()
 
+        if not booking:
+            return None, False, "Booking does not exist", None
+
         # Delete all pricing info if exist for this booking
-        if booking:
-            pk_booking_id = booking.pk_booking_id
-            booking.api_booking_quote = None  # Reset pricing relation
-            booking.save()
-            # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
-        else:
-            return False, "Booking does not exist", None
+        pk_booking_id = booking.pk_booking_id
+        # set_booking_quote(booking, None)
+        # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
+
+    if not booking_lines:
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
 
     # Set is_used flag for existing old pricings
     if booking.pk_booking_id:
@@ -86,8 +142,15 @@ def pricing(body, booking_id, is_pricing_only=False):
         # Interpolate gaps (for Plum client now)
         quotes = interpolate_gaps(quotes)
 
+        # Calculate Surcharges
+        for quote in quotes:
+            gen_surcharges(booking, booking_lines, quote, "booking")
+
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes)
+
+        # Confirm visible
+        quotes = _confirm_visible(booking, booking_lines, quotes)
 
     return booking, True, "Retrieved all Pricing info", quotes
 
@@ -157,6 +220,14 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
 
                     # Allow live pricing credentials only on PROD
                     if settings.ENV == "prod" and "test" in key:
+                        continue
+
+                    # Allow test credential only Sendle+DEV
+                    if (
+                        settings.ENV == "dev"
+                        and _fp_name == "sendle"
+                        and "dme" == client_name
+                    ):
                         continue
 
                     # Pricing only accounts can be used on pricing_only mode
@@ -258,23 +329,48 @@ async def _api_pricing_worker_builder(
 
         if parse_results and not "error" in parse_results:
             for parse_result in parse_results:
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                # We do not get surcharges from Allied api
+                # # Allied surcharges
+                # surcharges = []
 
+                # if (
+                #     parse_result["freight_provider"].lower() == "allied"
+                #     and "surcharges" in parse_result
+                # ):
+                #     surcharges = parse_result["surcharges"]
+                #     del parse_result["surcharges"]
+
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
-                    serializer.save()
+                    quote = serializer.save()
+
+                    # We do not get surcharges from Allied api
+                    # for surcharge in surcharges:
+                    #     if float(surcharge["amount"]) > 0:
+                    #         surcharge_obj = Surcharge()
+                    #         surcharge_obj.name = surcharge["name"]
+                    #         surcharge_obj.description = surcharge["description"]
+                    #         surcharge_obj.amount = float(surcharge["amount"])
+                    #         surcharge_obj.quote = quote
+                    #         surcharge_obj.fp_id = 2  # Allied(Hardcode)
+                    #         surcharge_obj.save()
                 else:
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
         trace_error.print()
-        logger.info(f"@402 [PRICING] Exception: {e}")
+        logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
 
 async def _built_in_pricing_worker_builder(
     _fp_name, booking, booking_lines, is_pricing_only
 ):
     results = get_self_pricing(_fp_name, booking, booking_lines, is_pricing_only)
-    logger.info(f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results)}")
-    parse_results = parse_pricing_response(results, _fp_name, booking, True)
+    logger.info(
+        f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results['price'])}, Results: {results['price']}"
+    )
+    parse_results = parse_pricing_response(
+        results, _fp_name, booking, True, None, booking.b_client_name
+    )
 
     for parse_result in parse_results:
         if parse_results and not "error" in parse_results:

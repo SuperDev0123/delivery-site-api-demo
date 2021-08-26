@@ -66,8 +66,8 @@ def tracking(request, fp_name):
 
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-        # Disabled on 2021-02-05
-        logger.info(f"### Response ({fp_name} tracking): {s0}")
+        # disabled on 2021-07-05
+        # logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
@@ -124,6 +124,8 @@ def tracking(request, fp_name):
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def book(request, fp_name):
+    LOG_ID = "[FP BOOK]"
+
     try:
         username = request.user.username
         body = literal_eval(request.body.decode("utf8"))
@@ -143,6 +145,7 @@ def book(request, fp_name):
         if success:
             return JsonResponse(res_json)
         else:
+            logger.info(f"{LOG_ID} Failed. BookingId: {booking.b_bookingID_Visual}")
             return JsonResponse(res_json, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         trace_error.print()
@@ -225,7 +228,7 @@ def rebook(request, fp_name):
                         + ")",
                         request.user.username,
                     )
-                    booking.b_status = "PU Rebooked"
+                    status_history.create(booking, "PU Rebooked", "jason_l")
                     booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
@@ -377,7 +380,7 @@ def edit_book(request, fp_name):
 
                 booking.fk_fp_pickup_id = json_data["consignmentNumber"]
                 booking.b_dateBookedDate = datetime.now()
-                booking.b_status = "Booked"
+                status_history.create(booking, "Booked", "DME_API")
                 booking.b_error_Capture = None
                 booking.save()
 
@@ -493,7 +496,6 @@ def cancel_book(request, fp_name):
                 try:
                     if response.status_code == 200:
                         status_history.create(booking, "Closed", request.user.username)
-                        booking.b_status = "Closed"
                         booking.b_dateBookedDate = None
                         booking.b_booking_Notes = (
                             "This booking has been closed vis Startrack API"
@@ -576,6 +578,15 @@ def get_label(request, fp_name):
         booking = Bookings.objects.get(id=booking_id)
         _fp_name = fp_name.lower()
 
+        if (
+            booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+            and booking.vx_freight_provider.lower() != "tnt"
+        ):  # Jason L:
+            error_msg = "JasonL order label should be built by built-in module."
+            return JsonResponse(
+                {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         error_msg = pre_check_label(booking)
         if error_msg:
             return JsonResponse(
@@ -612,8 +623,7 @@ def get_label(request, fp_name):
                     fk_booking_id=booking.id,
                 ).save()
 
-                error_msg = s0
-                _set_error(booking, error_msg)
+                _set_error(booking, str(e))
                 return JsonResponse(
                     {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
                 )
@@ -624,6 +634,7 @@ def get_label(request, fp_name):
             logger.info(f"### Payload ({fp_name} get_label): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
+            z_label_url = None
 
             while (
                 json_data is None
@@ -689,7 +700,11 @@ def get_label(request, fp_name):
                 file_path, file_name = build_label(booking, file_path)
                 z_label_url = f"{_fp_name}_au/{file_name}"
 
-            booking.z_label_url = z_label_url
+            # JasonL
+            if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+                # JasonL never get Label from FP
+                booking.z_label_url = z_label_url
+
             booking.b_error_Capture = None
             booking.save()
 
@@ -1043,18 +1058,35 @@ def pricing(request):
 
     booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
 
+    try:
+        client = booking.get_client()
+        client_customer_mark_up = client.client_customer_mark_up or 0
+    except:
+        client_customer_mark_up = 0
+
     if not success:
         return JsonResponse(
             {"success": False, "message": message}, status=status.HTTP_400_BAD_REQUEST
         )
 
     json_results = ApiBookingQuotesSerializer(
-        results, many=True, context={"booking": booking}
+        results,
+        many=True,
+        context={
+            "booking": booking,
+            "client_customer_mark_up": client_customer_mark_up,
+        },
     ).data
 
     if is_pricing_only:
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
     else:
+        if booking.booking_type == "DMEM":
+            results = results.filter(
+                freight_provider__iexact=booking.vx_freight_provider,
+                service_name=booking.vx_serviceName,
+            )
+
         auto_select_pricing(booking, results, auto_select_type)
 
     res_json = {"success": True, "message": message, "results": json_results}

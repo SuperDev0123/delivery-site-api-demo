@@ -13,8 +13,9 @@ import redis
 import urllib, requests
 import pymysql, pymysql.cursors
 import json
-
+import logging
 import time
+
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.pdfbase.pdfmetrics import registerFont, registerFontFamily
 from reportlab.pdfbase.ttfonts import TTFont
@@ -48,6 +49,8 @@ from api.models import Booking_lines, FPRouting, Fp_freight_providers
 
 from api.fp_apis.utils import gen_consignment_num
 
+logger = logging.getLogger("dme_api")
+
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
 style_left = ParagraphStyle(
@@ -71,11 +74,11 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 
-def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
+def gen_barcode(booking, booking_lines, j=0, label_index=0):
     consignment_num = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
     )
-    item_index = str(label_index + line_index + 1).zfill(3)
+    item_index = str(label_index + j + 1).zfill(3)
     items_count = str(len(booking_lines)).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
@@ -119,7 +122,9 @@ class RotatedImage(Image):
         Image.draw(self)
 
 
-def build_label(booking, file_path, lines, label_index, one_page_label):
+def build_label(
+    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+):
     logger.info(
         f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
@@ -127,17 +132,37 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
     if not lines:
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
-    if not os.path.exists(file_path):
-        os.makedirs(file_path)
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
 
-    file_name = (
-        booking.pu_Address_State
-        + "_"
-        + str(booking.v_FPBookingNumber)
-        + "_"
-        + str(booking.b_bookingID_Visual)
-        + ".pdf"
-    )
+    if lines:
+        if sscc:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(sscc)
+                + ".pdf"
+            )
+        else:
+            filename = (
+                booking.pu_Address_State
+                + "_"
+                + str(booking.b_bookingID_Visual)
+                + "_"
+                + str(lines[0].pk)
+                + ".pdf"
+            )
+    else:
+        filename = (
+            booking.pu_Address_State
+            + "_"
+            + v_FPBookingNumber
+            + "_"
+            + str(booking.b_bookingID_Visual)
+            + ".pdf"
+        )
 
     fp_color_code = (
         Fp_freight_providers.objects.get(fp_company_name="Hunter").hex_color_code
@@ -151,7 +176,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
         backColor=f"#{fp_color_code}",
     )
 
-    file = open(file_path + file_name, "w")
+    file = open(f"{filepath}/{filename}", "w")
 
     date = datetime.datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
 
@@ -181,7 +206,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
     width = float(label_settings["label_dimension_length"]) * mm
     height = float(label_settings["label_dimension_width"]) * mm
     doc = SimpleDocTemplate(
-        file_path + file_name,
+        f"{filepath}/{filename}",
         pagesize=(width, height),
         rightMargin=float(label_settings["margin_h"]) * mm,
         leftMargin=float(label_settings["margin_h"]) * mm,
@@ -199,16 +224,28 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
     de_postcode = booking.de_To_Address_PostalCode
     de_state = booking.de_To_Address_State
     fp_routing = FPRouting.objects.filter(
-        suburb=de_suburb, post_code=de_postcode, state=de_state
+        suburb=de_suburb, dest_postcode=de_postcode, state=de_state
     )
-    if fp_routing[0]:
-        head_port = fp_routing[0].head_port
-        port_code = fp_routing[0].port_code
+    if fp_routing[0] and fp_routing[0].orig_depot:
+        head_port = fp_routing[0].orig_depot
     else:
         head_port = ""
+
+    if fp_routing[0] and fp_routing[0].gateway:
+        port_code = fp_routing[0].gateway
+    else:
         port_code = ""
 
+    j = 1
+
     totalQty = 0
+    if one_page_label:
+        lines = [lines[0]]
+        totalQty = 1
+    else:
+        for booking_line in lines:
+            totalQty = totalQty + booking_line.e_qty
+
     totalWeight = 0
     totalCubic = 0
     if one_page_label:
@@ -218,11 +255,13 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
         totalCubic = lines[0].e_1_Total_dimCubicMeter
     else:
         for line in lines:
-            totalQty = totalQty + line.e_qty
             totalWeight = totalWeight + line.e_Total_KG_weight
             totalCubic = totalCubic + line.e_1_Total_dimCubicMeter
 
-    line_index = 0
+    if sscc:
+        j = label_index
+        totalQty = sscc_cnt
+
     for line in lines:
         for k in range(line.e_qty):
             if one_page_label and k > 0:
@@ -263,7 +302,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s><b>Date: %s</b></font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.b_dateBookedDate.strftime("%d/%m/%Y"),
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                            if booking.b_dateBookedDate
+                            else "",
                         ),
                         style_left,
                     ),
@@ -273,9 +314,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s><b>Consignment: %s</b></font>"
                         % (
                             label_settings["font_size_large"],
-                            (booking.v_FPBookingNumber)
-                            if (booking.v_FPBookingNumber)
-                            else "",
+                            gen_consignment_num(
+                                booking.vx_freight_provider, booking.b_bookingID_Visual
+                            ),
                         ),
                         style_left,
                     ),
@@ -375,7 +416,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 [
                     Paragraph(
                         "<font size=%s><b>%s of %s</b></font>"
-                        % (label_settings["font_size_large"], line_index + 1, totalQty),
+                        % (label_settings["font_size_large"], j + 1, totalQty),
                         style_left,
                     )
                 ],
@@ -420,9 +461,9 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                         "<font size=%s>Dims: %s x %s x %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            int(line.e_dimWidth),
-                            int(line.e_dimHeight),
-                            int(line.e_dimLength),
+                            float(line.e_dimWidth),
+                            float(line.e_dimHeight),
+                            float(line.e_dimLength),
                         ),
                         style_left,
                     ),
@@ -439,7 +480,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>Cubic:%s</font>"
+                        "<font size=%s>Cubic: %s M<super rise=4 size=4>3</super></font>"
                         % (
                             label_settings["font_size_medium"],
                             (line.e_1_Total_dimCubicMeter)
@@ -451,7 +492,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>Total Cubic: %s</font>"
+                        "<font size=%s>Total Cubic: %s M<super rise=4 size=4>3</super></font>"
                         % (label_settings["font_size_medium"], totalCubic),
                         style_left,
                     )
@@ -504,7 +545,7 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
                 ],
             )
 
-            barcode = gen_barcode(booking, lines, line_index, label_index)
+            barcode = gen_barcode(booking, lines, j, label_index)
 
             d = Drawing(100, 100)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
@@ -530,59 +571,62 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
             Story.append(shell_table)
             Story.append(Spacer(1, 5))
 
-            tbl_data1 = [
+            tbl_data1 = []
+            font_size = 12
+
+            if (booking.deToCompanyName or "").lower() != (
+                booking.de_to_Contact_F_LName or ""
+            ).lower():
+                tbl_data1.append(
+                    [
+                        Paragraph(
+                            "<font size=%s><b>%s</b></font>"
+                            % (
+                                font_size,
+                                booking.deToCompanyName or "",
+                            ),
+                            style_left,
+                        )
+                    ]
+                )
+
+            tbl_data1.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_to_Contact_F_LName,
+                            font_size,
+                            booking.de_To_Address_Street_1 or "",
                         ),
                         style_left,
                     )
-                ],
+                ]
+            )
+            tbl_data1.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["font_size_extra_large"],
-                            booking.deToCompanyName if booking.deToCompanyName else "",
+                            font_size,
+                            booking.de_To_Address_Street_2 or "",
                         ),
                         style_left,
                     )
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_To_Address_Street_1,
-                        ),
-                        style_left,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font> "
-                        % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_To_Address_Street_2,
-                        ),
-                        style_left,
-                    ),
-                ],
+                ]
+            )
+            tbl_data1.append(
                 [
                     Paragraph(
                         "<font size=%s><b>%s %s</b></font> "
                         % (
-                            label_settings["font_size_extra_large"],
-                            booking.de_To_Address_Suburb,
-                            booking.de_To_Address_PostalCode,
+                            font_size,
+                            booking.de_To_Address_Suburb or "",
+                            booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
                     ),
-                ],
-            ]
+                ]
+            )
 
             t1 = Table(
                 tbl_data1,
@@ -703,10 +747,10 @@ def build_label(booking, file_path, lines, label_index, one_page_label):
 
             Story.append(PageBreak())
 
-            line_index += 1
+            j += 1
 
     doc.build(Story, onFirstPage=myFirstPage, onLaterPages=myLaterPages)
 
     # end writting data into pdf file
     file.close()
-    return file_path, file_name
+    return filepath, filename

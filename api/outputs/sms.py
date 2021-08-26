@@ -8,3 +8,4 @@ def send_sms(phone_number, message):
     msg = client.messages.create(
         to=phone_number, from_=settings.TWILIO["NUMBER"], body=message
     )
+    print('message status', msg.status)
