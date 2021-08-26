@@ -3297,7 +3297,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                         )
 
                     if not booking.b_given_to_transport_date_time:
-                        booking.b_given_to_transport_date_time = datetime.now()
+                        booking.b_given_to_transport_date_time = (
+                            booking.s_20_Actual_Pickup_TimeStamp
+                        )
 
                     booking.z_calculated_ETA = datetime.strftime(
                         z_calculated_ETA, "%Y-%m-%d"
