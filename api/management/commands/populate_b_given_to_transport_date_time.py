@@ -50,9 +50,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("----- Populating `b_given_to_transport_date_time` ... -----")
 
+        # Bookings.objects.filter(b_given_to_transport_date_time__isnull=True) # For Solution #1
+        # .filter(vx_freight_provider__in=FPS_TO_BE_PROCESSED)
         bookings = (
-            Bookings.objects.filter(b_given_to_transport_date_time__isnull=True)
-            .filter(vx_freight_provider__in=FPS_TO_BE_PROCESSED)
+            Bookings.objects.all()
             .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
             .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
             .only(
