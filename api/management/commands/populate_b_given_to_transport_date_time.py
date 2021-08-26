@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
         # Solution #2 (From statusHistory)
         pk_booking_ids = []
-        for booking in bookings[:20]:
+        for booking in bookings:
             pk_booking_ids.append(booking.pk_booking_id)
 
         status_histories = Dme_status_history.objects.filter(
@@ -77,13 +77,18 @@ class Command(BaseCommand):
             status_last__in=TRANSIT_STATUSES,
         ).order_by("id")
 
-        for booking in bookings[:20]:
+        for booking in bookings:
             print(f"    {booking.b_bookingID_Visual}({booking.vx_freight_provider})")
             for status_history in status_histories:
                 if booking.pk_booking_id == status_history.fk_booking_id:
                     print(
                         f"    Note: {status_history.notes}, Event timestamp: {str(status_history.event_time_stamp)}"
                     )
+                    booking.b_given_to_transport_date_time = (
+                        status_history.event_time_stamp
+                    )
+                    booking.save()
+                    break
 
         # # Solution #1
         # for index, booking in enumerate(bookings):
