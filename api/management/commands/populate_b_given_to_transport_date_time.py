@@ -82,7 +82,7 @@ class Command(BaseCommand):
             for status_history in status_histories:
                 if booking.pk_booking_id == status_history.fk_booking_id:
                     print(
-                        f"    Event timestamp: {str(status_history.event_time_stamp)}"
+                        f"    Note: {status_history.notes}, Event timestamp: {str(status_history.event_time_stamp)}"
                     )
 
         # # Solution #1
