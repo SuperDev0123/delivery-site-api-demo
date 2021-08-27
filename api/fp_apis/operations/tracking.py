@@ -108,7 +108,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
                 if _consignmentStatus["status"] == "DEL":
                     break
 
-        print("@2 - ", index, _consignmentStatuses)
+        print("@2 - ", _consignmentStatuses)
 
         if has_delivered_status:
             lines = booking.lines().filter(is_deleted=False)
