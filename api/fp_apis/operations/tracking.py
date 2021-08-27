@@ -85,8 +85,6 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         _consignmentStatuses_0 = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
-        _consignmentStatuses = _consignmentStatuses_0
-        print("@1 - ", _consignmentStatuses)
 
         # Check Partially Delivered
         has_delivered_status = False
@@ -107,8 +105,8 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
                 if _consignmentStatus["status"] == "DEL":
                     break
-
-        print("@2 - ", _consignmentStatuses)
+        else:
+            _consignmentStatuses = _consignmentStatuses_0
 
         if has_delivered_status:
             lines = booking.lines().filter(is_deleted=False)
@@ -124,7 +122,6 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
                         "statusUpdate": last_consignmentStatus["statusUpdate"],
                     }
                 )
-    print("@3 - ", _consignmentStatuses)
 
     # Get actual_pickup_timestamp
     if not booking.s_20_Actual_Pickup_TimeStamp:
