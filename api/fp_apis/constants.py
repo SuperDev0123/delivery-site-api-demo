@@ -169,6 +169,11 @@ FP_CREDENTIALS = {
                 "accountKey": "55010|XXLFNZRLPW",
                 "accountPassword": "deliver",
             },
+            "live_7": {
+                "accountCode": "DELIME",
+                "accountKey": "55010|XXLFNZRLPW",
+                "accountPassword": "deliver",
+            },
         },
         # "bunnings": {
         #     "live_bunnings_0": {
