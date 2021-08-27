@@ -105,7 +105,9 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
             for index, _consignmentStatus in enumerate(_consignmentStatuses_0):
                 if _consignmentStatus["status"] == "DEL":
                     del_index = index
+                    break
 
+            for index, _consignmentStatus in enumerate(_consignmentStatuses_0):
                 if del_index > 0 and index > del_index:
                     _consignmentStatuses.pop(index)
                     print("@2 - ", index, _consignmentStatuses)
