@@ -85,7 +85,6 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         _consignmentStatuses_0 = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
-        _consignmentStatuses = _consignmentStatuses_0
 
         # Check Partially Delivered
         has_delivered_status = False
@@ -99,14 +98,15 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
         # Take out status after `DEL`
         if has_delivered_status:
-            del_index = 0
+            _consignmentStatuses = []
 
             for index, _consignmentStatus in enumerate(_consignmentStatuses_0):
-                if _consignmentStatus["status"] == "DEL":
-                    del_index = index
+                _consignmentStatuses.append(_consignmentStatus)
 
-                if del_index > 0 and index > del_index:
-                    _consignmentStatuses.pop(index)
+                if _consignmentStatus["status"] == "DEL":
+                    break
+        else:
+            _consignmentStatuses = _consignmentStatuses_0
 
         if has_delivered_status:
             lines = booking.lines().filter(is_deleted=False)
