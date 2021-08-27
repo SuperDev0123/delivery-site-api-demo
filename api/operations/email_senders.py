@@ -632,11 +632,12 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     )
     subject = f"Your {client_name} Order status has been updated"
 
+    to_emails = []
+
     if settings.ENV in ["local", "dev"]:
         to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
-
         if booking.de_Email:
             to_emails.append(booking.de_Email)
         else:
