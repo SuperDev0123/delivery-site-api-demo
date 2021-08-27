@@ -103,7 +103,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
             _consignmentStatuses = []
 
             for index, _consignmentStatus in enumerate(_consignmentStatuses_0):
-                _consignmentStatus.append(_consignmentStatus)
+                _consignmentStatuses.append(_consignmentStatus)
 
                 if _consignmentStatus["status"] == "DEL":
                     break
