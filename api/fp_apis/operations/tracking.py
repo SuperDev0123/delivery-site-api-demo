@@ -44,6 +44,7 @@ def _extract(fp_name, consignmentStatus):
 
 def _extract_bulk(fp_name, consignmentStatuses):
     _result = []
+    _consignmentStatuses = consignmentStatuses
 
     if fp_name.lower() == "allied":
         # Sort by timestamp
