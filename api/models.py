@@ -4901,3 +4901,6 @@ class FP_status_history(models.Model):
     event_timestamp = models.DateTimeField(null=True, default=None)
     is_active = models.BooleanField(default=True)
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "fp_status_history"
