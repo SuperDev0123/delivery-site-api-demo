@@ -243,15 +243,31 @@ def populate_fp_status_history(booking, consignmentStatuses):
         print("@1 - ")
     else:
         news = []
-        for index, fp_status_history in enumerate(fp_status_histories):
-            new_fp_status_history = new_fp_status_histories[index]
-            print(
-                "@2 - ", fp_status_history.status, new_fp_status_history["b_status_API"]
-            )
-            print("@2 - ", fp_status_history.desc, new_fp_status_history["status_desc"])
-            print(
-                "@2 - ",
-                fp_status_history.event_timestamp,
-                new_fp_status_history["event_time"],
-            )
-            print("\n")
+        for _new in new_fp_status_histories:
+            news.append(_new["b_status_API"])
+
+        exists = []
+        for fp_status_history in fp_status_histories:
+            exists.append(fp_status_history.status)
+
+        if set(news).difference(set(exists)):
+            for index, fp_status_history in enumerate(fp_status_histories):
+                new_fp_status_history = new_fp_status_histories[index]
+                print(
+                    "@2 - ",
+                    fp_status_history.status,
+                    new_fp_status_history["b_status_API"],
+                )
+                print(
+                    "@2 - ",
+                    fp_status_history.desc,
+                    new_fp_status_history["status_desc"],
+                )
+                print(
+                    "@2 - ",
+                    fp_status_history.event_timestamp,
+                    new_fp_status_history["event_time"],
+                )
+                print("\n")
+        else:
+            print("@9 - No new status from FP")
