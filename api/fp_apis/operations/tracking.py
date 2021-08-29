@@ -42,6 +42,54 @@ def _extract(fp_name, consignmentStatus):
     return b_status_API, status_desc, event_time
 
 
+def _extract_bulk(fp_name, consignmentStatuses):
+    _result = []
+
+    if fp_name.lower() == "allied":
+        # Sort by timestamp
+        _consignmentStatuses = sorted(
+            consignmentStatuses, key=lambda x: x["statusUpdate"]
+        )
+    elif fp_name.lower() == "startrack":
+        # Reverse sort order
+        _consignmentStatuses = consignmentStatuses.reverse()
+
+    for consignmentStatus in _consignmentStatuses:
+        if fp_name.lower() == "startrack":
+            b_status_API = consignmentStatus["status"]
+            event_time = None
+            status_desc = ""
+        elif fp_name.lower() in ["tnt"]:
+            b_status_API = consignmentStatus["status"][0]
+            status_desc = consignmentStatus["statusDescription"][0]
+            event_time = consignmentStatus["statusDate"][0]
+            event_time = datetime.strptime(event_time, "%d/%m/%Y")
+            event_time = str(convert_to_UTC_tz(event_time))
+        elif fp_name.lower() in ["hunter", "sendle", "allied"]:
+            b_status_API = consignmentStatus["status"]
+            status_desc = consignmentStatus.get("statusDescription")
+            event_time = consignmentStatus["statusUpdate"]
+            is_UTC = len(event_time) == 19
+            event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
+
+            if is_UTC:
+                event_time = str(convert_to_UTC_tz(event_time))
+            else:
+                event_time = str(event_time)
+        else:
+            event_time = None
+
+        _result.append(
+            {
+                "b_status_API": b_status_API,
+                "status_desc": status_desc,
+                "event_time": event_time,
+            }
+        )
+
+    return _result
+
+
 def _get_actual_timestamp(fp_name, consignmentStatuses, type):
     if fp_name in ["tnt", "hunter", "sendle", "allied"]:
         try:
@@ -159,3 +207,50 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
     # msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
     # logger.info(msg)
     return True
+
+
+def populate_fp_status_history(booking, consignmentStatuses):
+    fp_name = booking.vx_freight_provider
+
+    if not consignmentStatuses:
+        msg = f"#321 [POPULATE FP STATUS HISTORY] No statuses: {booking.b_bookingID_Visual}({fp_name})"
+        logger.info(msg)
+        return False
+
+    fp_status_histories = FP_status_history.objects.filter(booking=booking).order_by(
+        "-event_timestamp"
+    )
+    new_fp_status_histories = _extract_bulk(fp_name, consignmentStatuses)
+    fp = booking.get_fp()
+
+    # Initial Tracking
+    if fp_status_histories.count() == 0:
+        for fp_status_history in new_fp_status_histories:
+            _fp_status_history = FP_status_history()
+            _fp_status_history.booking = booking
+            _fp_status_history.fp = fp
+            _fp_status_history.status = fp_status_history["b_status_API"]
+            _fp_status_history.desc = fp_status_history["status_desc"]
+            _fp_status_history.event_timestamp = fp_status_history["event_time"]
+            _fp_status_history.is_active = True
+            _fp_status_history.save()
+
+        return True
+
+    # Periodic Tracking
+    if len(new_fp_status_histories) < fp_status_histories.len():
+        print("@1 - ")
+    else:
+        news = []
+        for index, fp_status_history in enumerate(fp_status_histories):
+            new_fp_status_history = new_fp_status_histories[index]
+            print(
+                "@2 - ", fp_status_history.status, new_fp_status_history["b_status_API"]
+            )
+            print("@2 - ", fp_status_history.desc, new_fp_status_history["status_desc"])
+            print(
+                "@2 - ",
+                fp_status_history.event_timestamp,
+                new_fp_status_history["event_time"],
+            )
+            print("\n")

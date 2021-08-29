@@ -2014,6 +2014,14 @@ class Bookings(models.Model):
                     elif service_etd.fp_service_time_uom.lower() == "hours":
                         return service_etd.fp_03_delivery_hours, "hours"
 
+    def get_fp(self):
+        try:
+            return Fp_freight_providers.objects.get(
+                company_name=self.vx_freight_provider
+            )
+        except:
+            return None
+
     def get_client(self):
         try:
             return DME_clients.objects.get(dme_account_num=self.kf_client_id)
@@ -4882,3 +4890,14 @@ class Surcharge(models.Model):
 
     class Meta:
         db_table = "dme_surcharge"
+
+
+class FP_status_history(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    status = models.CharField(max_length=32, default=None, null=True)
+    desc = models.CharField(max_length=32, default=None, null=True)
+    event_timestamp = models.DateTimeField(null=True, default=None)
+    is_active = models.BooleanField(default=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)

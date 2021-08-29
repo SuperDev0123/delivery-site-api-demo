@@ -31,7 +31,10 @@ from api.fp_apis.payload_builder import *
 from api.fp_apis.response_parser import *
 from api.fp_apis.pre_check import *
 from api.fp_apis.operations.common import _set_error
-from api.fp_apis.operations.tracking import update_booking_with_tracking_result
+from api.fp_apis.operations.tracking import (
+    update_booking_with_tracking_result,
+    populate_fp_status_history,
+)
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import (
@@ -80,11 +83,12 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            update_booking_with_tracking_result(
-                request, booking, fp_name, consignmentStatuses
-            )
-            booking.b_error_Capture = None
-            booking.save()
+            populate_fp_status_history(booking, consignmentStatuses)
+            # update_booking_with_tracking_result(
+            #     request, booking, fp_name, consignmentStatuses
+            # )
+            # booking.b_error_Capture = None
+            # booking.save()
 
             return JsonResponse(
                 {
