@@ -239,7 +239,7 @@ def populate_fp_status_history(booking, consignmentStatuses):
         return True
 
     # Periodic Tracking
-    if len(new_fp_status_histories) < fp_status_histories.len():
+    if len(new_fp_status_histories) < fp_status_histories.count():
         print("@1 - ")
     else:
         news = []
