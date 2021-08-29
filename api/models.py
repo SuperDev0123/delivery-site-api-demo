@@ -2017,7 +2017,7 @@ class Bookings(models.Model):
     def get_fp(self):
         try:
             return Fp_freight_providers.objects.get(
-                company_name=self.vx_freight_provider
+                fp_company_name=self.vx_freight_provider
             )
         except:
             return None
