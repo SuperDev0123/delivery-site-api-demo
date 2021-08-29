@@ -791,9 +791,13 @@ def get_pricing_payload(
 
     # Check puPickUpAvailFrom_Date
     pu_avail_from = booking.puPickUpAvailFrom_Date
-    if not pu_avail_from or pu_avail_from < date.today():
-        booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
-        booking.save()
+
+    try:
+        if not pu_avail_from or pu_avail_from < date.today():
+            booking.b_error_Capture = "Please note that date and time you've entered is either a non working day or after hours. This will limit your options of providers available for your collection"
+            booking.save()
+    except TypeError as e:  # Pricing-only
+        pass
 
     payload["readyDate"] = "" or str(pu_avail_from)[:10]
     payload["referenceNumber"] = "" or booking.b_clientReference_RA_Numbers

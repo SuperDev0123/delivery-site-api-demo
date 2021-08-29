@@ -198,8 +198,8 @@ LOGGING = {
             "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(BASE_DIR, "logs/debug.log"),
-            "backupCount": 30,  # keep at most 30 log files
-            "maxBytes": 1024 * 1024 * 10,  # 10 MB
+            "backupCount": 50,  # keep at most 50 log files
+            "maxBytes": 1024 * 1024 * 30,  # 10 MB
             "formatter": "verbose",
         },
     },
@@ -216,7 +216,7 @@ if ENV == "prod":
 # S3 url
 S3_URL = os.environ["S3_URL"]
 
-WEB_SITE_IP = os.environ["WEB_SITE_IP"]
+WEB_SITE_URL = os.environ["WEB_SITE_URL"]
 STATIC_PUBLIC = os.environ["STATIC_PUBLIC"]
 STATIC_PRIVATE = os.environ["STATIC_PRIVATE"]
 

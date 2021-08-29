@@ -88,6 +88,9 @@ from api.file_operations import (
 from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
+from api.common.booking_quote import set_booking_quote
+from api.operations.packing.booking import auto_repack as booking_auto_repack
+from api.operations.packing.booking import manual_repack as booking_manual_repack
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -103,12 +106,12 @@ logger = logging.getLogger(__name__)
 def password_reset_token_created(
     sender, instance, reset_password_token, *args, **kwargs
 ):
-    url = f"http://{settings.WEB_SITE_IP}"
     context = {
         "current_user": reset_password_token.user,
         "username": reset_password_token.user.username,
         "email": reset_password_token.user.email,
-        "reset_password_url": f"{url}/reset-password?token=" + reset_password_token.key,
+        "reset_password_url": f"{settings.WEB_SITE_URL}/reset-password?token="
+        + reset_password_token.key,
     }
 
     try:
@@ -225,7 +228,10 @@ class UserViewSet(viewsets.ViewSet):
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
         if dme_employee is not None:
             return JsonResponse(
-                {"username": request.user.username, "clientname": "dme"}
+                {
+                    "username": request.user.username,
+                    "clientname": "dme",
+                }
             )
         else:
             client_employee = Client_employees.objects.filter(
@@ -1179,7 +1185,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 ]:
                     # Jason L
                     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
-                        if not booking.b_dateBookedDate:
+                        if booking.b_status == "Picked":
                             to_manifest += 1
                     else:
                         if booking.b_status == "Booked":
@@ -1214,7 +1220,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 ):
                     queryset = queryset.filter(
                         Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                    ).exclude(b_status__in=["Cancelled", "Closed"])
+                    ).filter(b_status="Picked")
                 else:
                     queryset = (
                         queryset.filter(b_status__iexact="Booked")
@@ -1299,11 +1305,37 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_booking(self, request, pk, format=None):
         booking = Bookings.objects.get(pk=pk)
+        lowest_pricing = None
+
+        # Check if `booking_type` changes
+        if (
+            booking.b_client_name == "Jason L"
+            and booking.booking_type != request.data.get("booking_type")
+        ):
+            if request.data.get("booking_type") == Bookings.DMEP:
+                request.data["inv_cost_quoted"] = 0
+                request.data["inv_sell_quoted"] = 0
+            elif (
+                request.data.get("booking_type") == Bookings.DMEA
+                and booking.api_booking_quote
+            ):
+                lowest_pricing = (
+                    API_booking_quotes.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    )
+                    .order_by("client_mu_1_minimum_values")
+                    .first()
+                )
+
         serializer = BookingSerializer(booking, data=request.data)
 
         try:
             if serializer.is_valid():
                 serializer.save()
+
+                if lowest_pricing:
+                    set_booking_quote(booking, lowest_pricing)
+
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -1344,7 +1376,6 @@ class BookingsViewSet(viewsets.ViewSet):
                         )
 
                     status_history.create(booking, status, request.user.username)
-                    booking.b_status = status
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
@@ -1689,6 +1720,15 @@ class BookingsViewSet(viewsets.ViewSet):
                         booking.z_label_url = "[REBUILD_REQUIRED]" + booking.z_label_url
                     else:
                         booking.z_label_url = "[REBUILD_REQUIRED]"
+
+                    # JasonL and 3 special FP
+                    if booking.b_client_name == "Jason L":
+                        if field_content in [
+                            "JasonL In house",
+                            "Customer Pickup",
+                            "Line haul General",
+                        ]:
+                            booking.booking_type = "DMEM"
 
                 booking.save()
             return JsonResponse(
@@ -2181,7 +2221,8 @@ class BookingViewSet(viewsets.ViewSet):
         serializer = BookingSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            booking = serializer.save()
+            serializer.data["id"] = booking.pk
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2219,6 +2260,20 @@ class BookingViewSet(viewsets.ViewSet):
                 "pu_email_Group": booking.de_Email_Group_Emails,
                 "de_Email_Group_Name": booking.pu_email_Group_Name,
                 "de_Email_Group_Emails": booking.pu_email_Group,
+                "pu_Address_Type": booking.pu_Address_Type,
+                "de_To_AddressType": booking.de_To_AddressType,
+                "pu_no_of_assists": booking.pu_no_of_assists,
+                "de_no_of_assists": booking.de_no_of_assists,
+                "pu_location": booking.pu_location,
+                "de_to_location": booking.de_to_location,
+                "pu_access": booking.pu_access,
+                "de_access": booking.de_access,
+                "pu_floor_number": booking.pu_floor_number,
+                "de_floor_number": booking.de_floor_number,
+                "pu_floor_access_by": booking.pu_floor_access_by,
+                "de_to_floor_access_by": booking.de_to_floor_access_by,
+                "pu_service": booking.pu_service,
+                "de_service": booking.de_service,
             }
         else:
             newBooking = {
@@ -2246,6 +2301,20 @@ class BookingViewSet(viewsets.ViewSet):
                 "pu_email_Group": booking.pu_email_Group,
                 "de_Email_Group_Name": booking.de_Email_Group_Name,
                 "de_Email_Group_Emails": booking.de_Email_Group_Emails,
+                "pu_Address_Type": booking.de_To_AddressType,
+                "de_To_AddressType": booking.pu_Address_Type,
+                "pu_no_of_assists": booking.de_no_of_assists,
+                "de_no_of_assists": booking.pu_no_of_assists,
+                "pu_location": booking.de_to_location,
+                "de_to_location": booking.pu_location,
+                "pu_access": booking.de_access,
+                "de_access": booking.pu_access,
+                "pu_floor_number": booking.de_floor_number,
+                "de_floor_number": booking.pu_floor_number,
+                "pu_floor_access_by": booking.de_to_floor_access_by,
+                "de_to_floor_access_by": booking.pu_floor_access_by,
+                "pu_service": booking.de_service,
+                "de_service": booking.pu_service,
             }
 
         newBooking["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
@@ -2266,6 +2335,7 @@ class BookingViewSet(viewsets.ViewSet):
         newBooking[
             "x_booking_Created_With"
         ] = f"Duped from #{booking.b_bookingID_Visual}"
+        newBooking["booking_type"] = booking.booking_type
 
         if dup_line_and_linedetail == "true":
             booking_lines = Booking_lines.objects.filter(
@@ -2347,7 +2417,6 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             status_history.create(booking, "Booked", request.user.username)
-            booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
             booking.save()
             serializer = BookingSerializer(booking)
@@ -2599,7 +2668,13 @@ class BookingViewSet(viewsets.ViewSet):
             logger.info(f"#102 {LOG_ID} {message}")
             raise ValidationError({"message": message})
 
-        logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
+        quotes_cnt = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_used=False
+        ).count()
+
+        logger.info(
+            f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}, Quote Cnt: {quotes_cnt}"
+        )
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -2744,9 +2819,30 @@ class BookingViewSet(viewsets.ViewSet):
             "pdf": pdf_data,
             "full_label_name": full_label_name,
             "sscc_obj": result_with_sscc,
+            "quotes_cnt": quotes_cnt,
         }
 
         return JsonResponse({"success": True, "result": result})
+
+    @action(detail=True, methods=["post"])
+    def repack(self, request, pk, format=None):
+        LOG_ID = "[REPACK LINES]"
+        body = literal_eval(request.body.decode("utf8"))
+        repack_status = body["repackStatus"]
+        # logger.info(f"@200 {LOG_ID}, BookingPk: {pk}, Repack Status: {repack_status}")
+
+        try:
+            booking = Bookings.objects.get(pk=pk)
+
+            if repack_status == "auto":
+                booking_auto_repack(booking, repack_status)
+            else:
+                booking_manual_repack(booking, repack_status)
+
+            return JsonResponse({"success": True})
+        except Exception as e:
+            logger.error(f"@204 {LOG_ID} Error: {str(e)}")
+            return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
@@ -3201,7 +3297,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                         )
 
                     if not booking.b_given_to_transport_date_time:
-                        booking.b_given_to_transport_date_time = datetime.now()
+                        booking.b_given_to_transport_date_time = (
+                            booking.s_20_Actual_Pickup_TimeStamp
+                        )
 
                     booking.z_calculated_ETA = datetime.strftime(
                         z_calculated_ETA, "%Y-%m-%d"
@@ -4007,7 +4105,6 @@ def get_csv(request):
                 ############################################################################################
                 booking.b_dateBookedDate = get_sydney_now_time()
                 status_history.create(booking, "Booked", request.user.username)
-                booking.b_status = "Booked"
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 booking.save()
 
@@ -4036,7 +4133,6 @@ def get_csv(request):
                 booking.b_dateBookedDate = get_sydney_now_time(return_type="datetime")
                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                 status_history.create(booking, "Booked", request.user.username)
-                booking.b_status = "Booked"
                 booking.save()
 
                 if vx_freight_provider == "state transport":
@@ -4128,8 +4224,15 @@ def get_manifest(request):
                 if (
                     "jason" in request.user.username and not booking.b_dateBookedDate
                 ):  # Jason L: Create new statusHistory
-                    status_history.create(booking, "Ready for Despatch", username)
-                    booking.b_status = "Ready for Despatch"
+                    if booking.vx_freight_provider in [
+                        "Line haul General",
+                        "Customer Pickup",
+                        "JasonL In house",
+                    ]:
+                        status_history.create(booking, "Booked", username)
+                        booking.b_dateBookedDate = datetime.now()
+                    else:
+                        status_history.create(booking, "Ready for Despatch", username)
 
                 booking.save()
 
@@ -4242,14 +4345,13 @@ def build_label(request):
             )
 
         booking.z_label_url = (
-            f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+            f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
         )
         booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":
             status_history.create(booking, "Picked", request.user.username)
-            booking.b_status = "Picked"
 
         booking.save()
     except Exception as e:
@@ -4709,6 +4811,11 @@ class BookingSetsViewSet(viewsets.ModelViewSet):
         request.data["status"] = "Created"
         request.data["z_createdByAccount"] = get_clientname(request)
         request.data["z_createdTimeStamp"] = str(datetime.now())
+
+        # prevent empty string
+        if not request.data["line_haul_date"]:
+            request.data["line_haul_date"] = None
+
         serializer = BookingSetsSerializer(data=request.data)
 
         if serializer.is_valid():

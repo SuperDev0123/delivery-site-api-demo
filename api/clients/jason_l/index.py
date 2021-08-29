@@ -39,7 +39,7 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import product_operations as product_oper
-from api.operations.email_senders import send_email_to_admins
+from api.operations.email_senders import send_email_to_admins, send_email_missing_dims
 from api.operations.labels.index import build_label, get_barcode
 
 # from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
@@ -342,13 +342,13 @@ def push_boks(payload, client, username, method):
                         old_bok_1.delete()
                     else:
                         # Return price page url
-                        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_objs.first().client_booking_id}/"
+                        url = f"{settings.WEB_SITE_URL}/price/{bok_1_objs.first().client_booking_id}/"
                         json_res["pricePageUrl"] = url
                         logger.info(f"@885 {LOG_ID} Response: {json_res}")
                         return json_res
                 else:
                     # Return status page url
-                    url = f"http://{settings.WEB_SITE_IP}/status/{bok_1_objs.first().client_booking_id}/"
+                    url = f"{settings.WEB_SITE_URL}/status/{bok_1_objs.first().client_booking_id}/"
                     json_res["pricePageUrl"] = url
                     logger.info(f"@886 {LOG_ID} Response: {json_res}")
                     return json_res
@@ -497,6 +497,7 @@ def push_boks(payload, client, username, method):
     items = bok_2s
     new_bok_2s = []
     bok_2_objs = []
+    lines_missing_dims = []
 
     with transaction.atomic():
         for index, item in enumerate(items):
@@ -533,6 +534,7 @@ def push_boks(payload, client, username, method):
                 or line["l_009_weight_per_each"] == 0
             ):
                 zero_dims = []
+                lines_missing_dims.append(line["e_item_type"])
                 if not line["l_005_dim_length"]:
                     zero_dims.append("length")
 
@@ -567,6 +569,14 @@ def push_boks(payload, client, username, method):
         bok_2s = new_bok_2s
         bok_1_obj = bok_1_serializer.save()
 
+    # Send missing dims email
+    if len(lines_missing_dims) > 0:
+        send_email_missing_dims(
+            client.company_name,
+            bok_1["b_client_order_num"],
+            ", ".join(lines_missing_dims),
+        )
+
     # create status history
     status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
 
@@ -591,7 +601,9 @@ def push_boks(payload, client, username, method):
         # Select suitable pallet and get required pallets count
         pallets = Pallet.objects.all()
         palletized, non_palletized = get_palletized_by_ai(bok_2_objs, pallets)
-        logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
+        logger.info(
+            f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
+        )
 
         # Create one PAL bok_2
         for item in non_palletized:  # Non Palletized
@@ -701,7 +713,7 @@ def push_boks(payload, client, username, method):
             f"#515 {LOG_ID} Skip Pricing due to address issue: {bok_1.get('zb_105_text_5')}"
         )
 
-        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+        url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
         result = {"success": True, "pricePageUrl": url}
         logger.info(f"@8837 {LOG_ID} success: True, 201_created --- SKIP QUOTE!")
         return result
@@ -820,9 +832,7 @@ def push_boks(payload, client, username, method):
         if b_client_order_num:
             message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
             logger.error(message)
-
-            if bok_1["b_client_order_num"]:
-                send_email_to_admins("No FC result", message)
+            send_email_to_admins("No FC result", message)
 
     # Set Express or Standard
     if len(json_results) == 1:
@@ -853,13 +863,13 @@ def push_boks(payload, client, username, method):
             # Commented (2021-06-18)
             # if bok_1["shipping_type"] == "DMEM":
             #     url = (
-            #         f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+            #         f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
             #     )
             # elif bok_1["shipping_type"] == "DMEA":
-            #     url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+            #     url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
 
             # Show price page either DMEA and DMEM
-            url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+            url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
@@ -869,11 +879,13 @@ def push_boks(payload, client, username, method):
             result = {"success": True, "results": json_results}
             return result
     else:
-        message = "Pricing cannot be returned due to incorrect address information."
+        message = (
+            "Pricing cannot be returned due to incorrect address/lines information."
+        )
         logger.info(f"@8839 {LOG_ID} {message}")
 
         # Show price page either DMEA and DMEM
-        url = f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
+        url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
         result = {"success": True, "results": json_results}
         result["pricePageUrl"] = url
@@ -1286,7 +1298,11 @@ def scanned(payload, client):
     if not booking:
         message = "Order does not exist. 'HostOrderNumber' is invalid."
         logger.info(f"@350 {LOG_ID} Booking: {booking}")
-        raise ValidationError(message)
+        # raise ValidationError(message)
+
+        # Return `does not exist` url
+        res_json = {"labelUrl": f"{settings.WEB_SITE_URL}/label/does-not-exist/"}
+        return res_json
 
     # Commented on 2021-07-29
     # if not booking.api_booking_quote:
@@ -1495,14 +1511,13 @@ def scanned(payload, client):
     logger.info(message)
 
     booking.z_label_url = (
-        f"http://{settings.WEB_SITE_IP}/label/{booking.b_client_booking_ref_num}/"
+        f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
     )
     booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
     if not booking.b_dateBookedDate and booking.b_status != "Picked":
         status_history.create(booking, "Picked", "jason_l")
 
-    booking.b_status = "Picked"
     booking.save()
 
     res_json = {"labelUrl": booking.z_label_url}

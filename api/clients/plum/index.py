@@ -327,9 +327,9 @@ def push_boks(payload, client, username, method):
                     paperless.send_order_info(bok_1_obj)
 
             if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
-                url = f"http://{settings.WEB_SITE_IP}/price/{bok_1_obj.client_booking_id}/"
+                url = f"{settings.WEB_SITE_URL}/price/{bok_1_obj.client_booking_id}/"
             else:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1_obj.client_booking_id}/"
+                url = f"{settings.WEB_SITE_URL}/status/{bok_1_obj.client_booking_id}/"
 
             return {"success": True, "results": [], "pricePageUrl": url}
 
@@ -721,11 +721,9 @@ def push_boks(payload, client, username, method):
             url = None
 
             if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
-                url = (
-                    f"http://{settings.WEB_SITE_IP}/price/{bok_1['client_booking_id']}/"
-                )
+                url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
             elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-                url = f"http://{settings.WEB_SITE_IP}/status/{bok_1['client_booking_id']}/"
+                url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
 
             result["pricePageUrl"] = url
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
@@ -1147,7 +1145,7 @@ def scanned(payload, client):
         elif fp_name == "hunter" and booking.b_status == "Picking":
             next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
             booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-            booking.b_status = "Ready for Booking"
+            status_history.create(booking, "Ready for Booking", "jason_l")
             booking.save()
 
             success, message = book_oper(fp_name, booking, "DME_API")
@@ -1299,9 +1297,9 @@ def ready_boks(payload, client):
 
     # Update DB so that Booking can be BOOKED
     if booking.api_booking_quote:
-        booking.b_status = "Ready for Booking"
+        status_history.create(booking, "Ready for Booking", "jason_l")
     else:
-        booking.b_status = "On Hold"
+        status_history.create(booking, "On Hold", "jason_l")
         send_email_to_admins(
             f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
             f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."

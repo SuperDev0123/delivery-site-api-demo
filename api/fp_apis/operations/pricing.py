@@ -222,6 +222,14 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                     if settings.ENV == "prod" and "test" in key:
                         continue
 
+                    # Allow test credential only Sendle+DEV
+                    if (
+                        settings.ENV == "dev"
+                        and _fp_name == "sendle"
+                        and "dme" == client_name
+                    ):
+                        continue
+
                     # Pricing only accounts can be used on pricing_only mode
                     if "pricingOnly" in account_detail and not is_pricing_only:
                         continue
@@ -360,7 +368,9 @@ async def _built_in_pricing_worker_builder(
     logger.info(
         f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results['price'])}, Results: {results['price']}"
     )
-    parse_results = parse_pricing_response(results, _fp_name, booking, True)
+    parse_results = parse_pricing_response(
+        results, _fp_name, booking, True, None, booking.b_client_name
+    )
 
     for parse_result in parse_results:
         if parse_results and not "error" in parse_results:

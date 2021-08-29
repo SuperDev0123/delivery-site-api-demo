@@ -5,8 +5,6 @@ import json
 import requests
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
-from api.models import Booking_lines
-from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +72,7 @@ def pallet_to_dict(pallets, pallet_self_height):
                 "w": pallet.width / 1000,
                 "h": (pallet.height - pallet_self_height) / 1000,
                 "d": pallet.length / 1000,
-                "max_wg": pallet.max_weight if pallet.max_weight else 0,
+                "max_wg": pallet.max_weight or 0,
                 "id": index,
             }
         )
@@ -86,21 +84,26 @@ def lines_to_dict(bok_2s):
     dim_min_limit = 0.2
     dim_max_limit = 0.5
     lines_data = []
-    for index, item in enumerate(bok_2s):
-        item_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
-        item_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
-        item_height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
-        item_weight = (
-            _get_weight_amount(item.l_008_weight_UOM) * item.l_009_weight_per_each
-        )
-        item_quantity = item.l_002_qty
 
-        dims = [
-            item_length,
-            item_width,
-            item_height
-        ]
+    for index, item in enumerate(bok_2s):
+        try:
+            item_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
+            item_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
+            item_height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+            item_weight = (
+                _get_weight_amount(item.l_008_weight_UOM) * item.l_009_weight_per_each
+            )
+            item_quantity = item.l_002_qty
+        except AttributeError:
+            item_length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+            item_width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+            item_height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+            item_weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
+            item_quantity = item.e_qty
+
+        dims = [item_length, item_width, item_height]
         dims.sort()
+
         if dims[0] <= dim_min_limit and dims[2] >= dim_max_limit:
             lines_data.append(
                 {
@@ -157,12 +160,19 @@ def lines_to_pallet(lines_data, pallets_data):
 
     url = os.environ["3D_PACKING_API_URL"]
     response = requests.post(url, data=json.dumps(data))
-    res_data = json.loads(response.content.decode("utf8"))["response"]
+    res_data = response.json()["response"]
+    if res_data["status"] == -1:
+        msg = ""
+        for error in res_data["errors"]:
+            msg += f"{error['message']} \n"
+            logger.info(f"Packing API Error: {msg}")
 
     return res_data
 
 
-def refine_pallets(packed_results, original_pallets, original_lines, pallet_self_height):
+def refine_pallets(
+    packed_results, original_pallets, original_lines, pallet_self_height
+):
     formatted_pallets = []
     for pallet in packed_results["bins_packed"]:
         packed_height, items = 0, []
@@ -241,7 +251,9 @@ def get_palletized_by_ai(bok_2s, pallets):
     packed_results = lines_to_pallet(lines_data, pallets_data)
 
     # check duplicated Pallets and non palletizable ones with only small items
-    palletized, non_palletized = refine_pallets(packed_results, pallets, bok_2s, pallet_self_height)
+    palletized, non_palletized = refine_pallets(
+        packed_results, pallets, bok_2s, pallet_self_height
+    )
 
     return palletized, non_palletized
 

@@ -803,8 +803,7 @@ def get_delivery_status(request):
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
         if has_deleted_lines:
-            lines = lines.filter(is_deleted=True)
-            # lines.filter(is_deleted=True, e_item_type__isnull=False)
+            lines = lines.filter(is_deleted=True, e_item_type__isnull=False)
         else:
             lines = lines.filter(is_deleted=False)
 
@@ -840,6 +839,7 @@ def get_delivery_status(request):
             "b_063_b_del_email": booking.de_Email,
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
             "b_000_3_consignment_number": booking.v_FPBookingNumber,
+            "vx_freight_provider": booking.vx_freight_provider,
         }
 
         def line_to_dict(line):
@@ -895,16 +895,28 @@ def get_delivery_status(request):
                     if booking and booking.z_CreatedTimestamp
                     else ""
                 )
-            elif index > step:
+            elif index >= step:
                 timestamps.append("")
             else:
-                status_time = get_status_time_from_category(booking.pk_booking_id, item)
-
-                timestamps.append(
-                    convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
-                    if status_time
-                    else None
-                )
+                if (
+                    category == "Complete"
+                    and not booking.b_status in ["Closed", "Cancelled"]
+                    and index == 4
+                ):
+                    timestamps.append(
+                        booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    )
+                else:
+                    status_time = get_status_time_from_category(
+                        booking.pk_booking_id, item
+                    )
+                    timestamps.append(
+                        convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
+                        if status_time
+                        else None
+                    )
 
         if step == 1:
             eta = (

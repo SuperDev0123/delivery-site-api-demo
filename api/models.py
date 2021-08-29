@@ -660,9 +660,10 @@ class Bookings(models.Model):
         (STAIRS, "Stairs"),
     )
 
-    DMEM = "DMEM"
-    DMEA = "DMEA"
-    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"))
+    DMEM = "DMEM"  # Manual
+    DMEA = "DMEA"  # Auto
+    DMEP = "DMEP"  # Pickup
+    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"), (DMEP, "DMEP"))
 
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
@@ -2216,6 +2217,22 @@ class Booking_lines(models.Model):
             logger.error(f"#562 gap_ras - {str(e)}")
             return ""
 
+    def modelNumbers(self):
+        try:
+            _modelNumbers = []
+            booking_lines_data = Booking_lines_data.objects.filter(
+                fk_booking_lines_id=self.pk_booking_lines_id
+            )
+
+            for booking_line_data in booking_lines_data:
+                if booking_line_data.modelNumber:
+                    _modelNumbers.append(booking_line_data.modelNumber)
+
+            return ", ".join(_modelNumbers)
+        except Exception as e:
+            logger.error(f"#563 modelNumbers - {str(e)}")
+            return ""
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         # Check if all other lines are picked at Warehouse
@@ -2234,8 +2251,7 @@ class Booking_lines(models.Model):
                 ).count()
 
                 if booking_lines_cnt - 1 == picked_up_lines_cnt:
-                    booking.b_status = "Ready for Booking"
-                    booking.save()
+                    status_history.create(booking, "Ready for Booking", "DME_BE")
 
         return super(Booking_lines, self).save(*args, **kwargs)
 
@@ -2403,7 +2419,8 @@ class BOK_1_headers(models.Model):
 
     DMEM = "DMEM"
     DMEA = "DMEA"
-    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"))
+    DMEP = "DMEP"  # Pickup
+    BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"), (DMEP, "DMEP"))
 
     pk_auto_id = models.AutoField(primary_key=True)
     quote = models.OneToOneField(
@@ -4258,6 +4275,7 @@ class FP_costs(models.Model):
 class FP_pricing_rules(models.Model):
     id = models.AutoField(primary_key=True)
     freight_provider = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    client = models.ForeignKey(DME_clients, on_delete=models.CASCADE, null=True)
     cost = models.ForeignKey(FP_costs, on_delete=models.CASCADE, null=True)
     etd = models.ForeignKey(FP_Service_ETDs, on_delete=models.CASCADE, null=True)
     vehicle = models.ForeignKey(
@@ -4535,7 +4553,6 @@ class BookingSets(models.Model):
                     )
                     booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
                     status_history.create(booking, "Booked", "DME_BE")
-                    booking.b_status = "Booked"
                     booking.save()
 
                     # Build Label and send booking email
