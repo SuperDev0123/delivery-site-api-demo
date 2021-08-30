@@ -76,7 +76,7 @@ class Command(BaseCommand):
 
         pk_booking_ids = []
         for booking in bookings:
-            pk_booking_ids.append(booking.pk_booking_ids)
+            pk_booking_ids.append(booking.pk_booking_id)
 
         dme_shs = Dme_status_history.objects.filter(fk_booking_id__in=pk_booking_ids)
         dme_shs = dme_shs.order_by("id")
