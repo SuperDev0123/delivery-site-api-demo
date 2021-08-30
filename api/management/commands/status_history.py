@@ -110,9 +110,9 @@ def populate_status_history(dme_shs, expected_shs):
         index += 1
 
         if (
-            dme_sh.status_old != expected_sh.status_old
-            or dme_sh.status_last != expected_sh.status_last
-            or dme_sh.event_time_stamp != expected_sh.event_time_stamp
+            dme_sh.status_old != expected_sh["status_old"]
+            or dme_sh.status_last != expected_sh["status_last"]
+            or dme_sh.event_time_stamp != expected_sh["event_time_stamp"]
         ):
             print("@! --- ", dme_sh, expected_sh)
 
