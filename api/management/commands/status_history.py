@@ -58,19 +58,18 @@ class Command(BaseCommand):
         print("----- Checking status_histories... -----")
 
         # Prepare data
-        # bookings = (
-        #     Bookings.objects.all()
-        #     .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
-        #     .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
-        #     .only(
-        #         "id",
-        #         "pk_booking_id",
-        #         "b_bookingID_Visual",
-        #         "vx_freight_provider",
-        #         "b_status",
-        #     )
-        # )
-        bookings = Bookings.objects.filter(b_bookingID_Visual="180007")
+        bookings = (
+            Bookings.objects.all()
+            .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
+            .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
+            .only(
+                "id",
+                "pk_booking_id",
+                "b_bookingID_Visual",
+                "vx_freight_provider",
+                "b_status",
+            )
+        )[:-20]
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
