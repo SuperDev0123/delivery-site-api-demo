@@ -96,6 +96,20 @@ class Command(BaseCommand):
             expected_shs = get_expected_status_histories(
                 booking, b_fp_shs, status_mappings, category_mappings
             )
+            populate_status_history(dme_shs, expected_shs)
+
+
+def populate_status_history(dme_shs, expected_shs):
+    for dme_sh in dme_shs:
+        if dme_sh.status_old in [None, "Picking", "Picked", "Booked"]:
+            continue
+
+        if (
+            dme_sh.status_old != expected_shs.status_old
+            or dme_sh.status_last != expected_shs.status_last
+            or dme_sh.event_time_stamp != expected_shs.event_time_stamp
+        ):
+            print("@! --- ", dme_sh, expected_sh)
 
 
 def get_expected_status_histories(booking, fp_shs, status_mappings, category_mappings):
@@ -109,7 +123,6 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             fp_name, fp_sh.status, status_mappings
         )
         category = get_status_category_from_status(dme_status, category_mappings)
-        print("@000 - ", dme_status, category, fp_sh.event_timestamp)
 
         if category and category != old_category:
             latest_expected_sh = expected_shs[:-1] if expected_shs else None
@@ -127,8 +140,6 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             )
             old_category = category
             old_status = dme_status
-
-    print("@111 - ", expected_shs)
 
 
 def get_dme_status_from_fp_status(fp_name, fp_status, status_mappings):
