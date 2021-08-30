@@ -109,9 +109,14 @@ class Command(BaseCommand):
 
 def populate_status_history(dme_shs, expected_shs):
     index = 0
+    has_wrong_sh = None
 
     for dme_sh in dme_shs:
         if dme_sh.status_last in [None, "Picking", "Picked", "Booked"]:
+            continue
+
+        if has_wrong_sh:
+            dme_sh.delete()
             continue
 
         expected_sh = expected_shs[index]
@@ -123,6 +128,8 @@ def populate_status_history(dme_shs, expected_shs):
             or dme_sh.event_time_stamp != expected_sh["event_time_stamp"]
         ):
             print("@1 --- ", dme_sh, expected_sh)
+            has_wrong_sh = True
+            index -= 1
 
     if index < len(expected_shs):
         expected_sh = expected_shs[index]
