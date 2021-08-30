@@ -101,6 +101,7 @@ class Command(BaseCommand):
 def get_expected_status_histories(booking, fp_shs, status_mappings, category_mappings):
     fp_name = booking.vx_freight_provider.lower()
     old_category = "Booked"
+    old_status = "Booked"
     expected_shs = []
 
     for fp_sh in fp_shs:
@@ -108,13 +109,11 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             fp_name, fp_sh.status, status_mappings
         )
         category = get_status_category_from_status(dme_status, category_mappings)
-        print("@000 - ", dme_status, category)
+        print("@000 - ", dme_status, category, fp_sh.event_timestamp)
 
         if category and category != old_category:
             latest_expected_sh = expected_shs[:-1] if expected_shs else None
-            status_old = (
-                latest_expected_sh.status_last if latest_expected_sh else "Booked"
-            )
+            status_old = old_status
             status_last = dme_status
             notes = f"{status_old} --> {status_last}"
             event_timestamp = fp_sh.event_timestamp
@@ -127,6 +126,7 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
                 }
             )
             old_category = category
+            old_status = dme_status
 
     print("@111 - ", expected_shs)
 
