@@ -87,6 +87,9 @@ class Command(BaseCommand):
 
         # Processing...
         for booking in bookings:
+            print(
+                f"@100 - Booking: {booking.b_bookingID_Visual} ({booking.pk_booking_id})"
+            )
             b_fp_shs = []
 
             for fp_sh in fp_shs:
@@ -96,6 +99,11 @@ class Command(BaseCommand):
             expected_shs = get_expected_status_histories(
                 booking, b_fp_shs, status_mappings, category_mappings
             )
+
+            if not expected_shs:
+                message = "@104 - No expected statusHistories."
+                print(message)
+
             populate_status_history(dme_shs, expected_shs)
 
 
@@ -145,6 +153,8 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             )
             old_category = category
             old_status = dme_status
+
+    return expected_shs
 
 
 def get_dme_status_from_fp_status(fp_name, fp_status, status_mappings):
