@@ -165,7 +165,7 @@ def get_status_category_from_status(status, category_mappings):
 
     for category_mapping in category_mappings:
         if category_mapping.dme_delivery_status == status:
-            return utl_dme_status.dme_delivery_status_category
+            return category_mapping.dme_delivery_status_category
 
     message = f"#102 Category not found with this status: {status}"
     print(message)
