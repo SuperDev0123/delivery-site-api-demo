@@ -75,7 +75,7 @@ class Command(BaseCommand):
         print(f"    Bookings to process: {bookings_cnt}")
 
         pk_booking_ids = []
-        for booking in bookings[:20]:
+        for booking in bookings:
             pk_booking_ids.append(booking.pk_booking_id)
 
         dme_shs = Dme_status_history.objects.filter(fk_booking_id__in=pk_booking_ids)
@@ -86,7 +86,7 @@ class Command(BaseCommand):
         category_mappings = Utl_dme_status.objects.all()
 
         # Processing...
-        for booking in bookings[:20]:
+        for booking in bookings:
             print(
                 f"@100 - Booking: {booking.b_bookingID_Visual} ({booking.pk_booking_id})"
             )
