@@ -83,12 +83,15 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            populate_fp_status_history(booking, consignmentStatuses)
-            # update_booking_with_tracking_result(
-            #     request, booking, fp_name, consignmentStatuses
-            # )
-            # booking.b_error_Capture = None
-            # booking.save()
+            has_new = populate_fp_status_history(booking, consignmentStatuses)
+
+            if has_new:
+                populate_status_history(booking)
+                update_booking_with_tracking_result(
+                    request, booking, fp_name, consignmentStatuses
+                )
+                booking.b_error_Capture = None
+                booking.save()
 
             return JsonResponse(
                 {
