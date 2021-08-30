@@ -131,7 +131,7 @@ def populate_status_history(booking, dme_shs, expected_shs):
             continue
 
         if has_wrong_sh:
-            # dme_sh.delete()
+            dme_sh.delete()  # WRITE OPERATION - DELETE
             continue
 
         expected_sh = expected_shs[index]
@@ -145,7 +145,7 @@ def populate_status_history(booking, dme_shs, expected_shs):
             print("    @106 Wrong statusHistory", dme_sh, expected_sh)
             has_wrong_sh = True
             index -= 1  # Rollback index
-            dme_sh.delete()
+            dme_sh.delete()  # WRITE OPERATION - DELETE
 
     for index_1, expected_sh in enumerate(expected_shs):
         if index < len(expected_shs) and index_1 >= index:
@@ -158,7 +158,7 @@ def populate_status_history(booking, dme_shs, expected_shs):
             new_dme_sh.notes = expected_sh["notes"]
             new_dme_sh.event_time_stamp = expected_sh["event_time_stamp"]
             new_dme_sh.status_update_via = "MANAGE COMM"  # Management command
-            new_dme_sh.save()
+            new_dme_sh.save()  # WRITE OPERATION - CREATE
 
 
 def get_expected_status_histories(booking, fp_shs, status_mappings, category_mappings):
