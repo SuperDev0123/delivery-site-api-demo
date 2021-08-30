@@ -116,7 +116,7 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             )
             status_last = dme_status
             notes = f"{status_old} --> {status_last}"
-            event_time_stamp = fp_sh.event_timestamp
+            event_timestamp = fp_sh.event_timestamp
             expected_shs.append(
                 {
                     "status_old": status_old,
