@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 "vx_freight_provider",
                 "b_status",
             )
-        )[:-20]
+        )[:20]
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
