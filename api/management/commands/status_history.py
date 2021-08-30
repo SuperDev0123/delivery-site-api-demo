@@ -90,7 +90,7 @@ class Command(BaseCommand):
             b_fp_shs = []
 
             for fp_sh in fp_shs:
-                if booking.pk_booking_id == fp_sh.fk_booking_id:
+                if booking == fp_sh.booking:
                     b_fp_shs.append(fp_sh)
 
             expected_shs = get_expected_status_histories(
