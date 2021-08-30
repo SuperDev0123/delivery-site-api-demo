@@ -62,7 +62,7 @@ class Command(BaseCommand):
             Bookings.objects.all()
             .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
             .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
-            .order_by("-id")
+            .order_by("id")
             .only(
                 "id",
                 "pk_booking_id",
