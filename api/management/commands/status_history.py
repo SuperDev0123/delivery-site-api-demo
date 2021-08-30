@@ -69,12 +69,12 @@ class Command(BaseCommand):
                 "vx_freight_provider",
                 "b_status",
             )
-        )[:20]
+        )
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
         pk_booking_ids = []
-        for booking in bookings:
+        for booking in bookings[:20]:
             pk_booking_ids.append(booking.pk_booking_id)
 
         dme_shs = Dme_status_history.objects.filter(fk_booking_id__in=pk_booking_ids)
