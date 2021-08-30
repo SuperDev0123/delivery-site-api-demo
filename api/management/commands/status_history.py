@@ -90,8 +90,8 @@ class Command(BaseCommand):
             print(
                 f"@100 - Booking: {booking.b_bookingID_Visual} ({booking.pk_booking_id})"
             )
-            b_fp_shs = []
 
+            b_fp_shs = []
             for fp_sh in fp_shs:
                 if booking == fp_sh.booking:
                     b_fp_shs.append(fp_sh)
@@ -105,7 +105,12 @@ class Command(BaseCommand):
                 print(message)
                 continue
 
-            populate_status_history(dme_shs, expected_shs)
+            b_dme_shs = []
+            for dme_sh in dme_shs:
+                if booking.pk_booking_id == dme_sh.fk_booking_id:
+                    b_dme_shs.append(dme_sh)
+
+            populate_status_history(b_dme_shs, expected_shs)
 
 
 def populate_status_history(dme_shs, expected_shs):
