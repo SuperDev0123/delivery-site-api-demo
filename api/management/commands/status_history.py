@@ -157,6 +157,7 @@ def populate_status_history(booking, dme_shs, expected_shs):
             new_dme_sh.status_last = expected_sh["status_last"]
             new_dme_sh.notes = expected_sh["notes"]
             new_dme_sh.event_time_stamp = expected_sh["event_time_stamp"]
+            new_dme_sh.status_update_via = "MANAGE COMM"  # Management command
             new_dme_sh.save()
 
 
