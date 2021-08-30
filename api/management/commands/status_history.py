@@ -80,7 +80,7 @@ class Command(BaseCommand):
 
         dme_shs = Dme_status_history.objects.filter(fk_booking_id__in=pk_booking_ids)
         dme_shs = dme_shs.order_by("id")
-        fp_shs = FP_status_history.objects.filter(fk_booking_id__in=pk_booking_ids)
+        fp_shs = FP_status_history.objects.filter(booking__in=bookings)
         fp_shs = fp_shs.filter(is_active=True).order_by("id")
         status_mappings = Dme_utl_fp_statuses.objects.all()
         category_mappings = Utl_dme_status.objects.all()
