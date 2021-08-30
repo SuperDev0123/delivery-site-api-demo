@@ -100,14 +100,19 @@ class Command(BaseCommand):
 
 
 def populate_status_history(dme_shs, expected_shs):
+    index = 0
+
     for dme_sh in dme_shs:
         if dme_sh.status_old in [None, "Picking", "Picked", "Booked"]:
             continue
 
+        expected_sh = expected_shs[index]
+        index += 1
+
         if (
-            dme_sh.status_old != expected_shs.status_old
-            or dme_sh.status_last != expected_shs.status_last
-            or dme_sh.event_time_stamp != expected_shs.event_time_stamp
+            dme_sh.status_old != expected_sh.status_old
+            or dme_sh.status_last != expected_sh.status_last
+            or dme_sh.event_time_stamp != expected_sh.event_time_stamp
         ):
             print("@! --- ", dme_sh, expected_sh)
 
