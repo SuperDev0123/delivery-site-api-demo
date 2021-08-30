@@ -108,6 +108,7 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             fp_name, fp_sh.status, status_mappings
         )
         category = get_status_category_from_status(dme_status, category_mappings)
+        print("@000 - ", dme_status, category)
 
         if category and category != old_category:
             latest_expected_sh = expected_shs[:-1] if expected_shs else None
