@@ -86,7 +86,7 @@ class Command(BaseCommand):
         category_mappings = Utl_dme_status.objects.all()
 
         # Processing...
-        for booking in bookings:
+        for booking in bookings[:20]:
             print(
                 f"@100 - Booking: {booking.b_bookingID_Visual} ({booking.pk_booking_id})"
             )
