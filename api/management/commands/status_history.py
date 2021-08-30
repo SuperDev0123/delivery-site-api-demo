@@ -103,7 +103,7 @@ def populate_status_history(dme_shs, expected_shs):
     index = 0
 
     for dme_sh in dme_shs:
-        if dme_sh.status_old in [None, "Picking", "Picked", "Booked"]:
+        if dme_sh.status_last in [None, "Picking", "Picked", "Booked"]:
             continue
 
         expected_sh = expected_shs[index]
