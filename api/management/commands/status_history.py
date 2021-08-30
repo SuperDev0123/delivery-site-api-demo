@@ -149,7 +149,7 @@ def get_dme_status_from_fp_status(fp_name, fp_status, status_mappings):
                 status_info = rule
     else:
         for rule in rules:
-            if rules.fp_lookup_status == fp_status:
+            if rule.fp_lookup_status == fp_status:
                 status_info = rule
 
     try:
