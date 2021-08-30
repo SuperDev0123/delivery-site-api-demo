@@ -116,7 +116,7 @@ def populate_status_history(dme_shs, expected_shs):
             continue
 
         if has_wrong_sh:
-            dme_sh.delete()
+            # dme_sh.delete()
             continue
 
         expected_sh = expected_shs[index]
@@ -131,9 +131,10 @@ def populate_status_history(dme_shs, expected_shs):
             has_wrong_sh = True
             index -= 1
 
-    if index < len(expected_shs):
-        expected_sh = expected_shs[index]
-        print("@2 --- ", dme_sh, expected_sh)
+    for index_1, expected_sh in expected_shs:
+        if index < len(expected_shs) and index_1 >= index:
+            expected_sh = expected_shs[index_1]
+            print("@2 --- ", dme_sh, expected_sh)
 
 
 def get_expected_status_histories(booking, fp_shs, status_mappings, category_mappings):
@@ -193,7 +194,7 @@ def get_dme_status_from_fp_status(fp_name, fp_status, status_mappings):
     try:
         return status_info.dme_status
     except Exception as e:
-        message = f"@101 - Missing status rule: {fp_status}"
+        message = f"    @101 - Missing status rule: {fp_status}"
         print(message)
 
 
@@ -205,6 +206,6 @@ def get_status_category_from_status(status, category_mappings):
         if category_mapping.dme_delivery_status == status:
             return category_mapping.dme_delivery_status_category
 
-    message = f"#102 Category not found with this status: {status}"
+    message = f"    @102 Category not found with this status: {status}"
     print(message)
     return None
