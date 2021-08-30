@@ -727,6 +727,7 @@ def send_email_to_admins(subject, message):
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
         cc_emails = ["dev.deliverme@gmail.com"]
+        to_emails = []
 
         if settings.ENV in ["prod"]:
             to_emails.append("bookings@deliver-me.com.au")
