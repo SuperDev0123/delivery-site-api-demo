@@ -131,7 +131,7 @@ def populate_status_history(dme_shs, expected_shs):
             has_wrong_sh = True
             index -= 1
 
-    for index_1, expected_sh in expected_shs:
+    for index_1, expected_sh in enumerate(expected_shs):
         if index < len(expected_shs) and index_1 >= index:
             expected_sh = expected_shs[index_1]
             print("@2 --- ", dme_sh, expected_sh)
