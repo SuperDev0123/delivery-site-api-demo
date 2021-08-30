@@ -86,7 +86,6 @@ def tracking(request, fp_name):
             has_new = populate_fp_status_history(booking, consignmentStatuses)
 
             if has_new:
-                populate_status_history(booking)
                 update_booking_with_tracking_result(
                     request, booking, fp_name, consignmentStatuses
                 )
