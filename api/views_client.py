@@ -948,6 +948,7 @@ def get_delivery_status(request):
                 "eta_date": eta,
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
+                "logo_url": client.logo_url
             }
         )
 
@@ -1041,6 +1042,13 @@ def get_delivery_status(request):
             else ""
         )
 
+    try:
+        logo_url = DME_clients.objects.get(company_name=booking.b_client_name).logo_url
+    except Exception as e:
+        logger.error(f"Logo url error: {str(e)}")
+        logo_url = None
+
+
     status = "Processing"
     return Response(
         {
@@ -1062,5 +1070,6 @@ def get_delivery_status(request):
                 "",
                 "",
             ],
+            "logo_url": client.logo_url
         }
     )
