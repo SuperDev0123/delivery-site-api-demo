@@ -110,10 +110,10 @@ class Command(BaseCommand):
                 if booking.pk_booking_id == dme_sh.fk_booking_id:
                     b_dme_shs.append(dme_sh)
 
-            populate_status_history(b_dme_shs, expected_shs)
+            populate_status_history(booking, b_dme_shs, expected_shs)
 
 
-def populate_status_history(dme_shs, expected_shs):
+def populate_status_history(booking, dme_shs, expected_shs):
     index = 0
     has_wrong_sh = None
 
