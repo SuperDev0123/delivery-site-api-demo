@@ -4897,7 +4897,7 @@ class FP_status_history(models.Model):
     booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
     fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
     status = models.CharField(max_length=32, default=None, null=True)
-    desc = models.CharField(max_length=32, default=None, null=True)
+    desc = models.CharField(max_length=128, default=None, null=True)
     event_timestamp = models.DateTimeField(null=True, default=None)
     is_active = models.BooleanField(default=True)
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
