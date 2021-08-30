@@ -113,7 +113,14 @@ def populate_status_history(dme_shs, expected_shs):
     has_wrong_sh = None
 
     for dme_sh in dme_shs:
-        if dme_sh.status_last in [None, "Pushed", "Picking", "Picked", "Booked"]:
+        if dme_sh.status_last in [
+            None,
+            "Ordered",
+            "Pushed",
+            "Picking",
+            "Picked",
+            "Booked",
+        ]:
             continue
 
         if has_wrong_sh:
