@@ -122,7 +122,11 @@ def populate_status_history(dme_shs, expected_shs):
             or dme_sh.status_last != expected_sh["status_last"]
             or dme_sh.event_time_stamp != expected_sh["event_time_stamp"]
         ):
-            print("@! --- ", dme_sh, expected_sh)
+            print("@1 --- ", dme_sh, expected_sh)
+
+    if index < len(expected_shs):
+        expected_sh = expected_shs[index]
+        print("@2 --- ", dme_sh, expected_sh)
 
 
 def get_expected_status_histories(booking, fp_shs, status_mappings, category_mappings):
