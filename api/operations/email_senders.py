@@ -1,4 +1,5 @@
 import logging
+import os
 import math
 from datetime import datetime, timedelta
 from email.utils import COMMASPACE, formatdate
@@ -520,6 +521,12 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         "Complete",
     ]
 
+    try:
+        logo_url = DME_clients.objects.get(dme_account_num=booking.kf_client_id).logo_url
+    except Exception as e:
+        logger.error(f"Client logo url error: {str(e)}")
+        logo_url = None
+
     timestamps = []
     for index, item in enumerate(steps):
         if index == 0:
@@ -601,6 +608,8 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         emailVarList["USERNAME"] = sender
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
         emailVarList["STATUS_URL"] = status_url
+        emailVarList["DME_LOGO_URL"] = os.path.abspath(f'{settings.STATIC_PUBLIC}/assets/logos/dme.png')
+        emailVarList["CLIENT_LOGO_URL"] = os.path.abspath(f'{settings.STATIC_PUBLIC}/assets/logos/{logo_url}')
 
         body_repeat = ""
         for idx, line_data in enumerate(lines_data):

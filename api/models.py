@@ -72,6 +72,9 @@ class DME_clients(models.Model):
     current_freight_provider = models.CharField(
         verbose_name=_("Related FP"), max_length=30, blank=False, null=True, default="*"
     )
+    logo_url = models.CharField(
+        verbose_name=_("Logo Url"), max_length=200, null=True, default=None
+    )
     client_mark_up_percent = models.FloatField(default=0, null=True, blank=True)
     client_min_markup_startingcostvalue = models.FloatField(
         default=0, null=True, blank=True
