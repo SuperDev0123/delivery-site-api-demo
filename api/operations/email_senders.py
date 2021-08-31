@@ -752,9 +752,8 @@ def send_email_missing_status(booking, fp_name, b_status_API):
         "dev.deliverme@gmail.com",
     ]
 
-    if subject == "New FP status":
-        if "FP name: ALLIED" in message:
-            to_emails.append("betty.petrov@alliedexpress.com.au")
+    if fp_name.upper() == "ALLIED":
+        to_emails.append("betty.petrov@alliedexpress.com.au")
 
     send_email(to_emails, cc_emails, subject, message)
 
