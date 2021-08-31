@@ -191,9 +191,10 @@ def interpolate_gaps(quotes):
             not _is_used_client_credential(fp_name, client_name, account_code)
             and gap > 0
         ):
-            logger.info(
+            log_msg = (
                 f"[$ INTERPOLATE] process! Quote: {quote.pk}({quote.fee}), Gap: {gap}"
             )
+            # logger.info(log_msg)
             quote.fee += gap * client.gap_percent
             quote.save()
 

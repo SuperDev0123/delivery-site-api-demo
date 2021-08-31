@@ -274,7 +274,7 @@ def populate_fp_status_history(booking, consignmentStatuses):
 
         if not diff:
             msg = f"#323 {LOG_ID} No new status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name})"
-            logger.info(msg)
+            # logger.info(msg)
             return False
 
         for index, fp_status_history in enumerate(fp_status_histories):

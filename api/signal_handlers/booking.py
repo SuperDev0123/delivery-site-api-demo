@@ -112,13 +112,14 @@ def pre_save_handler(instance):
 
 def post_save_handler(instance):
     LOG_ID = "[BOOKING POST SAVE]"
-    logger.info(f"{LOG_ID} Booking PK: {instance.id}")
 
     if (
         instance.vx_freight_provider
         and instance.z_label_url
         and "[REBUILD_REQUIRED]" in instance.z_label_url
     ):
+        logger.info(f"{LOG_ID} Booking PK: {instance.id}")
+
         # Check if pricings exist for selected FP
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=instance.pk_booking_id,
