@@ -133,7 +133,11 @@ def populate_status_history(booking, dme_shs, expected_shs):
             dme_sh.delete()  # WRITE OPERATION - DELETE
             continue
 
-        expected_sh = expected_shs[index]
+        try:
+            expected_sh = expected_shs[index]
+        except:
+            return False
+
         index += 1
 
         if (
