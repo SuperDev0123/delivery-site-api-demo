@@ -78,14 +78,6 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
 
         return status_info.dme_status
     except:
-        message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
-        logger.error(message)
-        send_email_to_admins("New FP status", message)
-
-        if booking:
-            booking.b_errorCapture = f"New FP status: {booking.b_status_API}"
-            booking.save()
-
         return None
 
 

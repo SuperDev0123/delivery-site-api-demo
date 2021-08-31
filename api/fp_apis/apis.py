@@ -37,10 +37,7 @@ from api.fp_apis.operations.tracking import (
 )
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
-from api.fp_apis.utils import (
-    get_dme_status_from_fp_status,
-    auto_select_pricing,
-)
+from api.fp_apis.utils import auto_select_pricing
 from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
 
 

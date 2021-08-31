@@ -10,6 +10,7 @@ from api.fp_apis.utils import (
     get_dme_status_from_fp_status,
     get_status_category_from_status,
 )
+from api.operations.email_senders import send_email_missing_status
 
 logger = logging.getLogger(__name__)
 
@@ -199,8 +200,13 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         fp_name.lower(), last_consignmentStatus
     )
     booking.b_status_API = b_status_API
-    status_from_fp = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
-    status_history.create(booking, status_from_fp, request.user.username, event_time)
+    new_status = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
+
+    if not new_status:  # Missing status mapping rule
+        booking.b_errorCapture = f"New FP status: {b_status_API}"
+        send_email_missing_status(booking, fp_name, b_status_API)
+
+    status_history.create(booking, new_status, request.user.username, event_time)
     # booking.b_status = status_from_fp
     # booking.b_booking_Notes = status_desc
     booking.save()

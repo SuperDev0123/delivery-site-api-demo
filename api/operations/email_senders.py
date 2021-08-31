@@ -522,7 +522,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     ]
 
     try:
-        logo_url = DME_clients.objects.get(dme_account_num=booking.kf_client_id).logo_url
+        logo_url = DME_clients.objects.get(
+            dme_account_num=booking.kf_client_id
+        ).logo_url
     except Exception as e:
         logger.error(f"Client logo url error: {str(e)}")
         logo_url = None
@@ -608,8 +610,12 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         emailVarList["USERNAME"] = sender
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
         emailVarList["STATUS_URL"] = status_url
-        emailVarList["DME_LOGO_URL"] = os.path.abspath(f'{settings.STATIC_PUBLIC}/assets/logos/dme.png')
-        emailVarList["CLIENT_LOGO_URL"] = os.path.abspath(f'{settings.STATIC_PUBLIC}/assets/logos/{logo_url}')
+        emailVarList["DME_LOGO_URL"] = os.path.abspath(
+            f"{settings.STATIC_PUBLIC}/assets/logos/dme.png"
+        )
+        emailVarList["CLIENT_LOGO_URL"] = os.path.abspath(
+            f"{settings.STATIC_PUBLIC}/assets/logos/{logo_url}"
+        )
 
         body_repeat = ""
         for idx, line_data in enumerate(lines_data):
@@ -729,24 +735,41 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     send_email(to_emails, cc_emails, subject, message)
 
 
+def send_email_missing_status(booking, fp_name, b_status_API):
+    message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
+    logger.error(message)
+
+    subject = f"Unknown Status From Freight Provider"
+    message = (
+        f"DME Booking ID: {booking.b_bookingID_Visual}\nOrderNumber: {booking.b_client_order_num}\n"
+        + f"Freight Provider: {booking.vx_freight_provider.upper()}\nConsignmentNo: {booking.v_FPBookingNumber}\nUnknown Status: {b_status_API}\n\n\n"
+        + f"Please reply to this email with the definition of the status code ASAP."
+    )
+    to_emails = ["bookings@deliver-me.com.au"]
+    cc_emails = [
+        "stephenm@deliver-me.com.au",
+        "petew@deliver-me.com.au",
+        "dev.deliverme@gmail.com",
+    ]
+
+    if subject == "New FP status":
+        if "FP name: ALLIED" in message:
+            to_emails.append("betty.petrov@alliedexpress.com.au")
+
+    send_email(to_emails, cc_emails, subject, message)
+
+
 def send_email_to_admins(subject, message):
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"
     ).first()
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
-        cc_emails = ["dev.deliverme@gmail.com"]
-        to_emails = []
-
         if settings.ENV in ["prod"]:
-            to_emails.append("bookings@deliver-me.com.au")
-            to_emails.append("stephenm@deliver-me.com.au")
-
-            if subject == "New FP status":
-                if "FP name: ALLIED" in message:
-                    to_emails.append("betty.petrov@alliedexpress.com.au")
+            to_emails = ["bookings@deliver-me.com.au", "stephenm@deliver-me.com.au"]
         else:
             subject = f"FROM TEST SERVER - {subject}"
-            to_emails.append("goldj@deliver-me.com.au")
+            to_emails = ["goldj@deliver-me.com.au"]
 
+        cc_emails = ["dev.deliverme@gmail.com"]
         send_email(to_emails, cc_emails, subject, message)
