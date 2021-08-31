@@ -292,6 +292,6 @@ def populate_fp_status_history(booking, consignmentStatuses):
             msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {new_fp_status_history['b_status_API']} ({new_fp_status_history['status_desc']})"
             logger.info(msg)
 
-            create_fp_status_history(booking, fp, new_data)
+            create_fp_status_history(booking, fp, new_fp_status_history)
 
         return True
