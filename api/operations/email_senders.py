@@ -611,10 +611,10 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
         emailVarList["STATUS_URL"] = status_url
         emailVarList["DME_LOGO_URL"] = os.path.abspath(
-            f"{settings.STATIC_PUBLIC}/assets/logos/dme.png"
+            "./static/assets/logos/dme.png"
         )
         emailVarList["CLIENT_LOGO_URL"] = os.path.abspath(
-            f"{settings.STATIC_PUBLIC}/assets/logos/{logo_url}"
+            "./static/assets/logos/{logo_url}"
         )
 
         body_repeat = ""
@@ -642,9 +642,14 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         html += emailBody
 
     mime_type = "html"
-    client_name = (
-        "Jason.l" if booking.b_client_name == "Jason L" else booking.b_client_name
-    )
+    client_name = ""
+    if booking.b_client_name == "Jason L":
+        client_name = "Jason.l"
+    elif booking.b_client_name == "Plum Products Australia Ltd":
+        client_name = "Plum Play"
+    else:
+        client_name = booking.b_client_name
+
     subject = f"Your {client_name} Order status has been updated"
 
     to_emails = []
