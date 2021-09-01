@@ -4,6 +4,7 @@ import traceback
 from api.models import Fp_freight_providers, Booking_lines, FP_pricing_rules, FP_costs
 from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
+from api.clients.operations.index import get_client
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,12 @@ def get_pricing(fp_name, booking, booking_lines):
     LOG_ID = "[ATC PRICING]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-    client = booking.get_client()
+
+    try:
+        client = booking.get_client()
+    except:
+        client = get_client(user=None, kf_client_id=booking["kf_client_id"])
+
     logger.info(
         f"@830 {LOG_ID} Booking: {booking.b_bookingID_Visual}, Client: {client.company_name}"
     )

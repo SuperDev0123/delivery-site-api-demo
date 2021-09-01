@@ -1,20 +1,24 @@
 import logging
 
-from api.models import Client_employees, Client_warehouses, Utl_suburbs
+from api.models import Client_employees, Client_warehouses, Utl_suburbs, DME_clients
 from api.helpers.string import similarity
 
 logger = logging.getLogger(__name__)
 
 
-def get_client(user):
+def get_client(user, kf_client_id=None):
     """
     get client
     """
     LOG_ID = "[GET CLIENT]"
 
     try:
-        client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
-        client = client_employee.fk_id_dme_client
+        if kf_client_id:
+            client = DME_clients.objects.get(dme_account_num=kf_client_id)
+        else:
+            client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
+            client = client_employee.fk_id_dme_client
+
         logger.info(f"{LOG_ID} Client: {client.company_name}")
         return client
     except Exception as e:
