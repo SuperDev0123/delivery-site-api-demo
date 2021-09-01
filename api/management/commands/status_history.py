@@ -192,6 +192,11 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
         )
         category = get_status_category_from_status(dme_status, category_mappings)
 
+        if is_check_only:
+            print(
+                f"FP Name: {fp_name.upper()}, FP status: {fp_sh.status}, DME status: {dme_status}, Category: {category}"
+            )
+
         if category and category != old_category:
             latest_expected_sh = expected_shs[:-1] if expected_shs else None
             status_old = old_status
