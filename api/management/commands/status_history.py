@@ -132,6 +132,7 @@ def populate_status_history(booking, dme_shs, expected_shs, is_check_only):
     print("Expected StatusHistories - ", expected_shs)
 
     if is_check_only:
+        print("CHECK_ONLY so no write operations!")
         return
 
     for dme_sh in dme_shs:
