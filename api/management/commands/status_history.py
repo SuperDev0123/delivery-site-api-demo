@@ -54,24 +54,34 @@ CLIENTS_TO_BE_PROCESSED = [
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument("booking_ids")
+
     def handle(self, *args, **options):
         print("----- Checking status_histories... -----")
 
+        booking_ids = options["booking_ids"]
+
+        if booking_ids:
+            print(f"    Bookings to process: {booking_ids.split(', ')}")
+
         # Prepare data
-        # bookings = (
-        #     Bookings.objects.all()
-        #     .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
-        #     .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
-        #     .order_by("id")
-        #     .only(
-        #         "id",
-        #         "pk_booking_id",
-        #         "b_bookingID_Visual",
-        #         "vx_freight_provider",
-        #         "b_status",
-        #     )
-        # )
-        bookings = Bookings.objects.filter(pk="139183")
+        if booking_ids:
+            bookings = Bookings.objects.filter(pk__in=booking_ids)
+        else:
+            bookings = (
+                Bookings.objects.all()
+                .filter(kf_client_id__in=CLIENTS_TO_BE_PROCESSED)
+                .exclude(b_status__in=STATUS_TO_BE_EXCLUDED)
+                .order_by("id")
+                .only(
+                    "id",
+                    "pk_booking_id",
+                    "b_bookingID_Visual",
+                    "vx_freight_provider",
+                    "b_status",
+                )
+            )
         bookings_cnt = bookings.count()
         print(f"    Bookings to process: {bookings_cnt}")
 
