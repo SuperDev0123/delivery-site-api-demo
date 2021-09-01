@@ -22,7 +22,7 @@ AVAILABLE_FPS_4_FC = [
     "Capital",
     "Hunter",
     "Sendle",
-    # "Allied",
+    "Allied",
     "Camerons",
     "Toll",
     "Century",
