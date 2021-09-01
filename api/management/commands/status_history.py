@@ -67,7 +67,7 @@ class Command(BaseCommand):
 
         # Prepare data
         if booking_ids:
-            bookings = Bookings.objects.filter(pk__in=booking_ids)
+            bookings = Bookings.objects.filter(pk__in=booking_ids.split(", "))
         else:
             bookings = (
                 Bookings.objects.all()
