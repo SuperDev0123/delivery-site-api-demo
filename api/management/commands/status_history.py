@@ -62,7 +62,7 @@ class Command(BaseCommand):
         print("----- Checking status_histories... -----")
 
         booking_ids = options["booking_ids"]
-        is_check_only = options["is_check_only"]
+        is_check_only = options["is_check_only"] === 'True'
 
         if booking_ids:
             print(f"    Bookings to process: {booking_ids.split(', ')}")
