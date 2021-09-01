@@ -22,11 +22,11 @@ AVAILABLE_FPS_4_FC = [
     "Capital",
     "Hunter",
     "Sendle",
-    "Allied",
+    # "Allied",
     "Camerons",
     "Toll",
     "Century",
-    "ATC"
+    "ATC",
 ]
 
 BUILT_IN_PRICINGS = {
@@ -34,13 +34,13 @@ BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
-    # "allied": {
-    #     "service_types": [
-    #         "Road Express",
-    #         "Standard Pallet Rate",
-    #         "Oversized Pallet Rate",
-    #     ]
-    # },
+    "allied": {
+        "service_types": [
+            "Road Express",
+            "Standard Pallet Rate",
+            "Oversized Pallet Rate",
+        ]
+    },
 }
 
 FP_CREDENTIALS = {
