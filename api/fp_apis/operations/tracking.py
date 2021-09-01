@@ -243,7 +243,6 @@ def populate_fp_status_history(booking, consignmentStatuses):
     ).order_by("-event_timestamp")
     new_fp_status_histories = _extract_bulk(fp_name, consignmentStatuses)
     fp = booking.get_fp()
-    print("@1 - ", fp_status_histories, new_fp_status_histories, fp)
 
     # Initial Tracking
     if fp_status_histories.count() == 0:
@@ -278,22 +277,19 @@ def populate_fp_status_history(booking, consignmentStatuses):
             exists.append(fp_status_history.status)
 
         diff = list(set(news).difference(set(exists)))
-        print("@3 - ", diff)
 
         if not diff:
             msg = f"#323 {LOG_ID} No new status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name})"
             # logger.info(msg)
             return False
 
-        for index, fp_status_history in enumerate(fp_status_histories):
-            new_fp_status_history = new_fp_status_histories[index]
-
-            if not new_fp_status_history["b_status_API"] in diff:
+        for index, fp_status_history in enumerate(new_fp_status_histories):
+            if not fp_status_history["b_status_API"] in diff:
                 continue
 
-            msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {new_fp_status_history['b_status_API']} ({new_fp_status_history['status_desc']})"
+            msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {fp_status_history['b_status_API']} ({fp_status_history['status_desc']})"
             logger.info(msg)
 
-            create_fp_status_history(booking, fp, new_fp_status_history)
+            create_fp_status_history(booking, fp, fp_status_history)
 
         return True
