@@ -56,11 +56,13 @@ CLIENTS_TO_BE_PROCESSED = [
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("booking_ids")
+        parser.add_argument("is_check_only")
 
     def handle(self, *args, **options):
         print("----- Checking status_histories... -----")
 
         booking_ids = options["booking_ids"]
+        is_check_only = options["is_check_only"]
 
         if booking_ids:
             print(f"    Bookings to process: {booking_ids.split(', ')}")
@@ -121,13 +123,16 @@ class Command(BaseCommand):
                 if booking.pk_booking_id == dme_sh.fk_booking_id:
                     b_dme_shs.append(dme_sh)
 
-            populate_status_history(booking, b_dme_shs, expected_shs)
+            populate_status_history(booking, b_dme_shs, expected_shs, is_check_only)
 
 
 def populate_status_history(booking, dme_shs, expected_shs):
     index = 0
     has_wrong_sh = None
-    print("@1111 - ", expected_shs)
+    print("Expected StatusHistories - ", expected_shs)
+
+    if is_check_only:
+        return
 
     for dme_sh in dme_shs:
         if dme_sh.status_last in [
