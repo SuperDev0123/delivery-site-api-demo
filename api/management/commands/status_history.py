@@ -110,7 +110,7 @@ class Command(BaseCommand):
                     b_fp_shs.append(fp_sh)
 
             expected_shs = get_expected_status_histories(
-                booking, b_fp_shs, status_mappings, category_mappings
+                booking, b_fp_shs, status_mappings, category_mappings, is_check_only
             )
 
             if not expected_shs:
@@ -180,7 +180,9 @@ def populate_status_history(booking, dme_shs, expected_shs, is_check_only):
             new_dme_sh.save()  # WRITE OPERATION - CREATE
 
 
-def get_expected_status_histories(booking, fp_shs, status_mappings, category_mappings):
+def get_expected_status_histories(
+    booking, fp_shs, status_mappings, category_mappings, is_check_only
+):
     fp_name = booking.vx_freight_provider.lower()
     old_category = "Booked"
     old_status = "Booked"
