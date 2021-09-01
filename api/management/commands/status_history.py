@@ -199,7 +199,7 @@ def get_expected_status_histories(
                 f"FP Name: {fp_name.upper()}, FP status: {fp_sh.status}, DME status: {dme_status}, Category: {category}"
             )
 
-        if category and category != old_category:
+        if dme_status and dme_status != old_status:
             latest_expected_sh = expected_shs[:-1] if expected_shs else None
             status_old = old_status
             status_last = dme_status
@@ -214,7 +214,6 @@ def get_expected_status_histories(
                     "event_time_stamp": event_timestamp,
                 }
             )
-            old_category = category
             old_status = dme_status
 
     return expected_shs
