@@ -243,10 +243,11 @@ def populate_fp_status_history(booking, consignmentStatuses):
     ).order_by("-event_timestamp")
     new_fp_status_histories = _extract_bulk(fp_name, consignmentStatuses)
     fp = booking.get_fp()
+    print("@1 - ", fp_status_histories, new_fp_status_histories, fp)
 
     # Initial Tracking
     if fp_status_histories.count() == 0:
-        msg = f"#322 {LOG_ID} Locked Booking: {booking.b_bookingID_Visual}({fp_name})"
+        msg = f"#322 {LOG_ID} Initial Tracking: {booking.b_bookingID_Visual}({fp_name})"
         logger.info(msg)
 
         for new_data in new_fp_status_histories:
@@ -277,6 +278,7 @@ def populate_fp_status_history(booking, consignmentStatuses):
             exists.append(fp_status_history.status)
 
         diff = list(set(news).difference(set(exists)))
+        print("@3 - ", diff)
 
         if not diff:
             msg = f"#323 {LOG_ID} No new status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name})"
