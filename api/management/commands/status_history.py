@@ -185,6 +185,7 @@ def get_expected_status_histories(booking, fp_shs, status_mappings, category_map
             event_timestamp = fp_sh.event_timestamp
             expected_shs.append(
                 {
+                    "b_status_API": fp_sh.status,
                     "status_old": status_old,
                     "status_last": status_last,
                     "notes": notes,
