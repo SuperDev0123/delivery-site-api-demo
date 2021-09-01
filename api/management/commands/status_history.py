@@ -126,7 +126,7 @@ class Command(BaseCommand):
             populate_status_history(booking, b_dme_shs, expected_shs, is_check_only)
 
 
-def populate_status_history(booking, dme_shs, expected_shs):
+def populate_status_history(booking, dme_shs, expected_shs, is_check_only):
     index = 0
     has_wrong_sh = None
     print("Expected StatusHistories - ", expected_shs)
