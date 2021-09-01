@@ -16,7 +16,7 @@ def get_pricing(fp_name, booking, booking_lines):
 
     try:
         client = booking.get_client()
-    except:
+    except Exception as e:
         client = get_client(user=None, kf_client_id=booking["kf_client_id"])
 
     logger.info(
