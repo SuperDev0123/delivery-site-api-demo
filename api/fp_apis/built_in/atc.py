@@ -16,12 +16,14 @@ def get_pricing(fp_name, booking, booking_lines):
 
     try:
         client = booking.get_client()
+        logger.info(
+            f"@830 {LOG_ID} Booking: {booking.b_bookingID_Visual}, Client: {client.company_name}"
+        )
     except Exception as e:
         client = get_client(user=None, kf_client_id=booking.kf_client_id)
-
-    logger.info(
-        f"@830 {LOG_ID} Booking: {booking.b_bookingID_Visual}, Client: {client.company_name}"
-    )
+        logger.info(
+            f"@830 {LOG_ID} PRICING_ONLY Booking: {booking.pk_booking_id}, Client: {client.company_name}"
+        )
 
     pricies = []
     for service_type in service_types:
