@@ -394,7 +394,12 @@ def get_book_payload(booking, fp_name):
         payload["consignmentNoteNumber"] = gen_consignment_num(
             "tnt", booking.b_bookingID_Visual
         )
-        payload["customerReference"] = booking.clientRefNumbers
+
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+            payload["customerReference"] = booking.b_client_sales_inv_num or ""
+        else:
+            payload["customerReference"] = booking.clientRefNumbers
+
         payload["isDangerousGoods"] = False
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
