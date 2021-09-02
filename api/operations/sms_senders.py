@@ -37,7 +37,13 @@ def send_status_update_sms(
     elif category == "Complete":
         template = DME_SMS_Templates.objects.get(smsName="Status Update - Delivered")
 
-    client_name = "Jason.l" if client == "Jason L" else client
+    client_name = "" 
+    if client == "Jason L":
+        client_name = "Jason.l"
+    elif client == "Plum Products Australia Ltd":
+        client_name = "Plum Play"
+    else:
+        client_name = client
 
     if template:
         smsMessage = template.smsMessage
