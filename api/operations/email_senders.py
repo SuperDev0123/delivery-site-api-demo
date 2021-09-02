@@ -547,11 +547,12 @@ def send_status_update_email(booking, category, eta, sender, status_url):
                     else ""
                 )
             else:
+                category_datetime = get_status_time_from_category(
+                    booking.pk_booking_id, item
+                )
                 timestamps.append(
-                    get_status_time_from_category(booking.pk_booking_id, item).strftime(
-                        "%d/%m/%Y %H:%M"
-                    )
-                    if get_status_time_from_category(booking.pk_booking_id, item)
+                    category_datetime.strftime("%d/%m/%Y %H:%M")
+                    if category_datetime
                     else ""
                 )
 
