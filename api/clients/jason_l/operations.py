@@ -421,7 +421,7 @@ def get_bok_by_talend(bok_1):
         logger.info(f"@384 {LOG_ID} No enough information!")
         return None, None
 
-    b_021 = datetime.strptime(first_line.split("|")[3], "%d-%b-%Y").strftime("%Y-%m-%d")
+    b_021 = datetime.strptime(first_line.split("|")[4], "%d-%b-%Y").strftime("%Y-%m-%d")
     b_055 = address["street_1"]
     b_056 = address["street_2"]
     b_057 = address["state"]
