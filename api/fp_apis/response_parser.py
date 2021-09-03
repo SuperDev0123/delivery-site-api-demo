@@ -67,9 +67,9 @@ def parse_pricing_response(
                 results.append(result)
         elif fp_name == "sendle" and "price" in json_data:  # Sendle
             for price in json_data["price"]:
-                # Exclude "Premium" and "Easy" service on PROD
+                # Exclude "Pro" and "Easy" service on PROD
                 if not settings.ENV == "local" and (
-                    price["plan_name"] == "Premium" or price["plan_name"] == "Easy"
+                    price["plan_name"] == "Pro" or price["plan_name"] == "Easy"
                 ):
                     continue
 
