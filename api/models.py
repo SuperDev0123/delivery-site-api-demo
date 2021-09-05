@@ -4907,3 +4907,12 @@ class FP_status_history(models.Model):
 
     class Meta:
         db_table = "fp_status_history"
+
+
+class ZohoTicketSummary(models.Model):
+    id = models.AutoField(primary_key=True)
+    summary = models.TextField(default=None, null=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "zoho_ticket_summary"
