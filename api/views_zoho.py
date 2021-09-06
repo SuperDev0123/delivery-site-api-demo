@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
-from api.models import Tokens, Bookings
+from api.models import Tokens, Bookings, ZohoTicketSummary
 
 
 @api_view(["GET"])
@@ -17,23 +17,24 @@ def get_auth_zoho_tickets(request):
         response = redirect(
             "https://accounts.zoho.com.au/oauth/v2/auth?response_type=code&client_id="
             + settings.CLIENT_ID_ZOHO
-            + "&scope=Desk.tickets.ALL&redirect_uri="
+            + "&scope=Desk.tickets.ALL,Desk.basic.ALL&redirect_uri="
             + settings.REDIRECT_URI_ZOHO
             + "&state=-5466400890088961855"
-            + "&prompt=consent&access_type=offline&dmeid="
+            + "&prompt=consent&access_type=offline"
         )
 
         return response
     else:
-        get_all_zoho_tickets(1)
-
+        return redirect(
+            settings.WEB_SITE_URL + "/api/get_all_zoho_tickets/"
+        )
 
 def get_zoho_access_token(request):
     access_token = None
     if Tokens.objects.filter(type="access_token").count() == 0:
         dat = request.GET.get("code")
         if not dat:
-            dat = ""
+            dat = ''
 
         response = requests.post(
             "https://accounts.zoho.com.au/oauth/v2/token?code="
@@ -44,7 +45,6 @@ def get_zoho_access_token(request):
             + settings.CLIENT_SECRET_ZOHO
             + "&redirect_uri="
             + settings.REDIRECT_URI_ZOHO
-            + "&prompt=consent&access_type=offline"
         ).json()
 
         refresh_token = response["refresh_token"]
@@ -137,14 +137,14 @@ def get_zoho_tickets_with_booking_id(request):
         headers=headers_for_tickets,
     )
 
-    dmeid = request.GET.get("dmeid")
+    dmeid = request.GET.get("dmeid") or ''
     booking = Bookings.objects.filter(b_bookingID_Visual=dmeid)
     if booking:
         # order_num = booking[0].b_client_order_num
         invoice_num = booking[0].b_client_sales_inv_num
     else:
         # order_num, invoice_num = None, None
-        invoice_num = None
+        invoice_num = ''
     tickets = []
     if ticket_list.status_code == 200:
         data = Tokens.objects.filter(type="access_token")
@@ -278,12 +278,31 @@ def update_zoho_ticket(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     updated_ticket = requests.patch(
-        "https://desk.zoho.com.au/api/v1/tickets/" + data["id"],
-        data=json.dumps(data["data"]),
+        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'],
+        data=json.dumps(data['data']),
         headers=headers_for_tickets,
     )
 
-    return JsonResponse(updated_ticket.json())
+    return JsonResponse({ 'status': updated_ticket.status_code, 'result': updated_ticket.json() })
+
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
+def move_zoho_ticket(request):
+    data = request.data
+    access_token = get_zoho_access_token(request)
+    headers_for_tickets = {
+        "content-type": "application/json",
+        "orgId": settings.ORG_ID,
+        "Authorization": "Zoho-oauthtoken " + access_token,
+    }
+    updated_ticket = requests.post(
+        "https://desk.zoho.com.au/api/v1/tickets/" + data['id'] + "/move",
+        data=json.dumps(data['data']),
+        headers=headers_for_tickets,
+    )
+
+    return JsonResponse({ 'status': updated_ticket.status_code })
 
 
 @api_view(["POST"])
@@ -396,3 +415,39 @@ def send_zoho_ticket_reply(request):
 
     res = replied_result.json()
     return JsonResponse(res)
+
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def get_zoho_departments(request):
+    access_token = get_zoho_access_token(request)
+    headers_for_tickets = {
+        "content-type": "application/json",
+        "orgId": settings.ORG_ID,
+        "Authorization": "Zoho-oauthtoken " + access_token,
+    }
+    get_result = requests.get(
+        "https://desk.zoho.com.au/api/v1/departments?isEnabled=true&chatStatus=AVAILABLE",
+        headers=headers_for_tickets
+    )
+    if get_result.status_code == 200:
+        res = get_result.json()['data']
+    else:
+        res = []
+    return JsonResponse({
+        'status': get_result.status_code,
+        'data': res
+    })
+
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def get_zoho_ticket_summaries(request):
+    access_token = get_zoho_access_token(request)
+    headers_for_tickets = {
+        "content-type": "application/json",
+        "orgId": settings.ORG_ID,
+        "Authorization": "Zoho-oauthtoken " + access_token,
+    }
+    summaries  = ZohoTicketSummary.objects.values_list('summary', flat=True).order_by('summary')
+    return JsonResponse(list(summaries), safe=False)
