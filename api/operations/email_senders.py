@@ -611,9 +611,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         emailVarList["USERNAME"] = sender
         emailVarList["BOOKIGNO"] = booking.b_client_order_num
         emailVarList["STATUS_URL"] = status_url
-        emailVarList["DME_LOGO_URL"] = os.path.abspath(
-            "./static/assets/logos/dme.png"
-        )
+        emailVarList["DME_LOGO_URL"] = os.path.abspath("./static/assets/logos/dme.png")
         emailVarList["CLIENT_LOGO_URL"] = os.path.abspath(
             "./static/assets/logos/{logo_url}"
         )
@@ -698,7 +696,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     )
 
 
-def send_picking_slip_printed_email(b_client_order_num):
+def send_picking_slip_printed_email(
+    b_client_order_num, b_092_booking_type, b_053_b_del_address_type
+):
     """
     Only used for `Jason L` client's orders
 
@@ -709,8 +709,8 @@ def send_picking_slip_printed_email(b_client_order_num):
     _b_client_order_num = (
         b_client_order_num if "-" in b_client_order_num else f"{b_client_order_num}-"
     )
-    subject = f"JasonL | {_b_client_order_num} | picking slip printed"
-    message = "Sent from DME platform"
+    subject = f"JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed"
+    message = "JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed (Sent from DME platform)"
     to_emails = ["data.deliver-me@outlook.com", "goldj@deliver-me.com.au"]
 
     # if settings.ENV != "prod":
