@@ -710,7 +710,7 @@ def send_picking_slip_printed_email(
         b_client_order_num if "-" in b_client_order_num else f"{b_client_order_num}-"
     )
     subject = f"JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed"
-    message = "JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed (Sent from DME platform)"
+    message = f"JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed (Sent from DME platform)"
     to_emails = ["data.deliver-me@outlook.com", "goldj@deliver-me.com.au"]
 
     # if settings.ENV != "prod":
