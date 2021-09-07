@@ -7,6 +7,7 @@ from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
+from api.fp_apis.operations.surcharge.camerons import camerons
 
 from api.models import Booking_lines, Surcharge, Fp_freight_providers
 from api.common.convert_price import apply_markups
@@ -242,6 +243,8 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         surcharge_opt_funcs = allied()
     elif booking["vx_freight_provider"].lower() == "hunter":
         surcharge_opt_funcs = hunter()
+    elif booking["vx_freight_provider"].lower() == "camerons":
+        surcharge_opt_funcs = camerons()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:

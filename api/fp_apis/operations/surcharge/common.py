@@ -46,4 +46,8 @@ SURCHARGE_NAME_DESC = {
         "Oversize Freight (OS4)": "Oversize freight where any one dimension (length, height or width) exceeds 4.99 metres.",
         "Oversize Freight (OS5)": "Oversize freight where any one dimension (length, height or width) exceeds 5.99 metres.",
     },
+    "Camerons Interstate": {
+        "Tail-Gate(pickup)": "Applied when there is tail lift pickup. If service is express, then 110% is applied",
+        "Tail-Gate(delivery)": "Applied when there is tail lift delivery. If service is express, then 110% is applied",
+    }
 }
