@@ -711,7 +711,11 @@ def send_picking_slip_printed_email(
     )
     subject = f"JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed"
     message = f"JasonL | {_b_client_order_num} | {b_092_booking_type} | {b_053_b_del_address_type} | picking slip printed (Sent from DME platform)"
-    to_emails = ["data.deliver-me@outlook.com", "goldj@deliver-me.com.au"]
+    to_emails = [
+        "data.deliver-me@outlook.com",
+        "dev.deliverme@gmail.com",
+        "goldj@deliver-me.com.au",
+    ]
 
     # if settings.ENV != "prod":
     #     to_emails.append("goldj@deliver-me.com.au")
