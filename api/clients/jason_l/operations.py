@@ -353,6 +353,16 @@ def get_address(order_num):
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
+    # Auto replacement
+    if (
+        address["street_1"]
+        and address["street_1"].upper() == "UNIT E30, 21 MORETON BAY"
+    ) or (
+        address["street_2"]
+        and address["street_2"].upper() == "UNIT E30, 21 MORETON BAY"
+    ):
+        address["company_name"] = "NATIONAL STORAGE"
+
     address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
