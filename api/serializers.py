@@ -251,8 +251,13 @@ class BookingSerializer(serializers.ModelSerializer):
     def get_customer_cost(self, obj):
         client_customer_mark_up = self.context.get("client_customer_mark_up", None)
 
-        if client_customer_mark_up and obj.inv_sell_quoted:
-            return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
+        if client_customer_mark_up:
+            if obj.inv_sell_quoted_override:
+                return round(
+                    obj.inv_sell_quoted_override * (1 + client_customer_mark_up), 2
+                )
+            elif obj.inv_sell_quoted:
+                return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
 
         return None
 
