@@ -3881,6 +3881,9 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             .order_by("client_mu_1_minimum_values")
         )
 
+        if booking.inv_dme_invoice_no and booking.api_booking_quote:
+            queryset = queryset.filter(pk=booking.api_booking_quote.pk)
+
         client = booking.get_client()
         context = {
             "booking": booking,
