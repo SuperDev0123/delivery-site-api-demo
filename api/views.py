@@ -3916,7 +3916,9 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=booking.vx_freight_provider
             )
-            newdict["fuel_levy_base_cl"] = without_surcharge * fp.fuel_levy_base
+            newdict["fuel_levy_base_cl"] = (
+                without_surcharge * fp.fp_markupfuel_levy_percent
+            )
             newdict["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
 
             print("@2 - ", newdict)
