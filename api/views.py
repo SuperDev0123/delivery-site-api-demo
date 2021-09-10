@@ -3902,21 +3902,26 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         res = serializer.data
         print("@1 - ", res)
         if res and booking.inv_dme_invoice_no:
-            res["freight_provider"] = booking.vx_freight_provider
+            newdict = {}
+            newdict["freight_provider"] = booking.vx_freight_provider
             quoted_amount = (
                 booking.inv_sell_quoted_override
                 if booking.inv_sell_quoted_override
                 else booking.inv_sell_quoted
             )
-            res["client_mu_1_minimum_values"] = quoted_amount
+            newdict["client_mu_1_minimum_values"] = quoted_amount
             quote = booking.api_booking_quote
             surcharge_total = quote.x_price_surcharge if quote.x_price_surcharge else 0
-            without_surcharge = res["client_mu_1_minimum_values"] - surcharge_total
+            without_surcharge = newdict["client_mu_1_minimum_values"] - surcharge_total
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=booking.vx_freight_provider
             )
-            res["fuel_levy_base_cl"] = without_surcharge * fp.fuel_levy_base
-            res["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
+            newdict["fuel_levy_base_cl"] = without_surcharge * fp.fuel_levy_base
+            newdict["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
+
+            print("@2 - ", newdict)
+            newdict.update(serializer.data)
+            print("@3 - ", newdict)
 
         return Response(res)
 
