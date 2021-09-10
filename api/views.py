@@ -3919,7 +3919,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             newdict["fuel_levy_base_cl"] = (
                 without_surcharge * fp.fp_markupfuel_levy_percent
             )
-            newdict["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
+            newdict["cost_dollar"] = without_surcharge - newdict["fuel_levy_base_cl"]
 
             print("@2 - ", newdict)
             newdict.update(serializer.data)
