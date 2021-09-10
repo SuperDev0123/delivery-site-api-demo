@@ -3881,6 +3881,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             .order_by("client_mu_1_minimum_values")
         )
 
+        # When DmeInvoice is set
         if booking.inv_dme_invoice_no and booking.api_booking_quote:
             queryset = queryset.filter(pk=booking.api_booking_quote.pk)
 
@@ -3896,6 +3897,25 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fields_to_exclude=fields_to_exclude,
             context=context,
         )
+
+        # When DmeInvoice and Quote $* is set
+        res = serializer.data
+        if res and booking.inv_dme_invoice_no:
+            res["freight_provider"] = booking.vx_freight_provider
+
+            if booking.inv_sell_quoted_override:
+                res["client_mu_1_minimum_values"] = booking.inv_sell_quoted_override
+                quote = booking.api_booking_quote
+                surcharge_total = (
+                    quote.x_price_surcharge if quote.x_price_surcharge else 0
+                )
+                without_surcharge = res["client_mu_1_minimum_values"] - surcharge_total
+                fp = Fp_freight_providers.objects.get(
+                    fp_company_name__iexact=booking.vx_freight_provider
+                )
+                res["fuel_levy_base_cl"] = without_surcharge * fp.fuel_levy_base
+                res["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
+
         return Response(serializer.data)
 
 
