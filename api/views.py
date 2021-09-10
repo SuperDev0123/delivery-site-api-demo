@@ -3901,7 +3901,6 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         # When DmeInvoice and Quote $* is set
         res = list(serializer.data)[0]
         if res and booking.inv_dme_invoice_no:
-            print("@1 - ", res)
             res["freight_provider"] = booking.vx_freight_provider
             quoted_amount = (
                 booking.inv_sell_quoted_override
@@ -3918,7 +3917,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             res["fuel_levy_base_cl"] = without_surcharge * fp.fp_markupfuel_levy_percent
             res["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
 
-        return Response(res)
+        return Response([res])
 
 
 @api_view(["POST"])
