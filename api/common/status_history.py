@@ -106,20 +106,20 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
             #     url
             # )
 
-        # Send SMS to Stephen (A week period)
-        send_status_update_sms(
-            "0499776446",
-            de_name,
-            booking.b_client_name,
-            booking.b_bookingID_Visual,
-            booking.v_FPBookingNumber,
-            category_new,
-            eta,
-            url,
-            de_company,
-            de_address,
-            delivered_time,
-        )
+        # TEST USAGE --- Send SMS to Stephen (A week period)
+        # send_status_update_sms(
+        #     "0499776446",
+        #     de_name,
+        #     booking.b_client_name,
+        #     booking.b_bookingID_Visual,
+        #     booking.v_FPBookingNumber,
+        #     category_new,
+        #     eta,
+        #     url,
+        #     de_company,
+        #     de_address,
+        #     delivered_time,
+        # )
 
 
 def notify_user_via_api(booking):
