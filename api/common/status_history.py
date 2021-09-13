@@ -78,35 +78,35 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                 delivered_time,
             )
 
-        if (
-            settings.ENV == "prod"
-            and booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
-        ):
-            # Send SMS to Plum agent
-            send_status_update_sms(
-                "0411608093",
-                de_name,
-                booking.b_client_name,
-                booking.b_bookingID_Visual,
-                booking.v_FPBookingNumber,
-                category_new,
-                eta,
-                url,
-                de_company,
-                de_address,
-                delivered_time,
-            )
-            # send_status_update_sms(
-            #     booking.pu_Phone_Main,
-            #     pu_name,
-            #     booking.b_bookingID_Visual,
-            #     booking.v_FPBookingNumber,
-            #     category_new,
-            #     eta,
-            #     url
-            # )
+        # if (
+        #     settings.ENV == "prod"
+        #     and booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+        # ):
+        # # TEST USAGE --- Send SMS to Plum agent
+        # send_status_update_sms(
+        #     "0411608093",
+        #     de_name,
+        #     booking.b_client_name,
+        #     booking.b_bookingID_Visual,
+        #     booking.v_FPBookingNumber,
+        #     category_new,
+        #     eta,
+        #     url,
+        #     de_company,
+        #     de_address,
+        #     delivered_time,
+        # )
+        # send_status_update_sms(
+        #     booking.pu_Phone_Main,
+        #     pu_name,
+        #     booking.b_bookingID_Visual,
+        #     booking.v_FPBookingNumber,
+        #     category_new,
+        #     eta,
+        #     url
+        # )
 
-        # TEST USAGE --- Send SMS to Stephen (A week period)
+        # # TEST USAGE --- Send SMS to Stephen (A week period)
         # send_status_update_sms(
         #     "0499776446",
         #     de_name,
