@@ -1304,6 +1304,20 @@ def scanned(payload, client):
         res_json = {"labelUrl": f"{settings.WEB_SITE_URL}/label/does-not-exist/"}
         return res_json
 
+    # Update DE address if not booked
+    if not booking.b_dateBookedDate:
+        address = get_address(b_client_order_num)
+        booking.de_To_Address_Street_1 = address["street_1"]
+        booking.de_To_Address_Street_2 = address["street_2"]
+        booking.de_To_Address_State = address["state"]
+        booking.de_To_Address_Suburb = address["suburb"]
+        booking.de_To_Address_PostalCode = address["postal_code"]
+        booking.deToCompanyName = address["company_name"]
+        booking.de_to_Contact_F_LName = address["company_name"]
+        booking.de_Email = address["email"]
+        booking.de_to_Phone_Main = address["phone"]
+        booking.save()
+
     # Commented on 2021-07-29
     # if not booking.api_booking_quote:
     #     logger.info(f"@351 {LOG_ID} No quote! Booking: {booking}")
