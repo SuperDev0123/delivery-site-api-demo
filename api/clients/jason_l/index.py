@@ -50,6 +50,7 @@ from api.clients.jason_l.operations import (
     update_when_no_quote_required,
     get_bok_by_talend,
     sucso_handler,
+    get_address,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
