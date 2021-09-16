@@ -650,6 +650,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "fuel_levy_base_cl",
             "mu_percentage_fuel_levy",
             "vehicle_name",
+            "packed_status",
         )
 
 

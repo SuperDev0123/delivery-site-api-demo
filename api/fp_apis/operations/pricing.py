@@ -80,10 +80,16 @@ def _confirm_visible(booking, booking_lines, quotes):
     return quotes
 
 
-def pricing(body, booking_id, is_pricing_only=False):
+def pricing(
+    body,
+    booking_id,
+    is_pricing_only=False,
+    packed_statuses=[Booking_lines.ORIGINAL],
+):
     """
     @params:
         * is_pricing_only: only get pricing info
+        * packed_statuses: array of options (ORIGINAL, AUTO_PACKED, MANUAL_PACKED, SCANNED_PACKED)
     """
     booking_lines = []
     booking = None
@@ -106,17 +112,6 @@ def pricing(body, booking_id, is_pricing_only=False):
         # set_booking_quote(booking, None)
         # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
 
-    if not booking_lines:
-        booking_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, is_deleted=False
-        )
-
-    # Set is_used flag for existing old pricings
-    if booking.pk_booking_id:
-        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).update(
-            is_used=True
-        )
-
     if not booking.puPickUpAvailFrom_Date:
         error_msg = "PU Available From Date is required."
 
@@ -125,17 +120,44 @@ def pricing(body, booking_id, is_pricing_only=False):
 
         return False, error_msg, None
 
+    # Set is_used flag for existing old pricings
+    if booking.pk_booking_id:
+        API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).update(
+            is_used=True
+        )
+
+    if not booking_lines:
+        for packed_status in packed_statuses:
+            booking_lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id,
+                is_deleted=False,
+                packed_status=packed_status,
+            )
+
+            if booking_lines:
+                _loop_process(booking, booking_lines, is_pricing_only, packed_status)
+    else:
+        _loop_process(booking, booking_lines, is_pricing_only, packed_statuses[0])
+
+    quotes = API_booking_quotes.objects.filter(
+        fk_booking_id=booking.pk_booking_id, is_used=False
+    )
+
+    return booking, True, "Retrieved all Pricing info", quotes
+
+
+def _loop_process(booking, booking_lines, is_pricing_only, packed_status):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(
-            _pricing_process(booking, booking_lines, is_pricing_only)
+            _pricing_process(booking, booking_lines, is_pricing_only, packed_status)
         )
     finally:
         loop.close()
 
     quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=False
+        fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
     )
 
     if quotes.exists():
@@ -152,20 +174,18 @@ def pricing(body, booking_id, is_pricing_only=False):
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)
 
-    return booking, True, "Retrieved all Pricing info", quotes
 
-
-async def _pricing_process(booking, booking_lines, is_pricing_only):
+async def _pricing_process(booking, booking_lines, is_pricing_only, packed_status):
     try:
         await asyncio.wait_for(
-            pricing_workers(booking, booking_lines, is_pricing_only),
+            pricing_workers(booking, booking_lines, is_pricing_only, packed_status),
             timeout=PRICING_TIME,
         )
     except asyncio.TimeoutError:
         logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
 
 
-async def pricing_workers(booking, booking_lines, is_pricing_only):
+async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status):
     # Schedule n pricing works *concurrently*:
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
@@ -243,6 +263,7 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                                 booking,
                                 booking_lines,
                                 is_pricing_only,
+                                packed_status,
                                 account_detail,
                                 service.fp_delivery_service_code,
                                 service.fp_delivery_time_description,
@@ -254,6 +275,7 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                             booking,
                             booking_lines,
                             is_pricing_only,
+                            packed_status,
                             account_detail,
                         )
                         _workers.add(_worker)
@@ -265,6 +287,7 @@ async def pricing_workers(booking, booking_lines, is_pricing_only):
                 booking,
                 booking_lines,
                 is_pricing_only,
+                packed_status,
             )
             _workers.add(_worker)
 
@@ -278,6 +301,7 @@ async def _api_pricing_worker_builder(
     booking,
     booking_lines,
     is_pricing_only,
+    packed_status,
     account_detail,
     service_code=None,
     service_name=None,
@@ -340,6 +364,7 @@ async def _api_pricing_worker_builder(
                 #     surcharges = parse_result["surcharges"]
                 #     del parse_result["surcharges"]
 
+                parse_result["packed_status"] = packed_status
                 serializer = ApiBookingQuotesSerializer(data=parse_result)
                 if serializer.is_valid():
                     quote = serializer.save()
@@ -362,7 +387,11 @@ async def _api_pricing_worker_builder(
 
 
 async def _built_in_pricing_worker_builder(
-    _fp_name, booking, booking_lines, is_pricing_only
+    _fp_name,
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
 ):
     results = get_self_pricing(_fp_name, booking, booking_lines, is_pricing_only)
     logger.info(
@@ -374,6 +403,7 @@ async def _built_in_pricing_worker_builder(
 
     for parse_result in parse_results:
         if parse_results and not "error" in parse_results:
+            parse_result["packed_status"] = packed_status
             serializer = ApiBookingQuotesSerializer(data=parse_result)
 
             if serializer.is_valid():

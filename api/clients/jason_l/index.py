@@ -1409,6 +1409,7 @@ def scanned(payload, client):
             new_line.zbl_102_text_2 = None
             new_line.sscc = first_item["sscc"]
             new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
+            new_line.packed_status = Booking_lines.SCANNED_PACK
             new_line.save()
 
             sscc_lines[sscc] = [new_line]
@@ -1450,7 +1451,12 @@ def scanned(payload, client):
     )
     new_fc_log.save()
     logger.info(f"#371 {LOG_ID} {booking.b_bookingID_Visual} - getting Quotes again...")
-    _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
+    _, success, message, quotes = pricing_oper(
+        body=None,
+        booking_id=booking.pk,
+        is_pricing_only=False,
+        packed_status=[Booking_lines.SCANNED_PACK],
+    )
     logger.info(
         f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
     )

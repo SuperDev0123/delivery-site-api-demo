@@ -1008,7 +1008,15 @@ def pricing(request):
     if not booking_id and "booking" in body:
         is_pricing_only = True
 
-    booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
+    packed_statuses = [
+        Booking_lines.ORIGINAL,
+        Booking_lines.AUTO_PACK,
+        Booking_lines.MANUAL_PACK,
+        Booking_lines.SCANNED_PACK,
+    ]
+    booking, success, message, results = pricing_oper(
+        body, booking_id, is_pricing_only, packed_statuses
+    )
 
     try:
         client = booking.get_client()

@@ -470,6 +470,17 @@ class FP_Service_ETDs(models.Model):
 
 
 class API_booking_quotes(models.Model):
+    ORIGINAL = "original"
+    AUTO_PACK = "auto"
+    MANUAL_PACK = "manual"
+    SCANNED_PACK = "scanned"
+    PACKED_STATUS_CHOICES = (
+        (ORIGINAL, "original"),
+        (AUTO_PACK, "auto"),
+        (MANUAL_PACK, "manual"),
+        (SCANNED_PACK, "scanned"),
+    )
+
     id = models.AutoField(primary_key=True)
     api_results_id = models.CharField(
         verbose_name=_("Result ID"), blank=True, null=True, max_length=128
@@ -619,6 +630,9 @@ class API_booking_quotes(models.Model):
     is_used = models.BooleanField(default=False)
     vehicle = models.ForeignKey(
         FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    packed_status = models.CharField(
+        max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
     )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
@@ -2050,10 +2064,12 @@ class Booking_lines(models.Model):
     ORIGINAL = "original"
     AUTO_PACK = "auto"
     MANUAL_PACK = "manual"
+    SCANNED_PACK = "scanned"
     PACKED_STATUS_CHOICES = (
         (ORIGINAL, "original"),
         (AUTO_PACK, "auto"),
         (MANUAL_PACK, "manual"),
+        (SCANNED_PACK, "scanned"),
     )
 
     pk_lines_id = models.AutoField(primary_key=True)
