@@ -277,7 +277,7 @@ def get_booking_lines_count(booking_lines):
 
 def find_rule_ids_by_dim(booking_lines, rules, fp):
     rule_ids = []
-
+    print(rules, booking_lines)
     for rule in rules:
         cost = rule.cost
 
@@ -422,7 +422,6 @@ def weight_filter(booking_lines, rules, fp):
 
     if fp.rule_type.rule_type_code in ["rule_type_02"]:  # Over weight & Normal weight
         rule_ids = find_rule_ids_by_weight(booking_lines, rules, fp)
-        print(booking_lines)
         filtered_rules = rules.filter(pk__in=rule_ids)
 
     return filtered_rules
