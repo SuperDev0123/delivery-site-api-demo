@@ -356,10 +356,10 @@ def get_address(order_num):
     # Auto replacement
     if (
         address["street_1"]
-        and address["street_1"].upper() == "UNIT E30, 21 MORETON BAY"
+        and address["street_1"].strip().upper() == "UNIT E30, 21 MORETON BAY"
     ) or (
         address["street_2"]
-        and address["street_2"].upper() == "UNIT E30, 21 MORETON BAY"
+        and address["street_2"].strip().upper() == "UNIT E30, 21 MORETON BAY"
     ):
         address["company_name"] = "NATIONAL STORAGE"
 

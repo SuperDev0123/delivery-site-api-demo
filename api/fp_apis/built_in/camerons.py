@@ -10,10 +10,14 @@ logger = logging.getLogger(__name__)
 
 def get_pricing(fp_name, booking, booking_lines):
     LOG_ID = "[BIP CAMERONS]"  # BUILT-IN PRICING
+    pricies = []
+
+    if booking.de_To_AddressType and booking.de_To_AddressType.lower() == "residential":
+        logger.info(f"@830 {LOG_ID} Not available for `Residential`")
+        return pricies
+
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-
-    pricies = []
     for service_type in service_types:
         logger.info(f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}")
         rules = FP_pricing_rules.objects.filter(
