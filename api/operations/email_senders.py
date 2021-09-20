@@ -467,6 +467,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
     When 'Plum Products Australia Ltd' bookings status is updated
     """
     from api.fp_apis.utils import get_status_time_from_category
+    from api.common.common_times import convert_to_AU_SYDNEY_tz
 
     LOG_ID = "[STATUS UPDATE EMAIL]"
     logger.info(
@@ -542,7 +543,9 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         else:
             if category == "Complete" and index == 4:
                 timestamps.append(
-                    booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_21_Actual_Delivery_TimeStamp
+                    ).strftime("%d/%m/%Y %H:%M")
                     if booking.s_21_Actual_Delivery_TimeStamp
                     else ""
                 )

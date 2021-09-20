@@ -59,6 +59,9 @@ def address_filter(booking, booking_lines, rules, fp):
     de_postal_code = booking.de_To_Address_PostalCode.lower()
     de_state = booking.de_To_Address_State.lower()
 
+    found_pu_zone = None
+    found_de_zone = None
+
     filtered_rule_ids = []
     for rule in rules:
         if rule.pu_suburb and rule.pu_suburb.lower() != pu_suburb:
@@ -86,15 +89,23 @@ def address_filter(booking, booking_lines, rules, fp):
             continue
 
         if rule.pu_zone:
+            if found_pu_zone and found_pu_zone != rule.pu_zone:
+                continue
+
             if not is_in_zone(fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state):
                 # logger.info(f"@856 {LOG_ID} PU Zone does not match")
                 continue
 
         if rule.de_zone:
+            if found_de_zone and found_de_zone != rule.de_zone:
+                continue
+
             if not is_in_zone(fp, rule.de_zone, de_suburb, de_postal_code, de_state):
                 # logger.info(f"@857 {LOG_ID} DE Zone does not match")
                 continue
 
+        found_pu_zone = rule.pu_zone
+        found_de_zone = rule.de_zone
         filtered_rule_ids.append(rule.id)
 
     for rule in rules:
@@ -283,7 +294,7 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
             c_length = _get_dim_amount(cost.dim_UOM) * cost.max_length
             c_height = _get_dim_amount(cost.dim_UOM) * cost.max_height
 
-        if cost.oversize_price and cost.price_up_to_width:
+        if cost.price_up_to_width:
             c_width = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_width
             c_length = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_length
             c_height = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_height
@@ -292,9 +303,11 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
         for item in booking_lines:
             if not item.e_type_of_packaging or (
                 item.e_type_of_packaging
-                and not item.e_type_of_packaging.lower() in PALLETS
+                and not item.e_type_of_packaging.upper() in PALLETS
             ):
-                logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
+                logger.info(
+                    f"@833 {fp.fp_company_name} - only support `Pallet`. Current is `{item.e_type_of_packaging}`"
+                )
                 return
             else:
                 width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
@@ -319,14 +332,14 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
         if cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
 
-        if cost.oversize_price and cost.price_up_to_weight:
+        if cost.price_up_to_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         comp_count = 0
         for booking_line in booking_lines:
             if (
-                cost.UOM_charge.lower() in PALLETS
-                and not booking_line.e_type_of_packaging.lower() in PALLETS
+                cost.UOM_charge.upper() in PALLETS
+                and not booking_line.e_type_of_packaging.upper() in PALLETS
             ):
                 logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
                 return
