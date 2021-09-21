@@ -49,7 +49,13 @@ def get_pricing(fp_name, booking, booking_lines):
         logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
         rules = weight_filter(booking_lines, rules, fp)
         cost = find_cost(booking_lines, rules, fp)
-        net_price = cost.per_UOM_charge * get_booking_lines_weight(booking_lines)
+        net_price = cost.basic_charge
+
+        for item in booking_lines:
+            net_price += float(cost.per_UOM_charge) * item.e_weightPerEach * item.e_qty
+
+        if net_price < cost.min_charge:
+            net_price = cost.min_charge
 
         logger.info(f"{LOG_ID} {fp_name.upper()} - final cost - {cost}")
         rule = rules.get(cost_id=cost.id)
