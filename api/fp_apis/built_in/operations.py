@@ -20,15 +20,10 @@ def get_zone(fp, state, postal_code, suburb):
     return None
 
 
-def is_in_zone(fp, zone_code, suburb, postal_code, state):
-    # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}")
-    zones = FP_zones.objects.filter(zone__iexact=zone_code, fk_fp=fp.id)
-    # logger.info(f"#821 {zones.count()}")
+def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
+    # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}, {avail_zones}")
 
-    if not zones:
-        return False
-
-    for zone in zones:
+    for zone in avail_zones:
         # logger.info(f"#822 {zone}")
 
         if zone.suburb and zone.suburb.lower() != suburb:
@@ -61,6 +56,30 @@ def address_filter(booking, booking_lines, rules, fp):
 
     found_pu_zone = None
     found_de_zone = None
+    avail_pu_zones = []
+    avail_de_zones = []
+    if booking.vx_freight_provider.lower() in ["camerons", "northline"]:
+        avail_pu_zones = FP_zones.objects.all()
+        avail_de_zones = FP_zones.objects.all()
+
+        if pu_state:
+            avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
+        if pu_postal_code:
+            avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
+        if pu_suburb:
+            avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
+
+        if de_state:
+            avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
+        if de_postal_code:
+            avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
+        if de_suburb:
+            avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
+
+        if booking.vx_freight_provider.lower() == "camerons":
+            avail_pu_zones = avail_pu_zones.filter(fk_fp=8)
+        elif booking.vx_freight_provider.lower() == "northline":
+            avail_pu_zones = avail_pu_zones.filter(fk_fp=9)
 
     filtered_rule_ids = []
     for rule in rules:
@@ -88,19 +107,23 @@ def address_filter(booking, booking_lines, rules, fp):
             # logger.info(f"@855 {LOG_ID} DE State does not match")
             continue
 
-        if rule.pu_zone:
+        if rule.pu_zone and avail_pu_zones.exists():
             if found_pu_zone and found_pu_zone != rule.pu_zone:
                 continue
 
-            if not is_in_zone(fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state):
+            if not is_in_zone(
+                fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state, avail_pu_zones
+            ):
                 # logger.info(f"@856 {LOG_ID} PU Zone does not match")
                 continue
 
-        if rule.de_zone:
+        if rule.de_zone and avail_de_zones.exists():
             if found_de_zone and found_de_zone != rule.de_zone:
                 continue
 
-            if not is_in_zone(fp, rule.de_zone, de_suburb, de_postal_code, de_state):
+            if not is_in_zone(
+                fp, rule.de_zone, de_suburb, de_postal_code, de_state, avail_de_zones
+            ):
                 # logger.info(f"@857 {LOG_ID} DE Zone does not match")
                 continue
 
