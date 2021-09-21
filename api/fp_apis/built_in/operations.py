@@ -325,7 +325,7 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
                 height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
                 length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
 
-                if width < c_width and height < c_height and length < c_length:
+                if width <= c_width and height <= c_height and length <= c_length:
                     comp_count += 1
 
         if comp_count == len(booking_lines):
@@ -361,7 +361,7 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
                     * booking_line.e_weightPerEach
                 )
 
-                if total_weight < c_weight:
+                if total_weight <= c_weight:
                     comp_count += 1
 
         if comp_count == len(booking_lines):
