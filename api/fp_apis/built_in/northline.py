@@ -22,7 +22,7 @@ def get_pricing(fp_name, booking, booking_lines):
         logger.info(f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}")
         rules = FP_pricing_rules.objects.filter(
             freight_provider_id=fp.id, service_timing_code__iexact=service_type
-        )
+        ).order_by("id")
 
         # Address Filter
         rules = address_filter(booking, booking_lines, rules, fp)
@@ -48,7 +48,7 @@ def get_pricing(fp_name, booking, booking_lines):
         """
         logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
         rules = weight_filter(booking_lines, rules, fp)
-        cost = find_cost(booking_lines, rules, fp)
+        cost = rules.first().cost
         net_price = cost.basic_charge
 
         for item in booking_lines:
