@@ -27,6 +27,7 @@ AVAILABLE_FPS_4_FC = [
     "Toll",
     "Century",
     "ATC",
+    "Northline",
 ]
 
 BUILT_IN_PRICINGS = {
@@ -34,6 +35,7 @@ BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
+    "northline": {"service_types": ["standard"]},
     # "allied": {
     #     "service_types": [
     #         "Road Express",

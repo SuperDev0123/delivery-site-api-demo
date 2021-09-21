@@ -266,6 +266,17 @@ def find_vehicle_ids(booking_lines, fp):
         return
 
 
+def get_booking_lines_weight(booking_lines):
+    weight = 0
+
+    for item in booking_lines:
+        weight += (
+            item.e_qty * item.e_weightPerEach * _get_weight_amount(item.e_weightUOM)
+        )
+
+    return weight
+
+
 def get_booking_lines_count(booking_lines):
     cnt = 0
 
@@ -277,7 +288,7 @@ def get_booking_lines_count(booking_lines):
 
 def find_rule_ids_by_dim(booking_lines, rules, fp):
     rule_ids = []
-    print(rules, booking_lines)
+
     for rule in rules:
         cost = rule.cost
 
