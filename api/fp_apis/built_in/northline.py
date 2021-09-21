@@ -53,7 +53,7 @@ def get_pricing(fp_name, booking, booking_lines):
         cost = rules.first().cost
         net_price = cost.basic_charge
         m3_to_kg_factor = 330
-        dead_weight, cubic_weight = 0
+        dead_weight, cubic_weight = 0, 0
 
         for item in booking_lines:
             dead_weight += (
