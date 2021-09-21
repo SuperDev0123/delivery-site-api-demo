@@ -4,6 +4,8 @@ import traceback
 from api.models import Fp_freight_providers, Booking_lines, FP_pricing_rules, FP_costs
 from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
+from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.helpers.cubic import get_cubic_meter
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +52,26 @@ def get_pricing(fp_name, booking, booking_lines):
         rules = weight_filter(booking_lines, rules, fp)
         cost = rules.first().cost
         net_price = cost.basic_charge
+        m3_to_kg_factor = 330
+        dead_weight, cubic_weight = 0
 
         for item in booking_lines:
-            net_price += float(cost.per_UOM_charge) * item.e_weightPerEach * item.e_qty
+            dead_weight += (
+                item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
+            )
+            cubic_weight += (
+                get_cubic_meter(
+                    item.e_dimLength,
+                    item.e_dimWidth,
+                    item.e_dimHeight,
+                    item.e_dimUOM,
+                    item.e_qty,
+                )
+                * m3_to_kg_factor
+            )
+
+        chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
+        net_price += float(cost.per_UOM_charge) * chargable_weight
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge

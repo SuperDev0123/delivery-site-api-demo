@@ -98,6 +98,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         m3_to_kg_factor = 330
     else:
         m3_to_kg_factor = 250
+
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
     lengths, widths, heights, diagonals, lines_data = [], [], [], [], []
     has_dangerous_item = False
