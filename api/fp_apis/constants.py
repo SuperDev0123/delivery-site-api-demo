@@ -12,7 +12,7 @@ elif settings.ENV == "prod":
     S3_URL = "/opt/s3_public"
 
 
-PRICING_TIME = 10  # seconds
+PRICING_TIME = 40  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost", "ATC"
 AVAILABLE_FPS_4_FC = [
