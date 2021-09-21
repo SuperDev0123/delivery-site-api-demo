@@ -84,7 +84,7 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
                 "e_dimHeight": line_obj.e_dimHeight,
                 "e_weightUOM": line_obj.e_weightUOM,
                 "e_weightPerEach": line_obj.e_weightPerEach,
-                "e_dangerousGoods": line_obj.e_dangerousGoods
+                "e_dangerousGoods": False,
             }
             lines.append(line)
 
@@ -94,7 +94,7 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
 def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
 
-    if booking['vx_freight_provider'].lower() == 'northline':
+    if booking["vx_freight_provider"].lower() == "northline":
         m3_to_kg_factor = 330
     else:
         m3_to_kg_factor = 250
@@ -139,7 +139,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             * _get_dim_amount(line["e_dimUOM"])
         )
 
-        if line["e_dangerousGoods"]:
+        if "e_dangerousGoods" in line and line["e_dangerousGoods"]:
             has_dangerous_item = True
 
         item_cubic_weight = (
@@ -234,7 +234,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         surcharge_opt_funcs = hunter()
     elif booking["vx_freight_provider"].lower() == "camerons":
         surcharge_opt_funcs = camerons()
-    elif booking['vx_freight_provider'].lower() == "northline":
+    elif booking["vx_freight_provider"].lower() == "northline":
         surcharge_opt_funcs = northline()
 
     if surcharge_opt_funcs:
