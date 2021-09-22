@@ -54,32 +54,23 @@ def address_filter(booking, booking_lines, rules, fp):
     de_postal_code = booking.de_To_Address_PostalCode.lower()
     de_state = booking.de_To_Address_State.lower()
 
+    # Zone
     found_pu_zone = None
     found_de_zone = None
-    avail_pu_zones = []
-    avail_de_zones = []
-    if booking.vx_freight_provider.lower() in ["camerons", "northline"]:
-        avail_pu_zones = FP_zones.objects.all()
-        avail_de_zones = FP_zones.objects.all()
-
-        if pu_state:
-            avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
-        if pu_postal_code:
-            avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
-        if pu_suburb:
-            avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
-
-        if de_state:
-            avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
-        if de_postal_code:
-            avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
-        if de_suburb:
-            avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
-
-        if booking.vx_freight_provider.lower() == "camerons":
-            avail_pu_zones = avail_pu_zones.filter(fk_fp=8)
-        elif booking.vx_freight_provider.lower() == "northline":
-            avail_pu_zones = avail_pu_zones.filter(fk_fp=9)
+    avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
+    avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
+    if pu_state:
+        avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
+    if pu_postal_code:
+        avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
+    if pu_suburb:
+        avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
+    if de_state:
+        avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
+    if de_postal_code:
+        avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
+    if de_suburb:
+        avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
 
     filtered_rule_ids = []
     for rule in rules:
