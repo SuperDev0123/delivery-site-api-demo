@@ -20,11 +20,11 @@ def get_zone(fp, state, postal_code, suburb):
     return None
 
 
-def is_in_zone(fp, zone, suburb, postal_code, state, avail_zones):
+def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
     # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}, {avail_zones}")
 
     for avail_zone in avail_zones:
-        if avail_zone.pk == zone.pk:
+        if avail_zone.zone == zone_code:
             return True
 
     return False
