@@ -95,7 +95,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
 
     if booking["vx_freight_provider"].lower() == "northline":
-        m3_to_kg_factor = 330
+        m3_to_kg_factor = 333
     else:
         m3_to_kg_factor = 250
 
