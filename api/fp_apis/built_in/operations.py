@@ -20,28 +20,14 @@ def get_zone(fp, state, postal_code, suburb):
     return None
 
 
-def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
+def is_in_zone(fp, zone, suburb, postal_code, state, avail_zones):
     # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}, {avail_zones}")
 
-    for zone in avail_zones:
-        # logger.info(f"#822 {zone}")
+    for avail_zone in avail_zones:
+        if avail_zone.pk == zone.pk:
+            return True
 
-        if zone.suburb and zone.suburb.lower() != suburb:
-            continue
-        if zone.postal_code and zone.postal_code.lower() != postal_code:
-            continue
-        if zone.state and zone.state.lower() != state:
-            continue
-        if (
-            zone.start_postal_code
-            and zone.end_postal_code
-            and postal_code
-            and int(postal_code) < int(zone.start_postal_code)
-            and int(postal_code) > int(zone.end_postal_code)
-        ):
-            continue
-
-        return True
+    return False
 
 
 def address_filter(booking, booking_lines, rules, fp):
