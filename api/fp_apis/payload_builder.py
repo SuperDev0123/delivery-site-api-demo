@@ -362,7 +362,10 @@ def get_book_payload(booking, fp_name):
             payload["serviceCode"] = "712"
         elif booking.api_booking_quote.service_name == "Overnight 10:00":
             payload["serviceCode"] = "EX10"
-        elif booking.api_booking_quote.service_name == "Overnight 12:00":
+        elif booking.api_booking_quote.service_name in [
+            "Overnight 12:00",
+            "12:00 Express",
+        ]:
             payload["serviceCode"] = "EX12"
         elif booking.api_booking_quote.service_name == "Overnight Express":
             payload["serviceCode"] = "75"
