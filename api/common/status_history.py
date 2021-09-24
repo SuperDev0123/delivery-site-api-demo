@@ -7,6 +7,7 @@ from api.models import Dme_status_history
 from api.outputs import tempo
 from api.operations.sms_senders import send_status_update_sms
 from api.operations.email_senders import send_status_update_email
+from api.operations.packing.booking import scanned_repack as booking_scanned_repack
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +192,9 @@ def create(booking, new_status, username, event_timestamp=None):
         post_new_status(
             booking, dme_status_history, new_status, event_timestamp, username
         )
+
+        if new_status == "Booked":
+            booking_scanned_repack(booking)
 
 
 # Create new status_history for Bok

@@ -13,9 +13,33 @@ from api.models import (
 from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 from api.operations.pronto_xi.index import update_note as update_pronto_note
-
+from api.common.booking_quote import set_booking_quote
+from api.helpers.list import *
 
 logger = logging.getLogger(__name__)
+IMPORTANT_FIELDS = [
+    "pu_Address_State",
+    "pu_Address_Suburb",
+    "pu_Address_PostalCode",
+    "pu_Address_Country",
+    "de_To_Address_State",
+    "de_To_Address_Suburb",
+    "de_To_Address_PostalCode",
+    "pu_Address_Type",
+    "de_To_AddressType",
+    "pu_no_of_assists",
+    "de_no_of_assists",
+    "pu_location",
+    "de_to_location",
+    "pu_access",
+    "de_access",
+    "pu_floor_number",
+    "de_floor_number",
+    "pu_floor_access_by",
+    "de_to_floor_access_by",
+    "pu_service",
+    "de_service",
+]
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -110,8 +134,24 @@ def pre_save_handler(instance):
             )
 
 
-def post_save_handler(instance):
+def post_save_handler(instance, created, update_fields):
     LOG_ID = "[BOOKING POST SAVE]"
+
+    if (
+        not created
+        and not instance.z_lock_status
+        and intersection(IMPORTANT_FIELDS, update_fields or [])
+    ):
+        logger.info(f"{LOG_ID} Updated important field.")
+        set_booking_quote(instance, None)
+
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=instance.pk_booking_id,
+            is_used=False,
+        )
+        for quote in quotes:
+            quote.is_used = True
+            quote.save()
 
     if (
         instance.vx_freight_provider

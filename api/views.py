@@ -89,8 +89,12 @@ from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
 from api.common.booking_quote import set_booking_quote
-from api.operations.packing.booking import auto_repack as booking_auto_repack
-from api.operations.packing.booking import manual_repack as booking_manual_repack
+from api.operations.packing.booking import (
+    reset_repack as booking_reset_repack,
+    auto_repack as booking_auto_repack,
+    manual_repack as booking_manual_repack,
+)
+
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -2834,7 +2838,9 @@ class BookingViewSet(viewsets.ViewSet):
         try:
             booking = Bookings.objects.get(pk=pk)
 
-            if repack_status == "auto":
+            if repack_status and repack_status[0] == "-":
+                booking_reset_repack(booking, repack_status[1:])
+            elif repack_status == "auto":
                 booking_auto_repack(booking, repack_status)
             else:
                 booking_manual_repack(booking, repack_status)
@@ -2926,7 +2932,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print("Exception: ", e)
+            logger.error("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])

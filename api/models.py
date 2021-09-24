@@ -2045,6 +2045,25 @@ class Bookings(models.Model):
         except:
             return None
 
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+
+        if not creating:
+            cls = self.__class__
+            old = cls.objects.get(pk=self.pk)
+            new = self
+
+            changed_fields = []
+            for field in cls._meta.get_fields():
+                field_name = field.name
+                try:
+                    if getattr(old, field_name) != getattr(new, field_name):
+                        changed_fields.append(field_name)
+                except Exception as ex:  # Catch field does not exist exception
+                    pass
+            kwargs["update_fields"] = changed_fields
+        return super(Bookings, self).save(*args, **kwargs)
+
 
 @receiver(pre_save, sender=Bookings)
 def pre_save_booking(sender, instance, **kwargs):
@@ -2054,10 +2073,10 @@ def pre_save_booking(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Bookings)
-def post_save_booking(sender, instance, **kwargs):
+def post_save_booking(sender, instance, created, update_fields, **kwargs):
     from api.signal_handlers.booking import post_save_handler
 
-    post_save_handler(instance)
+    post_save_handler(instance, created, update_fields)
 
 
 class Booking_lines(models.Model):
@@ -2265,6 +2284,21 @@ class Booking_lines(models.Model):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
 
+        if not creating:
+            cls = self.__class__
+            old = cls.objects.get(pk=self.pk)
+            new = self
+
+            changed_fields = []
+            for field in cls._meta.get_fields():
+                field_name = field.name
+                try:
+                    if getattr(old, field_name) != getattr(new, field_name):
+                        changed_fields.append(field_name)
+                except Exception as ex:  # Catch field does not exist exception
+                    pass
+            kwargs["update_fields"] = changed_fields
+
         if not creating and self.picked_up_timestamp:
             booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
 
@@ -2284,6 +2318,20 @@ class Booking_lines(models.Model):
 
     class Meta:
         db_table = "dme_booking_lines"
+
+
+# @receiver(pre_save, sender=Booking_lines)
+# def pre_save_booking(sender, instance, **kwargs):
+#     from api.signal_handlers.booking_line import pre_save_handler
+
+#     pre_save_handler(instance)
+
+
+@receiver(post_save, sender=Booking_lines)
+def post_save_booking_line(sender, instance, created, update_fields, **kwargs):
+    from api.signal_handlers.booking_line import post_save_handler
+
+    post_save_handler(instance, created, update_fields)
 
 
 @receiver(post_delete, sender=Booking_lines)
