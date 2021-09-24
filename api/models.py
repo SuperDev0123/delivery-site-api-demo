@@ -2284,7 +2284,7 @@ class Booking_lines(models.Model):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
 
-        if not creating:
+        if self.pk:
             cls = self.__class__
             old = cls.objects.get(pk=self.pk)
             new = self

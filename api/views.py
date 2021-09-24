@@ -2847,6 +2847,7 @@ class BookingViewSet(viewsets.ViewSet):
 
             return JsonResponse({"success": True})
         except Exception as e:
+            trace_error.print()
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
             return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
