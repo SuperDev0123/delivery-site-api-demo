@@ -36,7 +36,10 @@ def post_save_handler(instance, created, update_fields):
         booking = instance.booking()
 
         packed_status = instance.packed_status
-        if booking.api_booking_quote.packed_status == packed_status:
+        if (
+            booking.api_booking_quote
+            and booking.api_booking_quote.packed_status == packed_status
+        ):
             set_booking_quote(booking, None)
 
         quotes = API_booking_quotes.objects.filter(
