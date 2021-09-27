@@ -990,7 +990,7 @@ def build_manifest(bookings, booking_lines, username):
     Dme_manifest_log.objects.create(
         fk_booking_id=bookings[0].pk_booking_id,
         manifest_url=filename,
-        manifest_number=manifest,
+        manifest_number=fp_info.fp_manifest_cnt,
         bookings_cnt=len(bookings),
         is_one_booking=1,
         z_createdByAccount=username,
