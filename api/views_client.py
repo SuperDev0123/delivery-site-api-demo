@@ -847,10 +847,17 @@ def get_delivery_status(request):
         }
 
         def line_to_dict(line):
+            try:
+                product = Client_Products.objects.get(child_model_number=line.e_item_type).description
+            except Exception as e:
+                logger.error(f"Client product doesn't exist: {e}")
+                product = ''
+
             return {
                 "e_item_type": line.e_item_type,
                 "l_003_item": line.e_item,
                 "l_002_qty": line.e_qty,
+                "product": product
             }
 
         lines = map(line_to_dict, lines)
@@ -1022,10 +1029,17 @@ def get_delivery_status(request):
     }
 
     def line_to_dict(line):
+        try:
+            product = Client_Products.objects.get(child_model_number=line.e_item_type).description
+        except Exception as e:
+            logger.error(f"Client product doesn't exist: {e}")
+            product = ''
+
         return {
             "e_item_type": line.e_item_type,
             "l_003_item": line.e_item,
             "l_002_qty": line.e_qty,
+            "product": product
         }
 
     lines = map(line_to_dict, lines)
