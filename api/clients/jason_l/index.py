@@ -1455,7 +1455,7 @@ def scanned(payload, client):
         body=None,
         booking_id=booking.pk,
         is_pricing_only=False,
-        packed_status=[Booking_lines.SCANNED_PACK],
+        packed_statuses=[Booking_lines.SCANNED_PACK],
     )
     logger.info(
         f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
