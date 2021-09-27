@@ -18,6 +18,7 @@ from api.models import (
     Utl_dme_status,
     Dme_status_history,
     API_booking_quotes,
+    Client_Products
 )
 from api.outputs.email import send_email
 from api.helpers.etd import get_etd
@@ -462,12 +463,11 @@ def send_booking_status_email(bookingId, emailName, sender):
     )
 
 
-def send_status_update_email(booking, category, eta, sender, status_url):
+def send_status_update_email(booking, category, eta, sender, status_url, client_status_email=None):
     """
     When 'Plum Products Australia Ltd' bookings status is updated
     """
     from api.fp_apis.utils import get_status_time_from_category
-    from api.common.common_times import convert_to_AU_SYDNEY_tz
 
     LOG_ID = "[STATUS UPDATE EMAIL]"
     logger.info(
@@ -543,9 +543,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         else:
             if category == "Complete" and index == 4:
                 timestamps.append(
-                    convert_to_AU_SYDNEY_tz(
-                        booking.s_21_Actual_Delivery_TimeStamp
-                    ).strftime("%d/%m/%Y %H:%M")
+                    booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
                     if booking.s_21_Actual_Delivery_TimeStamp
                     else ""
                 )
@@ -589,7 +587,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
 
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id
-    ).order_by("-z_createdTimeStamp")
+    ).order_by("z_createdTimeStamp")
     deleted_lines_cnt = booking_lines.filter(is_deleted=True).count()
 
     if deleted_lines_cnt > 0:
@@ -597,8 +595,15 @@ def send_status_update_email(booking, category, eta, sender, status_url):
 
     lines_data = []
     for booking_line in booking_lines:
+        try:
+            product = Client_Products.objects.get(child_model_number=booking_line.e_item_type).description
+        except Exception as e:
+            logger.error(f"Client product doesn't exist: {e}")
+            product = ''
+
         lines_data.append(
             {
+                "PRODUCT_NAME": product,
                 "ITEM_NUMBER": booking_line.e_item_type,
                 "ITEM_DESCRIPTION": booking_line.e_item,
                 "ITEM_QUANTITY": booking_line.e_qty,
@@ -616,7 +621,7 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         emailVarList["STATUS_URL"] = status_url
         emailVarList["DME_LOGO_URL"] = os.path.abspath("./static/assets/logos/dme.png")
         emailVarList["CLIENT_LOGO_URL"] = os.path.abspath(
-            "./static/assets/logos/{logo_url}"
+            f"./static/assets/logos/{logo_url}"
         )
 
         body_repeat = ""
@@ -660,6 +665,8 @@ def send_status_update_email(booking, category, eta, sender, status_url):
         to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
+        if client_status_email:
+            to_emails.append(client_status_email)
         if booking.de_Email:
             to_emails.append(booking.de_Email)
         else:
