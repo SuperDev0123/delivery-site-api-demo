@@ -58,7 +58,7 @@ style_center = ParagraphStyle(
     name="center",
     parent=styles["Normal"],
     alignment=TA_CENTER,
-    leading=12,
+    leading=8,
 )
 style_center_title = ParagraphStyle(
     name="center_title",
@@ -144,27 +144,41 @@ def build_manifest(bookings, booking_lines, username):
         fp_bg_color = fp_info.hex_color_code
     else:
         fp_bg_color = "808080"
-    # new_manifest_index = fp_info.fp_manifest_cnt
-    # new_connot_index = fp_info.
+
+    if 'jasonl' in fp_name.lower().replace(' ', ''):
+        fp_name = 'Jason L'
 
     m3_to_kg_factor = 250
     total_dead_weight, total_cubic, total_qty = 0, 0, 0
-    orders = []
+    kg_per_booking, cubic_per_booking, pallets_per_order, packages_per_order = [], [], [], []
 
-    for line in booking_lines:
-        total_qty += line.e_qty
-        total_dead_weight += (
-            line.e_weightPerEach
-            * _get_weight_amount(line.e_weightUOM)
-            * line.e_qty
-        )
-        total_cubic += get_cubic_meter(
-            line.e_dimLength,
-            line.e_dimWidth,
-            line.e_dimHeight,
-            line.e_dimUOM,
-            line.e_qty,
-        )
+    for order in bookings:
+        lines = [item for item in booking_lines if item.fk_booking_id == order.pk_booking_id]
+        kg, cubic, pallets, packages = 0, 0, 0, 0
+        for line in lines:
+            total_qty += line.e_qty
+            kg += (
+                line.e_weightPerEach
+                * _get_weight_amount(line.e_weightUOM)
+                * line.e_qty
+            )
+            cubic += get_cubic_meter(
+                line.e_dimLength,
+                line.e_dimWidth,
+                line.e_dimHeight,
+                line.e_dimUOM,
+                line.e_qty,
+            )
+            if line.e_type_of_packaging and line.e_type_of_packaging.lower() in ['pal', 'pallet']:
+                pallets += line.e_qty
+            else:
+                packages += line.e_qty
+        pallets_per_order.append(pallets)
+        packages_per_order.append(packages)
+        kg_per_booking.append(round(kg, 3))
+        cubic_per_booking.append(round(cubic, 3))
+        total_dead_weight += kg
+        total_cubic += cubic
 
     total_cubic_weight = total_cubic * m3_to_kg_factor
     number_of_consignments = len(bookings)
@@ -207,7 +221,7 @@ def build_manifest(bookings, booking_lines, username):
     # label_settings = get_label_settings( 146, 104 )[0]
     label_settings = {
         "font_family": "Verdana",
-        "font_size_extra_small": "4",
+        "font_size_extra_small": "7",
         "font_size_small": "8",
         "font_size_medium": "10",
         "font_size_large": "18",
@@ -314,7 +328,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "Payer Account Name:",
+                    "Payer Account Number:",
                 ),
                 style_left,
             ),
@@ -322,7 +336,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "Deliver-ME PTY LTD",
+                    "DELVME",
                 ),
                 style_left,
             ),
@@ -340,24 +354,6 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "Payer Account Number:",
-                ),
-                style_left,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "DELVME",
-                ),
-                style_left,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
                     "Consigner ID/Name:",
                 ),
                 style_left,
@@ -366,7 +362,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "",
+                    bookings[0].b_client_name or "",
                 ),
                 style_left,
             ),
@@ -384,53 +380,17 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    ""
+                    f"{bookings[0].pu_Address_Street_1} {f'{bookings[0].pu_Address_street_2},' if bookings[0].pu_Address_street_2 else ''}{f'{bookings[0].pu_Address_City},' if bookings[0].pu_Address_City else ''}{bookings[0].pu_Address_Suburb} {bookings[0].pu_Address_State} {bookings[0].pu_Address_PostalCode} {bookings[0].pu_Address_Country}"
                 ),
                 style_left,
             ),
         ],
-        # [
-        #     Paragraph(
-        #         "<font size=%s>%s</font>"
-        #         % (
-        #             label_settings["font_size_medium"],
-        #             "Despatch/Merchant Location ID:",
-        #         ),
-        #         style_left,
-        #     ),
-        #     Paragraph(
-        #         "<font size=%s>%s</font>"
-        #         % (
-        #             label_settings["font_size_medium"],
-        #             "9WCZ",
-        #         ),
-        #         style_left,
-        #     ),
-        # ],
-        # [
-        #     Paragraph(
-        #         "<font size=%s>%s</font>"
-        #         % (
-        #             label_settings["font_size_medium"],
-        #             "Order ID:",
-        #         ),
-        #         style_left,
-        #     ),
-        #     Paragraph(
-        #         "<font size=%s>%s</font>"
-        #         % (
-        #             label_settings["font_size_medium"],
-        #             "AP47236140",
-        #         ),
-        #         style_left,
-        #     ),
-        # ],
         [
             Paragraph(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "Order Created Date:",
+                    "Order Created/Manifest Date:",
                 ),
                 style_left,
             ),
@@ -438,29 +398,11 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "",
+                    bookings[0].b_dateBookedDate.strftime('%d/%m/%Y') if bookings[0].b_dateBookedDate else datetime.today().strftime('%d/%m/%Y'),
                 ),
                 style_left,
             ),
         ],
-        # [
-        #     Paragraph(
-        #         "<font size=%s>%s</font>"
-        #         % (
-        #             label_settings["font_size_medium"],
-        #             "Lodgement Facility (AP only):",
-        #         ),
-        #         style_left,
-        #     ),
-        #     Paragraph(
-        #         "<font size=%s>%s</font>"
-        #         % (
-        #             label_settings["font_size_medium"],
-        #             "",
-        #         ),
-        #         style_left,
-        #     ),
-        # ],
     ]
 
     t1_w = float(label_settings["label_image_size_width"]) * (1 / 3) * mm
@@ -472,7 +414,7 @@ def build_manifest(bookings, booking_lines, username):
         colWidths=[t1_w, t2_w, t3_w],
         style=[
             ("SPAN", (-1, 0), (-1, -1)),
-            ("VALIGN", (0, 0), (1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (1, -1), "TOP"),
             # ("VALIGN", (-1, 0), (-1, -1), "TOP"),
             ("TOPPADDING", (0, 0), (2, -1), 0),
             ("VALIGN", (-1, 0), (-1, -1), "CENTER"),
@@ -560,659 +502,231 @@ def build_manifest(bookings, booking_lines, username):
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    "Sales #",
+                    label_settings["font_size_extra_small"],
+                    "Consignment Number",
                 ),
                 style_center,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    "Deliver To Postal",
+                    label_settings["font_size_extra_small"],
+                    "Customer Reference",
                 ),
                 style_center,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    "Number of Articles",
+                    label_settings["font_size_extra_small"],
+                    "Receiver Name",
                 ),
                 style_center,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    "Freight Dimensions(mm)",
-                ),
-                style_center,
-            ),
-            "",
-            "",
-            Paragraph(
-                "<font size=%s><b>Total KG/Total M<super rise=4 size=6>3</super></b></font>"
-                % (
-                    label_settings["font_size_medium"],
-                ),
-                style_center,
-            ),
-        ],
-        [
-            "",
-            "",
-            "",
-            Paragraph(
-                "<font size=%s><b>%s</b></font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Length",
+                    label_settings["font_size_extra_small"],
+                    "Destination",
                 ),
                 style_center,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    "Width",
+                    label_settings["font_size_extra_small"],
+                    "Pallets",
                 ),
                 style_center,
             ),
             Paragraph(
                 "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    "Height",
-                ),
-                style_center,
-            ),
-            "",
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
+                    label_settings["font_size_extra_small"],
+                    "Packages",
                 ),
                 style_center,
             ),
             Paragraph(
-                "<font size=%s>%s</font>"
+                "<font size=%s><b>%s</b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    " ",
+                    label_settings["font_size_extra_small"],
+                    "KG",
                 ),
                 style_center,
             ),
             Paragraph(
-                "<font size=%s>%s</font>"
+                "<font size=%s><b>Cubic M<super rise=4 size=6>3</super></b></font>"
                 % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
+                    label_settings["font_size_extra_small"],
                 ),
                 style_center,
             ),
         ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    " ",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "",
-                ),
-                style_center,
-            ),
-        ],
-        
     ]
+    
+    for index in range(9):
+        if index < len(bookings):
+            data.append([
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].v_FPBookingNumber if bookings[index].v_FPBookingNumber else "",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].b_client_sales_inv_num if bookings[index].b_client_sales_inv_num else "",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].de_to_Contact_F_LName if bookings[index].de_to_Contact_F_LName else "",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        f"{bookings[index].de_To_Address_Suburb} {bookings[index].de_To_Address_State} {bookings[index].de_To_Address_PostalCode}",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        pallets_per_order[index],
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        packages_per_order[index],
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        kg_per_booking[index],
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        cubic_per_booking[index],
+                    ),
+                    style_center,
+                ),
+            ])
+        else:
+            data.append([
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        " ",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        " ",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        " ",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        " ",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        " ",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        " ",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        "",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        "",
+                    ),
+                    style_center,
+                ),
+            ])
 
-    t1_w = float(label_settings["label_image_size_width"]) * (3 / 19) * mm
-    t2_w = float(label_settings["label_image_size_width"]) * (2 / 19) * mm
-    t3_w = float(label_settings["label_image_size_width"]) * (4 / 19) * mm
-    t1_h = float(label_settings["label_image_size_height"]) * (1 / 50) * mm
-    t2_h = float(label_settings["label_image_size_height"]) * (1 / 45) * mm
+    t1_w = float(label_settings["label_image_size_width"]) * (4 / 32) * mm
+    t2_w = float(label_settings["label_image_size_width"]) * (6 / 32) * mm
+    t3_w = float(label_settings["label_image_size_width"]) * (3 / 32) * mm
+    t1_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
+    t2_h = float(label_settings["label_image_size_height"]) * (1 / 42) * mm
 
     table = Table(
         data,
-        colWidths=[t1_w, t1_w, t1_w, t2_w, t2_w, t2_w, t3_w],
-        rowHeights=[t1_h, t1_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h],
+        colWidths=[t1_w, t1_w, t2_w, t2_w, t3_w, t3_w, t3_w, t3_w],
+        rowHeights=[t1_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h],
         style=[
-            ("SPAN", (0, 0), (0, 1)),
-            ("SPAN", (1, 0), (1, 1)),
-            ("SPAN", (2, 0), (2, 1)),
-            ("SPAN", (3, 0), (5, 0)),
-            ("SPAN", (-1, 0), (-1, 1)),
             ("VALIGN", (0, 0), (-1, -1), "CENTER"),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
-            ("LEFTPADDING", (-1, 6), (-1, 6), 42),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
             (
                 "BACKGROUND",
                 (0, 0),
-                (-1, 1),
+                (-1, 0),
                 colors.Color(red=237 / 255, green=237 / 255, blue=237 / 255),
-            ),
-            (
-                "BACKGROUND",
-                (-1, 2),
-                (-1, -1),
-                colors.Color(red=221 / 255, green=221 / 255, blue=221 / 255),
             ),
             ("GRID", (0, 0), (-1, -1), 0.5, "black"),
         ],
     )
     Story.append(table)
-
-    # data = [
-    #     [
-    #         "",
-    #         VerticalText("Office use only")
-    #     ],
-    # ]
-
-    # t1_w = float(label_settings["label_image_size_width"]) * (4 / 5) * mm
-    # t2_w = float(label_settings["label_image_size_width"]) * (1 / 5) * mm
-
-    # table = Table(
-    #     data,
-    #     colWidths=[t1_w, t2_w],
-    #     style=[
-    #         ("TOPPADDING", (0, 0), (-1, -1), -500),
-    #         ("BOTTOMPADDING", (1, 0), (-1, -1), 0),
-    #         ("RIGHTPADDING", (0, 0), (-1, -1), -200),
-    #     ],
-    # )
-    # Story.append(table)
-    Story.append(Spacer(1, 70))
+    Story.append(Spacer(1, 66))
 
     data = [
         [
@@ -1295,7 +809,7 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s><b>%s</b>%s</font>"
                 % (
                     label_settings["font_size_small"],
-                    "NO: ",
+                    "NO, ",
                     "I, the sender, declare that THIS CARGO DOES NOT CONTAIN DANGEROUS GOODS that legally require declaration",
                 ),
                 style_left,
@@ -1458,18 +972,18 @@ def build_manifest(bookings, booking_lines, username):
     doc.build(Story)
     file.close()
 
-    # # Add manifest log
-    # Dme_manifest_log.objects.create(
-    #     fk_booking_id=booking.pk_booking_id,
-    #     manifest_url=filename,
-    #     manifest_number=manifest,
-    #     bookings_cnt=len(bookings),
-    #     is_one_booking=1,
-    #     z_createdByAccount=username,
-    # )
+    # Add manifest log
+    Dme_manifest_log.objects.create(
+        fk_booking_id=booking.pk_booking_id,
+        manifest_url=filename,
+        manifest_number=manifest,
+        bookings_cnt=len(bookings),
+        is_one_booking=1,
+        z_createdByAccount=username,
+    )
 
-    # fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
-    # fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
-    # fp_info.save()
+    fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
+    fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
+    fp_info.save()
 
     return filename
