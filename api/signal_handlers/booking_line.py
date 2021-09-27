@@ -35,6 +35,9 @@ def post_save_handler(instance, created, update_fields):
         logger.info(f"{LOG_ID} Created new or updated important field.")
         booking = instance.booking()
 
+        if not booking:
+            return
+
         packed_status = instance.packed_status
         if (
             booking.api_booking_quote
