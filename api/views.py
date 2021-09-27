@@ -4285,6 +4285,7 @@ def get_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
+        trace_error.print()
         logger.error(f"get_mainifest error: {str(e)}")
         return JsonResponse(
             {"success": False, "message": "Please contact support center."}
