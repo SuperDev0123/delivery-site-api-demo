@@ -13,21 +13,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='dme_clients',
-            name='status_email',
-            field=models.CharField(default=None, max_length=64),
-        ),
-        migrations.AddField(
-            model_name='dme_clients',
-            name='status_phone',
-            field=models.CharField(default=None, max_length=16),
-        ),
-        migrations.AddField(
-            model_name='dme_clients',
-            name='status_send_flag',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
             model_name="api_booking_quotes",
             name="packed_status",
             field=models.CharField(
