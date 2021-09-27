@@ -4,7 +4,13 @@ import logging
 from django.db import transaction
 from django.db.models import Q
 
-from api.models import Bookings, Booking_lines, Booking_lines_data, Pallet
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Booking_lines_data,
+    Pallet,
+    API_booking_quotes,
+)
 from api.serializers import BookingLineSerializer, BookingLineDetailSerializer
 from api.common.pallet import get_palletized_by_ai
 
