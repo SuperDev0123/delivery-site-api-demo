@@ -1361,9 +1361,6 @@ def scanned(payload, client):
                 line.delete()
                 # continue
 
-            line.is_deleted = True
-            line.save()
-
         # Delete all LineData
         for line_data in line_datas:
             line_data.delete()
