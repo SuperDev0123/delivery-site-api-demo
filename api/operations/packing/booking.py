@@ -227,8 +227,8 @@ def scanned_repack(booking):
         latest_modified_line = original_lines[0]
         latest_modified_timestamp = (
             latest_modified_line.z_modifiedTimeStamp
-            if line.z_modifiedTimeStamp
-            else line.z_createdTimeStamp
+            if latest_modified_line.z_modifiedTimeStamp
+            else latest_modified_line.z_createdTimeStamp
         )
 
         for line in original_lines:
