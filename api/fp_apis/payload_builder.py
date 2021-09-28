@@ -215,7 +215,7 @@ def get_book_payload(booking, fp_name):
         packed_status = booking.api_booking_quote.packed_status
         booking_lines = booking_lines.filter(packed_status=packed_status)
     else:
-        scanned_lines = booking_lines.filter(picked_status=Booking_lines.SCANNED_PACK)
+        scanned_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
         booking_lines = scanned_lines if scanned_lines else booking_lines
 
     items = []
@@ -567,7 +567,7 @@ def get_getlabel_payload(booking, fp_name):
         packed_status = booking.api_booking_quote.packed_status
         booking_lines = booking_lines.filter(packed_status=packed_status)
     else:
-        scanned_lines = booking_lines.filter(picked_status=Booking_lines.SCANNED_PACK)
+        scanned_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
         booking_lines = scanned_lines if scanned_lines else booking_linesc
 
     items = []

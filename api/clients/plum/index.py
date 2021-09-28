@@ -969,7 +969,7 @@ def scanned(payload, client):
                 new_line.e_item = (
                     "Picked Item" if repack_type == "model_number" else "Repacked Item"
                 )
-                new_line.picked_status = Booking_lines.SCANNED_PACK
+                new_line.packed_status = Booking_lines.SCANNED_PACK
 
                 if picked_item.get("dimensions"):
                     new_line.e_dimUOM = picked_item["dimensions"]["unit"]
