@@ -32,6 +32,7 @@ from django.conf import settings
 
 from api.models import Fp_freight_providers, Dme_manifest_log
 from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.fp_apis.utils import gen_consignment_num
 from api.helpers.cubic import get_cubic_meter
 
 if settings.ENV == "local":
@@ -336,32 +337,6 @@ def build_manifest(bookings, booking_lines, username):
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    "Payer Account Number:",
-                ),
-                style_left,
-            ),
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "DELVME",
-                ),
-                style_left,
-            ),
-            Paragraph(
-                "<font size=%s><b>%s</b></font>"
-                % (
-                    label_settings["font_size_large"],
-                    bookings[0].vx_serviceName or "",
-                ),
-                style_right,
-            ),
-        ],
-        [
-            Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
                     "Consigner ID/Name:",
                 ),
                 style_left,
@@ -373,6 +348,14 @@ def build_manifest(bookings, booking_lines, username):
                     bookings[0].b_client_name or "",
                 ),
                 style_left,
+            ),
+            Paragraph(
+                "<font size=%s><b>%s</b></font>"
+                % (
+                    label_settings["font_size_large"],
+                    bookings[0].vx_serviceName or "",
+                ),
+                style_right,
             ),
         ],
         [
@@ -501,7 +484,7 @@ def build_manifest(bookings, booking_lines, username):
         ],
     )
     Story.append(table)
-    Story.append(Spacer(1, 8))
+    Story.append(Spacer(1, 3))
 
     data = [
         [
@@ -571,37 +554,36 @@ def build_manifest(bookings, booking_lines, username):
 
     for index in range(9):
         if index < len(bookings):
-            data.append(
-                [
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            bookings[index].v_FPBookingNumber
-                            if bookings[index].v_FPBookingNumber
-                            else "",
+            data.append([
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].v_FPBookingNumber 
+                        if bookings[index].v_FPBookingNumber 
+                        else gen_consignment_num(
+                            bookings[index].vx_freight_provider, bookings[index].b_bookingID_Visual
                         ),
-                        style_center,
                     ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            bookings[index].b_client_sales_inv_num
-                            if bookings[index].b_client_sales_inv_num
-                            else "",
-                        ),
-                        style_center,
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].b_client_sales_inv_num
+                        if bookings[index].b_client_sales_inv_num
+                        else "",
                     ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            bookings[index].de_to_Contact_F_LName
-                            if bookings[index].de_to_Contact_F_LName
-                            else "",
-                        ),
-                        style_center,
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].de_to_Contact_F_LName
+                        if bookings[index].de_to_Contact_F_LName
+                        else "",
                     ),
                     Paragraph(
                         "<font size=%s>%s</font>"
@@ -719,7 +701,7 @@ def build_manifest(bookings, booking_lines, username):
     t2_w = float(label_settings["label_image_size_width"]) * (6 / 32) * mm
     t3_w = float(label_settings["label_image_size_width"]) * (3 / 32) * mm
     t1_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
-    t2_h = float(label_settings["label_image_size_height"]) * (1 / 42) * mm
+    t2_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
 
     table = Table(
         data,
@@ -740,7 +722,7 @@ def build_manifest(bookings, booking_lines, username):
         ],
     )
     Story.append(table)
-    Story.append(Spacer(1, 66))
+    Story.append(Spacer(1, 32))
 
     data = [
         [
@@ -949,7 +931,6 @@ def build_manifest(bookings, booking_lines, username):
         ],
     )
     Story.append(table)
-    Story.append(Spacer(1, 8))
 
     data = [
         [
