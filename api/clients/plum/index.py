@@ -969,6 +969,7 @@ def scanned(payload, client):
                 new_line.e_item = (
                     "Picked Item" if repack_type == "model_number" else "Repacked Item"
                 )
+                new_line.picked_status = Booking_lines.SCANNED_PACK
 
                 if picked_item.get("dimensions"):
                     new_line.e_dimUOM = picked_item["dimensions"]["unit"]
@@ -1015,8 +1016,8 @@ def scanned(payload, client):
                 new_lines.append(new_line)
 
                 # Soft delete source line
-                old_line.is_deleted = True
-                old_line.save()
+                # old_line.is_deleted = True
+                # old_line.save()
 
                 for item in picked_item["items"]:
                     # Create new Line_Data
@@ -1107,7 +1108,12 @@ def scanned(payload, client):
             logger.info(
                 f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
             )
-            _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
+            _, success, message, quotes = pricing_oper(
+                body=None,
+                booking_id=booking.pk,
+                is_pricing_only=False,
+                packed_statuses=[Booking_lines.SCANNED_PACK],
+            )
             logger.info(
                 f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
             )
