@@ -211,6 +211,10 @@ def get_book_payload(booking, fp_name):
         fk_booking_id=booking.pk_booking_id, is_deleted=False
     )
 
+    if booking.api_booking_quote:
+        packed_status = booking.api_booking_quote.packed_status
+        booking_lines = booking_lines.filter(packed_status=packed_status)
+
     items = []
     totalWeight = 0
     maxHeight = 0
@@ -555,6 +559,10 @@ def get_getlabel_payload(booking, fp_name):
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_deleted=False
     )
+
+    if booking.api_booking_quote:
+        packed_status = booking.api_booking_quote.packed_status
+        booking_lines = booking_lines.filter(packed_status=packed_status)
 
     items = []
     for line in booking_lines:
