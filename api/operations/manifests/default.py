@@ -554,36 +554,40 @@ def build_manifest(bookings, booking_lines, username):
 
     for index in range(9):
         if index < len(bookings):
-            data.append([
-                Paragraph(
-                    "<font size=%s>%s</font>"
-                    % (
-                        label_settings["font_size_extra_small"],
-                        bookings[index].v_FPBookingNumber 
-                        if bookings[index].v_FPBookingNumber 
-                        else gen_consignment_num(
-                            bookings[index].vx_freight_provider, bookings[index].b_bookingID_Visual
+            data.append(
+                [
+                    Paragraph(
+                        "<font size=%s>%s</font>"
+                        % (
+                            label_settings["font_size_extra_small"],
+                            bookings[index].v_FPBookingNumber
+                            if bookings[index].v_FPBookingNumber
+                            else gen_consignment_num(
+                                bookings[index].vx_freight_provider,
+                                bookings[index].b_bookingID_Visual,
+                            ),
                         ),
+                        style_center,
                     ),
-                    style_center,
-                ),
-                Paragraph(
-                    "<font size=%s>%s</font>"
-                    % (
-                        label_settings["font_size_extra_small"],
-                        bookings[index].b_client_sales_inv_num
-                        if bookings[index].b_client_sales_inv_num
-                        else "",
+                    Paragraph(
+                        "<font size=%s>%s</font>"
+                        % (
+                            label_settings["font_size_extra_small"],
+                            bookings[index].b_client_sales_inv_num
+                            if bookings[index].b_client_sales_inv_num
+                            else "",
+                        ),
+                        style_center,
                     ),
-                    style_center,
-                ),
-                Paragraph(
-                    "<font size=%s>%s</font>"
-                    % (
-                        label_settings["font_size_extra_small"],
-                        bookings[index].de_to_Contact_F_LName
-                        if bookings[index].de_to_Contact_F_LName
-                        else "",
+                    Paragraph(
+                        "<font size=%s>%s</font>"
+                        % (
+                            label_settings["font_size_extra_small"],
+                            bookings[index].de_to_Contact_F_LName
+                            if bookings[index].de_to_Contact_F_LName
+                            else "",
+                        ),
+                        style_center,
                     ),
                     Paragraph(
                         "<font size=%s>%s</font>"
