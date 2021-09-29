@@ -18,7 +18,7 @@ from api.models import (
     Utl_dme_status,
     Dme_status_history,
     API_booking_quotes,
-    Client_Products
+    Client_Products,
 )
 from api.outputs.email import send_email
 from api.helpers.etd import get_etd
@@ -463,7 +463,9 @@ def send_booking_status_email(bookingId, emailName, sender):
     )
 
 
-def send_status_update_email(booking, category, eta, sender, status_url, client_status_email=None):
+def send_status_update_email(
+    booking, category, eta, sender, status_url, client_status_email=None
+):
     """
     When 'Plum Products Australia Ltd' bookings status is updated
     """
@@ -586,20 +588,18 @@ def send_status_update_email(booking, category, eta, sender, status_url, client_
     }
 
     booking_lines = Booking_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id
+        fk_booking_id=booking.pk_booking_id, e_item_type__isnull=False
     ).order_by("z_createdTimeStamp")
-    deleted_lines_cnt = booking_lines.filter(is_deleted=True).count()
-
-    if deleted_lines_cnt > 0:
-        booking_lines = booking_lines.filter(e_item_type__isnull=False, is_deleted=True)
 
     lines_data = []
     for booking_line in booking_lines:
         try:
-            product = Client_Products.objects.get(child_model_number=booking_line.e_item_type).description
+            product = Client_Products.objects.get(
+                child_model_number=booking_line.e_item_type
+            ).description
         except Exception as e:
             logger.error(f"Client product doesn't exist: {e}")
-            product = ''
+            product = ""
 
         lines_data.append(
             {
