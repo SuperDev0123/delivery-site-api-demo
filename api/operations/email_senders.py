@@ -48,13 +48,13 @@ def send_booking_status_email(bookingId, emailName, sender):
             packed_status=booking.api_booking_quote.packed_status,
         ).order_by("-z_createdTimeStamp")
     else:
-        scanned_lines = Booking_lines.objects.filter(
+        booking_lines = Booking_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id,
             packed_status=Booking_lines.SCANNED_PACK,
         ).order_by("-z_createdTimeStamp")
 
-        if not scanned_lines.exists():
-            scanned_lines = Booking_lines.objects.filter(
+        if not booking_lines.exists():
+            booking_lines = Booking_lines.objects.filter(
                 fk_booking_id=booking.pk_booking_id,
                 packed_status=Booking_lines.ORIGINAL,
             ).order_by("-z_createdTimeStamp")
