@@ -73,7 +73,7 @@ from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
-from api.fp_apis.utils import get_status_category_from_status
+from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num
 from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
@@ -4264,6 +4264,9 @@ def get_manifest(request):
                     ]:
                         status_history.create(booking, "Booked", username)
                         booking.b_dateBookedDate = datetime.now()
+                        booking.v_FPBookingNumber = gen_consignment_num(
+                            booking.vx_freight_provider, booking.b_bookingID_Visual
+                        )
                     else:
                         status_history.create(booking, "Ready for Despatch", username)
 
