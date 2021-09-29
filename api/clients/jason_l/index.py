@@ -1357,9 +1357,13 @@ def scanned(payload, client):
     with transaction.atomic():
         # Rollback `auto repack` | `already packed` operation
         for line in lines:
-            if line.sscc:  # Delete prev sscc lines
-                line.delete()
-                # continue
+            if line.sscc:
+                if "NOSSCC" in line.sscc:
+                    line.sscc = None
+                    line.save()
+                else:  # Delete prev real-sscc lines
+                    line.delete()
+                    # continue
 
         # Delete all LineData
         for line_data in line_datas:

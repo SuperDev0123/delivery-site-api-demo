@@ -42,9 +42,23 @@ def send_booking_status_email(bookingId, emailName, sender):
     ]:
         return
 
-    booking_lines = Booking_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id
-    ).order_by("-z_createdTimeStamp")
+    if booking.api_booking_quote:
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            packed_status=booking.api_booking_quote.packed_status,
+        ).order_by("-z_createdTimeStamp")
+    else:
+        scanned_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            packed_status=Booking_lines.SCANNED_PACK,
+        ).order_by("-z_createdTimeStamp")
+
+        if not scanned_lines.exists():
+            scanned_lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id,
+                packed_status=Booking_lines.ORIGINAL,
+            ).order_by("-z_createdTimeStamp")
+
     booking_lines_data = Booking_lines_data.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
