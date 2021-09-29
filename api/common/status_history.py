@@ -63,19 +63,25 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
         )
 
         email_sent = False
-        if setting.ENV == 'prod':
+        if settings.ENV == "prod":
             try:
                 client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
             except Exception as e:
                 logger.info(f"Get client error: {str(e)}")
                 client = None
-            
+
             if client and client.status_send_flag:
                 if client.status_email:
                     # Send email to client too -- TEST USAGE
-                    send_status_update_email(booking, category_new, eta_etd, username, url, client.status_email)
+                    send_status_update_email(
+                        booking,
+                        category_new,
+                        eta_etd,
+                        username,
+                        url,
+                        client.status_email,
+                    )
                     email_sent = True
-                    
 
                 if client.status_phone and is_mobile(client.status_phone):
                     # TEST USAGE --- Send SMS to Plum agent
@@ -107,7 +113,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                 #     de_address,
                 #     delivered_time,
                 # )
-        
+
         if not email_sent:
             send_status_update_email(booking, category_new, eta_etd, username, url)
 
