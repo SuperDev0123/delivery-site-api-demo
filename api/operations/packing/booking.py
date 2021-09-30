@@ -279,9 +279,17 @@ def scanned_repack(booking):
             packed_status=packed_status,
         )
         for quote in quotes:
+            is_selected_dup = False
+
+            if booking.api_booking_quote and booking.api_booking_quote=quote:
+                is_selected_dup = True
+
             quote.pk = None
             quote.packed_status = Booking_lines.SCANNED_PACK
             quote.save()
+
+            if is_selected_dup:
+                booking.api_booking_quote = quote
 
         lines = (
             booking.lines().filter(packed_status=packed_status).filter(is_deleted=False)
