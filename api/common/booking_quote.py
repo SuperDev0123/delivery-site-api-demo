@@ -1,4 +1,4 @@
-import logggin
+import logging
 
 from api.models import Fp_freight_providers
 
