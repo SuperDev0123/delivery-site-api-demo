@@ -281,7 +281,7 @@ def scanned_repack(booking):
         for quote in quotes:
             is_selected_dup = False
 
-            if booking.api_booking_quote and booking.api_booking_quote=quote:
+            if booking.api_booking_quote and booking.api_booking_quote == quote:
                 is_selected_dup = True
 
             quote.pk = None
