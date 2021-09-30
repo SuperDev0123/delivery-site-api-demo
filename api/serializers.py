@@ -420,6 +420,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "pu_service",
             "de_service",
             "booking_type",
+            "inv_booked_quoted",
         )
 
 

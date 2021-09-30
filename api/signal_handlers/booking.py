@@ -125,13 +125,19 @@ def pre_save_handler(instance):
         if (
             instance.api_booking_quote
             and old.api_booking_quote_id != instance.api_booking_quote_id
-            and instance.api_booking_quote.vehicle
         ):
-            logger.info(f"#506 {LOG_ID} vehicle changed!")
             quote = instance.api_booking_quote
-            instance.v_vehicle_Type = (
-                quote.vehicle.description if quote.vehicle else None
-            )
+
+            if instance.api_booking_quote.vehicle:
+                logger.info(f"#506 {LOG_ID} vehicle changed!")
+                instance.v_vehicle_Type = (
+                    quote.vehicle.description if quote.vehicle else None
+                )
+
+            if quote.packed_status == API_booking_quotes.SCANNED_PACK:
+                instance.inv_booked_quoted = quote.client_mu_1_minimum_values
+            else:
+                instance.inv_sell_quoted = quote.client_mu_1_minimum_values
 
 
 def post_save_handler(instance, created, update_fields):
@@ -182,7 +188,7 @@ def post_save_handler(instance, created, update_fields):
         instance.vx_serviceName = quote.service_name
         instance.v_service_Type = quote.service_code
         instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
-        instance.inv_sell_quoted = quote.client_mu_1_minimum_values
+        # instance.inv_sell_quoted = quote.client_mu_1_minimum_values
         instance.v_vehicle_Type = quote.vehicle.description if quote.vehicle else None
         instance.api_booking_quote = quote
 
