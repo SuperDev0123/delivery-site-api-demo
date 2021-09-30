@@ -4328,7 +4328,7 @@ def build_label(request):
     lines = booking.lines().filter(is_deleted=False)
 
     if booking.api_booking_quote:
-        lines = lines.filter(packed_status=booking.api_booking_quote)
+        lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
 
     line_datas = booking.line_datas()
     label_urls = []
