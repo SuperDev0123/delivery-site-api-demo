@@ -1,6 +1,6 @@
 import logging
 
-from api.models import Fp_freight_providers
+from api.models import Fp_freight_providers, API_booking_quotes
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,12 @@ def set_booking_quote(booking, quote=None):
         booking.vx_account_code = quote.account_code
         booking.vx_serviceName = quote.service_name
         booking.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
-        # booking.inv_sell_quoted = quote.client_mu_1_minimum_values
+
+        if quote.packed_status == API_booking_quotes.SCANNED_PACK:
+            booking.inv_booked_quoted = quote.client_mu_1_minimum_values
+        else:
+            booking.inv_sell_quoted = quote.client_mu_1_minimum_values
+
         booking.v_vehicle_Type = quote.vehicle.description if quote.vehicle else None
 
         fp = Fp_freight_providers.objects.get(

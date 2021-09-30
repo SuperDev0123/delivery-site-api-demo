@@ -13,6 +13,7 @@ from api.models import (
 )
 from api.serializers import BookingLineSerializer, BookingLineDetailSerializer
 from api.common.pallet import get_palletized_by_ai
+from api.common.booking_quote import set_booking_quote
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +290,7 @@ def scanned_repack(booking):
             quote.save()
 
             if is_selected_dup:
-                booking.api_booking_quote = quote
+                set_booking_quote(booking, quote)
 
         lines = (
             booking.lines().filter(packed_status=packed_status).filter(is_deleted=False)
