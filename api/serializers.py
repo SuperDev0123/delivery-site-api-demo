@@ -518,6 +518,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     is_deliverable = serializers.SerializerMethodField(read_only=True)
     inv_cost_quoted = serializers.SerializerMethodField(read_only=True)
     surcharge_total = serializers.SerializerMethodField(read_only=True)
+    surcharge_total_cl = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharges = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
@@ -567,6 +568,13 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 
     def get_surcharge_total(self, obj):
         return obj.x_price_surcharge if obj.x_price_surcharge else 0
+
+    def get_surcharge_total_cl(self, obj):
+        return (
+            obj.x_price_surcharge * (1 + obj.client_mark_up_percent)
+            if obj.x_price_surcharge
+            else 0
+        )
 
     def get_client_customer_mark_up(self, obj):
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
