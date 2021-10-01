@@ -40,7 +40,7 @@ from api.models import (
     BookingCostOption,
     Pallet,
     Surcharge,
-    FP_status_history
+    FP_status_history,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -667,6 +667,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "client_mu_1_minimum_values",
             "cost",
             "surcharge_total",
+            "surcharge_total_cl",
             "client_customer_mark_up",
             "eta",
             "service_name",
