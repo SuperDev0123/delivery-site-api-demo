@@ -40,6 +40,7 @@ from api.models import (
     BookingCostOption,
     Pallet,
     Surcharge,
+    FP_status_history
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -903,4 +904,10 @@ class SurchargeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Surcharge
+        fields = "__all__"
+
+
+class FPStatusHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_status_history
         fields = "__all__"
