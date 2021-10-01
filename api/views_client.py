@@ -948,6 +948,12 @@ def get_delivery_status(request):
                 else ""
             )
 
+        try:
+            fp_status_history = FP_status_history.objects.values('id', 'status', 'desc', 'event_timestamp').filter(booking_id=booking.id).order_by('-event_timestamp')
+        except Exception as e:
+            logger.info(f"Get FP status history error: {str(e)}")
+            fp_status_history = []
+
         return Response(
             {
                 "step": step,
@@ -960,6 +966,7 @@ def get_delivery_status(request):
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
                 "logo_url": client.logo_url,
+                "scans": fp_status_history
             }
         )
 
@@ -1088,5 +1095,6 @@ def get_delivery_status(request):
                 "",
             ],
             "logo_url": client.logo_url,
+            "scans": []
         }
     )
