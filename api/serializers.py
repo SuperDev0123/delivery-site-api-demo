@@ -608,6 +608,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharge_total = serializers.SerializerMethodField(read_only=True)
+    surcharge_total_cl = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
@@ -632,8 +633,14 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return round(cost, 2)
 
     def get_surcharge_total(self, obj):
-        _result = obj.x_price_surcharge if obj.x_price_surcharge else 0
-        return _result * (1 + obj.client_mark_up_percent)
+        return obj.x_price_surcharge if obj.x_price_surcharge else 0
+
+    def get_surcharge_total_cl(self, obj):
+        return (
+            obj.x_price_surcharge * (1 + obj.client_mark_up_percent)
+            if obj.x_price_surcharge
+            else 0
+        )
 
     def get_eta(self, obj):
         return obj.etd
