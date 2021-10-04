@@ -140,12 +140,12 @@ def get_book_payload(booking, fp_name):
     payload["serviceType"] = booking.vx_serviceName or "R"
     payload["bookedBy"] = "DME"
     payload["pickupAddress"] = {
-        "companyName": "" or puCompany,
+        "companyName": puCompany or "",
         "contact": (booking.pu_Contact_F_L_Name or " ")[:19],
-        "emailAddress": "" or booking.pu_Email,
+        "emailAddress": booking.pu_Email or "",
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "0283111500" or booking.pu_Phone_Main,
+        "phoneNumber": booking.pu_Phone_Main or "0283111500",
     }
 
     payload["pickupAddress"]["instruction"] = " "
@@ -157,21 +157,21 @@ def get_book_payload(booking, fp_name):
         ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": "" or pu_Address_Street_1,
-        "address2": "_" or pu_Address_street_2,
-        "country": "" or booking.pu_Address_Country,
-        "postCode": "" or booking.pu_Address_PostalCode,
-        "state": "" or booking.pu_Address_State,
-        "suburb": "" or booking.pu_Address_Suburb,
-        "sortCode": "" or booking.pu_Address_PostalCode,
+        "address1": pu_Address_Street_1 or "",
+        "address2": pu_Address_street_2 or "_",
+        "country": booking.pu_Address_Country or "",
+        "postCode": booking.pu_Address_PostalCode or "",
+        "state": booking.pu_Address_State or "",
+        "suburb": booking.pu_Address_Suburb or "",
+        "sortCode": booking.pu_Address_PostalCode or "",
     }
     payload["dropAddress"] = {
-        "companyName": "" or deToCompanyName,
+        "companyName": deToCompanyName or "",
         "contact": (booking.de_to_Contact_F_LName or " ")[:19],
-        "emailAddress": "" or de_Email,
+        "emailAddress": de_Email or "",
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "" or booking.de_to_Phone_Main,
+        "phoneNumber": booking.de_to_Phone_Main or "",
     }
 
     payload["dropAddress"]["instruction"] = " "
@@ -184,8 +184,8 @@ def get_book_payload(booking, fp_name):
             "instruction"
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
-    de_street_1 = "" or de_To_Address_Street_1 or de_To_Address_Street_2
-    de_street_2 = "" or de_To_Address_Street_2
+    de_street_1 = de_To_Address_Street_1 or de_To_Address_Street_2 or ""
+    de_street_2 = de_To_Address_Street_2 or ""
 
     if not de_street_1 and not de_street_2:
         message = f"DE street info is required. BookingId: {booking.b_bookingID_Visual}"
@@ -195,11 +195,11 @@ def get_book_payload(booking, fp_name):
     payload["dropAddress"]["postalAddress"] = {
         "address1": de_street_1,
         "address2": de_street_2 if de_street_1 != de_street_2 else "_",
-        "country": "" or booking.de_To_Address_Country,
-        "postCode": "" or booking.de_To_Address_PostalCode,
-        "state": "" or booking.de_To_Address_State,
-        "suburb": "" or booking.de_To_Address_Suburb,
-        "sortCode": "" or booking.de_To_Address_PostalCode,
+        "country": booking.de_To_Address_Country or "",
+        "postCode": booking.de_To_Address_PostalCode or "",
+        "state": booking.de_To_Address_State or "",
+        "suburb": booking.de_To_Address_Suburb or "",
+        "sortCode": booking.de_To_Address_PostalCode or "",
     }
 
     booking_lines = Booking_lines.objects.filter(
@@ -211,7 +211,7 @@ def get_book_payload(booking, fp_name):
         booking_lines = booking_lines.filter(packed_status=packed_status)
     else:
         scanned_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
-        booking_lines = scanned_lines if scanned_lines else booking_lines
+        booking_lines = scanned_lines or booking_lines
 
     items = []
     totalWeight = 0
@@ -227,12 +227,12 @@ def get_book_payload(booking, fp_name):
         for i in range(line.e_qty):
             item = {
                 "dangerous": 0,
-                "width": 0 or width,
-                "height": 0 or height,
-                "length": 0 or length,
+                "width": width or 0,
+                "height": height or 0,
+                "length": length or 0,
                 "quantity": 1,
                 "volume": round(width * height * length / 1000000, 5),
-                "weight": 0 or weight,
+                "weight": weight or 0,
             }
 
             # Plum
@@ -520,21 +520,21 @@ def get_getlabel_payload(booking, fp_name):
         ] += f" {booking.pu_PickUp_Instructions_Contact}"
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": ("" or pu_Address_Street_1)[:29],
-        "address2": "" or pu_Address_street_2,
-        "country": "" or booking.pu_Address_Country,
-        "postCode": "" or booking.pu_Address_PostalCode,
-        "state": "" or booking.pu_Address_State,
-        "suburb": "" or booking.pu_Address_Suburb,
-        "sortCode": "" or booking.pu_Address_PostalCode,
+        "address1": (pu_Address_Street_1 or "")[:29],
+        "address2": pu_Address_street_2 or "",
+        "country": booking.pu_Address_Country or "",
+        "postCode": booking.pu_Address_PostalCode or "",
+        "state": booking.pu_Address_State or "",
+        "suburb": booking.pu_Address_Suburb or "",
+        "sortCode": booking.pu_Address_PostalCode or "",
     }
     payload["dropAddress"] = {
-        "companyName": "" or deToCompanyName,
+        "companyName": deToCompanyName or "",
         "contact": (booking.de_to_Contact_F_LName or " ")[:19],
-        "emailAddress": "" or de_Email,
+        "emailAddress": de_Email or "",
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "" or booking.de_to_Phone_Main,
+        "phoneNumber": booking.de_to_Phone_Main or "",
     }
 
     payload["dropAddress"]["instruction"] = " "
@@ -561,11 +561,11 @@ def get_getlabel_payload(booking, fp_name):
     payload["dropAddress"]["postalAddress"] = {
         "address1": de_street_1[:29],
         "address2": de_street_2 if de_street_1 != de_street_2 else "_",
-        "country": "" or booking.de_To_Address_Country,
-        "postCode": "" or booking.de_To_Address_PostalCode,
-        "state": "" or booking.de_To_Address_State,
-        "suburb": "" or booking.de_To_Address_Suburb,
-        "sortCode": "" or booking.de_To_Address_PostalCode,
+        "country": booking.de_To_Address_Country or "",
+        "postCode": booking.de_To_Address_PostalCode or "",
+        "state": booking.de_To_Address_State or "",
+        "suburb": booking.de_To_Address_Suburb or "",
+        "sortCode": booking.de_To_Address_PostalCode or "",
     }
 
     booking_lines = Booking_lines.objects.filter(
