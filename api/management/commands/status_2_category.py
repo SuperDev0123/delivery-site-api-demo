@@ -18,7 +18,7 @@ class Command(BaseCommand):
                     "Entered",
                 ]
             )
-            .exclude(z_lock_status=True)
+            .exclude(z_lock_status=False)
             .only("id", "b_bookingID_Visual", "b_status", "b_booking_Category")
         )
         bookings_cnt = bookings.count()
