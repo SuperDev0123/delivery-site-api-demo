@@ -92,7 +92,7 @@ def bdra3(param):
 
 
 def ptl(param):
-    if int(param["pu_tail_lift"]) != 0:
+    if param["pu_tail_lift"] and int(param["pu_tail_lift"]) != 0:
         return {
             "name": "Tail-Lift Truck8(pickup)",
             "description": "",
@@ -103,7 +103,7 @@ def ptl(param):
 
 
 def dtl(param):
-    if int(param["de_tail_lift"]) != 0:
+    if param["de_tail_lift"] and int(param["de_tail_lift"]) != 0:
         return {
             "name": "Tail-Lift Truck8(delivery)",
             "description": "",

@@ -72,6 +72,9 @@ class DME_clients(models.Model):
     current_freight_provider = models.CharField(
         verbose_name=_("Related FP"), max_length=30, blank=False, null=True, default="*"
     )
+    logo_url = models.CharField(
+        verbose_name=_("Logo Url"), max_length=200, null=True, default=None
+    )
     client_mark_up_percent = models.FloatField(default=0, null=True, blank=True)
     client_min_markup_startingcostvalue = models.FloatField(
         default=0, null=True, blank=True
@@ -81,6 +84,9 @@ class DME_clients(models.Model):
     augment_pu_available_time = models.TimeField(blank=True, null=True, default=None)
     client_customer_mark_up = models.FloatField(default=0, null=True, blank=True)
     gap_percent = models.FloatField(default=0, null=True, blank=True)
+    status_email = models.CharField(max_length=64, default=None, null=False)
+    status_phone = models.CharField(max_length=16, default=None, null=False)
+    status_send_flag = models.BooleanField(default=False, null=False)
 
     class Meta:
         db_table = "dme_clients"
@@ -467,6 +473,17 @@ class FP_Service_ETDs(models.Model):
 
 
 class API_booking_quotes(models.Model):
+    ORIGINAL = "original"
+    AUTO_PACK = "auto"
+    MANUAL_PACK = "manual"
+    SCANNED_PACK = "scanned"
+    PACKED_STATUS_CHOICES = (
+        (ORIGINAL, "original"),
+        (AUTO_PACK, "auto"),
+        (MANUAL_PACK, "manual"),
+        (SCANNED_PACK, "scanned"),
+    )
+
     id = models.AutoField(primary_key=True)
     api_results_id = models.CharField(
         verbose_name=_("Result ID"), blank=True, null=True, max_length=128
@@ -616,6 +633,9 @@ class API_booking_quotes(models.Model):
     is_used = models.BooleanField(default=False)
     vehicle = models.ForeignKey(
         FP_vehicles, on_delete=models.CASCADE, null=True, default=None
+    )
+    packed_status = models.CharField(
+        max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
     )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
@@ -1807,6 +1827,7 @@ class Bookings(models.Model):
     inv_sell_quoted = models.FloatField(blank=True, default=0, null=True)
     inv_sell_quoted_override = models.FloatField(blank=True, default=None, null=True)
     inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
+    inv_booked_quoted = models.FloatField(blank=True, default=0, null=True)
     b_del_to_signed_name = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
@@ -2014,11 +2035,38 @@ class Bookings(models.Model):
                     elif service_etd.fp_service_time_uom.lower() == "hours":
                         return service_etd.fp_03_delivery_hours, "hours"
 
+    def get_fp(self):
+        try:
+            return Fp_freight_providers.objects.get(
+                fp_company_name=self.vx_freight_provider
+            )
+        except:
+            return None
+
     def get_client(self):
         try:
             return DME_clients.objects.get(dme_account_num=self.kf_client_id)
         except:
             return None
+
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+
+        if not creating:
+            cls = self.__class__
+            old = cls.objects.get(pk=self.pk)
+            new = self
+
+            changed_fields = []
+            for field in cls._meta.get_fields():
+                field_name = field.name
+                try:
+                    if getattr(old, field_name) != getattr(new, field_name):
+                        changed_fields.append(field_name)
+                except Exception as ex:  # Catch field does not exist exception
+                    pass
+            kwargs["update_fields"] = changed_fields
+        return super(Bookings, self).save(*args, **kwargs)
 
 
 @receiver(pre_save, sender=Bookings)
@@ -2029,20 +2077,22 @@ def pre_save_booking(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Bookings)
-def post_save_booking(sender, instance, **kwargs):
+def post_save_booking(sender, instance, created, update_fields, **kwargs):
     from api.signal_handlers.booking import post_save_handler
 
-    post_save_handler(instance)
+    post_save_handler(instance, created, update_fields)
 
 
 class Booking_lines(models.Model):
     ORIGINAL = "original"
     AUTO_PACK = "auto"
     MANUAL_PACK = "manual"
+    SCANNED_PACK = "scanned"
     PACKED_STATUS_CHOICES = (
         (ORIGINAL, "original"),
         (AUTO_PACK, "auto"),
         (MANUAL_PACK, "manual"),
+        (SCANNED_PACK, "scanned"),
     )
 
     pk_lines_id = models.AutoField(primary_key=True)
@@ -2238,6 +2288,21 @@ class Booking_lines(models.Model):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
 
+        if self.pk:
+            cls = self.__class__
+            old = cls.objects.get(pk=self.pk)
+            new = self
+
+            changed_fields = []
+            for field in cls._meta.get_fields():
+                field_name = field.name
+                try:
+                    if getattr(old, field_name) != getattr(new, field_name):
+                        changed_fields.append(field_name)
+                except Exception as ex:  # Catch field does not exist exception
+                    pass
+            kwargs["update_fields"] = changed_fields
+
         if not creating and self.picked_up_timestamp:
             booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
 
@@ -2257,6 +2322,20 @@ class Booking_lines(models.Model):
 
     class Meta:
         db_table = "dme_booking_lines"
+
+
+# @receiver(pre_save, sender=Booking_lines)
+# def pre_save_booking(sender, instance, **kwargs):
+#     from api.signal_handlers.booking_line import pre_save_handler
+
+#     pre_save_handler(instance)
+
+
+@receiver(post_save, sender=Booking_lines)
+def post_save_booking_line(sender, instance, created, update_fields, **kwargs):
+    from api.signal_handlers.booking_line import post_save_handler
+
+    post_save_handler(instance, created, update_fields)
 
 
 @receiver(post_delete, sender=Booking_lines)
@@ -4882,3 +4961,26 @@ class Surcharge(models.Model):
 
     class Meta:
         db_table = "dme_surcharge"
+
+
+class FP_status_history(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    status = models.CharField(max_length=32, default=None, null=True)
+    desc = models.TextField(default=None, null=True)
+    event_timestamp = models.DateTimeField(null=True, default=None)
+    is_active = models.BooleanField(default=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "fp_status_history"
+
+
+class ZohoTicketSummary(models.Model):
+    id = models.AutoField(primary_key=True)
+    summary = models.TextField(default=None, null=True)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "zoho_ticket_summary"

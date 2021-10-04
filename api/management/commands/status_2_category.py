@@ -14,10 +14,12 @@ class Command(BaseCommand):
 
         for index, booking in enumerate(bookings):
             category = get_status_category_from_status(booking.b_status)
-            # print(
-            #     f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status} -> {category}"
-            # )
-            booking.b_booking_Category = category
-            booking.save()
+
+            if category != booking.b_booking_Category:
+                print(
+                    f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status} -> {category}"
+                )
+                booking.b_booking_Category = category
+                booking.save()
 
         # print("\n----- Finished! -----")

@@ -206,6 +206,13 @@ def get_book_payload(booking, fp_name):
         fk_booking_id=booking.pk_booking_id, is_deleted=False
     )
 
+    if booking.api_booking_quote:
+        packed_status = booking.api_booking_quote.packed_status
+        booking_lines = booking_lines.filter(packed_status=packed_status)
+    else:
+        scanned_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
+        booking_lines = scanned_lines if scanned_lines else booking_lines
+
     items = []
     totalWeight = 0
     maxHeight = 0
@@ -361,7 +368,10 @@ def get_book_payload(booking, fp_name):
             payload["serviceCode"] = "712"
         elif booking.api_booking_quote.service_name == "Overnight 10:00":
             payload["serviceCode"] = "EX10"
-        elif booking.api_booking_quote.service_name == "Overnight 12:00":
+        elif booking.api_booking_quote.service_name in [
+            "Overnight 12:00",
+            "12:00 Express",
+        ]:
             payload["serviceCode"] = "EX12"
         elif booking.api_booking_quote.service_name == "Overnight Express":
             payload["serviceCode"] = "75"
@@ -393,7 +403,12 @@ def get_book_payload(booking, fp_name):
         payload["consignmentNoteNumber"] = gen_consignment_num(
             "tnt", booking.b_bookingID_Visual
         )
-        payload["customerReference"] = booking.clientRefNumbers
+
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
+            payload["customerReference"] = booking.b_client_sales_inv_num or ""
+        else:
+            payload["customerReference"] = booking.clientRefNumbers
+
         payload["isDangerousGoods"] = False
         payload["payer"] = "Receiver"
         payload["receiver_Account"] = "30021385"
@@ -546,6 +561,13 @@ def get_getlabel_payload(booking, fp_name):
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_deleted=False
     )
+
+    if booking.api_booking_quote:
+        packed_status = booking.api_booking_quote.packed_status
+        booking_lines = booking_lines.filter(packed_status=packed_status)
+    else:
+        scanned_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
+        booking_lines = scanned_lines if scanned_lines else booking_linesc
 
     items = []
     for line in booking_lines:

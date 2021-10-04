@@ -1,8 +1,10 @@
+import logging
 import traceback
 
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
+
 
 def print():
-    if settings.ENV in ["local"]:
-        traceback.print_exc()
+    logger.error(f"@000 traceback: {traceback.format_exc()}")

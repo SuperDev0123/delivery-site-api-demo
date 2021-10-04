@@ -353,6 +353,16 @@ def get_address(order_num):
     if not address["street_1"]:
         errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
+    # Auto replacement
+    if (
+        address["street_1"]
+        and address["street_1"].strip().upper() == "UNIT E30, 21 MORETON BAY"
+    ) or (
+        address["street_2"]
+        and address["street_2"].strip().upper() == "UNIT E30, 21 MORETON BAY"
+    ):
+        address["company_name"] = "NATIONAL STORAGE"
+
     address["error"] = "***".join(errors)
     logger.info(f"@359 {LOG_ID} {json.dumps(address, indent=2, sort_keys=True)}")
     return address
@@ -421,7 +431,7 @@ def get_bok_by_talend(bok_1):
         logger.info(f"@384 {LOG_ID} No enough information!")
         return None, None
 
-    b_021 = datetime.strptime(first_line.split("|")[3], "%d-%b-%Y").strftime("%Y-%m-%d")
+    b_021 = datetime.strptime(first_line.split("|")[4], "%d-%b-%Y").strftime("%Y-%m-%d")
     b_055 = address["street_1"]
     b_056 = address["street_2"]
     b_057 = address["state"]

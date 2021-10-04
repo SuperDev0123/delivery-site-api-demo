@@ -73,7 +73,7 @@ from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
-from api.fp_apis.utils import get_status_category_from_status
+from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num
 from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
@@ -89,8 +89,12 @@ from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
 from api.common.booking_quote import set_booking_quote
-from api.operations.packing.booking import auto_repack as booking_auto_repack
-from api.operations.packing.booking import manual_repack as booking_manual_repack
+from api.operations.packing.booking import (
+    reset_repack as booking_reset_repack,
+    auto_repack as booking_auto_repack,
+    manual_repack as booking_manual_repack,
+)
+
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -2834,13 +2838,16 @@ class BookingViewSet(viewsets.ViewSet):
         try:
             booking = Bookings.objects.get(pk=pk)
 
-            if repack_status == "auto":
+            if repack_status and repack_status[0] == "-":
+                booking_reset_repack(booking, repack_status[1:])
+            elif repack_status == "auto":
                 booking_auto_repack(booking, repack_status)
             else:
                 booking_manual_repack(booking, repack_status)
 
             return JsonResponse({"success": True})
         except Exception as e:
+            trace_error.print()
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
             return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2926,7 +2933,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # print("Exception: ", e)
+            logger.error("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"])
@@ -3881,6 +3888,10 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             .order_by("client_mu_1_minimum_values")
         )
 
+        # When DmeInvoice is set
+        if booking.inv_dme_invoice_no and booking.api_booking_quote:
+            queryset = queryset.filter(pk=booking.api_booking_quote.pk)
+
         client = booking.get_client()
         context = {
             "booking": booking,
@@ -3893,7 +3904,29 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fields_to_exclude=fields_to_exclude,
             context=context,
         )
-        return Response(serializer.data)
+
+        # When DmeInvoice and Quote $* is set
+        res = list(serializer.data)
+        if res and booking.inv_dme_invoice_no:
+            res = list(serializer.data)[0]
+            res["freight_provider"] = booking.vx_freight_provider
+            quoted_amount = (
+                booking.inv_sell_quoted_override
+                if booking.inv_sell_quoted_override
+                else booking.inv_sell_quoted
+            )
+            res["client_mu_1_minimum_values"] = quoted_amount
+            quote = booking.api_booking_quote
+            surcharge_total = quote.x_price_surcharge if quote.x_price_surcharge else 0
+            without_surcharge = res["client_mu_1_minimum_values"] - surcharge_total
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name__iexact=booking.vx_freight_provider
+            )
+            res["fuel_levy_base_cl"] = without_surcharge * fp.fp_markupfuel_levy_percent
+            res["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
+            res = [res]
+
+        return Response(res)
 
 
 @api_view(["POST"])
@@ -4231,6 +4264,9 @@ def get_manifest(request):
                     ]:
                         status_history.create(booking, "Booked", username)
                         booking.b_dateBookedDate = datetime.now()
+                        booking.v_FPBookingNumber = gen_consignment_num(
+                            booking.vx_freight_provider, booking.b_bookingID_Visual
+                        )
                     else:
                         status_history.create(booking, "Ready for Despatch", username)
 
@@ -4252,6 +4288,7 @@ def get_manifest(request):
         response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
         return response
     except Exception as e:
+        trace_error.print()
         logger.error(f"get_mainifest error: {str(e)}")
         return JsonResponse(
             {"success": False, "message": "Please contact support center."}
@@ -4289,6 +4326,10 @@ def build_label(request):
     logger.info(f"{LOG_ID} Booking pk: {booking_id}")
     booking = Bookings.objects.get(pk=booking_id)
     lines = booking.lines().filter(is_deleted=False)
+
+    if booking.api_booking_quote:
+        lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
+
     line_datas = booking.line_datas()
     label_urls = []
 

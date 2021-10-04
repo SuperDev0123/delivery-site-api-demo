@@ -12,7 +12,7 @@ elif settings.ENV == "prod":
 #     S3_URL = "/opt/s3_public"
 
 
-PRICING_TIME = 10  # seconds
+PRICING_TIME = 40  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost", "ATC"
 AVAILABLE_FPS_4_FC = [
@@ -27,6 +27,7 @@ AVAILABLE_FPS_4_FC = [
     "Toll",
     "Century",
     "ATC",
+    "Northline",
 ]
 
 BUILT_IN_PRICINGS = {
@@ -34,6 +35,7 @@ BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
+    "northline": {"service_types": ["standard"]},
     # "allied": {
     #     "service_types": [
     #         "Road Express",

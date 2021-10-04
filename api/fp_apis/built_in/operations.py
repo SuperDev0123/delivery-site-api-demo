@@ -20,33 +20,14 @@ def get_zone(fp, state, postal_code, suburb):
     return None
 
 
-def is_in_zone(fp, zone_code, suburb, postal_code, state):
-    # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}")
-    zones = FP_zones.objects.filter(zone__iexact=zone_code, fk_fp=fp.id)
-    # logger.info(f"#821 {zones.count()}")
+def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
+    # logger.info(f"#820 {fp}, {zone_code}, {suburb}, {postal_code}, {state}, {avail_zones}")
 
-    if not zones:
-        return False
+    for avail_zone in avail_zones:
+        if avail_zone.zone == zone_code:
+            return True
 
-    for zone in zones:
-        # logger.info(f"#822 {zone}")
-
-        if zone.suburb and zone.suburb.lower() != suburb:
-            continue
-        if zone.postal_code and zone.postal_code.lower() != postal_code:
-            continue
-        if zone.state and zone.state.lower() != state:
-            continue
-        if (
-            zone.start_postal_code
-            and zone.end_postal_code
-            and postal_code
-            and int(postal_code) < int(zone.start_postal_code)
-            and int(postal_code) > int(zone.end_postal_code)
-        ):
-            continue
-
-        return True
+    return False
 
 
 def address_filter(booking, booking_lines, rules, fp):
@@ -58,6 +39,24 @@ def address_filter(booking, booking_lines, rules, fp):
     de_suburb = booking.de_To_Address_Suburb.lower()
     de_postal_code = booking.de_To_Address_PostalCode.lower()
     de_state = booking.de_To_Address_State.lower()
+
+    # Zone
+    found_pu_zone = None
+    found_de_zone = None
+    avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
+    avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
+    if pu_state:
+        avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
+    if pu_postal_code:
+        avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
+    if pu_suburb:
+        avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
+    if de_state:
+        avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
+    if de_postal_code:
+        avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
+    if de_suburb:
+        avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
 
     filtered_rule_ids = []
     for rule in rules:
@@ -85,16 +84,28 @@ def address_filter(booking, booking_lines, rules, fp):
             # logger.info(f"@855 {LOG_ID} DE State does not match")
             continue
 
-        if rule.pu_zone:
-            if not is_in_zone(fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state):
+        if rule.pu_zone and avail_pu_zones.exists():
+            if found_pu_zone and found_pu_zone != rule.pu_zone:
+                continue
+
+            if not is_in_zone(
+                fp, rule.pu_zone, pu_suburb, pu_postal_code, pu_state, avail_pu_zones
+            ):
                 # logger.info(f"@856 {LOG_ID} PU Zone does not match")
                 continue
 
-        if rule.de_zone:
-            if not is_in_zone(fp, rule.de_zone, de_suburb, de_postal_code, de_state):
+        if rule.de_zone and avail_de_zones.exists():
+            if found_de_zone and found_de_zone != rule.de_zone:
+                continue
+
+            if not is_in_zone(
+                fp, rule.de_zone, de_suburb, de_postal_code, de_state, avail_de_zones
+            ):
                 # logger.info(f"@857 {LOG_ID} DE Zone does not match")
                 continue
 
+        found_pu_zone = rule.pu_zone
+        found_de_zone = rule.de_zone
         filtered_rule_ids.append(rule.id)
 
     for rule in rules:
@@ -255,6 +266,17 @@ def find_vehicle_ids(booking_lines, fp):
         return
 
 
+def get_booking_lines_weight(booking_lines):
+    weight = 0
+
+    for item in booking_lines:
+        weight += (
+            item.e_qty * item.e_weightPerEach * _get_weight_amount(item.e_weightUOM)
+        )
+
+    return weight
+
+
 def get_booking_lines_count(booking_lines):
     cnt = 0
 
@@ -283,7 +305,7 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
             c_length = _get_dim_amount(cost.dim_UOM) * cost.max_length
             c_height = _get_dim_amount(cost.dim_UOM) * cost.max_height
 
-        if cost.oversize_price and cost.price_up_to_width:
+        if cost.price_up_to_width:
             c_width = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_width
             c_length = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_length
             c_height = _get_dim_amount(cost.dim_UOM) * cost.price_up_to_height
@@ -292,16 +314,18 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
         for item in booking_lines:
             if not item.e_type_of_packaging or (
                 item.e_type_of_packaging
-                and not item.e_type_of_packaging.lower() in PALLETS
+                and not item.e_type_of_packaging.upper() in PALLETS
             ):
-                logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
+                logger.info(
+                    f"@833 {fp.fp_company_name} - only support `Pallet`. Current is `{item.e_type_of_packaging}`"
+                )
                 return
             else:
                 width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
                 height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
                 length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
 
-                if width < c_width and height < c_height and length < c_length:
+                if width <= c_width and height <= c_height and length <= c_length:
                     comp_count += 1
 
         if comp_count == len(booking_lines):
@@ -319,14 +343,14 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
         if cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
 
-        if cost.oversize_price and cost.price_up_to_weight:
+        if cost.price_up_to_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         comp_count = 0
         for booking_line in booking_lines:
             if (
-                cost.UOM_charge.lower() in PALLETS
-                and not booking_line.e_type_of_packaging.lower() in PALLETS
+                cost.UOM_charge.upper() in PALLETS
+                and not booking_line.e_type_of_packaging.upper() in PALLETS
             ):
                 logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
                 return
@@ -337,7 +361,7 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
                     * booking_line.e_weightPerEach
                 )
 
-                if total_weight < c_weight:
+                if total_weight <= c_weight:
                     comp_count += 1
 
         if comp_count == len(booking_lines):

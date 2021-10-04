@@ -3,10 +3,12 @@ from datetime import datetime, date, timedelta
 
 from django.conf import settings
 
-from api.models import Dme_status_history
+from api.models import Dme_status_history, DME_clients
 from api.outputs import tempo
 from api.operations.sms_senders import send_status_update_sms
 from api.operations.email_senders import send_status_update_email
+from api.helpers.phone import is_mobile, format_mobile
+from api.operations.packing.booking import scanned_repack as booking_scanned_repack
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +52,6 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
 
         eta_etd = f"{eta}({etd} days)" if eta else ""
 
-        if booking.de_Email:
-            send_status_update_email(booking, category_new, eta_etd, username, url)
-
         pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
         de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
         de_company = booking.deToCompanyName
@@ -63,9 +62,64 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
             else ""
         )
 
-        if booking.de_to_Phone_Main or booking.de_to_Phone_Mobile:
+        email_sent = False
+        if settings.ENV == "prod":
+            try:
+                client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
+            except Exception as e:
+                logger.info(f"Get client error: {str(e)}")
+                client = None
+
+            if client and client.status_send_flag:
+                if client.status_email:
+                    # Send email to client too -- TEST USAGE
+                    send_status_update_email(
+                        booking,
+                        category_new,
+                        eta_etd,
+                        username,
+                        url,
+                        client.status_email,
+                    )
+                    email_sent = True
+
+                if client.status_phone and is_mobile(client.status_phone):
+                    # TEST USAGE --- Send SMS to Plum agent
+                    send_status_update_sms(
+                        format_mobile(client.status_phone),
+                        de_name,
+                        booking.b_client_name,
+                        booking.b_bookingID_Visual,
+                        booking.v_FPBookingNumber,
+                        category_new,
+                        eta,
+                        url,
+                        de_company,
+                        de_address,
+                        delivered_time,
+                    )
+
+                # # TEST USAGE --- Send SMS to Stephen (A week period)
+                # send_status_update_sms(
+                #     "0499776446",
+                #     de_name,
+                #     booking.b_client_name,
+                #     booking.b_bookingID_Visual,
+                #     booking.v_FPBookingNumber,
+                #     category_new,
+                #     eta,
+                #     url,
+                #     de_company,
+                #     de_address,
+                #     delivered_time,
+                # )
+
+        if not email_sent:
+            send_status_update_email(booking, category_new, eta_etd, username, url)
+
+        if booking.de_to_Phone_Main and is_mobile(booking.de_to_Phone_Main):
             send_status_update_sms(
-                booking.de_to_Phone_Main or booking.de_to_Phone_Mobile,
+                format_mobile(booking.de_to_Phone_Main),
                 de_name,
                 booking.b_client_name,
                 booking.b_bookingID_Visual,
@@ -77,14 +131,9 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                 de_address,
                 delivered_time,
             )
-
-        if (
-            settings.ENV == "prod"
-            and booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
-        ):
-            # Send SMS to Plum agent
+        if booking.de_to_Phone_Mobile and is_mobile(booking.de_to_Phone_Mobile):
             send_status_update_sms(
-                "0411608093",
+                format_mobile(booking.de_to_Phone_Mobile),
                 de_name,
                 booking.b_client_name,
                 booking.b_bookingID_Visual,
@@ -96,30 +145,6 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                 de_address,
                 delivered_time,
             )
-            # send_status_update_sms(
-            #     booking.pu_Phone_Main,
-            #     pu_name,
-            #     booking.b_bookingID_Visual,
-            #     booking.v_FPBookingNumber,
-            #     category_new,
-            #     eta,
-            #     url
-            # )
-
-        # Send SMS to Stephen (A week period)
-        send_status_update_sms(
-            "0499776446",
-            de_name,
-            booking.b_client_name,
-            booking.b_bookingID_Visual,
-            booking.v_FPBookingNumber,
-            category_new,
-            eta,
-            url,
-            de_company,
-            de_address,
-            delivered_time,
-        )
 
 
 def notify_user_via_api(booking):
@@ -191,6 +216,9 @@ def create(booking, new_status, username, event_timestamp=None):
         post_new_status(
             booking, dme_status_history, new_status, event_timestamp, username
         )
+
+        if new_status == "Booked":
+            booking_scanned_repack(booking)
 
 
 # Create new status_history for Bok

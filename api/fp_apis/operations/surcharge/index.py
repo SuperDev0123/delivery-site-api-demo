@@ -7,6 +7,8 @@ from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
+from api.fp_apis.operations.surcharge.camerons import camerons
+from api.fp_apis.operations.surcharge.northline import northline
 
 from api.models import Booking_lines, Surcharge, Fp_freight_providers
 from api.common.convert_price import apply_markups
@@ -92,7 +94,11 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
 def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
 
-    m3_to_kg_factor = 250
+    if booking["vx_freight_provider"].lower() == "northline":
+        m3_to_kg_factor = 333
+    else:
+        m3_to_kg_factor = 250
+
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
     lengths, widths, heights, diagonals, lines_data = [], [], [], [], []
     has_dangerous_item = False
@@ -134,22 +140,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             * _get_dim_amount(line["e_dimUOM"])
         )
 
-        if line["e_dangerousGoods"]:
-            has_dangerous_item = True
-
-        lengths.append(line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"]))
-        widths.append(line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"]))
-        heights.append(line["e_dimHeight"] * _get_dim_amount(line["e_dimUOM"]))
-        diagonals.append(
-            math.sqrt(
-                line["e_dimLength"] ** 2
-                + line["e_dimWidth"] ** 2
-                + line["e_dimHeight"] ** 2
-            )
-            * _get_dim_amount(line["e_dimUOM"])
-        )
-
-        if line["e_dangerousGoods"]:
+        if "e_dangerousGoods" in line and line["e_dangerousGoods"]:
             has_dangerous_item = True
 
         item_cubic_weight = (
@@ -242,6 +233,10 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         surcharge_opt_funcs = allied()
     elif booking["vx_freight_provider"].lower() == "hunter":
         surcharge_opt_funcs = hunter()
+    elif booking["vx_freight_provider"].lower() == "camerons":
+        surcharge_opt_funcs = camerons()
+    elif booking["vx_freight_provider"].lower() == "northline":
+        surcharge_opt_funcs = northline()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:

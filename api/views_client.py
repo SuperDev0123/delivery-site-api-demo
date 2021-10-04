@@ -340,7 +340,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             from api.operations.email_senders import send_picking_slip_printed_email
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
-            send_picking_slip_printed_email(bok_1.b_client_order_num)
+            send_picking_slip_printed_email(
+                bok_1.b_client_order_num,
+                bok_1.b_092_booking_type,
+                bok_1.b_053_b_del_address_type,
+            )
             logger.info(f"@842 {LOG_ID} Success to send email: {identifier}")
             return Response({"success": True}, status.HTTP_200_OK)
         except Exception as e:
@@ -843,10 +847,17 @@ def get_delivery_status(request):
         }
 
         def line_to_dict(line):
+            try:
+                product = Client_Products.objects.get(child_model_number=line.e_item_type).description
+            except Exception as e:
+                logger.error(f"Client product doesn't exist: {e}")
+                product = ''
+
             return {
                 "e_item_type": line.e_item_type,
                 "l_003_item": line.e_item,
                 "l_002_qty": line.e_qty,
+                "product": product
             }
 
         lines = map(line_to_dict, lines)
@@ -937,6 +948,12 @@ def get_delivery_status(request):
                 else ""
             )
 
+        try:
+            fp_status_history = FP_status_history.objects.values('id', 'status', 'desc', 'event_timestamp').filter(booking_id=booking.id).order_by('-event_timestamp')
+        except Exception as e:
+            logger.info(f"Get FP status history error: {str(e)}")
+            fp_status_history = []
+
         return Response(
             {
                 "step": step,
@@ -948,6 +965,8 @@ def get_delivery_status(request):
                 "eta_date": eta,
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
+                "logo_url": client.logo_url,
+                "scans": fp_status_history
             }
         )
 
@@ -1017,10 +1036,17 @@ def get_delivery_status(request):
     }
 
     def line_to_dict(line):
+        try:
+            product = Client_Products.objects.get(child_model_number=line.e_item_type).description
+        except Exception as e:
+            logger.error(f"Client product doesn't exist: {e}")
+            product = ''
+
         return {
             "e_item_type": line.e_item_type,
             "l_003_item": line.e_item,
             "l_002_qty": line.e_qty,
+            "product": product
         }
 
     lines = map(line_to_dict, lines)
@@ -1040,6 +1066,12 @@ def get_delivery_status(request):
             if json_quote and bok_1.b_021_b_pu_avail_from_date
             else ""
         )
+
+    try:
+        logo_url = DME_clients.objects.get(company_name=booking.b_client_name).logo_url
+    except Exception as e:
+        logger.error(f"Logo url error: {str(e)}")
+        logo_url = None
 
     status = "Processing"
     return Response(
@@ -1062,5 +1094,7 @@ def get_delivery_status(request):
                 "",
                 "",
             ],
+            "logo_url": client.logo_url,
+            "scans": []
         }
     )

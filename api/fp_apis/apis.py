@@ -31,13 +31,13 @@ from api.fp_apis.payload_builder import *
 from api.fp_apis.response_parser import *
 from api.fp_apis.pre_check import *
 from api.fp_apis.operations.common import _set_error
-from api.fp_apis.operations.tracking import update_booking_with_tracking_result
+from api.fp_apis.operations.tracking import (
+    update_booking_with_tracking_result,
+    populate_fp_status_history,
+)
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
-from api.fp_apis.utils import (
-    get_dme_status_from_fp_status,
-    auto_select_pricing,
-)
+from api.fp_apis.utils import auto_select_pricing
 from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
 
 
@@ -80,11 +80,14 @@ def tracking(request, fp_name):
 
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            update_booking_with_tracking_result(
-                request, booking, fp_name, consignmentStatuses
-            )
-            booking.b_error_Capture = None
-            booking.save()
+            has_new = populate_fp_status_history(booking, consignmentStatuses)
+
+            if has_new:
+                update_booking_with_tracking_result(
+                    request, booking, fp_name, consignmentStatuses
+                )
+                booking.b_error_Capture = None
+                booking.save()
 
             return JsonResponse(
                 {
@@ -1056,7 +1059,15 @@ def pricing(request):
     if not booking_id and "booking" in body:
         is_pricing_only = True
 
-    booking, success, message, results = pricing_oper(body, booking_id, is_pricing_only)
+    packed_statuses = [
+        Booking_lines.ORIGINAL,
+        Booking_lines.AUTO_PACK,
+        Booking_lines.MANUAL_PACK,
+        Booking_lines.SCANNED_PACK,
+    ]
+    booking, success, message, results = pricing_oper(
+        body, booking_id, is_pricing_only, packed_statuses
+    )
 
     try:
         client = booking.get_client()
@@ -1086,6 +1097,8 @@ def pricing(request):
                 freight_provider__iexact=booking.vx_freight_provider,
                 service_name=booking.vx_serviceName,
             )
+        else:
+            results = results.exclude(freight_provider="Sendle")
 
         auto_select_pricing(booking, results, auto_select_type)
 

@@ -16,11 +16,28 @@ logger = logging.getLogger(__name__)
 
 
 def get_booking_lines(bookings):
-    pk_booking_ids = bookings.values_list("pk_booking_id", flat=True)
+    _lines = []
 
-    return Booking_lines.objects.filter(
-        fk_booking_id__in=pk_booking_ids, is_deleted=False
-    )
+    for booking in bookings:
+        lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_deleted=False
+        )
+
+        if booking.api_booking_quote:
+            packed_status = booking.api_booking_quote.packed_status
+            lines = lines.filter(packed_status=packed_status)
+        else:
+            scanned_lines = lines.filter(packed_status=Booking_lines.SCANNED_PACK)
+            original_lines = lines.filter(packed_status=Booking_lines.ORIGINAL)
+
+            if scanned_lines:
+                lines = scanned_lines
+            else:
+                lines = original_lines
+
+        _lines += lines
+
+    return _lines
 
 
 def build_csv(booking_ids):

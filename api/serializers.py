@@ -40,6 +40,7 @@ from api.models import (
     BookingCostOption,
     Pallet,
     Surcharge,
+    FP_status_history,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -212,6 +213,7 @@ class BookingSerializer(serializers.ModelSerializer):
     pricing_account_code = serializers.SerializerMethodField(read_only=True)
     is_auto_augmented = serializers.SerializerMethodField(read_only=True)
     customer_cost = serializers.SerializerMethodField(read_only=True)
+    quote_packed_status = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -251,10 +253,21 @@ class BookingSerializer(serializers.ModelSerializer):
     def get_customer_cost(self, obj):
         client_customer_mark_up = self.context.get("client_customer_mark_up", None)
 
-        if client_customer_mark_up and obj.inv_sell_quoted:
-            return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
+        if client_customer_mark_up:
+            if obj.inv_sell_quoted_override:
+                return round(
+                    obj.inv_sell_quoted_override * (1 + client_customer_mark_up), 2
+                )
+            elif obj.inv_sell_quoted:
+                return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
 
         return None
+
+    def get_quote_packed_status(self, obj):
+        if obj.api_booking_quote:
+            return obj.api_booking_quote.packed_status
+
+        return ""
 
     class Meta:
         model = Bookings
@@ -270,6 +283,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "gap_ras",  # property
             "is_auto_augmented",  # Auto Augmented
             "customer_cost",  # Customer cost (Client: Plum)
+            "quote_packed_status",
         )
         fields = read_only_fields + (
             "id",
@@ -415,6 +429,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "pu_service",
             "de_service",
             "booking_type",
+            "inv_booked_quoted",
         )
 
 
@@ -504,6 +519,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     is_deliverable = serializers.SerializerMethodField(read_only=True)
     inv_cost_quoted = serializers.SerializerMethodField(read_only=True)
     surcharge_total = serializers.SerializerMethodField(read_only=True)
+    surcharge_total_cl = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharges = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
@@ -554,6 +570,13 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     def get_surcharge_total(self, obj):
         return obj.x_price_surcharge if obj.x_price_surcharge else 0
 
+    def get_surcharge_total_cl(self, obj):
+        return (
+            obj.x_price_surcharge * (1 + obj.client_mark_up_percent)
+            if obj.x_price_surcharge
+            else 0
+        )
+
     def get_client_customer_mark_up(self, obj):
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         return client_customer_mark_up
@@ -586,6 +609,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost = serializers.SerializerMethodField(read_only=True)
     client_customer_mark_up = serializers.SerializerMethodField(read_only=True)
     surcharge_total = serializers.SerializerMethodField(read_only=True)
+    surcharge_total_cl = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
@@ -610,8 +634,14 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return round(cost, 2)
 
     def get_surcharge_total(self, obj):
-        _result = obj.x_price_surcharge if obj.x_price_surcharge else 0
-        return _result * (1 + obj.client_mark_up_percent)
+        return obj.x_price_surcharge if obj.x_price_surcharge else 0
+
+    def get_surcharge_total_cl(self, obj):
+        return (
+            obj.x_price_surcharge * (1 + obj.client_mark_up_percent)
+            if obj.x_price_surcharge
+            else 0
+        )
 
     def get_eta(self, obj):
         return obj.etd
@@ -637,6 +667,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "client_mu_1_minimum_values",
             "cost",
             "surcharge_total",
+            "surcharge_total_cl",
             "client_customer_mark_up",
             "eta",
             "service_name",
@@ -645,6 +676,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "fuel_levy_base_cl",
             "mu_percentage_fuel_levy",
             "vehicle_name",
+            "packed_status",
         )
 
 
@@ -896,4 +928,10 @@ class SurchargeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Surcharge
+        fields = "__all__"
+
+
+class FPStatusHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FP_status_history
         fields = "__all__"

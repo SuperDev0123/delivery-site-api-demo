@@ -50,6 +50,7 @@ from api.clients.jason_l.operations import (
     update_when_no_quote_required,
     get_bok_by_talend,
     sucso_handler,
+    get_address,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
@@ -1304,6 +1305,20 @@ def scanned(payload, client):
         res_json = {"labelUrl": f"{settings.WEB_SITE_URL}/label/does-not-exist/"}
         return res_json
 
+    # Update DE address if not booked
+    if not booking.b_dateBookedDate:
+        address = get_address(b_client_order_num)
+        booking.de_To_Address_Street_1 = address["street_1"]
+        booking.de_To_Address_Street_2 = address["street_2"]
+        booking.de_To_Address_State = address["state"]
+        booking.de_To_Address_Suburb = address["suburb"]
+        booking.de_To_Address_PostalCode = address["postal_code"]
+        booking.deToCompanyName = address["company_name"]
+        booking.de_to_Contact_F_LName = address["company_name"]
+        booking.de_Email = address["email"]
+        booking.de_to_Phone_Main = address["phone"]
+        booking.save()
+
     # Commented on 2021-07-29
     # if not booking.api_booking_quote:
     #     logger.info(f"@351 {LOG_ID} No quote! Booking: {booking}")
@@ -1342,12 +1357,13 @@ def scanned(payload, client):
     with transaction.atomic():
         # Rollback `auto repack` | `already packed` operation
         for line in lines:
-            if line.sscc:  # Delete prev sscc lines
-                line.delete()
-                # continue
-
-            line.is_deleted = True
-            line.save()
+            if line.sscc:
+                if "NOSSCC" in line.sscc:
+                    line.sscc = None
+                    line.save()
+                else:  # Delete prev real-sscc lines
+                    line.delete()
+                    # continue
 
         # Delete all LineData
         for line_data in line_datas:
@@ -1394,6 +1410,7 @@ def scanned(payload, client):
             new_line.zbl_102_text_2 = None
             new_line.sscc = first_item["sscc"]
             new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
+            new_line.packed_status = Booking_lines.SCANNED_PACK
             new_line.save()
 
             sscc_lines[sscc] = [new_line]
@@ -1435,7 +1452,12 @@ def scanned(payload, client):
     )
     new_fc_log.save()
     logger.info(f"#371 {LOG_ID} {booking.b_bookingID_Visual} - getting Quotes again...")
-    _, success, message, quotes = pricing_oper(body=None, booking_id=booking.pk)
+    _, success, message, quotes = pricing_oper(
+        body=None,
+        booking_id=booking.pk,
+        is_pricing_only=False,
+        packed_statuses=[Booking_lines.SCANNED_PACK],
+    )
     logger.info(
         f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
     )
