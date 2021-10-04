@@ -34,7 +34,7 @@ def gen_consignment_num(fp_name, uid):
 
     _fp_name = fp_name.lower()
 
-    if _fp_name in ["tnt", "hunter"]:
+    if _fp_name in ["tnt"]:
         return f"DME{str(uid).zfill(9)}"
     # elif _fp_name == "hunter":
     #     digit_len = 6
