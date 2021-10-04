@@ -34,23 +34,23 @@ def gen_consignment_num(fp_name, uid):
 
     _fp_name = fp_name.lower()
 
-    if _fp_name == "hunter":
-        digit_len = 6
-        limiter = "1"
-
-        for i in range(digit_len):
-            limiter += "0"
-
-        limiter = int(limiter)
-
-        prefix_index = int(int(uid) / limiter) + 1
-        prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
-            ((prefix_index - 1) % 26) + 65
-        )
-
-        return prefix + str(uid)[-digit_len:].zfill(digit_len)
-    elif _fp_name == "tnt":
+    if _fp_name in ["tnt", "hunter"]:
         return f"DME{str(uid).zfill(9)}"
+    # elif _fp_name == "hunter":
+    #     digit_len = 6
+    #     limiter = "1"
+
+    #     for i in range(digit_len):
+    #         limiter += "0"
+
+    #     limiter = int(limiter)
+
+    #     prefix_index = int(int(uid) / limiter) + 1
+    #     prefix = chr(int((prefix_index - 1) / 26) + 65) + chr(
+    #         ((prefix_index - 1) % 26) + 65
+    #     )
+
+    #     return prefix + str(uid)[-digit_len:].zfill(digit_len)
     # elif _fp_name == "century": # Deactivated
     #     return f"D_jasonl_{str(uid)}"
     else:

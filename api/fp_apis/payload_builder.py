@@ -307,9 +307,9 @@ def get_book_payload(booking, fp_name):
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
 
-        payload[
-            "consignmentNoteNumber"
-        ] = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
+        payload["consignmentNoteNumber"] = gen_consignment_num(
+            "hunter", booking.b_bookingID_Visual
+        )
 
         if booking.b_client_order_num:
             payload["reference1"] = booking.b_client_order_num
@@ -319,6 +319,16 @@ def get_book_payload(booking, fp_name):
             payload["reference1"] = booking.b_client_sales_inv_num
         else:
             payload["reference1"] = "reference1"
+
+        # V2 fields
+        payload["SenderReference"] = payload["reference1"]
+        payload["ReceiverReference"] = ""
+        payload["ConsignmentSenderIsResidential"] = (
+            "y" if booking.pu_Address_Type == "residential" else "n"
+        )
+        payload["ConsignmentReceiverIsResidential"] = (
+            "y" if booking.de_To_AddressType == "residential" else "n"
+        )
 
         # Plum
         payload["reference2"] = gen_consignment_num(
