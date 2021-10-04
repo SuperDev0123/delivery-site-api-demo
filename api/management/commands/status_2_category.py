@@ -29,7 +29,7 @@ class Command(BaseCommand):
             category = None
 
             for utl_category in utl_categories:
-                if booking.b_status == utl_category.dme_delivery_status
+                if booking.b_status == utl_category.dme_delivery_status:
                     category = utl_category.dme_delivery_status_category
                     break
 
