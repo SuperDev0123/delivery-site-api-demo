@@ -7,7 +7,7 @@ from django.conf import settings
 from api.models import *
 from api.common import common_times as dme_time_lib
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
-from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
+from api.fp_apis.constants import FP_CREDENTIALS, OLD_FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
 
 logger = logging.getLogger(__name__)  # Payload Builder
@@ -30,9 +30,9 @@ def get_account_detail(booking, fp_name):
         account_code = booking.vx_account_code
 
     if account_code:
-        for client_name in FP_CREDENTIALS[_fp_name].keys():
-            for key in FP_CREDENTIALS[_fp_name][client_name].keys():
-                detail = FP_CREDENTIALS[_fp_name][client_name][key]
+        for client_name in OLD_FP_CREDENTIALS[_fp_name].keys():
+            for key in OLD_FP_CREDENTIALS[_fp_name][client_name].keys():
+                detail = OLD_FP_CREDENTIALS[_fp_name][client_name][key]
 
                 if detail["accountCode"] == account_code:
                     account_detail = detail
@@ -503,12 +503,10 @@ def get_getlabel_payload(booking, fp_name):
     payload["pickupAddress"] = {
         "companyName": puCompany or "",
         "contact": (booking.pu_Contact_F_L_Name or " ")[:19],
-        "emailAddress": "" if booking.pu_Email is None else booking.pu_Email,
+        "emailAddress": booking.pu_Email or "",
         "instruction": "",
         "contactPhoneAreaCode": "0",
-        "phoneNumber": "0267651109"
-        if booking.pu_Phone_Main is None
-        else booking.pu_Phone_Main,
+        "phoneNumber": booking.pu_Phone_Main or "0267651109",
     }
 
     payload["pickupAddress"]["instruction"] = " "
