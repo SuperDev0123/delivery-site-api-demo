@@ -146,31 +146,31 @@ FP_CREDENTIALS = {
             # },
         },
         "dme": {
-            "live_1": {
-                "accountCode": "DEMELP",
-                "accountKey": "55010|XXLFNZRLPW",
-                "accountPassword": "deliver",
-            },
-            "live_3": {
-                "accountCode": "DMEBNE",
-                "accountKey": "55010|XXLFNZRLPW",
-                "accountPassword": "deliver",
-            },
-            "live_4": {
-                "accountCode": "DMEPAL",
-                "accountKey": "55010|XXLFNZRLPW",
-                "accountPassword": "deliver",
-            },
-            "live_5": {
-                "accountCode": "DEMELK",
-                "accountKey": "55010|XXLFNZRLPW",
-                "accountPassword": "deliver",
-            },
-            "live_6": {
-                "accountCode": "DMEADL",
-                "accountKey": "55010|XXLFNZRLPW",
-                "accountPassword": "deliver",
-            },
+            # "live_1": {
+            #     "accountCode": "DEMELP",
+            #     "accountKey": "55010|XXLFNZRLPW",
+            #     "accountPassword": "deliver",
+            # },
+            # "live_3": {
+            #     "accountCode": "DMEBNE",
+            #     "accountKey": "55010|XXLFNZRLPW",
+            #     "accountPassword": "deliver",
+            # },
+            # "live_4": {
+            #     "accountCode": "DMEPAL",
+            #     "accountKey": "55010|XXLFNZRLPW",
+            #     "accountPassword": "deliver",
+            # },
+            # "live_5": {
+            #     "accountCode": "DEMELK",
+            #     "accountKey": "55010|XXLFNZRLPW",
+            #     "accountPassword": "deliver",
+            # },
+            # "live_6": {
+            #     "accountCode": "DMEADL",
+            #     "accountKey": "55010|XXLFNZRLPW",
+            #     "accountPassword": "deliver",
+            # },
             "live_7": {
                 "accountCode": "DELIME",
                 "accountKey": "55010|XXLFNZRLPW",
