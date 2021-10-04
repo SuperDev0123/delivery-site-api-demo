@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from api.models import Bookings
+from api.models import Bookings, Utl_dme_status
 from api.fp_apis.utils import get_status_category_from_status
 
 
