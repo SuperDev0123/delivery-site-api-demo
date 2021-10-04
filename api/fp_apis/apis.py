@@ -1046,6 +1046,8 @@ def pricing(request):
                 freight_provider__iexact=booking.vx_freight_provider,
                 service_name=booking.vx_serviceName,
             )
+        else:
+            results = results.exclude(freight_provider="Sendle")
 
         auto_select_pricing(booking, results, auto_select_type)
 
