@@ -169,18 +169,15 @@ def book(fp_name, booking, booker):
                 booking.save()
 
                 # Send email when GET_LABEL
-                email_template_name = "General Booking"
-
                 if booking.b_booking_Category == "Salvage Expense":
                     email_template_name = "Return Booking"
-
-                send_booking_status_email(booking.pk, email_template_name, booker)
-
-                # POD Email
-                if booking.b_send_POD_eMail:
+                elif booking.b_send_POD_eMail:  # POD Email
                     email_template_name = "POD"
+                else:
+                    email_template_name = "General Booking"
 
                 send_booking_status_email(booking.pk, email_template_name, booker)
+
             # Save Label for Capital
             elif _fp_name == "capital" and is_get_label:
                 json_label_data = json.loads(response.content)
