@@ -66,16 +66,17 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h05 = wrap_in_quote(booking.pu_Address_State)
 
-        h06 = ""
-        if (
-            booking.pu_pickup_instructions_address
-            or booking.pu_PickUp_Instructions_Contact
-        ):
-            h06 = wrap_in_quote(
-                booking.pu_pickup_instructions_address
-                or "" + booking.pu_PickUp_Instructions_Contact
-                or ""
-            )
+        # h06 = ""
+        # if (
+        #     booking.pu_pickup_instructions_address
+        #     or booking.pu_PickUp_Instructions_Contact
+        # ):
+        #     h06 = wrap_in_quote(
+        #         booking.pu_pickup_instructions_address
+        #         or "" + booking.pu_PickUp_Instructions_Contact
+        #         or ""
+        #     )
+        h06 = f"Collecting Order No. #{str(booking.b_client_order_num)}"
 
         if booking.pu_Phone_Main is None:
             h07 = ""
@@ -144,7 +145,7 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h19 = f"DME{booking.b_bookingID_Visual}"
 
-        h20 = f"Collecting Order No. #{str(booking.b_client_order_num)}"
+        h20 = ""
 
         if booking.b_client_name is None:
             h24 = ""
