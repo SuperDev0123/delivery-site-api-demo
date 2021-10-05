@@ -2870,8 +2870,13 @@ def get_pu_by(booking):
     pu_by = None
 
     if booking.pu_PickUp_By_Date:
+        pu_PickUp_By_Date = booking.pu_PickUp_By_Date
+
+        if isinstance(pu_PickUp_By_Date, str):
+            pu_PickUp_By_Date = datetime.strptime(pu_PickUp_By_Date, "%Y-%m-%d")
+
         pu_by = datetime.combine(
-            booking.pu_PickUp_By_Date,
+            pu_PickUp_By_Date,
             time(
                 int(booking.pu_PickUp_By_Time_Hours or 0),
                 int(booking.pu_PickUp_By_Time_Minutes or 0),
@@ -2879,8 +2884,15 @@ def get_pu_by(booking):
             ),
         )
     elif booking.puPickUpAvailFrom_Date:
+        puPickUpAvailFrom_Date = booking.puPickUpAvailFrom_Date
+
+        if isinstance(puPickUpAvailFrom_Date, str):
+            puPickUpAvailFrom_Date = datetime.strptime(
+                puPickUpAvailFrom_Date, "%Y-%m-%d"
+            )
+
         pu_by = datetime.combine(
-            booking.puPickUpAvailFrom_Date,
+            puPickUpAvailFrom_Date,
             time(
                 int(booking.pu_PickUp_By_Time_Hours or 0),
                 int(booking.pu_PickUp_By_Time_Minutes or 0),
