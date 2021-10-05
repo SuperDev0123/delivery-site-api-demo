@@ -307,10 +307,6 @@ def get_book_payload(booking, fp_name):
         elif booking.vx_serviceName == "Same Day Air Freight":
             payload["serviceType"] = "SDX"
 
-        payload["consignmentNoteNumber"] = gen_consignment_num(
-            "hunter", booking.b_bookingID_Visual
-        )
-
         if booking.b_client_order_num:
             payload["reference1"] = booking.b_client_order_num
         elif booking.clientRefNumbers:
@@ -329,11 +325,17 @@ def get_book_payload(booking, fp_name):
         payload["ConsignmentReceiverIsResidential"] = (
             "y" if booking.de_To_AddressType == "residential" else "n"
         )
+        payload["SpecialInstructions"] = booking.b_handling_Instructions or ""
+
+        payload["consignmentNoteNumber"] = gen_consignment_num(
+            "hunter", booking.b_bookingID_Visual, booking.kf_client_id
+        )
 
         # Plum
-        payload["reference2"] = gen_consignment_num(
-            "hunter", booking.b_bookingID_Visual
-        )
+        if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
+            payload["reference2"] = gen_consignment_num(
+                "hunter", booking.b_bookingID_Visual, booking.kf_client_id
+            )
 
         payload["connoteFormat"] = "Thermal"  # For `Thermal` type printers
     elif fp_name == "tnt":  # TNT

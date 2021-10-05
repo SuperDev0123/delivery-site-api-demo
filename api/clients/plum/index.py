@@ -32,7 +32,6 @@ from api.common import (
 )
 from api.common.booking_quote import set_booking_quote
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.labels.index import build_label, get_barcode
@@ -1143,7 +1142,9 @@ def scanned(payload, client):
                 "success": False,
                 "message": "This Order is already BOOKED.",
                 "consignment_number": gen_consignment_num(
-                    booking.vx_freight_provider, booking.b_bookingID_Visual
+                    booking.vx_freight_provider,
+                    booking.b_bookingID_Visual,
+                    booking.kf_client_id,
                 ),
                 "labels": [],
             }
@@ -1190,7 +1191,9 @@ def scanned(payload, client):
             "success": True,
             "message": "Successfully updated picked info.",
             "consignment_number": gen_consignment_num(
-                booking.vx_freight_provider, booking.b_bookingID_Visual
+                booking.vx_freight_provider,
+                booking.b_bookingID_Visual,
+                booking.kf_client_id,
             ),
             "labels": labels,
         }
