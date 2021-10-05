@@ -191,8 +191,8 @@ FP_CREDENTIALS = {
         "plum products australia ltd": {
             "live_plum_0": {
                 "accountCode": "PLUMPR",
-                "accountKey": "UExVTVBSOnBsdXBybw==",
-                "accountPassword": "plupro",
+                "accountKey": "55010|XXLFNZRLPW",
+                "accountPassword": "deliver",
             },
         },
     },
