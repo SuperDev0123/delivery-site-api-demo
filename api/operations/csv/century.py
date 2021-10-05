@@ -66,10 +66,16 @@ def build_csv(fileHandler, bookings, booking_lines):
         else:
             h05 = wrap_in_quote(booking.pu_Address_State)
 
-        if booking.pu_Contact_F_L_Name is None:
-            h06 = ""
-        else:
-            h06 = wrap_in_quote(booking.pu_Contact_F_L_Name)
+        h06 = ""
+        if (
+            booking.pu_pickup_instructions_address
+            or booking.pu_PickUp_Instructions_Contact
+        ):
+            h06 = wrap_in_quote(
+                booking.pu_pickup_instructions_address
+                or "" + booking.pu_PickUp_Instructions_Contact
+                or ""
+            )
 
         if booking.pu_Phone_Main is None:
             h07 = ""
