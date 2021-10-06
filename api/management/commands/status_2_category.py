@@ -19,13 +19,19 @@ class Command(BaseCommand):
                 ]
             )
             .exclude(z_lock_status=False)
-            .only("id", "b_bookingID_Visual", "b_status", "b_booking_Category")
+            .only(
+                "id",
+                "b_bookingID_Visual",
+                "b_status",
+                "b_booking_Category",
+                "z_ModifiedTimestamp",
+            )
             .order_by("z_ModifiedTimestamp")
         )
         utl_categories = Utl_dme_status.objects.all()
         bookings_cnt = bookings.count()
 
-        for index, booking in enumerate(bookings):
+        for index, booking in enumerate(bookings[:1000]):
             category = None
 
             for utl_category in utl_categories:
@@ -35,7 +41,7 @@ class Command(BaseCommand):
 
             if category and category != booking.b_booking_Category:
                 print(
-                    f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status} -> {category}"
+                    f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status}({booking.b_booking_Category}) -> {category}, {booking.z_ModifiedTimestamp}"
                 )
                 booking.b_booking_Category = category
                 booking.save()
