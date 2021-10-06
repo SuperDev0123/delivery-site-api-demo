@@ -23,7 +23,9 @@ def set_booking_quote(booking, quote=None):
         booking.vx_freight_provider = quote.freight_provider
         booking.vx_account_code = quote.account_code
         booking.vx_serviceName = quote.service_name
-        booking.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+        booking.inv_cost_quoted = (
+            quote.fee * (1 + quote.mu_percentage_fuel_levy) + quote.x_price_surcharge
+        )
 
         if quote.packed_status == API_booking_quotes.SCANNED_PACK:
             booking.inv_booked_quoted = quote.client_mu_1_minimum_values
