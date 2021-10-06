@@ -33,7 +33,7 @@ class Command(BaseCommand):
         utl_categories = Utl_dme_status.objects.all()
         bookings_cnt = bookings.count()
 
-        for index, booking in enumerate(bookings[3000:]):
+        for index, booking in enumerate(bookings[5000:]):
             category = None
 
             for utl_category in utl_categories:
