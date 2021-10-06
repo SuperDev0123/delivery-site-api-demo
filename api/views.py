@@ -3908,25 +3908,17 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         # When DmeInvoice and Quote $* is set
         res = list(serializer.data)
         if res and booking.inv_dme_invoice_no:
-            quote = booking.api_booking_quote
-            serializer = ApiBookingQuotesSerializer(
-                quote,
-                many=False,
-                fields_to_exclude=fields_to_exclude,
-                context=context,
-            )
-            res = serializer.data
-            print("@1 - ", res)
+            res = list(serializer.data)[0]
             res["freight_provider"] = booking.vx_freight_provider
-            # quoted_amount = (
-            #     booking.inv_sell_quoted_override
-            #     if booking.inv_sell_quoted_override
-            #     else booking.inv_sell_quoted
-            # )
+            quoted_amount = (
+                booking.inv_sell_quoted_override
+                if booking.inv_sell_quoted_override
+                else booking.inv_sell_quoted
+            )
+            res["client_mu_1_minimum_values"] = quoted_amount
             quote = booking.api_booking_quote
             surcharge_total = quote.x_price_surcharge if quote.x_price_surcharge else 0
             without_surcharge = res["client_mu_1_minimum_values"] - surcharge_total
-            print("@2 - ", res["client_mu_1_minimum_values"], surcharge_total)
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=booking.vx_freight_provider
             )
