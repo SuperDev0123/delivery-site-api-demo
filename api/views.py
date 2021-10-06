@@ -3915,7 +3915,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
                 fields_to_exclude=fields_to_exclude,
                 context=context,
             )
-            res = list(serializer.data)
+            res = serializer.data
             res["freight_provider"] = booking.vx_freight_provider
             quoted_amount = (
                 booking.inv_sell_quoted_override
