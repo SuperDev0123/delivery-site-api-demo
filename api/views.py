@@ -3916,6 +3916,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
                 context=context,
             )
             res = serializer.data
+            print("@1 - ", res)
             res["freight_provider"] = booking.vx_freight_provider
             quoted_amount = (
                 booking.inv_sell_quoted_override
@@ -3926,6 +3927,7 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             quote = booking.api_booking_quote
             surcharge_total = quote.x_price_surcharge if quote.x_price_surcharge else 0
             without_surcharge = res["client_mu_1_minimum_values"] - surcharge_total
+            print("@2 - ", res["client_mu_1_minimum_values"], surcharge_total)
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=booking.vx_freight_provider
             )
