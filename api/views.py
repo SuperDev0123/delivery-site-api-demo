@@ -3908,7 +3908,14 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         # When DmeInvoice and Quote $* is set
         res = list(serializer.data)
         if res and booking.inv_dme_invoice_no:
-            res = list(serializer.data)[0]
+            quote = booking.api_booking_quote
+            serializer = ApiBookingQuotesSerializer(
+                quote,
+                many=False,
+                fields_to_exclude=fields_to_exclude,
+                context=context,
+            )
+            res = list(serializer.data)
             res["freight_provider"] = booking.vx_freight_provider
             quoted_amount = (
                 booking.inv_sell_quoted_override
