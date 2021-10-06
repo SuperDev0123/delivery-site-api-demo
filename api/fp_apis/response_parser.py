@@ -44,7 +44,7 @@ def parse_pricing_response(
                 result["fk_client_id"] = dme_client.company_name
                 # result["freight_provider"] = get_service_provider(fp_name, False)
                 result["freight_provider"] = "Hunter"
-                result["etd"] = price["etd"] if "etd" in price else None
+                result["etd"] = (price["etd"] if "etd" in price else None) or "3 Days"
                 result["fee"] = price["netPrice"]
                 result["service_name"] = (
                     price["serviceName"] if "serviceName" in price else None
