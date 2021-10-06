@@ -3918,12 +3918,11 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             res = serializer.data
             print("@1 - ", res)
             res["freight_provider"] = booking.vx_freight_provider
-            quoted_amount = (
-                booking.inv_sell_quoted_override
-                if booking.inv_sell_quoted_override
-                else booking.inv_sell_quoted
-            )
-            res["client_mu_1_minimum_values"] = quoted_amount
+            # quoted_amount = (
+            #     booking.inv_sell_quoted_override
+            #     if booking.inv_sell_quoted_override
+            #     else booking.inv_sell_quoted
+            # )
             quote = booking.api_booking_quote
             surcharge_total = quote.x_price_surcharge if quote.x_price_surcharge else 0
             without_surcharge = res["client_mu_1_minimum_values"] - surcharge_total
