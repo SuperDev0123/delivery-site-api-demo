@@ -747,6 +747,9 @@ def scanned(payload, client):
     b_client_order_num = payload.get("HostOrderNumber")
     picked_items = payload.get("picked_items")
 
+    # Deactivated 2021-10-07
+    return {"success": False, "message": "Temporary unavailable"}
+
     # Check required params are included
     if not b_client_order_num:
         message = "'HostOrderNumber' is required."
