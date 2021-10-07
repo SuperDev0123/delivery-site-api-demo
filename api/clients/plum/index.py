@@ -180,7 +180,7 @@ def partial_pricing(payload, client, warehouse):
                 eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
                 json_results[1]["eta"] = eta
 
-            json_results = [json_results[1], json_results[0]]
+            json_results = [json_results[1]]
         else:
             json_results[1]["service_name"] = "Express"
             json_results[0]["service_name"] = "Standard"
@@ -188,6 +188,8 @@ def partial_pricing(payload, client, warehouse):
             if json_results[0]["eta"] == json_results[1]["eta"]:
                 eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
                 json_results[0]["eta"] = eta
+
+            json_results = [json_results[0]]
 
     if json_results:
         logger.info(f"@818 {LOG_ID} Success!")
@@ -702,7 +704,7 @@ def push_boks(payload, client, username, method):
                 eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
                 json_results[1]["eta"] = eta
 
-            json_results = [json_results[1], json_results[0]]
+            json_results = [json_results[1]]
         else:
             json_results[1]["service_name"] = "Express"
             json_results[0]["service_name"] = "Standard"
@@ -710,6 +712,8 @@ def push_boks(payload, client, username, method):
             if json_results[0]["eta"] == json_results[1]["eta"]:
                 eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
                 json_results[0]["eta"] = eta
+
+            json_results = [json_results[0]]
 
     if json_results:
         if is_biz:
