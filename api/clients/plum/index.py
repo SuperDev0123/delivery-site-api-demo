@@ -171,6 +171,8 @@ def partial_pricing(payload, client, warehouse):
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
+        eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 3} days"
+        json_results[0]["eta"] = eta
     else:
         if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
             json_results[0]["service_name"] = "Express"
@@ -695,6 +697,8 @@ def push_boks(payload, client, username, method):
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
+        eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 3} days"
+        json_results[0]["eta"] = eta
     else:
         if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
             json_results[0]["service_name"] = "Express"
