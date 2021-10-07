@@ -233,13 +233,9 @@ def get_book_payload(booking, fp_name):
                 "quantity": 1,
                 "volume": round(width * height * length / 1000000, 5),
                 "weight": weight or 0,
+                "reference": line.sscc or "",
+                "description": line.e_item,
             }
-
-            # Plum
-            if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
-                item["description"] = line.sscc
-            else:
-                item["description"] = line.e_item
 
             if fp_name == "startrack":
                 item["itemId"] = "EXP"
