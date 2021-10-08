@@ -39,7 +39,10 @@ def auto_repack(booking, repack_status, need_soft_delete=False):
 
     # Create one PAL Line
     for item in non_palletized:  # Non Palletized
-        auto_repacked_lines.append(item)
+        item["line_obj"].pk = None
+        item["line_obj"].packed_status = Booking_lines.AUTO_PACK
+        item["line_obj"].save()
+        auto_repacked_lines.append(item["line_obj"])
 
     for palletized_item in palletized:  # Palletized
         pallet = pallets[palletized_item["pallet_index"]]
