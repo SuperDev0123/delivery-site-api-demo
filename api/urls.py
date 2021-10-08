@@ -130,4 +130,5 @@ urlpatterns += [
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
     # DE Status
     url(r"^get_delivery_status/", get_delivery_status),
+    url(r"^logs/", get_logs)
 ]
