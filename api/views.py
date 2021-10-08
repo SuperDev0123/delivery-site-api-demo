@@ -3936,13 +3936,14 @@ def download(request):
     download_option = body["downloadOption"]
     file_paths = []
 
-    if download_option in ["pricing-only", "pricing-rule", "xls import"]:
-        file_name = body["fileName"]
-    elif download_option == "manifest":
-        z_manifest_url = body["z_manifest_url"]
-    else:
-        bookingIds = body["ids"]
-        bookings = Bookings.objects.filter(id__in=bookingIds)
+    if download_option != "logs":
+        if download_option in ["pricing-only", "pricing-rule", "xls import"]:
+            file_name = body["fileName"]
+        elif download_option == "manifest":
+            z_manifest_url = body["z_manifest_url"]
+        else:
+            bookingIds = body["ids"]
+            bookings = Bookings.objects.filter(id__in=bookingIds)
 
     if download_option == "pricing-only":
         src_file_path = f"./static/uploaded/pricing_only/achieve/{file_name}"
@@ -4038,6 +4039,21 @@ def download(request):
                 )
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
+    elif download_option == "logs":
+        mode = body["mode"]
+        
+        if mode == 0:
+            file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", 'debug.log'))
+        else:
+            count = 10 if mode == 1 else 50
+            for i in range(count):
+                if i == 0:
+                    path = f"{settings.BASE_DIR}/logs/debug.log"
+                else:
+                    path = f"{settings.BASE_DIR}/logs/debug.log.{i}"
+
+                if os.path.exists(path):
+                    file_paths.append(path)
 
     response = download_libs.download_from_disk(download_option, file_paths)
     return response
