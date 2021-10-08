@@ -118,7 +118,7 @@ def pricing(
         if not is_pricing_only:
             _set_error(booking, error_msg)
 
-        return False, error_msg, None
+        return None, False, error_msg, None
 
     # Set is_used flag for existing old pricings
     if booking.pk_booking_id:
