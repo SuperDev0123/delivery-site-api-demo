@@ -40,6 +40,7 @@ from api.models import (
     BookingCostOption,
     Pallet,
     Surcharge,
+    Dme_utl_fp_statuses,
     FP_status_history,
 )
 from api import utils
@@ -928,6 +929,12 @@ class SurchargeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Surcharge
+        fields = "__all__"
+
+
+class FpStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dme_utl_fp_statuses
         fields = "__all__"
 
 
