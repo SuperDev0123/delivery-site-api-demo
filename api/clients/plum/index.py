@@ -1156,7 +1156,9 @@ def scanned(payload, client):
         for index, sscc in enumerate(sscc_list):
             file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
 
-            logger.info(f"@368 - building label with SSCC...")
+            logger.info(
+                f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}"
+            )
             file_path, file_name = build_label(
                 booking=booking,
                 file_path=file_path,
