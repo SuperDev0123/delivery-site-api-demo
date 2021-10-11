@@ -756,7 +756,7 @@ def scanned(payload, client):
     picked_items = payload.get("picked_items")
 
     # Deactivated 2021-10-07
-    return {"success": False, "message": "Temporary unavailable"}
+    # return {"success": False, "message": "Temporary unavailable"}
 
     # Check required params are included
     if not b_client_order_num:
@@ -950,7 +950,8 @@ def scanned(payload, client):
     # Save
     try:
         labels = []
-        new_lines = []
+        sscc_list = []
+        sscc_lines = {}
 
         with transaction.atomic():
             for picked_item in picked_items:
@@ -1023,7 +1024,12 @@ def scanned(payload, client):
                     picked_item.get("timestamp") or datetime.now()
                 )
                 new_line.save()
-                new_lines.append(new_line)
+
+                if picked_item["sscc"] not in sscc_list:
+                    sscc_list.append(picked_item["sscc"])
+                    sscc_lines[picked_item["sscc"]] = [new_line]
+                else:
+                    sscc_lines[picked_item["sscc"]].append(new_line)
 
                 # Soft delete source line
                 # old_line.is_deleted = True
@@ -1053,56 +1059,6 @@ def scanned(payload, client):
 
                 if not booking.vx_freight_provider and booking.api_booking_quote:
                     _booking = set_booking_quote(booking, booking.api_booking_quote)
-
-                if fp_name != "hunter":
-                    file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-
-                    logger.info(f"@368 - building label...")
-                    label_index = scanned_items_count + repacked_items_count
-                    file_path, file_name = build_label(
-                        booking, file_path, [new_line], label_index
-                    )
-
-                    # Convert label into ZPL format
-                    logger.info(
-                        f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-                    )
-                    label_url = f"{file_path}/{file_name}"
-                    result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-                    if not result:
-                        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                        logger.info(f"@370 {LOG_ID} {message}")
-                        raise Exception(message)
-
-                    with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                        zpl_data = str(b64encode(zpl.read()))[2:-1]
-                        labels.append(
-                            {
-                                "sscc": picked_item["sscc"],
-                                "label": zpl_data,
-                                "barcode": get_barcode(booking, [new_line]),
-                            }
-                        )
-
-            # Build label with Lines
-            if fp_name != "hunter":
-                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-
-                logger.info(f"@368 - building label...")
-                file_path, file_name = build_label(booking, file_path, new_lines, 0)
-
-                # Convert label into ZPL format
-                logger.info(
-                    f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-                )
-                label_url = f"{file_path}/{file_name}"
-                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-                if not result:
-                    message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                    logger.info(f"@371 {LOG_ID} {message}")
-                    raise Exception(message)
 
         # Should get pricing again when if fully picked
         if is_picked_all:
@@ -1149,6 +1105,7 @@ def scanned(payload, client):
             logger.info(
                 f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
             )
+
             return {
                 "success": False,
                 "message": "This Order is already BOOKED.",
@@ -1159,41 +1116,87 @@ def scanned(payload, client):
                 ),
                 "labels": [],
             }
-
         elif fp_name == "hunter" and booking.b_status == "Picking":
             next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
             booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
             status_history.create(booking, "Ready for Booking", "jason_l")
             booking.save()
 
-            success, message = book_oper(fp_name, booking, "DME_API")
+            # success, message = book_oper(fp_name, booking, "DME_API")
 
-            if not success:
-                logger.info(
-                    f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
-                )
+            # if not success:
+            #     logger.info(
+            #         f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
+            #     )
+            #     message = (
+            #         "Please contact DME support center. <bookings@deliver-me.com.au>"
+            #     )
+            #     raise Exception(message)
+            # else:
+            #     label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+            #     result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+            #     if not result:
+            #         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+            #         raise Exception(message)
+
+            #     with open(label_url[:-4] + ".zpl", "rb") as zpl:
+            #         zpl_data = str(b64encode(zpl.read()))[2:-1]
+
+            #     labels.append(
+            #         {
+            #             "sscc": picked_item["sscc"],
+            #             "label": zpl_data,
+            #             "barcode": get_barcode(booking, [new_line]),
+            #         }
+            #     )
+
+        # Build built-in label with SSCC - one sscc should have one page label
+        label_urls = []
+        for index, sscc in enumerate(sscc_list):
+            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+
+            logger.info(f"@368 - building label with SSCC...")
+            file_path, file_name = build_label(
+                booking=booking,
+                file_path=file_path,
+                lines=sscc_lines[sscc],
+                label_index=index,
+                sscc=sscc,
+                sscc_cnt=len(sscc_list),
+                one_page_label=True,
+            )
+
+            # Convert label into ZPL format
+            logger.info(
+                f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
+            )
+            label_url = f"{file_path}/{file_name}"
+            label_urls.append(label_url)
+            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+            if not result:
                 message = (
                     "Please contact DME support center. <bookings@deliver-me.com.au>"
                 )
                 raise Exception(message)
-            else:
-                label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
-                if not result:
-                    message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-                    raise Exception(message)
+            with open(label_url[:-4] + ".zpl", "rb") as zpl:
+                zpl_data = str(b64encode(zpl.read()))[2:-1]
 
-                with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                    zpl_data = str(b64encode(zpl.read()))[2:-1]
+            labels.append(
+                {
+                    "sscc": sscc,
+                    "label": zpl_data,
+                    "barcode": get_barcode(booking, [new_line]),
+                }
+            )
 
-                labels.append(
-                    {
-                        "sscc": picked_item["sscc"],
-                        "label": zpl_data,
-                        "barcode": get_barcode(booking, [new_line]),
-                    }
-                )
+        if label_urls:
+            entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+            pdf.pdf_merge(label_urls, entire_label_url)
+            booking.z_label_url = entire_label_url
+            booking.save()
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"

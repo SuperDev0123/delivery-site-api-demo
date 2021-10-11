@@ -140,8 +140,11 @@ def book(fp_name, booking, booker):
             # Save Label for Hunter
             is_get_label = True  # Flag to decide if need to get label from response
 
-            # JasonL
-            if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            # JasonL | Plum
+            if not booking.kf_client_id in [
+                "461162D2-90C7-BF4E-A905-000000000004",
+                "1af6bcd2-6148-11eb-ae93-0242ac130002",
+            ]::
                 # JasonL never get label from FP
                 is_get_label = False
 
