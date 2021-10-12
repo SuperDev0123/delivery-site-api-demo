@@ -53,7 +53,9 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None):
     #     return prefix + str(uid)[-digit_len:].zfill(digit_len)
     # elif _fp_name == "century": # Deactivated
     #     return f"D_jasonl_{str(uid)}"
-    elif kf_client_id == "461162D2-90C7-BF4E-A905-000000000004" and fp_name == "hunter":
+    elif (
+        kf_client_id == "461162D2-90C7-BF4E-A905-000000000004" and _fp_name == "hunter"
+    ):
         return f"PLX{str(uid)}"
     else:
         return f"DME{str(uid)}"
