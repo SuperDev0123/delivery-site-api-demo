@@ -76,7 +76,7 @@ def myLaterPages(canvas, doc):
 
 def gen_barcode(booking, booking_lines, j=0, label_index=0):
     consignment_num = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
+        booking.vx_freight_provider, booking.b_bookingID_Visual, booking.kf_client_id
     )
     item_index = str(label_index + j + 1).zfill(3)
     items_count = str(len(booking_lines)).zfill(3)
@@ -316,7 +316,9 @@ def build_label(
                         % (
                             label_settings["font_size_large"],
                             gen_consignment_num(
-                                booking.vx_freight_provider, booking.b_bookingID_Visual
+                                booking.vx_freight_provider,
+                                booking.b_bookingID_Visual,
+                                booking.kf_client_id,
                             ),
                         ),
                         style_left,
@@ -581,6 +583,20 @@ def build_label(
                 tbl_data1.append(
                     [
                         Paragraph(
+                            "<font size=%s><b>%s</b> <b>%s</b></font>"
+                            % (
+                                font_size,
+                                booking.deToCompanyName or "",
+                                booking.de_to_Contact_F_LName or "",
+                            ),
+                            style_left,
+                        )
+                    ]
+                )
+            else:
+                tbl_data1.append(
+                    [
+                        Paragraph(
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 font_size,
@@ -688,9 +704,7 @@ def build_label(
                         "<font size=%s>Reference: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_client_sales_inv_num
-                            if booking.b_client_sales_inv_num
-                            else "",
+                            booking.b_client_order_num or "",
                         ),
                         style_left,
                     ),
@@ -725,7 +739,7 @@ def build_label(
             tbl_data = [
                 [
                     code128.Code128(
-                        barcode, barHeight=15 * mm, barWidth=0.7, humanReadable=True
+                        barcode, barHeight=15 * mm, barWidth=1, humanReadable=True
                     )
                 ],
             ]
