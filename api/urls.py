@@ -59,6 +59,7 @@ router.register(r"cost-option-map", CostOptionMapViewSet, basename="cost_option_
 router.register(
     r"booking-cost-option", BookingCostOptionViewSet, basename="booking_cost_option"
 )
+router.register(r"scans", ScansViewSet, basename="scans")
 router.register(r"fp_statuses", FpStatusesViewSet, basename="fp_statuses")
 
 
@@ -130,5 +131,11 @@ urlpatterns += [
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
     # DE Status
     url(r"^get_delivery_status/", get_delivery_status),
-    url(r"^logs/", get_logs)
+<<<<<<< HEAD
+=======
+    # scans on booking detail page - To be refactored
+    url(r"^get_scans/", get_scans),
+    # Backend LOG file
+    url(r"^logs/", get_logs),
+>>>>>>> dd98d80a7565fd3604488dc37f03a1bdc1395bcb
 ]
