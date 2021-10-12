@@ -1122,16 +1122,16 @@ def scanned(payload, client):
             status_history.create(booking, "Ready for Booking", "jason_l")
             booking.save()
 
-            # success, message = book_oper(fp_name, booking, "DME_API")
+            success, message = book_oper(fp_name, booking, "DME_API")
 
-            # if not success:
-            #     logger.info(
-            #         f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
-            #     )
-            #     message = (
-            #         "Please contact DME support center. <bookings@deliver-me.com.au>"
-            #     )
-            #     raise Exception(message)
+            if not success:
+                logger.info(
+                    f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
+                )
+                message = (
+                    "Please contact DME support center. <bookings@deliver-me.com.au>"
+                )
+                raise Exception(message)
             # else:
             #     label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
             #     result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
