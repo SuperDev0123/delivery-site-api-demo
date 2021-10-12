@@ -7,6 +7,7 @@ except ImportError:
     from pyPdf import PdfFileReader, PdfFileWriter
 
 from api.operations.email_senders import send_email_to_admins
+from api.common import trace_error
 
 
 def base64_to_pdf(base64, pdf_path):
@@ -48,6 +49,7 @@ def pdf_to_zpl(pdf_path, zpl_path):
             f.close()
             return True
     except Exception as e:
+        trace_error.print()
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
         send_email_to_admins("PDF covertion error", error_msg)
         return False

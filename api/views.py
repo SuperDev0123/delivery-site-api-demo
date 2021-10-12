@@ -3936,13 +3936,14 @@ def download(request):
     download_option = body["downloadOption"]
     file_paths = []
 
-    if download_option in ["pricing-only", "pricing-rule", "xls import"]:
-        file_name = body["fileName"]
-    elif download_option == "manifest":
-        z_manifest_url = body["z_manifest_url"]
-    else:
-        bookingIds = body["ids"]
-        bookings = Bookings.objects.filter(id__in=bookingIds)
+    if download_option != "logs":
+        if download_option in ["pricing-only", "pricing-rule", "xls import"]:
+            file_name = body["fileName"]
+        elif download_option == "manifest":
+            z_manifest_url = body["z_manifest_url"]
+        else:
+            bookingIds = body["ids"]
+            bookings = Bookings.objects.filter(id__in=bookingIds)
 
     if download_option == "pricing-only":
         src_file_path = f"./static/uploaded/pricing_only/achieve/{file_name}"
@@ -4038,6 +4039,21 @@ def download(request):
                 )
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
+    elif download_option == "logs":
+        mode = body["mode"]
+        
+        if mode == 0:
+            file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", 'debug.log'))
+        else:
+            count = 10 if mode == 1 else 50
+            for i in range(count):
+                if i == 0:
+                    path = f"{settings.BASE_DIR}/logs/debug.log"
+                else:
+                    path = f"{settings.BASE_DIR}/logs/debug.log.{i}"
+
+                if os.path.exists(path):
+                    file_paths.append(path)
 
     response = download_libs.download_from_disk(download_option, file_paths)
     return response
@@ -5354,3 +5370,47 @@ class PalletViewSet(NoUpdateMixin, NoDestroyMixin, viewsets.ModelViewSet):
     queryset = Pallet.objects.all()
     serializer_class = PalletSerializer
     permission_classes = (AllowAny,)
+
+
+class FpStatusesViewSet(viewsets.ViewSet):
+    serializer_class = FpStatusSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=["get"])
+    @authentication_classes([JSONWebTokenAuthentication])
+    def get_fp_statuses(self, request, pk=None):
+        try:
+            fp_name = request.GET.get("fp_name")
+            queryset = Dme_utl_fp_statuses.objects.filter(fp_name=fp_name)
+            serializer = FpStatusSerializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.info(f"Get Fp Statuses Error: {str(e)}")
+
+    def create(self, request):
+        serializer = FpStatusSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            logger.info(f"Create Fp Status Error: {str(e)}")
+            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        fp_status = Dme_utl_fp_statuses.objects.get(pk=pk)
+        serializer = FpStatusSerializer(fp_status, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            logger.info(f"Create Fp Status Error: {str(e)}")
+            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk=None):
+        fp_status = Dme_utl_fp_statuses.objects.get(pk=pk)
+        try:
+            fp_status.delete()
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.info(f"Delete Fp Status Error: {str(e)}")
+            return Response(status=status.HTTP_400_BAD_REQUEST)

@@ -39,7 +39,10 @@ def auto_repack(booking, repack_status, need_soft_delete=False):
 
     # Create one PAL Line
     for item in non_palletized:  # Non Palletized
-        auto_repacked_lines.append(item)
+        item["line_obj"].pk = None
+        item["line_obj"].packed_status = Booking_lines.AUTO_PACK
+        item["line_obj"].save()
+        auto_repacked_lines.append(item["line_obj"])
 
     for palletized_item in palletized:  # Palletized
         pallet = pallets[palletized_item["pallet_index"]]
@@ -77,7 +80,7 @@ def auto_repack(booking, repack_status, need_soft_delete=False):
                 bok_3["fk_booking_id"] = booking.pk_booking_id
                 bok_3["fk_booking_lines_id"] = new_line["pk_booking_lines_id"]
                 bok_3["itemSerialNumbers"] = line.zbl_131_decimal_1  # Sequence
-                bok_3["quantity"] = line.e_qty
+                bok_3["quantity"] = palletized_item["quantity"] * _iter["quantity"]
                 bok_3["itemDescription"] = line.e_item
                 bok_3["modelNumber"] = line.e_item_type
 
@@ -274,24 +277,7 @@ def scanned_repack(booking):
         packed_status = latest_modified_line.packed_status
 
     if packed_status:
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            is_used=False,
-            packed_status=packed_status,
-        )
-        for quote in quotes:
-            is_selected_dup = False
-
-            if booking.api_booking_quote and booking.api_booking_quote == quote:
-                is_selected_dup = True
-
-            quote.pk = None
-            quote.packed_status = Booking_lines.SCANNED_PACK
-            quote.save()
-
-            if is_selected_dup:
-                set_booking_quote(booking, quote)
-
+        # Duplicate Lines
         lines = (
             booking.lines().filter(packed_status=packed_status).filter(is_deleted=False)
         )
@@ -310,6 +296,25 @@ def scanned_repack(booking):
                 line_data.pk = None
                 line_data.fk_booking_lines_id = line.pk_booking_lines_id
                 line_data.save()
+
+        # Duplicate Quotes
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            is_used=False,
+            packed_status=packed_status,
+        )
+        for quote in quotes:
+            is_selected_dup = False
+
+            if booking.api_booking_quote and booking.api_booking_quote == quote:
+                is_selected_dup = True
+
+            quote.pk = None
+            quote.packed_status = Booking_lines.SCANNED_PACK
+            quote.save()
+
+            if is_selected_dup:
+                set_booking_quote(booking, quote)
 
     logger.info(
         f"@879 {LOG_ID} Booking: {booking.b_bookingID_Visual} --- Finished successfully!"

@@ -1352,7 +1352,7 @@ class Bookings(models.Model):
     )
     booking_Created_For = models.CharField(
         verbose_name=_("Booking Created For"),
-        max_length=20,
+        max_length=64,
         blank=True,
         null=True,
         default=None,

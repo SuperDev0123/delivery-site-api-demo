@@ -1,6 +1,7 @@
 import logging
 
 from api.models import Bookings, Fp_freight_providers
+from api.common import trace_error
 from api.operations.labels import (
     ship_it,
     dhl,
@@ -9,7 +10,7 @@ from api.operations.labels import (
     hunter_thermal,
     tnt,
     allied,
-    default
+    default,
 )
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,7 @@ def build_label(
 
         return file_path, file_name
     except Exception as e:
+        trace_error.print()
         logger.error(f"[LABEL] error: {str(e)}")
         return None
 

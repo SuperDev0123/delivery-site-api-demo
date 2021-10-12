@@ -1413,7 +1413,10 @@ def scanned(payload, client):
             new_line.packed_status = Booking_lines.SCANNED_PACK
             new_line.save()
 
-            sscc_lines[sscc] = [new_line]
+            if not sscc in sscc_lines:
+                sscc_lines[sscc] = [new_line]
+            else:
+                sscc_lines[sscc].append(new_line)
 
             # Create new line_data(s)
             for picked_item in picked_items:
@@ -1488,18 +1491,14 @@ def scanned(payload, client):
         if booking.b_client_order_num:
             send_email_to_admins("No FC result", message)
 
-    # Build label with SSCC - one sscc should have one page label
-
-    # if booking.vx_freight_provider.lower() == "tnt":  # Do not get Label for TNT for now
-    #     sscc_list = []
-
+    # Build built-in label with SSCC - one sscc should have one page label
     label_urls = []
     for index, sscc in enumerate(sscc_list):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
 
-        logger.info(f"@368 - building label with SSCC...")
+        logger.info(f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}")
         file_path, file_name = build_label(
             booking=booking,
             file_path=file_path,

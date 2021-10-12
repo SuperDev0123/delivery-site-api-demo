@@ -1,7 +1,9 @@
 import logging
+import os
 
 from django.conf import settings
 from django.http import JsonResponse
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from rest_framework.authentication import TokenAuthentication
@@ -76,3 +78,28 @@ def send_order_to_paperless(request):
     return JsonResponse(
         {"success": True, "error": None, "message": result}, status=status.HTTP_200_OK
     )
+
+
+@api_view(["GET"])
+@authentication_classes([JSONWebTokenAuthentication])
+def get_logs(request):
+    username = request.user.username
+    if username != "dme":
+        return Response(
+            {"success": False, "error": "Only admin can call"},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    try:
+        log_file = os.path.join(f"{settings.BASE_DIR}/logs", "debug.log")
+        f = open(log_file, "r")
+        lines = f.readlines()
+        last_lines = lines[-300:]
+
+        return Response(
+            {"success": True, "logs": last_lines}, status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+        )
