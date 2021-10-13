@@ -49,7 +49,6 @@ def get_pricing(fp_name, booking, booking_lines):
             Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
         """
         logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
-        rules = weight_filter(booking_lines, rules, fp)
         cost = rules.first().cost
         net_price = cost.basic_charge
         m3_to_kg_factor = 333

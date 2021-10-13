@@ -414,7 +414,7 @@ def build_csv(fileHandler, bookings, booking_lines):
             h30 = ""
             h31 = ""
 
-            eachLineText += comma + h0 + comma + h1 + comma + h2
+            eachLineText += comma + h00 + comma + h01 + comma + h02
             eachLineText += (
                 +h00
                 + comma
