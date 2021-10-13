@@ -1197,7 +1197,7 @@ def scanned(payload, client):
         if label_urls:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
             pdf.pdf_merge(label_urls, entire_label_url)
-            booking.z_label_url = entire_label_url
+            booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             booking.save()
 
         logger.info(
