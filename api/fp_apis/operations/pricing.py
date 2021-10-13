@@ -280,7 +280,7 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
                         )
                         _workers.add(_worker)
 
-        elif _fp_name in BUILT_IN_PRICINGS:
+        if _fp_name in BUILT_IN_PRICINGS:
             logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
             _worker = _built_in_pricing_worker_builder(
                 _fp_name,
@@ -397,9 +397,7 @@ async def _built_in_pricing_worker_builder(
     logger.info(
         f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results['price'])}, Results: {results['price']}"
     )
-    parse_results = parse_pricing_response(
-        results, _fp_name, booking, True, None, booking.b_client_name
-    )
+    parse_results = parse_pricing_response(results, _fp_name, booking, True, None)
 
     for parse_result in parse_results:
         if parse_results and not "error" in parse_results:

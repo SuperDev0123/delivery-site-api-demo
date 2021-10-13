@@ -154,6 +154,9 @@ def notify_user_via_api(booking):
 def post_new_status(booking, dme_status_history, new_status, event_timestamp, username):
     from api.fp_apis.utils import get_status_category_from_status
 
+    booking.b_status = new_status
+    booking.save()
+
     category_new = get_status_category_from_status(dme_status_history.status_last)
     category_old = get_status_category_from_status(dme_status_history.status_old)
 
@@ -172,7 +175,6 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
             booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
             booking.delivery_booking = event_timestamp[:10]
 
-    booking.b_status = new_status
     booking.save()
     booking.refresh_from_db()
 

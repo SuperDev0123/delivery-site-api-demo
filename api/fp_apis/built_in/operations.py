@@ -1,5 +1,7 @@
 import logging
 
+from django.db.models import Q
+
 from api.models import FP_zones, FP_vehicles
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.common import trace_error
@@ -7,6 +9,20 @@ from api.common.constants import PALLETS
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_zone_code(postal_code, fp):
+    zones = (
+        FP_zones.objects.filter(fk_fp=fp.id)
+        .filter(
+            Q(postal_code=postal_code)
+            | Q(start_postal_code__lte=postal_code, end_postal_code__gte=postal_code)
+        )
+        .only("zone")
+    )
+
+    if zones.exists():
+        return zones.first().zone
 
 
 def get_zone(fp, state, postal_code, suburb):
@@ -339,6 +355,15 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
 
     for rule in rules:
         cost = rule.cost
+        c_weight = 0
+
+        # Check if only for PALLET
+        if (
+            cost.UOM_charge.upper() in PALLETS
+            and not booking_line.e_type_of_packaging.upper() in PALLETS
+        ):
+            logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
+            return
 
         if cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
@@ -346,26 +371,32 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
         if cost.price_up_to_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
-        comp_count = 0
+        qty = 0
+        total_weight = 0
         for booking_line in booking_lines:
-            if (
-                cost.UOM_charge.upper() in PALLETS
-                and not booking_line.e_type_of_packaging.upper() in PALLETS
-            ):
-                logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
-                return
-            else:
-                total_weight = (
-                    booking_line.e_qty
-                    * _get_weight_amount(booking_line.e_weightUOM)
-                    * booking_line.e_weightPerEach
-                )
+            weight = (
+                booking_line.e_qty
+                * _get_weight_amount(booking_line.e_weightUOM)
+                * booking_line.e_weightPerEach
+            )
+            total_weight += weight
+            qty += booking_line.e_qty
 
-                if total_weight <= c_weight:
-                    comp_count += 1
+        if cost.UOM_charge.upper() in PALLETS:
+            if cost.end_qty and cost.end_qty <= qty:
+                continue
+            if cost.start_qty and cost.start_qty > qty:
+                continue
+        else:
+            if cost.end_qty and cost.end_qty <= total_weight:
+                continue
+            if cost.start_qty and cost.start_qty > total_weight:
+                continue
 
-        if comp_count == len(booking_lines):
-            rule_ids.append(rule.id)
+        if c_weight and total_weight > c_weight:
+            continue
+
+        rule_ids.append(rule.id)
 
     return rule_ids
 
