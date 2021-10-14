@@ -226,6 +226,10 @@ CLIENT_SECRET_ZOHO = os.environ["CLIENT_SECRET_ZOHO"]
 ORG_ID = os.environ["ORG_ID"]
 REDIRECT_URI_ZOHO = os.environ["REDIRECT_URI_ZOHO"]
 
+# Optimoroute
+OPTIMOROUTE_API_URL = os.environ["OPTIMOROUTE_API_URL"]
+OPTIMOROUTE_API_KEY = os.environ["OPTIMOROUTE_API_KEY"]
+
 
 # Twilio
 TWILIO = {
