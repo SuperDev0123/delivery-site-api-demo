@@ -83,7 +83,6 @@ def get_pricing(fp_name, booking, booking_lines):
             )
 
         chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
-        print("@1 = ", cost.per_UOM_charge, chargable_weight)
         net_price += float(cost.per_UOM_charge or 0) * (
             chargable_weight - (cost.start_qty or 0)
         )
@@ -106,6 +105,7 @@ def get_pricing(fp_name, booking, booking_lines):
 
             Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
         """
+        net_price = 0
         logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
         rules = weight_filter(pallet_lines, rules, fp)
         cost = find_cost(pallet_lines, rules, fp)
@@ -113,7 +113,7 @@ def get_pricing(fp_name, booking, booking_lines):
         net_price = cost.basic_charge
         pallet_price = net_price
 
-        print("@2 - ", kg_price, pallet_price)
+        logger.info(f"{LOG_ID} KG price: {kg_price}, Pallet price: {pallet_price}")
         rule = rules.get(cost_id=cost.id)
         price = {
             "netPrice": kg_price + pallet_price,
