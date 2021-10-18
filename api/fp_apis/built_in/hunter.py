@@ -48,70 +48,76 @@ def get_pricing(fp_name, booking, booking_lines):
             else:
                 kg_lines.append(line)
 
-        # For KG lines
-        # Weight Filter
-        logger.info(f"{LOG_ID} Applying weight filter... rules cnt: {rules.count()}")
-        rules = weight_filter(kg_lines, rules, fp)
-        logger.info(f"{LOG_ID} Filtered rules - {rules}")
-        if not rules:
-            continue
-
-        """
-            rule_type_02
-
-            Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
-        """
-        cost = rules.first().cost
-        logger.info(f"{LOG_ID} Final cost - {cost}")
-        net_price = cost.basic_charge or 0
-        m3_to_kg_factor = 250
-        dead_weight, cubic_weight = 0, 0
-
-        for item in kg_lines:
-            dead_weight += (
-                item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
+        if kg_lines:  # For KG lines
+            # Weight Filter
+            logger.info(
+                f"{LOG_ID} Applying weight filter... rules cnt: {rules.count()}"
             )
-            cubic_weight += (
-                get_cubic_meter(
-                    item.e_dimLength,
-                    item.e_dimWidth,
-                    item.e_dimHeight,
-                    item.e_dimUOM,
-                    item.e_qty,
-                )
-                * m3_to_kg_factor
-            )
-
-        chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
-        net_price += float(cost.per_UOM_charge or 0) * (
-            chargable_weight - (cost.start_qty or 0)
-        )
-
-        if cost.min_charge and net_price < cost.min_charge:
-            net_price = cost.min_charge
-
-        kg_price = net_price
-
-        # For Pallet lines
-        # Size(dim) Filter
-        if fp.rule_type.rule_type_code in ["rule_type_01", "rule_type_02"]:
-            rules = dim_filter(booking, pallet_lines, rules, fp)
-
+            rules = weight_filter(kg_lines, rules, fp)
+            logger.info(f"{LOG_ID} Filtered rules - {rules}")
             if not rules:
                 continue
 
-        """
-            rule_type_02
+            """
+                rule_type_02
 
-            Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
-        """
-        net_price = 0
-        logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
-        rules = weight_filter(pallet_lines, rules, fp)
-        cost = find_cost(pallet_lines, rules, fp)
-        logger.info(f"{LOG_ID} Final cost - {cost}")
-        net_price = cost.basic_charge
-        pallet_price = net_price
+                Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
+            """
+            cost = rules.first().cost
+            logger.info(f"{LOG_ID} Final cost - {cost}")
+            net_price = cost.basic_charge or 0
+            m3_to_kg_factor = 250
+            dead_weight, cubic_weight = 0, 0
+
+            for item in kg_lines:
+                dead_weight += (
+                    item.e_weightPerEach
+                    * _get_weight_amount(item.e_weightUOM)
+                    * item.e_qty
+                )
+                cubic_weight += (
+                    get_cubic_meter(
+                        item.e_dimLength,
+                        item.e_dimWidth,
+                        item.e_dimHeight,
+                        item.e_dimUOM,
+                        item.e_qty,
+                    )
+                    * m3_to_kg_factor
+                )
+
+            chargable_weight = (
+                dead_weight if dead_weight > cubic_weight else cubic_weight
+            )
+            net_price += float(cost.per_UOM_charge or 0) * (
+                chargable_weight - (cost.start_qty or 0)
+            )
+
+            if cost.min_charge and net_price < cost.min_charge:
+                net_price = cost.min_charge
+
+            kg_price = net_price
+
+        if pallet_lines:  # For Pallet lines
+            # Size(dim) Filter
+            if fp.rule_type.rule_type_code in ["rule_type_01", "rule_type_02"]:
+                rules = dim_filter(booking, pallet_lines, rules, fp)
+
+                if not rules:
+                    continue
+
+            """
+                rule_type_02
+
+                Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
+            """
+            net_price = 0
+            logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
+            rules = weight_filter(pallet_lines, rules, fp)
+            cost = find_cost(pallet_lines, rules, fp)
+            logger.info(f"{LOG_ID} Final cost - {cost}")
+            net_price = cost.basic_charge
+            pallet_price = net_price
 
         logger.info(f"{LOG_ID} KG price: {kg_price}, Pallet price: {pallet_price}")
         rule = rules.get(cost_id=cost.id)
