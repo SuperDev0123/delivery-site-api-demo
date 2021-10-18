@@ -450,9 +450,7 @@ def send_booking_status_email(bookingId, emailName, sender):
     if settings.ENV in ["local", "dev"]:
         to_emails = [
             "bookings@deliver-me.com.au",
-            "petew@deliver-me.com.au",
             "goldj@deliver-me.com.au",
-            "greatroyalone@outlook.com",
         ]
         subject = f"FROM TEST SERVER - {subject}"
     else:
@@ -682,7 +680,7 @@ def send_status_update_email(
     to_emails = []
 
     if settings.ENV in ["local", "dev"]:
-        to_emails = ["petew@deliver-me.com.au", "goldj@deliver-me.com.au"]
+        to_emails = ["goldj@deliver-me.com.au"]
         subject = f"FROM TEST SERVER - {subject}"
     else:
         if client_status_email:
@@ -769,7 +767,6 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     to_emails = ["rejina@jasonl.com.au"]
     cc_emails = [
         "stephenm@deliver-me.com.au",
-        "petew@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
     send_email(to_emails, cc_emails, subject, message)
@@ -788,7 +785,6 @@ def send_email_missing_status(booking, fp_name, b_status_API):
     to_emails = ["bookings@deliver-me.com.au"]
     cc_emails = [
         "stephenm@deliver-me.com.au",
-        "petew@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
 

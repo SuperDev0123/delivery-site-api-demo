@@ -36,22 +36,22 @@ BUILT_IN_PRICINGS = {
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
     "northline": {"service_types": ["standard"]},
-    "tnt": {  # Coming soon
-        "service_types": [
-            "Overnight - 9:00 Express*",
-            "Overnight - 10:00 Express",
-            "Overnight - 12:00 Express",
-            "Overnight - Express",
-            "Overnight - Pay As You Go Satchel Express",
-            "Road Express",
-            "Technology Express Premium",
-            "Technology Express Sensitive",
-            "Time Critical Nationwide",
-            "Failsafe Security Satchel ",
-            "Failsafe Secure Service",
-        ]
-    },
-    "hunter": {"service_types": ["Road Express"]},  # Coming soon
+    # "tnt": {  # Coming soon
+    #     "service_types": [
+    #         "Overnight - 9:00 Express*",
+    #         "Overnight - 10:00 Express",
+    #         "Overnight - 12:00 Express",
+    #         "Overnight - Express",
+    #         "Overnight - Pay As You Go Satchel Express",
+    #         "Road Express",
+    #         "Technology Express Premium",
+    #         "Technology Express Sensitive",
+    #         "Time Critical Nationwide",
+    #         "Failsafe Security Satchel ",
+    #         "Failsafe Secure Service",
+    #     ]
+    # },
+    # "hunter": {"service_types": ["Road Express"]},  # Coming soon
     # "allied": { # Deactivated
     #     "service_types": [
     #         "Road Express",
