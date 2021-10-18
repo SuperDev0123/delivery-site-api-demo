@@ -62,6 +62,7 @@ def get_pricing(fp_name, booking, booking_lines):
             Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
         """
         cost = rules.first().cost
+        logger.info(f"{LOG_ID} Final cost - {cost}")
         net_price = cost.basic_charge or 0
         m3_to_kg_factor = 250
         dead_weight, cubic_weight = 0, 0
@@ -108,10 +109,11 @@ def get_pricing(fp_name, booking, booking_lines):
         logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
         rules = weight_filter(pallet_lines, rules, fp)
         cost = find_cost(pallet_lines, rules, fp)
+        logger.info(f"{LOG_ID} Final cost - {cost}")
         net_price = cost.basic_charge
         pallet_price = net_price
 
-        logger.info(f"{LOG_ID} Final cost - {cost}")
+        print("@2 - ", kg_price, pallet_price)
         rule = rules.get(cost_id=cost.id)
         price = {
             "netPrice": kg_price + pallet_price,
