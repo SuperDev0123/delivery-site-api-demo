@@ -35,8 +35,11 @@ def _built_in(booking, fp_name, dme_client, json_data, account_code):
             price["serviceType"] if "serviceType" in price else None
         )
         result["vehicle"] = price.get("vehicle")
-        results.append(result)
 
+        if fp_name.lower() == "hunter":
+            result["freight_provider"] = "Hunter"
+
+        results.append(result)
     return results
 
 

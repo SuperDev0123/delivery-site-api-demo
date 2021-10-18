@@ -217,68 +217,68 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
             ).only("fp_delivery_time_description", "fp_delivery_service_code")
             logger.info(f"#904 [PRICING] services: {services}")
 
-        if _fp_name in FP_CREDENTIALS:
-            fp_client_names = FP_CREDENTIALS[_fp_name].keys()
-            b_client_name = booking.b_client_name.lower()
+        # if _fp_name in FP_CREDENTIALS:
+        #     fp_client_names = FP_CREDENTIALS[_fp_name].keys()
+        #     b_client_name = booking.b_client_name.lower()
 
-            for client_name in fp_client_names:
-                if client_name == "test":
-                    pass
-                elif b_client_name in fp_client_names and b_client_name != client_name:
-                    continue
-                elif (
-                    b_client_name not in fp_client_names
-                    and client_name not in ["dme", "test"]
-                    and not is_pricing_only
-                ):
-                    continue
+        #     for client_name in fp_client_names:
+        #         if client_name == "test":
+        #             pass
+        #         elif b_client_name in fp_client_names and b_client_name != client_name:
+        #             continue
+        #         elif (
+        #             b_client_name not in fp_client_names
+        #             and client_name not in ["dme", "test"]
+        #             and not is_pricing_only
+        #         ):
+        #             continue
 
-                logger.info(f"#905 [PRICING] - {_fp_name}, {client_name}")
+        #         logger.info(f"#905 [PRICING] - {_fp_name}, {client_name}")
 
-                for key in FP_CREDENTIALS[_fp_name][client_name].keys():
-                    account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+        #         for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+        #             account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
-                    # Allow live pricing credentials only on PROD
-                    if settings.ENV == "prod" and "test" in key:
-                        continue
+        #             # Allow live pricing credentials only on PROD
+        #             if settings.ENV == "prod" and "test" in key:
+        #                 continue
 
-                    # Allow test credential only Sendle+DEV
-                    if (
-                        settings.ENV == "dev"
-                        and _fp_name == "sendle"
-                        and "dme" == client_name
-                    ):
-                        continue
+        #             # Allow test credential only Sendle+DEV
+        #             if (
+        #                 settings.ENV == "dev"
+        #                 and _fp_name == "sendle"
+        #                 and "dme" == client_name
+        #             ):
+        #                 continue
 
-                    # Pricing only accounts can be used on pricing_only mode
-                    if "pricingOnly" in account_detail and not is_pricing_only:
-                        continue
+        #             # Pricing only accounts can be used on pricing_only mode
+        #             if "pricingOnly" in account_detail and not is_pricing_only:
+        #                 continue
 
-                    logger.info(f"#906 [PRICING] - {_fp_name}, {client_name}")
+        #             logger.info(f"#906 [PRICING] - {_fp_name}, {client_name}")
 
-                    if _fp_name == "auspost" and services:
-                        for service in services:
-                            _worker = _api_pricing_worker_builder(
-                                _fp_name,
-                                booking,
-                                booking_lines,
-                                is_pricing_only,
-                                packed_status,
-                                account_detail,
-                                service.fp_delivery_service_code,
-                                service.fp_delivery_time_description,
-                            )
-                            _workers.add(_worker)
-                    else:
-                        _worker = _api_pricing_worker_builder(
-                            _fp_name,
-                            booking,
-                            booking_lines,
-                            is_pricing_only,
-                            packed_status,
-                            account_detail,
-                        )
-                        _workers.add(_worker)
+        #             if _fp_name == "auspost" and services:
+        #                 for service in services:
+        #                     _worker = _api_pricing_worker_builder(
+        #                         _fp_name,
+        #                         booking,
+        #                         booking_lines,
+        #                         is_pricing_only,
+        #                         packed_status,
+        #                         account_detail,
+        #                         service.fp_delivery_service_code,
+        #                         service.fp_delivery_time_description,
+        #                     )
+        #                     _workers.add(_worker)
+        #             else:
+        #                 _worker = _api_pricing_worker_builder(
+        #                     _fp_name,
+        #                     booking,
+        #                     booking_lines,
+        #                     is_pricing_only,
+        #                     packed_status,
+        #                     account_detail,
+        #                 )
+        #                 _workers.add(_worker)
 
         if _fp_name in BUILT_IN_PRICINGS:
             logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
