@@ -26,7 +26,7 @@ def get_pricing(fp_name, booking, booking_lines):
         )
 
     for service_type in service_types:
-        logger.info(f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}")
+        logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
         rules = FP_pricing_rules.objects.filter(
             freight_provider_id=fp.id,
@@ -34,7 +34,9 @@ def get_pricing(fp_name, booking, booking_lines):
             pu_zone=pu_zone,
             de_zone=de_zone,
         ).order_by("id")
-        print("@1 - ", pu_zone, de_zone, rules.count())
+        logger.info(
+            f"@830 {LOG_ID} Filtered Addresses: {rules.count()}, PU, DE zone: {pu_zone}, {de_zone}"
+        )
 
         kg_price = 0
         pallet_price = 0
