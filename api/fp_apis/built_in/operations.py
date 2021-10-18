@@ -362,8 +362,10 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             cost.UOM_charge.upper() in PALLETS
             and not booking_line.e_type_of_packaging.upper() in PALLETS
         ):
-            logger.info(f"@833 {fp.fp_company_name} - only support `Pallet`")
-            return
+            logger.info(
+                f"@833 {fp.fp_company_name} - rule({rule.pk}) only support `Pallet`"
+            )
+            continue
 
         if cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
