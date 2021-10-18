@@ -82,7 +82,7 @@ def get_pricing(fp_name, booking, booking_lines):
             )
 
         chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
-        print("@1 = ", cost.per_UOM_charge, cost.chargable_weight)
+        print("@1 = ", cost.per_UOM_charge, chargable_weight)
         net_price += float(cost.per_UOM_charge or 0) * (
             chargable_weight - (cost.start_qty or 0)
         )
