@@ -133,7 +133,7 @@ def get_zoho_tickets_with_booking_id(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_list = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets?limit=50",
+        "https://desk.zoho.com.au/api/v1/tickets?limit=200",
         headers=headers_for_tickets,
     )
 
@@ -168,43 +168,43 @@ def get_zoho_tickets_with_booking_id(request):
                     invoice_num and invoice_num in to_be_checked
                 ):
                     tickets.append(ticket_data)
-                else:
-                    ticket_details = requests.get(
-                        "https://desk.zoho.com.au/api/v1/tickets/"
-                        + ticket["id"]
-                        + "/conversations",
-                        headers=headers,
-                    )
-                    if ticket_details.status_code == 200:
-                        for item in ticket_details.json()["data"]:
-                            content = None
-                            if item["type"] == "thread":
-                                thread = requests.get(
-                                    "https://desk.zoho.com.au/api/v1/tickets/"
-                                    + ticket["id"]
-                                    + "/threads/"
-                                    + item["id"]
-                                    + "?include=plainText",
-                                    headers=headers,
-                                )
-                                if thread.status_code == 200:
-                                    content = thread.json()["plainText"]
-                            else:
-                                comment = requests.get(
-                                    "https://desk.zoho.com.au/api/v1/tickets/"
-                                    + ticket["id"]
-                                    + "/comments/"
-                                    + item["id"],
-                                    headers=headers,
-                                )
-                                if comment.status_code == 200:
-                                    content = comment.json()["content"]
+                # else:
+                #     ticket_details = requests.get(
+                #         "https://desk.zoho.com.au/api/v1/tickets/"
+                #         + ticket["id"]
+                #         + "/conversations",
+                #         headers=headers,
+                #     )
+                #     if ticket_details.status_code == 200:
+                #         for item in ticket_details.json()["data"]:
+                #             content = None
+                #             if item["type"] == "thread":
+                #                 thread = requests.get(
+                #                     "https://desk.zoho.com.au/api/v1/tickets/"
+                #                     + ticket["id"]
+                #                     + "/threads/"
+                #                     + item["id"]
+                #                     + "?include=plainText",
+                #                     headers=headers,
+                #                 )
+                #                 if thread.status_code == 200:
+                #                     content = thread.json()["plainText"]
+                #             else:
+                #                 comment = requests.get(
+                #                     "https://desk.zoho.com.au/api/v1/tickets/"
+                #                     + ticket["id"]
+                #                     + "/comments/"
+                #                     + item["id"],
+                #                     headers=headers,
+                #                 )
+                #                 if comment.status_code == 200:
+                #                     content = comment.json()["content"]
 
-                            if (dmeid and content and dmeid in content) or (
-                                invoice_num and content and invoice_num in content
-                            ):
-                                tickets.append(ticket_data)
-                                continue
+                #             if (dmeid and content and dmeid in content) or (
+                #                 invoice_num and content and invoice_num in content
+                #             ):
+                #                 tickets.append(ticket_data)
+                #                 continue
         if not tickets:
             return JsonResponse(
                 {
