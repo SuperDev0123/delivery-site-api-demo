@@ -314,7 +314,7 @@ def get_book_payload(booking, fp_name):
 
         # V2 fields
         payload["SenderReference"] = payload["reference1"]
-        payload["ReceiverReference"] = "TEST-ReceiverReference"
+        payload["ReceiverReference"] = booking.gap_ras
         payload["ConsignmentSenderIsResidential"] = (
             "y" if booking.pu_Address_Type == "residential" else "n"
         )

@@ -552,7 +552,9 @@ def partial_pricing(request):
             results = jason_l.partial_pricing(request.data, client, warehouse)
 
         if results:
-            logger.info(f"@819 {LOG_ID} Success!")
+            logger.info(
+                f"@819 {LOG_ID} Success! \nPayload: {request.data}\nResults: {results}"
+            )
             return Response({"success": True, "results": results})
         else:
             message = "Pricing cannot be returned due to incorrect address information."
@@ -848,16 +850,18 @@ def get_delivery_status(request):
 
         def line_to_dict(line):
             try:
-                product = Client_Products.objects.get(child_model_number=line.e_item_type).description
+                product = Client_Products.objects.get(
+                    child_model_number=line.e_item_type
+                ).description
             except Exception as e:
                 logger.error(f"Client product doesn't exist: {e}")
-                product = ''
+                product = ""
 
             return {
                 "e_item_type": line.e_item_type,
                 "l_003_item": line.e_item,
                 "l_002_qty": line.e_qty,
-                "product": product
+                "product": product,
             }
 
         lines = map(line_to_dict, lines)
@@ -949,7 +953,13 @@ def get_delivery_status(request):
             )
 
         try:
-            fp_status_history = FP_status_history.objects.values('id', 'status', 'desc', 'event_timestamp').filter(booking_id=booking.id).order_by('-event_timestamp')
+            fp_status_history = (
+                FP_status_history.objects.values(
+                    "id", "status", "desc", "event_timestamp"
+                )
+                .filter(booking_id=booking.id)
+                .order_by("-event_timestamp")
+            )
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
             fp_status_history = []
@@ -966,7 +976,7 @@ def get_delivery_status(request):
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
                 "logo_url": client.logo_url,
-                "scans": fp_status_history
+                "scans": fp_status_history,
             }
         )
 
@@ -1037,16 +1047,18 @@ def get_delivery_status(request):
 
     def line_to_dict(line):
         try:
-            product = Client_Products.objects.get(child_model_number=line.e_item_type).description
+            product = Client_Products.objects.get(
+                child_model_number=line.e_item_type
+            ).description
         except Exception as e:
             logger.error(f"Client product doesn't exist: {e}")
-            product = ''
+            product = ""
 
         return {
             "e_item_type": line.e_item_type,
             "l_003_item": line.e_item,
             "l_002_qty": line.e_qty,
-            "product": product
+            "product": product,
         }
 
     lines = map(line_to_dict, lines)
@@ -1095,6 +1107,6 @@ def get_delivery_status(request):
                 "",
             ],
             "logo_url": client.logo_url,
-            "scans": []
+            "scans": [],
         }
     )
