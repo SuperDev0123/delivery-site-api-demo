@@ -133,8 +133,11 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
             result["service_code"] = service_code
             result["service_name"] = service_name
             results.append(result)
-
-    elif fp_name == "allied" and "netPrice" in json_data:  # Allied API
+    elif (
+        fp_name == "allied"
+        and "netPrice" in json_data
+        and json_data["netPrice"] != "0.0"
+    ):  # Allied API
         result = {}
         result["account_code"] = account_code
         result["api_results_id"] = json_data["requestId"]
