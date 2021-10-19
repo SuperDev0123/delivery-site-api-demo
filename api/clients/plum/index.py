@@ -1375,7 +1375,7 @@ def reprint_label(params, client):
         raise ValidationError(message)
 
     if sscc:  # Line label
-        filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.pk)}.pdf"
+        filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.sscc)}.pdf"
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
     else:  # Order Label
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
