@@ -798,23 +798,21 @@ def scanned(payload, client):
     logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
 
+    # Delete exisint ssccs(for scanned ones)
+    picked_ssccs = []
+    for picked_item in picked_items:
+        picked_ssccs.append(picked_item["sscc"])
+    if picked_ssccs:
+        Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
+
     # Validation
-    missing_sscc_picked_items = []
     invalid_model_numbers = []
     invalid_sscc_list = []
-    duplicated_sscc_list = []
     for picked_item in picked_items:
         # Check `sscc` is provided
         if not "sscc" in picked_item:
             message = f"There is an item which doesn`t have 'sscc' information. Invalid item: {json.dumps(picked_item)}"
             raise ValidationError(message)
-
-        # Check if sscc is invalid (except Hunter Orders)
-        if (
-            fp_name != "hunter"
-            and Booking_lines.objects.filter(sscc=picked_item["sscc"]).exists()
-        ):
-            duplicated_sscc_list.append(picked_item["sscc"])
 
         # Validate repacked items
         if (
@@ -871,10 +869,6 @@ def scanned(payload, client):
             message = f"There is an invalid item: {json.dumps(picked_item)}"
             raise ValidationError(message)
 
-    if duplicated_sscc_list:
-        message = f"There are duplicated sscc(s): {', '.join(duplicated_sscc_list)}"
-        raise ValidationError(message)
-
     if invalid_sscc_list:
         message = (
             f"This order doesn't have given sscc(s): {', '.join(invalid_sscc_list)}"
@@ -929,21 +923,21 @@ def scanned(payload, client):
             ):
                 is_picked_all = False
 
-    # If found over picked items
-    if over_picked_items:
-        logger.error(
-            f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
-        )
-        message = f"There are over picked items: {', '.join(over_picked_items)}"
-        raise ValidationError(message)
-
-    # Hunter order should be scanned fully always(at first scan)
-    if fp_name == "hunter" and not is_picked_all:
-        logger.error(
-            f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
-        )
-        message = f"Hunter Order should be fully picked."
-        raise ValidationError(message)
+    # # If found over picked items
+    # if over_picked_items:
+    #     logger.error(
+    #         f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
+    #     )
+    #     message = f"There are over picked items: {', '.join(over_picked_items)}"
+    #     raise ValidationError(message)
+    #
+    # # Hunter order should be scanned fully always(at first scan)
+    # if fp_name == "hunter" and not is_picked_all:
+    #     logger.error(
+    #         f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
+    #     )
+    #     message = f"Hunter Order should be fully picked."
+    #     raise ValidationError(message)
 
     # Save
     try:
@@ -1099,7 +1093,7 @@ def scanned(payload, client):
                     set_booking_quote(booking, None)
 
         # If Hunter Order?
-        if fp_name == "hunter" and booking.b_status != "Picking":
+        if is_picked_all and booking.b_status != "Picking":
             logger.info(
                 f"#373 {LOG_ID} - HUNTER order is already booked. Booking Id: {booking.b_bookingID_Visual}, status: {booking.b_status}"
             )
@@ -1114,7 +1108,7 @@ def scanned(payload, client):
                 ),
                 "labels": [],
             }
-        elif fp_name == "hunter" and booking.b_status == "Picking":
+        elif is_picked_all and booking.b_status == "Picking":
             next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
             booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
             status_history.create(booking, "Ready for Booking", "jason_l")
@@ -1192,11 +1186,11 @@ def scanned(payload, client):
                 }
             )
 
-        if label_urls:
-            entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            pdf.pdf_merge(label_urls, entire_label_url)
-            booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
-            booking.save()
+        # if label_urls:
+        #     entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+        #     pdf.pdf_merge(label_urls, entire_label_url)
+        #     booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
+        #     booking.save()
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
