@@ -783,7 +783,9 @@ def scanned(payload, client):
     fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-    original_items = lines.filter(sscc__isnull=True)
+    original_items = lines.filter(
+        sscc__isnull=True, packed_status=Booking_lines.ORIGINAL
+    )
     scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
     repacked_items_count = lines.filter(
         sscc__isnull=False, e_item="Repacked Item"
@@ -798,12 +800,16 @@ def scanned(payload, client):
     logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
 
-    # Delete exisint ssccs(for scanned ones)
+    # Delete existing ssccs(for scanned ones)
     picked_ssccs = []
     for picked_item in picked_items:
         picked_ssccs.append(picked_item["sscc"])
     if picked_ssccs:
         Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
+
+    # Get scanned items again for sequence of label
+    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
 
     # Validation
     invalid_model_numbers = []
@@ -1155,9 +1161,9 @@ def scanned(payload, client):
                 booking=booking,
                 file_path=file_path,
                 lines=sscc_lines[sscc],
-                label_index=index,
+                label_index=scanned_items + index,
                 sscc=sscc,
-                sscc_cnt=len(sscc_list),
+                sscc_cnt=original_items.count(),
                 one_page_label=True,
             )
 
