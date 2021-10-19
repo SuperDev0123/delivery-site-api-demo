@@ -687,7 +687,7 @@ def push_boks(payload, client, username, method):
             bok_1_obj.save()
             fc_log.new_quote = best_quotes[0]
             fc_log.save()
-    elif bok_1["b_client_order_num"]:
+    elif bok_1.get("b_client_order_num"):
         message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
         logger.error(message)
         send_email_to_admins("No FC result", message)
