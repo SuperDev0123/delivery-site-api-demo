@@ -1161,7 +1161,7 @@ def scanned(payload, client):
                 booking=booking,
                 file_path=file_path,
                 lines=sscc_lines[sscc],
-                label_index=scanned_items + index,
+                label_index=scanned_items.count() + index,
                 sscc=sscc,
                 sscc_cnt=original_items.count(),
                 one_page_label=True,
