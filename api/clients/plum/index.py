@@ -739,7 +739,7 @@ def push_boks(payload, client, username, method):
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8839 {LOG_ID} {message}")
-        return message
+        return {"success": True, "results": [], "message": message}
 
 
 def scanned(payload, client):
