@@ -223,7 +223,7 @@ def get_zoho_tickets_with_booking_id(request):
             }
         )
     else:
-        final_ticket = {"status": "success", "tickets": tickets}
+        final_ticket = {"status": "failed", "tickets": []}
         return JsonResponse(final_ticket)
 
 
