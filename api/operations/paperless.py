@@ -243,8 +243,8 @@ def send_order_info(bok_1):
         return True
 
     # Turn on/off this feature - `send order to ACR`
-    # if settings.ENV == "prod":
-    #     return True
+    if settings.ENV == "prod":
+        return True
 
     try:
         headers = {
