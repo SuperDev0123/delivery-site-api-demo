@@ -32,7 +32,6 @@ def post_save_handler(instance, created, update_fields):
     LOG_ID = "[LINE POST SAVE]"
 
     if intersection(IMPORTANT_FIELDS, update_fields or []) or created:
-        logger.info(f"{LOG_ID} Created new or updated important field.")
         booking = instance.booking()
 
         if not booking:
@@ -45,6 +44,7 @@ def post_save_handler(instance, created, update_fields):
         ):
             return
 
+        logger.info(f"{LOG_ID} Created new or updated important field.")
         packed_status = instance.packed_status
         if (
             booking.api_booking_quote
