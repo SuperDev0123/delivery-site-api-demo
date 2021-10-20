@@ -38,6 +38,13 @@ def post_save_handler(instance, created, update_fields):
         if not booking:
             return
 
+        # Ignore when plum scans
+        if (
+            booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+            and instance.packed_status == Booking_lines.SCANNED_PACK
+        ):
+            return
+
         packed_status = instance.packed_status
         if (
             booking.api_booking_quote
