@@ -243,11 +243,11 @@ def send_order_info(bok_1):
         return True
 
     # Turn on/off this feature - `send order to ACR`
-    if settings.ENV == "prod":
-        logger.info(
-            f"{LOG_ID} 'Send Order to ACR' is temporaily disabled - {bok_1.b_client_order_num}"
-        )
-        return True
+    # if settings.ENV == "prod":
+    #     logger.info(
+    #         f"{LOG_ID} 'Send Order to ACR' is temporaily disabled - {bok_1.b_client_order_num}"
+    #     )
+    #     return True
 
     try:
         headers = {
