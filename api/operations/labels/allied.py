@@ -387,7 +387,7 @@ def build_label(
                     ),
                     Paragraph(
                         "<font size=%s>Package: %s of %s</font>"
-                        % (label_settings["font_size_medium"], j, totalQty),
+                        % (label_settings["font_size_medium"], j, sscc_cnt),
                         style_left,
                     ),
                 ],

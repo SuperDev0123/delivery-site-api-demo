@@ -618,7 +618,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
                 [
                     Paragraph(
                         "<font size=%s>%s of %s</font>"
-                        % (label_settings["font_size_small"], j, totalQty),
+                        % (label_settings["font_size_small"], j, sscc_cnt),
                         style_center,
                     )
                 ]

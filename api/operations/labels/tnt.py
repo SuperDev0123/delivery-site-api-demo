@@ -439,7 +439,7 @@ def build_label(
                     ),
                     Paragraph(
                         "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
-                        % (9, j, totalQty),
+                        % (9, j, sscc_cnt),
                         style_left,
                     ),
                     Paragraph(
@@ -857,7 +857,7 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>%s &#160 of &#160 %s</b></font>"
-                        % (label_settings["font_size_normal"], j, totalQty),
+                        % (label_settings["font_size_normal"], j, sscc_cnt),
                         style_left,
                     )
                 ],
