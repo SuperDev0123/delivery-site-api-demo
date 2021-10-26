@@ -1192,7 +1192,7 @@ def scanned(payload, client):
                 {
                     "sscc": sscc,
                     "label": zpl_data,
-                    "barcode": get_barcode(booking, [new_line]),
+                    "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
                 }
             )
 
