@@ -341,7 +341,7 @@ def build_label(booking):
                     [
                         Paragraph(
                             "<font size=%s><b>Item:&nbsp;%s of %s</b></font>"
-                            % (label_settings["font_size_small"], j, totalQty),
+                            % (label_settings["font_size_small"], j, sscc_cnt),
                             style_left,
                         )
                     ],

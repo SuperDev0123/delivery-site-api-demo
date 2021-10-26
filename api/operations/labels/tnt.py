@@ -70,10 +70,10 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 
-def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
+def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     TT = 11
     CCCCCC = "132214"  # DME
-    item_index = str(label_index + line_index + 1).zfill(3)
+    item_index = str(line_index).zfill(3)
     postal_code = str(booking.de_To_Address_PostalCode)
 
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
@@ -1056,7 +1056,7 @@ def build_label(
 
             Story.append(shell_table)
 
-            barcode = gen_barcode(booking, lines, j - 1, label_index)
+            barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
             tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=25 * mm)]]
 

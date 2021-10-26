@@ -74,12 +74,12 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 
-def gen_barcode(booking, booking_lines, j=0, label_index=0):
+def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     consignment_num = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual, booking.kf_client_id
     )
-    item_index = str(label_index + j + 1).zfill(3)
-    items_count = str(len(booking_lines)).zfill(3)
+    item_index = str(line_index).zfill(3)
+    items_count = str(sscc_cnt).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
@@ -260,8 +260,7 @@ def build_label(
             totalCubic = totalCubic + line.e_1_Total_dimCubicMeter
 
     if sscc:
-        j = label_index
-        totalQty = sscc_cnt
+        j = 1 + label_index
 
     for line in lines:
         for k in range(line.e_qty):
@@ -419,7 +418,7 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>%s of %s</b></font>"
-                        % (label_settings["font_size_large"], j + 1, totalQty),
+                        % (label_settings["font_size_large"], j, sscc_cnt),
                         style_left,
                     )
                 ],
@@ -548,7 +547,7 @@ def build_label(
                 ],
             )
 
-            barcode = gen_barcode(booking, lines, j, label_index)
+            barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
             d = Drawing(100, 100)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
@@ -714,7 +713,7 @@ def build_label(
                         "<font size=%s>Other Reference: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            line.sscc if line.sscc else "",
+                            line.sscc or "",
                         ),
                         style_left,
                     ),
