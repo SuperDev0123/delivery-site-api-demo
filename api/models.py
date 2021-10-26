@@ -4903,6 +4903,9 @@ class FPRouting(models.Model):
     """
 
     id = models.AutoField(primary_key=True)
+    freight_provider = models.ForeignKey(
+        Fp_freight_providers, on_delete=models.CASCADE, default=None, null=True
+    )
     suburb = models.CharField(max_length=45, default=None, null=True)
     state = models.CharField(max_length=45, default=None, null=True)
     dest_postcode = models.CharField(max_length=45, default=None, null=True)
