@@ -1388,7 +1388,10 @@ def reprint_label(params, client):
         filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.sscc)}.pdf"
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
     else:  # Order Label
-        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+        if "http" in booking.z_label_url:
+            label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+        else:
+            label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower}_au/{booking.b_bookingID_Visual}.pdf"
 
     # Convert label into ZPL format
     logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
