@@ -714,7 +714,7 @@ def build_label(
                         "<font size=%s>Other Reference: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            line.sscc if line.sscc else "",
+                            line.sscc or "",
                         ),
                         style_left,
                     ),

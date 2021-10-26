@@ -1168,7 +1168,7 @@ def scanned(payload, client):
                 label_index=scanned_items.count() + index,
                 sscc=sscc,
                 sscc_cnt=item_cnt,
-                one_page_label=True,
+                one_page_label=False,
             )
 
             # Convert label into ZPL format
