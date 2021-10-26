@@ -261,7 +261,6 @@ def build_label(
 
     if sscc:
         j = label_index
-        totalQty = sscc_cnt
 
     for line in lines:
         for k in range(line.e_qty):

@@ -250,7 +250,6 @@ def build_label(
 
     if sscc:
         j = 1 + label_index
-        totalQty = sscc_cnt
 
     for booking_line in lines:
         for j_index in range(booking_line.e_qty):
