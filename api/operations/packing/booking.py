@@ -1,7 +1,6 @@
 import uuid
 import logging
 
-from django.db import transaction
 from django.db.models import Q
 
 from api.models import (

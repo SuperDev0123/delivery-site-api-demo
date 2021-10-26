@@ -2836,7 +2836,7 @@ class BookingViewSet(viewsets.ViewSet):
         # logger.info(f"@200 {LOG_ID}, BookingPk: {pk}, Repack Status: {repack_status}")
 
         try:
-            booking = Bookings.objects.get(pk=pk)
+            booking = self.get_object()
 
             if repack_status and repack_status[0] == "-":
                 booking_reset_repack(booking, repack_status[1:])
@@ -4041,9 +4041,9 @@ def download(request):
                 booking.save()
     elif download_option == "logs":
         mode = body["mode"]
-        
+
         if mode == 0:
-            file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", 'debug.log'))
+            file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", "debug.log"))
         else:
             count = 10 if mode == 1 else 50
             for i in range(count):

@@ -2942,6 +2942,12 @@ class BOK_1_headers(models.Model):
     zb_144_date_4 = models.DateField(default=date.today, blank=True, null=True)
     zb_145_date_5 = models.DateField(default=date.today, blank=True, null=True)
 
+    def bok_2s(self):
+        return BOK_2_lines.objects.filter(fk_header_id=self.pk_header_id)
+
+    def bok_3s(self):
+        return BOK_3_lines_data.objects.filter(fk_header_id=self.pk_header_id)
+
     def save(self, *args, **kwargs):
         if self._state.adding:
             from api.signal_handlers.bok_1 import on_create_bok_1_handler
@@ -2978,6 +2984,15 @@ class BOK_1_headers(models.Model):
 
 
 class BOK_2_lines(models.Model):
+    ORIGINAL = "original"
+    AUTO_PACK = "auto"
+    MANUAL_PACK = "manual"
+    PACKED_STATUS_CHOICES = (
+        (ORIGINAL, "original"),
+        (AUTO_PACK, "auto"),
+        (MANUAL_PACK, "manual"),
+    )
+
     pk_lines_id = models.AutoField(primary_key=True)
     success = models.CharField(
         verbose_name=_("Success"), max_length=1, default=0, blank=True, null=True
@@ -3056,6 +3071,9 @@ class BOK_2_lines(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     is_deleted = models.BooleanField(default=False, null=True)
+    b_093_packed_status = models.CharField(
+        max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

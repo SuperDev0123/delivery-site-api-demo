@@ -75,12 +75,12 @@ urlpatterns += [
         r"^password_reset/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
-    # Uploads
+    # File Uploads
     url(r"^upload/", FileUploadView.as_view()),
     url(r"^upload/status/", get_upload_status),
-    # Downloads
+    # File Downloads
     url(r"^download/", download),
-    # Delete
+    # File Delete
     url(r"^delete-file/", delete_file),
     # Build & download
     url(r"^get-csv/", get_csv),  # build & download CSV
@@ -91,7 +91,6 @@ urlpatterns += [
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
-    url(r"^boks/auto_repack/", auto_repack),
     url(r"^reprint_label/", reprint_label),
     url(r"^manifest/", manifest_boks),
     # BOK apis
@@ -130,5 +129,5 @@ urlpatterns += [
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
     # DE Status
     url(r"^get_delivery_status/", get_delivery_status),
-    url(r"^logs/", get_logs)
+    url(r"^logs/", get_logs),
 ]
