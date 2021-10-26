@@ -201,6 +201,7 @@ def build_label(
     This should appear in section 3 of the routing label preceded by “Ex “.
     """
     crecords = FPRouting.objects.filter(
+        freight_provider="TNT",
         suburb=booking.de_To_Address_Suburb,
         dest_postcode=booking.de_To_Address_PostalCode,
         state=booking.de_To_Address_State,
@@ -211,6 +212,7 @@ def build_label(
     if crecords.exists():
         drecord = (
             FPRouting.objects.filter(
+                freight_provider="TNT",
                 orig_postcode=booking.de_To_Address_PostalCode,
                 routing_group=routing_group,
                 orig_depot__isnull=False,

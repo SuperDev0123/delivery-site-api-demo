@@ -225,15 +225,15 @@ def build_label(
     de_state = booking.de_To_Address_State
 
     fp_routing = FPRouting.objects.filter(
-        suburb=de_suburb, dest_postcode=de_postcode, state=de_state
+        freight_provider="Hunter", suburb=de_suburb, dest_postcode=de_postcode, state=de_state
     )
-    if fp_routing and fp_routing[0].orig_depot:
-        head_port = fp_routing[0].orig_depot
+    if fp_routing and fp_routing[0].gateway:
+        head_port = fp_routing[0].gateway
     else:
         head_port = ""
 
-    if fp_routing and fp_routing[0].gateway:
-        port_code = fp_routing[0].gateway
+    if fp_routing and fp_routing[0].onfwd:
+        port_code = fp_routing[0].onfwd
     else:
         port_code = ""
 
