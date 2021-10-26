@@ -4041,9 +4041,9 @@ def download(request):
                 booking.save()
     elif download_option == "logs":
         mode = body["mode"]
-        
+
         if mode == 0:
-            file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", 'debug.log'))
+            file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", "debug.log"))
         else:
             count = 10 if mode == 1 else 50
             for i in range(count):
@@ -4385,7 +4385,7 @@ def build_label(request):
                 label_index=index,
                 sscc=sscc,
                 sscc_cnt=len(sscc_list),
-                one_page_label=True,
+                one_page_label=False,
             )
             label_urls.append(f"{file_path}/{file_name}")
 
