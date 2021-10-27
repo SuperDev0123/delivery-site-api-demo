@@ -235,7 +235,7 @@ def build_label(
     if not head_port or not port_code:
         message = f"No port_code for Hunter label.\n\n"
         message += f"Booking ID: {booking.b_bookingID_Visual}\nOrder Num: {booking.b_client_order_num}\n"
-        message += f"State: {de_state}\nPostal Code: {booking.de_postcode}\nSuburb: {de_suburb}"
+        message += f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
         send_email_to_admins("Failed to build Hunter label", message)
         raise Exception(message)
 
