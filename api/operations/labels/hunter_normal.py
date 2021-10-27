@@ -46,6 +46,7 @@ from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines, FPRouting, Fp_freight_providers
+from api.operations.email_senders import send_email_to_admins
 
 from api.fp_apis.utils import gen_consignment_num
 
@@ -224,18 +225,19 @@ def build_label(
     de_postcode = booking.de_To_Address_PostalCode
     de_state = booking.de_To_Address_State
 
-    fp_routing = FPRouting.objects.filter(
+    # head_port and port_code
+    fp_routings = FPRouting.objects.filter(
         freight_provider=13, suburb=de_suburb, dest_postcode=de_postcode, state=de_state
     )
-    if fp_routing and fp_routing[0].gateway:
-        head_port = fp_routing[0].gateway
-    else:
-        head_port = ""
+    head_port = fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
+    port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
 
-    if fp_routing and fp_routing[0].onfwd:
-        port_code = fp_routing[0].onfwd
-    else:
-        port_code = ""
+    if not head_port or not port_code:
+        message = f"No port_code for Hunter label.\n\n"
+        message += f"Booking ID: {booking.b_bookingID_Visual}\nOrder Num: {booking.b_client_order_num}\n"
+        message += f"State: {de_state}\nPostal Code: {booking.de_postcode}\nSuburb: {de_suburb}"
+        send_email_to_admins("Failed to build Hunter label", message)
+        raise Exception(message)
 
     j = 1
 
