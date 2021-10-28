@@ -123,7 +123,9 @@ def pricing(
     # Set is_used flag for existing old pricings
     if booking.pk_booking_id:
         API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id, packed_status__in=[packed_statuses]
+            fk_booking_id=booking.pk_booking_id,
+            is_used=False,
+            packed_status__in=packed_statuses,
         ).update(is_used=True)
 
     if not booking_lines:
