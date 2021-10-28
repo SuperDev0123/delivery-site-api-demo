@@ -6,7 +6,8 @@ from django.conf import settings
 
 from api.outputs.soap import send_soap_request
 from api.outputs.email import send_email
-from api.models import BOK_1_headers, BOK_2_lines, Log
+from api.models import BOK_1_headers, BOK_2_lines, Log, FPRouting
+from api.operations.email_senders import send_email_to_admins
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +237,30 @@ def parse_xml(is_success_xml, xml_str):
     return json_res
 
 
+def _check_port_code(bok_1):
+    logger.info("[PAPERLESS] Checking port_code...")
+    de_suburb = bok_1.b_032_b_pu_address_suburb
+    de_postcode = bok_1.b_033_b_pu_address_postalcode
+    de_state = bok_1.b_031_b_pu_address_state
+
+    # head_port and port_code
+    fp_routings = FPRouting.objects.filter(
+        freight_provider=13, suburb=de_suburb, dest_postcode=de_postcode, state=de_state
+    )
+    head_port = fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
+    port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
+
+    if not head_port or not port_code:
+        message = f"No port_code.\n\n"
+        message += f"Order Num: {bok_1.b_client_order_num}\n"
+        message += f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
+        logger.error(f"[PAPERLESS] {message}")
+        send_email_to_admins("Failed to send order to ACR due to port_code", message)
+        raise Exception(message)
+
+    logger.info("[PAPERLESS] `port_code` is fine")
+
+
 def send_order_info(bok_1):
     LOG_ID = "[PAPERLESS]"
 
@@ -248,6 +273,8 @@ def send_order_info(bok_1):
     #         f"{LOG_ID} 'Send Order to ACR' is temporaily disabled - {bok_1.b_client_order_num}"
     #     )
     #     return True
+
+    _check_port_code(bok_1)
 
     try:
         headers = {
@@ -303,8 +330,8 @@ def send_order_info(bok_1):
 
         log.response = json.dumps(json_res, indent=4)
         log.save()
-        logger.error(
-            f"@9009 - {LOG_ID} send_order_info() result: {json.dumps(json_res, indent=4)}"
+        logger.info(
+            f"@9009 - {LOG_ID} send_order_info()\nresult: {json.dumps(json_res, indent=4)}"
         )
         return json_res
     except Exception as e:
