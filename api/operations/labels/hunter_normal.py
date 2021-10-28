@@ -219,8 +219,6 @@ def build_label(
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
-    Story = []
-
     de_suburb = booking.de_To_Address_Suburb
     de_postcode = booking.de_To_Address_PostalCode
     de_state = booking.de_To_Address_State
@@ -264,6 +262,7 @@ def build_label(
     if sscc:
         j = 1 + label_index
 
+    Story = []
     for line in lines:
         for k in range(line.e_qty):
             if one_page_label and k > 0:
@@ -482,25 +481,25 @@ def build_label(
                         style_left,
                     ),
                 ],
-                [
-                    Paragraph(
-                        "<font size=%s>Cubic: %s M<super rise=4 size=4>3</super></font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            (line.e_1_Total_dimCubicMeter)
-                            if (line.e_1_Total_dimCubicMeter)
-                            else "",
-                        ),
-                        style_left,
-                    )
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s>Total Cubic: %s M<super rise=4 size=4>3</super></font>"
-                        % (label_settings["font_size_medium"], totalCubic),
-                        style_left,
-                    )
-                ],
+                # [
+                #     Paragraph(
+                #         "<font size=%s>Cubic: %s M<super rise=4 size=4>3</super></font>"
+                #         % (
+                #             label_settings["font_size_medium"],
+                #             (line.e_1_Total_dimCubicMeter)
+                #             if (line.e_1_Total_dimCubicMeter)
+                #             else "",
+                #         ),
+                #         style_left,
+                #     )
+                # ],
+                # [
+                #     Paragraph(
+                #         "<font size=%s>Total Cubic: %s M<super rise=4 size=4>3</super></font>"
+                #         % (label_settings["font_size_medium"], totalCubic),
+                #         style_left,
+                #     )
+                # ],
                 [
                     Paragraph(
                         "<font size=%s>Total Dead: %s kg</font>"
