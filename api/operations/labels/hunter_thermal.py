@@ -61,12 +61,12 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 
-def gen_barcode(booking, booking_lines, line_index=0, label_index=0):
+def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     consignment_num = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
+        booking.vx_freight_provider, booking.b_bookingID_Visual, booking.kf_client_id
     )
-    item_index = str(label_index + line_index + 1).zfill(3)
-    items_count = str(len(booking_lines)).zfill(3)
+    item_index = str(line_index).zfill(3)
+    items_count = str(sscc_cnt).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
@@ -198,7 +198,6 @@ def build_label(
 
     if sscc:
         j = 1 + label_index
-        totalQty = sscc_cnt
 
     for line in lines:
         for k in range(line.e_qty):
@@ -335,7 +334,10 @@ def build_label(
             port_code = ""
 
             fp_routing = FPRouting.objects.filter(
-                suburb=de_suburb, dest_postcode=de_postcode, state=de_state
+                freight_provider=13,
+                suburb=de_suburb,
+                dest_postcode=de_postcode,
+                state=de_state,
             )
             if fp_routing:
                 head_port = fp_routing[0].orig_depot
@@ -448,7 +450,7 @@ def build_label(
 
             Story.append(shell_table)
 
-            barcode = gen_barcode(booking, lines, j, label_index)
+            barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
             tbl_data = [
                 [

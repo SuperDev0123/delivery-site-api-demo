@@ -1168,7 +1168,7 @@ def scanned(payload, client):
                 label_index=scanned_items.count() + index,
                 sscc=sscc,
                 sscc_cnt=item_cnt,
-                one_page_label=True,
+                one_page_label=False,
             )
 
             # Convert label into ZPL format
@@ -1192,7 +1192,7 @@ def scanned(payload, client):
                 {
                     "sscc": sscc,
                     "label": zpl_data,
-                    "barcode": get_barcode(booking, [new_line]),
+                    "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
                 }
             )
 
@@ -1388,7 +1388,10 @@ def reprint_label(params, client):
         filename = f"{booking.pu_Address_State}_{str(booking.b_bookingID_Visual)}_{str(sscc_line.sscc)}.pdf"
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
     else:  # Order Label
-        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+        if not "http" in booking.z_label_url:
+            label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
+        else:
+            label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
 
     # Convert label into ZPL format
     logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")

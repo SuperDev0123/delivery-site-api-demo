@@ -805,7 +805,11 @@ def send_email_to_admins(subject, message):
 
     if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
         if settings.ENV in ["prod"]:
-            to_emails = ["bookings@deliver-me.com.au", "stephenm@deliver-me.com.au"]
+            to_emails = [
+                "care@deliver-me.com.au",
+                "bookings@deliver-me.com.au",
+                "stephenm@deliver-me.com.au",
+            ]
         else:
             subject = f"FROM TEST SERVER - {subject}"
             to_emails = ["goldj@deliver-me.com.au"]
