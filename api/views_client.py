@@ -55,6 +55,7 @@ from api.operations.pronto_xi.index import (
     update_note as update_pronto_note,
 )
 from api.clients.jason_l.constants import SERVICE_GROUP_CODES
+from api.operations.paperless import send_order_info
 
 
 logger = logging.getLogger(__name__)
@@ -271,17 +272,6 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
             bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
-            for bok_2 in bok_2s:
-                bok_2.success = dme_constants.BOK_SUCCESS_4
-                bok_2.save()
-
-            for bok_3 in bok_3s:
-                bok_3.success = dme_constants.BOK_SUCCESS_4
-                bok_3.save()
-
-            bok_1.success = dme_constants.BOK_SUCCESS_4
-            bok_1.save()
-
             if bok_1.quote:
                 bok_1.b_001_b_freight_provider = bok_1.quote.freight_provider
                 bok_1.b_003_b_service_name = bok_1.quote.service_name
@@ -289,10 +279,28 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.b_002_b_vehicle_type = (
                     bok_1.quote.vehicle.description if bok_1.quote.vehicle else None
                 )
+                send_order_info(bok_1)
                 bok_1.save()
 
-            logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
-            return Response({"success": True}, status.HTTP_200_OK)
+                for bok_2 in bok_2s:
+                    bok_2.success = dme_constants.BOK_SUCCESS_4
+                    bok_2.save()
+
+                for bok_3 in bok_3s:
+                    bok_3.success = dme_constants.BOK_SUCCESS_4
+                    bok_3.save()
+
+                bok_1.success = dme_constants.BOK_SUCCESS_4
+                bok_1.save()
+
+                logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
+                return Response({"success": True}, status.HTTP_200_OK)
+            else:
+                logger.error(f"@8430 [BOOK] BOK Failure with identifier: {identifier}")
+                return Response(
+                    {"success": False, "message": "Order doesn't have quote."},
+                    status.HTTP_400_BAD_REQUEST,
+                )
         except Exception as e:
             logger.error(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
             logger.error(f"@845 [BOOK] BOK Failure: {str(e)}")

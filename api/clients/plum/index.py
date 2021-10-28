@@ -260,16 +260,15 @@ def push_boks(payload, client, username, method):
     # Check required fields
     if is_biz:
         if not bok_1.get("shipping_type"):
-            message = "'shipping_type' is required."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
-        elif len(bok_1.get("shipping_type")) != 4:
-            message = "'shipping_type' is not valid."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
-
+            message = "'shipping_type' is required. "
+        if len(bok_1.get("shipping_type")) != 4:
+            message = "'shipping_type' is not valid. "
         if not bok_1.get("b_client_order_num"):
-            message = "'b_client_order_num' is required."
+            message = "'b_client_order_num' is required. "
+        if not bok_1.get("b_055_b_del_address_street_1"):
+            message = "'Street 1' is required. "
+
+        if message:
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
     else:
@@ -279,62 +278,62 @@ def push_boks(payload, client, username, method):
             raise ValidationError(message)
 
     # Check if already pushed 'b_client_order_num', then return URL only
-    if method == "POST" and is_biz:
-        bok_1_obj = None
+    # if method == "POST" and is_biz:
+    #     bok_1_obj = None
 
-        if bok_1["b_client_order_num"][:2] != "Q_":
-            bok_1_obj = (
-                BOK_1_headers.objects.select_related("quote")
-                .filter(
-                    fk_client_id=client.dme_account_num,
-                    # b_client_order_num=bok_1["b_client_order_num"],
-                    b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
-                )
-                .first()
-            )
+    #     if bok_1["b_client_order_num"][:2] != "Q_":
+    #         bok_1_obj = (
+    #             BOK_1_headers.objects.select_related("quote")
+    #             .filter(
+    #                 fk_client_id=client.dme_account_num,
+    #                 # b_client_order_num=bok_1["b_client_order_num"],
+    #                 b_client_sales_inv_num=bok_1["b_client_sales_inv_num"],
+    #             )
+    #             .first()
+    #         )
 
-        if bok_1_obj and bok_1["b_client_sales_inv_num"]:
-            if not bok_1_obj.b_client_order_num:
-                bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
-                bok_1_obj.save()
+    #     if bok_1_obj and bok_1["b_client_sales_inv_num"]:
+    #         if not bok_1_obj.b_client_order_num:
+    #             bok_1_obj.b_client_order_num = bok_1["b_client_order_num"]
+    #             bok_1_obj.save()
 
-                # Just set the order
-                if (
-                    bok_1.get("shipping_type") == "DMEA"
-                    and bok_1_obj.success != dme_constants.BOK_SUCCESS_4
-                ):
-                    pk_header_id = bok_1_obj.pk_header_id
-                    bok_2_objs = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
-                    bok_3_objs = BOK_3_lines_data.objects.filter(
-                        fk_header_id=pk_header_id
-                    )
+    #             # Just set the order
+    #             if (
+    #                 bok_1.get("shipping_type") == "DMEA"
+    #                 and bok_1_obj.success != dme_constants.BOK_SUCCESS_4
+    #             ):
+    #                 pk_header_id = bok_1_obj.pk_header_id
+    #                 bok_2_objs = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
+    #                 bok_3_objs = BOK_3_lines_data.objects.filter(
+    #                     fk_header_id=pk_header_id
+    #                 )
 
-                    for bok_2_obj in bok_2_objs:
-                        bok_2_obj.success = dme_constants.BOK_SUCCESS_4
-                        bok_2_obj.save()
+    #                 for bok_2_obj in bok_2_objs:
+    #                     bok_2_obj.success = dme_constants.BOK_SUCCESS_4
+    #                     bok_2_obj.save()
 
-                    for bok_3_obj in bok_3_objs:
-                        bok_3_obj.success = dme_constants.BOK_SUCCESS_4
-                        bok_3_obj.save()
+    #                 for bok_3_obj in bok_3_objs:
+    #                     bok_3_obj.success = dme_constants.BOK_SUCCESS_4
+    #                     bok_3_obj.save()
 
-                    bok_1_obj.success = dme_constants.BOK_SUCCESS_4
-                    bok_1_obj.save()
+    #                 bok_1_obj.success = dme_constants.BOK_SUCCESS_4
+    #                 bok_1_obj.save()
 
-                    if bok_1_obj.quote:
-                        fp = bok_1_obj.quote.freight_provider
-                        bok_1_obj.b_001_b_freight_provider = fp
-                        service_name = bok_1_obj.quote.service_name
-                        bok_1_obj.b_003_b_service_name = service_name
-                        bok_1_obj.save()
+    #                 if bok_1_obj.quote:
+    #                     fp = bok_1_obj.quote.freight_provider
+    #                     bok_1_obj.b_001_b_freight_provider = fp
+    #                     service_name = bok_1_obj.quote.service_name
+    #                     bok_1_obj.b_003_b_service_name = service_name
+    #                     bok_1_obj.save()
 
-                    paperless.send_order_info(bok_1_obj)
+    #                 paperless.send_order_info(bok_1_obj)
 
-            if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
-                url = f"{settings.WEB_SITE_URL}/price/{bok_1_obj.client_booking_id}/"
-            else:
-                url = f"{settings.WEB_SITE_URL}/status/{bok_1_obj.client_booking_id}/"
+    #         if int(bok_1_obj.success) == int(dme_constants.BOK_SUCCESS_3):
+    #             url = f"{settings.WEB_SITE_URL}/price/{bok_1_obj.client_booking_id}/"
+    #         else:
+    #             url = f"{settings.WEB_SITE_URL}/status/{bok_1_obj.client_booking_id}/"
 
-            return {"success": True, "results": [], "pricePageUrl": url}
+    #         return {"success": True, "results": [], "pricePageUrl": url}
 
     # "Detect modified data" and "delete existing boks" if request method is PUT
     if method == "PUT":
@@ -390,11 +389,17 @@ def push_boks(payload, client, username, method):
                 fk_client_id=client.dme_account_num,
                 b_client_order_num=bok_1["b_client_order_num"],
             )
+
             if bok_1s.exists():
+                old_bok_1 = bok_1s.first()
+
                 # If "sales quote" request, then clear all existing information
-                if bok_1["b_client_order_num"][:2] == "Q_":
+                # If `success` code is 1 or 4, then ignore push
+                if (
+                    bok_1["b_client_order_num"][:2] == "Q_"
+                    or int(old_bok_1.success) == 3
+                ):
                     pk_header_id = bok_1s.first().pk_header_id
-                    old_bok_1 = bok_1s.first()
                     old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                     old_bok_3s = BOK_3_lines_data.objects.filter(
                         fk_header_id=pk_header_id
@@ -404,15 +409,16 @@ def push_boks(payload, client, username, method):
                     old_bok_3s.delete()
                     old_quote = old_bok_1.quote
                 else:
-                    message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
-
+                    message = (
+                        f"Order({bok_1['b_client_order_num']}) is already sent to ACR."
+                    )
         elif is_web:
             bok_1s = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 client_booking_id=bok_1["client_booking_id"],
             )
             if bok_1s.exists():
-                message = f"BOKS API Error - Order(client_booking_id={bok_1['client_booking_id']}) does already exist."
+                message = f"Order({bok_1['client_booking_id']}) is already sent to ACR."
 
     if message:
         logger.info(f"@884 {LOG_ID} {message}")
@@ -430,11 +436,7 @@ def push_boks(payload, client, username, method):
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["b_clientPU_Warehouse"] = warehouse.name
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
-
-        if bok_1.get("shipping_type") == "DMEA":
-            bok_1["success"] = dme_constants.BOK_SUCCESS_4
-        else:
-            bok_1["success"] = dme_constants.BOK_SUCCESS_3
+        bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
         if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
             bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
@@ -722,15 +724,21 @@ def push_boks(payload, client, username, method):
             if bok_1.get("shipping_type") == "DMEA":  # Direct push from Sapb1
                 paperless.send_order_info(bok_1_obj)
 
-            result = {"success": True, "results": json_results}
-            url = None
+                bok_1_obj.success = dme_constants.BOK_SUCCESS_4
+                bok_1_obj.save()
+                BOK_2_lines.objects.filter(fk_header_id=bok_1_obj.pk_header_id).update(
+                    success=dme_constants.BOK_SUCCESS_4
+                )
+                BOK_3_lines_data.objects.filter(
+                    fk_header_id=bok_1_obj.pk_header_id
+                ).update(success=dme_constants.BOK_SUCCESS_4)
 
-            if bok_1["success"] == dme_constants.BOK_SUCCESS_3:
+            if bok_1.get("shipping_type") == "DMEM":
                 url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
-            elif bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+            elif bok_1.get("shipping_type") == "DMEA":
                 url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
 
-            result["pricePageUrl"] = url
+            result = {"success": True, "results": json_results, "pricePageUrl": url}
             logger.info(f"@8837 {LOG_ID} success: True, 201_created")
             return result
         else:

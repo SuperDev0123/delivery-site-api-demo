@@ -265,6 +265,9 @@ def send_order_info(bok_1):
     LOG_ID = "[PAPERLESS]"
 
     if settings.ENV == "local":
+        logger.info(
+            f"{LOG_ID} 'Send Order to ACR' is skipped on LOCAL - {bok_1.b_client_order_num}"
+        )
         return True
 
     # Turn on/off this feature - `send order to ACR`
@@ -293,7 +296,7 @@ def send_order_info(bok_1):
         log.save()
 
         try:
-            logger.info(f"@9000 {LOG_ID} url - {url}")
+            # logger.info(f"@9000 {LOG_ID} url - {url}")
             body = build_xml_with_bok(bok_1, bok_2s)
             logger.info(f"@9000 {LOG_ID} payload body - {body}")
         except Exception as e:
@@ -330,9 +333,7 @@ def send_order_info(bok_1):
 
         log.response = json.dumps(json_res, indent=4)
         log.save()
-        logger.info(
-            f"@9009 - {LOG_ID} send_order_info()\nresult: {json.dumps(json_res, indent=4)}"
-        )
+        logger.info(f"@9009 - {LOG_ID}\nresult: {json.dumps(json_res, indent=4)}")
         return json_res
     except Exception as e:
         if bok_1.b_client_order_num:

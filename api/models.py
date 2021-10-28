@@ -2948,22 +2948,6 @@ class BOK_1_headers(models.Model):
 
             on_create_bok_1_handler(self)
 
-            if self.success == dme_constants.BOK_SUCCESS_4 and self.fk_client_id == 7:
-                from api.operations.paperless import send_order_info
-
-                send_order_info(self)
-        else:
-            old_obj = BOK_1_headers.objects.get(pk=self.pk)
-
-            if (
-                self.success != old_obj.success
-                and self.fk_client_id == 7
-                and self.success == dme_constants.BOK_SUCCESS_4
-            ):
-                from api.operations.paperless import send_order_info
-
-                send_order_info(self)
-
         return super(BOK_1_headers, self).save(*args, **kwargs)
 
     class Meta:
