@@ -687,7 +687,7 @@ def push_boks(payload, client, username, method):
         ).data
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
-        if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+        if bok_1.get("shipping_type") == "DMEA":
             best_quote = best_quotes[0]
             bok_1_obj.b_003_b_service_name = best_quote.service_name
             bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
