@@ -412,6 +412,11 @@ def push_boks(payload, client, username, method):
                     message = (
                         f"Order({bok_1['b_client_order_num']}) is already sent to ACR."
                     )
+                    logger.info(f"@884 {LOG_ID} {message}")
+                    url = (
+                        f"{settings.WEB_SITE_URL}/status/{old_bok_1.client_booking_id}/"
+                    )
+                    return {"success": True, "results": [], "pricePageUrl": url}
         elif is_web:
             bok_1s = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
