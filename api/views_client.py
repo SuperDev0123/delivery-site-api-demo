@@ -1118,3 +1118,54 @@ def get_delivery_status(request):
             "scans": [],
         }
     )
+
+
+@api_view(["GET"])
+def find_a_booking(request):
+    LOG_ID = "[FIND BOOKING]"
+    client_pk = request.GET.get("clientPK")
+    order_number = request.GET.get("orderNumber")
+    client = DME_clients.objects.get(pk=client_pk)
+
+    logger.info(f"{LOG_ID} Client: {client}, Order number: {order_number}")
+
+    # 1. Try to find from dme_bookings table
+    booking = Bookings.objects.filter(
+        b_client_order_num=order_number, kf_client_id=client.dme_account_num
+    ).first()
+
+    if booking:
+        logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
+        return Response(
+            {
+                "status": True,
+                "statusPageUrl": f"{settings.WEB_SITE_URL}/status/{booking.b_client_booking_ref_num}/",
+                "pricePageUrl": f"{settings.WEB_SITE_URL}/price/{booking.b_client_booking_ref_num}/",
+            }
+        )
+
+    # 2. Try to find from bok_1 table
+    bok_1 = BOK_1_headers.objects.filter(
+        b_client_order_num=order_number, fk_client_id=client.dme_account_num
+    ).first()
+
+    if bok_1:
+        return Response(
+            {
+                "status": True,
+                "statusPageUrl": f"{settings.WEB_SITE_URL}/status/{bok_1.client_booking_id}/"
+                if bok_1.success in [1, 4]
+                else "",
+                "pricePageUrl": f"{settings.WEB_SITE_URL}/price/{bok_1.client_booking_id}/",
+            }
+        )
+
+    logger.info(f"{LOG_ID} Order({order_number}) does not exist.")
+    return Response(
+        {
+            "status": False,
+            "statusPageUrl": "",
+            "pricePageUrl": "",
+            "message": f"Order({order_number}) does not exist.",
+        }
+    )

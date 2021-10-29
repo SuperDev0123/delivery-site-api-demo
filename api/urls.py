@@ -128,7 +128,9 @@ urlpatterns += [
     url(r"^send_zoho_ticket_reply/", send_zoho_ticket_reply),
     url(r"^get_zoho_departments/", get_zoho_departments),
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
-    # DE Status
+    # Client apis
     url(r"^get_delivery_status/", get_delivery_status),
-    url(r"^logs/", get_logs)
+    url(r"^find-a-booking/", find_a_booking),
+    # Logs for debugging
+    url(r"^logs/", get_logs),
 ]
