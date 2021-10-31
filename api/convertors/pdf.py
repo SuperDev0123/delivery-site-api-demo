@@ -50,7 +50,7 @@ def pdf_to_zpl(pdf_path, zpl_path):
             return True
     except Exception as e:
         trace_error.print()
-        error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
+        error_msg = f"@301 Error on pdf_to_zpl(): {str(e)}"
         send_email_to_admins("PDF covertion error", error_msg)
         return False
 
@@ -80,3 +80,27 @@ def pdf_merge(input_files, output_file_url):
             f.close()
 
         output_stream.close()
+
+
+def rotate_pdf(input_path):
+    try:
+        pdf_in = open(input_path, "rb")
+        pdf_reader = PdfFileReader(pdf_in)
+        pdf_writer = PdfFileWriter()
+
+        for pagenum in range(pdf_reader.numPages):
+            page = pdf_reader.getPage(pagenum)
+            page.rotateClockwise(90)
+            pdf_writer.addPage(page)
+
+        output_path = input_path[:-4] + "_rotated.pdf"
+        pdf_out = open(output_path, "wb")
+        pdf_writer.write(pdf_out)
+        pdf_out.close()
+        pdf_in.close()
+        return output_path
+    except Exception as e:
+        trace_error.print()
+        error_msg = f"@301 Error on rotate_pdf(): {str(e)}"
+        send_email_to_admins("PDF rotation error", error_msg)
+        return False

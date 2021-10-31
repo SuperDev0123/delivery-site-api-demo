@@ -1190,6 +1190,11 @@ def scanned(payload, client):
             )
             label_url = f"{file_path}/{file_name}"
             label_urls.append(label_url)
+
+            # Plum ZPL printer requries portrait label
+            if booking.vx_freight_provider.lower() == "allied":
+                pdf.rotate_pdf(label_url)
+
             result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
             if not result:
@@ -1209,11 +1214,11 @@ def scanned(payload, client):
                 }
             )
 
-        # if label_urls:
-        #     entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-        #     pdf.pdf_merge(label_urls, entire_label_url)
-        #     booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
-        #     booking.save()
+        if label_urls:
+            entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+            pdf.pdf_merge(label_urls, entire_label_url)
+            booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
+            booking.save()
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
@@ -1405,6 +1410,10 @@ def reprint_label(params, client):
             label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
         else:
             label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
+
+    # Plum ZPL printer requries portrait label
+    if booking.vx_freight_provider.lower() == "allied":
+        pdf.rotate_pdf(label_url)
 
     # Convert label into ZPL format
     logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")

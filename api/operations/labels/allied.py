@@ -233,6 +233,7 @@ def build_label(
 
     if sscc:
         j = 1 + label_index
+        totalQty = sscc_cnt
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
@@ -285,7 +286,7 @@ def build_label(
             )
 
             Story.append(hr)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -294,14 +295,6 @@ def build_label(
                         % (
                             label_settings["font_size_medium"],
                             booking.puCompany or "",
-                        ),
-                        style_left,
-                    ),
-                    Paragraph(
-                        "<font size=%s>P/U Phone: %s</font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            booking.pu_Phone_Main or "",
                         ),
                         style_left,
                     ),
@@ -321,8 +314,7 @@ def build_label(
             shell_table = Table(
                 tbl_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm,
                     float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
                 ),
                 style=[
@@ -333,7 +325,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -365,7 +357,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -373,7 +365,7 @@ def build_label(
                         "<font size=%s>Contact: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_Contact_F_LName or "",
+                            booking.pu_Contact_F_L_Name or "",
                         ),
                         style_left,
                     ),
@@ -381,13 +373,13 @@ def build_label(
                         "<font size=%s>Phone: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_Phone_Main or "",
+                            booking.pu_Phone_Main or "",
                         ),
                         style_left,
                     ),
                     Paragraph(
                         "<font size=%s>Package: %s of %s</font>"
-                        % (label_settings["font_size_medium"], j, sscc_cnt),
+                        % (label_settings["font_size_medium"], j, totalQty),
                         style_left,
                     ),
                 ],
@@ -407,7 +399,7 @@ def build_label(
                 ],
             )
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -577,7 +569,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s>To: <b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.deToCompanyName or "",
                         ),
                         style_left,
@@ -597,7 +589,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             if (booking.de_to_Contact_F_LName or "").lower() != (
                 booking.deToCompanyName or ""
@@ -607,7 +599,7 @@ def build_label(
                         Paragraph(
                             "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
                             % (
-                                label_settings["line_height_extra_large"],
+                                label_settings["font_size_large"],
                                 booking.de_to_Contact_F_LName or "",
                                 booking.de_To_Address_Street_1 or "",
                                 booking.de_To_Address_Street_2 or "",
@@ -622,7 +614,7 @@ def build_label(
                         Paragraph(
                             "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
                             % (
-                                label_settings["line_height_extra_large"],
+                                label_settings["font_size_large"],
                                 booking.de_To_Address_Street_1 or "",
                                 booking.de_To_Address_Street_2 or "",
                             ),
@@ -643,14 +635,14 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
                     Paragraph(
                         "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.de_To_Address_State or "",
                         ),
                         style_left,
@@ -663,7 +655,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             carrier or "",
                         ),
                         style_left,
@@ -676,7 +668,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
@@ -707,7 +699,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.de_To_Address_Suburb,
                         ),
                         style_left,
@@ -731,7 +723,31 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 2))
+
+            tbl_data1 = [
+                [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        % (label_settings["font_size_large"], booking.de_to_Phone_Main),
+                        style_left,
+                    ),
+                ]
+            ]
+
+            shell_table = Table(
+                tbl_data1,
+                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+
+            Story.append(shell_table)
+            Story.append(Spacer(1, 3))
 
             tbl_data1 = [
                 [
@@ -758,7 +774,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -766,8 +782,8 @@ def build_label(
                         "<font size=%s>Instruction: %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_PickUp_Instructions_Address,
-                            booking.de_to_Pick_Up_Instructions_Contact,
+                            booking.de_to_PickUp_Instructions_Address or "",
+                            booking.de_to_Pick_Up_Instructions_Contact or "",
                         ),
                         style_left,
                     )
@@ -786,7 +802,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -834,7 +850,7 @@ def build_label(
             )
 
             Story.append(signature_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -880,7 +896,7 @@ def build_label(
             )
 
             Story.append(signature_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             hr = HRFlowable(
                 width=(float(label_settings["label_image_size_length"]) * mm),
@@ -893,7 +909,7 @@ def build_label(
                 dash=None,
             )
             Story.append(hr)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
