@@ -1457,8 +1457,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     s_20_Actual_Pickup_TimeStamp__range=(
                         convert_to_UTC_tz(first_date),
                         convert_to_UTC_tz(last_date),
-                    ),
-                    ~Q(b_status='Futile Pickup')
+                    )
                 )
             elif report_type == "box":
                 queryset = queryset.filter(

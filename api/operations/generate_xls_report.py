@@ -4,6 +4,7 @@ import logging
 import shutil
 import xlsxwriter as xlsxwriter
 from datetime import datetime
+from django.db.models import Q
 
 from django.conf import settings
 
@@ -2040,6 +2041,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        def is_futile(booking):
+            filter = (Q(fk_booking_id=booking.pk_booking_id) & (Q(status_last__icontains='futile') | Q(status_old__icontains='futile')))
+            filtered = Dme_status_history.objects.filter(filter)
+            if filtered:
+                return False
+            else: 
+                return True
+        bookings = [booking for booking in bookings if is_futile(booking)]
         logger.info(f"#321 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
