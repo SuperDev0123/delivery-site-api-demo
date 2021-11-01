@@ -170,6 +170,7 @@ class BOK_2_Serializer(serializers.ModelSerializer):
             "zbl_131_decimal_1",  # Sequence
             "zbl_102_text_2",  # ProductGroupCode
             "pallet_cubic_meter",
+            "b_093_packed_status",
         )
 
 
