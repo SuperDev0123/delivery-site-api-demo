@@ -28,7 +28,7 @@ from rest_framework.decorators import (
     action,
 )
 from api.serializers_client import *
-from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
+from api.serializers import SimpleQuoteSerializer, SurchargeSerializer, FPStatusHistorySerializer
 from api.models import *
 from api.common import (
     trace_error,
@@ -1169,3 +1169,32 @@ def find_a_booking(request):
             "message": f"Order({order_number}) does not exist.",
         }
     )
+
+class ScansViewSet(viewsets.ViewSet):
+    serializer_class = FPStatusHistorySerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["get"])
+    def get_scans_from_booking_id(self, request, pk=None):
+        booking_id = request.GET.get("bookingId")
+        try:
+            if not booking_id:
+                booking_id = Bookings.objects.all().order_by('-z_CreatedTimestamp')[0].id
+            fp_status_history = FP_status_history.objects.values('id', 'status', 'desc', 'event_timestamp').filter(booking_id=booking_id).order_by('-event_timestamp')
+            return Response(
+                {
+                    "scans": fp_status_history
+                },
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            logger.info(f"Get FP status history error: {str(e)}")
+            fp_status_history = []
+            return Response(
+                {
+                    "msg": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    
+
