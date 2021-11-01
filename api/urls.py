@@ -59,6 +59,7 @@ router.register(r"cost-option-map", CostOptionMapViewSet, basename="cost_option_
 router.register(
     r"booking-cost-option", BookingCostOptionViewSet, basename="booking_cost_option"
 )
+router.register(r"scans", ScansViewSet, basename="scans")
 router.register(r"fp_statuses", FpStatusesViewSet, basename="fp_statuses")
 
 
