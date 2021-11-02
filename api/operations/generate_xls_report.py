@@ -4,6 +4,7 @@ import logging
 import shutil
 import xlsxwriter as xlsxwriter
 from datetime import datetime
+from django.db.models import Q
 
 from django.conf import settings
 
@@ -2008,6 +2009,20 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         shutil.move(filename, local_filepath + filename)
         logger.info("#319 Finished - `Booked Bookings` XLS")
     elif xls_type == "picked_up_bookings":
+        # Exclude `Futile` bookings
+        pk_booking_ids = [booking.pk_booking_id for booking in bookings]
+        q_filter = Q(fk_booking_id__in=pk_booking_ids) & (
+            Q(status_last__icontains="futile") | Q(status_old__icontains="futile")
+        )
+        futile_pk_booking_ids = Dme_status_history.objects.filter(q_filter).values_list(
+            "fk_booking_id", flat=True
+        )
+        filtered_bookings = [
+            booking
+            for booking in bookings
+            if booking.pk_booking_id not in futile_pk_booking_ids
+        ]
+
         logger.info("#320 Get started to build `Picked Up Bookings` XLS")
         worksheet.set_column(0, 10, width=25)
 
@@ -2040,8 +2055,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
-        logger.info(f"#321 Total cnt: {len(bookings)}")
-        for booking_ind, booking in enumerate(bookings):
+        logger.info(f"#321 Total cnt: {len(filtered_bookings)}")
+        for booking_ind, booking in enumerate(filtered_bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
 
             if booking.s_20_Actual_Pickup_TimeStamp:

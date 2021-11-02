@@ -28,7 +28,11 @@ from rest_framework.decorators import (
     action,
 )
 from api.serializers_client import *
-from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
+from api.serializers import (
+    SimpleQuoteSerializer,
+    SurchargeSerializer,
+    FPStatusHistorySerializer,
+)
 from api.models import *
 from api.common import (
     trace_error,
@@ -45,17 +49,21 @@ from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharge
 from api.clients.plum import index as plum
 from api.clients.jason_l import index as jason_l
 from api.clients.jason_l.operations import (
-    do_quote as jasonL_do_quote,
     create_or_update_product as jasonL_create_or_update_product,
 )
 from api.clients.standard import index as standard
-from api.clients.operations.index import get_client, get_warehouse
+from api.clients.operations.index import get_client, get_warehouse, bok_quote
 from api.operations.pronto_xi.index import (
     send_info_back,
     update_note as update_pronto_note,
 )
 from api.clients.jason_l.constants import SERVICE_GROUP_CODES
 from api.operations.paperless import send_order_info
+from api.operations.packing.bok import (
+    reset_repack as bok_reset_repack,
+    auto_repack as bok_auto_repack,
+    manual_repack as bok_manual_repack,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +88,7 @@ class BOK_0_ViewSet(viewsets.ViewSet):
 
 
 class BOK_1_ViewSet(viewsets.ModelViewSet):
-    queryset = CostOption.objects.all()
+    queryset = BOK_1_headers.objects.all()
     serializer_class = BOK_1_Serializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -429,10 +437,13 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_2.l_008_weight_UOM = line.get("e_weightUOM")
                 bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
                 bok_2.v_client_pk_consigment_num = line.get("fk_header_id")
+                bok_2.b_093_packed_status = line.get("b_093_packed_status")
                 bok_2.save()
 
-            # Get quote again
-            jasonL_do_quote(bok_2.fk_header_id)
+                API_booking_quotes.objects.filter(
+                    fk_booking_id=line["fk_header_id"],
+                    packed_status=bok_2.b_093_packed_status,
+                ).update(is_used=True)
 
             return Response({"success": True}, status.HTTP_200_OK)
         except Exception as e:
@@ -475,8 +486,10 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_2.l_009_weight_per_each = line.get("e_weightPerEach")
                 bok_2.save()
 
-            # Get quote again
-            jasonL_do_quote(bok_2.fk_header_id)
+                API_booking_quotes.objects.filter(
+                    fk_booking_id=bok_2.fk_header_id,
+                    packed_status=bok_2.b_093_packed_status,
+                ).update(is_used=True)
 
             return Response({"success": True}, status.HTTP_200_OK)
         except Exception as e:
@@ -497,14 +510,45 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_2 = BOK_2_lines.objects.get(pk=line_id)
             bok_2.delete()
 
-            # Get quote again
-            jasonL_do_quote(bok_2.fk_header_id)
+            API_booking_quotes.objects.filter(
+                fk_booking_id=bok_2.fk_header_id,
+                packed_status=bok_2.b_093_packed_status,
+            ).update(is_used=True)
 
             return Response({"success": True}, status.HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
             return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
+    def repack(self, request, pk, format=None):
+        LOG_ID = "[BOK REPACK LINES]"
+        repack_status = request.data.get("repackStatus")
+        pallet_id = request.data.get("palletId")
+        bok_1 = self.get_object()
+        client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+        logger.info(
+            f"@200 {LOG_ID}, Bok pk: {pk}, Repack Status: {repack_status}, Client: {client}"
+        )
+
+        try:
+            if repack_status and repack_status[0] == "-":
+                bok_reset_repack(bok_1, repack_status[1:])
+            elif "quote-" in repack_status:
+                bok_quote(bok_1, repack_status[6:])
+            elif repack_status == "auto":
+                bok_auto_repack(bok_1, repack_status, pallet_id, client)
+                bok_quote(bok_1, repack_status)
+            else:
+                bok_manual_repack(bok_1, repack_status)
+                bok_quote(bok_1, repack_status)
+
+            return JsonResponse({"success": True})
+        except Exception as e:
+            trace_error.print()
+            logger.error(f"@204 {LOG_ID} Error: {str(e)}")
+            return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BOK_2_ViewSet(viewsets.ViewSet):
@@ -728,38 +772,6 @@ def manifest_boks(request):
 
         logger.info(f"#858 {LOG_ID} {result}")
         return Response(result)
-    except Exception as e:
-        logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
-        trace_error.print()
-        res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(["POST"])
-@permission_classes((AllowAny,))  # SECURITY WARNNING
-def auto_repack(request):
-    """
-    When User try to tick/untick auto_repack freight option on Pricing page
-    """
-    LOG_ID = "[AUTO REPACK]"
-    user = request.user
-    logger.info(f"@850 {LOG_ID} Requester: {user.username}")
-    logger.info(f"@851 {LOG_ID} Payload: {request.data}")
-
-    try:
-        # client = get_client(user)
-        # dme_account_num = client.dme_account_num
-
-        # if dme_account_num == "461162D2-90C7-BF4E-A905-000000000004":  # Plum
-        #     result = plum.ready_boks(payload=request.data, client=client)
-        # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
-        client = DME_clients.objects.get(
-            dme_account_num="1af6bcd2-6148-11eb-ae93-0242ac130002"
-        )
-        result = jason_l.auto_repack(payload=request.data, client=client)
-
-        logger.info(f"#858 {LOG_ID} {result}")
-        return Response({"success": True, "message": result})
     except Exception as e:
         logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
@@ -1169,3 +1181,32 @@ def find_a_booking(request):
             "message": f"Order({order_number}) does not exist.",
         }
     )
+
+
+class ScansViewSet(viewsets.ViewSet):
+    serializer_class = FPStatusHistorySerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=["get"])
+    def get_scans_from_booking_id(self, request, pk=None):
+        booking_id = request.GET.get("bookingId")
+        try:
+            if not booking_id:
+                booking_id = (
+                    Bookings.objects.all().order_by("-z_CreatedTimestamp")[0].id
+                )
+            fp_status_history = (
+                FP_status_history.objects.values(
+                    "id", "status", "desc", "event_timestamp"
+                )
+                .filter(booking_id=booking_id)
+                .order_by("-event_timestamp")
+            )
+            return Response({"scans": fp_status_history}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.info(f"Get FP status history error: {str(e)}")
+            fp_status_history = []
+            return Response(
+                {"msg": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

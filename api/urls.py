@@ -59,6 +59,7 @@ router.register(r"cost-option-map", CostOptionMapViewSet, basename="cost_option_
 router.register(
     r"booking-cost-option", BookingCostOptionViewSet, basename="booking_cost_option"
 )
+router.register(r"scans", ScansViewSet, basename="scans")
 router.register(r"fp_statuses", FpStatusesViewSet, basename="fp_statuses")
 
 
@@ -75,12 +76,12 @@ urlpatterns += [
         r"^password_reset/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
-    # Uploads
+    # File Uploads
     url(r"^upload/", FileUploadView.as_view()),
     url(r"^upload/status/", get_upload_status),
-    # Downloads
+    # File Downloads
     url(r"^download/", download),
-    # Delete
+    # File Delete
     url(r"^delete-file/", delete_file),
     # Build & download
     url(r"^get-csv/", get_csv),  # build & download CSV
@@ -91,7 +92,6 @@ urlpatterns += [
     # APIs for Warehouse(Paperless)
     url(r"^boks/get_label/", scanned),
     url(r"^boks/ready/", ready_boks),
-    url(r"^boks/auto_repack/", auto_repack),
     url(r"^reprint_label/", reprint_label),
     url(r"^manifest/", manifest_boks),
     # BOK apis

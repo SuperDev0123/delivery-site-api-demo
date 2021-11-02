@@ -2836,7 +2836,7 @@ class BookingViewSet(viewsets.ViewSet):
         # logger.info(f"@200 {LOG_ID}, BookingPk: {pk}, Repack Status: {repack_status}")
 
         try:
-            booking = Bookings.objects.get(pk=pk)
+            booking = self.get_object()
 
             if repack_status and repack_status[0] == "-":
                 booking_reset_repack(booking, repack_status[1:])
