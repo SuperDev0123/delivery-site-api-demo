@@ -298,7 +298,7 @@ def push_boks(payload, client, username, method):
 
         if not head_port or not port_code:
             message = f"No port_code.\n\n"
-            message += f"Order Num: {bok_1.b_client_order_num}\n"
+            message += f"Order Num: {bok_1['b_client_order_num']}\n"
             message += (
                 f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
             )
