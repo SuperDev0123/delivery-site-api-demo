@@ -522,6 +522,7 @@ def push_boks(payload, client, username, method):
                 item["zbl_102_text_2"] if item["zbl_102_text_2"] else "_"
             )
             line["is_deleted"] = item["zbl_102_text_2"] in SERVICE_GROUP_CODES
+            line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
             if line["is_deleted"] and line["l_005_dim_length"] == 0:
                 line["l_005_dim_length"] = 0.01
@@ -653,6 +654,7 @@ def push_boks(payload, client, username, method):
             new_line["l_009_weight_per_each"] = round(total_weight, 2)
             new_line["l_008_weight_UOM"] = "KG"
             new_line["is_deleted"] = False
+            new_line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
 
             bok_2_serializer = BOK_2_Serializer(data=new_line)
             if bok_2_serializer.is_valid():
@@ -687,8 +689,8 @@ def push_boks(payload, client, username, method):
                         bok_3_serializer.save()
 
                         # Soft delete `line in pallet`
-                        line.is_deleted = True
-                        line.save()
+                        # line.is_deleted = True
+                        # line.save()
                     else:
                         message = f"Serialiser Error - {bok_3_serializer.errors}"
                         logger.info(f"@8134 {LOG_ID} {message}")
