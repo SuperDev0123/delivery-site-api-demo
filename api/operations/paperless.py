@@ -245,7 +245,10 @@ def _check_port_code(bok_1):
 
     # head_port and port_code
     fp_routings = FPRouting.objects.filter(
-        freight_provider=13, suburb=de_suburb, dest_postcode=de_postcode, state=de_state
+        freight_provider=13,
+        suburb__iexact=de_suburb,
+        dest_postcode=de_postcode,
+        state__iexact=de_state,
     )
     head_port = fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
     port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
