@@ -832,7 +832,6 @@ def scanned(payload, client):
 
     # If Order exists
     pk_booking_id = booking.pk_booking_id
-    fp_name = booking.api_booking_quote.freight_provider.lower()
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
     original_items = lines.filter(
@@ -987,14 +986,6 @@ def scanned(payload, client):
     #         f"@367 {LOG_ID} over picked! - limit: {model_number_qtys}, estimated: {estimated_picked}"
     #     )
     #     message = f"There are over picked items: {', '.join(over_picked_items)}"
-    #     raise ValidationError(message)
-    #
-    # # Hunter order should be scanned fully always(at first scan)
-    # if fp_name == "hunter" and not is_picked_all:
-    #     logger.error(
-    #         f"@368 {LOG_ID} HUNTER order should be fully picked. Booking Id: {booking.b_bookingID_Visual}"
-    #     )
-    #     message = f"Hunter Order should be fully picked."
     #     raise ValidationError(message)
 
     # Save
@@ -1172,7 +1163,9 @@ def scanned(payload, client):
             status_history.create(booking, "Ready for Booking", "jason_l")
             booking.save()
 
-            success, message = book_oper(fp_name, booking, "DME_API")
+            success, message = book_oper(
+                booking.vx_freight_provider, booking, "DME_API"
+            )
 
             if not success:
                 logger.info(
