@@ -16,6 +16,7 @@ from api.models import (
     BOK_1_headers,
     BOK_2_lines,
     BOK_3_lines_data,
+    FPRouting,
 )
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
@@ -266,7 +267,45 @@ def push_boks(payload, client, username, method):
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required. "
         if not bok_1.get("b_055_b_del_address_street_1"):
-            message = "'Street 1' is required. "
+            message = "'Street 1' is required."
+        if not bok_1.get("b_057_b_del_address_state"):
+            message = "'State' is required."
+        if not bok_1.get("b_058_b_del_address_suburb"):
+            message = "'Suburb' is required."
+        if not bok_1.get("b_059_b_del_address_postalcode"):
+            message = "'Postal Code' is required."
+
+        if message:
+            logger.info(f"{LOG_ID} {message}")
+            raise ValidationError(message)
+
+        logger.info("[PAPERLESS] Checking port_code...")
+        de_state = bok_1.get("b_057_b_del_address_state")
+        de_suburb = bok_1.get("b_058_b_del_address_suburb")
+        de_postcode = bok_1.get("b_059_b_del_address_postalcode")
+
+        # head_port and port_code
+        fp_routings = FPRouting.objects.filter(
+            freight_provider=13,
+            suburb__iexact=de_suburb,
+            dest_postcode=de_postcode,
+            state__iexact=de_state,
+        )
+        head_port = (
+            fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
+        )
+        port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
+
+        if not head_port or not port_code:
+            message = f"No port_code.\n\n"
+            message += f"Order Num: {bok_1.b_client_order_num}\n"
+            message += (
+                f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
+            )
+            logger.error(f"{LOG_ID} {message}")
+            raise Exception(message)
+
+        logger.info("[PAPERLESS] `port_code` is fine")
 
         if message:
             logger.info(f"{LOG_ID} {message}")
