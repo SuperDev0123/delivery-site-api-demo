@@ -154,7 +154,11 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             ):
                 lowest_quote = quote
 
-        if obj.api_booking_quote.id == lowest_quote.id:
+        if (
+            obj.api_booking_quote
+            and lowest_quote
+            and obj.api_booking_quote.id == lowest_quote.id
+        ):
             return {}
 
         return {
