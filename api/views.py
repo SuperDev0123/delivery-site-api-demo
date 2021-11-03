@@ -68,6 +68,7 @@ from api.utils import (
     get_eta_de_by,
     sanitize_address,
 )
+from api.operations.booking.cancel import cancel_booking_by_id
 from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
@@ -2380,6 +2381,14 @@ class BookingViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
+    def cancel_booking(self, request, format=None):
+        booking_id = request.POST["bookingId"]
+        success, data = cancel_booking_by_id(booking_id)
+        if (success):
+            return Response(data, status=status.HTTP_201_CREATED)
+        return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def tick_manual_book(self, request, format=None):
