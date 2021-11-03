@@ -80,6 +80,8 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
     de_Deliver_By_Time = serializers.SerializerMethodField(read_only=True)
     remaining_time = serializers.SerializerMethodField(read_only=True)
     remaining_time_in_seconds = serializers.SerializerMethodField(read_only=True)
+    cheapest_quote = serializers.SerializerMethodField(read_only=True)
+    cost_dollar = serializers.SerializerMethodField(read_only=True)
 
     def get_de_Deliver_By_Time(self, obj):
         if not obj.de_Deliver_By_Minutes:
@@ -127,6 +129,44 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
 
         return 0
 
+    def get_cheapest_quote(self, obj):
+        scanned_quotes_4_picked_bookings = self.context.get(
+            "scanned_quotes_4_picked_bookings", []
+        )
+        lowest_quote = None
+        booking_quotes = []
+
+        for quote in scanned_quotes_4_picked_bookings:
+            if quote.fk_booking_id == obj.pk_booking_id:
+                booking_quotes.append(quote)
+
+            if obj.api_booking_quote and obj.api_booking_quote == quote.id:
+                lowest_quote = quote
+
+        if not booking_quotes:
+            return {}
+
+        lowest_quote = lowest_quote or booking_quotes[0]
+        for quote in booking_quotes:
+            if (
+                quote.client_mu_1_minimum_values
+                < lowest_quote.client_mu_1_minimum_values
+            ):
+                lowest_quote = quote
+
+        if obj.api_booking_quote.id == lowest_quote.id:
+            return {}
+
+        return {
+            "fp": lowest_quote.freight_provider,
+            "cost_dollar": round(lowest_quote.client_mu_1_minimum_values, 2),
+            "account_code": lowest_quote.account_code,
+        }
+
+    def get_cost_dollar(self, obj):
+        if obj.api_booking_quote:
+            return round(obj.api_booking_quote.client_mu_1_minimum_values, 2)
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -135,6 +175,8 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "de_Deliver_By_Time",
             "remaining_time",
             "remaining_time_in_seconds",
+            "cheapest_quote",
+            "cost_dollar",
         )
         fields = read_only_fields + (
             "id",
@@ -154,6 +196,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "deToCompanyName",
             "v_FPBookingNumber",
             "vx_freight_provider",
+            "vx_serviceName",
             "z_label_url",
             "z_pod_url",
             "z_pod_signed_url",

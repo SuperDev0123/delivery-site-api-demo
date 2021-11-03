@@ -14,7 +14,9 @@ from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 from api.operations.pronto_xi.index import update_note as update_pronto_note
 from api.common.booking_quote import set_booking_quote
+from api.common import trace_error
 from api.helpers.list import *
+from api.convertors.pdf import pdf_merge
 
 logger = logging.getLogger(__name__)
 IMPORTANT_FIELDS = [
@@ -164,81 +166,104 @@ def post_save_handler(instance, created, update_fields):
         and instance.z_label_url
         and "[REBUILD_REQUIRED]" in instance.z_label_url
     ):
-        logger.info(f"{LOG_ID} Booking PK: {instance.id}")
+        try:
+            logger.info(f"{LOG_ID} Booking PK: {instance.id}")
 
-        # Check if pricings exist for selected FP
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=instance.pk_booking_id,
-            freight_provider__iexact=instance.vx_freight_provider,
-            is_used=False,
-        ).order_by("fee")
-
-        if not quotes:
-            instance.b_error_Capture = "Quote doen't exist"
-
-            if instance.z_label_url:
-                instance.z_label_url = instance.z_label_url[18:]
-
-            instance.save()
-            return
-
-        # Mapping Pircing info to Booking
-        quote = quotes.first()
-        instance.vx_account_code = quote.account_code
-        instance.vx_serviceName = quote.service_name
-        instance.v_service_Type = quote.service_code
-        instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
-        # instance.inv_sell_quoted = quote.client_mu_1_minimum_values
-        instance.v_vehicle_Type = quote.vehicle.description if quote.vehicle else None
-        instance.api_booking_quote = quote
-
-        # Build Label
-        _fp_name = instance.vx_freight_provider.lower()
-        file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-
-        if instance.b_client_name == "Jason L":
-            lines = Booking_lines.objects.filter(
+            # Check if pricings exist for selected FP
+            quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=instance.pk_booking_id,
-                is_deleted=False,
-                sscc__isnull=False,
-            )
+                freight_provider__iexact=instance.vx_freight_provider,
+                is_used=False,
+            ).order_by("client_mu_1_minimum_values")
 
-            if lines.count() == 0:
-                instance.z_label_url = None
+            if not quotes:
+                instance.b_error_Capture = "Quote doen't exist"
+
+                if instance.z_label_url:
+                    instance.z_label_url = instance.z_label_url[18:]
+
                 instance.save()
                 return
 
-            sscc_lines = {}
+            # Mapping Pircing info to Booking
+            quote = quotes.first()
+            instance.vx_account_code = quote.account_code
+            instance.vx_serviceName = quote.service_name
+            instance.v_service_Type = quote.service_code
+            instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
 
-            for line in lines:
-                if line.sscc not in sscc_lines:
-                    sscc_lines[line.sscc] = [line]
-                else:
-                    sscc_lines[line.sscc].append(line)
+            if instance.b_status == Booking_lines.SCANNED_PACK:
+                instance.inv_sell_quoted = quote.client_mu_1_minimum_values
+            else:
+                instance.inv_booked_quoted = quote.client_mu_1_minimum_values
 
-            labeled_ssccs = []
-            for sscc in sscc_lines:
-                if sscc in labeled_ssccs:
-                    continue
+            instance.v_vehicle_Type = (
+                quote.vehicle.description if quote.vehicle else None
+            )
+            instance.api_booking_quote = quote
 
-                file_path, file_name = build_label(
-                    booking=instance,
-                    file_path=file_path,
-                    lines=sscc_lines[sscc],
-                    label_index=0,
-                    sscc=sscc,
-                    one_page_label=True,
-                )
-
-                # Convert label into ZPL format
-                logger.info(
-                    f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-                )
-                instance.z_label_url = f"{file_path}/{file_name}"
-                instance.save()
-        else:
+            # Build Label
             _fp_name = instance.vx_freight_provider.lower()
-            file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-            file_path, file_name = build_label(booking=instance, file_path=file_path)
-            instance.z_label_url = f"{_fp_name}_au/{file_name}"
+            file_path = f"{S3_URL}/pdfs/{_fp_name}_au"
+
+            if instance.b_client_name == "Jason L":
+                lines = Booking_lines.objects.filter(
+                    fk_booking_id=instance.pk_booking_id,
+                    is_deleted=False,
+                    sscc__isnull=False,
+                )
+
+                if lines.count() == 0:
+                    instance.z_label_url = None
+                    instance.save()
+                    logger.info(f"@369 {LOG_ID} No SSCC lines")
+                    return
+
+                sscc_lines = {}
+                sscc_list = []
+
+                for line in lines:
+                    if line.sscc not in sscc_list:
+                        sscc_list.append(line.sscc)
+                        _lines = []
+
+                        for line1 in lines:
+                            if line1.sscc == line.sscc:
+                                _lines.append(line1)
+
+                        sscc_lines[line.sscc] = _lines
+
+                label_urls = []
+                for index, sscc in enumerate(sscc_list):
+                    file_path, file_name = build_label(
+                        booking=instance,
+                        file_path=file_path,
+                        lines=sscc_lines[sscc],
+                        label_index=index,
+                        sscc=sscc,
+                        sscc_cnt=len(sscc_list),
+                        one_page_label=False,
+                    )
+                    logger.info(f"@369 {LOG_ID} Built Label - {file_path}/{file_name}")
+
+                if label_urls:
+                    entire_label_url = (
+                        f"{file_path}/DME{instance.b_bookingID_Visual}.pdf"
+                    )
+                    pdf_merge(label_urls, entire_label_url)
+
+                instance.z_label_url = f"{settings.WEB_SITE_URL}/label/{instance.b_client_booking_ref_num}/"
+                logger.info(
+                    f"@370 {LOG_ID} Rebuilt Label Successfully - {instance.z_label_url}"
+                )
+            else:
+                _fp_name = instance.vx_freight_provider.lower()
+                file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+                file_path, file_name = build_label(
+                    booking=instance, file_path=file_path
+                )
+                instance.z_label_url = f"{_fp_name}_au/{file_name}"
+
             instance.save()
+        except Exception as e:
+            trace_error.print()

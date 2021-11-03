@@ -1175,7 +1175,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
 
             # active_tab_index count
-            for booking in queryset:
+            queryset_4_get_stat = queryset.only(
+                "b_error_Capture",
+                "z_label_url",
+                "z_manifest_url",
+                "b_status",
+                "z_downloaded_shipping_label_timestamp",
+            )
+            for booking in queryset_4_get_stat:
                 if (
                     booking.b_error_Capture is not None
                     and len(booking.b_error_Capture) > 0
@@ -1240,7 +1247,9 @@ class BookingsViewSet(viewsets.ViewSet):
             elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
                 queryset = queryset.exclude(b_client_name="BioPak")
             elif active_tab_index == 8:  # 'PreBooking'
-                queryset = queryset.filter(b_status_category="Pre Booking")
+                queryset = queryset.filter(
+                    b_status_category="Pre Booking"
+                ).select_related("api_booking_quote")
             elif active_tab_index == 9:  # 'Unprinted Labels'
                 queryset = queryset.filter(
                     z_label_url__isnull=False,
@@ -1283,7 +1292,33 @@ class BookingsViewSet(viewsets.ViewSet):
             * (int(page_ind) + 1)
         ]
 
-        bookings = SimpleBookingSerializer(queryset, many=True).data
+        if active_tab_index == 8:
+            picked_booking_pk_booking_ids = []
+
+            for booking in queryset:
+                if booking.b_status == "Picked" or booking.b_dateBookedDate:
+                    picked_booking_pk_booking_ids.append(booking.pk_booking_id)
+
+            scanned_quotes_4_picked_bookings = API_booking_quotes.objects.filter(
+                fk_booking_id__in=picked_booking_pk_booking_ids,
+                packed_status=Booking_lines.SCANNED_PACK,
+                is_used=False,
+            ).only(
+                "id",
+                "fk_booking_id",
+                "freight_provider",
+                "account_code",
+                "client_mu_1_minimum_values",
+            )
+
+            context = {
+                "scanned_quotes_4_picked_bookings": scanned_quotes_4_picked_bookings
+            }
+            bookings = SimpleBookingSerializer(
+                queryset, many=True, context=context
+            ).data
+        else:
+            bookings = SimpleBookingSerializer(queryset, many=True).data
 
         # Sort on `remaining time` on 'Delivery Management' tab
         if active_tab_index == 6:
@@ -1325,14 +1360,14 @@ class BookingsViewSet(viewsets.ViewSet):
             ):
                 lowest_pricing = (
                     API_booking_quotes.objects.filter(
-                        fk_booking_id=booking.pk_booking_id
+                        fk_booking_id=booking.pk_booking_id,
+                        packed_status=booking.api_booking_quote.packed_status,
                     )
                     .order_by("client_mu_1_minimum_values")
                     .first()
                 )
 
         serializer = BookingSerializer(booking, data=request.data)
-
         try:
             if serializer.is_valid():
                 serializer.save()
@@ -2672,13 +2707,10 @@ class BookingViewSet(viewsets.ViewSet):
             logger.info(f"#102 {LOG_ID} {message}")
             raise ValidationError({"message": message})
 
-        quotes_cnt = API_booking_quotes.objects.filter(
+        quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
-        ).count()
-
-        logger.info(
-            f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}, Quote Cnt: {quotes_cnt}"
-        )
+        ).only("id", "freight_provider", "account_code", "client_mu_1_minimum_values")
+        logger.info(f"#103 {LOG_ID} BookingId: {booking.b_bookingID_Visual}")
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -2797,7 +2829,6 @@ class BookingViewSet(viewsets.ViewSet):
 
         # Full PDF
         full_label_name = ""
-
         try:
             pdf_data = None
             file_name = f"DME{booking.b_bookingID_Visual}.pdf"
@@ -2809,6 +2840,63 @@ class BookingViewSet(viewsets.ViewSet):
         except:
             full_label_name = ""
             pass
+
+        # Cheapest quote
+        quote_json = {}
+        scanned_quotes = []
+        cheapest_quote = None
+
+        for quote in quotes:
+            if quote.packed_status == Booking_lines.SCANNED_PACK:
+                scanned_quotes.append(quote)
+
+        if scanned_quotes:
+            cheapest_quote = booking.api_booking_quote or scanned_quotes.first()
+            original_quote = None
+            scanned_quote = None
+
+            for quote in quotes:
+                if (
+                    quote.packed_status == Booking_lines.ORIGINAL
+                    and quote.client_mu_1_minimum_values == booking.inv_sell_quoted
+                ):
+                    original_quote = quote
+
+                if (
+                    quote.packed_status == Booking_lines.SCANNED_PACK
+                    and quote.client_mu_1_minimum_values == booking.inv_booked_quoted
+                ):
+                    scanned_quote = quote
+
+            for quote in scanned_quotes:
+                if (
+                    quote.client_mu_1_minimum_values
+                    < cheapest_quote.client_mu_1_minimum_values
+                ):
+                    cheapest_quote = quote
+
+            if cheapest_quote != booking.api_booking_quote:
+                quote_json = {
+                    "cheapest": {
+                        "id": cheapest_quote.pk,
+                        "fp": cheapest_quote.freight_provider,
+                        "cost_dollar": cheapest_quote.client_mu_1_minimum_values,
+                        "savings": booking.api_booking_quote.client_mu_1_minimum_values
+                        - cheapest_quote.client_mu_1_minimum_values,
+                    }
+                }
+
+                if original_quote:
+                    quote_json["original"] = {
+                        "fp": original_quote.freight_provider,
+                        "cost_dollar": original_quote.client_mu_1_minimum_values,
+                    }
+
+                if scanned_quote:
+                    quote_json["scanned"] = {
+                        "fp": scanned_quote.freight_provider,
+                        "cost_dollar": scanned_quote.client_mu_1_minimum_values,
+                    }
 
         result = {
             "id": booking.pk,
@@ -2823,7 +2911,8 @@ class BookingViewSet(viewsets.ViewSet):
             "pdf": pdf_data,
             "full_label_name": full_label_name,
             "sscc_obj": result_with_sscc,
-            "quotes_cnt": quotes_cnt,
+            "quotes_cnt": quotes.count(),
+            "quote": quote_json,
         }
 
         return JsonResponse({"success": True, "result": result})
