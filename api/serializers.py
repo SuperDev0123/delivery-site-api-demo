@@ -262,6 +262,7 @@ class BookingSerializer(serializers.ModelSerializer):
     is_auto_augmented = serializers.SerializerMethodField(read_only=True)
     customer_cost = serializers.SerializerMethodField(read_only=True)
     quote_packed_status = serializers.SerializerMethodField(read_only=True)
+    inv_cost_quoted = serializers.FloatField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
