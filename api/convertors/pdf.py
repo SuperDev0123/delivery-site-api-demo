@@ -56,15 +56,14 @@ def pdf_to_zpl(pdf_path, zpl_path):
 
 
 def pdf_merge(input_files, output_file_url):
-    input_streams = []
-    output_stream = open(output_file_url, "w+b")
-
     try:
         # First open all the files, then produce the output file, and
         # finally close the input files. This is necessary because
         # the data isn't read from the input files until the write
         # operation. Thanks to
         # https://stackoverflow.com/questions/6773631/problem-with-closing-python-pypdf-writing-getting-a-valueerror-i-o-operation/6773733#6773733
+        input_streams = []
+        output_stream = open(output_file_url, "w+b")
         writer = PdfFileWriter()
 
         for input_file in input_files:
@@ -75,6 +74,9 @@ def pdf_merge(input_files, output_file_url):
                 writer.addPage(reader.getPage(n))
 
         writer.write(output_stream)
+    except Exception as e:
+        trace_error.print()
+        error_msg = f"[PDF MERGE] Error: {str(e)}"
     finally:
         for f in input_streams:
             f.close()
