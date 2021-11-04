@@ -173,6 +173,7 @@ def post_save_handler(instance, created, update_fields):
             quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=instance.pk_booking_id,
                 freight_provider__iexact=instance.vx_freight_provider,
+                packed_status=Booking_lines.SCANNED_PACK,
                 is_used=False,
             ).order_by("client_mu_1_minimum_values")
 
