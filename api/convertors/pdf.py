@@ -9,6 +9,8 @@ except ImportError:
 from api.operations.email_senders import send_email_to_admins
 from api.common import trace_error
 
+logger = logging.getLogger(__name__)
+
 
 def base64_to_pdf(base64, pdf_path):
     try:
@@ -56,6 +58,11 @@ def pdf_to_zpl(pdf_path, zpl_path):
 
 
 def pdf_merge(input_files, output_file_url):
+    LOG_ID = "[PDF MERGE]"
+    loggers.info(
+        f"{LOG_ID} Started!\nInput files: {input_files}\nOutput file: {output_file_url}"
+    )
+
     try:
         # First open all the files, then produce the output file, and
         # finally close the input files. This is necessary because
@@ -76,12 +83,14 @@ def pdf_merge(input_files, output_file_url):
         writer.write(output_stream)
     except Exception as e:
         trace_error.print()
-        error_msg = f"[PDF MERGE] Error: {str(e)}"
+        error_msg = f"{LOG_ID} Error: {str(e)}"
+        loggers.error(error_msg)
     finally:
         for f in input_streams:
             f.close()
 
         output_stream.close()
+        loggers.info(f"{LOG_ID} Finished!")
 
 
 def rotate_pdf(input_path):
