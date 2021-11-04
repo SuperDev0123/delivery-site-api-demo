@@ -2382,12 +2382,12 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["post"])
-    def cancel_booking(self, request, format=None):
-        booking_id = request.POST["bookingId"]
+    @action(detail=False, methods=["post"])
+    def cancel_book(self, request, format=None):
+        booking_id = request.data["booking_id"]
         success, data = cancel_booking_by_id(booking_id)
         if (success):
-            return Response(data, status=status.HTTP_201_CREATED)
+            return Response(data, status=status.HTTP_200_OK)
         return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
