@@ -60,7 +60,7 @@ def pdf_to_zpl(pdf_path, zpl_path):
 
 def pdf_merge(input_files, output_file_url):
     LOG_ID = "[PDF MERGE]"
-    loggers.info(
+    logger.info(
         f"{LOG_ID} Started!\nInput files: {input_files}\nOutput file: {output_file_url}"
     )
 
@@ -85,13 +85,13 @@ def pdf_merge(input_files, output_file_url):
     except Exception as e:
         trace_error.print()
         error_msg = f"{LOG_ID} Error: {str(e)}"
-        loggers.error(error_msg)
+        logger.error(error_msg)
     finally:
         for f in input_streams:
             f.close()
 
         output_stream.close()
-        loggers.info(f"{LOG_ID} Finished!")
+        logger.info(f"{LOG_ID} Finished!")
 
 
 def rotate_pdf(input_path):
