@@ -63,24 +63,30 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None):
 
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
     try:
-        if fp_name.lower() == "allied":
-            status_info = None
-            rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)
+        rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)
 
+        def get_dme_status(fp_status):
+            dme_status = None
             for rule in rules:
-                if "XXX" in rule.fp_lookup_status:
-                    fp_lookup_status = rule.fp_lookup_status.replace("XXX", "")
+                if fp_name.lower() == "allied":
+                    if "XXX" in rule.fp_lookup_status:
+                        fp_lookup_status = rule.fp_lookup_status.replace("XXX", "")
+                        if fp_lookup_status in fp_status:
+                            dme_status = rule.dme_status
+                    elif rule.fp_lookup_status == fp_status:
+                        dme_status = rule.dme_status
+                else:
+                    if rule.fp_lookup_status == fp_status:
+                        dme_status = rule.dme_status
+            return dme_status
 
-                    if fp_lookup_status in b_status_API:
-                        status_info = rule
-                elif rule.fp_lookup_status == b_status_API:
-                    status_info = rule
+        if isinstance(b_status_API, str):
+            return get_dme_status(b_status_API)
         else:
-            status_info = Dme_utl_fp_statuses.objects.get(
-                fp_name__iexact=fp_name, fp_lookup_status=b_status_API
-            )
-
-        return status_info.dme_status
+            status_info = []
+            for fp_status in b_status_API:
+                status_info.append(get_dme_status(fp_status))
+            return status_info
     except:
         return None
 
