@@ -35,8 +35,8 @@ def el2(param):
 def bdra0(param):
     if (
         param["de_to_address_type"].lower() == "residential"
-        and param["max_average_weight"] >= 34
-        and param["max_average_weight"] < 50
+        and param["max_item_weight"] >= 34
+        and param["max_item_weight"] < 50
     ):
         return {
             "name": "Bulk Delivery to Residential Address - Average dead or cubic weight per item 34-49kg",
@@ -50,8 +50,8 @@ def bdra0(param):
 def bdra1(param):
     if (
         param["de_to_address_type"].lower() == "residential"
-        and param["max_average_weight"] >= 50
-        and param["max_average_weight"] < 75
+        and param["max_item_weight"] >= 50
+        and param["max_item_weight"] < 75
     ):
         return {
             "name": "Bulk Delivery to Residential Address - Average dead or cubic weight per item 50-74kg",
@@ -65,8 +65,8 @@ def bdra1(param):
 def bdra2(param):
     if (
         param["de_to_address_type"].lower() == "residential"
-        and param["max_average_weight"] >= 75
-        and param["max_average_weight"] < 100
+        and param["max_item_weight"] >= 75
+        and param["max_item_weight"] < 100
     ):
         return {
             "name": "Bulk Delivery to Residential Address - Average dead or cubic weight per item 75-99kg",
@@ -80,7 +80,7 @@ def bdra2(param):
 def bdra3(param):
     if (
         param["de_to_address_type"].lower() == "residential"
-        and param["max_average_weight"] >= 100
+        and param["max_item_weight"] >= 100
     ):
         return {
             "name": "Bulk Delivery to Residential Address - Average dead or cubic weight per item 100kg or greater",
@@ -115,10 +115,6 @@ def dtl(param):
 
 def hunter():
     return {
-        "order": [bdra0, bdra1, bdra2, bdra3, ptl, dtl],
-        "line": [
-            el0,
-            el1,
-            el2,
-        ],
+        "order": [bdra0, bdra1, bdra2, bdra3, ptl, dtl, el0, el1, el2],
+        "line": [],
     }
