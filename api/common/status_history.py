@@ -18,7 +18,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
 
     # JasonL and Plum
     if not booking.kf_client_id in [
-        # "461162D2-90C7-BF4E-A905-000000000004",
+        "461162D2-90C7-BF4E-A905-000000000004",
         "1af6bcd2-6148-11eb-ae93-0242ac130002",
     ]:
         return
