@@ -2698,6 +2698,9 @@ class BookingViewSet(viewsets.ViewSet):
                 "vx_freight_provider",
                 "z_label_url",
                 "pu_Address_State",
+                "x_manual_booked_flag",
+                "api_booking_quote",
+                "b_dateBookedDate",
             )
             .first()
         )
@@ -2900,12 +2903,16 @@ class BookingViewSet(viewsets.ViewSet):
 
         result = {
             "id": booking.pk,
+            "pk_booking_id": booking.pk_booking_id,
             "b_bookingID_Visual": booking.b_bookingID_Visual,
             "b_client_name": booking.b_client_name,
             "b_client_order_num": booking.b_client_order_num,
             "b_client_sales_inv_num": booking.b_client_sales_inv_num,
             "v_FPBookingNumber": booking.v_FPBookingNumber,
             "vx_freight_provider": booking.vx_freight_provider,
+            "x_manual_booked_flag": booking.x_manual_booked_flag,
+            "api_booking_quote_id": booking.api_booking_quote_id,
+            "b_dateBookedDate": booking.b_dateBookedDate,
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
             "pdf": pdf_data,
