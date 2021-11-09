@@ -589,6 +589,7 @@ def push_boks(payload, client, username, method):
                 line["l_009_weight_per_each"] = item["e_weightPerEach"]
                 line["l_008_weight_UOM"] = item["e_weightUOM"]
                 line["e_item_type"] = item["e_item_type"]
+                line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
                 bok_2_serializer = BOK_2_Serializer(data=line)
                 if bok_2_serializer.is_valid():
@@ -610,6 +611,7 @@ def push_boks(payload, client, username, method):
                 _bok_2["success"] = bok_1["success"]
                 l_001 = "Carton" or _bok_2.get("l_001_type_of_packaging")
                 _bok_2["l_001_type_of_packaging"] = l_001
+                _bok_2["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
                 bok_2_serializer = BOK_2_Serializer(data=_bok_2)
                 if bok_2_serializer.is_valid():
