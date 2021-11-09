@@ -208,7 +208,7 @@ def push_boks(payload, client, username, method):
             }
         }
     """
-    LOG_ID = "[PUSH Jason L]"  # PB - PUSH BOKS
+    LOG_ID = "[PUSH FROM JasonL]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
     bok_2s = []
     client_name = None

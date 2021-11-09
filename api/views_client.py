@@ -47,6 +47,7 @@ from api.fp_apis.utils import (
 )
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
+from api.clients.tempo import index as tempo
 from api.clients.jason_l import index as jason_l
 from api.clients.jason_l.operations import (
     create_or_update_product as jasonL_create_or_update_product,
@@ -648,6 +649,13 @@ def push_boks(request):
                 username=user.username,
                 method=request.method,
             )
+        elif dme_account_num == "37C19636-C5F9-424D-AD17-05A056A8FBDB":  # Tempo
+            result = tempo.push_boks(
+                payload=request.data,
+                client=client,
+                username=user.username,
+                method=request.method,
+            )
         else:  # Standard Client
             result = standard.push_boks(request.data, client)
 
@@ -982,7 +990,15 @@ def get_delivery_status(request):
                 .filter(booking_id=booking.id)
                 .order_by("-event_timestamp")
             )
-            fp_status_history = [ {**item, 'desc': get_dme_status_from_fp_status(booking.vx_freight_provider, item['status'])} for item in fp_status_history]
+            fp_status_history = [
+                {
+                    **item,
+                    "desc": get_dme_status_from_fp_status(
+                        booking.vx_freight_provider, item["status"]
+                    ),
+                }
+                for item in fp_status_history
+            ]
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
             fp_status_history = []
@@ -1207,9 +1223,14 @@ class ScansViewSet(viewsets.ViewSet):
                 .filter(booking_id=booking_id)
                 .order_by("-event_timestamp")
             )
-            fp_statuses = [item['status'] for item in fp_status_history]
-            dme_statuses = get_dme_status_from_fp_status(booking.vx_freight_provider, fp_statuses)
-            fp_status_history = [ {**item, 'desc': dme_statuses[index]} for index, item in enumerate(fp_status_history)]
+            fp_statuses = [item["status"] for item in fp_status_history]
+            dme_statuses = get_dme_status_from_fp_status(
+                booking.vx_freight_provider, fp_statuses
+            )
+            fp_status_history = [
+                {**item, "desc": dme_statuses[index]}
+                for index, item in enumerate(fp_status_history)
+            ]
             return Response({"scans": fp_status_history}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
