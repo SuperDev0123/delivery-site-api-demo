@@ -100,48 +100,31 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         m3_to_kg_factor = 250
 
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
-    lengths, widths, heights, diagonals, lines_data = [], [], [], [], []
+    lengths, widths, heights, diagonals, lines_data, lines_max_weight = [], [], [], [], [], []
     has_dangerous_item = False
 
     for line in lines:
         total_qty += line["e_qty"]
-        dead_weight += (
-            line["e_weightPerEach"]
-            * _get_weight_amount(line["e_weightUOM"])
-            * line["e_qty"]
-        )
-        total_cubic += get_cubic_meter(
-            line["e_dimLength"],
-            line["e_dimWidth"],
-            line["e_dimHeight"],
-            line["e_dimUOM"],
-            line["e_qty"],
-        )
-        cubic_weight += (
-            get_cubic_meter(
-                line["e_dimLength"],
-                line["e_dimWidth"],
-                line["e_dimHeight"],
-                line["e_dimUOM"],
-                line["e_qty"],
-            )
-            * m3_to_kg_factor
+
+        item_length = line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"])
+        item_width = line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"])
+        item_height = line["e_dimHeight"] * _get_dim_amount(line["e_dimUOM"])
+
+        item_dead_weight = line["e_weightPerEach"] * _get_weight_amount(
+            line["e_weightUOM"]
         )
 
-        lengths.append(line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"]))
-        widths.append(line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"]))
-        heights.append(line["e_dimHeight"] * _get_dim_amount(line["e_dimUOM"]))
-        diagonals.append(
-            math.sqrt(
-                line["e_dimLength"] ** 2
-                + line["e_dimWidth"] ** 2
-                + line["e_dimHeight"] ** 2
+        is_pallet = line["e_type_of_packaging"].lower() == "pallet"
+        if (
+            booking["vx_freight_provider"].lower() == "hunter" 
+            and (not is_pallet) 
+            and (
+                (item_length > 1.2 and item_width > 1.2) 
+                or (item_height > 1.8) 
+                or (max(item_length, item_width) > 1.2 and item_dead_weight > 59)
             )
-            * _get_dim_amount(line["e_dimUOM"])
-        )
-
-        if "e_dangerousGoods" in line and line["e_dangerousGoods"]:
-            has_dangerous_item = True
+        ):
+            m3_to_kg_factor = 333
 
         item_cubic_weight = (
             get_cubic_meter(
@@ -153,14 +136,36 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             )
             * m3_to_kg_factor
         )
-        item_dead_weight = line["e_weightPerEach"] * _get_weight_amount(
-            line["e_weightUOM"]
+        dead_weight += item_dead_weight * line["e_qty"]
+        total_cubic += item_cubic_weight * line["e_qty"]
+        
+        cubic_weight += (
+            get_cubic_meter(
+                line["e_dimLength"],
+                line["e_dimWidth"],
+                line["e_dimHeight"],
+                line["e_dimUOM"],
+                line["e_qty"],
+            )
+            * m3_to_kg_factor
         )
-        is_pallet = line["e_type_of_packaging"].lower() == "pallet"
-        if is_pallet:
-            item_max_weight = max(item_cubic_weight, item_dead_weight)
-        else:
-            item_max_weight = item_dead_weight
+
+        lengths.append(item_length)
+        widths.append(item_width)
+        heights.append(item_height)
+        diagonals.append(
+            math.sqrt(
+                item_length ** 2
+                + item_width ** 2
+                + item_height ** 2
+            )
+        )
+
+        if "e_dangerousGoods" in line and line["e_dangerousGoods"]:
+            has_dangerous_item = True
+
+        item_max_weight = max(item_cubic_weight, item_dead_weight)
+        lines_max_weight.append(math.ceil(item_max_weight))
 
         lines_data.append(
             {
@@ -205,6 +210,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         "total_cubic": total_cubic,
         "max_weight": max(dead_weight, cubic_weight),
         "min_weight": min(dead_weight, cubic_weight),
+        "max_item_weight": max(lines_max_weight),
         "max_average_weight": max(dead_weight, cubic_weight) / total_qty,
         "min_average_weight": min(dead_weight, cubic_weight) / total_qty,
         "max_dimension": max_dimension,
