@@ -4453,6 +4453,11 @@ def build_label(request):
 
         if scanned_lines:
             lines = scanned_lines
+
+            for line in lines:
+                if line.sscc and "NOSSCC_" in line.sscc:
+                    line.sscc = None
+                    line.save()
         else:
             # Populate SSCC if doesn't exist
             for line in lines:
