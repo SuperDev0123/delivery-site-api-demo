@@ -4442,10 +4442,11 @@ def build_label(request):
     if booking.api_booking_quote:
         lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
 
-    line_datas = booking.line_datas()
-    label_urls = []
-
-    try:
+        for line in lines:
+            if not line.sscc:
+                line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
+                line.save()
+    else:
         scanned_lines = []
         for line in lines:
             if line.sscc and not "NOSSCC_" in line.sscc:
@@ -4465,21 +4466,23 @@ def build_label(request):
                     line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                     line.save()
 
-        # Prerequisite
-        sscc_list = []
-        sscc_lines = {}
+    line_datas = booking.line_datas()
+    label_urls = []
 
-        for line in lines:
-            if line.sscc not in sscc_list:
-                sscc_list.append(line.sscc)
-                _lines = []
+    sscc_list = []
+    sscc_lines = {}
+    for line in lines:
+        if line.sscc not in sscc_list:
+            sscc_list.append(line.sscc)
+            _lines = []
 
-                for line1 in lines:
-                    if line1.sscc == line.sscc:
-                        _lines.append(line1)
+            for line1 in lines:
+                if line1.sscc == line.sscc:
+                    _lines.append(line1)
 
-                sscc_lines[line.sscc] = _lines
+            sscc_lines[line.sscc] = _lines
 
+    try:
         # Build label with SSCC - one sscc should have one page label
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
