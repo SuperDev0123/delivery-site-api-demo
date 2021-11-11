@@ -79,6 +79,13 @@ def _set_error(booking, error_msg):
     booking.save()
 
 
+def get_pu_avail_from(booking):
+    pu_avail_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+    pu_hour = booking.pu_PickUp_Avail_Time_Hours
+    pu_avail_from += f"T{pu_hour.zfill(2)}:00:00" if pu_hour else "T00:00:00"
+    return pu_avail_from
+
+
 def get_tracking_payload(booking, fp_name):
     try:
         payload = {}
@@ -313,7 +320,7 @@ def get_book_payload(booking, fp_name):
             payload["reference1"] = "reference1"
 
         # V2 fields
-        payload["SenderReference"] = payload["reference1"]
+        payload["SenderReference"] = booking.clientRefNumbers
         payload["ReceiverReference"] = booking.gap_ras
         payload["ConsignmentSenderIsResidential"] = (
             "y" if booking.pu_Address_Type == "residential" else "n"
@@ -326,6 +333,7 @@ def get_book_payload(booking, fp_name):
         payload["consignmentNoteNumber"] = gen_consignment_num(
             "hunter", booking.b_bookingID_Visual, booking.kf_client_id
         )
+        payload["ConsignmentPickupBookingTime"] = get_pu_avail_from(booking)
 
         # Plum
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
@@ -342,21 +350,7 @@ def get_book_payload(booking, fp_name):
         payload["maxWidth"] = int(maxWidth)
         payload["maxLength"] = int(maxLength)
         payload["packagingCode"] = "CT"
-        payload["collectionDateTime"] = booking.puPickUpAvailFrom_Date.strftime(
-            "%Y-%m-%d"
-        )
-
-        if booking.pu_PickUp_Avail_Time_Hours:
-            if booking.pu_PickUp_Avail_Time_Hours < 10:
-                payload[
-                    "collectionDateTime"
-                ] += f"T0{booking.pu_PickUp_Avail_Time_Hours}:00:00"
-            else:
-                payload[
-                    "collectionDateTime"
-                ] += f"T{booking.pu_PickUp_Avail_Time_Hours}:00:00"
-        else:
-            payload["collectionDateTime"] += "T00:00:00"
+        payload["collectionDateTime"] = get_pu_avail_from(booking)
 
         if booking.pu_PickUp_By_Time_Hours:
             payload["collectionCloseTime"] = str(booking.pu_PickUp_By_Time_Hours).zfill(
