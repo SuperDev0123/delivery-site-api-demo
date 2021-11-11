@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from django.conf import settings
 from api.models import *
 from api.common import common_times as dme_time_lib
+from api.common.common_times import TIME_DIFFERENCE
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
@@ -82,7 +83,8 @@ def _set_error(booking, error_msg):
 def get_pu_avail_from(booking):
     pu_avail_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
     pu_hour = booking.pu_PickUp_Avail_Time_Hours
-    pu_avail_from += f"T{str(pu_hour).zfill(2)}:00:00" if pu_hour else "T00:00:00"
+    pu_avail_from += f"T{str(pu_hour).zfill(2)}:00" if pu_hour else "T00:00"
+    pu_avail_from += f"+{TIME_DIFFERENCE}:00"
     return pu_avail_from
 
 
