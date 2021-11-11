@@ -96,7 +96,7 @@ def get_pu_to(booking):
     minute = booking.pu_PickUp_By_Time_Minutes
 
     if hour or minute:
-        _pu_to += f"{str(pu_hour).zfill(2)}" if hour else "00"
+        _pu_to += f"{str(hour).zfill(2)}" if hour else "00"
         _pu_to += f":{str(minute).zfill(2)}" if minute else ":00"
         _pu_to += f"+{TIME_DIFFERENCE}:00"
         return _pu_to
