@@ -305,3 +305,9 @@ FP_UOM = {
     "allied": {"dim": "cm", "weight": "kg"},
     "dhl": {"dim": "cm", "weight": "kg"},
 }
+
+SPECIAL_FPS = [
+    "Line haul General",
+    "Customer Pickup",
+    "JasonL In house",
+]
