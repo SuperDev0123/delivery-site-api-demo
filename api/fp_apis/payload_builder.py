@@ -80,12 +80,49 @@ def _set_error(booking, error_msg):
     booking.save()
 
 
-def get_pu_avail_from(booking):
-    pu_avail_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
-    pu_hour = booking.pu_PickUp_Avail_Time_Hours
-    pu_avail_from += f"T{str(pu_hour).zfill(2)}:00" if pu_hour else "T00:00"
-    pu_avail_from += f"+{TIME_DIFFERENCE}:00"
-    return pu_avail_from
+def get_pu_from(booking):
+    _pu_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+    hour = booking.pu_PickUp_Avail_Time_Hours
+    minute = booking.pu_PickUp_Avail_Time_Minutes
+    _pu_from += f"T{str(hour).zfill(2)}" if hour else "T00"
+    _pu_from += f":{str(minute).zfill(2)}" if minute else ":00"
+    _pu_from += f"+{TIME_DIFFERENCE}:00"
+    return _pu_from
+
+
+def get_pu_to(booking):
+    _pu_to = ""
+    hour = booking.pu_PickUp_By_Time_Hours
+    minute = booking.pu_PickUp_By_Time_Minutes
+
+    if hour or minute:
+        _pu_to += f"{str(pu_hour).zfill(2)}" if hour else "00"
+        _pu_to += f":{str(minute).zfill(2)}" if minute else ":00"
+        _pu_to += f"+{TIME_DIFFERENCE}:00"
+        return _pu_to
+
+
+def get_de_from(booking):
+    if booking.de_Deliver_From_Date:
+        _de_from = booking.de_Deliver_From_Date.strftime("%Y-%m-%d")
+        hour = booking.de_Deliver_From_Hours
+        minute = booking.de_Deliver_From_Minutes
+        _de_from += f"T{str(hour).zfill(2)}" if hour else "T00"
+        _de_from += f":{str(minute).zfill(2)}" if minute else ":00"
+        _de_from += f"+{TIME_DIFFERENCE}:00"
+        return _de_from
+
+
+def get_de_to(booking):
+    _de_to = ""
+    hour = booking.de_Deliver_By_Hours
+    minute = booking.de_Deliver_By_Minutes
+
+    if hour or minute:
+        _de_to += f"{str(hour).zfill(2)}" if hour else "00"
+        _de_to += f":{str(minute).zfill(2)}" if minute else ":00"
+        _de_to += f"+{TIME_DIFFERENCE}:00"
+        return _de_to
 
 
 def get_tracking_payload(booking, fp_name):
@@ -335,7 +372,10 @@ def get_book_payload(booking, fp_name):
         payload["consignmentNoteNumber"] = gen_consignment_num(
             "hunter", booking.b_bookingID_Visual, booking.kf_client_id
         )
-        payload["ConsignmentPickupBookingTime"] = get_pu_avail_from(booking)
+        payload["ConsignmentPickupBookingTime"] = get_pu_from(booking)
+        payload["ConsignmentPickupBookingTimeTo"] = get_pu_to(booking) or ""
+        payload["ConsignmentBookingDateTime"] = get_de_from(booking) or ""
+        payload["ConsignmentBookingDateTimeTo"] = get_de_to(booking) or ""
 
         # Plum
         if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
@@ -352,12 +392,12 @@ def get_book_payload(booking, fp_name):
         payload["maxWidth"] = int(maxWidth)
         payload["maxLength"] = int(maxLength)
         payload["packagingCode"] = "CT"
-        payload["collectionDateTime"] = get_pu_avail_from(booking)
+        payload["collectionDateTime"] = get_pu_from(booking)
 
         if booking.pu_PickUp_By_Time_Hours:
-            payload["collectionCloseTime"] = str(booking.pu_PickUp_By_Time_Hours).zfill(
-                2
-            )
+            payload["collectionCloseTime"] = str(
+                booking.pu_PickUYp_By_Time_Hours
+            ).zfill(2)
 
             if booking.pu_PickUp_By_Time_Minutes:
                 payload["collectionCloseTime"] += str(
