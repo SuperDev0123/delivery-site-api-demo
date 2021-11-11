@@ -1132,6 +1132,7 @@ def scanned(payload, client):
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
+                    packed_status=Booking_lines.SCANNED_PACK,
                 )
                 best_quotes = select_best_options(pricings=quotes)
                 logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
