@@ -82,7 +82,7 @@ def _set_error(booking, error_msg):
 def get_pu_avail_from(booking):
     pu_avail_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
     pu_hour = booking.pu_PickUp_Avail_Time_Hours
-    pu_avail_from += f"T{pu_hour.zfill(2)}:00:00" if pu_hour else "T00:00:00"
+    pu_avail_from += f"T{str(pu_hour).zfill(2)}:00:00" if pu_hour else "T00:00:00"
     return pu_avail_from
 
 
