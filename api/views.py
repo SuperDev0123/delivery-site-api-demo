@@ -2854,7 +2854,7 @@ class BookingViewSet(viewsets.ViewSet):
                 scanned_quotes.append(quote)
 
         if scanned_quotes:
-            cheapest_quote = booking.api_booking_quote or scanned_quotes.first()
+            cheapest_quote = booking.api_booking_quote or scanned_quotes[0]
             original_quote = None
             scanned_quote = None
 
