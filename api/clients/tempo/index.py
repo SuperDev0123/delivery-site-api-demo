@@ -26,36 +26,32 @@ def push_boks(payload, client, username, method):
     if not bok_2s:
         raise Exception("No Lines")
 
+    # Check `port_code`
+    logger.info(f"{LOG_ID} Checking port_code...")
+    pu_state = bok_1.get("b_031_b_pu_address_state")
+    pu_suburb = bok_1.get("b_032_b_pu_address_suburb")
+    pu_postcode = bok_1.get("b_033_b_pu_address_postalcode")
+
+    # head_port and port_code
+    fp_routings = FPRouting.objects.filter(
+        freight_provider=13,
+        suburb__iexact=pu_suburb,
+        dest_postcode=pu_postcode,
+        state__iexact=pu_state,
+    )
+    head_port = fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
+    port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
+
+    if not head_port or not port_code:
+        message = f"No port_code.\n\n"
+        message += f"Order Num: {bok_1['b_client_order_num']}\n"
+        message += f"State: {pu_state}\nPostal Code: {pu_postcode}\nSuburb: {pu_suburb}"
+        logger.error(f"{LOG_ID} {message}")
+        raise Exception(message)
+
     b_008_b_category = bok_1.get("b_008_b_category")
     bok_1["pk_header_id"] = str(uuid.uuid4())
     if b_008_b_category and b_008_b_category.lower() == "salvage expense":
-        # Check `port_code`
-        logger.info(f"{LOG_ID} Checking port_code...")
-        de_state = bok_1.get("b_057_b_del_address_state")
-        de_suburb = bok_1.get("b_058_b_del_address_suburb")
-        de_postcode = bok_1.get("b_059_b_del_address_postalcode")
-
-        # head_port and port_code
-        fp_routings = FPRouting.objects.filter(
-            freight_provider=13,
-            suburb__iexact=de_suburb,
-            dest_postcode=de_postcode,
-            state__iexact=de_state,
-        )
-        head_port = (
-            fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
-        )
-        port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
-
-        if not head_port or not port_code:
-            message = f"No port_code.\n\n"
-            message += f"Order Num: {bok_1['b_client_order_num']}\n"
-            message += (
-                f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
-            )
-            logger.error(f"{LOG_ID} {message}")
-            raise Exception(message)
-
         # Find warehouse
         warehouse = find_warehouse(bok_1, bok_2s)
         bok_1["client_booking_id"] = bok_1["pk_header_id"]
