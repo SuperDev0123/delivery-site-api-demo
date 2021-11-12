@@ -49,6 +49,7 @@ def push_boks(payload, client, username, method):
         logger.error(f"{LOG_ID} {message}")
         raise Exception(message)
 
+    bok_1["b_008_b_category"] = bok_1.get("b_008_b_category") or "salvage expense"
     b_008_b_category = bok_1.get("b_008_b_category")
     bok_1["pk_header_id"] = str(uuid.uuid4())
     if b_008_b_category and b_008_b_category.lower() == "salvage expense":
