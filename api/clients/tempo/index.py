@@ -56,17 +56,13 @@ def push_boks(payload, client, username, method):
             logger.error(f"{LOG_ID} {message}")
             raise Exception(message)
 
-        bok_1["fk_client_id"] = client.dme_account_num
-        bok_1["x_booking_Created_With"] = "DME PUSH API"
-        bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
-
         # Find warehouse
         warehouse = find_warehouse(bok_1, bok_2s)
         bok_1["client_booking_id"] = bok_1["pk_header_id"]
         bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
         bok_1["b_clientPU_Warehouse"] = warehouse.name
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
-        bok_1["b_027_b_pu_address_type"] = "Business"
+        bok_1["b_053_b_del_address_type"] = "Business"
         bok_1["b_054_b_del_company"] = warehouse.name
         bok_1["b_055_b_del_address_street_1"] = warehouse.address1
         bok_1["b_056_b_del_address_street_2"] = warehouse.address2
@@ -81,7 +77,8 @@ def push_boks(payload, client, username, method):
     bok_1["b_028_b_pu_company"] = bok_1.get("b_028_b_pu_company") or bok_1.get(
         "b_035_b_pu_contact_full_name"
     )
-    bok_1["success"] = 2
+    bok_1["x_booking_Created_With"] = "DME PUSH API"
+    bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
     bok_1["b_031_b_pu_address_state"] = bok_1.get("b_031_b_pu_address_state").upper()
     bok_1["fk_client_id"] = client.dme_account_num
     client_booking_id = (
