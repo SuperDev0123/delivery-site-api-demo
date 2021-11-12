@@ -73,7 +73,8 @@ from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
-from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num
+from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num, get_dme_status_from_fp_status
+from api.fp_apis.operations import tracking
 from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
@@ -3291,6 +3292,8 @@ class BookingStatusViewSet(viewsets.ViewSet):
 
 
 class StatusHistoryViewSet(viewsets.ViewSet):
+    permission_classes = (AllowAny,)
+
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
         pk_booking_id = self.request.GET.get("pk_booking_id")
@@ -3304,73 +3307,122 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
-        booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
-        request.data["status_old"] = booking.b_status
-        serializer = StatusHistorySerializer(data=request.data)
+        if 'is_from_script' in request.data:
+            is_from_script = request.data['is_from_script']
+        else:
+            is_from_script = None
 
         try:
-            if serializer.is_valid():
-                # ######################################## #
-                #    Disabled because it was for `Cope`    #
-                # ######################################## #
-                # if request.data["status_last"] == "In Transit":
-                #     calc_collect_after_status_change(
-                #         request.data["fk_booking_id"], request.data["status_last"]
-                #     )
-                # elif request.data["status_last"] == "Delivered":
-                #     booking.z_api_issue_update_flag_500 = 0
-                #     booking.delivery_booking = str(datetime.now())
-                #     booking.save()
+            if not is_from_script:
+                booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
+                request.data["status_old"] = booking.b_status
+                dme_serializer = StatusHistorySerializer(data=request.data)
+                if dme_serializer.is_valid():
+                    # ######################################## #
+                    #    Disabled because it was for `Cope`    #
+                    # ######################################## #
+                    # if request.data["status_last"] == "In Transit":
+                    #     calc_collect_after_status_change(
+                    #         request.data["fk_booking_id"], request.data["status_last"]
+                    #     )
+                    # elif request.data["status_last"] == "Delivered":
+                    #     booking.z_api_issue_update_flag_500 = 0
+                    #     booking.delivery_booking = str(datetime.now())
+                    #     booking.save()
 
-                # status_category = get_status_category_from_status(
-                #     request.data["status_last"]
-                # )
+                    # status_category = get_status_category_from_status(
+                    #     request.data["status_last"]
+                    # )
 
-                # if status_category == "Transit":
-                #     booking.s_20_Actual_Pickup_TimeStamp = request.data[
-                #         "event_time_stamp"
-                #     ]
+                    # if status_category == "Transit":
+                    #     booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                    #         "event_time_stamp"
+                    #     ]
 
-                #     if booking.s_20_Actual_Pickup_TimeStamp:
-                #         z_calculated_ETA = datetime.strptime(
-                #             booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
-                #         ) + timedelta(days=booking.delivery_kpi_days)
-                #     else:
-                #         z_calculated_ETA = datetime.now() + timedelta(
-                #             days=booking.delivery_kpi_days
-                #         )
+                    #     if booking.s_20_Actual_Pickup_TimeStamp:
+                    #         z_calculated_ETA = datetime.strptime(
+                    #             booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                    #         ) + timedelta(days=booking.delivery_kpi_days)
+                    #     else:
+                    #         z_calculated_ETA = datetime.now() + timedelta(
+                    #             days=booking.delivery_kpi_days
+                    #         )
 
-                #     if not booking.b_given_to_transport_date_time:
-                #         booking.b_given_to_transport_date_time = datetime.now()
+                    #     if not booking.b_given_to_transport_date_time:
+                    #         booking.b_given_to_transport_date_time = datetime.now()
 
-                #     booking.z_calculated_ETA = datetime.strftime(
-                #         z_calculated_ETA, "%Y-%m-%d"
-                #     )
-                # elif status_category == "Complete":
-                #     booking.s_21_Actual_Delivery_TimeStamp = request.data[
-                #         "event_time_stamp"
-                #     ]
-                #     booking.delivery_booking = request.data["event_time_stamp"][:10]
-                #     booking.z_api_issue_update_flag_500 = 0
+                    #     booking.z_calculated_ETA = datetime.strftime(
+                    #         z_calculated_ETA, "%Y-%m-%d"
+                    #     )
+                    # elif status_category == "Complete":
+                    #     booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                    #         "event_time_stamp"
+                    #     ]
+                    #     booking.delivery_booking = request.data["event_time_stamp"][:10]
+                    #     booking.z_api_issue_update_flag_500 = 0
 
-                # booking.b_status = request.data["status_last"]
-                # booking.save()
-                # tempo.push_via_api(booking)
-                # serializer.save()
+                    # booking.b_status = request.data["status_last"]
+                    # booking.save()
+                    # tempo.push_via_api(booking)
+                    # serializer.save()
 
-                status_history.create(
-                    booking,
-                    request.data["status_last"],
-                    request.user.username,
-                    request.data["event_time_stamp"],
-                )
+                    status_history.create(
+                        booking,
+                        request.data["status_last"],
+                        request.user.username,
+                        request.data["event_time_stamp"],
+                    )
 
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(dme_serializer.data, status=status.HTTP_200_OK)
+                return Response(dme_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                booking_id = request.data['booking_id']
+                booking = Bookings.objects.get(id=booking_id)
+                fp = Fp_freight_providers.objects.get(fp_company_name=booking.vx_freight_provider)
+                status_last = get_dme_status_from_fp_status(fp.fp_company_name, request.data['fp_status_code'])
+                event_time_stamp = request.data['event_time_stamp']
+
+                dme_data = {
+                    'fk_booking_id': booking.pk_booking_id,
+                    'status_last': status_last,
+                    'event_time_stamp': event_time_stamp
+                }
+                fp_data = {
+                    'status': request.data['fp_status_code'],
+                    'desc': request.data['fp_status_details'],
+                    'event_timestamp': event_time_stamp,
+                    'is_active': True,
+                    'booking': booking.id,
+                    'fp': fp.id
+                }
+
+                dme_serializer = StatusHistorySerializer(data=dme_data)
+                fp_serializer = FPStatusHistorySerializer(data=fp_data)
+                if dme_serializer.is_valid() and fp_serializer.is_valid():
+                    status_history.create(
+                        booking,
+                        status_last,
+                        request.user.username,
+                        event_time_stamp,
+                    )
+
+                    tracking.create_fp_status_history(
+                        booking, 
+                        fp, 
+                        {
+                            'b_status_API': fp_data['status'],
+                            'status_desc': fp_data['desc'],
+                            'event_time': fp_data['event_timestamp']
+                        }
+                    )
+
+                    return Response(status=status.HTTP_200_OK)
+                else:
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             trace_error.print()
             logger.error(f"@902 - save_status_history: {str(e)}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
     def update_status_history(self, request, pk, format=None):
