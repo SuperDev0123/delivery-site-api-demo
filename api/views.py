@@ -2878,7 +2878,10 @@ class BookingViewSet(viewsets.ViewSet):
                 ):
                     cheapest_quote = quote
 
-            if cheapest_quote != booking.api_booking_quote:
+            if (
+                booking.api_booking_quote
+                and cheapest_quote != booking.api_booking_quote
+            ):
                 quote_json = {
                     "cheapest": {
                         "id": cheapest_quote.pk,
