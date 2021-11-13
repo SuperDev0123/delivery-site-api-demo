@@ -66,7 +66,7 @@ def push_boks(payload, client, username, method):
         bok_1["b_057_b_del_address_state"] = warehouse.state
         bok_1["b_059_b_del_address_postalcode"] = warehouse.postal_code
         bok_1["b_058_b_del_address_suburb"] = warehouse.suburb
-        bok_1["b_034_b_pu_address_country"] = "Australia"
+        bok_1["b_060_b_del_address_country"] = "Australia"
         bok_1["b_061_b_del_contact_full_name"] = warehouse.contact_name
         bok_1["b_063_b_del_email"] = warehouse.contact_email
         bok_1["b_064_b_del_phone_main"] = warehouse.phone_main

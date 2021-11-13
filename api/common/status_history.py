@@ -131,6 +131,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                 de_address,
                 delivered_time,
             )
+
         if booking.de_to_Phone_Mobile and is_mobile(booking.de_to_Phone_Mobile):
             send_status_update_sms(
                 format_mobile(booking.de_to_Phone_Mobile),
@@ -147,8 +148,8 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
             )
 
 
-def notify_user_via_api(booking):
-    tempo.push_via_api(booking)
+def notify_user_via_api(booking, event_timestamp):
+    tempo.push_via_api(booking, event_timestamp)
 
 
 def post_new_status(booking, dme_status_history, new_status, event_timestamp, username):
@@ -179,7 +180,7 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
     booking.refresh_from_db()
 
     notify_user_via_email_sms(booking, category_new, category_old, username)
-    notify_user_via_api(booking)
+    notify_user_via_api(booking, event_timestamp)
 
 
 # Create new status_history for Booking

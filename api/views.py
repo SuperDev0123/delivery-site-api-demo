@@ -3355,7 +3355,6 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
                 # booking.b_status = request.data["status_last"]
                 # booking.save()
-                # tempo.push_via_api(booking)
                 # serializer.save()
 
                 status_history.create(
