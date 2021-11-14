@@ -395,9 +395,9 @@ def get_book_payload(booking, fp_name):
         payload["collectionDateTime"] = get_pu_from(booking)
 
         if booking.pu_PickUp_By_Time_Hours:
-            payload["collectionCloseTime"] = str(
-                booking.pu_PickUYp_By_Time_Hours
-            ).zfill(2)
+            payload["collectionCloseTime"] = str(booking.pu_PickUp_By_Time_Hours).zfill(
+                2
+            )
 
             if booking.pu_PickUp_By_Time_Minutes:
                 payload["collectionCloseTime"] += str(
