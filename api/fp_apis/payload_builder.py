@@ -81,14 +81,14 @@ def _set_error(booking, error_msg):
 
 
 def get_pu_from(booking, fp_name):
-    if booking.fp_name == "hunter":
+    if fp_name == "hunter":
         _pu_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
         hour = booking.pu_PickUp_Avail_Time_Hours
         minute = booking.pu_PickUp_Avail_Time_Minutes
         _pu_from += f"T{str(hour).zfill(2)}" if hour else "T00"
         _pu_from += f":{str(minute).zfill(2)}" if minute else ":00"
         _pu_from += f"+{TIME_DIFFERENCE}:00"
-    elif booking.fp_name == "tnt":
+    elif fp_name == "tnt":
         _pu_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
         hour = booking.pu_PickUp_Avail_Time_Hours
         minute = booking.pu_PickUp_Avail_Time_Minutes
