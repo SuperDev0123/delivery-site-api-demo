@@ -2019,7 +2019,7 @@ class BookingViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def get_booking(self, request, format=None):
-        idBookingNumber = request.GET["id"]
+        uid = request.GET["id"]
         filterName = request.GET["filter"]
         user_id = request.user.id
 
@@ -2066,11 +2066,11 @@ class BookingViewSet(viewsets.ViewSet):
             if filterName == "null":
                 booking = queryset.last()
             elif filterName == "dme":
-                booking = queryset.get(b_bookingID_Visual=idBookingNumber)
+                booking = queryset.get(b_bookingID_Visual=uid)
             elif filterName == "con":
-                booking = queryset.filter(v_FPBookingNumber=idBookingNumber).first()
-            elif filterName == "id" and idBookingNumber and idBookingNumber != "null":
-                booking = queryset.get(id=idBookingNumber)
+                booking = queryset.filter(v_FPBookingNumber=uid).first()
+            elif filterName == "id" and uid and uid != "null":
+                booking = queryset.get(id=uid)
             else:
                 return JsonResponse({"booking": {}, "nextid": 0, "previd": 0})
 
@@ -2127,6 +2127,7 @@ class BookingViewSet(viewsets.ViewSet):
                 }
             )
         except Exception as e:
+            trace_error.print()
             logger.info(f"#104 - Get booking exception: {str(e)}")
             return JsonResponse(
                 {
@@ -2265,15 +2266,21 @@ class BookingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=["post"])
-    def duplicate_booking(self, request, format=None):
-        switch_info = request.GET["switchInfo"]
-        dup_line_and_linedetail = request.GET["dupLineAndLineDetail"]
-        booking_id = request.GET["bookingId"]
+    @action(detail=True, methods=["post"])
+    def duplicate_booking(self, request, pk=None, format=None):
+        LOG_ID = "[DUP BOOKING]"
         user_id = request.user.id
-        booking = Bookings.objects.get(id=booking_id)
+        booking = Bookings.objects.get(pk=pk)
+        payload = request.data
+        logger.info(
+            f"{LOG_ID} Booking: {pk}({booking.b_bookingID_Visual}), Payload: {payload}"
+        )
+        dup_line_and_linedetail = payload.get("dupLineAndLineDetail")
+        switch_info = payload.get("switchInfo")
+        is_4_child = payload.get("is4Child")
+        qtys_4_children = payload.get("qtys4Children")
 
-        if switch_info == "true":
+        if switch_info:
             newBooking = {
                 "puCompany": booking.deToCompanyName,
                 "pu_Address_Street_1": booking.de_To_Address_Street_1,
@@ -2371,17 +2378,33 @@ class BookingViewSet(viewsets.ViewSet):
         ] = booking.b_clientReference_RA_Numbers
         newBooking["vx_serviceName"] = booking.vx_serviceName
         newBooking["z_CreatedByAccount"] = request.user.username
-        newBooking[
-            "x_booking_Created_With"
-        ] = f"Duped from #{booking.b_bookingID_Visual}"
         newBooking["booking_type"] = booking.booking_type
 
-        if dup_line_and_linedetail == "true":
+        if is_4_child:
+            newBooking[
+                "x_booking_Created_With"
+            ] = f"Child of #{booking.b_bookingID_Visual}"
+        else:
+            newBooking[
+                "x_booking_Created_With"
+            ] = f"Duped from #{booking.b_bookingID_Visual}"
+
+        if dup_line_and_linedetail or is_4_child:
             booking_lines = Booking_lines.objects.filter(
                 fk_booking_id=booking.pk_booking_id
             )
 
             for booking_line in booking_lines:
+                if qtys_4_children:
+                    if (
+                        str(booking_line.pk) in qtys_4_children
+                        and qtys_4_children[str(booking_line.pk)]
+                        and qtys_4_children[str(booking_line.pk)] > 0
+                    ):
+                        booking_line.e_qty = qtys_4_children[str(booking_line.pk)]
+                    else:
+                        continue
+
                 booking_line.pk_lines_id = None
                 booking_line.fk_booking_id = newBooking["pk_booking_id"]
                 booking_line.e_qty_delivered = 0
@@ -2413,6 +2436,9 @@ class BookingViewSet(viewsets.ViewSet):
         serializer = BookingSerializer(data=newBooking)
         if serializer.is_valid():
             serializer.save()
+            logger.info(
+                f"{LOG_ID} Successfully duplicated! Original: {pk}({booking.b_bookingID_Visual}) -> New: {serializer.data['id']}({serializer.data['b_bookingID_Visual']})"
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3032,6 +3058,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            trace_error.print()
             logger.error("Exception: ", e)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3051,6 +3078,7 @@ class BookingLinesViewSet(viewsets.ViewSet):
             booking_line.delete()
             return JsonResponse({}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
+            trace_error.print()
             logger.error(f"#330 - booking line delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLine"})
 
@@ -3161,6 +3189,7 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
             booking_line_detail.delete()
             return JsonResponse({"Deleted BookingLineDetail ": booking_line_detail})
         except Exception as e:
+            trace_error.print()
             logger.error(f"#331 - booking lines data delete: {str(e)}")
             return JsonResponse({"error": "Can not delete BookingLineDetail"})
 
@@ -4877,6 +4906,7 @@ class VehiclesViewSet(viewsets.ViewSet):
                 status=200,
             )
         except Exception as e:
+            trace_error.print()
             logger.error(f"Vehicle Add error: {str(e)}")
             return JsonResponse({"result": None}, status=400)
 

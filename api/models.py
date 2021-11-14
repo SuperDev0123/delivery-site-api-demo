@@ -1962,6 +1962,7 @@ class Bookings(models.Model):
 
             return qty
         except Exception as e:
+            trace_error.print()
             logger.error(f"#552 [get_total_lines_qty] - {str(e)}")
             return 0
 
@@ -1979,6 +1980,7 @@ class Bookings(models.Model):
 
             return ", ".join(client_item_references)
         except Exception as e:
+            trace_error.print()
             logger.error(f"#553 [client_item_references] - {str(e)}")
             return ""
 
@@ -1996,6 +1998,7 @@ class Bookings(models.Model):
 
             return ", ".join(clientRefNumbers)
         except Exception as e:
+            trace_error.print()
             logger.error(f"#554 [clientRefNumbers] - {str(e)}")
             return ""
 
@@ -2013,6 +2016,7 @@ class Bookings(models.Model):
 
             return ", ".join(gap_ras)
         except Exception as e:
+            trace_error.print()
             logger.error(f"#555 [gap_ras] - {str(e)}")
             return ""
 
@@ -2234,7 +2238,8 @@ class Booking_lines(models.Model):
         try:
             return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
         except Exception as e:
-            logger.info(f"#516 Error: {str(e)}")
+            trace_error.print()
+            logger.error(f"#516 Error: {str(e)}")
             return None
 
     def get_is_scanned(self):
@@ -2247,6 +2252,7 @@ class Booking_lines(models.Model):
                 return True
             return False
         except Exception as e:
+            trace_error.print()
             logger.error(f"#561 get_is_scanned - {str(e)}")
             return False
 
@@ -2264,6 +2270,7 @@ class Booking_lines(models.Model):
 
             return ", ".join(_gap_ras)
         except Exception as e:
+            trace_error.print()
             logger.error(f"#562 gap_ras - {str(e)}")
             return ""
 
@@ -2280,6 +2287,7 @@ class Booking_lines(models.Model):
 
             return ", ".join(_modelNumbers)
         except Exception as e:
+            trace_error.print()
             logger.error(f"#563 modelNumbers - {str(e)}")
             return ""
 
@@ -2400,6 +2408,7 @@ class Booking_lines_data(models.Model):
         try:
             return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
         except Exception as e:
+            trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
             return None
 
@@ -2409,6 +2418,7 @@ class Booking_lines_data(models.Model):
                 pk_booking_lines_id=self.fk_booking_lines_id
             )
         except Exception as e:
+            trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
             return None
 

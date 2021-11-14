@@ -263,6 +263,8 @@ class BookingSerializer(serializers.ModelSerializer):
     customer_cost = serializers.SerializerMethodField(read_only=True)
     quote_packed_status = serializers.SerializerMethodField(read_only=True)
     inv_cost_quoted = serializers.FloatField(read_only=True)
+    qtys_in_stock = serializers.SerializerMethodField(read_only=True)
+    children = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -318,6 +320,92 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return ""
 
+    def get_children(self, obj):
+        _chidren = []
+
+        child_bookings = Bookings.objects.filter(
+            x_booking_Created_With__contains=f"Child of #{obj.b_bookingID_Visual}"
+        ).only(
+            "id",
+            "b_bookingID_Visual",
+            "pk_booking_id",
+            "vx_freight_provider",
+            "b_status",
+        )
+
+        if not child_bookings:
+            return _chidren
+
+        pk_booking_ids = [booking.pk_booking_id for booking in child_bookings]
+        child_lines = Booking_lines.objects.filter(
+            fk_booking_id__in=pk_booking_ids
+        ).only("pk_lines_id", "e_item", "e_qty")
+
+        for booking in child_bookings:
+            child = {}
+            _child_lines = []
+
+            child["b_bookingID_Visual"] = booking.b_bookingID_Visual
+            child["vx_freight_provider"] = booking.vx_freight_provider
+            child["b_status"] = booking.b_status
+            child["lines"] = []
+
+            for line in child_lines:
+                if booking.pk_booking_id == line.fk_booking_id:
+                    _line = {"e_item": line.e_item, "e_qty": line.e_qty}
+                    child["lines"].append(_line)
+
+            _chidren.append(child)
+
+        return _chidren
+
+    def get_qtys_in_stock(self, obj):
+        _qtys_in_stock = []
+
+        if "Child of #" in obj.x_booking_Created_With:
+            return _qtys_in_stock
+
+        child_bookings = Bookings.objects.filter(
+            x_booking_Created_With__contains=f"Child of #{obj.b_bookingID_Visual}"
+        ).only("id", "pk_booking_id", "vx_freight_provider")
+        lines = (
+            obj.lines()
+            .filter(is_deleted=False, packed_status=Booking_lines.ORIGINAL)
+            .only("pk_lines_id", "e_item", "e_qty")
+        )
+
+        if not child_bookings:
+            for line in lines:
+                _qtys_in_stock.append(
+                    {
+                        "pk_lines_id": line.pk,
+                        "qty_in_stock": line.e_qty,
+                        "e_item": line.e_item,
+                    }
+                )
+        else:
+            pk_booking_ids = [booking.pk_booking_id for booking in child_bookings]
+            child_lines = Booking_lines.objects.filter(
+                fk_booking_id__in=pk_booking_ids
+            ).only("pk_lines_id", "e_item", "e_qty")
+
+            for line in lines:
+                qty_in_stock = line.e_qty
+
+                for _line in child_lines:
+                    if line.e_item == _line.e_item:
+                        qty_in_stock -= _line.e_qty
+
+                _qtys_in_stock.append(
+                    {
+                        "pk_lines_id": line.pk,
+                        "qty_in_stock": qty_in_stock,
+                        "e_item": line.e_item,
+                    }
+                )
+
+        return _qtys_in_stock
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -333,6 +421,8 @@ class BookingSerializer(serializers.ModelSerializer):
             "is_auto_augmented",  # Auto Augmented
             "customer_cost",  # Customer cost (Client: Plum)
             "quote_packed_status",
+            "qtys_in_stock",  # Child booking related field
+            "children",  # Child booking related field
         )
         fields = read_only_fields + (
             "id",
