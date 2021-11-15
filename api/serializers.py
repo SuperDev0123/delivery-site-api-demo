@@ -380,6 +380,7 @@ class BookingSerializer(serializers.ModelSerializer):
                     {
                         "pk_lines_id": line.pk,
                         "qty_in_stock": line.e_qty,
+                        "qty_out_stock": 0,
                         "e_item": line.e_item,
                     }
                 )
@@ -391,15 +392,18 @@ class BookingSerializer(serializers.ModelSerializer):
 
             for line in lines:
                 qty_in_stock = line.e_qty
+                qty_out_stock = 0
 
                 for _line in child_lines:
                     if line.e_item == _line.e_item:
                         qty_in_stock -= _line.e_qty
+                        qty_out_stock += _line.e_qty
 
                 _qtys_in_stock.append(
                     {
                         "pk_lines_id": line.pk,
                         "qty_in_stock": qty_in_stock,
+                        "qty_out_stock": qty_out_stock,
                         "e_item": line.e_item,
                     }
                 )

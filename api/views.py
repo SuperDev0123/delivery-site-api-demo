@@ -2436,6 +2436,12 @@ class BookingViewSet(viewsets.ViewSet):
         serializer = BookingSerializer(data=newBooking)
         if serializer.is_valid():
             serializer.save()
+
+            if is_4_child:
+                status_history.create(
+                    booking, "Parent Booking", request.user.username, datetime.now()
+                )
+
             logger.info(
                 f"{LOG_ID} Successfully duplicated! Original: {pk}({booking.b_bookingID_Visual}) -> New: {serializer.data['id']}({serializer.data['b_bookingID_Visual']})"
             )
