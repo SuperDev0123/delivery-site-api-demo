@@ -2090,11 +2090,11 @@ class Bookings(models.Model):
         return super(Bookings, self).save(*args, **kwargs)
 
 
-@receiver(pre_save, sender=Bookings)
-def pre_save_booking(sender, instance, **kwargs):
-    from api.signal_handlers.booking import pre_save_handler
+# @receiver(pre_save, sender=Bookings)
+# def pre_save_booking(sender, instance, **kwargs):
+#     from api.signal_handlers.booking import pre_save_handler
 
-    pre_save_handler(instance)
+#     pre_save_handler(instance)
 
 
 @receiver(post_save, sender=Bookings)
