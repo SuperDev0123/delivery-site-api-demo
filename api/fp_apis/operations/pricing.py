@@ -205,8 +205,14 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
     for fp_name in AVAILABLE_FPS_4_FC:
         _fp_name = fp_name.lower()
 
-        if booking.b_dateBookedDate and booking.vx_freight_provider.lower() != _fp_name:
-            continue
+        try:
+            if (
+                booking.b_dateBookedDate
+                and booking.vx_freight_provider.lower() != _fp_name
+            ):
+                continue
+        except:
+            pass
 
         # If not allowed for this Client
         if _fp_name not in client_fps:
