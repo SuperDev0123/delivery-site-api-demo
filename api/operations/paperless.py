@@ -297,7 +297,7 @@ def send_order_info(bok_1):
 
         url = f"http://automation.acrsupplypartners.com.au:{port}/SalesOrderToWMS"
         bok_2s = BOK_2_lines.objects.filter(
-            fk_header_id=bok_1.pk_header_id, packed_status=BOK_2_lines.ORIGINAL
+            fk_header_id=bok_1.pk_header_id, b_093_packed_status=BOK_2_lines.ORIGINAL
         )
         log = Log(fk_booking_id=bok_1.pk_header_id, request_type="PAPERLESS_ORDER")
         log.save()
