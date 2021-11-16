@@ -1100,7 +1100,8 @@ def pricing(request):
         else:
             results = results.exclude(freight_provider="Sendle")
 
-        auto_select_pricing(booking, results, auto_select_type)
+        if not booking.b_dateBookedDate:
+            auto_select_pricing(booking, results, auto_select_type)
 
     res_json = {"success": True, "message": message, "results": json_results}
     return JsonResponse(res_json, status=status.HTTP_200_OK)
