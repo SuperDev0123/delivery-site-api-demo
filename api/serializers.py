@@ -362,7 +362,7 @@ class BookingSerializer(serializers.ModelSerializer):
     def get_qtys_in_stock(self, obj):
         _qtys_in_stock = []
 
-        if "Child of #" in obj.x_booking_Created_With:
+        if obj.x_booking_Created_With and "Child of #" in obj.x_booking_Created_With:
             return _qtys_in_stock
 
         child_bookings = Bookings.objects.filter(
