@@ -324,7 +324,7 @@ def send_order_info(bok_1):
         try:
             json_res = parse_xml(response.status_code == 200, response.content)
         except Exception as e:
-            error = f"@902 {LOG_ID} error on parseing response.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\n\n"
+            error = f"@902 {LOG_ID} error on parseing response.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrderNum: {bok_1.b_client_order_num}\n\n"
             error += f"Request info:\n    url: {url}\n    headers: {json.dumps(headers, indent=4)}\n    body: {body}\n\n"
             error += f"Response info:\n    status_code: {response.status_code}\n    content: {response.content}"
             logger.error(error)
@@ -344,13 +344,13 @@ def send_order_info(bok_1):
         return json_res
     except Exception as e:
         if bok_1.b_client_order_num:
-            to_emails = [settings.ADMIN_EMAIL_01, settings.ADMIN_EMAIL_02]
+            to_emails = [settings.ADMIN_EMAIL_02]
             subject = "Error on Paperless workflow"
 
             if settings.ENV == "prod":
                 to_emails.append(settings.SUPPORT_CENTER_EMAIL)
-                to_emails.append("randerson@plumproducts.com")  # Plum agent
-                to_emails.append("aussales@plumproducts.com")  # Plum agent
+                # to_emails.append("randerson@plumproducts.com")  # Plum agent
+                # to_emails.append("aussales@plumproducts.com")  # Plum agent
 
             send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
             logger.error(f"@905 {LOG_ID} Sent email notification!")
