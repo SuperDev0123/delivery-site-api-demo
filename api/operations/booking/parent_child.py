@@ -3,6 +3,7 @@ from api.models import Bookings, Booking_lines
 # Filter fully `run out` Bookings with Children - In short, no more child can be made
 def get_run_out_bookings(bookings):
     _run_out_booking_pks = []
+    _runable_booking_pks = []
     created_withs = []
     pk_booking_ids = []
     queryset = bookings.only("id", "pk_booking_id", "b_bookingID_Visual")
@@ -54,7 +55,11 @@ def get_run_out_bookings(bookings):
                     qty_in_stock -= _line.e_qty
 
             if qty_in_stock > 0:
-                _run_out_booking_pks.append(booking.id)
+                _runable_booking_pks.append(booking.id)
                 break
+
+    for booking in queryset:
+        if not booking.id in _runable_booking_pks:
+            _run_out_booking_pks.append(booking.id)
 
     return _run_out_booking_pks
