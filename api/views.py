@@ -95,6 +95,7 @@ from api.operations.packing.booking import (
     auto_repack as booking_auto_repack,
     manual_repack as booking_manual_repack,
 )
+from api.operations.booking.parent_child import get_run_out_bookings
 
 
 if settings.ENV == "local":
@@ -1258,6 +1259,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
             elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
+            elif active_tab_index == 11:
+                queryset = queryset.filter(b_status="Parent Booking")
+                run_out_bookings = get_run_out_bookings(queryset)
+                queryset = queryset.exclude(pk__in=run_out_bookings)
 
         # Sort
         if download_option != "check_pod" and (

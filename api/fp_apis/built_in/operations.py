@@ -182,7 +182,7 @@ def find_vehicle_ids(booking_lines, fp):
             height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
             weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
 
-            total_weight += weight
+            total_weight += weight * item.e_qty
             max_length = length if max_length < length else max_length
             max_width = width if max_width < width else max_width
             max_height = height if max_height < height else max_height
