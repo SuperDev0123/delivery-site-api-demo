@@ -4512,9 +4512,11 @@ def build_label(request):
 
     sscc_list = []
     sscc_lines = {}
+    total_qty = 0
     for line in lines:
         if line.sscc not in sscc_list:
             sscc_list.append(line.sscc)
+            total_qty += line.e_qty
             _lines = []
 
             for line1 in lines:
@@ -4529,18 +4531,20 @@ def build_label(request):
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
 
-        for index, sscc in enumerate(sscc_list):
+        label_index = 0
+        for sscc in enumerate(sscc_list):
             logger.info(f"@368 - building label with SSCC...")
             file_path, file_name = build_label_oper(
                 booking=booking,
                 file_path=file_path,
                 lines=sscc_lines[sscc],
-                label_index=index,
+                label_index=label_index,
                 sscc=sscc,
-                sscc_cnt=len(sscc_list),
+                sscc_cnt=total_qty,
                 one_page_label=False,
             )
             label_urls.append(f"{file_path}/{file_name}")
+            label_index += sscc_lines[sscc].e_qty
 
         if label_urls:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
