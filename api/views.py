@@ -74,6 +74,7 @@ from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
 from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num
+from api.fp_apis.constants import SPECIAL_FPS
 from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
@@ -1762,11 +1763,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
                     # JasonL and 3 special FP
                     if booking.b_client_name == "Jason L":
-                        if field_content in [
-                            "JasonL In house",
-                            "Customer Pickup",
-                            "Line haul General",
-                        ]:
+                        if field_content in SPECIAL_FPS:
                             booking.booking_type = "DMEM"
 
                 booking.save()
@@ -4410,11 +4407,7 @@ def get_manifest(request):
                 if (
                     "jason" in request.user.username and not booking.b_dateBookedDate
                 ):  # Jason L: Create new statusHistory
-                    if booking.vx_freight_provider in [
-                        "Line haul General",
-                        "Customer Pickup",
-                        "JasonL In house",
-                    ]:
+                    if booking.vx_freight_provider in SPECIAL_FPS:
                         status_history.create(booking, "Booked", username)
                         booking.b_dateBookedDate = datetime.now()
                         booking.v_FPBookingNumber = gen_consignment_num(
@@ -4480,7 +4473,7 @@ def build_label(request):
     booking = Bookings.objects.get(pk=booking_id)
     lines = booking.lines().filter(is_deleted=False)
 
-    if booking.api_booking_quote:
+    if booking.api_booking_quote and not booking.vx_freight_provider in SPECIAL_FPS:
         lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
 
         for line in lines:
