@@ -919,6 +919,11 @@ class BookingsViewSet(viewsets.ViewSet):
                     fk_client_warehouse_id=employee_warehouse_id,
                 )
 
+        if active_tab_index and active_tab_index in [11]:
+            queryset = queryset.filter(b_status="Parent Booking")
+            run_out_bookings = get_run_out_bookings(queryset)
+            queryset = queryset.exclude(pk__in=run_out_bookings)
+
         # If booking_ids is not None
         if booking_ids:
             queryset = queryset.filter(pk__in=booking_ids)
@@ -927,7 +932,6 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = self._column_filter_4_get_bookings(
                 queryset, column_filters, active_tab_index
             )
-
         else:
             # Client filter
             if client_pk is not "0":
@@ -1260,10 +1264,10 @@ class BookingsViewSet(viewsets.ViewSet):
             elif active_tab_index == 10:
                 queryset = queryset.filter(b_status=dme_status)
             elif active_tab_index == 11:
-                queryset = queryset.filter(b_status="Parent Booking")
-                print("@! - ", queryset)
-                run_out_bookings = get_run_out_bookings(queryset)
-                queryset = queryset.exclude(pk__in=run_out_bookings)
+                # queryset = queryset.filter(b_status="Parent Booking")
+                # run_out_bookings = get_run_out_bookings(queryset)
+                # queryset = queryset.exclude(pk__in=run_out_bookings)
+                pass
 
         # Sort
         if download_option != "check_pod" and (
