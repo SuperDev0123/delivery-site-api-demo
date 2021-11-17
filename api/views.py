@@ -4507,23 +4507,22 @@ def build_label(request):
                     line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                     line.save()
 
-    line_datas = booking.line_datas()
     label_urls = []
-
     sscc_list = []
     sscc_lines = {}
     total_qty = 0
     for line in lines:
         if line.sscc not in sscc_list:
             sscc_list.append(line.sscc)
-            total_qty += line.e_qty
             _lines = []
 
             for line1 in lines:
                 if line1.sscc == line.sscc:
+                    total_qty += line1.e_qty
                     _lines.append(line1)
 
             sscc_lines[line.sscc] = _lines
+    logger.info(f"{LOG_ID} \nsscc_list:{sscc_list}\nsscc_lines: {sscc_lines}")
 
     try:
         # Build label with SSCC - one sscc should have one page label
@@ -4544,7 +4543,9 @@ def build_label(request):
                 one_page_label=False,
             )
             label_urls.append(f"{file_path}/{file_name}")
-            label_index += sscc_lines[sscc].e_qty
+
+            for _line in sscc_lines[sscc]:
+                label_index += _line.e_qty
 
         if label_urls:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
