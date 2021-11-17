@@ -4531,7 +4531,7 @@ def build_label(request):
         )
 
         label_index = 0
-        for sscc in enumerate(sscc_list):
+        for sscc in sscc_list:
             logger.info(f"@368 - building label with SSCC...")
             file_path, file_name = build_label_oper(
                 booking=booking,
