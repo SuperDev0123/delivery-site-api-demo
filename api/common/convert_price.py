@@ -51,9 +51,9 @@ def _apply_mu(quote, fp, client):
     # else:
     #     fuel_levy_base = quote.fee * fp_mu
 
-    fuel_levy_base = quote.fee * fp_mu
     surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
-    cost = quote.fee + fuel_levy_base + surcharge
+    fuel_levy_base = (quote.fee + surcharge) * fp_mu
+    cost = quote.fee + surcharge + fuel_levy_base
 
     # Client MU
     # Apply FP MU for Quotes with DME credentials
