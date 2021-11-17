@@ -1261,6 +1261,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(b_status=dme_status)
             elif active_tab_index == 11:
                 queryset = queryset.filter(b_status="Parent Booking")
+                print("@! - ", queryset)
                 run_out_bookings = get_run_out_bookings(queryset)
                 queryset = queryset.exclude(pk__in=run_out_bookings)
 
