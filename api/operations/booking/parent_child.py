@@ -1,7 +1,12 @@
+import logging
+
 from api.models import Bookings, Booking_lines
+
+logger = logging.getLogger(__name__)
 
 # Filter fully `run out` Bookings with Children - In short, no more child can be made
 def get_run_out_bookings(bookings):
+    LOG_ID = f"[GET RUN OUT BOOKINGS]"
     _run_out_booking_pks = []
     _runable_booking_pks = []
     created_withs = []
@@ -47,6 +52,9 @@ def get_run_out_bookings(bookings):
             if booking.pk_booking_id == line.fk_booking_id:
                 booking_lines.append(line)
 
+        logger.info(
+            f"{LOG_ID}, booking_children: {booking_children}\nbooking_lines: {booking_lines}\nchild_lines:{child_lines}"
+        )
         for line in booking_lines:
             qty_in_stock = line.e_qty
 
@@ -62,4 +70,5 @@ def get_run_out_bookings(bookings):
         if not booking.id in _runable_booking_pks:
             _run_out_booking_pks.append(booking.id)
 
+    logger.info(f"{LOG_ID} result: {_run_out_booking_pks}")
     return _run_out_booking_pks
