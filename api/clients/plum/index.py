@@ -1448,7 +1448,7 @@ def reprint_label(params, client):
 
     # Plum ZPL printer requries portrait label
     if booking.vx_freight_provider.lower() == "allied":
-        pdf.rotate_pdf(label_url)
+        label_url = pdf.rotate_pdf(label_url)
 
     # Convert label into ZPL format
     logger.info(f"@369 - converting LABEL({label_url}) into ZPL format...")
