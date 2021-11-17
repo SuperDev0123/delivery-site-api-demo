@@ -76,6 +76,16 @@ def push_via_api(booking, event_timestamp):
     json_booking["deToPhoneMain"] = booking.de_to_Phone_Main
     json_booking["deToEmail"] = booking.de_Email
 
+    # PU info
+    json_booking["puEntity"] = booking.puCompany
+    json_booking["puStreet1"] = booking.pu_Address_Street_1
+    json_booking["puState"] = booking.pu_Address_State
+    json_booking["puPostalCode"] = booking.pu_Address_PostalCode
+    json_booking["puSuburb"] = booking.pu_Address_Suburb
+    json_booking["puContactName"] = booking.pu_Contact_F_L_Name
+    json_booking["puPhoneMain"] = booking.pu_Phone_Main
+    json_booking["puEmail"] = booking.pu_Email
+
     json_payload = {"data": [json_booking]}
     logger.info(f"{LOG_ID} Payload: {json_payload}")
     headers = {"content-type": "application/json"}
