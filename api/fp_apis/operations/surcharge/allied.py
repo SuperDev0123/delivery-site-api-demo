@@ -101,7 +101,7 @@ def hd0(param):
         and param["max_weight"] < 22
     ):
         return {
-            "name": "Home Deliveries [HD]",
+            "name": "Home Deliveries [HD] - 22",
             "description": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment under 22kgs (dead or cubic weight)",
             "value": 10.6 * 0.5,
         }
@@ -116,7 +116,7 @@ def hd1(param):
         and param["max_weight"] <= 55
     ):
         return {
-            "name": "Home Deliveries [HD]",
+            "name": "Home Deliveries [HD] - 55",
             "description": "For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
             "value": 21.19 * 0.5,
         }
@@ -128,10 +128,10 @@ def hd2(param):
     if param["de_to_address_type"].lower() == "residential" and (
         (param["dead_weight"] > 55 and param["dead_weight"] <= 90)
         or (param["cubic_weight"] > 55 and param["cubic_weight"] <= 135)
-    ):
+    ) and not (param["dead_weight"] > 90 or param["cubic_weight"] > 135):
         return {
-            "name": "Home Deliveries [HD]",
-            "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
+            "name": "Home Deliveries [HD] - 90",
+            "description": "For freight being delivered to residential addresses a surcharge per consignment over 55kgs dead weight or over 90 cubic weight will apply",
             "value": 74.15 * 0.5,
         }
     else:
@@ -143,7 +143,7 @@ def hd3(param):
         param["dead_weight"] > 90 or param["cubic_weight"] > 135
     ):
         return {
-            "name": "Home Deliveries [HD]",
+            "name": "Home Deliveries [HD] - 136",
             "description": "For freight being delivered to residential addresses a surcharge per consignment over 90kgs dead weight or over 136 cubic weight will apply",
             "value": 158.87 * 0.5,
         }

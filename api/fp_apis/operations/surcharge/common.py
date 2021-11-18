@@ -17,7 +17,10 @@ SURCHARGE_NAME_DESC = {
         "Onforwarding(Pickup)": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
         "Onforwarding(Delivery)": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
         "Overweight": "Base charge plus kilo charge",
-        "Home Deliveries [HD]": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
+        "Home Deliveries [HD] - 22": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment less than 23 kgs (dead or cubic weight)",
+        "Home Deliveries [HD] - 55": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
+        "Home Deliveries [HD] - 90": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 55 and 90 kgs (dead or cubic weight)",
+        "Home Deliveries [HD] - 136": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 90 and 136 kgs (dead or cubic weight)",
     },
     "HUNTER": {
         "Excess Lengths (2.5m+)": "2.5m up to/not incl. 4.0m",
