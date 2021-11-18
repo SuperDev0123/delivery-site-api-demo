@@ -31,7 +31,7 @@ def auto_repack(booking, repack_status, need_soft_delete=False):
 
     # Select suitable pallet and get required pallets count
     if booking.b_client_name == 'Bathroom Sales Direct':
-        pallets = Pallet.objects.get(pk=7) # 1.2 x 1.2
+        pallets = Pallet.objects.filter(pk=7) # 1.2 x 1.2
     else:
         pallets = Pallet.objects.all()
     palletized, non_palletized = get_palletized_by_ai(lines, pallets)
