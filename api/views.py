@@ -73,7 +73,7 @@ from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
-from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num, get_dme_status_from_fp_status
+from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num, get_dme_status_from_fp_status, get_fp_status_description_from_fp_status
 from api.fp_apis.operations import tracking
 from api.outputs import tempo
 from api.outputs.email import send_email
@@ -3389,7 +3389,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 }
                 fp_data = {
                     'status': request.data['fp_status_code'],
-                    'desc': request.data['fp_status_details'],
+                    'desc': request.data['fp_status_details'] or get_fp_status_description_from_fp_status(fp.fp_company_name, request.data['fp_status_code']),
                     'event_timestamp': event_time_stamp,
                     'is_active': True,
                     'booking': booking.id,
@@ -3399,25 +3399,27 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 dme_serializer = StatusHistorySerializer(data=dme_data)
                 fp_serializer = FPStatusHistorySerializer(data=fp_data)
                 if dme_serializer.is_valid() and fp_serializer.is_valid():
-                    status_history.create(
-                        booking,
-                        status_last,
-                        request.user.username,
-                        event_time_stamp,
-                    )
+                    print('dme_data', dme_data, '\nfp_data', fp_data)
+                    # status_history.create(
+                    #     booking,
+                    #     status_last,
+                    #     request.user.username,
+                    #     event_time_stamp,
+                    # )
 
-                    tracking.create_fp_status_history(
-                        booking, 
-                        fp, 
-                        {
-                            'b_status_API': fp_data['status'],
-                            'status_desc': fp_data['desc'],
-                            'event_time': fp_data['event_timestamp']
-                        }
-                    )
+                    # tracking.create_fp_status_history(
+                    #     booking, 
+                    #     fp, 
+                    #     {
+                    #         'b_status_API': fp_data['status'],
+                    #         'status_desc': fp_data['desc'],
+                    #         'event_time': fp_data['event_timestamp']
+                    #     }
+                    # )
 
                     return Response(status=status.HTTP_200_OK)
                 else:
+                    print('eeeeeeeeeeeeee, dme_data', dme_data, '\nfp_data', fp_data)
                     return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             trace_error.print()

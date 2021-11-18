@@ -91,6 +91,36 @@ def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
         return None
 
 
+def get_fp_status_description_from_fp_status(fp_name, b_status_API, booking=None):
+    try:
+        rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)
+
+        def get_fp_status_description(fp_status):
+            fp_status_description = None
+            for rule in rules:
+                if fp_name.lower() == "allied":
+                    if "XXX" in rule.fp_lookup_status:
+                        fp_lookup_status = rule.fp_lookup_status.replace("XXX", "")
+                        if fp_lookup_status in fp_status:
+                            fp_status_description = rule.fp_status_description
+                    elif rule.fp_lookup_status == fp_status:
+                        fp_status_description = rule.fp_status_description
+                else:
+                    if rule.fp_lookup_status == fp_status:
+                        fp_status_description = rule.fp_status_description
+            return fp_status_description
+
+        if isinstance(b_status_API, str):
+            return get_fp_status_description(b_status_API)
+        else:
+            status_descs = []
+            for fp_status in b_status_API:
+                status_descs.append(get_fp_status_description(fp_status))
+            return status_descs
+    except:
+        return None
+
+
 def get_status_category_from_status(status):
     if not status:
         return None
