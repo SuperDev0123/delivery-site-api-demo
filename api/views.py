@@ -3399,27 +3399,25 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 dme_serializer = StatusHistorySerializer(data=dme_data)
                 fp_serializer = FPStatusHistorySerializer(data=fp_data)
                 if dme_serializer.is_valid() and fp_serializer.is_valid():
-                    print('dme_data', dme_data, '\nfp_data', fp_data)
-                    # status_history.create(
-                    #     booking,
-                    #     status_last,
-                    #     request.user.username,
-                    #     event_time_stamp,
-                    # )
+                    status_history.create(
+                        booking,
+                        status_last,
+                        request.user.username,
+                        event_time_stamp,
+                    )
 
-                    # tracking.create_fp_status_history(
-                    #     booking, 
-                    #     fp, 
-                    #     {
-                    #         'b_status_API': fp_data['status'],
-                    #         'status_desc': fp_data['desc'],
-                    #         'event_time': fp_data['event_timestamp']
-                    #     }
-                    # )
+                    tracking.create_fp_status_history(
+                        booking, 
+                        fp, 
+                        {
+                            'b_status_API': fp_data['status'],
+                            'status_desc': fp_data['desc'],
+                            'event_time': fp_data['event_timestamp']
+                        }
+                    )
 
                     return Response(status=status.HTTP_200_OK)
                 else:
-                    print('eeeeeeeeeeeeee, dme_data', dme_data, '\nfp_data', fp_data)
                     return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             trace_error.print()
