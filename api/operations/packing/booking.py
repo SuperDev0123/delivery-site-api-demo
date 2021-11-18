@@ -30,7 +30,10 @@ def auto_repack(booking, repack_status, need_soft_delete=False):
     auto_repacked_lines = []
 
     # Select suitable pallet and get required pallets count
-    pallets = Pallet.objects.all()
+    if booking.b_client_name == 'Bathroom Sales Direct':
+        pallets = Pallet.objects.get(pk=7) # 1.2 x 1.2
+    else:
+        pallets = Pallet.objects.all()
     palletized, non_palletized = get_palletized_by_ai(lines, pallets)
     logger.info(
         f"@831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
