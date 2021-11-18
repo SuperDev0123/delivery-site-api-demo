@@ -989,6 +989,12 @@ def get_pricing_payload(
         payload["serviceType"] = "R"
     elif fp_name == "hunter":
         payload["serviceType"] = "RF"
+        payload["ConsignmentSenderIsResidential"] = (
+            "y" if booking.pu_Address_Type == "residential" else "n"
+        )
+        payload["ConsignmentReceiverIsResidential"] = (
+            "y" if booking.de_To_AddressType == "residential" else "n"
+        )
     elif fp_name == "capital":
         payload["serviceType"] = "EC"
     elif fp_name == "allied":
