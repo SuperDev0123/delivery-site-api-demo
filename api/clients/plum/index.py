@@ -1227,7 +1227,7 @@ def scanned(payload, client):
             label_urls.append(label_url)
 
             # Plum ZPL printer requries portrait label
-            if booking.vx_freight_provider.lower() == "allied":
+            if booking.vx_freight_provider.lower() in ["hunter", 'tnt']:
                 label_url = pdf.rotate_pdf(label_url)
 
             result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")

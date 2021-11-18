@@ -88,7 +88,7 @@ from api.file_operations import (
 )
 from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
-from api.convertors.pdf import pdf_merge
+from api.convertors.pdf import pdf_merge, rotate_pdf, pdf_to_zpl
 from api.common.booking_quote import set_booking_quote
 from api.operations.packing.booking import (
     reset_repack as booking_reset_repack,
@@ -4076,15 +4076,19 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
 def download(request):
+    LOG_ID = "[DOWNLOAD]"
     body = literal_eval(request.body.decode("utf8"))
     download_option = body["downloadOption"]
     file_paths = []
+    logger.info(f"{LOG_ID} Option: {download_option}")
 
     if download_option != "logs":
         if download_option in ["pricing-only", "pricing-rule", "xls import"]:
             file_name = body["fileName"]
         elif download_option == "manifest":
             z_manifest_url = body["z_manifest_url"]
+        elif download_option == "zpl":
+            pass
         else:
             bookingIds = body["ids"]
             bookings = Bookings.objects.filter(id__in=bookingIds)
@@ -4183,6 +4187,22 @@ def download(request):
                 )
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
+    elif download_option == "zpl":
+        pdf_url = body.get('url')
+        booking_id = body.get('id')
+        booking = Bookings.objects.get(pk=booking_id)
+        label_url = f"{settings.STATIC_PUBLIC}/pdfs/{pdf_url}"
+
+        # Plum ZPL printer requries portrait label
+        if booking.vx_freight_provider.lower() in ["hunter", 'tnt']:
+            label_url = rotate_pdf(label_url)
+
+        # Convert label into ZPL format
+        logger.info(f"{LOG_ID} - converting LABEL({label_url}) into ZPL format...")
+        result = pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+
+        zpl_url = label_url[:-4] + ".zpl"
+        file_paths.append(zpl_url)
     elif download_option == "logs":
         mode = body["mode"]
 
@@ -4190,6 +4210,7 @@ def download(request):
             file_paths.append(os.path.join(f"{settings.BASE_DIR}/logs", "debug.log"))
         else:
             count = 10 if mode == 1 else 50
+
             for i in range(count):
                 if i == 0:
                     path = f"{settings.BASE_DIR}/logs/debug.log"
