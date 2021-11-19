@@ -4506,10 +4506,16 @@ def build_label(request):
 
     if booking.api_booking_quote and not booking.vx_freight_provider in SPECIAL_FPS:
         lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
+        non_quote_lines = lines.exclude(packed_status=booking.api_booking_quote.packed_status)
 
         for line in lines:
             if not line.sscc:
                 line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
+                line.save()
+
+        for line in non_quote_lines:
+            if line.sscc and "NOSSCC_" in line.sscc:
+                line.sscc = None
                 line.save()
     else:
         scanned_lines = []

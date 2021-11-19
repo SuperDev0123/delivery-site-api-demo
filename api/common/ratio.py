@@ -1,24 +1,24 @@
 def _get_dim_amount(dim_uom):
     uom = dim_uom.lower()
 
-    if uom == "km" or uom == "kms" or uom == "kilometer" or uom == "kilometers":
+    if uom in ["km", "kms", "kilometer", "kilometers"]:
         return 1000
-    elif uom == "m" or uom == "ms" or uom == "meter" or uom == "meters":
+    elif uom in ["m", "ms", "meter", "meters"]:
         return 1
-    elif uom == "cm" or uom == "cms" or uom == "centimeter" or uom == "centimeters":
+    elif uom in ["cm", "cms", "centimeter", "centimeters"]:
         return 0.01
-    elif uom == "mm" or uom == "mms" or uom == "millimeter" or uom == "millimeters":
+    elif uom in ["mm", "mms", "millimeter", "millimeters"]:
         return 0.001
 
 
 def _get_weight_amount(weight_uom):
     uom = weight_uom.lower()
 
-    if uom == "t" or uom == "ts" or uom == "ton" or uom == "tons":
+    if uom in ["t", "ts", "ton", "tons"]:
         return 1000
-    elif uom == "kg" or uom == "kgs" or uom == "kilogram" or uom == "kilograms":
+    elif uom in ["kg", "kgs", "kilogram", "kilograms"]:
         return 1
-    elif uom == "g" or uom == "gs" or uom == "gram" or uom == "grams":
+    elif uom in ["g", "gs", "gram", "grams"]:
         return 0.001
 
 
