@@ -33,7 +33,7 @@ def push_boks(payload, client, username, method):
         # Warehouse
         bok_1["client_booking_id"] = bok_1["pk_header_id"]
         bok_1["fk_client_warehouse"] = 220
-        bok_1["b_clientPU_Warehouse"] = 'Merrylands'
+        bok_1["b_clientPU_Warehouse"] = 'Bathroom Sales Direct'
         bok_1["b_client_warehouse_code"] = 'BSD_MERRYLANDS'
         bok_1['booking_Created_For_Email'] = 'info@bathroomsalesdirect.com.au'
 
