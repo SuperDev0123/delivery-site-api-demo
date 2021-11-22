@@ -31,13 +31,11 @@ def push_boks(payload, client, username, method):
         bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
 
         # Warehouse
-        warehouse = Client_warehouses.objects.get(
-            client_warehouse_code=bok_1["b_client_warehouse_code"]
-        )
         bok_1["client_booking_id"] = bok_1["pk_header_id"]
-        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-        bok_1["b_clientPU_Warehouse"] = warehouse.name
-        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+        bok_1["fk_client_warehouse"] = 220
+        bok_1["b_clientPU_Warehouse"] = 'Merrylands'
+        bok_1["b_client_warehouse_code"] = 'BSD_MERRYLANDS'
+        bok_1['booking_Created_For_Email'] = 'info@bathroomsalesdirect.com.au'
 
         if not bok_1.get("b_054_b_del_company"):
             bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
