@@ -1201,7 +1201,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     "Cancelled",
                 ]:
                     # Jason L & BSD
-                    if booking.kf_client_id in ["1af6bcd2-6148-11eb-ae93-0242ac130002", "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"]:
+                    if booking.kf_client_id in [
+                        "1af6bcd2-6148-11eb-ae93-0242ac130002",
+                        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+                    ]:
                         if booking.b_status == "Picked":
                             to_manifest += 1
                     else:
@@ -1233,7 +1236,11 @@ class BookingsViewSet(viewsets.ViewSet):
             elif active_tab_index == 3:  # To manifest
                 if (  # Jason L
                     client_employee_role == "company"
-                    and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+                    and client.dme_account_num
+                    in [
+                        "1af6bcd2-6148-11eb-ae93-0242ac130002",
+                        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+                    ]
                 ):
                     queryset = queryset.filter(
                         Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
@@ -4188,13 +4195,13 @@ def download(request):
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
     elif download_option == "zpl":
-        pdf_url = body.get('url')
-        booking_id = body.get('id')
+        pdf_url = body.get("url")
+        booking_id = body.get("id")
         booking = Bookings.objects.get(pk=booking_id)
         label_url = f"{settings.STATIC_PUBLIC}/pdfs/{pdf_url}"
 
         # Plum ZPL printer requries portrait label
-        if booking.vx_freight_provider.lower() in ["hunter", 'tnt']:
+        if booking.vx_freight_provider.lower() in ["hunter", "tnt"]:
             label_url = rotate_pdf(label_url)
 
         # Convert label into ZPL format
@@ -4506,7 +4513,9 @@ def build_label(request):
 
     if booking.api_booking_quote and not booking.vx_freight_provider in SPECIAL_FPS:
         lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
-        non_quote_lines = lines.exclude(packed_status=booking.api_booking_quote.packed_status)
+        non_quote_lines = lines.exclude(
+            packed_status=booking.api_booking_quote.packed_status
+        )
 
         for line in lines:
             if not line.sscc:
