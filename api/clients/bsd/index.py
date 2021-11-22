@@ -33,21 +33,25 @@ def push_boks(payload, client, username, method):
         # Warehouse
         bok_1["client_booking_id"] = bok_1["pk_header_id"]
         bok_1["fk_client_warehouse"] = 220
-        bok_1["b_clientPU_Warehouse"] = 'Bathroom Sales Direct'
-        bok_1["b_client_warehouse_code"] = 'BSD_MERRYLANDS'
-        bok_1['booking_Created_For_Email'] = 'info@bathroomsalesdirect.com.au'
+        bok_1["b_clientPU_Warehouse"] = "Bathroom Sales Direct"
+        bok_1["b_client_warehouse_code"] = "BSD_MERRYLANDS"
+        bok_1["booking_Created_For_Email"] = "info@bathroomsalesdirect.com.au"
 
         if not bok_1.get("b_054_b_del_company"):
             bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
         bok_1["b_057_b_del_address_state"] = bok_1["b_057_b_del_address_state"].upper()
         bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+        bok_1["b_027_b_pu_address_type"] = "business"
+        bok_1["b_053_b_del_address_type"] = "residential"
 
         # PU avail from
-        if not bok_1.get('b_021_b_pu_avail_from_date'):
+        if not bok_1.get("b_021_b_pu_avail_from_date"):
             now_time = datetime.now()
-            start_date = now_time - timedelta(days=1) if now_time.time().hour < 12 else now_time
-            bok_1['b_021_b_pu_avail_from_date'] = next_business_day(start_date, 3)
+            start_date = (
+                now_time - timedelta(days=1) if now_time.time().hour < 12 else now_time
+            )
+            bok_1["b_021_b_pu_avail_from_date"] = next_business_day(start_date, 3)
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if not bok_1_serializer.is_valid():
