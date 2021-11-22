@@ -48,6 +48,7 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.surcharge.index import get_surcharges, gen_surcharges
 from api.clients.plum import index as plum
 from api.clients.tempo import index as tempo
+from api.clients.bsd import index as bsd
 from api.clients.jason_l import index as jason_l
 from api.clients.jason_l.operations import (
     create_or_update_product as jasonL_create_or_update_product,
