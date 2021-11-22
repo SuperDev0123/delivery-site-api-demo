@@ -566,6 +566,7 @@ class BOK_2_ViewSet(viewsets.ViewSet):
         logger.info(f"@874 request payload - {request.data}")
         bok_2_line = request.data
         bok_2_line["v_client_pk_consigment_num"] = bok_2_line["fk_header_id"]
+        bok_2_line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
         bok_2_line["success"] = dme_constants.BOK_SUCCESS_2
         serializer = BOK_2_Serializer(data=bok_2_line)
 
@@ -657,7 +658,9 @@ def push_boks(request):
                 username=user.username,
                 method=request.method,
             )
-        elif dme_account_num == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8":  # BSD - Bathroom Sales Direct
+        elif (
+            dme_account_num == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        ):  # BSD - Bathroom Sales Direct
             result = bsd.push_boks(
                 payload=request.data,
                 client=client,
