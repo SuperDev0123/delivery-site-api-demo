@@ -1200,8 +1200,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     "Closed",
                     "Cancelled",
                 ]:
-                    # Jason L
-                    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+                    # Jason L & BSD
+                    if booking.kf_client_id in ["1af6bcd2-6148-11eb-ae93-0242ac130002", "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"]:
                         if booking.b_status == "Picked":
                             to_manifest += 1
                     else:
