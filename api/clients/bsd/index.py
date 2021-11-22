@@ -4,7 +4,7 @@ from datetime import datetime, date
 
 from django.db import transaction
 
-from api.models import Client_warehouses
+from api.models import Client_warehouses, BOK_2_lines
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.common import common_times as dme_time_lib, constants as dme_constants
@@ -66,6 +66,8 @@ def push_boks(payload, client, username, method):
             _bok_2["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
             _bok_2["pk_booking_lines_id"] = str(uuid.uuid1())
             _bok_2["success"] = bok_1["success"]
+            _bok_2["is_deleted"] = 0
+            _bok_2["b_093_packed_status"] = BOK_2_lines.ORIGINAL
             l_001 = "Carton" or _bok_2.get("l_001_type_of_packaging")
             _bok_2["l_001_type_of_packaging"] = l_001
 
