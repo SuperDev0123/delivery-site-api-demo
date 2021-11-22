@@ -47,7 +47,7 @@ def push_boks(payload, client, username, method):
         if not bok_1.get('b_021_b_pu_avail_from_date'):
             now_time = datetime.now()
             start_date = now_time - timedelta(days=1) if now_time.time().hour < 12 else now_time
-            bok_1.get('b_021_b_pu_avail_from_date') = next_business_day(start_date, 3)
+            bok_1['b_021_b_pu_avail_from_date'] = next_business_day(start_date, 3)
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if not bok_1_serializer.is_valid():
