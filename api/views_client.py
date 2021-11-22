@@ -657,7 +657,7 @@ def push_boks(request):
                 method=request.method,
             )
         elif dme_account_num == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8":  # BSD - Bathroom Sales Direct
-            result = tempo.push_boks(
+            result = bsd.push_boks(
                 payload=request.data,
                 client=client,
                 username=user.username,
