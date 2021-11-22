@@ -4442,9 +4442,10 @@ def get_manifest(request):
                 booking.z_manifest_url = f"startrack_au/{filename}"
                 booking.manifest_timestamp = now
 
+                # Jason L & BSD: Create new statusHistory
                 if (
-                    "jason" in request.user.username and not booking.b_dateBookedDate
-                ):  # Jason L: Create new statusHistory
+                    "bsd" in request.user.username or "jason" in request.user.username
+                ) and not booking.b_dateBookedDate:
                     if booking.vx_freight_provider in SPECIAL_FPS:
                         status_history.create(booking, "Booked", username)
                         booking.b_dateBookedDate = datetime.now()
