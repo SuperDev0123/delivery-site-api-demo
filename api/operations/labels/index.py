@@ -2,6 +2,7 @@ import logging
 
 from api.models import Bookings, Fp_freight_providers
 from api.common import trace_error
+from api.fp_apis.utils import gen_consignment_num
 from api.operations.labels import (
     ship_it,
     dhl,
@@ -48,6 +49,14 @@ def build_label(
             file_path, file_name = default.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
+
+        # Set consignment number
+        booking.v_FPBookingNumber = gen_consignment_num(
+            booking.vx_freight_provider,
+            booking.b_bookingID_Visual,
+            booking.kf_client_id,
+        )
+        booking.save()
 
         return file_path, file_name
     except Exception as e:
