@@ -134,7 +134,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         last_consignmentStatus = _consignmentStatuses_0[len(_consignmentStatuses_0) - 1]
 
         for _consignmentStatus in _consignmentStatuses_0:
-            if _consignmentStatus["status"] == "DEL":
+            if _consignmentStatus["status"] in ["DEL", "ATL", "PODIN"]:
                 has_delivered_status = True
                 delivered_status_cnt += 1
 
