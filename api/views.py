@@ -73,6 +73,7 @@ from api.operations.csv.index import build_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
+from api.operations.booking.cancel import cancel_book as cancel_book_oper
 from api.fp_apis.utils import get_status_category_from_status, gen_consignment_num
 from api.fp_apis.constants import SPECIAL_FPS
 from api.outputs import tempo
@@ -2507,6 +2508,21 @@ class BookingViewSet(viewsets.ViewSet):
             serializer = BookingSerializer(booking)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def cancel_book(self, request, pk, format=None):
+        LOG_ID = "[CANCEL BOOK]"
+        try:
+            booking = Bookings.objects.get(pk=pk)
+            cancel_book_oper(booking, request.user)
+            return Response(
+                {"success": True, "message": "Successfully Cancelled"},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            trace_error.print()
+            logger.info(f"{LOG_ID} Error: {str(e)}")
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"])
     def update_augment(self, request, format=None):
