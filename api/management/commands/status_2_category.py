@@ -10,14 +10,17 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # print("----- Populating category from status... -----")
         bookings = (
-            Bookings.objects.filter(b_status__isnull=False)
+            Bookings.objects.filter(
+                b_status__isnull=False, b_dateBookedDate__isnull=False
+            )
             .exclude(
                 b_status__in=[
-                    "Delivered",
                     "On Hold",
                     "Entered",
                     "Picking",
                     "Picked",
+                    "Closed",
+                    "Cancelled",
                 ]
             )
             .exclude(z_lock_status=True)
