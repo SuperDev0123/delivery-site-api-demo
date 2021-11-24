@@ -3390,7 +3390,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 }
                 create_fp_status_history(booking, fp, data)
                 status_last = get_dme_status_from_fp_status(
-                    fp.company_name, b_status_API, booking
+                    fp.fp_company_name, b_status_API, booking
                 )
 
             status_history.create(
