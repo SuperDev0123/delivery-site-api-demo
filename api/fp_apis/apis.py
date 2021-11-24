@@ -67,7 +67,7 @@ def tracking(request, fp_name):
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         # disabled on 2021-07-05
-        # logger.info(f"### Response ({fp_name} tracking): {s0}")
+        logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
@@ -582,7 +582,11 @@ def get_label(request, fp_name):
         _fp_name = fp_name.lower()
 
         if (
-            booking.kf_client_id in ["1af6bcd2-6148-11eb-ae93-0242ac130002", "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"]
+            booking.kf_client_id
+            in [
+                "1af6bcd2-6148-11eb-ae93-0242ac130002",
+                "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+            ]
             and booking.vx_freight_provider.lower() != "tnt"
         ):  # JasonL & BSD:
             error_msg = "JasonL order label should be built by built-in module."
@@ -704,7 +708,10 @@ def get_label(request, fp_name):
                 z_label_url = f"{_fp_name}_au/{file_name}"
 
             # JasonL & BSD
-            if not booking.kf_client_id in ["1af6bcd2-6148-11eb-ae93-0242ac130002", '9e72da0f-77c3-4355-a5ce-70611ffd0bc8']:
+            if not booking.kf_client_id in [
+                "1af6bcd2-6148-11eb-ae93-0242ac130002",
+                "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+            ]:
                 # JasonL & BSD never get Label from FP
                 booking.z_label_url = z_label_url
 
