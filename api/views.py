@@ -3376,7 +3376,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
     def save_status_history(self, request, pk=None):
         try:
             booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
-            status_last = request.data["status_last"]
+            status_last = request.data.get("status_last")
             event_time_stamp = request.data.get("event_time_stamp")
             is_from_script = request.data.get("is_from_script")
 
