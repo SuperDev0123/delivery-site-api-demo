@@ -152,7 +152,16 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
             _consignmentStatuses = _consignmentStatuses_0
 
         if has_delivered_status:
-            lines = booking.lines().filter(is_deleted=False)
+            if booking.api_booking_quote:
+                lines = booking.lines().filter(
+                    is_deleted=False,
+                    packed_status=booking.api_booking_quote.packed_status,
+                )
+            else:
+                lines = booking.lines().filter(
+                    is_deleted=False, packed_status=Booking_lines.ORIGINAL
+                )
+
             logger.info(f"@2 - {delivered_status_cnt}, {lines.count()}")
 
             if delivered_status_cnt < lines.count():
