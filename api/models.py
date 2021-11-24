@@ -2071,6 +2071,7 @@ class Bookings(models.Model):
             return None
 
     def save(self, *args, **kwargs):
+        self.z_ModifiedTimestamp = datetime.now()
         creating = self._state.adding
 
         if not creating:

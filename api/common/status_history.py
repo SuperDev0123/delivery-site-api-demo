@@ -20,7 +20,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
     if not booking.kf_client_id in [
         "461162D2-90C7-BF4E-A905-000000000004",
         "1af6bcd2-6148-11eb-ae93-0242ac130002",
-        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
     ]:
         return
 
@@ -177,6 +177,7 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
             booking.s_21_Actual_Delivery_TimeStamp = event_timestamp
             booking.delivery_booking = event_timestamp[:10]
 
+    booking.b_status_category = category_new
     booking.save()
     booking.refresh_from_db()
 
