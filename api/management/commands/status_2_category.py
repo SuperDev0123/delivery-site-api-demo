@@ -21,14 +21,15 @@ class Command(BaseCommand):
                     "Picked",
                     "Closed",
                     "Cancelled",
-                ]
+                ],
+                b_status_category="Completed",
             )
             .exclude(z_lock_status=True)
             .only(
                 "id",
                 "b_bookingID_Visual",
                 "b_status",
-                "b_booking_Category",
+                "b_status_category",
                 "z_ModifiedTimestamp",
             )
             .order_by("z_ModifiedTimestamp")
@@ -45,12 +46,12 @@ class Command(BaseCommand):
                     category = utl_category.dme_delivery_status_category
                     break
 
-            if category and category != booking.b_booking_Category:
+            if category and category != booking.b_status_category:
                 print(
-                    f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status}({booking.b_booking_Category}) -> {category}, {booking.z_ModifiedTimestamp}"
+                    f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status}({booking.b_status_category}) -> {category}, {booking.z_ModifiedTimestamp}"
                 )
                 booking.z_ModifiedTimestamp = datetime.now()
-                booking.b_booking_Category = category
+                booking.b_status_category = category
                 booking.save()
 
         # print("\n----- Finished! -----")
