@@ -3447,11 +3447,11 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             # booking.save()
             # serializer.save()
 
-            return Response({success: True})
+            return Response({"success": True})
         except Exception as e:
             trace_error.print()
-            logger.error(f"@902 - save_status_history: {str(e)}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"@902 - save_status_history Error: {str(e)}")
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
     def update_status_history(self, request, pk, format=None):
