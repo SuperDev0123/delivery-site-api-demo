@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 from api.models import Bookings, Utl_dme_status
@@ -12,15 +14,13 @@ class Command(BaseCommand):
             .exclude(
                 b_status__in=[
                     "Delivered",
-                    "Ready for Booking",
-                    "Ready for Despatch",
                     "On Hold",
                     "Entered",
                     "Picking",
                     "Picked",
                 ]
             )
-            .exclude(z_lock_status=False)
+            .exclude(z_lock_status=True)
             .only(
                 "id",
                 "b_bookingID_Visual",
@@ -32,8 +32,9 @@ class Command(BaseCommand):
         )
         utl_categories = Utl_dme_status.objects.all()
         bookings_cnt = bookings.count()
+        print(f"Bookings Cnt: {bookings_cnt}")
 
-        for index, booking in enumerate(bookings[5000:]):
+        for index, booking in enumerate(bookings):
             category = None
 
             for utl_category in utl_categories:
@@ -45,6 +46,7 @@ class Command(BaseCommand):
                 print(
                     f"Processing {index + 1}/{bookings_cnt} {booking.b_bookingID_Visual}, {booking.b_status}({booking.b_booking_Category}) -> {category}, {booking.z_ModifiedTimestamp}"
                 )
+                booking.z_ModifiedTimestamp = datetime.now()
                 booking.b_booking_Category = category
                 booking.save()
 
