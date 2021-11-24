@@ -122,6 +122,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
     if fp_name.lower() == "allied":
         _consignmentStatuses_0 = consignmentStatuses
+        logger.info(f"@1 - {_consignmentStatuses_0}")
 
         # Sort by timestamp
         _consignmentStatuses_0 = sorted(
@@ -152,6 +153,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
 
         if has_delivered_status:
             lines = booking.lines().filter(is_deleted=False)
+            logger.info(f"@2 - {delivered_status_cnt}, {lines.count()}")
 
             if delivered_status_cnt < lines.count():
                 logger.info(
