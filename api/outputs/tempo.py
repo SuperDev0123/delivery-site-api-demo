@@ -24,7 +24,7 @@ def push_via_api(booking, event_timestamp):
         return False
 
     # Run only for "Tempo" Client
-    if booking.kf_client_id != "461162D2-90C7-BF4E-A905-092A1A5F73F3":
+    if booking.kf_client_id != "37C19636-C5F9-424D-AD17-05A056A8FBDB":
         return False
 
     # Run only when `tempo_push` flag is `on`
