@@ -10,10 +10,9 @@ from api.models import *
 logger = logging.getLogger(__name__)
 
 TEMPO_CREDENTIALS = {
-    "host_url": "https://globalconnect.tempo.org/",
-    "api_url": "https://globalconnect.tempo.org/api/EDIDelivery/Items",
+    "api_url": "https://globalconnect.tempo.org/api/RAPickup/Bookings",
     "username": "Deliver.Me",
-    "password": "P93xVv2T",
+    "password": "dk45b_AM",
 }
 
 
@@ -88,7 +87,7 @@ def push_via_api(booking, event_timestamp):
 
     json_payload = {"data": [json_booking]}
     logger.info(f"{LOG_ID} Payload: {json_payload}")
-    headers = {"content-type": "application/json"}
+    headers = {"content-type": "application/json", "GCDB-Request-Type": "APIRequest"}
 
     res = requests.post(
         TEMPO_CREDENTIALS["api_url"],
