@@ -18,6 +18,7 @@ TEMPO_CREDENTIALS = {
 
 def push_via_api(booking, event_timestamp):
     LOG_ID = "[UPDATE TEMPO via API]"
+    logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
     # Run only on PROD
     if settings.ENV == "prod":
@@ -30,6 +31,7 @@ def push_via_api(booking, event_timestamp):
     # Run only when `tempo_push` flag is `on`
     dme_option = DME_Options.objects.get(option_name="tempo_push")
     if int(dme_option.option_value) != 1:
+        logger.info(f"{LOG_ID} tempo_push flag is off")
         return False
 
     json_booking = {}
