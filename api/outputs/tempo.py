@@ -87,7 +87,7 @@ def push_via_api(booking, event_timestamp):
     json_booking["puPhoneMain"] = booking.pu_Phone_Main
     json_booking["puEmail"] = booking.pu_Email
 
-    json_payload = {"data": [json_booking]}
+    json_payload = {"data": json_booking}
     logger.info(f"{LOG_ID} Payload: {json_payload}")
     headers = {"content-type": "application/json", "GCDB-Request-Type": "APIRequest"}
 
