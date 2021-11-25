@@ -21,7 +21,7 @@ def push_via_api(booking, event_timestamp):
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
     # Run only on PROD
-    if settings.ENV == "prod":
+    if settings.ENV != "prod":
         return False
 
     # Run only for "Tempo" Client
@@ -31,7 +31,7 @@ def push_via_api(booking, event_timestamp):
     # Run only when `tempo_push` flag is `on`
     dme_option = DME_Options.objects.get(option_name="tempo_push")
     if int(dme_option.option_value) != 1:
-        logger.info(f"{LOG_ID} tempo_push flag is off")
+        logger.info(f"{LOG_ID} tempo_push flag is OFF")
         return False
 
     json_booking = {}
