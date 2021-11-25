@@ -20,7 +20,7 @@ def push_via_api(booking, event_timestamp):
     LOG_ID = "[UPDATE TEMPO via API]"
 
     # Run only on PROD
-    if settings.ENV != "prod":
+    if settings.ENV == "prod":
         return False
 
     # Run only for "Tempo" Client
