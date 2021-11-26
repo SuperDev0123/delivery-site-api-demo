@@ -240,7 +240,6 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
                 elif (
                     b_client_name not in fp_client_names
                     and client_name not in ["dme", "test"]
-                    and not is_pricing_only
                 ):
                     continue
 

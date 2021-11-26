@@ -710,7 +710,7 @@ def push_boks(payload, client, username, method):
     _, success, message, quote_set = pricing_oper(
         body=body,
         booking_id=None,
-        is_pricing_only=True,
+        is_pricing_only=False,
     )
     logger.info(
         f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"

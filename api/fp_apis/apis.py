@@ -612,10 +612,11 @@ def get_label(request, fp_name):
                 response = requests.post(url, params={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
-                s0 = json.dumps(
-                    json_data, indent=2, sort_keys=True, default=str
-                )  # Just for visual
-                logger.info(f"### Response ({fp_name} create_label): {s0}")
+                # # Deactivated on 2021-11-26
+                # s0 = json.dumps(
+                #     json_data, indent=2, sort_keys=True, default=str
+                # )  # Just for visual
+                # logger.info(f"### Response ({fp_name} create_label): {s0}")
 
                 payload["consignmentNumber"] = json_data[0]["request_id"]
             except Exception as e:

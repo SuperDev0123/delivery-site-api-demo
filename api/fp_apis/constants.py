@@ -51,7 +51,7 @@ BUILT_IN_PRICINGS = {
     #         "Failsafe Secure Service",
     #     ]
     # },
-    "hunter": {"service_types": ["Road Express"]},  # Coming soon
+    # "hunter": {"service_types": ["Road Express"]},  # Coming soon
     # "allied": { # Deactivated
     #     "service_types": [
     #         "Road Express",

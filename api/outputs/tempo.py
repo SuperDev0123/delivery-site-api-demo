@@ -98,4 +98,7 @@ def push_via_api(booking, event_timestamp):
         headers=headers,
     )
     logger.info(f"{LOG_ID} Response: {res.status_code}, {res.content}")
+
+    # TODO
+    # When response status_code is not 200 then email to Gold
     return True
