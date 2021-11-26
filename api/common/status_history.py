@@ -156,9 +156,6 @@ def notify_user_via_api(booking, event_timestamp):
 def post_new_status(booking, dme_status_history, new_status, event_timestamp, username):
     from api.fp_apis.utils import get_status_category_from_status
 
-    booking.b_status = new_status
-    booking.save()
-
     category_new = get_status_category_from_status(dme_status_history.status_last)
     category_old = get_status_category_from_status(dme_status_history.status_old)
 
@@ -199,6 +196,9 @@ def create(booking, new_status, username, event_timestamp=None):
         last_status_history = status_histories.first()
     else:
         last_status_history = None
+
+    booking.b_status = new_status
+    booking.save()
 
     if not last_status_history or (
         last_status_history
