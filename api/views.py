@@ -1240,9 +1240,8 @@ class BookingsViewSet(viewsets.ViewSet):
                     Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
                 )
             elif active_tab_index == 3:  # To manifest
-                if (  # Jason L
-                    client_employee_role == "company"
-                    and client.dme_account_num
+                if (  # Jason L & BSD
+                    client.dme_account_num
                     in [
                         "1af6bcd2-6148-11eb-ae93-0242ac130002",
                         "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
