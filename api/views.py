@@ -951,8 +951,11 @@ class BookingsViewSet(viewsets.ViewSet):
                     .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url=""))
                     .exclude(b_status__in=["Closed", "Cancelled"])
                 )
-        elif active_tab_index == 4:  # To Process
-            queryset = queryset.filter(b_status__iexact="Ready to booking")
+        elif active_tab_index == 4:  # In Process
+            queryset = queryset.filter(
+                b_status_category__in=["Booked", "Transit", "On Board for Delivery"]
+            )
+
         elif active_tab_index == 5:  # Closed
             queryset = queryset.filter(b_status__in=["Closed", "Cancelled"])
         elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
@@ -966,12 +969,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 z_label_url__isnull=False,
                 z_downloaded_shipping_label_timestamp__isnull=True,
             )
-        elif active_tab_index == 10:
+        elif active_tab_index == 10:  # More tab
             queryset = queryset.filter(b_status=dme_status)
         elif active_tab_index == 11:
             queryset = queryset.filter(b_status="Parent Booking")
             run_out_bookings = get_run_out_bookings(queryset)
             queryset = queryset.exclude(pk__in=run_out_bookings)
+        elif active_tab_index == 12:  # Delivered
+            queryset = queryset.filter(b_status="Delivered")
 
         # If booking_ids is not None
         if booking_ids:
