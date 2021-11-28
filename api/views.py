@@ -925,7 +925,50 @@ class BookingsViewSet(viewsets.ViewSet):
                     fk_client_warehouse_id=employee_warehouse_id,
                 )
 
-        if active_tab_index and active_tab_index in [11]:
+        # active_tab_index filter: 0 -> all
+        if active_tab_index == 1:  # Erros to Correct
+            queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
+                b_error_Capture__exact=""
+            )
+        if active_tab_index == 2:  # Missing labels
+            queryset = queryset.filter(Q(z_label_url__isnull=True) | Q(z_label_url=""))
+        elif active_tab_index == 3:  # To manifest
+            # DME & Jason L & BSD
+            if user_type == "DME" or (
+                client_employee_role == "company"
+                and client.dme_account_num
+                in [
+                    "1af6bcd2-6148-11eb-ae93-0242ac130002",
+                    "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+                ]
+            ):
+                queryset = queryset.filter(
+                    Q(z_manifest_url__isnull=True) | Q(z_manifest_url="")
+                ).filter(b_status="Picked")
+            else:
+                queryset = (
+                    queryset.filter(b_status__iexact="Booked")
+                    .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url=""))
+                    .exclude(b_status__in=["Closed", "Cancelled"])
+                )
+        elif active_tab_index == 4:  # To Process
+            queryset = queryset.filter(b_status__iexact="Ready to booking")
+        elif active_tab_index == 5:  # Closed
+            queryset = queryset.filter(b_status__in=["Closed", "Cancelled"])
+        elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
+            queryset = queryset.exclude(b_client_name="BioPak")
+        elif active_tab_index == 8:  # 'PreBooking'
+            queryset = queryset.filter(b_status_category="Pre Booking").select_related(
+                "api_booking_quote"
+            )
+        elif active_tab_index == 9:  # 'Unprinted Labels'
+            queryset = queryset.filter(
+                z_label_url__isnull=False,
+                z_downloaded_shipping_label_timestamp__isnull=True,
+            )
+        elif active_tab_index == 10:
+            queryset = queryset.filter(b_status=dme_status)
+        elif active_tab_index == 11:
             queryset = queryset.filter(b_status="Parent Booking")
             run_out_bookings = get_run_out_bookings(queryset)
             queryset = queryset.exclude(pk__in=run_out_bookings)
@@ -1186,103 +1229,6 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset, column_filters, active_tab_index
                 )
 
-            # active_tab_index count
-            queryset_4_get_stat = queryset.only(
-                "b_error_Capture",
-                "z_label_url",
-                "z_manifest_url",
-                "b_status",
-                "z_downloaded_shipping_label_timestamp",
-            )
-            for booking in queryset_4_get_stat:
-                if (
-                    booking.b_error_Capture is not None
-                    and len(booking.b_error_Capture) > 0
-                ):
-                    errors_to_correct += 1
-                if booking.z_label_url is None or len(booking.z_label_url) == 0:
-                    missing_labels += 1
-                if not booking.z_manifest_url and not booking.b_status in [
-                    "Closed",
-                    "Cancelled",
-                ]:
-                    # Jason L & BSD
-                    if booking.kf_client_id in [
-                        "1af6bcd2-6148-11eb-ae93-0242ac130002",
-                        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
-                    ]:
-                        if booking.b_status == "Picked":
-                            to_manifest += 1
-                    else:
-                        if booking.b_status == "Booked":
-                            to_manifest += 1
-                if booking.b_status == "Ready to booking":
-                    to_process += 1
-                if booking.b_status == "Closed":
-                    closed += 1
-                if (
-                    booking.z_label_url
-                    and not booking.z_downloaded_shipping_label_timestamp
-                ):
-                    unprinted_labels += 1
-                # if booking.b_status_category == "Pre Booking":
-                #     prebookings_cnt += 1
-
-            # active_tab_index filter
-            # 0 -> all
-            # 1 -> errors_to_correct
-            if active_tab_index == 1:
-                queryset = queryset.exclude(b_error_Capture__isnull=True).exclude(
-                    b_error_Capture__exact=""
-                )
-            if active_tab_index == 2:
-                queryset = queryset.filter(
-                    Q(z_label_url__isnull=True) | Q(z_label_url__exact="")
-                )
-            elif active_tab_index == 3:  # To manifest
-                # DME & Jason L & BSD
-                if user_type == "DME" or (
-                    client_employee_role == "company"
-                    and client.dme_account_num
-                    in [
-                        "1af6bcd2-6148-11eb-ae93-0242ac130002",
-                        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
-                    ]
-                ):
-                    queryset = queryset.filter(
-                        Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                    ).filter(b_status="Picked")
-                else:
-                    queryset = (
-                        queryset.filter(b_status__iexact="Booked")
-                        .filter(
-                            Q(z_manifest_url__isnull=True) | Q(z_manifest_url__exact="")
-                        )
-                        .exclude(b_status__in=["Closed", "Cancelled"])
-                    )
-            elif active_tab_index == 4:
-                queryset = queryset.filter(b_status__iexact="Ready to booking")
-            elif active_tab_index == 5:
-                queryset = queryset.filter(b_status__iexact="Closed")
-            elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
-                queryset = queryset.exclude(b_client_name="BioPak")
-            elif active_tab_index == 8:  # 'PreBooking'
-                queryset = queryset.filter(
-                    b_status_category="Pre Booking"
-                ).select_related("api_booking_quote")
-            elif active_tab_index == 9:  # 'Unprinted Labels'
-                queryset = queryset.filter(
-                    z_label_url__isnull=False,
-                    z_downloaded_shipping_label_timestamp__isnull=True,
-                )
-            elif active_tab_index == 10:
-                queryset = queryset.filter(b_status=dme_status)
-            elif active_tab_index == 11:
-                # queryset = queryset.filter(b_status="Parent Booking")
-                # run_out_bookings = get_run_out_bookings(queryset)
-                # queryset = queryset.exclude(pk__in=run_out_bookings)
-                pass
-
         # Sort
         if download_option != "check_pod" and (
             len(multi_find_values) == 0
@@ -1357,12 +1303,6 @@ class BookingsViewSet(viewsets.ViewSet):
                 "page_cnt": page_cnt,
                 "page_ind": page_ind,
                 "page_item_cnt": page_item_cnt,
-                "errors_to_correct": errors_to_correct,
-                "to_manifest": to_manifest,
-                "missing_labels": missing_labels,
-                "to_process": to_process,
-                "closed": closed,
-                "unprinted_labels": unprinted_labels,
             }
         )
 
