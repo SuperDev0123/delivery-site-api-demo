@@ -877,6 +877,7 @@ class BookingsViewSet(viewsets.ViewSet):
         multi_find_field = self.request.query_params.get("multiFindField", None)
         multi_find_values = self.request.query_params.get("multiFindValues", "")
         project_name = self.request.query_params.get("projectName", None)
+        fp_name = self.request.query_params.get("fpName", None)
         booking_ids = self.request.query_params.get("bookingIds", None)
 
         if multi_find_values:
@@ -1074,6 +1075,10 @@ class BookingsViewSet(viewsets.ViewSet):
                 # Warehouse filter
                 if int(warehouse_id) is not 0:
                     queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+
+                # Fp name filter
+                if (fp_name):
+                    queryset = queryset.filter(vx_freight_provider__iexact=fp_name)
 
                 # Mulitple search | Simple search | Project Name Search
                 if project_name and project_name.exists():
