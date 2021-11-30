@@ -197,6 +197,7 @@ def create(booking, new_status, username, event_timestamp=None):
     else:
         last_status_history = None
 
+    old_status = booking.b_status
     booking.b_status = new_status
     booking.save()
 
@@ -206,10 +207,10 @@ def create(booking, new_status, username, event_timestamp=None):
         and last_status_history.status_last != new_status
     ):
         dme_status_history = Dme_status_history(fk_booking_id=booking.pk_booking_id)
-        notes = f"{str(booking.b_status)} ---> {str(new_status)}"
+        notes = f"{str(old_status)} ---> {str(new_status)}"
         logger.info(f"@700 New Status! {booking.b_bookingID_Visual}({notes})")
 
-        dme_status_history.status_old = booking.b_status
+        dme_status_history.status_old = old_status
         dme_status_history.notes = notes
         dme_status_history.status_last = new_status
         dme_status_history.event_time_stamp = event_timestamp or datetime.now()
