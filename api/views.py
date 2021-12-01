@@ -3320,7 +3320,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
+        LOG_ID = "STATUS_HISTORY_CREATE"
         try:
+            logger.info(f"{LOG_ID} Payload: {request.data}")
             booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
             status_last = request.data.get("status_last")
             event_time_stamp = request.data.get("event_time_stamp")
@@ -3338,6 +3340,14 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 status_last = get_dme_status_from_fp_status(
                     fp.fp_company_name, b_status_API, booking
                 )
+
+                if not status_last:
+                    logger.info(
+                        f"{LOG_ID} Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
+                    )
+                    return Response(
+                        {"success": False}, status=status.HTTP_400_BAD_REQUEST
+                    )
 
             status_history.create(
                 booking,
