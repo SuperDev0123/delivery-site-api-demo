@@ -22,6 +22,7 @@ from rest_framework.permissions import (
     AllowAny,
     IsAuthenticatedOrReadOnly,
 )
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_201_CREATED
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -85,8 +86,8 @@ class BOK_0_ViewSet(viewsets.ViewSet):
         serializer = BOK_0_Serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=HTTP_201_CREATED)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
 class BOK_1_ViewSet(viewsets.ModelViewSet):
@@ -117,10 +118,10 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=HTTP_201_CREATED)
         else:
             logger.info(f"@841 BOK_1 POST - {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"], permission_classes=[AllowAny])
     def update_freight_options(self, request, pk=None):
@@ -130,7 +131,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
         if not identifier:
             return Response(
-                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+                {"message": "Wrong identifier."}, status=HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -187,12 +188,12 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 gen_surcharges(bok_1, bok_2s, quote, "bok_1")
 
             res_json = {"success": True, "message": "Freigth options are updated."}
-            return Response(res_json, status=status.HTTP_200_OK)
+            return Response(res_json, status=HTTP_200_OK)
         except Exception as e:
             logger.info(
                 f"[UPDATE_FREIGHT_OPT] BOK Failure with identifier: {identifier}, reason: {str(e)}"
             )
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_boks_with_pricings(self, request):
@@ -207,7 +208,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         if not client_booking_id:
             logger.info(f"#491 [get_boks_with_pricings] Error: Wrong identifier.")
             res_json = {"message": "Wrong identifier."}
-            return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+            return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
         try:
             bok_1 = BOK_1_headers.objects.get(client_booking_id=client_booking_id)
@@ -254,13 +255,13 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
             res_json = {"message": "Succesfully get bok and pricings.", "data": result}
             logger.info(f"#495 [get_boks_with_pricings] Success!")
-            return Response(res_json, status=status.HTTP_200_OK)
+            return Response(res_json, status=HTTP_200_OK)
         except Exception as e:
             logger.info(f"#499 [get_boks_with_pricings] Error: {e}")
             trace_error.print()
             return Response(
                 {"message": "Couldn't find matching Booking."},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=HTTP_400_BAD_REQUEST,
             )
 
     @action(detail=False, methods=["patch"], permission_classes=[AllowAny])
@@ -272,7 +273,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
         if not identifier:
             return Response(
-                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+                {"message": "Wrong identifier."}, status=HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -304,17 +305,17 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.save()
 
                 logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
-                return Response({"success": True}, status=status.HTTP_200_OK)
+                return Response({"success": True}, status=HTTP_200_OK)
             else:
                 logger.error(f"@8430 [BOOK] BOK Failure with identifier: {identifier}")
                 return Response(
                     {"success": False, "message": "Order doesn't have quote."},
-                    status=status.HTTP_400_BAD_REQUEST,
+                    status=HTTP_400_BAD_REQUEST,
                 )
         except Exception as e:
             logger.error(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
             logger.error(f"@845 [BOOK] BOK Failure: {str(e)}")
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
     def cancel(self, request):
@@ -325,7 +326,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
         if not identifier:
             return Response(
-                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+                {"message": "Wrong identifier."}, status=HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -334,12 +335,12 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
             bok_1.delete()
             logger.info(f"@840 [CANCEL] BOK success with identifier: {identifier}")
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True}, status=HTTP_200_OK)
         except Exception as e:
             logger.info(
                 f"@841 [CANCEL] BOK Failure with identifier: {identifier}, reason: {str(e)}"
             )
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def send_email(self, request):
@@ -352,7 +353,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         if not identifier:
             message = f"Wrong identifier: {identifier}"
             logger.info(f"@841 {LOG_ID} message")
-            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": message}, status=HTTP_400_BAD_REQUEST)
 
         try:
             from api.operations.email_senders import send_picking_slip_printed_email
@@ -364,13 +365,13 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.b_053_b_del_address_type,
             )
             logger.info(f"@842 {LOG_ID} Success to send email: {identifier}")
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True}, status=HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(
                 f"@843 {LOG_ID} Failed to send email: {identifier}, reason: {str(e)}"
             )
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
@@ -400,10 +401,10 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             fc_log.new_quote = bok_1.quote
             fc_log.save()
 
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True}, status=HTTP_200_OK)
         except:
             trace_error.print()
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def add_bok_line(self, request):
@@ -447,11 +448,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                     packed_status=bok_2.b_093_packed_status,
                 ).update(is_used=True)
 
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True}, status=HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"], permission_classes=[AllowAny])
     def update_bok_line(self, request):
@@ -493,11 +494,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                     packed_status=bok_2.b_093_packed_status,
                 ).update(is_used=True)
 
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True}, status=HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
     def delete_bok_line(self, request):
@@ -517,11 +518,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 packed_status=bok_2.b_093_packed_status,
             ).update(is_used=True)
 
-            return Response({"success": True}, status=status.HTTP_200_OK)
+            return Response({"success": True}, status=HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
-            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     def repack(self, request, pk, format=None):
@@ -550,7 +551,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         except Exception as e:
             trace_error.print()
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
-            return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"success": False}, status=HTTP_400_BAD_REQUEST)
 
 
 class BOK_2_ViewSet(viewsets.ViewSet):
@@ -572,10 +573,10 @@ class BOK_2_ViewSet(viewsets.ViewSet):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=HTTP_201_CREATED)
         else:
             logger.info(f"@842 BOK_2 POST - {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
 class BOK_3_ViewSet(viewsets.ViewSet):
@@ -615,12 +616,12 @@ def partial_pricing(request):
             message = "Pricing cannot be returned due to incorrect address information."
             logger.info(f"@827 {LOG_ID} {message}")
             res_json = {"success": False, "code": "invalid_request", "message": message}
-            return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+            return Response(res_json, status=HTTP_400_BAD_REQUEST)
     except Exception as e:
         logger.info(f"@829 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST", "PUT"])
@@ -671,12 +672,12 @@ def push_boks(request):
             result = standard.push_boks(request.data, client)
 
         logger.info(f"@828 {LOG_ID} Push BOKS success!, 201_created")
-        return JsonResponse(result, status=status.HTTP_201_CREATED)
+        return JsonResponse(result, status=HTTP_201_CREATED)
     except Exception as e:
         logger.info(f"@829 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -703,12 +704,12 @@ def scanned(request):
 
         message = f"Successfully scanned."
         logger.info(f"#838 {LOG_ID} {message}")
-        return JsonResponse(result, status=status.HTTP_200_OK)
+        return JsonResponse(result, status=HTTP_200_OK)
     except Exception as e:
         logger.info(f"@839 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -736,7 +737,7 @@ def ready_boks(request):
         logger.info(f"@849 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])
@@ -764,7 +765,7 @@ def reprint_label(request):
         logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 
 @transaction.atomic
@@ -795,7 +796,7 @@ def manifest_boks(request):
         logger.info(f"@859 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
-        return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 
 @api_view(["GET"])
@@ -828,7 +829,7 @@ def get_delivery_status(request):
                     "step": None,
                     "status": None,
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+                status=HTTP_400_BAD_REQUEST,
             )
 
         status_history = Dme_status_history.objects.filter(
@@ -1043,7 +1044,7 @@ def get_delivery_status(request):
                 "step": None,
                 "status": None,
             },
-            status=status.HTTP_400_BAD_REQUEST,
+            status=HTTP_400_BAD_REQUEST,
         )
 
     lines = (
@@ -1244,11 +1245,11 @@ class ScansViewSet(viewsets.ViewSet):
                 {**item, "desc": dme_statuses[index]}
                 for index, item in enumerate(fp_status_history)
             ]
-            return Response({"scans": fp_status_history}, status=status.HTTP_200_OK)
+            return Response({"scans": fp_status_history}, status=HTTP_200_OK)
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
             fp_status_history = []
             return Response(
                 {"msg": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=HTTP_400_BAD_REQUEST,
             )
