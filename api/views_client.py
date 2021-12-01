@@ -846,7 +846,9 @@ def get_delivery_status(request):
         else:
             last_updated = ""
 
-        lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
+        lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id, packed_status=Booking_lines.ORIGINAL
+        )
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
         if has_deleted_lines:
