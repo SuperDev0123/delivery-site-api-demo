@@ -192,7 +192,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             logger.info(
                 f"[UPDATE_FREIGHT_OPT] BOK Failure with identifier: {identifier}, reason: {str(e)}"
             )
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def get_boks_with_pricings(self, request):
@@ -304,17 +304,17 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.save()
 
                 logger.info(f"@843 [BOOK] BOK success with identifier: {identifier}")
-                return Response({"success": True}, status.HTTP_200_OK)
+                return Response({"success": True}, status=status.HTTP_200_OK)
             else:
                 logger.error(f"@8430 [BOOK] BOK Failure with identifier: {identifier}")
                 return Response(
                     {"success": False, "message": "Order doesn't have quote."},
-                    status.HTTP_400_BAD_REQUEST,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
         except Exception as e:
             logger.error(f"@844 [BOOK] BOK Failure with identifier: {identifier}")
             logger.error(f"@845 [BOOK] BOK Failure: {str(e)}")
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
     def cancel(self, request):
@@ -334,12 +334,12 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id).delete()
             bok_1.delete()
             logger.info(f"@840 [CANCEL] BOK success with identifier: {identifier}")
-            return Response({"success": True}, status.HTTP_200_OK)
+            return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(
                 f"@841 [CANCEL] BOK Failure with identifier: {identifier}, reason: {str(e)}"
             )
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["get"], permission_classes=[AllowAny])
     def send_email(self, request):
@@ -364,13 +364,13 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_1.b_053_b_del_address_type,
             )
             logger.info(f"@842 {LOG_ID} Success to send email: {identifier}")
-            return Response({"success": True}, status.HTTP_200_OK)
+            return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(
                 f"@843 {LOG_ID} Failed to send email: {identifier}, reason: {str(e)}"
             )
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def select_pricing(self, request):
@@ -400,10 +400,10 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             fc_log.new_quote = bok_1.quote
             fc_log.save()
 
-            return Response({"success": True}, status.HTTP_200_OK)
+            return Response({"success": True}, status=status.HTTP_200_OK)
         except:
             trace_error.print()
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     def add_bok_line(self, request):
@@ -447,11 +447,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                     packed_status=bok_2.b_093_packed_status,
                 ).update(is_used=True)
 
-            return Response({"success": True}, status.HTTP_200_OK)
+            return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["put"], permission_classes=[AllowAny])
     def update_bok_line(self, request):
@@ -493,11 +493,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                     packed_status=bok_2.b_093_packed_status,
                 ).update(is_used=True)
 
-            return Response({"success": True}, status.HTTP_200_OK)
+            return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["delete"], permission_classes=[AllowAny])
     def delete_bok_line(self, request):
@@ -517,11 +517,11 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 packed_status=bok_2.b_093_packed_status,
             ).update(is_used=True)
 
-            return Response({"success": True}, status.HTTP_200_OK)
+            return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             trace_error.print()
             logger.info(f"{LOG_ID} error: {str(e)}")
-            return Response({"success": False}, status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     def repack(self, request, pk, format=None):
