@@ -258,8 +258,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.info(f"#499 [get_boks_with_pricings] Error: {e}")
             trace_error.print()
+            res_json = {"message": "Couldn't find matching Booking."}
             return Response(
-                {"message": "Couldn't find matching Booking."},
+                res_json,
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -271,8 +272,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         identifier = request.GET["identifier"]
 
         if not identifier:
+            res_json = {"message": "Wrong identifier."}
             return Response(
-                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+                res_json, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -324,8 +326,9 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         identifier = request.GET["identifier"]
 
         if not identifier:
+            res_json = {"message": "Wrong identifier."}
             return Response(
-                {"message": "Wrong identifier."}, status=status.HTTP_400_BAD_REQUEST
+                res_json, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -352,7 +355,8 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         if not identifier:
             message = f"Wrong identifier: {identifier}"
             logger.info(f"@841 {LOG_ID} message")
-            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+            res_json = {"message": "Wrong identifier."}
+            return Response(res_json, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             from api.operations.email_senders import send_picking_slip_printed_email
@@ -550,7 +554,8 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         except Exception as e:
             trace_error.print()
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
-            return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+            res_json = {"success": False}
+            return JsonResponse(res_json, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BOK_2_ViewSet(viewsets.ViewSet):
@@ -821,14 +826,15 @@ def get_delivery_status(request):
             logger.info(
                 f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
             )
+            res_json = {
+                "code": "unknown_status",
+                "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
+                "step": None,
+                "status": None,
+            }
             return Response(
-                {
-                    "code": "unknown_status",
-                    "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
-                    "step": None,
-                    "status": None,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+                res_json
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         status_history = Dme_status_history.objects.filter(
@@ -1034,13 +1040,14 @@ def get_delivery_status(request):
     bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
 
     if not bok_1:
+        res_json = {
+            "code": "does_not_exist",
+            "message": "Could not find Order!",
+            "step": None,
+            "status": None,
+        }
         return Response(
-            {
-                "code": "does_not_exist",
-                "message": "Could not find Order!",
-                "step": None,
-                "status": None,
-            },
+            res_json,
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -1242,11 +1249,13 @@ class ScansViewSet(viewsets.ViewSet):
                 {**item, "desc": dme_statuses[index]}
                 for index, item in enumerate(fp_status_history)
             ]
-            return Response({"scans": fp_status_history}, status=status.HTTP_200_OK)
+            res_json = {"scans": fp_status_history}
+            return Response(res_json, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
             fp_status_history = []
+            res_json = {"msg": str(e)}
             return Response(
-                {"msg": str(e)},
+                res_json,
                 status=status.HTTP_400_BAD_REQUEST,
             )
