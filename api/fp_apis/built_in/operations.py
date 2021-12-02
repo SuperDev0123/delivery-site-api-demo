@@ -165,15 +165,7 @@ def address_filter(booking, booking_lines, rules, fp):
     return rules.filter(pk__in=filtered_rule_ids)
 
 
-
-
-
-
-
-
-
-
-def vehicle_to_dict(vehicles, vehicle_self_height):
+def vehicles_to_dict(vehicles):
     vehicles_dict = []
     for vehicle in vehicles:
         vehicles_dict.append(
@@ -235,30 +227,11 @@ def find_vehicle_ids(booking_lines, fp):
     
     try:
         # prepare vehicles data
-        vehicles_dict = pallet_to_dict(vehicles)
+        vehicles_dict = vehicles_to_dict(vehicles)
 
         # prepare lines data
         lines_dict = lines_to_dict(booking_lines)
 
-        # vehicles_dict = [
-        #     {
-        #        'id': 'big',
-        #        'w': 10,
-        #        'h': 5,
-        #        'd': 8,
-        #        'max_wg': 1000 
-        #     },{
-        #        'id': 'small',
-        #        'w': 3,
-        #        'h': 2,
-        #        'd': 5,
-        #        'max_wg': 300 
-        #     }
-        # ]
-        # lines_dict = [
-        #     {"w": 2, "h": 3, "d": 2, "q": 2, "vr": 1, "wg": 70, "id": "Item1"},
-        #     {"w": 2, "h": 3, "d": 3, "q": 3, "vr": 1, "wg": 60, "id": "Item2"},
-        # ]
         packed_results = lines_to_vehicle(lines_dict, vehicles_dict)
         vehicle_ids = []
         for bin_packed in packed_results['bins_packed']:
@@ -285,7 +258,7 @@ def find_vehicle_ids(booking_lines, fp):
 
             if has_pallet:
                 for vehicle_id in vehicle_ids:
-                    non_pallet_ids = [22, 23, 24, 25, 63, 64, 65, 66, 67, 68, 69, 70]
+                    non_pallet_ids = [63, 64, 65, 66, 67, 68, 69, 70]
 
                     if not vehicle_id in non_pallet_ids:
                         _vehicle_ids.append(vehicle_id)
