@@ -850,6 +850,13 @@ def get_delivery_status(request):
         lines = Booking_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id, packed_status=Booking_lines.ORIGINAL
         )
+
+        if booking.api_booking_quote:
+            lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id,
+                packed_status=booking.api_booking_quote.packed_status,
+            )
+
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
         if has_deleted_lines:
