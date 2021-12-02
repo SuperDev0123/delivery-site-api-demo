@@ -609,6 +609,16 @@ def send_status_update_email(
         fk_booking_id=booking.pk_booking_id, e_item_type__isnull=False
     ).order_by("z_createdTimeStamp")
 
+    # BSD
+    if (
+        booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        and booking.api_booking_quote
+    ):
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            packed_status=booking.api_booking_quote.packed_status,
+        ).order_by("z_createdTimeStamp")
+
     lines_data = []
     for booking_line in booking_lines:
         try:
