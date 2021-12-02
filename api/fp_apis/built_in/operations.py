@@ -1,4 +1,7 @@
 import logging
+import os
+import json
+import requests
 
 from django.db.models import Q
 
@@ -6,6 +9,7 @@ from api.models import FP_zones, FP_vehicles
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.common import trace_error
 from api.common.constants import PALLETS
+from api.common.pallet import lines_to_dict
 
 
 logger = logging.getLogger(__name__)
@@ -161,92 +165,105 @@ def address_filter(booking, booking_lines, rules, fp):
     return rules.filter(pk__in=filtered_rule_ids)
 
 
+
+
+
+
+
+
+
+
+def vehicle_to_dict(vehicles, vehicle_self_height):
+    vehicles_dict = []
+    for vehicle in vehicles:
+        vehicles_dict.append(
+            {
+                "w": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width,
+                "h": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height,
+                "d": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length,
+                "max_wg": vehicle.max_mass,
+                "id": vehicle.id,
+            }
+        )
+
+    return vehicles_dict
+
+
+def lines_to_vehicle(lines_dict, vehicles_dict):
+    data = {
+        "bins": vehicles_dict,
+        "items": lines_dict,
+        "username": os.environ["3D_PACKING_API_USERNAME"],
+        "api_key": os.environ["3D_PACKING_API_KEY"],
+        "params": {
+            "images_background_color": "255,255,255",
+            "images_bin_border_color": "59,59,59",
+            "images_bin_fill_color": "230,230,230",
+            "images_item_border_color": "214,79,79",
+            "images_item_fill_color": "177,14,14",
+            "images_item_back_border_color": "215,103,103",
+            "images_sbs_last_item_fill_color": "99,93,93",
+            "images_sbs_last_item_border_color": "145,133,133",
+            "images_width": 100,
+            "images_height": 100,
+            "images_source": "file",
+            "images_sbs": 1,
+            "stats": 1,
+            "item_coordinates": 1,
+            "images_complete": 1,
+            "images_separated": 1,
+        },
+    }
+    url = f"{os.environ['3D_PACKING_API_URL']}/packer/pack"
+    response = requests.post(url, data=json.dumps(data))
+    res_data = response.json()["response"]
+    if res_data["status"] == -1:
+        msg = ""
+        for error in res_data["errors"]:
+            msg += f"{error['message']} \n"
+        logger.info(f"Packing API Error: {msg}")
+
+    return res_data
+
+
 def find_vehicle_ids(booking_lines, fp):
     vehicles = FP_vehicles.objects.filter(freight_provider_id=fp.id)
 
     if len(booking_lines) == 0:
         logger.info(f"@832 Rule Type 01 - no Booking Lines to deliver")
         return
-
+    
     try:
-        sum_cube = 0
-        max_length = 0
-        max_width = 0
-        max_height = 0
-        lines_cnt = 0
-        total_weight = 0
+        # prepare vehicles data
+        vehicles_dict = pallet_to_dict(vehicles)
 
-        for item in booking_lines:
-            length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
-            width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
-            height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
-            weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
+        # prepare lines data
+        lines_dict = lines_to_dict(booking_lines)
 
-            total_weight += weight * item.e_qty
-            max_length = length if max_length < length else max_length
-            max_width = width if max_width < width else max_width
-            max_height = height if max_height < height else max_height
-            sum_cube += width * height * length * item.e_qty
-            lines_cnt += 1
-
-        # print(
-        #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
-        # )
-
-        # 2021-07-07 Century only charge per vehicle
-        # if (
-        #     booking_lines.first().e_type_of_packaging
-        #     and booking_lines.first().e_type_of_packaging.lower() in PALLETS
-        # ):
-        #     for vehicle in vehicles:
-        #         vmax_width = (
-        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
-        #         )
-        #         vmax_height = (
-        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
-        #         )
-        #         vmax_length = (
-        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
-        #         )
-
-        #         if (
-        #             vmax_width >= max_width
-        #             and max_height >= max_height
-        #             and vmax_length >= max_length
-        #             and vehicle.pallets >= len(booking_lines)
-        #         ):
-        #             vehicle_ids.append(vehicle.id)
-        # else:
-        #     for vehicle in vehicles:
-        #         vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-        #         vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-        #         vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-        #         vehicle_cube = vmax_width * vmax_height * vmax_length
-
-        #         if (
-        #             vmax_width >= max_width
-        #             and max_height >= max_height
-        #             and vmax_length >= max_length
-        #             and vehicle_cube * 0.8 >= sum_cube
-        #         ):
-        #             vehicle_ids.append(vehicle.id)
-
+        # vehicles_dict = [
+        #     {
+        #        'id': 'big',
+        #        'w': 10,
+        #        'h': 5,
+        #        'd': 8,
+        #        'max_wg': 1000 
+        #     },{
+        #        'id': 'small',
+        #        'w': 3,
+        #        'h': 2,
+        #        'd': 5,
+        #        'max_wg': 300 
+        #     }
+        # ]
+        # lines_dict = [
+        #     {"w": 2, "h": 3, "d": 2, "q": 2, "vr": 1, "wg": 70, "id": "Item1"},
+        #     {"w": 2, "h": 3, "d": 3, "q": 3, "vr": 1, "wg": 60, "id": "Item2"},
+        # ]
+        packed_results = lines_to_vehicle(lines_dict, vehicles_dict)
         vehicle_ids = []
-        cubic_ratio = 1 if lines_cnt == 1 else 0.8
-        for vehicle in vehicles:
-            vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-            vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-            vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-            vehicle_cube = vmax_width * vmax_height * vmax_length
-
-            if (
-                vmax_width >= max_width
-                and vmax_height >= max_height
-                and vmax_length >= max_length
-                and vehicle_cube * cubic_ratio >= sum_cube
-                and vehicle.max_mass >= total_weight
-            ):
-                vehicle_ids.append(vehicle.id)
+        for bin_packed in packed_results['bins_packed']:
+            if not bin_packed['not_packed_items']:
+                vehicle_ids.append(int(bin_packed['bin_data']['id']))
 
         # Century Exceptional Rule #1
         if fp.fp_company_name.upper() == "CENTURY":

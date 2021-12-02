@@ -158,14 +158,14 @@ def lines_to_pallet(lines_data, pallets_data):
         },
     }
 
-    url = os.environ["3D_PACKING_API_URL"]
+    url = f"{os.environ['3D_PACKING_API_URL']}/packer/packIntoMany"
     response = requests.post(url, data=json.dumps(data))
     res_data = response.json()["response"]
     if res_data["status"] == -1:
         msg = ""
         for error in res_data["errors"]:
             msg += f"{error['message']} \n"
-            logger.info(f"Packing API Error: {msg}")
+        logger.info(f"Packing API Error: {msg}")
 
     return res_data
 
