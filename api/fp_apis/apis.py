@@ -24,7 +24,10 @@ from api.common import status_history, download_external, trace_error
 from api.file_operations.directory import create_dir
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
-from api.operations.email_senders import send_booking_status_email
+from api.operations.email_senders import (
+    send_booking_status_email,
+    send_email_manual_book,
+)
 from api.operations.labels.index import build_label
 
 from api.fp_apis.payload_builder import *
@@ -38,8 +41,8 @@ from api.fp_apis.operations.tracking import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import auto_select_pricing
-from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
-
+from api.fp_apis.constants import FP_CREDENTIALS, S3_URL, DME_LEVEL_API_URL
+from api.fp_apis.utils import gen_consignment_num
 
 logger = logging.getLogger(__name__)
 
@@ -142,8 +145,20 @@ def book(request, fp_name):
 
     try:
         booking = Bookings.objects.get(id=booking_id)
-        success, message = book_oper(fp_name, booking, username)
-        res_json = {"success": success, "message": message}
+
+        if fp_name.lower() not in FP_CREDENTIALS:
+            booking.b_status = "Booked"
+            booking.b_dateBookedDate = datetime.now()
+            booking.v_FPBookingNumber = gen_consignment_num(
+                fp_name, booking.b_bookingID_Visual
+            )
+            booking.save()
+            send_email_manual_book(booking)
+            res_json = {"success": True, "message": "Booked Successfully"}
+            return JsonResponse(res_json)
+        else:
+            success, message = book_oper(fp_name, booking, username)
+            res_json = {"success": success, "message": message}
 
         if success:
             return JsonResponse(res_json)

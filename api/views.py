@@ -2224,6 +2224,7 @@ class BookingViewSet(viewsets.ViewSet):
         bookingData = request.data
         bookingData["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
         bookingData["pk_booking_id"] = str(uuid.uuid1())
+        bookingData["b_client_booking_ref_num"] = bookingData["pk_booking_id"]
         serializer = BookingSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -2345,6 +2346,7 @@ class BookingViewSet(viewsets.ViewSet):
         newBooking["vx_serviceName"] = booking.vx_serviceName
         newBooking["z_CreatedByAccount"] = request.user.username
         newBooking["booking_type"] = booking.booking_type
+        newBooking["b_client_booking_ref_num"] = newBooking["pk_booking_id"]
 
         if is_4_child:
             newBooking[

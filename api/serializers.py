@@ -432,6 +432,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "id",
             "pk_booking_id",
             "b_bookingID_Visual",
+            "b_client_booking_ref_num",
             "puCompany",
             "pu_Address_Street_1",
             "pu_Address_street_2",

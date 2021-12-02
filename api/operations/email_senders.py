@@ -804,6 +804,24 @@ def send_email_missing_status(booking, fp_name, b_status_API):
     send_email(to_emails, cc_emails, subject, message)
 
 
+def send_email_manual_book(booking):
+    subject = f"Manual BOOK Operation Required!"
+    message = (
+        f"Hi DME Customer Support,\n\nPlease manually book the following:\nBooking ID: {booking.b_bookingID_Visual}"
+        + f"\nFreight Provider: {booking.vx_freight_provider.upper()}\nConsignmentNo: {booking.v_FPBookingNumber}\n\n"
+        + f"Please use mentioned consignment number if possible, else update it on DME portal after booked.\nPlease reply to this email with name of resolver.\nBest\nDME_API"
+    )
+
+    if settings.ENV in ["local", "dev"]:
+        to_emails = ["dev.deliverme@gmail.com"]
+        cc_emails = ["goldj@deliver-me.com.au"]
+    else:
+        to_emails = ["bookings@deliver-me.com.au", "care@deliver-me.com.au"]
+        cc_emails = ["dev.deliverme@gmail.com"]
+
+    send_email(to_emails, cc_emails, subject, message)
+
+
 def send_email_to_admins(subject, message):
     if settings.ENV in ["local", "dev"]:
         logger.info("Email trigger is ignored on LOCAL & DEV.")
