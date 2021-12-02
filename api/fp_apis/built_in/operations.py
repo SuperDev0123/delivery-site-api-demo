@@ -1,4 +1,5 @@
 import logging
+import re
 
 from django.db.models import Q
 
@@ -486,3 +487,36 @@ def find_cost(booking_lines, rules, fp):
             lowest_cost = cost
 
     return lowest_cost
+
+
+def parse_shopify_item(item_str):
+    qty_index = item.find('Quantity')
+    sku_part = item[:qty_index]
+    qty_part = item[qty_index:]
+    sku_str = sku_part.split(':')[1].strip()
+    qty_str = qty_part.split(':')[1].strip()
+
+    lines = []
+    if '|' not in sku_str:
+        lines.append({'sku': sku_str, 'qty': int(qty_str)})
+    else:
+        if '(' in sku_str:
+            sku_strs = sku_str[:-1].split('(')
+        else:
+            sku_strs = [sku_str]
+        
+        distinct_skus = []
+        for sku_qtys in sku_strs:
+            sku_qty_list = sku_qtys.split('|')
+            skus = sku_qty_list[0].split(',')
+            qtys = sku_qty_list[1].split(',')
+            
+            for index, sku in enumerate(skus):
+                if sku != 'NONE' and int(qtys[index]):
+                    if sku not in distinct_skus:
+                        lines.append({'sku': sku, 'qty': int(qtys[index])})
+                        distinct_skus.append(sku)
+                    else:
+                        sku_idx = distinct_skus.index(sku)
+                        lines[sku_idx]['qty'] += int(qtys[index])
+    return lines
