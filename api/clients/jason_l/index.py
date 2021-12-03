@@ -802,7 +802,7 @@ def push_boks(payload, client, username, method):
                 service_name=selected_quote.service_name,
             )
         else:
-            quote_set = quote_set.exclude(freight_provider="Sendle")
+            quote_set = quote_set.exclude(freight_provider__in=["Sendle", "Hunter"])
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
@@ -1108,7 +1108,7 @@ def scanned(payload, client):
                     packed_status=Booking_lines.SCANNED_PACK,
                 )
             else:
-                quotes = quotes.exclude(freight_provider="Sendle")
+                quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
 
             best_quotes = select_best_options(pricings=quotes)
             logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
