@@ -52,6 +52,30 @@ def dgere(param):
 # else:
 #     return None
 
+def mhp(param):
+    con_length = param['length'] < 0.2 or param['length'] > 1.2
+    con_width = param['width'] < 0.1 or param['width'] > 0.6
+    con_height = param['height'] < 0.015 or param['height'] > 0.8
+    con_diagonal = param['diagonal'] > 1.2
+    con_weight = param['max_weight'] < 0.25 or param['max_weight'] > 30
+    con_dangerous_goods = param['is_dangerous']
+
+    if con_length or con_width or con_height or con_diagonal or con_weight or con_dangerous_goods:
+        return {
+            "name": "Manual Handling Processing (MHP) Fee",
+            "description": "From 7 December 2020, MHP Fee3 will be $12.50 per item on items which are not compatible with TNT's sortation system "
+            + "and require manual handling due to size1, weight2, fragility (including glass), poor packaging (including where the parcel is unstable "
+            + "due to poor weight distribution) and/or unusual shape (including tubes, flat pack items) and Dangerous Goods."
+            + "1 Length <200mm or >1200mm and/or Width <100mm or >600mm and/or Height <15mm or >800mm and/or Diagonal Length >1200mm "
+            + "2 Weight <250g or >30kg "
+            + "3 The MHP fee is charged per item in addition to any other applicable surcharge for the consignment, including oversize surcharge "
+            + "and Dangerous Goods' surcharge. The MHP Fee is applied to each and all items under a consignment note, which contains Dangerous Goods "
+            + "(Dangerous Goods consignment notes are to contain Dangerous Goods items only).",
+            "value": 12.5
+        }
+    else:
+        return None
+
 
 def rsp(param):
     if param["pu_address_type"].lower() == "residential":
@@ -249,5 +273,6 @@ def tnt():
             os3,
             os4,
             os5,
+            mhp
         ],
     }
