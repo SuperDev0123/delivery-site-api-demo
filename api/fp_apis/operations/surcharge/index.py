@@ -109,6 +109,11 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         item_length = line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"])
         item_width = line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"])
         item_height = line["e_dimHeight"] * _get_dim_amount(line["e_dimUOM"])
+        item_diagonal = math.sqrt(
+            item_length ** 2
+            + item_width ** 2
+            + item_height ** 2
+        )
 
         item_dead_weight = line["e_weightPerEach"] * _get_weight_amount(
             line["e_weightUOM"]
@@ -153,15 +158,11 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         lengths.append(item_length)
         widths.append(item_width)
         heights.append(item_height)
-        diagonals.append(
-            math.sqrt(
-                item_length ** 2
-                + item_width ** 2
-                + item_height ** 2
-            )
-        )
+        diagonals.append(item_diagonal)
 
+        is_dangerous = False
         if "e_dangerousGoods" in line and line["e_dangerousGoods"]:
+            is_dangerous = True
             has_dangerous_item = True
 
         item_max_weight = max(item_cubic_weight, item_dead_weight)
@@ -171,11 +172,12 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
             {
                 "pk": line["pk"],
                 "max_dimension": max(
-                    line["e_dimLength"], line["e_dimWidth"], line["e_dimHeight"]
-                )
-                * _get_dim_amount(line["e_dimUOM"]),
-                "length": line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"]),
-                "width": line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"]),
+                    item_width, item_length, item_height
+                ),
+                "length": item_length,
+                "width": item_width,
+                "height": item_height,
+                "diagonal": item_diagonal,
                 "max_weight": math.ceil(item_max_weight),
                 "is_pallet": is_pallet,
                 "quantity": line["e_qty"],
@@ -187,6 +189,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 "de_to_address_suburb": booking["de_To_Address_Suburb"],
                 "vx_freight_provider": booking["vx_freight_provider"],
                 "vx_service_name": booking["vx_serviceName"],
+                "is_dangerous": is_dangerous,
                 "is_jason_l": booking["client_id"]
                 == "1af6bcd2-6148-11eb-ae93-0242ac130002",
             }

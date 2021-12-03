@@ -48,6 +48,7 @@ SURCHARGE_NAME_DESC = {
         "Oversize Freight (OS3)": "Oversize freight where any one dimension (length, height or width) exceeds 3.99 metres.",
         "Oversize Freight (OS4)": "Oversize freight where any one dimension (length, height or width) exceeds 4.99 metres.",
         "Oversize Freight (OS5)": "Oversize freight where any one dimension (length, height or width) exceeds 5.99 metres.",
+        "Manual Handling Processing (MHP) Fee": "From 7 December 2020, MHP Fee3 will be $12.50 per item on items which are not compatible with TNT's sortation system and require manual handling due to size1, weight2, fragility (including glass), poor packaging (including where the parcel is unstable due to poor weight distribution) and/or unusual shape (including tubes, flat pack items) and Dangerous Goods. 1 Length <200mm or >1200mm and/or Width <100mm or >600mm and/or Height <15mm or >800mm and/or Diagonal Length >1200mm 2 Weight <250g or >30kg 3 The MHP fee is charged per item in addition to any other applicable surcharge for the consignment, including oversize surcharge and Dangerous Goods' surcharge. The MHP Fee is applied to each and all items under a consignment note, which contains Dangerous Goods (Dangerous Goods consignment notes are to contain Dangerous Goods items only)."
     },
     "CAMERONS": {
         "Tail-Gate(pickup)": "Applied when there is tail lift pickup. If service is express, then 110% is applied",
