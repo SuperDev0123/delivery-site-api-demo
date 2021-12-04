@@ -839,3 +839,42 @@ def create_or_update_product(new_product):
         product.save()
 
     return product
+
+
+def parse_sku_string(sku_str):
+    if not sku_str:
+        return []
+
+    # Get distinct SKU array
+    if "(" in sku_str:
+        sku_parts = sku_str[:-1].split("(")
+    else:
+        sku_parts = [sku_str]
+
+    sku_array = []
+    for part in sku_parts:
+        _skus = part.split("|")[0].split(",")
+
+        for sku in _skus:
+            if sku != "NONE":
+                if sku not in sku_array:
+                    sku_array.append(sku)
+
+    # Get SKU array with count
+    skus_with_cnt = {}
+    for sku in sku_array:
+        for _iter in sku_str.split(","):
+            for _iter1 in _iter.split("|"):
+                for _iter2 in _iter1.split("("):
+                    if sku == _iter2:
+                        if sku in skus_with_cnt:
+                            skus_with_cnt[sku] += 1
+                        else:
+                            skus_with_cnt[sku] = 1
+
+    # Formatting
+    results = []
+    for sku in skus_with_cnt:
+        results.append({"model_number": sku, "qty": skus_with_cnt[sku]})
+
+    return results

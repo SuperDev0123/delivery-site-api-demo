@@ -51,6 +51,7 @@ from api.clients.jason_l.operations import (
     get_bok_by_talend,
     sucso_handler,
     get_address,
+    parse_sku_string,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
@@ -62,26 +63,24 @@ logger = logging.getLogger(__name__)
 
 def partial_pricing(payload, client, warehouse):
     LOG_ID = "[PP Jason L]"
-    bok_1 = payload["booking"]
-    bok_1["pk_header_id"] = str(uuid.uuid4())
-    bok_2s = payload["booking_lines"]
+    pk_header_id = str(uuid.uuid4())
+    bok_2s = parse_sku_string(payload.get("sku"))
     json_results = []
 
-    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
+    de_postal_code = payload.get("b_059_b_del_address_postalcode")
     de_state, de_suburb = get_suburb_state(de_postal_code)
 
     # Check if has lines
-    if len(bok_2s) == 0:
+    if bok_2s and len(bok_2s) == 0:
         message = "Line items are required."
         logger.info(f"@815 {LOG_ID} {message}")
         raise Exception(message)
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-    bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
 
     booking = {
-        "pk_booking_id": bok_1["pk_header_id"],
+        "pk_booking_id": pk_header_id,
         "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
         "puCompany": warehouse.name,
@@ -94,7 +93,7 @@ def partial_pricing(payload, client, warehouse):
         "pu_Address_PostalCode": warehouse.postal_code,
         "pu_Address_State": warehouse.state,
         "pu_Address_Suburb": warehouse.suburb,
-        "pu_Address_Type": bok_1.get("b_027_b_pu_address_type") or "residential",
+        "pu_Address_Type": "business",
         "deToCompanyName": "initial_DE_company",
         "de_to_Contact_F_LName": "initial_DE_contact",
         "de_Email": "de@email.com",
@@ -105,9 +104,9 @@ def partial_pricing(payload, client, warehouse):
         "de_To_Address_PostalCode": de_postal_code,
         "de_To_Address_State": de_state.upper(),
         "de_To_Address_Suburb": de_suburb,
-        "de_To_AddressType": bok_1.get("b_053_b_del_address_type") or "residential",
-        "b_booking_tail_lift_pickup": bok_1.get("b_019_b_pu_tail_lift") or 0,
-        "b_booking_tail_lift_deliver": bok_1.get("b_041_b_del_tail_lift") or 0,
+        "de_To_AddressType": "residential",
+        "b_booking_tail_lift_pickup": 0,
+        "b_booking_tail_lift_deliver": 0,
         "client_warehouse_code": warehouse.client_warehouse_code,
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
@@ -131,7 +130,7 @@ def partial_pricing(payload, client, warehouse):
         booking_line = {
             "pk_lines_id": index,
             "e_type_of_packaging": "Carton" or item["e_type_of_packaging"],
-            "fk_booking_id": bok_1["pk_header_id"],
+            "fk_booking_id": pk_header_id,
             "e_qty": item["qty"],
             "e_item": item["description"],
             "e_dimUOM": item["e_dimUOM"],
@@ -252,13 +251,15 @@ def push_boks(payload, client, username, method):
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
     else:
+        _bok_2s = parse_sku_string(payload.get("sku"))
+
         if not bok_1.get("client_booking_id"):
             message = "'client_booking_id' is required."
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 
-        if not payload.get("booking_lines"):
-            message = "'booking_lines' is required."
+        if not payload.get("sku"):
+            message = "'sku' is required."
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 
@@ -376,7 +377,7 @@ def push_boks(payload, client, username, method):
         bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
 
     if is_web:
-        for index, line in enumerate(payload.get("booking_lines")):
+        for index, line in enumerate(_bok_2s):
             bok_2s.append(
                 {
                     "model_number": line["model_number"],
