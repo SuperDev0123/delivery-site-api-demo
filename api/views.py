@@ -859,6 +859,7 @@ class BookingsViewSet(viewsets.ViewSet):
             last_date = last_date.replace(hour=23, minute=59, second=59)
 
         warehouse_id = self.request.query_params.get("warehouseId", None)
+        fp_id = self.request.query_params.get("fpId", None)
         sort_field = self.request.query_params.get("sortField", None)
         column_filters = json.loads(
             self.request.query_params.get("columnFilters", None)
@@ -1074,6 +1075,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 # Warehouse filter
                 if int(warehouse_id) is not 0:
                     queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+
+                # Warehouse filter
+                print("@! - ", int(fp_id))
+                if int(fp_id) is not 0:
+                    fp = Fp_freight_providers.objects.get(pk=fp_id)
+                    queryset = queryset.filter(
+                        vx_freight_provider__iexact=fp.fp_company_name
+                    )
 
                 # Mulitple search | Simple search | Project Name Search
                 if project_name and project_name.exists():
