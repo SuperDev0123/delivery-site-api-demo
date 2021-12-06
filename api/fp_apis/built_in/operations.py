@@ -9,7 +9,7 @@ from api.models import FP_zones, FP_vehicles
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.common import trace_error
 from api.common.constants import PALLETS
-from api.common.pallet import lines_to_dict
+from api.common.pallet import lines_to_dict, vehicles_to_dict
 
 
 logger = logging.getLogger(__name__)
@@ -163,22 +163,6 @@ def address_filter(booking, booking_lines, rules, fp):
             filtered_rule_ids.append(rule.id)
 
     return rules.filter(pk__in=filtered_rule_ids)
-
-
-def vehicles_to_dict(vehicles):
-    vehicles_dict = []
-    for vehicle in vehicles:
-        vehicles_dict.append(
-            {
-                "w": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width,
-                "h": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height,
-                "d": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length,
-                "max_wg": vehicle.max_mass,
-                "id": vehicle.id,
-            }
-        )
-
-    return vehicles_dict
 
 
 def lines_to_vehicle(lines_dict, vehicles_dict):
