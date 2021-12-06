@@ -958,9 +958,9 @@ def get_delivery_status(request):
         for index, item in enumerate(steps):
             if index == 0:
                 timestamps.append(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(booking.z_CreatedTimestamp).strftime(
-                        "%d/%m/%Y %H:%M"
-                    )
+                    dme_time_lib.convert_to_AU_SYDNEY_tz(
+                        booking.z_CreatedTimestamp
+                    ).strftime("%d/%m/%Y %H:%M")
                     if booking and booking.z_CreatedTimestamp
                     else ""
                 )
@@ -982,7 +982,9 @@ def get_delivery_status(request):
                         booking.pk_booking_id, item
                     )
                     timestamps.append(
-                        dme_time_lib.convert_to_AU_SYDNEY_tz(status_time).strftime("%d/%m/%Y %H:%M")
+                        dme_time_lib.convert_to_AU_SYDNEY_tz(status_time).strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
                         if status_time
                         else None
                     )
@@ -994,10 +996,12 @@ def get_delivery_status(request):
                 #     + timedelta(days=int(json_quote["eta"].split()[0]))
                 # ).strftime("%d/%m/%Y")
                 dme_time_lib.next_business_day(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date),
+                    dme_time_lib.convert_to_AU_SYDNEY_tz(
+                        booking.puPickUpAvailFrom_Date
+                    ),
                     int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider
-                ).strftime('%d/%m/%Y')
+                    booking.vx_freight_provider,
+                ).strftime("%d/%m/%Y")
                 if json_quote and booking.puPickUpAvailFrom_Date
                 else ""
             )
@@ -1010,8 +1014,8 @@ def get_delivery_status(request):
                 dme_time_lib.next_business_day(
                     dme_time_lib.convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
                     int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider
-                ).strftime('%d/%m/%Y')
+                    booking.vx_freight_provider,
+                ).strftime("%d/%m/%Y")
                 if json_quote and booking.b_dateBookedDate
                 else ""
             )
@@ -1081,9 +1085,9 @@ def get_delivery_status(request):
 
     if status_history:
         last_updated = (
-            dme_time_lib.convert_to_AU_SYDNEY_tz(status_history.first().event_time_stamp).strftime(
-                "%d/%m/%Y %H:%M"
-            )
+            dme_time_lib.convert_to_AU_SYDNEY_tz(
+                status_history.first().event_time_stamp
+            ).strftime("%d/%m/%Y %H:%M")
             if status_history.first().event_time_stamp
             else ""
         )
@@ -1149,10 +1153,9 @@ def get_delivery_status(request):
             #     + timedelta(days=int(json_quote["eta"].split()[0]))
             # ).strftime("%d/%m/%Y")
             dme_time_lib.next_business_day(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date),
-                    int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider
-                ).strftime('%d/%m/%Y')
+                dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date),
+                int(json_quote["eta"].split()[0]),
+            ).strftime("%d/%m/%Y")
             if json_quote and bok_1.b_021_b_pu_avail_from_date
             else ""
         )
