@@ -952,19 +952,56 @@ class BookingsViewSet(viewsets.ViewSet):
                     .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url=""))
                     .exclude(b_status__in=["Closed", "Cancelled"])
                 )
-        elif active_tab_index == 4:  # In Process
+        elif active_tab_index == 4:  # In Progress
             queryset = queryset.filter(
-                b_status_category__in=["Booked", "Transit", "On Board for Delivery"]
+                Q(b_status_category__in=["Booked", "Transit", "On Board for Delivery"])
+                | Q(
+                    b_status__in=[
+                        "Status In Transit",
+                        "Futile",
+                        "Returning",
+                        "Cancel Requested",
+                        "Partially Delivered",
+                        "Partially in transit",
+                        "Delivery Delayed",
+                        "Scanned into depot",
+                        "Carded",
+                        "Insufficient Address",
+                        "Picked up",
+                        "On Forwarded",
+                        "Futile Delivery",
+                    ]
+                )
             )
-
         elif active_tab_index == 5:  # Closed
             queryset = queryset.filter(b_status__in=["Closed", "Cancelled"])
+        elif active_tab_index == 51:  # Closed with issue
+            queryset = queryset.filter(b_status__in=["Lost in Transit", "Damaged"])
         elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
             queryset = queryset.exclude(b_client_name="BioPak")
-        elif active_tab_index == 8:  # 'PreBooking'
-            queryset = queryset.filter(b_status_category="Pre Booking").select_related(
-                "api_booking_quote"
-            )
+        elif active_tab_index == 8:  # 'Pre-Processing'
+            queryset = queryset.filter(
+                b_status__in=[
+                    "To Quote",
+                    "Quoted",
+                    "Pushed",
+                    "Entered",
+                ]
+            ).select_related("api_booking_quote")
+        elif active_tab_index == 81:  # 'Processing'
+            queryset = queryset.filter(
+                Q(
+                    b_status__in=[
+                        "Hold",
+                        "On Hold",
+                        "Picking",
+                        "Picked",
+                        "Ready for Despatch",
+                        "Ready for Booking",
+                    ]
+                )
+                | Q(b_status__icontains=["pickup rebooked"])
+            ).select_related("api_booking_quote")
         elif active_tab_index == 9:  # 'Unprinted Labels'
             queryset = queryset.filter(
                 z_label_url__isnull=False,
@@ -977,7 +1014,7 @@ class BookingsViewSet(viewsets.ViewSet):
             run_out_bookings = get_run_out_bookings(queryset)
             queryset = queryset.exclude(pk__in=run_out_bookings)
         elif active_tab_index == 12:  # Delivered
-            queryset = queryset.filter(b_status="Delivered")
+            queryset = queryset.filter(b_status__in=["Delivered", "Returned"])
 
         # If booking_ids is not None
         if booking_ids:
