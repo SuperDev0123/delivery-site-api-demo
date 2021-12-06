@@ -1114,7 +1114,6 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
 
                 # Warehouse filter
-                print("@! - ", int(fp_id))
                 if int(fp_id) is not 0:
                     fp = Fp_freight_providers.objects.get(pk=fp_id)
                     queryset = queryset.filter(
