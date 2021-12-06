@@ -1,5 +1,5 @@
 import math, logging
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 from django.conf import settings
 
@@ -9,6 +9,7 @@ from api.operations.sms_senders import send_status_update_sms
 from api.operations.email_senders import send_status_update_email
 from api.helpers.phone import is_mobile, format_mobile
 from api.operations.packing.booking import scanned_repack as booking_scanned_repack
+from api.common import common_times as dme_time_lib
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,11 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
             etd, unit = None, None
 
         eta = (
-            (booking.puPickUpAvailFrom_Date + timedelta(days=etd)).strftime("%d/%m/%Y")
+            dme_time_lib.next_business_day(
+                dme_time_lib.convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date),
+                etd,
+                booking.vx_freight_provider
+            ).strftime('%d/%m/%Y')
             if etd and booking.puPickUpAvailFrom_Date
             else ""
         )
