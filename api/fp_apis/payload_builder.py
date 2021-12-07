@@ -696,11 +696,7 @@ def get_getlabel_payload(booking, fp_name):
                 "collectionInstructions"
             ] += f" {payload['dropAddress']['instruction']}"
 
-        payload["clientSalesInvNum"] = (
-            ""
-            if booking.b_client_sales_inv_num is None
-            else booking.b_client_sales_inv_num
-        )
+        payload["customerReference"] = booking.b_client_sales_inv_num or ""
     elif fp_name.lower() == "sendle":
         payload["consignmentNumber"] = booking.fk_fp_pickup_id
 
