@@ -66,7 +66,7 @@ def get_m3_to_kg_factor(fp_name, data=None):
         return 333
     elif (
         fp_name.lower() == "hunter"
-        and (not data.is_pallet)
+        and (data and not data.is_pallet)
         and (
             (data.item_length > 1.2 and data.item_width > 1.2)
             or (data.item_height > 1.8)
