@@ -75,6 +75,10 @@ def address_filter(booking, booking_lines, rules, fp):
     if de_suburb:
         avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
 
+    logger.info(
+        f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
+    )
+
     filtered_rule_ids = []
     for rule in rules:
         if rule.pu_suburb and rule.pu_suburb.lower() != pu_suburb:
