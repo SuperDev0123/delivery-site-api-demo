@@ -6,6 +6,7 @@ from api.fp_apis.constants import BUILT_IN_PRICINGS
 from api.fp_apis.built_in.operations import *
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.helpers.cubic import get_cubic_meter
+from api.fp_apis.utils import get_m3_to_kg_factor
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,6 @@ def get_pricing(fp_name, booking, booking_lines):
         logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
         cost = rules.first().cost
         net_price = cost.basic_charge
-        m3_to_kg_factor = 333
         dead_weight, cubic_weight = 0, 0
 
         for item in booking_lines:
@@ -66,7 +66,7 @@ def get_pricing(fp_name, booking, booking_lines):
                     item.e_dimUOM,
                     item.e_qty,
                 )
-                * m3_to_kg_factor
+                * get_m3_to_kg_factor(fp_name)
             )
 
         chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight

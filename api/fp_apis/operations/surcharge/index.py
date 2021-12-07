@@ -3,6 +3,10 @@ import logging
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.helpers.cubic import get_cubic_meter
+from api.models import Booking_lines, Surcharge, Fp_freight_providers
+from api.common.convert_price import apply_markups
+from api.fp_apis.utils import get_m3_to_kg_factor
+from api.common.constants import PALLETS
 
 from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
@@ -10,8 +14,6 @@ from api.fp_apis.operations.surcharge.hunter import hunter
 from api.fp_apis.operations.surcharge.camerons import camerons
 from api.fp_apis.operations.surcharge.northline import northline
 
-from api.models import Booking_lines, Surcharge, Fp_freight_providers
-from api.common.convert_price import apply_markups
 
 logger = logging.getLogger(__name__)
 
@@ -93,14 +95,17 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
 
 def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
-
-    if booking["vx_freight_provider"].lower() == "northline":
-        m3_to_kg_factor = 333
-    else:
-        m3_to_kg_factor = 250
+    m3_to_kg_factor = get_m3_to_kg_factor(booking["vx_freight_provider"])
 
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
-    lengths, widths, heights, diagonals, lines_data, lines_max_weight = [], [], [], [], [], []
+    lengths, widths, heights, diagonals, lines_data, lines_max_weight = (
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+    )
     has_dangerous_item = False
 
     for line in lines:
@@ -109,28 +114,23 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         item_length = line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"])
         item_width = line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"])
         item_height = line["e_dimHeight"] * _get_dim_amount(line["e_dimUOM"])
-        item_diagonal = math.sqrt(
-            item_length ** 2
-            + item_width ** 2
-            + item_height ** 2
-        )
+        item_diagonal = math.sqrt(item_length ** 2 + item_width ** 2 + item_height ** 2)
 
         item_dead_weight = line["e_weightPerEach"] * _get_weight_amount(
             line["e_weightUOM"]
         )
 
-        is_pallet = line["e_type_of_packaging"].lower() == "pallet"
-        if (
-            booking["vx_freight_provider"].lower() == "hunter" 
-            and (not is_pallet) 
-            and (
-                (item_length > 1.2 and item_width > 1.2) 
-                or (item_height > 1.8) 
-                or (max(item_length, item_width) > 1.2 and item_dead_weight > 59)
-            )
-        ):
-            m3_to_kg_factor = 333
-
+        is_pallet = line["e_type_of_packaging"].lower() in PALLETS
+        m3_to_kg_factor = get_m3_to_kg_factor(
+            booking["vx_freight_provider"],
+            {
+                "is_pallet": is_pallet,
+                "item_length": item_length,
+                "item_width": item_width,
+                "item_height": item_height,
+                "item_dead_weight": item_dead_weight,
+            },
+        )
         item_cubic_weight = (
             get_cubic_meter(
                 line["e_dimLength"],
@@ -143,7 +143,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         )
         dead_weight += item_dead_weight * line["e_qty"]
         total_cubic += item_cubic_weight * line["e_qty"]
-        
+
         cubic_weight += (
             get_cubic_meter(
                 line["e_dimLength"],
@@ -171,9 +171,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         lines_data.append(
             {
                 "pk": line["pk"],
-                "max_dimension": max(
-                    item_width, item_length, item_height
-                ),
+                "max_dimension": max(item_width, item_length, item_height),
                 "length": item_length,
                 "width": item_width,
                 "height": item_height,

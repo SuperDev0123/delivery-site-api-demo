@@ -4149,7 +4149,7 @@ class FP_zones(models.Model):
         db_table = "fp_zones"
 
     def __str__(self):
-        return f"Zone #{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
+        return f"#{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
 
 
 class FP_carriers(models.Model):
