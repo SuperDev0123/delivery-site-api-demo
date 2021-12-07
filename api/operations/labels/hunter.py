@@ -2532,7 +2532,7 @@ def build_label(booking, filepath=None, lines=[], label_index=0):
         * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 8 * mm)
     Story = []
     line_index = 0

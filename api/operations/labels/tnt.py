@@ -169,7 +169,7 @@ def build_label(
     tnt_logo = "./static/assets/tnt_fedex_logo.png"
     tnt_img = Image(tnt_logo, 30 * mm, 6.6 * mm)
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
     Story = []

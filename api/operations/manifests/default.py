@@ -259,7 +259,7 @@ def build_manifest(bookings, booking_lines, username):
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 40 * mm, 10 * mm)
 
     Story = []

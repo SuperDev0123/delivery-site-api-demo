@@ -187,10 +187,10 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
         bottomMargin=float(label_settings["margin_h"]) * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 60 * mm, 12 * mm)
 
-    allied_logo = "./static/assets/allied_logo.png"
+    allied_logo = "./static/assets/logos/allied.png"
     allied_img = Image(allied_logo, 60 * mm, 12 * mm)
 
     fp_color_code = (

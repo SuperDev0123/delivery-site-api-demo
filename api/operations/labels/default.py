@@ -198,7 +198,7 @@ def build_label(
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
     fp_color_code = (
