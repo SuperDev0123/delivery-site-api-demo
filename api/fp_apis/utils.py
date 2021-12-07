@@ -69,7 +69,7 @@ def get_m3_to_kg_factor(fp_name, data=None):
         and (data and not data["is_pallet"])
         and (
             (data["item_length"] > 1.2 and data["item_width"] > 1.2)
-            or (data.item_height > 1.8)
+            or (data["item_height"] > 1.8)
             or (
                 max(data["item_length"], data["item_width"]) > 1.2
                 and data["item_dead_weight"] > 59
