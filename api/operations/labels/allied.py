@@ -243,15 +243,19 @@ def build_label(
             data = [
                 [
                     dme_img,
+                    # Paragraph(
+                    #     "<font size=%s><b>%s</b></font>"
+                    #     % (
+                    #         label_settings["font_size_extra_large"],
+                    #         (booking.vx_freight_provider)
+                    #         if (booking.vx_freight_provider)
+                    #         else "",
+                    #     ),
+                    #     style_center_bg,
+                    # ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_extra_large"],
-                            (booking.vx_freight_provider)
-                            if (booking.vx_freight_provider)
-                            else "",
-                        ),
-                        style_center_bg,
+                        "",
+                        style_center,
                     ),
                     allied_img,
                 ]

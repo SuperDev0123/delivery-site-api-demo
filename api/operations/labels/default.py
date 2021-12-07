@@ -201,6 +201,15 @@ def build_label(
     dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
+    if fp_id == 8:
+        fp_logo = "./static/assets/logos/cameron.png"
+        fp_img = Image(fp_logo, 30 * mm, 7.7 * mm)
+    elif fp_id == 9:
+        fp_logo = "./static/assets/logos/northline.png"
+        fp_img = Image(fp_logo, 30 * mm, 7.7 * mm)
+    else:
+        fp_img = None
+
     fp_color_code = (
         Fp_freight_providers.objects.get(
             fp_company_name=booking.vx_freight_provider
@@ -245,36 +254,62 @@ def build_label(
         for k in range(booking_line.e_qty):
             if one_page_label and k > 0:
                 continue
-
-            data = [
-                [
-                    dme_img,
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_extra_large"],
-                            (booking.vx_freight_provider)
-                            if (booking.vx_freight_provider)
-                            else "",
+            if fp_img:
+                data = [
+                    [
+                        dme_img,
+                        Paragraph(
+                            "",
+                            style_center,
                         ),
-                        style_center_bg,
-                    ),
+                        fp_img
+                    ]
                 ]
-            ]
 
-            t1_w = float(label_settings["label_image_size_length"]) * (2 / 4) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (2 / 4) * mm
+                t1_w = float(label_settings["label_image_size_length"]) * (4 / 12) * mm
+                t2_w = float(label_settings["label_image_size_length"]) * (5 / 12) * mm
+                t3_w = float(label_settings["label_image_size_length"]) * (3 / 12) * mm
 
-            header = Table(
-                data,
-                colWidths=[t1_w, t2_w],
-                style=[
-                    ("VALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
-                ],
-            )
+                header = Table(
+                    data,
+                    colWidths=[t1_w, t2_w, t3_w],
+                    style=[
+                        ("VALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                    ],
+                )
+            else:
+                data = [
+                    [
+                        dme_img,
+                        Paragraph(
+                            "<font size=%s><b>%s</b></font>"
+                            % (
+                                label_settings["font_size_extra_large"],
+                                (booking.vx_freight_provider)
+                                if (booking.vx_freight_provider)
+                                else "",
+                            ),
+                            style_center_bg,
+                        ),
+                    ]
+                ]
+
+                t1_w = float(label_settings["label_image_size_length"]) * (2 / 4) * mm
+                t2_w = float(label_settings["label_image_size_length"]) * (2 / 4) * mm
+
+                header = Table(
+                    data,
+                    colWidths=[t1_w, t2_w],
+                    style=[
+                        ("VALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+                    ],
+                )
             Story.append(header)
 
             hr = HRFlowable(
