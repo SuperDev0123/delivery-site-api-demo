@@ -863,7 +863,7 @@ def push_boks(payload, client, username, method):
     # Response
     if json_results:
         if is_biz:
-            result = {"success": True, "results": json_results}
+            result = {"success": True}
 
             # Commented (2021-06-18)
             # if bok_1["shipping_type"] == "DMEM":
