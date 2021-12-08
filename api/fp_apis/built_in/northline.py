@@ -58,7 +58,7 @@ def get_pricing(fp_name, booking, booking_lines):
             dead_weight += (
                 item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
             )
-            cubic_weight += (
+            cubic_weight += round(
                 get_cubic_meter(
                     item.e_dimLength,
                     item.e_dimWidth,

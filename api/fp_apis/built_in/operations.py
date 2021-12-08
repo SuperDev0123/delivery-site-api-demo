@@ -370,7 +370,7 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
     total_cubic_weight = 0
     m3_to_kg_factor = get_m3_to_kg_factor(fp.fp_company_name)
     for line in booking_lines:
-        total_cubic_weight += (
+        total_cubic_weight += round(
             get_cubic_meter(
                 line.e_dimLength, line.e_dimWidth, line.e_dimHeight, line.e_dimUOM
             )
