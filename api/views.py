@@ -3010,6 +3010,32 @@ class BookingViewSet(viewsets.ViewSet):
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
             return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def get_status_page_url(self, request):
+        LOG_ID = "[get_status_page_url]"
+        v_FPBookingNumber = request.GET.get("v_FPBookingNumber", None)
+        logger.info(f"{LOG_ID} v_FPBookingNumber: {v_FPBookingNumber}")
+
+        if v_FPBookingNumber:
+            bookings = Bookings.objects.filter(
+                v_FPBookingNumber__iexact=v_FPBookingNumber
+            )
+
+            if bookings:
+                booking = bookings.first()
+
+                if not booking.b_client_booking_ref_num:
+                    booking.b_client_booking_ref_num = (
+                        f"{booking.b_bookingID_Visual}_{booking.pk_booking_id}"
+                    )
+                    booking.save()
+
+                status_page_url = f"{settings.WEB_SITE_URL}/status/{booking.b_client_booking_ref_num}/"
+                return JsonResponse({"success": True, "statusPageUrl": status_page_url})
+
+        logger.error(f"{LOG_ID} Failed to find status page url")
+        return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
