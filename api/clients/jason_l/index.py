@@ -21,7 +21,7 @@ from api.models import (
     Pallet,
     API_booking_quotes,
 )
-from api.serializers import SimpleQuoteSerializer
+from api.serializers import SimpleQuoteSerializer, Simple4ProntoQuoteSerializer
 from api.serializers_client import *
 from api.convertors import pdf
 from api.common import (
@@ -157,7 +157,7 @@ def partial_pricing(payload, client, warehouse):
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = SimpleQuoteSerializer(
+        json_results = Simple4ProntoQuoteSerializer(
             best_quotes, many=True, context=context
         ).data
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
@@ -812,9 +812,10 @@ def push_boks(payload, client, username, method):
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = SimpleQuoteSerializer(
+        json_results = Simple4ProntoQuoteSerializer(
             best_quotes, many=True, context=context
         ).data
+
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
         # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
