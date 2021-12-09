@@ -79,6 +79,11 @@ def address_filter(booking, booking_lines, rules, fp):
         f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
     )
 
+    if fp.fp_company_name == "Northline" and (
+        not avail_de_zones.exists() or not avail_de_zones.exists()
+    ):
+        return []
+
     filtered_rule_ids = []
     for rule in rules:
         if rule.pu_suburb and rule.pu_suburb.lower() != pu_suburb:
