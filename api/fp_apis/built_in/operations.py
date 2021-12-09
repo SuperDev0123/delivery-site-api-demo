@@ -79,7 +79,7 @@ def address_filter(booking, booking_lines, rules, fp):
         f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
     )
 
-    if fp.fp_company_name == "Northline" and (
+    if fp.fp_company_name in ["Northline", "Camerons"] and (
         not avail_pu_zones.exists() or not avail_de_zones.exists()
     ):
         return []
