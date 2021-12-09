@@ -80,7 +80,7 @@ def address_filter(booking, booking_lines, rules, fp):
     )
 
     if fp.fp_company_name == "Northline" and (
-        not avail_de_zones.exists() or not avail_de_zones.exists()
+        not avail_pu_zones.exists() or not avail_de_zones.exists()
     ):
         return []
 
