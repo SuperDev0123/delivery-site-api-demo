@@ -139,7 +139,8 @@ def pricing(
             if booking_lines:
                 _loop_process(booking, booking_lines, is_pricing_only, packed_status)
     else:
-        _loop_process(booking, booking_lines, is_pricing_only, packed_statuses[0])
+        for packed_status in packed_statuses:
+            _loop_process(booking, booking_lines, is_pricing_only, packed_status)
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
@@ -237,10 +238,10 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
                     pass
                 elif b_client_name in fp_client_names and b_client_name != client_name:
                     continue
-                elif (
-                    b_client_name not in fp_client_names
-                    and client_name not in ["dme", "test"]
-                ):
+                elif b_client_name not in fp_client_names and client_name not in [
+                    "dme",
+                    "test",
+                ]:
                     continue
 
                 logger.info(f"#905 [PRICING] - {_fp_name}, {client_name}")
