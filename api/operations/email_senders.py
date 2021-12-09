@@ -603,6 +603,7 @@ def send_status_update_email(
         "DME_NUMBER": booking.b_bookingID_Visual,
         "ETA": eta,
         "BODY_REPEAT": "",
+        "NOTICE_DISPLAY": "none" if step == 5 and last_milestone == "Delivered" else "table-row"
     }
 
     booking_lines = Booking_lines.objects.filter(
