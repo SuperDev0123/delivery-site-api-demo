@@ -157,7 +157,7 @@ def partial_pricing(payload, client, warehouse):
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = Simple4ProntoQuoteSerializer(
+        json_results = SimpleQuoteSerializer(
             best_quotes, many=True, context=context
         ).data
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
@@ -813,9 +813,15 @@ def push_boks(payload, client, username, method):
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = Simple4ProntoQuoteSerializer(
-            best_quotes, many=True, context=context
-        ).data
+
+        if is_biz:
+            json_results = Simple4ProntoQuoteSerializer(
+                best_quotes, many=True, context=context
+            ).data
+        else:
+            json_results = SimpleQuoteSerializer(
+                best_quotes, many=True, context=context
+            ).data
 
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
