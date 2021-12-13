@@ -10,6 +10,7 @@ from api.common.common_times import TIME_DIFFERENCE
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
+from api.fps.tnt import get_service_code as get_tnt_service_code
 
 logger = logging.getLogger(__name__)  # Payload Builder
 
@@ -424,32 +425,9 @@ def get_book_payload(booking, fp_name):
         else:
             payload["collectionCloseTime"] = "1500"
 
-        # Get `serviceCode` from `serviceName`
-        if booking.api_booking_quote.service_name == "Overnight 09:00":
-            payload["serviceCode"] = "712"
-        elif booking.api_booking_quote.service_name == "Overnight 10:00":
-            payload["serviceCode"] = "EX10"
-        elif booking.api_booking_quote.service_name in [
-            "Overnight 12:00",
-            "12:00 Express",
-        ]:
-            payload["serviceCode"] = "EX12"
-        elif booking.api_booking_quote.service_name == "Overnight Express":
-            payload["serviceCode"] = "75"
-        elif booking.api_booking_quote.service_name == "Road Express":
-            payload["serviceCode"] = "76"
-        elif (
+        payload["ServiceCode"] = get_tnt_servoce_code(
             booking.api_booking_quote.service_name
-            == "Technology Express - Sensitive Express"
-        ):
-            payload["serviceCode"] = "717B"
-        elif booking.api_booking_quote.service_name == "Fashion Express – Carton":
-            payload["serviceCode"] = "718"
-        elif booking.api_booking_quote.service_name == "Sameday Domestic":
-            payload["serviceCode"] = "701"
-        else:
-            error_msg = f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
-            logger.info(error_msg)
+        )
 
         payload["collectionInstructions"] = " "
         if payload["pickupAddress"]["instruction"]:
@@ -694,32 +672,9 @@ def get_getlabel_payload(booking, fp_name):
         )
 
         # Get `serviceCode` from `serviceName`
-        if booking.api_booking_quote.service_name == "Overnight 09:00":
-            payload["ServiceCode"] = "712"
-        elif booking.api_booking_quote.service_name == "Overnight 10:00":
-            payload["serviceCode"] = "EX10"
-        elif booking.api_booking_quote.service_name in [
-            "Overnight 12:00",
-            "12:00 Express",
-        ]:
-            payload["serviceCode"] = "EX12"
-        elif booking.api_booking_quote.service_name == "Overnight Express":
-            payload["serviceCode"] = "75"
-        elif booking.api_booking_quote.service_name == "Road Express":
-            payload["serviceCode"] = "76"
-        elif (
+        payload["ServiceCode"] = get_tnt_servoce_code(
             booking.api_booking_quote.service_name
-            == "Technology Express - Sensitive Express"
-        ):
-            payload["serviceCode"] = "717B"
-        elif booking.api_booking_quote.service_name == "Fashion Express – Carton":
-            payload["serviceCode"] = "718"
-        elif booking.api_booking_quote.service_name == "Sameday Domestic":
-            payload["serviceCode"] = "701"
-        else:
-            error_msg = f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
-            logger.info(error_msg)
-
+        )
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
         payload["collectionInstructions"] = ""
