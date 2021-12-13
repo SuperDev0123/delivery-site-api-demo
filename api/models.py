@@ -2257,7 +2257,11 @@ class Booking_lines(models.Model):
 
     def booking(self):
         try:
-            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            return (
+                Bookings.objects.filter(pk_booking_id=self.fk_booking_id)
+                .order_by("id")
+                .first()
+            )
         except Exception as e:
             trace_error.print()
             logger.error(f"#516 Error: {str(e)}")
@@ -2430,7 +2434,11 @@ class Booking_lines_data(models.Model):
 
     def booking(self):
         try:
-            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            return (
+                Bookings.objects.filter(pk_booking_id=self.fk_booking_id)
+                .order_by("id")
+                .first()
+            )
         except Exception as e:
             trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
@@ -2438,8 +2446,12 @@ class Booking_lines_data(models.Model):
 
     def booking_line(self):
         try:
-            return Booking_lines.objects.get(
-                pk_booking_lines_id=self.fk_booking_lines_id
+            return (
+                Booking_lines.objects.filter(
+                    pk_booking_lines_id=self.fk_booking_lines_id
+                )
+                .order_by("id")
+                .first()
             )
         except Exception as e:
             trace_error.print()
