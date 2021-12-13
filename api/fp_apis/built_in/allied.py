@@ -181,6 +181,11 @@ def get_pricing(fp_name, booking, booking_lines):
     )
     logger.info(f"@832 {LOG_ID} DE Zone: {de_zone}")
 
+    if not pu_zone:
+        message = f"@833 {LOG_ID} PU address is not supported."
+        logger.info(message)
+        raise Exception(message)
+
     if not de_zone:
         message = f"@833 {LOG_ID} DE address is not supported."
         logger.info(message)
