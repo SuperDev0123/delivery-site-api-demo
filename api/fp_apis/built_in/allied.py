@@ -157,7 +157,7 @@ def _select_service_type(fp_name, booking_lines):
             return service_types[2]  # "Oversized Pallet Rate"
 
 
-def get_pricing(fp_name, booking, booking_lines):
+def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     LOG_ID = "[BIP ALLIED]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
 
@@ -165,20 +165,50 @@ def get_pricing(fp_name, booking, booking_lines):
     service_type = _select_service_type(fp_name, booking_lines)
     logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
-    # Get pu_zone and de_zone
-    pu_zone = get_zone(
-        fp=fp,
-        state=booking.pu_Address_State,
-        postal_code=booking.pu_Address_PostalCode,
-        suburb=booking.pu_Address_Suburb,
-    )
+    # Get pu_zone
+    if not pu_zones:
+        pu_zone = get_zone(
+            fp=fp,
+            state=booking.pu_Address_State,
+            postal_code=booking.pu_Address_PostalCode,
+            suburb=booking.pu_Address_Suburb,
+        )
+    else:
+        pu_zone = None
+
+        for _pu_zone in pu_zones:
+            if (
+                _pu_zone.fk_fp == fp.pk
+                and _pu_zone.state == booking.pu_Address_State
+                and _pu_zone.postal_code == booking.pu_Address_PostalCode
+                and _pu_zone.suburb == booking.pu_Address_Suburb
+            ):
+                pu_zone = _pu_zone
+                break
+
     logger.info(f"@831 {LOG_ID} PU Zone: {pu_zone}")
-    de_zone = get_zone(
-        fp=fp,
-        state=booking.de_To_Address_State,
-        postal_code=booking.de_To_Address_PostalCode,
-        suburb=booking.de_To_Address_Suburb,
-    )
+
+    # Get de_zone
+    if not de_zones:
+        de_zone = get_zone(
+            fp=fp,
+            state=booking.de_To_Address_State,
+            postal_code=booking.de_To_Address_PostalCode,
+            suburb=booking.de_To_Address_Suburb,
+        )
+    else:
+        de_zone = None
+
+        for _de_zone in de_zones:
+            if (
+                _de_zone.fk_fp == fp.pk
+                and _de_zone.state == booking.de_To_Address_State
+                and _de_zone.postal_code == booking.de_To_Address_PostalCode
+                and _de_zone.suburb == booking.de_To_Address_Suburb
+            ):
+                de_zone = _de_zone
+                break
+
     logger.info(f"@832 {LOG_ID} DE Zone: {de_zone}")
 
     if not pu_zone:

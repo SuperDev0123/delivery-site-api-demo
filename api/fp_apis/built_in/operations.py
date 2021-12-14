@@ -12,29 +12,54 @@ from api.fp_apis.utils import get_m3_to_kg_factor
 logger = logging.getLogger(__name__)
 
 
-def get_zone_code(postal_code, fp):
-    zones = (
-        FP_zones.objects.filter(fk_fp=fp.id)
-        .filter(
-            Q(postal_code=postal_code)
-            | Q(start_postal_code__lte=postal_code, end_postal_code__gte=postal_code)
-        )
-        .only("zone")
-    )
-
-    if zones.exists():
-        return zones.first().zone
-
-
-def get_zone(fp, state, postal_code, suburb):
-    zones = FP_zones.objects.filter(
-        state=state, postal_code=postal_code, suburb=suburb, fk_fp=fp.id
-    )
-
+def get_zone_code(postal_code, fp, zones):
     if zones:
-        return zones.first()
+        _postal_code = int(postal_code)
 
-    return None
+        for zone in zones:
+            zone_postal_code = int(zone.postal_code or -1)
+            if int(zone.fk_fp) == int(fp.id) and (
+                zone_postal_code == int(postal_code or -1)
+                or (
+                    zone.start_postal_code
+                    and zone.end_postal_code
+                    and int(zone.start_postal_code) < _postal_code
+                    and int(zone.end_postal_code) > _postal_code
+                )
+            ):
+                return zone.zone
+    else:
+        _zones = (
+            FP_zones.objects.filter(fk_fp=fp.id)
+            .filter(
+                Q(postal_code=postal_code)
+                | Q(
+                    start_postal_code__gte=postal_code, end_postal_code__lte=postal_code
+                )
+            )
+            .only("zone")
+        )
+
+        if _zones.exists():
+            return _zones.first().zone
+
+
+def get_zone(fp, state, postal_code, suburb, zones):
+    if zones:
+        for zone in zones:
+            if (
+                zone.postal_code == postal_code
+                and zone.state == state
+                and zone.fk_fp == fp.id
+            ):
+                return zone
+    else:
+        _zones = FP_zones.objects.filter(
+            state=state, postal_code=postal_code, suburb=suburb, fk_fp=fp.id
+        )
+
+        if _zones:
+            return _zones.first()
 
 
 def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
@@ -47,40 +72,68 @@ def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
     return False
 
 
-def address_filter(booking, booking_lines, rules, fp):
+def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
     LOG_ID = "[BP addr filter]"
     pu_suburb = booking.pu_Address_Suburb.lower()
-    pu_postal_code = booking.pu_Address_PostalCode.lower()
+    pu_postal_code = booking.pu_Address_PostalCode.zfill(4)
     pu_state = booking.pu_Address_State.lower()
 
     de_suburb = booking.de_To_Address_Suburb.lower()
-    de_postal_code = booking.de_To_Address_PostalCode.lower()
+    de_postal_code = booking.de_To_Address_PostalCode.zfill(4)
     de_state = booking.de_To_Address_State.lower()
 
     # Zone
     found_pu_zone = None
     found_de_zone = None
-    avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
-    avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
-    if pu_state:
-        avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
-    if pu_postal_code:
-        avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
-    if pu_suburb:
-        avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
-    if de_state:
-        avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
-    if de_postal_code:
-        avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
-    if de_suburb:
-        avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
+    avail_pu_zones = []
+    avail_de_zones = []
+
+    if pu_zones and de_zones:
+        for zone in pu_zones:
+            if int(zone.fk_fp) != int(fp.pk):
+                continue
+            if (
+                (pu_suburb and zone.suburb.lower() != pu_suburb.lower())
+                or (pu_state and zone.state.lower() != pu_state.lower())
+                or (pu_postal_code and int(zone.postal_code) != int(pu_postal_code))
+            ):
+                continue
+            else:
+                avail_pu_zones.append(zone)
+
+        for zone in de_zones:
+            if int(zone.fk_fp) != int(fp.pk):
+                continue
+            if (
+                (de_suburb and zone.suburb.lower() != de_suburb.lower())
+                or (de_state and zone.state.lower() != de_state.lower())
+                or (de_postal_code and int(zone.postal_code) != int(de_postal_code))
+            ):
+                continue
+            else:
+                avail_de_zones.append(zone)
+    else:
+        avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
+        avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
+        if pu_state:
+            avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
+        if pu_postal_code:
+            avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
+        if pu_suburb:
+            avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
+        if de_state:
+            avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
+        if de_postal_code:
+            avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
+        if de_suburb:
+            avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
 
     logger.info(
         f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
     )
 
     if fp.fp_company_name in ["Northline", "Camerons"] and (
-        not avail_pu_zones.exists() or not avail_de_zones.exists()
+        not avail_pu_zones or not avail_de_zones
     ):
         return []
 
@@ -110,7 +163,7 @@ def address_filter(booking, booking_lines, rules, fp):
             # logger.info(f"@855 {LOG_ID} DE State does not match")
             continue
 
-        if rule.pu_zone and avail_pu_zones.exists():
+        if rule.pu_zone and avail_pu_zones:
             if found_pu_zone and found_pu_zone != rule.pu_zone:
                 continue
 
@@ -120,7 +173,7 @@ def address_filter(booking, booking_lines, rules, fp):
                 # logger.info(f"@856 {LOG_ID} PU Zone does not match")
                 continue
 
-        if rule.de_zone and avail_de_zones.exists():
+        if rule.de_zone and avail_de_zones:
             if found_de_zone and found_de_zone != rule.de_zone:
                 continue
 

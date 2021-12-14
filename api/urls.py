@@ -128,6 +128,7 @@ urlpatterns += [
     url(r"^send_zoho_ticket_reply/", send_zoho_ticket_reply),
     url(r"^get_zoho_departments/", get_zoho_departments),
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
+    url(r"^bulk_pricing/", bulk_pricing),
     # Client apis
     url(r"^get_delivery_status/", get_delivery_status),
     url(r"^find-a-booking/", find_a_booking),

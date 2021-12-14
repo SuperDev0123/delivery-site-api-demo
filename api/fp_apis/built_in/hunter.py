@@ -11,14 +11,14 @@ from api.helpers.cubic import get_cubic_meter
 logger = logging.getLogger(__name__)
 
 
-def get_pricing(fp_name, booking, booking_lines):
+def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     LOG_ID = "[BIP HUNTER]"  # BUILT-IN PRICING
     pricies = []
 
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-    pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp)
-    de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp)
+    pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp, pu_zones)
+    de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp, de_zones)
 
     if not pu_zone or not de_zone:
         raise Exception(
