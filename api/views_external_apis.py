@@ -145,7 +145,7 @@ def bulk_pricing(request):
                 lines.append(booking_line)
 
         _, success, message, quote_set = pricing_oper(
-            body={"booking": booking, "booking_lines": booking_lines},
+            body={"booking": booking, "booking_lines": lines},
             booking_id=None,
             is_pricing_only=True,
             packed_statuses=[Booking_lines.ORIGINAL],
