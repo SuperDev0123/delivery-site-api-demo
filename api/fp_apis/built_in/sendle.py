@@ -80,7 +80,6 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             logger.info(f"{LOG_ID} {fp_name.upper()} - volumn exceeded")
             continue
 
-        print("@90 - ", rules)
         cost = rules[0].cost
         price = {
             "netPrice": cost.basic_charge,
