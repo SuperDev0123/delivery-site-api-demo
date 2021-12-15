@@ -169,12 +169,13 @@ def do_bulk_pricing(bookings, booking_lines):
 
         result.append({"booking": booking, "pricings": json_results})
 
-    if not result:
-        return JsonResponse(
-            {"success": True, "error": "Unknown erorr"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    # if not result:
+    #     return JsonResponse(
+    #         {"success": True, "error": "Unknown erorr"},
+    #         status=status.HTTP_400_BAD_REQUEST,
+    #     )
 
-    return JsonResponse(
-        {"success": True, "error": None, "result": result}, status=status.HTTP_200_OK
-    )
+    # return JsonResponse(
+    #     {"success": True, "error": None, "result": result}, status=status.HTTP_200_OK
+    # )
+    return result

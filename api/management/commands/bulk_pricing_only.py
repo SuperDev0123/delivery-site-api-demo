@@ -216,10 +216,9 @@ def do_process(fpath, fname):
     bookings, booking_lines = read_xls(fpath)
     bookings = replace_null(bookings)
     booking_lines = replace_null(booking_lines)
+    results = do_bulk_pricing(bookings, booking_lines)
 
-    pricing_response = do_bulk_pricing(bookings, booking_lines)
-
-    for result in pricing_response["result"]:
+    for result in results:
         booking = result["booking"]
         pricings = result["pricings"]
 
