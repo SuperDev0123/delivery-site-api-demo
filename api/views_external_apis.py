@@ -137,9 +137,11 @@ def bulk_pricing(request):
     pu_zones = FP_zones.objects.filter(Q(suburb__in=pu_suburbs) | Q(fk_fp=12))
     de_zones = FP_zones.objects.filter(Q(suburb__in=de_suburbs) | Q(fk_fp=12))
 
-    for booking in bookings:
-        lines = []
+    for index, booking in enumerate(bookings):
+        if index % 10 == 0:
+            logger.info(f"{LOG_ID} Bulk pricing: {index}/{len(bookings)}")
 
+        lines = []
         for booking_line in booking_lines:
             if booking["pk_booking_id"] == booking_line["fk_booking_id"]:
                 lines.append(booking_line)
