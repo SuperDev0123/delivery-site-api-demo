@@ -16,18 +16,18 @@ PRICING_TIME = 40  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost", "ATC"
 AVAILABLE_FPS_4_FC = [
-    # "Startrack",
-    # "AUSPost",
-    # "TNT",
-    # "Capital",
-    # "Hunter",
+    "Startrack",
+    "AUSPost",
+    "TNT",
+    "Capital",
+    "Hunter",
     "Sendle",
-    # "Allied",
-    # "Camerons",
-    # "Toll",
-    # "Century",
-    # "ATC",
-    # "Northline",
+    "Allied",
+    "Camerons",
+    "Toll",
+    "Century",
+    "ATC",
+    "Northline",
 ]
 
 BUILT_IN_PRICINGS = {
