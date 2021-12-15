@@ -36,6 +36,7 @@ def _update_file_info(fname, fpath, note):
     file = DME_Files.objects.get(file_name=fname)
     file.file_path = modified_fpath
     file.note = note
+    file.save()
 
 
 def _insert_file_info(fname, fpath, note):
