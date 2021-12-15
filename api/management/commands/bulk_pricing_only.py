@@ -30,7 +30,7 @@ def replace_null(array):
     return array
 
 
-def _update_file_info(mysqlcon, fname, fpath, note):
+def _update_file_info(fname, fpath, note):
     print(f"#800 - {fname}, {note}")
     modified_fpath = fpath.replace("../dme_api/", "")
     file = DME_Files.objects.get(file_name=fname)
@@ -38,7 +38,7 @@ def _update_file_info(mysqlcon, fname, fpath, note):
     file.note = note
 
 
-def _insert_file_info(mysqlcon, fname, fpath, note):
+def _insert_file_info(fname, fpath, note):
     print(f"801 - {fname}, {note}")
     modified_fpath = fpath.replace("../dme_api/", "")
 
