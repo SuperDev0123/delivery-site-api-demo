@@ -110,12 +110,13 @@ def get_logs(request):
 
 
 # Pricing-only
-@api_view(["POST"])
-def bulk_pricing(request):
-    LOG_ID = "[BULK PRICING]"
-    logger.info(f"{LOG_ID} bulk_pricing")
-    bookings = request.data.get("bookings")
-    booking_lines = request.data.get("booking_lines")
+# @api_view(["POST"])
+# def bulk_pricing(request):
+#     LOG_ID = "[BULK PRICING]"
+#     logger.info(f"{LOG_ID} bulk_pricing")
+#     bookings = request.data.get("bookings")
+#     booking_lines = request.data.get("booking_lines")
+def do_bulk_pricing(bookings, booking_lines):
     result = []
 
     pu_suburbs = []
