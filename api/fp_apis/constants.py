@@ -16,18 +16,18 @@ PRICING_TIME = 40  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost", "ATC"
 AVAILABLE_FPS_4_FC = [
-    "Startrack",
-    "AUSPost",
-    "TNT",
-    "Capital",
-    "Hunter",
+    # "Startrack",
+    # "AUSPost",
+    # "TNT",
+    # "Capital",
+    # "Hunter",
     "Sendle",
-    "Allied",
-    "Camerons",
-    "Toll",
-    "Century",
-    "ATC",
-    "Northline",
+    # "Allied",
+    # "Camerons",
+    # "Toll",
+    # "Century",
+    # "ATC",
+    # "Northline",
 ]
 
 BUILT_IN_PRICINGS = {
@@ -36,7 +36,7 @@ BUILT_IN_PRICINGS = {
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
     "northline": {"service_types": ["standard"]},
-    "tnt": {  # Coming soon
+    "tnt": {
         "service_types": [
             "Overnight - 9:00 Express*",
             "Overnight - 10:00 Express",
@@ -51,7 +51,7 @@ BUILT_IN_PRICINGS = {
             "Failsafe Secure Service",
         ]
     },
-    "hunter": {"service_types": ["Road Express"]},  # Coming soon
+    "hunter": {"service_types": ["Road Express"]},
     "allied": {  # Deactivated
         "service_types": [
             "Road Express",
@@ -59,6 +59,7 @@ BUILT_IN_PRICINGS = {
             "Oversized Pallet Rate",
         ]
     },
+    "sendle": {"service_types": ["Pro"]},
 }
 
 FP_CREDENTIALS = {

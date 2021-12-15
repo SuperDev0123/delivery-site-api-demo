@@ -413,6 +413,28 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
     return rule_ids
 
 
+def find_rule_ids_by_volume(booking_lines, rules, fp):
+    rule_ids = []
+
+    total_volume = 0
+    for item in booking_lines:
+        width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+        height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+        length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+        volume = item.e_qty * length * width * height
+        total_volume += volume
+
+    for rule in rules:
+        cost = rule.cost
+
+        if total_volume and (total_volume > cost.max_volume):
+            continue
+
+        rule_ids.append(rule.id)
+
+    return rule_ids
+
+
 def find_rule_ids_by_weight(booking_lines, rules, fp):
     rule_ids = []
 
@@ -449,10 +471,10 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             )
             continue
 
-        if cost.max_weight:
+        if cost.weight_UOM and cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
 
-        if cost.price_up_to_weight:
+        if cost.weight_UOM and cost.price_up_to_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         if cost.UOM_charge.upper() in PALLETS:
@@ -540,6 +562,12 @@ def weight_filter(booking_lines, rules, fp):
         filtered_rules = rules.filter(pk__in=rule_ids)
 
     return filtered_rules
+
+
+def volume_filter(booking_lines, rules, fp):
+    filtered_rules = []
+    rule_ids = find_rule_ids_by_volume(booking_lines, rules, fp)
+    return rules.filter(pk__in=rule_ids)
 
 
 def find_cost(booking_lines, rules, fp):

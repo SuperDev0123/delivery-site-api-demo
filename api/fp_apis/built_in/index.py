@@ -12,6 +12,7 @@ from api.fp_apis.built_in import (
     northline,
     tnt,
     hunter,
+    sendle,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,10 @@ def get_pricing(
             )
         elif fp_name.lower() == "hunter":
             prices = hunter.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "sendle":
+            prices = sendle.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
     except Exception as e:
