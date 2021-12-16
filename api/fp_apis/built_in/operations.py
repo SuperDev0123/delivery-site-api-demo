@@ -44,7 +44,7 @@ def get_zone_code(postal_code, fp, zones):
             return _zones.first().zone
 
 
-def get_zone(fp, state, postal_code, suburb, zones):
+def get_zone(fp, state, postal_code, suburb, zones=[]):
     if zones:
         for zone in zones:
             if (

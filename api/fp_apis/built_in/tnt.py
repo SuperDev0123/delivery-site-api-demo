@@ -1,3 +1,4 @@
+import math
 import logging
 import traceback
 
@@ -70,7 +71,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         if service_type == "Road Express" and chargable_weight > 20:
             chargable_weight -= 20
 
-        net_price += float(cost.per_UOM_charge or 0) * chargable_weight
+        net_price += float(cost.per_UOM_charge or 0) * math.ceil(chargable_weight)
 
         logger.info(f"{LOG_ID} Final cost - {cost}")
         rule = rules.get(cost_id=cost.id)
