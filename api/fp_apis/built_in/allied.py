@@ -148,13 +148,16 @@ def _select_service_type(fp_name, booking_lines):
         logger.info(message)
         raise Exception(message)
 
-    if e_type_of_packagings[0] == "carton":
-        return service_types[0]  # "Road Express"
-    else:
-        if not _has_oversize_pallet(fp_name, booking_lines):
-            return service_types[1]  # "Standard Pallet Rate"
-        else:
-            return service_types[2]  # "Oversized Pallet Rate"
+    # Only "Road Express" is available for Allied
+    return service_types[0]
+
+    # if e_type_of_packagings[0] == "carton":
+    #     return service_types[0]  # "Road Express"
+    # else:
+    #     if not _has_oversize_pallet(fp_name, booking_lines):
+    #         return service_types[1]  # "Standard Pallet Rate"
+    #     else:
+    #         return service_types[2]  # "Oversized Pallet Rate"
 
 
 def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
