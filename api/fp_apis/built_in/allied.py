@@ -241,11 +241,29 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     message = f"@835 {LOG_ID} RuleID: {rules.first()}, CostID: {cost}"
     logger.info(message)
 
+    m3_to_kg_factor = 250
+    dead_weight, cubic_weight = 0, 0
+
+    for item in booking_lines:
+        dead_weight += (
+            item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
+        )
+        cubic_weight += (
+            get_cubic_meter(
+                item.e_dimLength,
+                item.e_dimWidth,
+                item.e_dimHeight,
+                item.e_dimUOM,
+                item.e_qty,
+            )
+            * m3_to_kg_factor
+        )
+
+    chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
+
     if service_type == "Road Express":
         net_price = cost.basic_charge
-
-        for item in booking_lines:
-            net_price += float(cost.per_UOM_charge) * item.e_weightPerEach * item.e_qty
+        net_price += float(cost.per_UOM_charge) * chargable_weight
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge
