@@ -1,3 +1,4 @@
+import math
 import logging
 import traceback
 
@@ -224,7 +225,6 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         logger.info(message)
         raise Exception(message)
 
-    print("@! - ", fp.id, service_type, pu_zone.zone, de_zone.zone)
     rules = FP_pricing_rules.objects.filter(
         freight_provider_id=fp.id,
         service_type=service_type,
@@ -263,7 +263,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
 
     if service_type == "Road Express":
         net_price = cost.basic_charge
-        net_price += float(cost.per_UOM_charge) * chargable_weight
+        net_price += float(cost.per_UOM_charge) * math.ceil(chargable_weight)
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge
