@@ -47,7 +47,6 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
         """
         cost = rules.first().cost
-        print("@0 - ", rules.first(), cost)
         net_price = cost.basic_charge or 0
         m3_to_kg_factor = 250
         dead_weight, cubic_weight = 0, 0
@@ -67,21 +66,11 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                 * m3_to_kg_factor
             )
 
-        print("@1 - cubic_weight, dead_weight", cubic_weight, dead_weight)
         chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
-        print("@1 - chargable_weight", chargable_weight)
-        net_price += float(cost.per_UOM_charge or 0) * chargable_weight
-        print(
-            "@1 - net_price",
-            service_type,
-            net_price,
-            cost.per_UOM_charge,
-            chargable_weight,
-            cost.start_qty,
-        )
+        if service_type == "Road Express" and chargable_weight > 20:
+            chargable_weight -= 20
 
-        if cost.min_charge and net_price < cost.min_charge:
-            net_price = cost.min_charge
+        net_price += float(cost.per_UOM_charge or 0) * chargable_weight
 
         logger.info(f"{LOG_ID} Final cost - {cost}")
         rule = rules.get(cost_id=cost.id)
