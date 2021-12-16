@@ -640,7 +640,7 @@ def get_getlabel_payload(booking, fp_name):
                 "weight": 0 or weight,
                 "description": ", ".join(descriptions)[:20] if descriptions else "_",
                 "gapRa": ", ".join(gaps)[:15],
-                "lineCustomerReference": line.sscc or "",
+                # "lineCustomerReference": line.sscc or "",
             }
 
             items.append(item)
