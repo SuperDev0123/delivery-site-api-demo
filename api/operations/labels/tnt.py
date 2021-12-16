@@ -184,24 +184,24 @@ def build_label(
     j = 1
 
     # Get routing_group with vx_service_name
-    routing_group = None
-    if booking.vx_serviceName == "Road Express":
-        routing_group = "EXP"
-    elif booking.vx_serviceName in [
-        "09:00 Express",
-        "10:00 Express",
-        "12:00 Express",
-        "Overnight Express",
-        "PAYU - Satchel",
-        "ONFC Satchel",
-    ]:
-        routing_group = "PRI"
-    elif booking.vx_serviceName in [
-        "Technology Express - Sensitive Express",
-        "Sensitive Express",
-        "Fashion Delivery",
-    ]:
-        routing_group = "TE"
+    # routing_group = None
+    # if booking.vx_serviceName == "Road Express":
+    #     routing_group = "EXP"
+    # elif booking.vx_serviceName in [
+    #     "09:00 Express",
+    #     "10:00 Express",
+    #     "12:00 Express",
+    #     "Overnight Express",
+    #     "PAYU - Satchel",
+    #     "ONFC Satchel",
+    # ]:
+    #     routing_group = "PRI"
+    # elif booking.vx_serviceName in [
+    #     "Technology Express - Sensitive Express",
+    #     "Sensitive Express",
+    #     "Fashion Delivery",
+    # ]:
+    #     routing_group = "TE"
 
     """
     Let's assume service group EXP
@@ -213,7 +213,8 @@ def build_label(
         dest_suburb=booking.de_To_Address_Suburb,
         dest_postcode=booking.de_To_Address_PostalCode,
         dest_state=booking.de_To_Address_State,
-        routing_group=routing_group,
+        data_code='C'
+        # routing_group=routing_group,
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
     routing = None
@@ -221,9 +222,10 @@ def build_label(
         drecord = (
             FPRouting.objects.filter(
                 freight_provider=12,
-                orig_postcode=booking.de_To_Address_PostalCode,
-                routing_group=routing_group,
+                orig_postcode=booking.pu_Address_PostalCode,
+                # routing_group=routing_group,
                 orig_depot__isnull=False,
+                data_code='D'
             )
             .only("orig_depot")
             .first()
@@ -236,7 +238,15 @@ def build_label(
                     break
 
         if not routing:
-            routing = crecords.first()
+            routing = FPRouting.objects.filter(
+                freight_provider=12,
+                dest_suburb=booking.de_To_Address_Suburb,
+                dest_postcode=booking.de_To_Address_PostalCode,
+                dest_state=booking.de_To_Address_State,
+                orig_depot_except__isnull=True,
+                data_code='C'
+                # routing_group=routing_group,
+            ).only("orig_depot_except", "gateway", "onfwd", "sort_bin").first()
 
         logger.info(
             f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
@@ -1070,7 +1080,7 @@ def build_label(
 
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
-            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=25 * mm)]]
+            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=20 * mm)]]
 
             t1 = Table(
                 tbl_data,
