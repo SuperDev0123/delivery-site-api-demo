@@ -5049,8 +5049,9 @@ class FPRouting(models.Model):
     freight_provider = models.ForeignKey(
         Fp_freight_providers, on_delete=models.CASCADE, default=None, null=True
     )
-    suburb = models.CharField(max_length=45, default=None, null=True)
-    state = models.CharField(max_length=45, default=None, null=True)
+    data_code = models.CharField(max_length=10, default=None, null=True)
+    dest_suburb = models.CharField(max_length=45, default=None, null=True)
+    dest_state = models.CharField(max_length=45, default=None, null=True)
     dest_postcode = models.CharField(max_length=45, default=None, null=True)
     orig_depot = models.CharField(max_length=10, default=None, null=True)
     orig_depot_except = models.CharField(max_length=10, default=None, null=True)

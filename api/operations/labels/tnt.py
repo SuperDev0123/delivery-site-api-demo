@@ -210,9 +210,9 @@ def build_label(
     """
     crecords = FPRouting.objects.filter(
         freight_provider=12,
-        suburb=booking.de_To_Address_Suburb,
+        dest_suburb=booking.de_To_Address_Suburb,
         dest_postcode=booking.de_To_Address_PostalCode,
-        state=booking.de_To_Address_State,
+        dest_state=booking.de_To_Address_State,
         routing_group=routing_group,
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
