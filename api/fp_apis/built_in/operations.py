@@ -34,7 +34,7 @@ def get_zone_code(postal_code, fp, zones):
             .filter(
                 Q(postal_code=postal_code)
                 | Q(
-                    start_postal_code__gte=postal_code, end_postal_code__lte=postal_code
+                    start_postal_code__lte=postal_code, end_postal_code__gte=postal_code
                 )
             )
             .only("zone")
