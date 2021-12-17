@@ -20,6 +20,7 @@ from api.models import (
     BOK_3_lines_data,
     Pallet,
     API_booking_quotes,
+    FP_zones,
 )
 from api.serializers import SimpleQuoteSerializer, Simple4ProntoQuoteSerializer
 from api.serializers_client import *
