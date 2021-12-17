@@ -169,9 +169,6 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     service_type = _select_service_type(fp_name, booking_lines)
     logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
-    logger.info(
-        f"@! - {len(pu_zones)}, {len(de_zones)}, {booking.pu_Address_State}, {booking.pu_Address_PostalCode}, {booking.pu_Address_Suburb}"
-    )
     # Get pu_zone
     if not pu_zones:
         pu_zone = get_zone(
@@ -188,7 +185,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                 int(_pu_zone.fk_fp) == int(fp.pk)
                 and _pu_zone.state == booking.pu_Address_State
                 and int(_pu_zone.postal_code) == int(booking.pu_Address_PostalCode)
-                and _pu_zone.suburb == booking.pu_Address_Suburb
+                and _pu_zone.suburb == booking.pu_Address_Suburb.upper()
             ):
                 pu_zone = _pu_zone
                 break
@@ -211,7 +208,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                 int(_de_zone.fk_fp) == int(fp.pk)
                 and _de_zone.state == booking.de_To_Address_State
                 and int(_de_zone.postal_code) == int(booking.de_To_Address_PostalCode)
-                and _de_zone.suburb == booking.de_To_Address_Suburb
+                and _de_zone.suburb == booking.de_To_Address_Suburb.upper()
             ):
                 de_zone = _de_zone
                 break
