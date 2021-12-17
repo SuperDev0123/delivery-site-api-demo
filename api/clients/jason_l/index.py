@@ -113,8 +113,6 @@ def partial_pricing(payload, client, warehouse):
         "b_client_name": client.company_name,
     }
 
-    booking_lines = []
-
     # Product & Child items
     missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s, client)
 
@@ -126,6 +124,7 @@ def partial_pricing(payload, client, warehouse):
 
     items = product_oper.get_product_items(bok_2s, client, True, False)
 
+    booking_lines = []
     for index, item in enumerate(items):
         booking_line = {
             "pk_lines_id": index,
@@ -141,6 +140,10 @@ def partial_pricing(payload, client, warehouse):
             "e_weightPerEach": item["e_weightPerEach"],
         }
         booking_lines.append(booking_line)
+
+    # fps = Fp_freight_providers.objects.filter(fp_company_name__in=AVAILABLE_FPS_4_FC)
+    pu_zones = FP_zones.objects.filter(Q(suburb__iexact=warehouse.suburb) | Q(fk_fp=12))
+    de_zones = FP_zones.objects.filter(Q(suburb__iexact=de_suburb) | Q(fk_fp=12))
 
     _, success, message, quote_set = pricing_oper(
         body={"booking": booking, "booking_lines": booking_lines},
