@@ -93,6 +93,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             net_price += float(cost.per_UOM_charge or 0) * (
                 chargable_weight - (cost.start_qty or 0)
             )
+            logger.info(
+                f"{LOG_ID} cost: ({cost.basic_charge, cost.per_UOM_charge}), chargable_weight: {chargable_weight}"
+            )
 
             if cost.min_charge and net_price < cost.min_charge:
                 net_price = cost.min_charge
