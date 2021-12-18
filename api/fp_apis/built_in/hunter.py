@@ -124,9 +124,11 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                     fp_name="hunter",
                     data={
                         "is_pallet": True,
-                        "item_length": _get_dim_amount(item.dim_UOM) * item.e_dimLength,
-                        "item_width": _get_dim_amount(item.dim_UOM) * item.e_dimWidth,
-                        "item_height": _get_dim_amount(item.dim_UOM) * item.e_dimHeight,
+                        "item_length": _get_dim_amount(item.e_dim_UOM)
+                        * item.e_dimLength,
+                        "item_width": _get_dim_amount(item.e_dim_UOM) * item.e_dimWidth,
+                        "item_height": _get_dim_amount(item.e_dim_UOM)
+                        * item.e_dimHeight,
                         "item_dead_weight": _get_weight_amount(item.e_weightUOM)
                         * item.e_weightPerEach,
                     },
