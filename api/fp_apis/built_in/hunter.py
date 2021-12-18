@@ -120,17 +120,16 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                     * _get_weight_amount(item.e_weightUOM)
                     * item.e_qty
                 )
+                dim_amount = _get_dim_amount(item.e_dimUOM)
+                weight_amount = _get_weight_amount(item.e_weightUOM)
                 m3_to_kg_factor = get_m3_to_kg_factor(
                     fp_name="hunter",
                     data={
                         "is_pallet": True,
-                        "item_length": _get_dim_amount(item.e_dim_UOM)
-                        * item.e_dimLength,
-                        "item_width": _get_dim_amount(item.e_dim_UOM) * item.e_dimWidth,
-                        "item_height": _get_dim_amount(item.e_dim_UOM)
-                        * item.e_dimHeight,
-                        "item_dead_weight": _get_weight_amount(item.e_weightUOM)
-                        * item.e_weightPerEach,
+                        "item_length": dim_amount * item.e_dimLength,
+                        "item_width": dim_amount * item.e_dimWidth,
+                        "item_height": dim_amount * item.e_dimHeight,
+                        "item_dead_weight": weight_amount * item.e_weightPerEach,
                     },
                 )
                 cubic_weight += (
