@@ -128,7 +128,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                         "item_width": _get_dim_amount(item.dim_UOM) * item.e_dimWidth,
                         "item_height": _get_dim_amount(item.dim_UOM) * item.e_dimHeight,
                         "item_dead_weight": _get_weight_amount(item.e_weightUOM)
-                        * price_up_to_weight,
+                        * item.e_weightPerEach,
                     },
                 )
                 cubic_weight += (
