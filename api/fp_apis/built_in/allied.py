@@ -61,7 +61,7 @@ def _get_etd(pu_postal_code, de_zone):
 
     if metro_abbr == "SYD":
         return allied_etds.first().syd
-    elif metro_abbr == "BEN":
+    elif metro_abbr == "BNE":
         return allied_etds.first().ben
     elif metro_abbr == "MEL":
         return allied_etds.first().mel
