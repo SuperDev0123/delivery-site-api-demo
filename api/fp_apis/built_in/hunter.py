@@ -1,3 +1,4 @@
+import math
 import logging
 import traceback
 
@@ -86,7 +87,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                     * m3_to_kg_factor
                 )
 
-            chargable_weight = (
+            chargable_weight = math.ceil(
                 dead_weight if dead_weight > cubic_weight else cubic_weight
             )
             net_price += float(cost.per_UOM_charge or 0) * (
