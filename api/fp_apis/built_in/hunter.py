@@ -114,7 +114,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             net_price = cost.basic_charge
             dead_weight, cubic_weight = 0, 0
 
-            for item in kg_lines:
+            for item in pallet_lines:
                 dead_weight += (
                     item.e_weightPerEach
                     * _get_weight_amount(item.e_weightUOM)
