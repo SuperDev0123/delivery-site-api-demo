@@ -141,6 +141,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                     )
                     * m3_to_kg_factor
                 )
+                print("@! - ", dead_weight, m3_to_kg_factor, cubic_weight, item)
 
             chargable_weight = math.ceil(
                 dead_weight if dead_weight > cubic_weight else cubic_weight
