@@ -264,6 +264,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     if service_type == "Road Express":
         net_price = cost.basic_charge
         net_price += float(cost.per_UOM_charge) * math.ceil(chargable_weight)
+        logger.info(
+            f"{LOG_ID} cost: #{cost}({cost.basic_charge, cost.per_UOM_charge}), chargable_weight: {chargable_weight}"
+        )
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge
