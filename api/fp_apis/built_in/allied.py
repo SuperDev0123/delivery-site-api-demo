@@ -61,8 +61,8 @@ def _get_etd(pu_postal_code, de_zone):
 
     if metro_abbr == "SYD":
         return allied_etds.first().syd
-    elif metro_abbr == "BEN":
-        return allied_etds.first().ben
+    elif metro_abbr == "BNE":
+        return allied_etds.first().bne
     elif metro_abbr == "MEL":
         return allied_etds.first().mel
     elif metro_abbr == "ADL":
@@ -264,6 +264,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     if service_type == "Road Express":
         net_price = cost.basic_charge
         net_price += float(cost.per_UOM_charge) * math.ceil(chargable_weight)
+        logger.info(
+            f"{LOG_ID} cost: #{cost}({cost.basic_charge, cost.per_UOM_charge}), chargable_weight: {chargable_weight}"
+        )
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge
