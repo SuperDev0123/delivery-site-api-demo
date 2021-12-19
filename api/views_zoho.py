@@ -132,7 +132,7 @@ def get_zoho_tickets_with_booking_id(request):
         "Authorization": "Zoho-oauthtoken " + access_token,
     }
     ticket_list = requests.get(
-        "https://desk.zoho.com.au/api/v1/tickets?limit=200",
+        "https://desk.zoho.com.au/api/v1/tickets?limit=100",
         headers=headers_for_tickets,
     )
 
