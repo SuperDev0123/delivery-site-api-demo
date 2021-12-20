@@ -272,7 +272,9 @@ def do_process(fpath, fname):
                 pricing["surcharge_total"] if pricing["surcharge_total"] else 0
             )
             worksheet.write(row, col + 32, round(float(surcharge_total), 2))
-            worksheet.write(row, col + 33, float(mu_percentage_fuel_levy) * 100)
+            worksheet.write(
+                row, col + 33, float(pricing["mu_percentage_fuel_levy"]) * 100
+            )
             worksheet.write(row, col + 34, round(float(pricing["fuel_levy_base"]), 2))
             worksheet.write(
                 row,
@@ -289,7 +291,7 @@ def do_process(fpath, fname):
             worksheet.write(
                 row,
                 col + 38,
-                round(float(pricing["pricingInfo.mu_percentage_fuel_levy"]) * 100, 2),
+                round(float(pricing["mu_percentage_fuel_levy"]) * 100, 2),
             )
             worksheet.write(
                 row, col + 39, round(float(pricing["fuel_levy_base_cl"]), 2)
