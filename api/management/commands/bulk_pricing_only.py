@@ -269,6 +269,7 @@ def do_process(fpath, fname):
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("----- Bulk Pricing-Only ... -----")
+        print("#900 Started %s" % datetime.datetime.now())
 
         for fname in os.listdir(SRC_DIR):
             fpath = os.path.join(SRC_DIR, fname)
@@ -298,4 +299,4 @@ class Command(BaseCommand):
                         f"Stopped... {str(e)}",
                     )
 
-        print("\n----- Finished! -----")
+        print("#999 Finished %s\n\n\n" % datetime.datetime.now())
