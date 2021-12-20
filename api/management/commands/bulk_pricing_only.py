@@ -259,7 +259,7 @@ def do_process(fpath, fname):
             worksheet.write(row, col + 24, booking["pu_Address_Type"])
             worksheet.write(row, col + 25, booking["de_To_AddressType"])
             worksheet.write(row, col + 26, "")
-            worksheet.write(row, col + 27, index)
+            worksheet.write(row, col + 27, index + 1)
             worksheet.write(
                 row,
                 col + 28,
@@ -287,19 +287,20 @@ def do_process(fpath, fname):
                 ),
             )
             worksheet.write(row, col + 36, pricing["client_mark_up_percent"] * 100)
-            worksheet.write(row, col + 37, round(float(pricing["cost_dollar"]), 2))
+            worksheet.write(row, col + 37, "")
+            worksheet.write(row, col + 38, round(float(pricing["cost_dollar"]), 2))
             worksheet.write(
                 row,
-                col + 38,
+                col + 39,
                 round(float(pricing["mu_percentage_fuel_levy"]) * 100, 2),
             )
             worksheet.write(
-                row, col + 39, round(float(pricing["fuel_levy_base_cl"]), 2)
+                row, col + 40, round(float(pricing["fuel_levy_base_cl"]), 2)
             )
-            worksheet.write(row, col + 40, pricing["surcharge_total_cl"])
+            worksheet.write(row, col + 41, pricing["surcharge_total_cl"])
             worksheet.write(
                 row,
-                col + 41,
+                col + 42,
                 round(
                     float(pricing["surcharge_total_cl"])
                     if pricing["surcharge_total_cl"]
@@ -307,8 +308,8 @@ def do_process(fpath, fname):
                     2,
                 ),
             )
-            worksheet.write(row, col + 42, pricing["client_mu_1_minimum_values"])
-            worksheet.write(row, col + 43, pricing["surcharge_total_cl"])
+            worksheet.write(row, col + 43, pricing["client_mu_1_minimum_values"])
+            worksheet.write(row, col + 44, pricing["surcharge_total_cl"])
 
             row += 1
 
