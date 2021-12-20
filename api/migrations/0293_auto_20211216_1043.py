@@ -7,23 +7,23 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0291_auto_20211115_0405'),
+        ("api", "0292_auto_20211215_0005"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='fprouting',
-            old_name='state',
-            new_name='dest_state',
+            model_name="fprouting",
+            old_name="state",
+            new_name="dest_state",
         ),
         migrations.RenameField(
-            model_name='fprouting',
-            old_name='suburb',
-            new_name='dest_suburb',
+            model_name="fprouting",
+            old_name="suburb",
+            new_name="dest_suburb",
         ),
         migrations.AddField(
-            model_name='fprouting',
-            name='data_code',
+            model_name="fprouting",
+            name="data_code",
             field=models.CharField(default=None, max_length=10, null=True),
-        )
+        ),
     ]
