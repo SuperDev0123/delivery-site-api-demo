@@ -36,7 +36,7 @@ BUILT_IN_PRICINGS = {
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
     "northline": {"service_types": ["standard"]},
-    # "tnt": {  # Coming soon
+    # "tnt": {
     #     "service_types": [
     #         "Overnight - 9:00 Express*",
     #         "Overnight - 10:00 Express",
@@ -51,14 +51,15 @@ BUILT_IN_PRICINGS = {
     #         "Failsafe Secure Service",
     #     ]
     # },
-    # "hunter": {"service_types": ["Road Express"]},  # Coming soon
-    # "allied": { # Deactivated
+    # "hunter": {"service_types": ["Road Express"]},
+    # "allied": {  # Deactivated
     #     "service_types": [
     #         "Road Express",
     #         "Standard Pallet Rate",
     #         "Oversized Pallet Rate",
     #     ]
     # },
+    # "sendle": {"service_types": ["Pro"]},
 }
 
 FP_CREDENTIALS = {

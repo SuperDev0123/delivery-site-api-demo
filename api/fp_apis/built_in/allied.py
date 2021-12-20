@@ -1,3 +1,4 @@
+import math
 import logging
 import traceback
 
@@ -60,8 +61,8 @@ def _get_etd(pu_postal_code, de_zone):
 
     if metro_abbr == "SYD":
         return allied_etds.first().syd
-    elif metro_abbr == "BEN":
-        return allied_etds.first().ben
+    elif metro_abbr == "BNE":
+        return allied_etds.first().bne
     elif metro_abbr == "MEL":
         return allied_etds.first().mel
     elif metro_abbr == "ADL":
@@ -148,16 +149,19 @@ def _select_service_type(fp_name, booking_lines):
         logger.info(message)
         raise Exception(message)
 
-    if e_type_of_packagings[0] == "carton":
-        return service_types[0]  # "Road Express"
-    else:
-        if not _has_oversize_pallet(fp_name, booking_lines):
-            return service_types[1]  # "Standard Pallet Rate"
-        else:
-            return service_types[2]  # "Oversized Pallet Rate"
+    # Only "Road Express" is available for Allied
+    return service_types[0]
+
+    # if e_type_of_packagings[0] == "carton":
+    #     return service_types[0]  # "Road Express"
+    # else:
+    #     if not _has_oversize_pallet(fp_name, booking_lines):
+    #         return service_types[1]  # "Standard Pallet Rate"
+    #     else:
+    #         return service_types[2]  # "Oversized Pallet Rate"
 
 
-def get_pricing(fp_name, booking, booking_lines):
+def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     LOG_ID = "[BIP ALLIED]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
 
@@ -165,20 +169,50 @@ def get_pricing(fp_name, booking, booking_lines):
     service_type = _select_service_type(fp_name, booking_lines)
     logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
-    # Get pu_zone and de_zone
-    pu_zone = get_zone(
-        fp=fp,
-        state=booking.pu_Address_State,
-        postal_code=booking.pu_Address_PostalCode,
-        suburb=booking.pu_Address_Suburb,
-    )
+    # Get pu_zone
+    if not pu_zones:
+        pu_zone = get_zone(
+            fp=fp,
+            state=booking.pu_Address_State,
+            postal_code=booking.pu_Address_PostalCode,
+            suburb=booking.pu_Address_Suburb,
+        )
+    else:
+        pu_zone = None
+
+        for _pu_zone in pu_zones:
+            if (
+                int(_pu_zone.fk_fp) == int(fp.pk)
+                and _pu_zone.state == booking.pu_Address_State
+                and int(_pu_zone.postal_code) == int(booking.pu_Address_PostalCode)
+                and _pu_zone.suburb == booking.pu_Address_Suburb.upper()
+            ):
+                pu_zone = _pu_zone
+                break
+
     logger.info(f"@831 {LOG_ID} PU Zone: {pu_zone}")
-    de_zone = get_zone(
-        fp=fp,
-        state=booking.de_To_Address_State,
-        postal_code=booking.de_To_Address_PostalCode,
-        suburb=booking.de_To_Address_Suburb,
-    )
+
+    # Get de_zone
+    if not de_zones:
+        de_zone = get_zone(
+            fp=fp,
+            state=booking.de_To_Address_State,
+            postal_code=booking.de_To_Address_PostalCode,
+            suburb=booking.de_To_Address_Suburb,
+        )
+    else:
+        de_zone = None
+
+        for _de_zone in de_zones:
+            if (
+                int(_de_zone.fk_fp) == int(fp.pk)
+                and _de_zone.state == booking.de_To_Address_State
+                and int(_de_zone.postal_code) == int(booking.de_To_Address_PostalCode)
+                and _de_zone.suburb == booking.de_To_Address_Suburb.upper()
+            ):
+                de_zone = _de_zone
+                break
+
     logger.info(f"@832 {LOG_ID} DE Zone: {de_zone}")
 
     if not pu_zone:
@@ -207,11 +241,32 @@ def get_pricing(fp_name, booking, booking_lines):
     message = f"@835 {LOG_ID} RuleID: {rules.first()}, CostID: {cost}"
     logger.info(message)
 
+    m3_to_kg_factor = 250
+    dead_weight, cubic_weight = 0, 0
+
+    for item in booking_lines:
+        dead_weight += (
+            item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
+        )
+        cubic_weight += (
+            get_cubic_meter(
+                item.e_dimLength,
+                item.e_dimWidth,
+                item.e_dimHeight,
+                item.e_dimUOM,
+                item.e_qty,
+            )
+            * m3_to_kg_factor
+        )
+
+    chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
+
     if service_type == "Road Express":
         net_price = cost.basic_charge
-
-        for item in booking_lines:
-            net_price += float(cost.per_UOM_charge) * item.e_weightPerEach * item.e_qty
+        net_price += float(cost.per_UOM_charge) * math.ceil(chargable_weight)
+        logger.info(
+            f"{LOG_ID} cost: #{cost}({cost.basic_charge, cost.per_UOM_charge}), chargable_weight: {chargable_weight}"
+        )
 
         if net_price < cost.min_charge:
             net_price = cost.min_charge

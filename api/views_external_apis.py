@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.http import JsonResponse
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
@@ -17,8 +18,11 @@ from rest_framework import views, serializers, status
 from rest_framework.permissions import IsAuthenticated
 
 from api.serializers_client import *
+from api.serializers import ApiBookingQuotesSerializer
 from api.models import *
 from api.operations import paperless
+from api.fp_apis.constants import AVAILABLE_FPS_4_FC, BUILT_IN_PRICINGS
+from api.fp_apis.operations.pricing import pricing as pricing_oper
 
 logger = logging.getLogger(__name__)
 
@@ -103,3 +107,75 @@ def get_logs(request):
         return Response(
             {"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+# Pricing-only
+# @api_view(["POST"])
+# def bulk_pricing(request):
+#     bookings = request.data.get("bookings")
+#     booking_lines = request.data.get("booking_lines")
+
+
+def do_bulk_pricing(bookings, booking_lines):
+    LOG_ID = "[BULK PRICING]"
+    logger.info(f"{LOG_ID} bulk_pricing")
+    result = []
+
+    pu_suburbs = []
+    de_suburbs = []
+
+    for booking in bookings:
+        pu_suburb = booking["pu_Address_Suburb"]
+
+        if pu_suburb and not pu_suburb in pu_suburbs:
+            pu_suburbs.append(pu_suburb)
+
+    for booking in bookings:
+        de_suburb = booking["de_To_Address_Suburb"]
+
+        if de_suburb and not de_suburb in de_suburbs:
+            de_suburbs.append(de_suburb)
+
+    # fps = Fp_freight_providers.objects.filter(fp_company_name__in=AVAILABLE_FPS_4_FC)
+    pu_zones = FP_zones.objects.filter(Q(suburb__in=pu_suburbs) | Q(fk_fp=12))
+    de_zones = FP_zones.objects.filter(Q(suburb__in=de_suburbs) | Q(fk_fp=12))
+
+    for index, booking in enumerate(bookings):
+        if index % 10 == 0:
+            logger.info(f"{LOG_ID} Bulk pricing: {index}/{len(bookings)}")
+
+        lines = []
+        for booking_line in booking_lines:
+            if booking["pk_booking_id"] == booking_line["fk_booking_id"]:
+                lines.append(booking_line)
+
+        _, success, message, quote_set = pricing_oper(
+            body={"booking": booking, "booking_lines": lines},
+            booking_id=None,
+            is_pricing_only=True,
+            packed_statuses=[Booking_lines.ORIGINAL],
+            pu_zones=pu_zones,
+            de_zones=de_zones,
+        )
+
+        json_results = ApiBookingQuotesSerializer(
+            quote_set,
+            many=True,
+            context={
+                "booking": booking,
+                "client_customer_mark_up": 0,
+            },
+        ).data
+
+        result.append({"booking": booking, "pricings": json_results})
+
+    # if not result:
+    #     return JsonResponse(
+    #         {"success": True, "error": "Unknown erorr"},
+    #         status=status.HTTP_400_BAD_REQUEST,
+    #     )
+
+    # return JsonResponse(
+    #     {"success": True, "error": None, "result": result}, status=status.HTTP_200_OK
+    # )
+    return result

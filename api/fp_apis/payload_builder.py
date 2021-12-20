@@ -425,7 +425,7 @@ def get_book_payload(booking, fp_name):
         else:
             payload["collectionCloseTime"] = "1500"
 
-        payload["ServiceCode"] = get_tnt_service_code(
+        payload["serviceCode"] = get_tnt_service_code(
             booking.api_booking_quote.service_name
         )
 

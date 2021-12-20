@@ -4464,6 +4464,7 @@ class FP_costs(models.Model):
     max_width = models.FloatField(default=0, null=True, blank=True)
     max_height = models.FloatField(default=0, null=True, blank=True)
     max_weight = models.FloatField(default=0, null=True, blank=True)
+    max_volume = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "fp_costs"
