@@ -303,7 +303,7 @@ def do_process(fpath, fname):
                 round(
                     float(pricing["surcharge_total_cl"])
                     if pricing["surcharge_total_cl"]
-                    else "",
+                    else 0,
                     2,
                 ),
             )
