@@ -263,7 +263,7 @@ def do_process(fpath, fname):
             worksheet.write(
                 row,
                 col + 28,
-                f"{pricing['freight_provider'] (pricing['account_code'])}",
+                f"{pricing['freight_provider']} ({pricing['account_code']})",
             )
             worksheet.write(row, col + 29, pricing["service_name"])
             worksheet.write(row, col + 30, pricing["etd"])
