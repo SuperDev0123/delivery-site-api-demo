@@ -210,17 +210,44 @@ def find_vehicle_ids(booking_lines, fp):
         return
     
     try:
-        # prepare vehicles data
-        vehicles_dict = vehicles_to_dict(vehicles)
-
-        # prepare lines data
-        lines_dict = lines_to_dict(booking_lines)
-
-        packed_results = lines_to_vehicle(lines_dict, vehicles_dict)
+                
         vehicle_ids = []
-        for bin_packed in packed_results['bins_packed']:
-            if not bin_packed['not_packed_items']:
-                vehicle_ids.append(int(bin_packed['bin_data']['id']))
+        if len(booking_lines) == 1 and booking_lines[0].e_qty == 1:
+
+            item = booking_lines[0]
+            length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+            width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+            height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+            weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
+            cube = width * height * length
+
+            for vehicle in vehicles:
+                vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+                vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+                vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+                vehicle_cube = vmax_width * vmax_height * vmax_length
+
+                if (
+                    vmax_width >= width
+                    and vmax_height >= height
+                    and vmax_length >= length
+                    and vehicle_cube >= cube
+                    and vehicle.max_mass >= weight
+                ):
+                    vehicle_ids.append(vehicle.id)
+        else:
+            # prepare vehicles data
+            vehicles_dict = vehicles_to_dict(vehicles)
+
+            # prepare lines data
+            lines_dict = lines_to_dict(booking_lines)
+
+            # pack lines into vehicle
+            packed_results = lines_to_vehicle(lines_dict, vehicles_dict)
+
+            for bin_packed in packed_results['bins_packed']:
+                if not bin_packed['not_packed_items']:
+                    vehicle_ids.append(int(bin_packed['bin_data']['id']))
 
         # Century Exceptional Rule #1
         if fp.fp_company_name.upper() == "CENTURY":
