@@ -72,10 +72,13 @@ def read_xls(file):
     while True:
         pk_booking_id = worksheet0["A%i" % row].value
 
-        if pk_booking_id == None or int(worksheet0["CX%i" % row].value) == 0:
+        if pk_booking_id == None:
             break
         else:
             pk_booking_id = str(pk_booking_id) + "_pricing_only"
+
+        if int(worksheet0["CX%i" % row].value) == 0:
+            continue
 
         if not last_pk_booking_id or pk_booking_id != last_pk_booking_id:
             last_pk_booking_id = pk_booking_id
