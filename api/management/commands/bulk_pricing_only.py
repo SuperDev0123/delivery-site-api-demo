@@ -40,7 +40,7 @@ def _update_file_info(fname, fpath, note):
 
 
 def _insert_file_info(fname, fpath, note):
-    print(f"801 - {fname}, {note}")
+    print(f"#801 - {fname}, {note}")
     modified_fpath = fpath.replace("../dme_api/", "")
 
     # file = DME_Files.objects.get(file_name=fname, file_type="pricing-result")

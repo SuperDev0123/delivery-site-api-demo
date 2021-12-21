@@ -1229,9 +1229,9 @@ def scanned(payload, client):
             )
 
             if not success:
-                logger.info(
-                    f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
-                )
+                error_msg = f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
+                logger.error(error_msg)
+                send_email_to_admins(f"Plum {LOG_ID}", f"{error_msg}")
                 message = (
                     "Please contact DME support center. <bookings@deliver-me.com.au>"
                 )

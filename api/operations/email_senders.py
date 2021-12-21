@@ -824,10 +824,6 @@ def send_email_manual_book(booking):
 
 
 def send_email_to_admins(subject, message):
-    if settings.ENV in ["local", "dev"]:
-        logger.info("Email trigger is ignored on LOCAL & DEV.")
-        return
-
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"
     ).first()
