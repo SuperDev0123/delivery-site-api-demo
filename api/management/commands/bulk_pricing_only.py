@@ -78,6 +78,7 @@ def read_xls(file):
             pk_booking_id = str(pk_booking_id) + "_pricing_only"
 
         if int(worksheet0["CX%i" % row].value) == 0:
+            print(f"@804 - {row} qty 0")
             continue
 
         if not last_pk_booking_id or pk_booking_id != last_pk_booking_id:
