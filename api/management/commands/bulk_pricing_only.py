@@ -72,7 +72,7 @@ def read_xls(file):
     while True:
         pk_booking_id = worksheet0["A%i" % row].value
 
-        if pk_booking_id == None:  # Best way to determine end of row?
+        if pk_booking_id == None or int(worksheet0["CX%i" % row]).value == 0:
             break
         else:
             pk_booking_id = str(pk_booking_id) + "_pricing_only"
