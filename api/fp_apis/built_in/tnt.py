@@ -21,9 +21,8 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp, de_zones)
 
     if not pu_zone or not de_zone:
-        raise Exception(
-            f"Not supported postal_code. [PU: {booking.pu_Address_PostalCode}({pu_zone}), DE: {booking.de_To_Address_PostalCode}({de_zone})]"
-        )
+        error_msg = f"Not supported postal_code. PU: {booking.pu_Address_PostalCode}({pu_zone}), DE: {booking.de_To_Address_PostalCode}({de_zone})"
+        raise Exception(error_msg)
 
     for service_type in service_types:
         logger.info(f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}")

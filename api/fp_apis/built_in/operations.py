@@ -27,8 +27,8 @@ def get_zone_code(postal_code, fp, zones):
                 or (
                     zone.start_postal_code
                     and zone.end_postal_code
-                    and int(zone.start_postal_code) < _postal_code
-                    and int(zone.end_postal_code) > _postal_code
+                    and int(zone.start_postal_code) <= _postal_code
+                    and int(zone.end_postal_code) >= _postal_code
                 )
             ):
                 return zone.zone
