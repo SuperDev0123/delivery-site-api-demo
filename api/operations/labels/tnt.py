@@ -218,6 +218,7 @@ def build_label(
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
     routing = None
+    orig_depot = ''
     if crecords.exists():
         drecord = (
             FPRouting.objects.filter(
@@ -232,6 +233,7 @@ def build_label(
         )
 
         if drecord:
+            orig_depot = drecord.orig_depot
             for crecord in crecords:
                 if crecord.orig_depot_except == drecord.orig_depot:
                     routing = crecord
@@ -474,7 +476,7 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (9, "Ex " + routing.gateway),
+                        "<font size=%s><b>%s</b></font>" % (9, "Ex " + orig_depot),
                         style_right,
                     ),
                 ],
