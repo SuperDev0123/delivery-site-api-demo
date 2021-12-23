@@ -130,6 +130,22 @@ def lines_to_dict(bok_2s):
             )
 
     return lines_data
+    
+
+def vehicles_to_dict(vehicles):
+    vehicles_dict = []
+    for vehicle in vehicles:
+        vehicles_dict.append(
+            {
+                "w": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width,
+                "h": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height,
+                "d": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length,
+                "max_wg": vehicle.max_mass,
+                "id": vehicle.id,
+            }
+        )
+
+    return vehicles_dict
 
 
 def lines_to_pallet(lines_data, pallets_data):
@@ -158,14 +174,14 @@ def lines_to_pallet(lines_data, pallets_data):
         },
     }
 
-    url = os.environ["3D_PACKING_API_URL"]
+    url = f"{os.environ['3D_PACKING_API_URL']}/packer/packIntoMany"
     response = requests.post(url, data=json.dumps(data))
     res_data = response.json()["response"]
     if res_data["status"] == -1:
         msg = ""
         for error in res_data["errors"]:
             msg += f"{error['message']} \n"
-            logger.info(f"Packing API Error: {msg}")
+        logger.info(f"Packing API Error: {msg}")
 
     return res_data
 
