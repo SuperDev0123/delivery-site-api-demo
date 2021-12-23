@@ -134,4 +134,6 @@ urlpatterns += [
     url(r"^find-a-booking/", find_a_booking),
     # Logs for debugging
     url(r"^logs/", get_logs),
+    # process admin pricing files
+    url(r"^process_pricing/", process_pricing_file),
 ]

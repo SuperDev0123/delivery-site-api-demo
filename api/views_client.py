@@ -6,6 +6,8 @@ import logging
 import requests
 import zipfile
 import asyncio
+import shutil
+from pathlib import Path
 from datetime import datetime, date, timedelta
 from base64 import b64decode, b64encode
 
@@ -13,6 +15,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.db import transaction
+from django.core.management import call_command
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, viewsets
@@ -1281,3 +1284,36 @@ class ScansViewSet(viewsets.ViewSet):
                 {"msg": str(e)},
                 status=HTTP_400_BAD_REQUEST,
             )
+
+
+@api_view(["POST"])
+def process_pricing_file(request):
+    """
+    When it is ready(picked all items) on Warehouse
+    """
+    LOG_ID = "[PROCESS PRICING FILE]"
+    user = request.user
+    logger.info(f"@860 {LOG_ID} Requester: {user.username}")
+    logger.info(f"@861 {LOG_ID} Payload: {request.data}")
+
+    try:
+        file_name = request.data['fileName']
+
+        indata_path = f'/static/uploaded/pricing_rule/indata/{file_name}'
+        inprogress_path = f'/static/uploaded/pricing_rule/inprogress'
+        achieve_path = f'/static/uploaded/pricing_rule/achieve'
+
+        if (Path(inprogress_path).exists()):
+            shutil.move(inprogress_path, indata_path)
+        if (Path(achieve_path).exists()):
+            shutil.move(achieve_path, indata_path)
+
+        call_command('bulk_pricing_only')
+        
+        logger.info(f"#868 {LOG_ID} {result}")
+        return Response({"success": True}, status=HTTP_200_OK)
+    except Exception as e:
+        logger.info(f"@869 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
