@@ -10,6 +10,7 @@ from api.common.common_times import TIME_DIFFERENCE
 from api.fp_apis.utils import _convert_UOM, gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS, FP_CREDENTIALS, FP_UOM
 from api.helpers.line import is_pallet
+from api.fps.tnt import get_service_code as get_tnt_service_code
 
 logger = logging.getLogger(__name__)  # Payload Builder
 
@@ -82,14 +83,22 @@ def _set_error(booking, error_msg):
 
 def get_pu_from(booking, fp_name):
     if fp_name == "hunter":
-        _pu_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+        _pu_from = (
+            booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+            if not isinstance(booking.puPickUpAvailFrom_Date, str)
+            else booking.puPickUpAvailFrom_Date
+        )
         hour = booking.pu_PickUp_Avail_Time_Hours
         minute = booking.pu_PickUp_Avail_Time_Minutes
         _pu_from += f"T{str(hour).zfill(2)}" if hour else "T00"
         _pu_from += f":{str(minute).zfill(2)}" if minute else ":00"
         _pu_from += f"+{TIME_DIFFERENCE}:00"
     elif fp_name == "tnt":
-        _pu_from = booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+        _pu_from = (
+            booking.puPickUpAvailFrom_Date.strftime("%Y-%m-%d")
+            if not isinstance(booking.puPickUpAvailFrom_Date, str)
+            else booking.puPickUpAvailFrom_Date
+        )
         hour = booking.pu_PickUp_Avail_Time_Hours
         minute = booking.pu_PickUp_Avail_Time_Minutes
         _pu_from += f"T{str(hour).zfill(2)}" if hour else "T00"
@@ -416,31 +425,9 @@ def get_book_payload(booking, fp_name):
         else:
             payload["collectionCloseTime"] = "1500"
 
-        if booking.api_booking_quote.service_name == "Overnight 09:00":
-            payload["serviceCode"] = "712"
-        elif booking.api_booking_quote.service_name == "Overnight 10:00":
-            payload["serviceCode"] = "EX10"
-        elif booking.api_booking_quote.service_name in [
-            "Overnight 12:00",
-            "12:00 Express",
-        ]:
-            payload["serviceCode"] = "EX12"
-        elif booking.api_booking_quote.service_name == "Overnight Express":
-            payload["serviceCode"] = "75"
-        elif booking.api_booking_quote.service_name == "Road Express":
-            payload["serviceCode"] = "76"
-        elif (
+        payload["serviceCode"] = get_tnt_service_code(
             booking.api_booking_quote.service_name
-            == "Technology Express - Sensitive Express"
-        ):
-            payload["serviceCode"] = "717B"
-        elif booking.api_booking_quote.service_name == "Fashion Express – Carton":
-            payload["serviceCode"] = "718"
-        elif booking.api_booking_quote.service_name == "Sameday Domestic":
-            payload["serviceCode"] = "701"
-        else:
-            error_msg = f"@118 Error: TNT({booking.api_booking_quote.service_name}) - there is no service code matched."
-            logger.info(error_msg)
+        )
 
         payload["collectionInstructions"] = " "
         if payload["pickupAddress"]["instruction"]:
@@ -653,6 +640,7 @@ def get_getlabel_payload(booking, fp_name):
                 "weight": 0 or weight,
                 "description": ", ".join(descriptions)[:20] if descriptions else "_",
                 "gapRa": ", ".join(gaps)[:15],
+                # "lineCustomerReference": line.sscc or "",
             }
 
             items.append(item)
@@ -682,7 +670,11 @@ def get_getlabel_payload(booking, fp_name):
         payload["consignmentNumber"] = gen_consignment_num(
             "tnt", booking.b_bookingID_Visual
         )
-        payload["serviceType"] = "76"
+
+        # Get `serviceCode` from `serviceName`
+        payload["ServiceCode"] = get_tnt_service_code(
+            booking.api_booking_quote.service_name
+        )
         payload["labelType"] = "A"
         payload["consignmentDate"] = datetime.today().strftime("%d%m%Y")
         payload["collectionInstructions"] = ""
@@ -696,11 +688,7 @@ def get_getlabel_payload(booking, fp_name):
                 "collectionInstructions"
             ] += f" {payload['dropAddress']['instruction']}"
 
-        payload["clientSalesInvNum"] = (
-            ""
-            if booking.b_client_sales_inv_num is None
-            else booking.b_client_sales_inv_num
-        )
+        payload["CustomerConsignmentRef"] = booking.b_client_order_num or ""
     elif fp_name.lower() == "sendle":
         payload["consignmentNumber"] = booking.fk_fp_pickup_id
 

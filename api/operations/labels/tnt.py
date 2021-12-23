@@ -79,6 +79,14 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
+def gen_itm(booking, booking_lines, line_index, sscc_cnt):
+    TT = 11
+    CCCCCC = "132214"  # DME
+    item_index = str(line_index).zfill(3)
+
+    return f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
+
+
 def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
@@ -323,7 +331,8 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s>Itm: %s</font>" % (6, booking_line.sscc),
+                        "<font size=%s>Itm: %s</font>"
+                        % (6, gen_itm(booking, lines, j, sscc_cnt)),
                         style_right,
                     ),
                 ],
@@ -853,7 +862,10 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>Itm: %s</b></font>"
-                        % (label_settings["font_size_normal"], booking_line.sscc),
+                        % (
+                            label_settings["font_size_normal"],
+                            gen_itm(booking, lines, j, sscc_cnt),
+                        ),
                         style_left,
                     )
                 ],

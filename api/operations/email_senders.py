@@ -603,11 +603,24 @@ def send_status_update_email(
         "DME_NUMBER": booking.b_bookingID_Visual,
         "ETA": eta,
         "BODY_REPEAT": "",
+        "NOTICE_DISPLAY": "none"
+        if step == 5 and last_milestone == "Delivered"
+        else "table-row",
     }
 
     booking_lines = Booking_lines.objects.filter(
         fk_booking_id=booking.pk_booking_id, e_item_type__isnull=False
     ).order_by("z_createdTimeStamp")
+
+    # BSD
+    if (
+        booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        and booking.api_booking_quote
+    ):
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            packed_status=booking.api_booking_quote.packed_status,
+        ).order_by("z_createdTimeStamp")
 
     lines_data = []
     for booking_line in booking_lines:
@@ -766,7 +779,6 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     message = f"Hi Regina, Order({order_num}) has lines with missing dims: {lines_missing_dims}"
     to_emails = ["rejina@jasonl.com.au"]
     cc_emails = [
-        "stephenm@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
     send_email(to_emails, cc_emails, subject, message)
@@ -784,7 +796,6 @@ def send_email_missing_status(booking, fp_name, b_status_API):
     )
     to_emails = ["bookings@deliver-me.com.au"]
     cc_emails = [
-        "stephenm@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
 
@@ -794,11 +805,25 @@ def send_email_missing_status(booking, fp_name, b_status_API):
     send_email(to_emails, cc_emails, subject, message)
 
 
-def send_email_to_admins(subject, message):
-    if settings.ENV in ["local", "dev"]:
-        logger.info("Email trigger is ignored on LOCAL & DEV.")
-        return
+def send_email_manual_book(booking):
+    subject = f"Manual BOOK Operation Required!"
+    message = (
+        f"Hi DME Customer Support,\n\nPlease manually book the following:\nBooking ID: {booking.b_bookingID_Visual}"
+        + f"\nFreight Provider: {booking.vx_freight_provider.upper()}\nConsignmentNo: {booking.v_FPBookingNumber}\n\n"
+        + f"Please use mentioned consignment number if possible, else update it on DME portal after booked.\nPlease reply to this email with name of resolver.\nBest\nDME_API"
+    )
 
+    if settings.ENV in ["local", "dev"]:
+        to_emails = ["dev.deliverme@gmail.com"]
+        cc_emails = ["goldj@deliver-me.com.au"]
+    else:
+        to_emails = ["bookings@deliver-me.com.au", "care@deliver-me.com.au"]
+        cc_emails = ["dev.deliverme@gmail.com"]
+
+    send_email(to_emails, cc_emails, subject, message)
+
+
+def send_email_to_admins(subject, message):
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"
     ).first()
@@ -808,11 +833,10 @@ def send_email_to_admins(subject, message):
             to_emails = [
                 "care@deliver-me.com.au",
                 "bookings@deliver-me.com.au",
-                "stephenm@deliver-me.com.au",
             ]
         else:
             subject = f"FROM TEST SERVER - {subject}"
             to_emails = ["goldj@deliver-me.com.au"]
 
-        cc_emails = ["dev.deliverme@gmail.com"]
+        cc_emails = ["dev.deliverme@gmail.com", "goldj@deliver-me.com.au"]
         send_email(to_emails, cc_emails, subject, message)

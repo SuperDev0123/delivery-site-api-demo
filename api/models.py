@@ -2257,7 +2257,11 @@ class Booking_lines(models.Model):
 
     def booking(self):
         try:
-            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            return (
+                Bookings.objects.filter(pk_booking_id=self.fk_booking_id)
+                .order_by("id")
+                .first()
+            )
         except Exception as e:
             trace_error.print()
             logger.error(f"#516 Error: {str(e)}")
@@ -2430,7 +2434,11 @@ class Booking_lines_data(models.Model):
 
     def booking(self):
         try:
-            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            return (
+                Bookings.objects.filter(pk_booking_id=self.fk_booking_id)
+                .order_by("id")
+                .first()
+            )
         except Exception as e:
             trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
@@ -2438,8 +2446,12 @@ class Booking_lines_data(models.Model):
 
     def booking_line(self):
         try:
-            return Booking_lines.objects.get(
-                pk_booking_lines_id=self.fk_booking_lines_id
+            return (
+                Booking_lines.objects.filter(
+                    pk_booking_lines_id=self.fk_booking_lines_id
+                )
+                .order_by("id")
+                .first()
             )
         except Exception as e:
             trace_error.print()
@@ -4149,7 +4161,7 @@ class FP_zones(models.Model):
         db_table = "fp_zones"
 
     def __str__(self):
-        return f"Zone #{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
+        return f"#{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
 
 
 class FP_carriers(models.Model):
@@ -4452,6 +4464,7 @@ class FP_costs(models.Model):
     max_width = models.FloatField(default=0, null=True, blank=True)
     max_height = models.FloatField(default=0, null=True, blank=True)
     max_weight = models.FloatField(default=0, null=True, blank=True)
+    max_volume = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "fp_costs"

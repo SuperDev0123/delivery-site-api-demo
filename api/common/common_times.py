@@ -125,7 +125,7 @@ def next_business_day(
         if fp.service_cutoff_time < time:
             _next_day += ONE_DAY
 
-    for i in range(0, business_days):
+    for i in range(0, int(business_days)):
         _next_day += ONE_DAY
 
         while _next_day.weekday() in [5, 6] or _next_day in AU_HOLIDAYS:

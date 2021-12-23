@@ -53,7 +53,7 @@ def _apply_mu(quote, fp, client):
 
     surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
 
-    if fp.fp_company_name in ["Hunter", "Allied"]:
+    if fp.fp_company_name in ["Hunter", "Allied", "Northline", "Camerons"]:
         fuel_levy_base = (quote.fee + surcharge) * fp_mu
     else:
         fuel_levy_base = quote.fee * fp_mu

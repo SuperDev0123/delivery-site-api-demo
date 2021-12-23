@@ -1,3 +1,4 @@
+import math
 import logging
 import traceback
 
@@ -7,18 +8,19 @@ from api.fp_apis.built_in.operations import *
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.common.constants import PALLETS
 from api.helpers.cubic import get_cubic_meter
+from api.fp_apis.utils import get_m3_to_kg_factor
 
 logger = logging.getLogger(__name__)
 
 
-def get_pricing(fp_name, booking, booking_lines):
+def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     LOG_ID = "[BIP HUNTER]"  # BUILT-IN PRICING
     pricies = []
 
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-    pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp)
-    de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp)
+    pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp, pu_zones)
+    de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp, de_zones)
 
     if not pu_zone or not de_zone:
         raise Exception(
@@ -58,11 +60,6 @@ def get_pricing(fp_name, booking, booking_lines):
             if not rules:
                 continue
 
-            """
-                rule_type_02
-
-                Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
-            """
             cost = rules.first().cost
             logger.info(f"{LOG_ID} Final cost - {cost}")
             net_price = cost.basic_charge or 0
@@ -86,11 +83,14 @@ def get_pricing(fp_name, booking, booking_lines):
                     * m3_to_kg_factor
                 )
 
-            chargable_weight = (
+            chargable_weight = math.ceil(
                 dead_weight if dead_weight > cubic_weight else cubic_weight
             )
             net_price += float(cost.per_UOM_charge or 0) * (
                 chargable_weight - (cost.start_qty or 0)
+            )
+            logger.info(
+                f"{LOG_ID} cost: ({cost.basic_charge, cost.per_UOM_charge}), chargable_weight: {chargable_weight}"
             )
 
             if cost.min_charge and net_price < cost.min_charge:
@@ -106,17 +106,56 @@ def get_pricing(fp_name, booking, booking_lines):
                 if not rules:
                     continue
 
-            """
-                rule_type_02
-
-                Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
-            """
             net_price = 0
             logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
             rules = weight_filter(pallet_lines, rules, fp)
             cost = find_cost(pallet_lines, rules, fp)
             logger.info(f"{LOG_ID} Final cost - {cost}")
             net_price = cost.basic_charge
+            dead_weight, cubic_weight = 0, 0
+
+            for item in pallet_lines:
+                dead_weight += (
+                    item.e_weightPerEach
+                    * _get_weight_amount(item.e_weightUOM)
+                    * item.e_qty
+                )
+                dim_amount = _get_dim_amount(item.e_dimUOM)
+                weight_amount = _get_weight_amount(item.e_weightUOM)
+                m3_to_kg_factor = get_m3_to_kg_factor(
+                    fp_name="hunter",
+                    data={
+                        "is_pallet": True,
+                        "item_length": dim_amount * item.e_dimLength,
+                        "item_width": dim_amount * item.e_dimWidth,
+                        "item_height": dim_amount * item.e_dimHeight,
+                        "item_dead_weight": weight_amount * item.e_weightPerEach,
+                    },
+                )
+                cubic_weight += (
+                    get_cubic_meter(
+                        item.e_dimLength,
+                        item.e_dimWidth,
+                        item.e_dimHeight,
+                        item.e_dimUOM,
+                        item.e_qty,
+                    )
+                    * m3_to_kg_factor
+                )
+
+            chargable_weight = math.ceil(
+                dead_weight if dead_weight > cubic_weight else cubic_weight
+            )
+            net_price += float(cost.per_UOM_charge or 0) * (
+                chargable_weight - (cost.start_qty or 0)
+            )
+            logger.info(
+                f"{LOG_ID} cost: #{cost}({cost.basic_charge, cost.per_UOM_charge}), chargable_weight: {chargable_weight}"
+            )
+
+            if cost.min_charge and net_price < cost.min_charge:
+                net_price = cost.min_charge
+
             pallet_price = net_price
 
         logger.info(f"{LOG_ID} KG price: {kg_price}, Pallet price: {pallet_price}")

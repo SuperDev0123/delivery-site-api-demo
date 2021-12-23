@@ -859,6 +859,7 @@ class BookingsViewSet(viewsets.ViewSet):
             last_date = last_date.replace(hour=23, minute=59, second=59)
 
         warehouse_id = self.request.query_params.get("warehouseId", None)
+        fp_id = self.request.query_params.get("fpId", None)
         sort_field = self.request.query_params.get("sortField", None)
         column_filters = json.loads(
             self.request.query_params.get("columnFilters", None)
@@ -951,19 +952,56 @@ class BookingsViewSet(viewsets.ViewSet):
                     .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url=""))
                     .exclude(b_status__in=["Closed", "Cancelled"])
                 )
-        elif active_tab_index == 4:  # In Process
+        elif active_tab_index == 4:  # In Progress
             queryset = queryset.filter(
-                b_status_category__in=["Booked", "Transit", "On Board for Delivery"]
+                Q(b_status_category__in=["Booked", "Transit", "On Board for Delivery"])
+                | Q(
+                    b_status__in=[
+                        "Status In Transit",
+                        "Futile",
+                        "Returning",
+                        "Cancel Requested",
+                        "Partially Delivered",
+                        "Partially in transit",
+                        "Delivery Delayed",
+                        "Scanned into depot",
+                        "Carded",
+                        "Insufficient Address",
+                        "Picked up",
+                        "On Forwarded",
+                        "Futile Delivery",
+                    ]
+                )
             )
-
         elif active_tab_index == 5:  # Closed
             queryset = queryset.filter(b_status__in=["Closed", "Cancelled"])
+        elif active_tab_index == 51:  # Closed with issue
+            queryset = queryset.filter(b_status__in=["Lost in Transit", "Damaged"])
         elif active_tab_index == 6:  # 'Delivery Management' - exclude BioPak
             queryset = queryset.exclude(b_client_name="BioPak")
-        elif active_tab_index == 8:  # 'PreBooking'
-            queryset = queryset.filter(b_status_category="Pre Booking").select_related(
-                "api_booking_quote"
-            )
+        elif active_tab_index == 8:  # 'Pre-Processing'
+            queryset = queryset.filter(
+                b_status__in=[
+                    "To Quote",
+                    "Quoted",
+                    "Pushed",
+                    "Entered",
+                ]
+            ).select_related("api_booking_quote")
+        elif active_tab_index == 81:  # 'Processing'
+            queryset = queryset.filter(
+                Q(
+                    b_status__in=[
+                        "Hold",
+                        "On Hold",
+                        "Picking",
+                        "Picked",
+                        "Ready for Despatch",
+                        "Ready for Booking",
+                    ]
+                )
+                | Q(b_status__icontains=["pickup rebooked"])
+            ).select_related("api_booking_quote")
         elif active_tab_index == 9:  # 'Unprinted Labels'
             queryset = queryset.filter(
                 z_label_url__isnull=False,
@@ -976,7 +1014,7 @@ class BookingsViewSet(viewsets.ViewSet):
             run_out_bookings = get_run_out_bookings(queryset)
             queryset = queryset.exclude(pk__in=run_out_bookings)
         elif active_tab_index == 12:  # Delivered
-            queryset = queryset.filter(b_status="Delivered")
+            queryset = queryset.filter(b_status__in=["Delivered", "Returned"])
 
         # If booking_ids is not None
         if booking_ids:
@@ -1074,6 +1112,13 @@ class BookingsViewSet(viewsets.ViewSet):
                 # Warehouse filter
                 if int(warehouse_id) is not 0:
                     queryset = queryset.filter(fk_client_warehouse=int(warehouse_id))
+
+                # Warehouse filter
+                if int(fp_id) is not 0:
+                    fp = Fp_freight_providers.objects.get(pk=fp_id)
+                    queryset = queryset.filter(
+                        vx_freight_provider__iexact=fp.fp_company_name
+                    )
 
                 # Mulitple search | Simple search | Project Name Search
                 if project_name and project_name.exists():
@@ -2224,6 +2269,7 @@ class BookingViewSet(viewsets.ViewSet):
         bookingData = request.data
         bookingData["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
         bookingData["pk_booking_id"] = str(uuid.uuid1())
+        bookingData["b_client_booking_ref_num"] = bookingData["pk_booking_id"]
         serializer = BookingSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -2345,6 +2391,7 @@ class BookingViewSet(viewsets.ViewSet):
         newBooking["vx_serviceName"] = booking.vx_serviceName
         newBooking["z_CreatedByAccount"] = request.user.username
         newBooking["booking_type"] = booking.booking_type
+        newBooking["b_client_booking_ref_num"] = newBooking["pk_booking_id"]
 
         if is_4_child:
             newBooking[
@@ -2963,6 +3010,32 @@ class BookingViewSet(viewsets.ViewSet):
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
             return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def get_status_page_url(self, request):
+        LOG_ID = "[get_status_page_url]"
+        v_FPBookingNumber = request.GET.get("v_FPBookingNumber", None)
+        logger.info(f"{LOG_ID} v_FPBookingNumber: {v_FPBookingNumber}")
+
+        if v_FPBookingNumber:
+            bookings = Bookings.objects.filter(
+                v_FPBookingNumber__iexact=v_FPBookingNumber
+            )
+
+            if bookings:
+                booking = bookings.first()
+
+                if not booking.b_client_booking_ref_num:
+                    booking.b_client_booking_ref_num = (
+                        f"{booking.b_bookingID_Visual}_{booking.pk_booking_id}"
+                    )
+                    booking.save()
+
+                status_page_url = f"{settings.WEB_SITE_URL}/status/{booking.b_client_booking_ref_num}/"
+                return JsonResponse({"success": True, "statusPageUrl": status_page_url})
+
+        logger.error(f"{LOG_ID} Failed to find status page url")
+        return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BookingLinesViewSet(viewsets.ViewSet):
     serializer_class = BookingLineSerializer
@@ -3320,7 +3393,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
+        LOG_ID = "STATUS_HISTORY_CREATE"
         try:
+            logger.info(f"{LOG_ID} Payload: {request.data}")
             booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
             status_last = request.data.get("status_last")
             event_time_stamp = request.data.get("event_time_stamp")
@@ -3338,6 +3413,14 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 status_last = get_dme_status_from_fp_status(
                     fp.fp_company_name, b_status_API, booking
                 )
+
+                if not status_last:
+                    logger.info(
+                        f"{LOG_ID} Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
+                    )
+                    return Response(
+                        {"success": False}, status=status.HTTP_400_BAD_REQUEST
+                    )
 
             status_history.create(
                 booking,
