@@ -213,12 +213,12 @@ def build_label(
         dest_suburb=booking.de_To_Address_Suburb,
         dest_postcode=booking.de_To_Address_PostalCode,
         dest_state=booking.de_To_Address_State,
-        data_code='C'
+        data_code="C"
         # routing_group=routing_group,
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
     routing = None
-    orig_depot = ''
+    orig_depot = ""
     if crecords.exists():
         drecord = (
             FPRouting.objects.filter(
@@ -226,7 +226,7 @@ def build_label(
                 orig_postcode=booking.pu_Address_PostalCode,
                 # routing_group=routing_group,
                 orig_depot__isnull=False,
-                data_code='D'
+                data_code="D",
             )
             .only("orig_depot")
             .first()
@@ -240,18 +240,22 @@ def build_label(
                     break
 
         if not routing:
-            routing = FPRouting.objects.filter(
-                freight_provider=12,
-                dest_suburb=booking.de_To_Address_Suburb,
-                dest_postcode=booking.de_To_Address_PostalCode,
-                dest_state=booking.de_To_Address_State,
-                orig_depot_except__isnull=True,
-                data_code='C'
-                # routing_group=routing_group,
-            ).only("orig_depot_except", "gateway", "onfwd", "sort_bin").first()
+            routing = (
+                FPRouting.objects.filter(
+                    freight_provider=12,
+                    dest_suburb=booking.de_To_Address_Suburb,
+                    dest_postcode=booking.de_To_Address_PostalCode,
+                    dest_state=booking.de_To_Address_State,
+                    orig_depot_except__isnull=True,
+                    data_code="C"
+                    # routing_group=routing_group,
+                )
+                .only("orig_depot_except", "gateway", "onfwd", "sort_bin")
+                .first()
+            )
 
         logger.info(
-            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
+            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}, {orig_depot}"
         )
     else:
         logger.info(
