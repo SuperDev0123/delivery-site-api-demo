@@ -72,10 +72,15 @@ def read_xls(file):
     while True:
         pk_booking_id = worksheet0["A%i" % row].value
 
-        if pk_booking_id == None:  # Best way to determine end of row?
+        if pk_booking_id == None:
             break
         else:
             pk_booking_id = str(pk_booking_id) + "_pricing_only"
+
+        if int(worksheet0["CX%i" % row].value) == 0:
+            print(f"@804 - {row} qty 0")
+            row += 1
+            continue
 
         if not last_pk_booking_id or pk_booking_id != last_pk_booking_id:
             last_pk_booking_id = pk_booking_id
@@ -204,15 +209,23 @@ def do_process(fpath, fname):
     worksheet.write("X1", "client_warehouse_code", bold)
     worksheet.write("Y1", "pu_Address_Type", bold)
     worksheet.write("Z1", "de_to_address_type", bold)
-    worksheet.write("AA1", "Freight Provider", bold)
-    worksheet.write("AB1", "Account Code", bold)
-    worksheet.write("AC1", "Service Name", bold)
-    worksheet.write("AD1", "FP Price", bold)
-    worksheet.write("AE1", "DME Price", bold)
-    worksheet.write("AF1", "Tax Type", bold)
-    worksheet.write("AG1", "Tax Amount", bold)
-    worksheet.write("AH1", "Etd", bold)
-    worksheet.write("AI1", "mu_percentage_fuel_levy", bold)
+    worksheet.write("AA1", "Intentional Blank", bold)
+    worksheet.write("AB1", "No", bold)
+    worksheet.write("AC1", "Transporter", bold)
+    worksheet.write("AD1", "Service (Vehicle)", bold)
+    worksheet.write("AE1", "Transport Days (working)", bold)
+    worksheet.write("AF1", "FP Cost (Ex GST)", bold)
+    worksheet.write("AG1", "FP Extra`s (Ex GST)", bold)
+    worksheet.write("AH1", "FP Fuel Levy %", bold)
+    worksheet.write("AI1", "FP Fuel Levy Amount", bold)
+    worksheet.write("AJ1", "FP Total Cost (Ex GST)", bold)
+    worksheet.write("AK1", "DME Client Markup %", bold)
+    worksheet.write("AL1", "Intentional Blank", bold)
+    worksheet.write("AM1", "Cost $", bold)
+    worksheet.write("AN1", "FP Fuel Levy %", bold)
+    worksheet.write("AO1", "FP Fuel Levy Amount", bold)
+    worksheet.write("AP1", "Extra $", bold)
+    worksheet.write("AQ1", "Total $ (Ex. GST)", bold)
 
     bookings, booking_lines = read_xls(fpath)
     bookings = replace_null(bookings)
@@ -223,7 +236,7 @@ def do_process(fpath, fname):
         booking = result["booking"]
         pricings = result["pricings"]
 
-        for pricing in pricings:
+        for index, pricing in enumerate(pricings):
             worksheet.write(row, col + 0, booking["pk_booking_id"])
             worksheet.write(row, col + 1, booking["puPickUpAvailFrom_Date"])
             worksheet.write(row, col + 2, booking["b_clientReference_RA_Numbers"])
@@ -250,15 +263,58 @@ def do_process(fpath, fname):
             worksheet.write(row, col + 23, booking["client_warehouse_code"])
             worksheet.write(row, col + 24, booking["pu_Address_Type"])
             worksheet.write(row, col + 25, booking["de_To_AddressType"])
-            worksheet.write(row, col + 26, pricing["freight_provider"])
-            worksheet.write(row, col + 27, pricing["account_code"])
-            worksheet.write(row, col + 28, pricing["service_name"])
-            worksheet.write(row, col + 29, pricing["fee"])
-            worksheet.write(row, col + 30, pricing["client_mu_1_minimum_values"])
-            worksheet.write(row, col + 31, pricing["tax_id_1"])
-            worksheet.write(row, col + 32, pricing["tax_value_1"])
-            worksheet.write(row, col + 33, pricing["etd"])
-            worksheet.write(row, col + 34, pricing["mu_percentage_fuel_levy"])
+            worksheet.write(row, col + 26, "")
+            worksheet.write(row, col + 27, index + 1)
+            worksheet.write(
+                row,
+                col + 28,
+                f"{pricing['freight_provider']} ({pricing['account_code']})",
+            )
+            worksheet.write(row, col + 29, pricing["service_name"])
+            worksheet.write(row, col + 30, pricing["etd"])
+            worksheet.write(row, col + 31, round(float(pricing["fee"]), 2))
+            surcharge_total = (
+                pricing["surcharge_total"] if pricing["surcharge_total"] else 0
+            )
+            worksheet.write(row, col + 32, round(float(surcharge_total), 2))
+            worksheet.write(
+                row, col + 33, float(pricing["mu_percentage_fuel_levy"]) * 100
+            )
+            worksheet.write(row, col + 34, round(float(pricing["fuel_levy_base"]), 2))
+            worksheet.write(
+                row,
+                col + 35,
+                round(
+                    float(pricing["fee"])
+                    + float(pricing["fuel_levy_base"])
+                    + float(surcharge_total),
+                    2,
+                ),
+            )
+            worksheet.write(row, col + 36, pricing["client_mark_up_percent"] * 100)
+            worksheet.write(row, col + 37, "")
+            worksheet.write(row, col + 38, round(float(pricing["cost_dollar"]), 2))
+            worksheet.write(
+                row,
+                col + 39,
+                round(float(pricing["mu_percentage_fuel_levy"]) * 100, 2),
+            )
+            worksheet.write(
+                row, col + 40, round(float(pricing["fuel_levy_base_cl"]), 2)
+            )
+            worksheet.write(row, col + 41, pricing["surcharge_total_cl"])
+            worksheet.write(
+                row,
+                col + 42,
+                round(
+                    float(pricing["surcharge_total_cl"])
+                    if pricing["surcharge_total_cl"]
+                    else 0,
+                    2,
+                ),
+            )
+            worksheet.write(row, col + 43, pricing["client_mu_1_minimum_values"])
+            worksheet.write(row, col + 44, pricing["surcharge_total_cl"])
 
             row += 1
 
