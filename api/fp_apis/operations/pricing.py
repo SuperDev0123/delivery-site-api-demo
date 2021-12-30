@@ -196,9 +196,9 @@ def _loop_process(
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
     )
-    fp_names = [quote.freight_provider.lower() for quote in quotes]
-    print("@0 - ", fp_names)
+    fp_names = [quote.freight_provider for quote in quotes]
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
+    print("@0 - ", fp_names, fps)
 
     if quotes.exists():
         if client:
@@ -209,7 +209,7 @@ def _loop_process(
         for quote in quotes:
             print("@1 - ", quote.fp_company_name)
             for fp in fps:
-                if quote.freight_provider == fp.fp_company_name.lower():
+                if quote.freight_provider == fp.fp_company_name:
                     quote_fp = fp
 
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
