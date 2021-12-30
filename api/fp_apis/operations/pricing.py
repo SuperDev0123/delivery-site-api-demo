@@ -197,6 +197,7 @@ def _loop_process(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
     )
     fp_names = [quote.freight_provider.lower() for quote in quotes]
+    print("@0 - ", fp_names)
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
     if quotes.exists():
@@ -206,6 +207,7 @@ def _loop_process(
 
         # Calculate Surcharges
         for quote in quotes:
+            print("@1 - ", quote.fp_company_name)
             for fp in fps:
                 if quote.freight_provider == fp.fp_company_name.lower():
                     quote_fp = fp
