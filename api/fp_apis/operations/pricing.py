@@ -207,7 +207,7 @@ def _loop_process(
 
         # Calculate Surcharges
         for quote in quotes:
-            print("@1 - ", quote.fp_company_name)
+            print("@1 - ", quote.freight_provider)
             for fp in fps:
                 if quote.freight_provider == fp.fp_company_name:
                     quote_fp = fp
