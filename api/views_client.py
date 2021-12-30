@@ -191,7 +191,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
             for quote in quotes:
                 for fp in fps:
-                    if quote.freight_provider == fp.company_name:
+                    if quote.freight_provider == fp.fp_company_name:
                         quote_fp = fp
 
                 gen_surcharges(bok_1, bok_2s, quote, client, quote_fp, "bok_1")

@@ -207,7 +207,7 @@ def _loop_process(
         # Calculate Surcharges
         for quote in quotes:
             for fp in fps:
-                if quote.freight_provider == fp.company_name:
+                if quote.freight_provider == fp.fp_company_name:
                     quote_fp = fp
 
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
