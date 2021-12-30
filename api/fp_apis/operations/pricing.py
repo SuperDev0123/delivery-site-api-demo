@@ -200,16 +200,16 @@ def _loop_process(
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
     if quotes.exists():
-        for fp in fps:
-            if quote.freight_provider == fp.company_name:
-                quote_fp = fp
-
         if client:
             # Interpolate gaps (for Plum client now)
             quotes = interpolate_gaps(quotes, client)
 
         # Calculate Surcharges
         for quote in quotes:
+            for fp in fps:
+                if quote.freight_provider == fp.company_name:
+                    quote_fp = fp
+
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
