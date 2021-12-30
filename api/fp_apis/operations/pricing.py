@@ -18,6 +18,8 @@ from api.models import (
     Client_FP,
     FP_Service_ETDs,
     Surcharge,
+    DME_clients,
+    Fp_freight_providers,
 )
 
 from api.fp_apis.operations.common import _set_error
@@ -104,7 +106,7 @@ def pricing(
             booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
-        booking = Bookings.objects.filter(id=booking_id).first()
+        booking = Bookings.objects.filter(id=booking_id).order_by("id").first()
 
         if not booking:
             return None, False, "Booking does not exist", None
@@ -130,6 +132,11 @@ def pricing(
             packed_status__in=packed_statuses,
         ).update(is_used=True)
 
+    try:
+        client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
+    except:
+        client = None
+
     if not booking_lines:
         for packed_status in packed_statuses:
             booking_lines = Booking_lines.objects.filter(
@@ -144,6 +151,7 @@ def pricing(
                     booking_lines,
                     is_pricing_only,
                     packed_status,
+                    client,
                     pu_zones,
                     de_zones,
                 )
@@ -154,6 +162,7 @@ def pricing(
                 booking_lines,
                 is_pricing_only,
                 packed_status,
+                client,
                 pu_zones,
                 de_zones,
             )
@@ -166,7 +175,7 @@ def pricing(
 
 
 def _loop_process(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking, booking_lines, is_pricing_only, packed_status, client, pu_zones, de_zones
 ):
     try:
         loop = asyncio.new_event_loop()
@@ -187,17 +196,24 @@ def _loop_process(
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
     )
+    fp_names = [quote.freight_provider for quote in quotes]
+    fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
     if quotes.exists():
-        # Interpolate gaps (for Plum client now)
-        quotes = interpolate_gaps(quotes)
+        for fp in fps:
+            if quote.freight_provider == fp.company_name:
+                quote_fp = fp
+
+        if client:
+            # Interpolate gaps (for Plum client now)
+            quotes = interpolate_gaps(quotes, client)
 
         # Calculate Surcharges
         for quote in quotes:
-            gen_surcharges(booking, booking_lines, quote, "booking")
+            gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes)
+        quotes = apply_markups(quotes, client, fp)
 
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)

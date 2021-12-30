@@ -340,11 +340,10 @@ def get_surcharges_total(quote):
     return _total
 
 
-def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok_1"):
     """
     Surcharge table management
 
-    - Delete existing of Quote
     - Calc new surcharge opts
     - Create new Surcharge objects
     """
@@ -356,17 +355,10 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     # if quote_obj.freight_provider.lower() == "allied":
     #     return result
 
-    # Delete existing Surcharges
-    Surcharge.objects.filter(quote=quote_obj).delete()
-
     # Calc new surcharge opts
     surcharges = clac_surcharges(booking_obj, line_objs, quote_obj, data_type)
 
     # Create new Surcharge objects
-    fp = Fp_freight_providers.objects.get(
-        fp_company_name__iexact=quote_obj.freight_provider
-    )
-
     for surcharge in surcharges:
         surcharge_obj = Surcharge()
         surcharge_obj.quote = quote_obj
@@ -393,6 +385,8 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     quote_obj.client_mu_1_minimum_values = quote_obj.fee
     quote_obj.x_price_surcharge = total
     quote_obj.save()
-    apply_markups([quote_obj])
+
+    if data_type == "bok_1":
+        apply_markups([quote_obj], client, fp)
 
     return result
