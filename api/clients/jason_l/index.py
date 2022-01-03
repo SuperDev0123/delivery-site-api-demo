@@ -241,14 +241,11 @@ def push_boks(payload, client, username, method):
 
     # Check required fields
     if is_biz:
-        if not bok_1.get("shipping_type"):
-            message = "'shipping_type' is required."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
-        elif len(bok_1.get("shipping_type")) != 4:
-            message = "'shipping_type' is not valid."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
+        if not bok_1.get("shipping_type") or len(bok_1.get("shipping_type")) != 4:
+            # message = "'shipping_type' is required."
+            # logger.info(f"{LOG_ID} {message}")
+            # raise ValidationError(message)
+            bok_1["shipping_type"] = "DMEA"
 
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
