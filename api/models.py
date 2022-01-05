@@ -5148,16 +5148,14 @@ class S_Bookings(models.Model):
         max_length=64, blank=True, null=True, default=None
     )
     de_Deliver_By_Date = models.DateField(blank=True, null=True, default=None)
-    b_client_name_sub = models.CharField(
-        max_length=64, blank=True, null=True, default=None
-    )
+    b_client_name = models.CharField(max_length=64, blank=True, null=True, default=None)
     vx_freight_provider = models.CharField(
         max_length=100,
         blank=True,
         null=True,
         default=None,
     )
-    v_service_Type_2 = models.CharField(
+    vx_serviceName = models.CharField(
         max_length=30,
         blank=True,
         null=True,
