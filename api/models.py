@@ -5132,3 +5132,146 @@ class ZohoTicketSummary(models.Model):
 
     class Meta:
         db_table = "zoho_ticket_summary"
+
+
+class S_Bookings(models.Model):
+    id = models.AutoField(primary_key=True)
+    b_bookingID_Visual = models.IntegerField(blank=True, null=True, default=0)
+    b_dateBookedDate = models.DateTimeField(blank=True, null=True, default=None)
+    v_FPBookingNumber = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    b_client_order_num = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    de_Deliver_By_Date = models.DateField(blank=True, null=True, default=None)
+    b_client_name_sub = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    vx_freight_provider = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    v_service_Type_2 = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    b_status = models.CharField(
+        verbose_name=_("Status"), max_length=40, blank=True, null=True, default=None
+    )
+    de_To_Address_Street_1 = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_Street_2 = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_State = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_Suburb = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_PostalCode = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_Country = models.CharField(
+        max_length=12,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_to_Contact_F_LName = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_Email = models.CharField(max_length=64, blank=True, null=True, default=None)
+    de_to_Phone_Mobile = models.CharField(
+        max_length=25,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_to_Phone_Main = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    fp_event_datetime = models.DateTimeField(blank=True, null=True, default=None)
+    fp_message = models.CharField(max_length=255, blank=True, null=True, default=None)
+    zoho_summary = models.CharField(max_length=255, blank=True, null=True, default=None)
+    zoho_event_datetime = models.DateTimeField(blank=True, null=True, default=None)
+    booked_for_comm_communicate_via = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "shared_bookings"
+
+
+class S_Booking_Lines(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(S_Bookings, on_delete=models.CASCADE)
+    e_type_of_packaging = models.CharField(
+        verbose_name=_("Type Of Packaging"), max_length=36, blank=True, null=True
+    )
+    e_item_type = models.CharField(
+        verbose_name=_("Item Type"), max_length=64, blank=True, null=True
+    )
+    e_pallet_type = models.CharField(
+        verbose_name=_("Pallet Type"), max_length=24, blank=True, null=True
+    )
+    e_item = models.CharField(
+        verbose_name=_("Item"), max_length=56, blank=True, null=True
+    )
+    e_qty = models.IntegerField(blank=True, null=True)
+    e_weightUOM = models.CharField(
+        verbose_name=_("Weight UOM"), max_length=56, blank=True, null=True
+    )
+    e_weightPerEach = models.FloatField(
+        verbose_name=_("Weight Per Each"), blank=True, null=True
+    )
+    e_dimUOM = models.CharField(
+        verbose_name=_("Dim UOM"), max_length=10, blank=True, null=True
+    )
+    e_dimLength = models.FloatField(verbose_name=_("Dim Length"), blank=True, null=True)
+    e_dimWidth = models.FloatField(verbose_name=_("Dim Width"), blank=True, null=True)
+    e_dimHeight = models.FloatField(verbose_name=_("Dim Height"), blank=True, null=True)
+    e_cubic = models.FloatField(blank=True, null=True)
+    e_cubic_2_mass_factor = models.FloatField(blank=True, null=True)
+    e_cubic_mass = models.FloatField(blank=True, null=True)
+    fp_event_datetime = models.DateTimeField(blank=True, null=True, default=None)
+    fp_status = models.CharField(max_length=64, blank=True, null=True, default=None)
+    fp_message = models.CharField(max_length=255, blank=True, null=True, default=None)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "shared_booking_lines"
