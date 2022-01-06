@@ -262,7 +262,7 @@ def push_boks(payload, client, username, method):
     if is_biz:
         if not bok_1.get("shipping_type"):
             message = "'shipping_type' is required. "
-        if len(bok_1.get("shipping_type")) != 4:
+        if bok_1.get("shipping_type") and len(bok_1.get("shipping_type")) != 4:
             message = "'shipping_type' is not valid. "
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required. "
