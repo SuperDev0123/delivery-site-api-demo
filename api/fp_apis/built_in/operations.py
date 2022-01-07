@@ -320,8 +320,10 @@ def find_vehicle_ids(booking_lines, fp):
             """
             has_pallet = False
             _vehicle_ids = []
-
             for line in booking_lines:
+                print(line.e_dimUOM)
+                max_width = _get_dim_amount(line.e_dimUOM) * line.e_dimWidth
+                max_length = _get_dim_amount(line.e_dimUOM) * line.e_dimLength
                 if (
                     line.e_type_of_packaging
                     and line.e_type_of_packaging.upper() in PALLETS
@@ -329,10 +331,9 @@ def find_vehicle_ids(booking_lines, fp):
                 ):
                     has_pallet = True
                     break
-
             if has_pallet:
                 for vehicle_id in vehicle_ids:
-                    non_pallet_ids = [63, 64, 65, 66, 67, 68, 69, 70]
+                    non_pallet_ids = [63, 64, 65, 66, 68, 70]
 
                     if not vehicle_id in non_pallet_ids:
                         _vehicle_ids.append(vehicle_id)
