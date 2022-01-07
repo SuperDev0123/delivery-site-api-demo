@@ -57,7 +57,7 @@ def mhp(param):
     con_width = param['width'] < 0.1 or param['width'] > 0.6
     con_height = param['height'] < 0.015 or param['height'] > 0.8
     con_diagonal = param['diagonal'] > 1.2
-    con_weight = param['max_weight'] < 0.25 or param['max_weight'] > 30
+    con_weight = param['dead_weight'] < 0.25 or param['dead_weight'] > 30
     con_dangerous_goods = param['is_dangerous']
 
     if con_length or con_width or con_height or con_diagonal or con_weight or con_dangerous_goods:

@@ -176,6 +176,7 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 "width": item_width,
                 "height": item_height,
                 "diagonal": item_diagonal,
+                "dead_weight": math.ceil(item_dead_weight),
                 "max_weight": math.ceil(item_max_weight),
                 "is_pallet": is_pallet,
                 "quantity": line["e_qty"],
