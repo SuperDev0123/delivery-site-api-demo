@@ -50,7 +50,7 @@ from reportlab.lib import colors
 from django.conf import settings
 from api.models import *
 from api.common import trace_error
-from api.common.common_times import next_business_day
+from api.common.common_times import next_business_day, convert_to_UTC_tz
 from api.operations.generate_xls_report import build_xls
 from api.outputs.email import send_email
 from api.fp_apis.utils import gen_consignment_num
@@ -2894,8 +2894,8 @@ def get_pu_by(booking):
         pu_by = datetime.combine(
             puPickUpAvailFrom_Date,
             time(
-                int(booking.pu_PickUp_By_Time_Hours or 0),
-                int(booking.pu_PickUp_By_Time_Minutes or 0),
+                int(booking.pu_PickUp_Avail_Time_Hours or 0),
+                int(booking.pu_PickUp_Avail_Time_Minutes or 0),
                 0,
             ),
         )
@@ -2905,7 +2905,13 @@ def get_pu_by(booking):
 
 def get_eta_pu_by(booking):
     try:
-        return get_pu_by(booking)
+        _eta_pu_by = get_pu_by(booking)
+
+        if _eta_pu_by:
+            _eta_pu_by = convert_to_UTC_tz(_eta_pu_by)
+
+        return _eta_pu_by
+
         # if get_pu_by(booking) is None:
         #     sydney_tz = pytz.timezone("Australia/Sydney")
         #     etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
@@ -2944,7 +2950,7 @@ def get_eta_de_by(booking, quote):
                 if weekno > 4:
                     etd_de_by = etd_de_by + timedelta(days=7 - weekno)
 
-                return etd_de_by
+                return convert_to_UTC_tz(etd_de_by)
         return None
     except Exception as e:
         trace_error.print()
