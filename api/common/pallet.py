@@ -130,7 +130,7 @@ def lines_to_dict(bok_2s):
             )
 
     return lines_data
-    
+
 
 def vehicles_to_dict(vehicles):
     vehicles_dict = []
@@ -176,12 +176,17 @@ def lines_to_pallet(lines_data, pallets_data):
 
     url = f"{os.environ['3D_PACKING_API_URL']}/packer/packIntoMany"
     response = requests.post(url, data=json.dumps(data))
-    res_data = response.json()["response"]
-    if res_data["status"] == -1:
-        msg = ""
-        for error in res_data["errors"]:
-            msg += f"{error['message']} \n"
-        logger.info(f"Packing API Error: {msg}")
+
+    try:
+        res_data = response.json()["response"]
+        if res_data["status"] == -1:
+            msg = ""
+            for error in res_data["errors"]:
+                msg += f"{error['message']} \n"
+            logger.info(f"Packing API Error: {msg}")
+    except Exception as e:
+        logger.error(f"3D_PACKING_API issue - url: {url}\ndata: {data}\n")
+        raise Exception("3D_PACKING_API issue")
 
     return res_data
 
