@@ -167,7 +167,7 @@ def update_shared_booking(booking, is_for="all"):
 
         if status_histories:
             s_booking.fp_event_datetime = status_histories[0].event_timestamp
-            s_booking.fp_message = status_histories.desc
+            s_booking.fp_message = status_histories[0].desc
 
         s_booking.zoho_summary = None
         s_booking.zoho_event_datetime = None
