@@ -2091,11 +2091,11 @@ class Bookings(models.Model):
         return super(Bookings, self).save(*args, **kwargs)
 
 
-# @receiver(pre_save, sender=Bookings)
-# def pre_save_booking(sender, instance, **kwargs):
-#     from api.signal_handlers.booking import pre_save_handler
+@receiver(pre_save, sender=Bookings)
+def pre_save_booking(sender, instance, update_fields, **kwargs):
+    from api.signal_handlers.booking import pre_save_handler
 
-#     pre_save_handler(instance)
+    pre_save_handler(instance, update_fields)
 
 
 @receiver(post_save, sender=Bookings)
@@ -5125,6 +5125,13 @@ class FP_status_history(models.Model):
         db_table = "fp_status_history"
 
 
+@receiver(post_save, sender=FP_status_history)
+def post_save_fp_status_history(sender, instance, **kwargs):
+    from api.signal_handlers.fp_status_history import post_save_handler
+
+    post_save_handler(instance)
+
+
 class ZohoTicketSummary(models.Model):
     id = models.AutoField(primary_key=True)
     summary = models.TextField(default=None, null=True)
@@ -5230,6 +5237,7 @@ class S_Bookings(models.Model):
         default=None,
     )
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
 
     class Meta:
         db_table = "shared_bookings"
@@ -5270,6 +5278,7 @@ class S_Booking_Lines(models.Model):
     fp_status = models.CharField(max_length=64, blank=True, null=True, default=None)
     fp_message = models.CharField(max_length=255, blank=True, null=True, default=None)
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
 
     class Meta:
         db_table = "shared_booking_lines"

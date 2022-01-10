@@ -9,6 +9,7 @@ from api.models import (
     API_booking_quotes,
 )
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
+from api.operations.genesis.index import create_shared_lines
 from api.common.booking_quote import set_booking_quote
 from api.helpers.list import *
 
@@ -36,6 +37,9 @@ def post_save_handler(instance, created, update_fields):
 
         if not booking:
             return
+
+        # Genesis
+        create_shared_lines(booking)
 
         # Ignore when plum scans
         if (

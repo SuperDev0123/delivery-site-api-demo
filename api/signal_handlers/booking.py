@@ -1,5 +1,4 @@
 import logging
-import asyncio
 from datetime import datetime
 
 from django.conf import settings
@@ -13,6 +12,7 @@ from api.models import (
 from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 from api.operations.pronto_xi.index import update_note as update_pronto_note
+from api.operations.genesis.index import create_shared_booking, update_shared_booking
 from api.common.booking_quote import set_booking_quote
 from api.common import trace_error
 from api.helpers.list import *
@@ -43,6 +43,27 @@ IMPORTANT_FIELDS = [
     "de_service",
 ]
 
+GENESIS_FIELDS = [
+    "b_dateBookedDate",
+    "v_FPBookingNumber",
+    "b_client_name",
+    "de_Deliver_By_Date",
+    "vx_freight_provider",
+    "vx_serviceName",
+    "b_status",
+    "de_To_Address_Street_1",
+    "de_To_Address_Street_2",
+    "de_To_Address_State",
+    "de_To_Address_Suburb",
+    "de_To_Address_PostalCode",
+    "de_To_Address_Country",
+    "de_to_Contact_F_LName",
+    "de_Email",
+    "de_to_Phone_Mobile",
+    "de_to_Phone_Main",
+    "booked_for_comm_communicate_via",
+]
+
 if settings.ENV == "local":
     S3_URL = "./static"
 elif settings.ENV == "dev":
@@ -51,11 +72,11 @@ elif settings.ENV == "prod":
     S3_URL = "/opt/s3_public"
 
 
-def pre_save_handler(instance):
+def pre_save_handler(instance, update_fields):
     LOG_ID = "[BOOKING PRE SAVE]"
+
     if instance.id is None:  # new object will be created
         pass
-
     else:
         logger.info(f"{LOG_ID} Booking PK: {instance.id}")
         old = Bookings.objects.get(id=instance.id)
@@ -65,14 +86,18 @@ def pre_save_handler(instance):
             instance.prev_dme_status_detail = old.dme_status_detail
             instance.dme_status_detail_updated_at = datetime.now()
 
-        if old.b_status != instance.b_status:
-            # Set Booking's status category
-            instance.b_status_category = get_status_category_from_status(
-                instance.b_status
-            )
+        if old.b_dateBookedDate and intersection(GENESIS_FIELDS, update_fields or []):
+            update_shared_booking(instance)
 
-            try:
-                if instance.b_status == "In Transit":
+        if old.b_status != instance.b_status:
+            if instance.b_status == "Booked":
+                instance.b_dateBookedDate = datetime.now()
+
+            # Mail Genesis
+            if old.b_dateBookedDate is None and instance.b_dateBookedDate:
+                create_shared_booking(instance)
+            elif instance.b_status == "In Transit":
+                try:
                     booking_Lines_cnt = Booking_lines.objects.filter(
                         fk_booking_id=instance.pk_booking_id
                     ).count()
@@ -96,14 +121,14 @@ def pre_save_handler(instance):
                     instance.dme_status_detail_updated_by = "user"
                     instance.prev_dme_status_detail = old.dme_status_detail
                     instance.dme_status_detail_updated_at = datetime.now()
-                elif instance.b_status == "Delivered":
-                    instance.dme_status_detail = ""
-                    instance.dme_status_detail_updated_by = "user"
-                    instance.prev_dme_status_detail = old.dme_status_detail
-                    instance.dme_status_detail_updated_at = datetime.now()
-            except Exception as e:
-                logger.info(f"#505 {LOG_ID} Error {e}")
-                pass
+                except Exception as e:
+                    logger.info(f"#505 {LOG_ID} Error {e}")
+                    pass
+            elif instance.b_status == "Delivered":
+                instance.dme_status_detail = ""
+                instance.dme_status_detail_updated_by = "user"
+                instance.prev_dme_status_detail = old.dme_status_detail
+                instance.dme_status_detail_updated_at = datetime.now()
 
         # JasonL
         if instance.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
