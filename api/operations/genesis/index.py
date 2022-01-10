@@ -115,9 +115,9 @@ def create_shared_booking(booking):
         )
 
         if status_histories:
-            s_booking_line.fp_event_datetime = status_histories[0].event_timestamp
-            s_booking_line.fp_status = status_histories[0].status
-            s_booking_line.fp_message = status_histories[0].desc
+            s_booking_line.fp_event_datetime = datetime.now()
+            s_booking_line.fp_status = "Booked"
+            s_booking_line.fp_message = "Booked"
 
         s_booking_line.z_createdAt = datetime.now()
         s_booking_line.z_updatedAt = datetime.now()
