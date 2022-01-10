@@ -177,7 +177,7 @@ def update_shared_booking(booking, is_for="all"):
     elif is_for == "fp-info":
         if status_histories:
             s_booking.fp_event_datetime = status_histories[0].event_timestamp
-            s_booking.fp_message = status_histories.desc
+            s_booking.fp_message = status_histories[0].desc
     elif is_for == "zoho_info":
         pass
 
