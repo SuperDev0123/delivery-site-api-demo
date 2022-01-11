@@ -86,8 +86,9 @@ def pre_save_handler(instance, update_fields):
             instance.prev_dme_status_detail = old.dme_status_detail
             instance.dme_status_detail_updated_at = datetime.now()
 
-        if old.b_dateBookedDate and intersection(GENESIS_FIELDS, update_fields or []):
-            update_shared_booking(instance)
+        # Mail Genesis
+        # if old.b_dateBookedDate and intersection(GENESIS_FIELDS, update_fields or []):
+        #     update_shared_booking(instance)
 
         if old.b_status != instance.b_status:
             if instance.b_status == "Booked":
@@ -95,7 +96,8 @@ def pre_save_handler(instance, update_fields):
 
             # Mail Genesis
             if old.b_dateBookedDate is None and instance.b_dateBookedDate:
-                create_shared_booking(instance)
+                # create_shared_booking(instance)
+                pass
             elif instance.b_status == "In Transit":
                 try:
                     booking_Lines_cnt = Booking_lines.objects.filter(

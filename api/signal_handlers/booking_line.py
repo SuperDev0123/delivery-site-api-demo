@@ -39,8 +39,8 @@ def post_save_handler(instance, created, update_fields):
             return
 
         # Genesis
-        if booking.b_dateBookedDate:
-            create_shared_lines(booking)
+        # if booking.b_dateBookedDate:
+        #     create_shared_lines(booking)
 
         # Ignore when plum scans
         if (

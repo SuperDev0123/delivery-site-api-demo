@@ -9,4 +9,4 @@ logger = logging.getLogger(__name__)
 def post_save_handler(instance):
     LOG_ID = "[FP_STATUS_HISTORY POST SAVE]"
 
-    update_shared_booking(instance.booking)
+    # update_shared_booking(instance.booking)

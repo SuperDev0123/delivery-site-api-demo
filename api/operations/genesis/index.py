@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime
+from django.conf import settings
 
 from api.models import (
     Bookings,
@@ -22,6 +23,10 @@ logger = logging.getLogger(__name__)
 def create_shared_booking(booking):
     LOG_ID = "[GENESIS CREATE]"
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
+
+    if settings.ENV != "prod":
+        logger.info(f"{LOG_ID} Skipped on this env")
+        return
 
     s_booking = (
         S_Bookings.objects.using("shared_mail")
@@ -131,6 +136,10 @@ def update_shared_booking(booking, is_for="all"):
     LOG_ID = "[GENESIS UPDATE]"
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
+    if settings.ENV != "prod":
+        logger.info(f"{LOG_ID} Skipped on this env")
+        return
+
     s_bookings = S_Bookings.objects.using("shared_mail").filter(
         b_bookingID_Visual=booking.b_bookingID_Visual
     )
@@ -188,6 +197,10 @@ def update_shared_booking(booking, is_for="all"):
 def create_shared_lines(booking):
     LOG_ID = "[GENESIS LINES UPDATE]"
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
+
+    if settings.ENV != "prod":
+        logger.info(f"{LOG_ID} Skipped on this env")
+        return
 
     s_bookings = S_Bookings.objects.using("shared_mail").filter(
         b_bookingID_Visual=booking.b_bookingID_Visual
