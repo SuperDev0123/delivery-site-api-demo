@@ -1884,7 +1884,9 @@ class BookingsViewSet(viewsets.ViewSet):
             ).filter(manifest_timestamp__range=(first_date, last_date))
 
             if clientname != "dme":
-                bookings_with_manifest.filter(b_client_name=clientname)
+                bookings_with_manifest = bookings_with_manifest.filter(
+                    b_client_name=clientname
+                )
 
             bookings_with_manifest.order_by("-manifest_timestamp")
             manifest_dates = bookings_with_manifest.values_list(
