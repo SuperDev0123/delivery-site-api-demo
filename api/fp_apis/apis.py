@@ -802,8 +802,11 @@ def create_order(request, fp_name):
             pk__in=booking_ids, b_status="Booked", vx_freight_provider__iexact=fp_name
         )
 
-        payload = get_create_order_payload(bookings, fp_name)
+        if bookings.exists() and bookings.first().vx_fp_order_id:
+            message = f"Successfully create order({bookings.first().vx_fp_order_id})"
+            return JsonResponse({"message": message})
 
+        payload = get_create_order_payload(bookings, fp_name)
         logger.info(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
         response = requests.post(url, params={}, json=payload)
