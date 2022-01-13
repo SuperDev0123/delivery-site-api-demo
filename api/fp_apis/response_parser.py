@@ -62,7 +62,6 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
             result["fk_client_id"] = dme_client.company_name
             # result["freight_provider"] = get_service_provider(fp_name, False)
             result["freight_provider"] = "Hunter"
-            logger.info(f'Hunter ETD: {price["etd"] if "etd" in price else None}')
             result["etd"] = (price["etd"] if "etd" in price else None) or "3 Days"
             result["fee"] = price["netPrice"]
             result["service_name"] = (

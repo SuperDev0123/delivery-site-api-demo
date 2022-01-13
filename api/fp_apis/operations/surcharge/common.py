@@ -17,6 +17,7 @@ SURCHARGE_NAME_DESC = {
         "Onforwarding(Pickup)": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
         "Onforwarding(Delivery)": "All our rates apply from pick up and to drop, where a delivery made to a nominated regional, country or remote location, as outlined on our Onforwarding matrix, an onforwarding surcharge is applicable.  Please contact Allied Express for a copy of this matrix.",
         "Overweight": "Base charge plus kilo charge",
+        "Home Deliveries [HD]": "FREIGHT OVERSIZED HOME DELIVERY",
         "Home Deliveries [HD] - 22": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment less than 23 kgs (dead or cubic weight)",
         "Home Deliveries [HD] - 55": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 23 and 55 kgs (dead or cubic weight)",
         "Home Deliveries [HD] - 90": "The Home delivery fee’s would be 50% less than what is shown, so we know it is not the standard price. For freight being delivered to residential addresses a surcharge per consignment between 55 and 90 kgs (dead or cubic weight)",
@@ -48,7 +49,7 @@ SURCHARGE_NAME_DESC = {
         "Oversize Freight (OS3)": "Oversize freight where any one dimension (length, height or width) exceeds 3.99 metres.",
         "Oversize Freight (OS4)": "Oversize freight where any one dimension (length, height or width) exceeds 4.99 metres.",
         "Oversize Freight (OS5)": "Oversize freight where any one dimension (length, height or width) exceeds 5.99 metres.",
-        "Manual Handling Processing (MHP) Fee": "From 7 December 2020, MHP Fee3 will be $12.50 per item on items which are not compatible with TNT's sortation system and require manual handling due to size1, weight2, fragility (including glass), poor packaging (including where the parcel is unstable due to poor weight distribution) and/or unusual shape (including tubes, flat pack items) and Dangerous Goods. 1 Length <200mm or >1200mm and/or Width <100mm or >600mm and/or Height <15mm or >800mm and/or Diagonal Length >1200mm 2 Weight <250g or >30kg 3 The MHP fee is charged per item in addition to any other applicable surcharge for the consignment, including oversize surcharge and Dangerous Goods' surcharge. The MHP Fee is applied to each and all items under a consignment note, which contains Dangerous Goods (Dangerous Goods consignment notes are to contain Dangerous Goods items only)."
+        "Manual Handling Processing (MHP) Fee": "From 7 December 2020, MHP Fee3 will be $12.50 per item on items which are not compatible with TNT's sortation system and require manual handling due to size1, weight2, fragility (including glass), poor packaging (including where the parcel is unstable due to poor weight distribution) and/or unusual shape (including tubes, flat pack items) and Dangerous Goods. 1 Length <200mm or >1200mm and/or Width <100mm or >600mm and/or Height <15mm or >800mm and/or Diagonal Length >1200mm 2 Weight <250g or >30kg 3 The MHP fee is charged per item in addition to any other applicable surcharge for the consignment, including oversize surcharge and Dangerous Goods' surcharge. The MHP Fee is applied to each and all items under a consignment note, which contains Dangerous Goods (Dangerous Goods consignment notes are to contain Dangerous Goods items only).",
     },
     "CAMERONS": {
         "Tail-Gate(pickup)": "Applied when there is tail lift pickup. If service is express, then 110% is applied",
@@ -79,5 +80,5 @@ SURCHARGE_NAME_DESC = {
         "Top Load Only": "Freight designated as “top load only” may attract a charge equivalent to the full pallet height of the trailer.",
         "Waiting Time": "Charge applies where allocated loading and/or unloading time is exceeded and will be calculated in 15-minute increments.",
         "Wharf Terminal": "Timeslot booking fees and infrastructure fees charged by wharf terminal providers for containers picked up or dropped off at the wharf will be passed onto the Customer.",
-    }
+    },
 }
