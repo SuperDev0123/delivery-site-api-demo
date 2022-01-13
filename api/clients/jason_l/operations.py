@@ -164,8 +164,8 @@ def get_address(order_num):
     DA_suburb, CUS_suburb, DI_suburb = None, None, None
     DA_state, CUS_state, DI_state = None, None, None
     DA_postal_code, CUS_postal_code, DI_postal_code = None, None, None
-    DA_phone = None
-    DA_email = None
+    DA_phone, DI_phone = None, None
+    DA_email, DI_email = None, None
     errors = []
     has_DA = False
     clue_DA, clue_CUS, clue_DI = "", "", ""
