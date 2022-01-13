@@ -1381,7 +1381,7 @@ def ready_boks(payload, client):
     else:
         status_history.create(booking, "On Hold", "jason_l")
         send_email_to_admins(
-            f"Quote issue on Booking(#{booking.b_bookingID_Visual})",
+            f"URGENT! Quote issue on Booking(#{booking.b_bookingID_Visual})",
             f"Original FP was {booking.vx_freight_provider}({booking.vx_serviceName})."
             + f" After labels were made {booking.vx_freight_provider}({booking.vx_serviceName}) was not an option for shipment."
             + f" Please do FC manually again on DME portal.",

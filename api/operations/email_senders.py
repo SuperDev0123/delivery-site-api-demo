@@ -828,7 +828,10 @@ def send_email_to_admins(subject, message):
         option_name="send_email_to_admins"
     ).first()
 
-    if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
+    if (
+        dme_option_4_email_to_admin
+        and int(dme_option_4_email_to_admin.option_value) == 1
+    ):
         if settings.ENV in ["prod"]:
             to_emails = [
                 "care@deliver-me.com.au",
