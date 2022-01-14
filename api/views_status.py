@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework.decorators import (
     api_view,
     permission_classes,
@@ -13,6 +15,8 @@ from rest_framework.permissions import (
 
 from api.models import Bookings, FP_status_history
 from api.serializers import FPStatusHistorySerializer
+
+logger = logging.getLogger(__name__)
 
 
 class ScansViewSet(viewsets.ViewSet):
