@@ -1,7 +1,11 @@
+from cgitb import strong
+from lib2to3.pgen2 import driver
 import os
+from pickle import NONE
 import sys
 import logging
 from datetime import datetime
+from tkinter import NO, Frame
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import letter, landscape, A6
 from reportlab.platypus import (
@@ -12,9 +16,10 @@ from reportlab.platypus import (
     PageBreak,
     Table,
 )
-from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable
+from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable, TopPadder
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch, mm
+from reportlab.platypus.frames import Frame as rep_frame
 from reportlab.graphics.barcode import (
     code39,
     code128,
@@ -35,18 +40,45 @@ from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.fp_apis.utils import gen_consignment_num
 from api.helpers.cubic import get_cubic_meter
 
+label_settings = {
+    "font_family": "Verdana",
+    "font_size_extra_small": "7",
+    "font_size_small": "8",
+    "font_size_medium": "10",
+    "font_size_large": "18",
+    "font_size_extra_large": "32",
+    "label_dimension_height": "297",
+    "label_dimension_width": "210",
+    "label_image_size_height": "260",
+    "label_image_size_width": "170",
+    "line_height_extra_small": "3",
+    "line_height_small": "5",
+    "line_height_medium": "6",
+    "line_height_large": "8",
+    "line_height_extra_large": "12",
+    "margin_v": "20",
+    "margin_h": "0",
+}
+
+kg_per_booking, cubic_per_booking, pallets_per_order, packages_per_order = (
+    [],
+    [],
+    [],
+    [],
+)
+
 if settings.ENV == "local":
     production = False  # Local
 else:
     production = True  # Dev
-
+    
 ### DHL constants ###
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(
     name="right",
     parent=styles["Normal"],
     alignment=TA_RIGHT,
-    leading=12,
+    leading=24,
 )
 style_left = ParagraphStyle(
     name="left",
@@ -134,9 +166,131 @@ class InteractiveCheckBox(Flowable):
         self.canv.restoreState()
         return
 
-
 checkbox = InteractiveCheckBox("")
 
+def make_table(bookings, start, end):
+    data = []
+    t1_w = float(label_settings["label_image_size_width"]) * (4 / 32) * mm
+    t2_w = float(label_settings["label_image_size_width"]) * (6 / 32) * mm
+    t3_w = float(label_settings["label_image_size_width"]) * (3 / 32) * mm
+    t1_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
+    t2_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
+    _rowHeights = []
+    for index in range(start, end):
+        _rowHeights.append(t2_h)
+        data.append(
+            [
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].v_FPBookingNumber
+                        if bookings[index].v_FPBookingNumber
+                        else gen_consignment_num(
+                            bookings[index].vx_freight_provider,
+                            bookings[index].b_bookingID_Visual,
+                        ),
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].b_client_sales_inv_num
+                        if bookings[index].b_client_sales_inv_num
+                        else "",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        bookings[index].de_to_Contact_F_LName
+                        if bookings[index].de_to_Contact_F_LName
+                        else "",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        f"{bookings[index].de_To_Address_Suburb} {bookings[index].de_To_Address_State} {bookings[index].de_To_Address_PostalCode}",
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        pallets_per_order[index],
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        packages_per_order[index],
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        kg_per_booking[index],
+                    ),
+                    style_center,
+                ),
+                Paragraph(
+                    "<font size=%s>%s</font>"
+                    % (
+                        label_settings["font_size_extra_small"],
+                        cubic_per_booking[index],
+                    ),
+                    style_center,
+                ),
+            ]
+        )
+    booking_table = Table(
+        data,
+        colWidths=[t1_w, t1_w, t2_w, t2_w, t3_w, t3_w, t3_w, t3_w],
+        rowHeights=_rowHeights,
+        style=[
+            ("VALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
+            ("GRID", (0, 0), (-1, -1), 0.5, "black"),
+        ],
+    )
+    return booking_table
+        
+def make_pagenumber(number, page_number):
+    data = [
+        [
+            "",
+            Paragraph(
+                "<font size=%s>%s</font>"
+                % (label_settings["font_size_medium"], f"Page {number} of {page_number}"),
+                style_right,
+            )
+        ],
+    ]
+    t1_w = float(label_settings["label_image_size_width"]) * (13 / 16) * mm
+    t2_w = float(label_settings["label_image_size_width"]) * (3 / 16) * mm
+    page_table = Table(
+        data,
+        colWidths=[t1_w, t2_w],
+        style=[
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ],
+    )
+    return page_table
 
 def build_manifest(bookings, booking_lines, username):
     fp_name = bookings[0].vx_freight_provider
@@ -151,13 +305,6 @@ def build_manifest(bookings, booking_lines, username):
 
     m3_to_kg_factor = 250
     total_dead_weight, total_cubic, total_qty = 0, 0, 0
-    kg_per_booking, cubic_per_booking, pallets_per_order, packages_per_order = (
-        [],
-        [],
-        [],
-        [],
-    )
-
     for order in bookings:
         lines = [
             item for item in booking_lines if item.fk_booking_id == order.pk_booking_id
@@ -188,7 +335,6 @@ def build_manifest(bookings, booking_lines, username):
         cubic_per_booking.append(round(cubic, 3))
         total_dead_weight += kg
         total_cubic += cubic
-
     total_cubic_weight = total_cubic * m3_to_kg_factor
     number_of_consignments = len(bookings)
 
@@ -228,26 +374,6 @@ def build_manifest(bookings, booking_lines, username):
     # end pdf file name using naming convention
 
     # label_settings = get_label_settings( 146, 104 )[0]
-    label_settings = {
-        "font_family": "Verdana",
-        "font_size_extra_small": "7",
-        "font_size_small": "8",
-        "font_size_medium": "10",
-        "font_size_large": "18",
-        "font_size_extra_large": "32",
-        "label_dimension_height": "297",
-        "label_dimension_width": "210",
-        "label_image_size_height": "260",
-        "label_image_size_width": "170",
-        "line_height_extra_small": "3",
-        "line_height_small": "5",
-        "line_height_medium": "6",
-        "line_height_large": "8",
-        "line_height_extra_large": "12",
-        "margin_v": "20",
-        "margin_h": "0",
-    }
-
     width = float(label_settings["label_dimension_width"]) * mm
     height = float(label_settings["label_dimension_height"]) * mm
     doc = SimpleDocTemplate(
@@ -258,12 +384,10 @@ def build_manifest(bookings, booking_lines, username):
         topMargin=float(label_settings["margin_v"]) * mm,
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
-
+   
+    Story = []
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 40 * mm, 10 * mm)
-
-    Story = []
-
     data = [
         [
             dme_img,
@@ -484,8 +608,8 @@ def build_manifest(bookings, booking_lines, username):
         ],
     )
     Story.append(table)
-    Story.append(Spacer(1, 3))
-
+    Story.append(Spacer(1, 8))
+#--------------- body part ------------------
     data = [
         [
             Paragraph(
@@ -552,165 +676,17 @@ def build_manifest(bookings, booking_lines, username):
         ],
     ]
 
-    for index in range(9):
-        if index < len(bookings):
-            data.append(
-                [
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            bookings[index].v_FPBookingNumber
-                            if bookings[index].v_FPBookingNumber
-                            else gen_consignment_num(
-                                bookings[index].vx_freight_provider,
-                                bookings[index].b_bookingID_Visual,
-                            ),
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            bookings[index].b_client_sales_inv_num
-                            if bookings[index].b_client_sales_inv_num
-                            else "",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            bookings[index].de_to_Contact_F_LName
-                            if bookings[index].de_to_Contact_F_LName
-                            else "",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            f"{bookings[index].de_To_Address_Suburb} {bookings[index].de_To_Address_State} {bookings[index].de_To_Address_PostalCode}",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            pallets_per_order[index],
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            packages_per_order[index],
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            kg_per_booking[index],
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            cubic_per_booking[index],
-                        ),
-                        style_center,
-                    ),
-                ]
-            )
-        else:
-            data.append(
-                [
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            " ",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            " ",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            " ",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            " ",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            " ",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            " ",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            "",
-                        ),
-                        style_center,
-                    ),
-                    Paragraph(
-                        "<font size=%s>%s</font>"
-                        % (
-                            label_settings["font_size_extra_small"],
-                            "",
-                        ),
-                        style_center,
-                    ),
-                ]
-            )
-
     t1_w = float(label_settings["label_image_size_width"]) * (4 / 32) * mm
     t2_w = float(label_settings["label_image_size_width"]) * (6 / 32) * mm
     t3_w = float(label_settings["label_image_size_width"]) * (3 / 32) * mm
     t1_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
     t2_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
-
-    table = Table(
+    _rowHeights = []
+    _rowHeights.append(t1_h)
+    table_header = Table(
         data,
         colWidths=[t1_w, t1_w, t2_w, t2_w, t3_w, t3_w, t3_w, t3_w],
-        rowHeights=[t1_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h, t2_h],
+        rowHeights=_rowHeights,
         style=[
             ("VALIGN", (0, 0), (-1, -1), "CENTER"),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -725,8 +701,40 @@ def build_manifest(bookings, booking_lines, username):
             ("GRID", (0, 0), (-1, -1), 0.5, "black"),
         ],
     )
-    Story.append(table)
-    Story.append(Spacer(1, 32))
+    Story.append(table_header)
+
+    start = 0
+    end = len(bookings)
+    available = 18
+    rest = 0
+    sign_rows = 10
+    header_rows = 5
+    page_rows = 25
+    margin = 0
+    index = 0
+    page_number = int((sign_rows + len(bookings) + header_rows) / 24) + 1
+    while(True):
+        index += 1
+        if end > available:
+            booking_table = make_table(bookings, start, available)
+            Story.append(booking_table)
+            start = available
+            Story.append(TopPadder(make_pagenumber(index, page_number)))
+            Story.append(PageBreak())
+            available += page_rows
+        else:
+            booking_table = make_table(bookings, start, end)
+            Story.append(booking_table)
+            rest = available - end
+            if rest > sign_rows:
+                margin = rest - sign_rows
+                break
+            else:
+                Story.append(TopPadder(make_pagenumber(index, page_number)))
+                Story.append(PageBreak())
+                index += 1
+                margin = page_rows - sign_rows + 1
+                break
 
     data = [
         [
@@ -756,12 +764,11 @@ def build_manifest(bookings, booking_lines, username):
             ),
         ],
     ]
-
     t1_w = float(label_settings["label_image_size_width"]) * (5 / 12) * mm
     t2_w = float(label_settings["label_image_size_width"]) * (4 / 12) * mm
     t3_w = float(label_settings["label_image_size_width"]) * (3 / 12) * mm
 
-    table = Table(
+    driver_table = Table(
         data,
         colWidths=[t1_w, t2_w, t3_w],
         style=[
@@ -769,10 +776,6 @@ def build_manifest(bookings, booking_lines, username):
             ("BOTTOMPADDING", (1, 0), (-1, -1), 0),
         ],
     )
-    Story.append(table)
-    Story.append(Spacer(1, 8))
-    Story.append(hr)
-    Story.append(Spacer(1, 10))
 
     data = [
         [
@@ -786,10 +789,8 @@ def build_manifest(bookings, booking_lines, username):
             ),
         ],
     ]
-
     t1_w = float(label_settings["label_image_size_width"]) * mm
-
-    table = Table(
+    subtitle_table = Table(
         data,
         colWidths=[t1_w],
         style=[
@@ -799,8 +800,6 @@ def build_manifest(bookings, booking_lines, username):
             ("BORDER", (0, 0), (-1, -1), 1),
         ],
     )
-    Story.append(table)
-    Story.append(Spacer(1, 12))
 
     data = [
         [
@@ -850,12 +849,10 @@ def build_manifest(bookings, booking_lines, username):
             ),
         ],
     ]
-
     t1_w = float(label_settings["label_image_size_width"]) * (1 / 30) * mm
     t2_w = float(label_settings["label_image_size_width"]) * (29 / 30) * mm
     t_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
-
-    table = Table(
+    privacy_table = Table(
         data,
         colWidths=[t1_w, t2_w],
         rowHeights=[t_h, t_h, t_h, t_h],
@@ -866,8 +863,6 @@ def build_manifest(bookings, booking_lines, username):
             ("BORDER", (0, 0), (-1, -1), 1),
         ],
     )
-    Story.append(table)
-    Story.append(Spacer(1, 20))
 
     data = [
         [
@@ -917,15 +912,13 @@ def build_manifest(bookings, booking_lines, username):
             )
         ],
     ]
-
     t1_w = float(label_settings["label_image_size_width"]) * (28 / 42) * mm
     t2_w = float(label_settings["label_image_size_width"]) * (5 / 42) * mm
     t3_w = float(label_settings["label_image_size_width"]) * (1 / 42) * mm
     t4_w = float(label_settings["label_image_size_width"]) * (3 / 42) * mm
     t5_w = float(label_settings["label_image_size_width"]) * (1 / 42) * mm
     t6_w = float(label_settings["label_image_size_width"]) * (4 / 42) * mm
-
-    table = Table(
+    signature_table = Table(
         data,
         colWidths=[t1_w, t2_w, t3_w, t4_w, t5_w, t6_w],
         style=[
@@ -934,7 +927,6 @@ def build_manifest(bookings, booking_lines, username):
             ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
         ],
     )
-    Story.append(table)
 
     data = [
         [
@@ -948,25 +940,36 @@ def build_manifest(bookings, booking_lines, username):
         [
             Paragraph(
                 "<font size=%s>%s</font>"
-                % (label_settings["font_size_medium"], "Page 1 of 1"),
+                % (label_settings["font_size_medium"], f"Page {index} of {page_number}"),
                 style_right,
             )
         ],
     ]
-
     t1_w = float(label_settings["label_image_size_width"]) * (15 / 16) * mm
     t2_w = float(label_settings["label_image_size_width"]) * (1 / 16) * mm
-
-    table = Table(
+    last_page_table = Table(
         data,
         colWidths=[t1_w, t2_w],
         style=[
             ("SPAN", (0, -1), (-1, -1)),
-            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            # ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
         ],
     )
-    Story.append(table)
+
+
+    Story.append(Spacer(1, margin * t2_h))
+    Story.append(driver_table)
+    Story.append(Spacer(1, 12))
+    Story.append(hr)
+    Story.append(Spacer(1, 12))
+    Story.append(subtitle_table)
+    Story.append(Spacer(1, 12))
+    Story.append(privacy_table)
+    Story.append(Spacer(1, 12))
+    Story.append(signature_table)
+    Story.append(TopPadder(last_page_table))
+             
 
     doc.build(Story)
     file.close()
