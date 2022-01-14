@@ -268,6 +268,18 @@ def populate_fp_status_history(booking, consignmentStatuses):
 
         return True
     else:
+        news0 = []
+        for fp_status_history in fp_status_histories:
+            for _new in new_fp_status_histories:
+                if (
+                    _new["b_status_API"] == fp_status_history.status
+                    and _new["event_time"] == fp_status_history.event_timestamp
+                ):
+                    continue
+                else:
+                    news0.append(_new)
+        print("@!  ", news0)
+
         news = []
         for _new in new_fp_status_histories:
             news.append(_new["b_status_API"])
