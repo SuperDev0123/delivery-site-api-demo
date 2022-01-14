@@ -5,7 +5,6 @@ from pickle import NONE
 import sys
 import logging
 from datetime import datetime
-from tkinter import NO, Frame
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import letter, landscape, A6
 from reportlab.platypus import (
@@ -16,7 +15,13 @@ from reportlab.platypus import (
     PageBreak,
     Table,
 )
-from reportlab.platypus.flowables import Spacer, HRFlowable, PageBreak, Flowable, TopPadder
+from reportlab.platypus.flowables import (
+    Spacer,
+    HRFlowable,
+    PageBreak,
+    Flowable,
+    TopPadder,
+)
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch, mm
 from reportlab.platypus.frames import Frame as rep_frame
@@ -71,7 +76,7 @@ if settings.ENV == "local":
     production = False  # Local
 else:
     production = True  # Dev
-    
+
 ### DHL constants ###
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(
@@ -166,7 +171,9 @@ class InteractiveCheckBox(Flowable):
         self.canv.restoreState()
         return
 
+
 checkbox = InteractiveCheckBox("")
+
 
 def make_table(bookings, start, end):
     data = []
@@ -268,16 +275,20 @@ def make_table(bookings, start, end):
         ],
     )
     return booking_table
-        
+
+
 def make_pagenumber(number, page_number):
     data = [
         [
             "",
             Paragraph(
                 "<font size=%s>%s</font>"
-                % (label_settings["font_size_medium"], f"Page {number} of {page_number}"),
+                % (
+                    label_settings["font_size_medium"],
+                    f"Page {number} of {page_number}",
+                ),
                 style_right,
-            )
+            ),
         ],
     ]
     t1_w = float(label_settings["label_image_size_width"]) * (13 / 16) * mm
@@ -291,6 +302,7 @@ def make_pagenumber(number, page_number):
         ],
     )
     return page_table
+
 
 def build_manifest(bookings, booking_lines, username):
     fp_name = bookings[0].vx_freight_provider
@@ -384,7 +396,7 @@ def build_manifest(bookings, booking_lines, username):
         topMargin=float(label_settings["margin_v"]) * mm,
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
-   
+
     Story = []
     dme_logo = "./static/assets/dme_logo.png"
     dme_img = Image(dme_logo, 40 * mm, 10 * mm)
@@ -609,7 +621,7 @@ def build_manifest(bookings, booking_lines, username):
     )
     Story.append(table)
     Story.append(Spacer(1, 8))
-#--------------- body part ------------------
+    # --------------- body part ------------------
     data = [
         [
             Paragraph(
@@ -713,7 +725,7 @@ def build_manifest(bookings, booking_lines, username):
     margin = 0
     index = 0
     page_number = int((sign_rows + len(bookings) + header_rows) / 24) + 1
-    while(True):
+    while True:
         index += 1
         if end > available:
             booking_table = make_table(bookings, start, available)
@@ -940,7 +952,10 @@ def build_manifest(bookings, booking_lines, username):
         [
             Paragraph(
                 "<font size=%s>%s</font>"
-                % (label_settings["font_size_medium"], f"Page {index} of {page_number}"),
+                % (
+                    label_settings["font_size_medium"],
+                    f"Page {index} of {page_number}",
+                ),
                 style_right,
             )
         ],
@@ -957,7 +972,6 @@ def build_manifest(bookings, booking_lines, username):
         ],
     )
 
-
     Story.append(Spacer(1, margin * t2_h))
     Story.append(driver_table)
     Story.append(Spacer(1, 12))
@@ -969,7 +983,6 @@ def build_manifest(bookings, booking_lines, username):
     Story.append(Spacer(1, 12))
     Story.append(signature_table)
     Story.append(TopPadder(last_page_table))
-             
 
     doc.build(Story)
     file.close()
