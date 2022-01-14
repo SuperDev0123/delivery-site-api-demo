@@ -273,6 +273,15 @@ def populate_fp_status_history(booking, consignmentStatuses):
             has_already = False
 
             for fp_status_history in fp_status_histories:
+                print(
+                    "@1 - ",
+                    _new["b_status_API"],
+                    fp_status_history.status,
+                    _new["event_time"],
+                    fp_status_history.event_timestamp,
+                    _new["b_status_API"] == fp_status_history.status,
+                    _new["event_time"] == fp_status_history.event_timestamp,
+                )
                 if (
                     _new["b_status_API"] == fp_status_history.status
                     and _new["event_time"] == fp_status_history.event_timestamp
