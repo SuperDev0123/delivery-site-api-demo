@@ -1,12 +1,7 @@
-from cgitb import strong
-from lib2to3.pgen2 import driver
 import os
-from pickle import NONE
-import sys
 import logging
 from datetime import datetime
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import letter, landscape, A6
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -23,25 +18,12 @@ from reportlab.platypus.flowables import (
     TopPadder,
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch, mm
-from reportlab.platypus.frames import Frame as rep_frame
-from reportlab.graphics.barcode import (
-    code39,
-    code128,
-    code93,
-    createBarcodeDrawing,
-    eanbc,
-    qr,
-    usps,
-)
-from reportlab.graphics.shapes import Drawing
-from reportlab.pdfgen import canvas
-from reportlab.graphics import renderPDF
+from reportlab.lib.units import mm
 from reportlab.lib import colors
 from django.conf import settings
 
 from api.models import Fp_freight_providers, Dme_manifest_log
-from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.common.ratio import _get_weight_amount
 from api.fp_apis.utils import gen_consignment_num
 from api.helpers.cubic import get_cubic_meter
 
@@ -967,7 +949,6 @@ def build_manifest(bookings, booking_lines, username):
         colWidths=[t1_w, t2_w],
         style=[
             ("SPAN", (0, -1), (-1, -1)),
-            # ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
         ],
     )
