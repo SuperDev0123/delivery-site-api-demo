@@ -296,7 +296,7 @@ def populate_fp_status_history(booking, consignmentStatuses):
             create_fp_status_history(booking, fp, new)
 
             # Do not create new dme_status_history when same `status` but different `event_time`
-            if new["b_status_API"] == fp_status_histories[0]["status"]:
+            if new["b_status_API"] == fp_status_histories[0].status:
                 logger.info(f"{LOG_ID} Same status with different even_time")
                 return False
 
