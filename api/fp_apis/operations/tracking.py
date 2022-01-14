@@ -290,13 +290,13 @@ def populate_fp_status_history(booking, consignmentStatuses):
             return False
 
         for new in news:
-            msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {new['status']} ({new['status_desc']})"
+            msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {new['b_status_API']} ({new['status_desc']})"
             logger.info(msg)
 
             create_fp_status_history(booking, fp, new)
 
             # Do not create new dme_status_history when same `status` but different `event_time`
-            if new["status"] == fp_status_histories[0]["b_status_API"]:
+            if new["b_status_API"] == fp_status_histories[0]["status"]:
                 logger.info(f"{LOG_ID} Same status with different even_time")
                 return False
 
