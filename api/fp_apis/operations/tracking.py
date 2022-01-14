@@ -280,11 +280,13 @@ def populate_fp_status_history(booking, consignmentStatuses):
                     _new["event_time"],
                     fp_status_history.event_timestamp,
                     _new["b_status_API"] == fp_status_history.status,
-                    _new["event_time"] == fp_status_history.event_timestamp,
+                    _new["event_time"][:19]
+                    == fp_status_history.event_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 )
-                if (
-                    _new["b_status_API"] == fp_status_history.status
-                    and _new["event_time"] == fp_status_history.event_timestamp
+                if _new["b_status_API"] == fp_status_history.status and _new[
+                    "event_time"
+                ][:19] == fp_status_history.event_timestamp.strftime(
+                    "%Y-%m-%d %H:%M:%S"
                 ):
                     has_already = True
 
