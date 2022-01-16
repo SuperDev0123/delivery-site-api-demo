@@ -62,6 +62,7 @@ router.register(
 )
 router.register(r"scans", ScansViewSet, basename="scans")
 router.register(r"fp_statuses", FpStatusesViewSet, basename="fp_statuses")
+router.register(r"cs_notes", DMEBookingCSNoteViewSet, basename="cs_notes")
 
 
 urlpatterns = router.urls

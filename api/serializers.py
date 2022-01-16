@@ -42,6 +42,7 @@ from api.models import (
     Surcharge,
     Dme_utl_fp_statuses,
     FP_status_history,
+    DMEBookingCSNote,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -1122,4 +1123,10 @@ class FpStatusSerializer(serializers.ModelSerializer):
 class FPStatusHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_status_history
+        fields = "__all__"
+
+
+class DMEBookingCSNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DMEBookingCSNote
         fields = "__all__"

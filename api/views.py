@@ -5677,3 +5677,43 @@ class FpStatusesViewSet(viewsets.ViewSet):
         except Exception as e:
             logger.info(f"Delete Fp Status Error: {str(e)}")
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DMEBookingCSNoteViewSet(viewsets.ModelViewSet):
+    queryset = DMEBookingCSNote.objects.all().order_by("z_createdTimeStamp")
+    serializer_class = DMEBookingCSNoteSerializer
+
+    def list(self, request):
+        booking_id = request.GET.get("bookingId")
+
+        if booking_id:
+            queryset = DMEBookingCSNote.objects.filter(booking_id=booking_id)
+        else:
+            queryset = DMEBookingCSNote.objects.all()
+
+        serializer = DMEBookingCSNoteSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        dme_employee = DME_employees.objects.get(fk_id_user_id=request.user.pk)
+        request.data[
+            "z_createdByAccount"
+        ] = f"{dme_employee.name_first} {dme_employee.name_last}"
+        serializer = DMEBookingCSNoteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            logger.info(f"Create CS Note Error: {str(serializer.errors)}")
+            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        try:
+            cs_note = DMEBookingCSNote.objects.get(pk=pk)
+            serializer = DMEBookingCSNoteSerializer(cs_note)
+            res_json = serializer.data
+            cs_note.delete()
+            return Response(res_json, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.info(f"Delete Fp Status Error: {str(e)}")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
