@@ -5,10 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('api', '0296_auto_20220110_0152'),
-    ]
-
     operations = [
         migrations.RemoveField(
             model_name='dme_clients',
