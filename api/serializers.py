@@ -1053,7 +1053,7 @@ class RoleSerializer(serializers.ModelSerializer):
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_clients
-        fields = "__all__"
+        fields = ['company_name', 'phone', 'dme_account_num', 'status_email', 'status_phone', 'status_send_flag']
 
 
 class CostOptionSerializer(serializers.ModelSerializer):
