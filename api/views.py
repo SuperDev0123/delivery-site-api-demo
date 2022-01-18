@@ -5594,8 +5594,9 @@ class ChartsViewSet(viewsets.ViewSet):
             result = (
                 Bookings.objects.filter(
                     b_client_name__in=['Tempo Pty Ltd', 'Reworx', 'Plum Products Australia Ltd', 'Cinnamon Creations', 'Jason L', 'Bathroom Sales Direct'],
-                    b_status="In Transit"
+                    b_dateBookedDate__isnull=False
                 )
+                .exclude(b_status__in=['Closed', 'Cancelled', 'Ready for booking', 'Delivered', 'To Quote', 'Picking', 'Picked', 'On Hold']) 
                 .extra(select={"b_client": "b_client_name"})
                 .values('b_client')
                 .annotate(ondeliveries=Count("b_client_name"))
