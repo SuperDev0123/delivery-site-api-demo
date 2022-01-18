@@ -2320,6 +2320,7 @@ class Booking_lines(models.Model):
     def save(self, *args, **kwargs):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
+        self.z_modifiedTimeStamp = datetime.now()
 
         if self.pk:
             cls = self.__class__
@@ -2457,6 +2458,10 @@ class Booking_lines_data(models.Model):
             trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
             return None
+
+    def save(self, *args, **kwargs):
+        self.z_modifiedTimeStamp = datetime.now()
+        return super(Booking_lines_data, self).save(*args, **kwargs)
 
     class Meta:
         db_table = "dme_booking_lines_data"
