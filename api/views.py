@@ -5588,6 +5588,24 @@ class ChartsViewSet(viewsets.ViewSet):
             # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
 
+    @action(detail=False, methods=["get"])
+    def get_num_active_bookings_per_client(self, request):
+        try:
+            result = (
+                Bookings.objects.filter(
+                    b_client_name__in=['Tempo Pty Ltd', 'Reworx', 'Plum Products Australia Ltd', 'Cinnamon Creations', 'Jason L', 'Bathroom Sales Direct'],
+                    b_status="In Transit"
+                )
+                .extra(select={"b_client": "b_client_name"})
+                .values('b_client')
+                .annotate(ondeliveries=Count("b_client_name"))
+                .order_by("ondeliveries")
+            )
+            num_reports = list(result)
+            return JsonResponse({"results": num_reports})
+        except Exception as e:
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
 class CostOptionViewSet(viewsets.ModelViewSet):
     queryset = CostOption.objects.all().order_by("z_createdAt")
