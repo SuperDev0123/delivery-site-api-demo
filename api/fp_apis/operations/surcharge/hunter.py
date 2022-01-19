@@ -1,7 +1,7 @@
 def el0(param):
     if param["max_dimension"] >= 1.5 and param["max_dimension"] < 2.5:
         return {
-            "name": "Excess Lengths (2.5m+)",
+            "name": "Excess Lengths: 1.5m up to/not incl. 2.5m",
             "description": "",
             "value": 10,
         }
@@ -10,9 +10,9 @@ def el0(param):
 
 
 def el1(param):
-    if param["max_dimension"] >= 2.5 and param["max_dimension"] < 6:
+    if param["max_dimension"] >= 2.5 and param["max_dimension"] < 4:
         return {
-            "name": "Excess Lengths (4.0m+)",
+            "name": "Excess Lengths: 2.5m up to/not incl. 4.0m",
             "description": "",
             "value": 50,
         }
@@ -22,9 +22,9 @@ def el1(param):
 
 # dummy value for below two
 def el2(param):
-    if param["max_dimension"] >= 6:
+    if param["max_dimension"] >= 4:
         return {
-            "name": "Excess Lengths (6.0m+)",
+            "name": "Excess Lengths: 4m up to/not incl. 6.0m",
             "description": "",
             "value": 200,
         }
