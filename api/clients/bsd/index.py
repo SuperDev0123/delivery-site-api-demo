@@ -56,6 +56,11 @@ def push_boks(payload, client, username, method):
         bok_1["b_027_b_pu_address_type"] = "business"
         bok_1["b_053_b_del_address_type"] = "residential"
 
+        # Shipping Method (local_pickup, ...)
+        b_010_b_notes = bok_1["shipping_method"]
+        if bok_1["shipping_method"] == "local_pickup":
+            bok_1["b_001_b_freight_provider"] = "Customer Collect"
+
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if not bok_1_serializer.is_valid():
             message = f"Serialiser Error - {bok_1_serializer.errors}"
