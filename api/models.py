@@ -5161,6 +5161,12 @@ class S_Bookings(models.Model):
     )
     de_Deliver_By_Date = models.DateField(blank=True, null=True, default=None)
     b_client_name = models.CharField(max_length=64, blank=True, null=True, default=None)
+    b_client_id = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
     vx_freight_provider = models.CharField(
         max_length=100,
         blank=True,
@@ -5175,6 +5181,9 @@ class S_Bookings(models.Model):
     )
     b_status = models.CharField(
         verbose_name=_("Status"), max_length=40, blank=True, null=True, default=None
+    )
+    b_status_category = models.CharField(
+        max_length=32, blank=True, null=True, default=None
     )
     de_To_Address_Street_1 = models.CharField(
         max_length=40,
@@ -5241,6 +5250,8 @@ class S_Bookings(models.Model):
         null=True,
         default=None,
     )
+    last_cs_note = models.TextField(null=True, default=None)
+    last_cs_note_timestamp = models.DateTimeField(null=True, default=None)
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
     z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
 
