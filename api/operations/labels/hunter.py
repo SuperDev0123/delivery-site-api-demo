@@ -373,7 +373,7 @@ def buildSenderSection(
         True,
     )
 
-    dme_senderscopy = "./static/assets/hunter_senders_copy.png"
+    dme_senderscopy = "./static/assets/logos/hunter_senders_copy.png"
     img_senderscopy = Image(dme_senderscopy, 10 * mm, 65 * mm)
     tbl_data3 = [[""], [img_senderscopy]]
     t3 = Table(
@@ -1083,7 +1083,7 @@ def buildReceiverSection(
         ],
     )
 
-    dme_receiverscopy = "./static/assets/hunter_receivers_copy.png"
+    dme_receiverscopy = "./static/assets/logos/hunter_receivers_copy.png"
     img_receiverscopy = Image(dme_receiverscopy, 10 * mm, 65 * mm)
     tbl_data3 = [
         [""],

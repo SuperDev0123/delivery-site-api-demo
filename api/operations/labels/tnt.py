@@ -166,7 +166,7 @@ def build_label(
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
-    tnt_logo = "./static/assets/tnt_fedex_logo.png"
+    tnt_logo = "./static/assets/logos/tnt_fedex_logo.png"
     tnt_img = Image(tnt_logo, 30 * mm, 6.6 * mm)
 
     dme_logo = "./static/assets/logos/dme.png"
