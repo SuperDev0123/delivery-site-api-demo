@@ -12,12 +12,20 @@ from api.fp_apis.built_in import (
     northline,
     tnt,
     hunter,
+    sendle,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def get_pricing(fp_name, booking, booking_lines=[], is_pricing_only=False):
+def get_pricing(
+    fp_name,
+    booking,
+    booking_lines=[],
+    is_pricing_only=False,
+    pu_zones=[],
+    de_zones=[],
+):
     LOG_ID = "[BIP]"  # BUILT-IN PRICING
     prices = []
     request_id = f"self-pricing-{str(random.randrange(0, 100000)).zfill(6)}"
@@ -29,21 +37,41 @@ def get_pricing(fp_name, booking, booking_lines=[], is_pricing_only=False):
 
     try:
         if fp_name.lower() == "camerons":
-            prices = camerons.get_pricing(fp_name, booking, booking_lines)
+            prices = camerons.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "century":
-            prices = century.get_pricing(fp_name, booking, booking_lines)
+            prices = century.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "toll":
-            prices = toll.get_pricing(fp_name, booking, booking_lines)
+            prices = toll.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "allied":
-            prices = allied.get_pricing(fp_name, booking, booking_lines)
+            prices = allied.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "atc":
-            prices = atc.get_pricing(fp_name, booking, booking_lines)
+            prices = atc.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "northline":
-            prices = northline.get_pricing(fp_name, booking, booking_lines)
+            prices = northline.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "tnt":
-            prices = tnt.get_pricing(fp_name, booking, booking_lines)
+            prices = tnt.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "hunter":
-            prices = hunter.get_pricing(fp_name, booking, booking_lines)
+            prices = hunter.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "sendle":
+            prices = sendle.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
     except Exception as e:
         trace_error.print()
         message = f"@800 {LOG_ID} {str(e)}"

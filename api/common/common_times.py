@@ -121,11 +121,12 @@ def next_business_day(
         fp = Fp_freight_providers.objects.only("service_cutoff_time").get(
             fp_company_name__iexact=fp_name
         )
-
-        if fp.service_cutoff_time < time:
+        default_service_cutoff_time = datetime.strptime('13:00', '%H:%M').time()
+        service_cutoff_time = fp.service_cutoff_time if fp and fp.service_cutoff_time else default_service_cutoff_time
+        if service_cutoff_time < time:
             _next_day += ONE_DAY
 
-    for i in range(0, business_days):
+    for i in range(0, int(business_days)):
         _next_day += ONE_DAY
 
         while _next_day.weekday() in [5, 6] or _next_day in AU_HOLIDAYS:

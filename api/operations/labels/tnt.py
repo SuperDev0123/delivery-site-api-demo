@@ -79,6 +79,14 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
 
 
+def gen_itm(booking, booking_lines, line_index, sscc_cnt):
+    TT = 11
+    CCCCCC = "132214"  # DME
+    item_index = str(line_index).zfill(3)
+
+    return f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
+
+
 def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
@@ -176,24 +184,24 @@ def build_label(
     j = 1
 
     # Get routing_group with vx_service_name
-    routing_group = None
-    if booking.vx_serviceName == "Road Express":
-        routing_group = "EXP"
-    elif booking.vx_serviceName in [
-        "09:00 Express",
-        "10:00 Express",
-        "12:00 Express",
-        "Overnight Express",
-        "PAYU - Satchel",
-        "ONFC Satchel",
-    ]:
-        routing_group = "PRI"
-    elif booking.vx_serviceName in [
-        "Technology Express - Sensitive Express",
-        "Sensitive Express",
-        "Fashion Delivery",
-    ]:
-        routing_group = "TE"
+    # routing_group = None
+    # if booking.vx_serviceName == "Road Express":
+    #     routing_group = "EXP"
+    # elif booking.vx_serviceName in [
+    #     "09:00 Express",
+    #     "10:00 Express",
+    #     "12:00 Express",
+    #     "Overnight Express",
+    #     "PAYU - Satchel",
+    #     "ONFC Satchel",
+    # ]:
+    #     routing_group = "PRI"
+    # elif booking.vx_serviceName in [
+    #     "Technology Express - Sensitive Express",
+    #     "Sensitive Express",
+    #     "Fashion Delivery",
+    # ]:
+    #     routing_group = "TE"
 
     """
     Let's assume service group EXP
@@ -202,36 +210,52 @@ def build_label(
     """
     crecords = FPRouting.objects.filter(
         freight_provider=12,
-        suburb=booking.de_To_Address_Suburb,
+        dest_suburb=booking.de_To_Address_Suburb,
         dest_postcode=booking.de_To_Address_PostalCode,
-        state=booking.de_To_Address_State,
-        routing_group=routing_group,
+        dest_state=booking.de_To_Address_State,
+        data_code="C"
+        # routing_group=routing_group,
     ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
 
     routing = None
+    orig_depot = ""
     if crecords.exists():
         drecord = (
             FPRouting.objects.filter(
                 freight_provider=12,
-                orig_postcode=booking.de_To_Address_PostalCode,
-                routing_group=routing_group,
+                orig_postcode=booking.pu_Address_PostalCode,
+                # routing_group=routing_group,
                 orig_depot__isnull=False,
+                data_code="D",
             )
             .only("orig_depot")
             .first()
         )
 
         if drecord:
+            orig_depot = drecord.orig_depot
             for crecord in crecords:
                 if crecord.orig_depot_except == drecord.orig_depot:
                     routing = crecord
                     break
 
         if not routing:
-            routing = crecords.first()
+            routing = (
+                FPRouting.objects.filter(
+                    freight_provider=12,
+                    dest_suburb=booking.de_To_Address_Suburb,
+                    dest_postcode=booking.de_To_Address_PostalCode,
+                    dest_state=booking.de_To_Address_State,
+                    orig_depot_except__isnull=True,
+                    data_code="C"
+                    # routing_group=routing_group,
+                )
+                .only("orig_depot_except", "gateway", "onfwd", "sort_bin")
+                .first()
+            )
 
         logger.info(
-            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}"
+            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}, {orig_depot}"
         )
     else:
         logger.info(
@@ -323,7 +347,8 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s>Itm: %s</font>" % (6, booking_line.sscc),
+                        "<font size=%s>Itm: %s</font>"
+                        % (6, gen_itm(booking, lines, j, sscc_cnt)),
                         style_right,
                     ),
                 ],
@@ -455,7 +480,7 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (9, "Ex " + routing.gateway),
+                        "<font size=%s><b>%s</b></font>" % (9, "Ex " + orig_depot),
                         style_right,
                     ),
                 ],
@@ -853,7 +878,10 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>Itm: %s</b></font>"
-                        % (label_settings["font_size_normal"], booking_line.sscc),
+                        % (
+                            label_settings["font_size_normal"],
+                            gen_itm(booking, lines, j, sscc_cnt),
+                        ),
                         style_left,
                     )
                 ],
@@ -1058,7 +1086,7 @@ def build_label(
 
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
-            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=25 * mm)]]
+            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=20 * mm)]]
 
             t1 = Table(
                 tbl_data,

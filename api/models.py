@@ -2091,11 +2091,11 @@ class Bookings(models.Model):
         return super(Bookings, self).save(*args, **kwargs)
 
 
-# @receiver(pre_save, sender=Bookings)
-# def pre_save_booking(sender, instance, **kwargs):
-#     from api.signal_handlers.booking import pre_save_handler
+@receiver(pre_save, sender=Bookings)
+def pre_save_booking(sender, instance, update_fields, **kwargs):
+    from api.signal_handlers.booking import pre_save_handler
 
-#     pre_save_handler(instance)
+    pre_save_handler(instance, update_fields)
 
 
 @receiver(post_save, sender=Bookings)
@@ -2257,7 +2257,11 @@ class Booking_lines(models.Model):
 
     def booking(self):
         try:
-            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            return (
+                Bookings.objects.filter(pk_booking_id=self.fk_booking_id)
+                .order_by("id")
+                .first()
+            )
         except Exception as e:
             trace_error.print()
             logger.error(f"#516 Error: {str(e)}")
@@ -2316,6 +2320,7 @@ class Booking_lines(models.Model):
     def save(self, *args, **kwargs):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
+        self.z_modifiedTimeStamp = datetime.now()
 
         if self.pk:
             cls = self.__class__
@@ -2430,7 +2435,11 @@ class Booking_lines_data(models.Model):
 
     def booking(self):
         try:
-            return Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            return (
+                Bookings.objects.filter(pk_booking_id=self.fk_booking_id)
+                .order_by("id")
+                .first()
+            )
         except Exception as e:
             trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
@@ -2438,13 +2447,21 @@ class Booking_lines_data(models.Model):
 
     def booking_line(self):
         try:
-            return Booking_lines.objects.get(
-                pk_booking_lines_id=self.fk_booking_lines_id
+            return (
+                Booking_lines.objects.filter(
+                    pk_booking_lines_id=self.fk_booking_lines_id
+                )
+                .order_by("id")
+                .first()
             )
         except Exception as e:
             trace_error.print()
             logger.info(f"#516 Error: {str(e)}")
             return None
+
+    def save(self, *args, **kwargs):
+        self.z_modifiedTimeStamp = datetime.now()
+        return super(Booking_lines_data, self).save(*args, **kwargs)
 
     class Meta:
         db_table = "dme_booking_lines_data"
@@ -2543,7 +2560,7 @@ class BOK_1_headers(models.Model):
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
     b_021_b_pu_avail_from_date = models.DateField(
-        verbose_name=_("Available From"), default=None, blank=True
+        verbose_name=_("Available From"), default=None, blank=True, null=True
     )
     b_003_b_service_name = models.CharField(
         verbose_name=_("Service Name"), max_length=64, blank=True, null=True
@@ -4149,7 +4166,7 @@ class FP_zones(models.Model):
         db_table = "fp_zones"
 
     def __str__(self):
-        return f"Zone #{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
+        return f"#{self.id}, {self.fk_fp}, {self.zone}, {self.state}, {self.postal_code}, {self.suburb}"
 
 
 class FP_carriers(models.Model):
@@ -4452,6 +4469,7 @@ class FP_costs(models.Model):
     max_width = models.FloatField(default=0, null=True, blank=True)
     max_height = models.FloatField(default=0, null=True, blank=True)
     max_weight = models.FloatField(default=0, null=True, blank=True)
+    max_volume = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = "fp_costs"
@@ -5037,8 +5055,9 @@ class FPRouting(models.Model):
     freight_provider = models.ForeignKey(
         Fp_freight_providers, on_delete=models.CASCADE, default=None, null=True
     )
-    suburb = models.CharField(max_length=45, default=None, null=True)
-    state = models.CharField(max_length=45, default=None, null=True)
+    data_code = models.CharField(max_length=10, default=None, null=True)
+    dest_suburb = models.CharField(max_length=45, default=None, null=True)
+    dest_state = models.CharField(max_length=45, default=None, null=True)
     dest_postcode = models.CharField(max_length=45, default=None, null=True)
     orig_depot = models.CharField(max_length=10, default=None, null=True)
     orig_depot_except = models.CharField(max_length=10, default=None, null=True)
@@ -5111,6 +5130,13 @@ class FP_status_history(models.Model):
         db_table = "fp_status_history"
 
 
+@receiver(post_save, sender=FP_status_history)
+def post_save_fp_status_history(sender, instance, **kwargs):
+    from api.signal_handlers.fp_status_history import post_save_handler
+
+    post_save_handler(instance)
+
+
 class ZohoTicketSummary(models.Model):
     id = models.AutoField(primary_key=True)
     summary = models.TextField(default=None, null=True)
@@ -5118,3 +5144,173 @@ class ZohoTicketSummary(models.Model):
 
     class Meta:
         db_table = "zoho_ticket_summary"
+
+
+class S_Bookings(models.Model):
+    id = models.AutoField(primary_key=True)
+    b_bookingID_Visual = models.IntegerField(blank=True, null=True, default=0)
+    b_dateBookedDate = models.DateTimeField(blank=True, null=True, default=None)
+    v_FPBookingNumber = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    b_client_order_num = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    de_Deliver_By_Date = models.DateField(blank=True, null=True, default=None)
+    b_client_name = models.CharField(max_length=64, blank=True, null=True, default=None)
+    vx_freight_provider = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    vx_serviceName = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    b_status = models.CharField(
+        verbose_name=_("Status"), max_length=40, blank=True, null=True, default=None
+    )
+    de_To_Address_Street_1 = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_Street_2 = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_State = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_Suburb = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_PostalCode = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_To_Address_Country = models.CharField(
+        max_length=12,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_to_Contact_F_LName = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_Email = models.CharField(max_length=64, blank=True, null=True, default=None)
+    de_to_Phone_Mobile = models.CharField(
+        max_length=25,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    de_to_Phone_Main = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    fp_event_datetime = models.DateTimeField(blank=True, null=True, default=None)
+    fp_message = models.CharField(max_length=255, blank=True, null=True, default=None)
+    zoho_summary = models.CharField(max_length=255, blank=True, null=True, default=None)
+    zoho_event_datetime = models.DateTimeField(blank=True, null=True, default=None)
+    booked_for_comm_communicate_via = models.CharField(
+        max_length=120,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "shared_bookings"
+
+
+class S_Booking_Lines(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(S_Bookings, on_delete=models.CASCADE)
+    e_type_of_packaging = models.CharField(
+        verbose_name=_("Type Of Packaging"), max_length=36, blank=True, null=True
+    )
+    e_item_type = models.CharField(
+        verbose_name=_("Item Type"), max_length=64, blank=True, null=True
+    )
+    e_pallet_type = models.CharField(
+        verbose_name=_("Pallet Type"), max_length=24, blank=True, null=True
+    )
+    e_item = models.CharField(
+        verbose_name=_("Item"), max_length=56, blank=True, null=True
+    )
+    e_qty = models.IntegerField(blank=True, null=True)
+    e_weightUOM = models.CharField(
+        verbose_name=_("Weight UOM"), max_length=56, blank=True, null=True
+    )
+    e_weightPerEach = models.FloatField(
+        verbose_name=_("Weight Per Each"), blank=True, null=True
+    )
+    e_dimUOM = models.CharField(
+        verbose_name=_("Dim UOM"), max_length=10, blank=True, null=True
+    )
+    e_dimLength = models.FloatField(verbose_name=_("Dim Length"), blank=True, null=True)
+    e_dimWidth = models.FloatField(verbose_name=_("Dim Width"), blank=True, null=True)
+    e_dimHeight = models.FloatField(verbose_name=_("Dim Height"), blank=True, null=True)
+    e_cubic = models.FloatField(blank=True, null=True)
+    e_cubic_2_mass_factor = models.FloatField(blank=True, null=True)
+    e_cubic_mass = models.FloatField(blank=True, null=True)
+    fp_event_datetime = models.DateTimeField(blank=True, null=True, default=None)
+    fp_status = models.CharField(max_length=64, blank=True, null=True, default=None)
+    fp_message = models.CharField(max_length=255, blank=True, null=True, default=None)
+    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
+    z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
+
+    class Meta:
+        db_table = "shared_booking_lines"
+
+
+class DMEBookingCSNote(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    note = models.TextField()
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=True,
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        auto_now=True,
+    )
+
+    class Meta:
+        db_table = "dme_booking_cs_note"

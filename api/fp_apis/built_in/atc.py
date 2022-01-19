@@ -9,7 +9,7 @@ from api.clients.operations.index import get_client
 logger = logging.getLogger(__name__)
 
 
-def get_pricing(fp_name, booking, booking_lines):
+def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     LOG_ID = "[ATC PRICING]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
@@ -35,7 +35,7 @@ def get_pricing(fp_name, booking, booking_lines):
         )
 
         # Address Filter
-        rules = address_filter(booking, booking_lines, rules, fp)
+        rules = address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones)
 
         if not rules:
             logger.info(f"@831 {LOG_ID} {fp_name.upper()} - not supported address")

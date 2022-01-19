@@ -156,17 +156,19 @@ def get_address(order_num):
         "email": "",
     }
 
-    DA_company_name, CUS_company_name = None, None
-    DA_street_1, CUS_street_1 = None, None
-    DA_suburb, CUS_suburb = None, None
-    DA_state, CUS_state = None, None
-    DA_postal_code, CUS_postal_code = None, None
-    DA_phone = None
-    DA_email = None
+    # Priority #1: DA (Delivery Address)
+    # Priority #2: CUS (Customer Contract)
+    # Priority #3: DI (Delivery Instruction)
+    DA_company_name, CUS_company_name, DI_company_name = None, None, None
+    DA_street_1, CUS_street_1, DI_street_1 = None, None, None
+    DA_suburb, CUS_suburb, DI_suburb = None, None, None
+    DA_state, CUS_state, DI_state = None, None, None
+    DA_postal_code, CUS_postal_code, DI_postal_code = None, None, None
+    DA_phone, DI_phone = None, None
+    DA_email, DI_email = None, None
     errors = []
     has_DA = False
-    clue_DA = ""
-    clue_CUS = ""
+    clue_DA, clue_CUS, clue_DI = "", "", ""
     for i, line in enumerate(csv_file):
         if i == 0:  # Ignore first header row
             continue
@@ -177,7 +179,6 @@ def get_address(order_num):
         address["phone"] = line_items[14] if line_items[14] else address["phone"]
 
         if type == "SO" and na_type == "DA":  # `Delivery Address` row
-            has_DA = True
             logger.info(f"@351 {LOG_ID} DA: {line}")
 
             DA_company_name = line_items[5]
@@ -196,7 +197,7 @@ def get_address(order_num):
             except Exception as e:
                 logger.info(f"@352 {LOG_ID} Error: {str(e)}")
                 pass
-        if type == "CUS" and na_type == "C":  # `Customer Contract` row
+        elif type == "CUS" and na_type == "C":  # `Customer Contract` row
             logger.info(f"@353 {LOG_ID} CUS: {line}")
 
             CUS_company_name = line_items[5]
@@ -210,26 +211,50 @@ def get_address(order_num):
             except Exception as e:
                 logger.info(f"@354 {LOG_ID} Error: {str(e)}")
                 pass
+        if type == "SO" and na_type == "DI":  # `Delivery Instruction` row
+            logger.info(f"@351 {LOG_ID} DI: {line}")
+
+            DI_company_name = line_items[5]
+            DI_street_1 = line_items[6]
+            DI_phone = line_items[14]
+
+            for item in line_items:
+                _item = item.strip()
+                email_regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+
+                if re.match(email_regex, _item):
+                    DI_email = _item
+            try:
+                clue_DI = line_items[7:]
+                errors, DI_state, DI_postal_code, DI_suburb = _extract_address(clue_DI)
+            except Exception as e:
+                logger.info(f"@352 {LOG_ID} Error: {str(e)}")
+                pass
 
         if type == "CUS" and na_type == "E":
             address["email"] = line_items[5]
 
-    if not has_DA:
-        address["company_name"] = CUS_company_name or ""
-        address["street_1"] = CUS_street_1 or ""
-        address["suburb"] = CUS_suburb or ""
-        address["state"] = CUS_state or ""
-        address["postal_code"] = CUS_postal_code or ""
-    else:
-        clue_CUS = []
+    if clue_DA:
         address["company_name"] = DA_company_name or ""
         address["street_1"] = DA_street_1 or ""
         address["suburb"] = DA_suburb or ""
         address["state"] = DA_state or ""
         address["postal_code"] = DA_postal_code or ""
+    elif clue_CUS:
+        address["company_name"] = CUS_company_name or ""
+        address["street_1"] = CUS_street_1 or ""
+        address["suburb"] = CUS_suburb or ""
+        address["state"] = CUS_state or ""
+        address["postal_code"] = CUS_postal_code or ""
+    elif clue_DI:
+        address["company_name"] = DI_company_name or ""
+        address["street_1"] = DI_street_1 or ""
+        address["suburb"] = DI_suburb or ""
+        address["state"] = DI_state or ""
+        address["postal_code"] = DI_postal_code or ""
 
-    address["phone"] = DA_phone or address["phone"]
-    address["email"] = DA_email or address["email"]
+    address["phone"] = DA_phone or DI_phone or address["phone"]
+    address["email"] = DA_email or DI_phone or address["email"]
 
     if not address["postal_code"]:
         errors.append("Stop Error: Delivery postal code missing or misspelled")
@@ -249,7 +274,7 @@ def get_address(order_num):
         )
 
     if not address["suburb"] and address["postal_code"]:
-        suburb = get_similar_suburb(clue_DA or clue_CUS)
+        suburb = get_similar_suburb(clue_DA or clue_CUS or clue_DI)
 
         if suburb:
             address["suburb"] = suburb
@@ -292,8 +317,8 @@ def get_address(order_num):
 
     # Email
     if not address["email"]:
-        if clue_DA or clue_CUS:
-            for clue in clue_DA or clue_CUS:
+        if clue_DA or clue_CUS or clue_DI:
+            for clue in clue_DA or clue_CUS or clue_DI:
                 if "@" in clue:
                     address["email"] = clue.strip()
                     errors.append("Warning: Email is formatted incorrectly")
@@ -305,8 +330,8 @@ def get_address(order_num):
             )
 
     # Street 1
-    if not address["street_1"] and (clue_DA or clue_CUS):
-        for clue in clue_DA or clue_CUS:
+    if not address["street_1"] and (clue_DA or clue_CUS or clue_DI):
+        for clue in clue_DA or clue_CUS or clue_DI:
             if (
                 clue
                 and clue.strip().upper() != address["company_name"].upper()
@@ -319,9 +344,9 @@ def get_address(order_num):
                 address["street_1"] = clue
 
     # Street 2
-    if clue_DA or clue_CUS:
+    if clue_DA or clue_CUS or clue_DI:
         street_2 = []
-        for clue in clue_DA or clue_CUS:
+        for clue in clue_DA or clue_CUS or clue_DI:
             if (
                 clue
                 and clue.strip().upper() != address["company_name"].upper()

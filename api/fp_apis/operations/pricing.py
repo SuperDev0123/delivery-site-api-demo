@@ -18,6 +18,8 @@ from api.models import (
     Client_FP,
     FP_Service_ETDs,
     Surcharge,
+    DME_clients,
+    Fp_freight_providers,
 )
 
 from api.fp_apis.operations.common import _set_error
@@ -85,6 +87,8 @@ def pricing(
     booking_id,
     is_pricing_only=False,
     packed_statuses=[Booking_lines.ORIGINAL],
+    pu_zones=[],
+    de_zones=[],
 ):
     """
     @params:
@@ -102,7 +106,7 @@ def pricing(
             booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
-        booking = Bookings.objects.filter(id=booking_id).first()
+        booking = Bookings.objects.filter(id=booking_id).order_by("id").first()
 
         if not booking:
             return None, False, "Booking does not exist", None
@@ -128,6 +132,11 @@ def pricing(
             packed_status__in=packed_statuses,
         ).update(is_used=True)
 
+    try:
+        client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
+    except:
+        client = None
+
     if not booking_lines:
         for packed_status in packed_statuses:
             booking_lines = Booking_lines.objects.filter(
@@ -137,9 +146,26 @@ def pricing(
             )
 
             if booking_lines:
-                _loop_process(booking, booking_lines, is_pricing_only, packed_status)
+                _loop_process(
+                    booking,
+                    booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    client,
+                    pu_zones,
+                    de_zones,
+                )
     else:
-        _loop_process(booking, booking_lines, is_pricing_only, packed_statuses[0])
+        for packed_status in packed_statuses:
+            _loop_process(
+                booking,
+                booking_lines,
+                is_pricing_only,
+                packed_status,
+                client,
+                pu_zones,
+                de_zones,
+            )
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
@@ -148,12 +174,21 @@ def pricing(
     return booking, True, "Retrieved all Pricing info", quotes
 
 
-def _loop_process(booking, booking_lines, is_pricing_only, packed_status):
+def _loop_process(
+    booking, booking_lines, is_pricing_only, packed_status, client, pu_zones, de_zones
+):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(
-            _pricing_process(booking, booking_lines, is_pricing_only, packed_status)
+            _pricing_process(
+                booking,
+                booking_lines,
+                is_pricing_only,
+                packed_status,
+                pu_zones,
+                de_zones,
+            )
         )
     finally:
         loop.close()
@@ -161,33 +196,51 @@ def _loop_process(booking, booking_lines, is_pricing_only, packed_status):
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
     )
+    fp_names = [quote.freight_provider for quote in quotes]
+    fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
     if quotes.exists():
-        # Interpolate gaps (for Plum client now)
-        quotes = interpolate_gaps(quotes)
+        if client:
+            # Interpolate gaps (for Plum client now)
+            quotes = interpolate_gaps(quotes, client)
 
         # Calculate Surcharges
         for quote in quotes:
-            gen_surcharges(booking, booking_lines, quote, "booking")
+            for fp in fps:
+                if quote.freight_provider.lower() == fp.fp_company_name.lower():
+                    quote_fp = fp
+
+            gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes)
+        quotes = apply_markups(quotes, client, fp)
 
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)
 
 
-async def _pricing_process(booking, booking_lines, is_pricing_only, packed_status):
+async def _pricing_process(
+    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+):
     try:
         await asyncio.wait_for(
-            pricing_workers(booking, booking_lines, is_pricing_only, packed_status),
+            pricing_workers(
+                booking,
+                booking_lines,
+                is_pricing_only,
+                packed_status,
+                pu_zones,
+                de_zones,
+            ),
             timeout=PRICING_TIME,
         )
     except asyncio.TimeoutError:
         logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
 
 
-async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status):
+async def pricing_workers(
+    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+):
     # Schedule n pricing works *concurrently*:
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
@@ -237,10 +290,10 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
                     pass
                 elif b_client_name in fp_client_names and b_client_name != client_name:
                     continue
-                elif (
-                    b_client_name not in fp_client_names
-                    and client_name not in ["dme", "test"]
-                ):
+                elif b_client_name not in fp_client_names and client_name not in [
+                    "dme",
+                    "test",
+                ]:
                     continue
 
                 logger.info(f"#905 [PRICING] - {_fp_name}, {client_name}")
@@ -298,6 +351,8 @@ async def pricing_workers(booking, booking_lines, is_pricing_only, packed_status
                 booking_lines,
                 is_pricing_only,
                 packed_status,
+                pu_zones,
+                de_zones,
             )
             _workers.add(_worker)
 
@@ -402,8 +457,12 @@ async def _built_in_pricing_worker_builder(
     booking_lines,
     is_pricing_only,
     packed_status,
+    pu_zones,
+    de_zones,
 ):
-    results = get_self_pricing(_fp_name, booking, booking_lines, is_pricing_only)
+    results = get_self_pricing(
+        _fp_name, booking, booking_lines, is_pricing_only, pu_zones, de_zones
+    )
     logger.info(
         f"#909 [BUILT_IN PRICING] - {_fp_name}, Result cnt: {len(results['price'])}, Results: {results['price']}"
     )

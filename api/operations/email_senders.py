@@ -603,6 +603,9 @@ def send_status_update_email(
         "DME_NUMBER": booking.b_bookingID_Visual,
         "ETA": eta,
         "BODY_REPEAT": "",
+        "NOTICE_DISPLAY": "none"
+        if step == 5 and last_milestone == "Delivered"
+        else "table-row",
     }
 
     booking_lines = Booking_lines.objects.filter(
@@ -776,7 +779,6 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     message = f"Hi Regina, Order({order_num}) has lines with missing dims: {lines_missing_dims}"
     to_emails = ["rejina@jasonl.com.au"]
     cc_emails = [
-        "stephenm@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
     send_email(to_emails, cc_emails, subject, message)
@@ -794,7 +796,6 @@ def send_email_missing_status(booking, fp_name, b_status_API):
     )
     to_emails = ["bookings@deliver-me.com.au"]
     cc_emails = [
-        "stephenm@deliver-me.com.au",
         "dev.deliverme@gmail.com",
     ]
 
@@ -823,24 +824,22 @@ def send_email_manual_book(booking):
 
 
 def send_email_to_admins(subject, message):
-    if settings.ENV in ["local", "dev"]:
-        logger.info("Email trigger is ignored on LOCAL & DEV.")
-        return
-
     dme_option_4_email_to_admin = DME_Options.objects.filter(
         option_name="send_email_to_admins"
     ).first()
 
-    if dme_option_4_email_to_admin and dme_option_4_email_to_admin.option_value == "1":
+    if (
+        dme_option_4_email_to_admin
+        and int(dme_option_4_email_to_admin.option_value) == 1
+    ):
         if settings.ENV in ["prod"]:
             to_emails = [
                 "care@deliver-me.com.au",
                 "bookings@deliver-me.com.au",
-                "stephenm@deliver-me.com.au",
             ]
         else:
             subject = f"FROM TEST SERVER - {subject}"
             to_emails = ["goldj@deliver-me.com.au"]
 
-        cc_emails = ["dev.deliverme@gmail.com"]
+        cc_emails = ["dev.deliverme@gmail.com", "goldj@deliver-me.com.au"]
         send_email(to_emails, cc_emails, subject, message)

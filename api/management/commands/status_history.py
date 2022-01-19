@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 STATUS_TO_BE_EXCLUDED = [
     "Entered",
+    "Imported / Integrated",
     "Ready for Despatch",
     "Ready for Booking",
     "Picking",

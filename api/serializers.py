@@ -42,6 +42,7 @@ from api.models import (
     Surcharge,
     Dme_utl_fp_statuses,
     FP_status_history,
+    DMEBookingCSNote,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -824,6 +825,44 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         )
 
 
+class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
+    cost_id = serializers.SerializerMethodField(read_only=True)
+    cost = serializers.SerializerMethodField(read_only=True)
+    eta = serializers.SerializerMethodField(read_only=True)
+    fp_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_cost_id(self, obj):
+        return obj.pk
+
+    def get_cost(self, obj):
+        cost = obj.client_mu_1_minimum_values
+        client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
+
+        if client_customer_mark_up:
+            cost = cost * (1 + client_customer_mark_up)
+
+            if obj.tax_value_1:
+                cost += obj.tax_value_1
+
+        return round(cost, 2)
+
+    def get_eta(self, obj):
+        return obj.etd
+
+    def get_fp_name(self, obj):
+        return obj.freight_provider
+
+    class Meta:
+        model = API_booking_quotes
+        fields = (
+            "cost_id",
+            "cost",
+            "eta",
+            "service_name",
+            "fp_name",
+        )
+
+
 class EmailTemplatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = DME_Email_Templates
@@ -1084,4 +1123,10 @@ class FpStatusSerializer(serializers.ModelSerializer):
 class FPStatusHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = FP_status_history
+        fields = "__all__"
+
+
+class DMEBookingCSNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DMEBookingCSNote
         fields = "__all__"

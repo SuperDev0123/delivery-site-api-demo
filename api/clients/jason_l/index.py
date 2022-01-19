@@ -20,8 +20,9 @@ from api.models import (
     BOK_3_lines_data,
     Pallet,
     API_booking_quotes,
+    FP_zones,
 )
-from api.serializers import SimpleQuoteSerializer
+from api.serializers import SimpleQuoteSerializer, Simple4ProntoQuoteSerializer
 from api.serializers_client import *
 from api.convertors import pdf
 from api.common import (
@@ -113,8 +114,6 @@ def partial_pricing(payload, client, warehouse):
         "b_client_name": client.company_name,
     }
 
-    booking_lines = []
-
     # Product & Child items
     missing_model_numbers = product_oper.find_missing_model_numbers(bok_2s, client)
 
@@ -126,6 +125,7 @@ def partial_pricing(payload, client, warehouse):
 
     items = product_oper.get_product_items(bok_2s, client, True, False)
 
+    booking_lines = []
     for index, item in enumerate(items):
         booking_line = {
             "pk_lines_id": index,
@@ -141,6 +141,10 @@ def partial_pricing(payload, client, warehouse):
             "e_weightPerEach": item["e_weightPerEach"],
         }
         booking_lines.append(booking_line)
+
+    # fps = Fp_freight_providers.objects.filter(fp_company_name__in=AVAILABLE_FPS_4_FC)
+    pu_zones = FP_zones.objects.filter(Q(suburb__iexact=warehouse.suburb) | Q(fk_fp=12))
+    de_zones = FP_zones.objects.filter(Q(suburb__iexact=de_suburb) | Q(fk_fp=12))
 
     _, success, message, quote_set = pricing_oper(
         body={"booking": booking, "booking_lines": booking_lines},
@@ -237,14 +241,11 @@ def push_boks(payload, client, username, method):
 
     # Check required fields
     if is_biz:
-        if not bok_1.get("shipping_type"):
-            message = "'shipping_type' is required."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
-        elif len(bok_1.get("shipping_type")) != 4:
-            message = "'shipping_type' is not valid."
-            logger.info(f"{LOG_ID} {message}")
-            raise ValidationError(message)
+        if not bok_1.get("shipping_type") or len(bok_1.get("shipping_type")) != 4:
+            # message = "'shipping_type' is required."
+            # logger.info(f"{LOG_ID} {message}")
+            # raise ValidationError(message)
+            bok_1["shipping_type"] = "DMEA"
 
         if not bok_1.get("b_client_order_num"):
             message = "'b_client_order_num' is required."
@@ -792,6 +793,7 @@ def push_boks(payload, client, username, method):
             body=body,
             booking_id=None,
             is_pricing_only=True,
+            packed_statuses=[Booking_lines.ORIGINAL, Booking_lines.AUTO_PACK],
         )
         logger.info(
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
@@ -812,9 +814,16 @@ def push_boks(payload, client, username, method):
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = SimpleQuoteSerializer(
-            best_quotes, many=True, context=context
-        ).data
+
+        if is_biz:
+            json_results = Simple4ProntoQuoteSerializer(
+                best_quotes, many=True, context=context
+            ).data
+        else:
+            json_results = SimpleQuoteSerializer(
+                best_quotes, many=True, context=context
+            ).data
+
         json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
         # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
@@ -862,7 +871,7 @@ def push_boks(payload, client, username, method):
     # Response
     if json_results:
         if is_biz:
-            result = {"success": True, "results": json_results}
+            result = {"success": True}
 
             # Commented (2021-06-18)
             # if bok_1["shipping_type"] == "DMEM":

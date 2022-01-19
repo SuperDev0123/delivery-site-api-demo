@@ -802,8 +802,11 @@ def create_order(request, fp_name):
             pk__in=booking_ids, b_status="Booked", vx_freight_provider__iexact=fp_name
         )
 
-        payload = get_create_order_payload(bookings, fp_name)
+        if bookings.exists() and bookings.first().vx_fp_order_id:
+            message = f"Successfully create order({bookings.first().vx_fp_order_id})"
+            return JsonResponse({"message": message})
 
+        payload = get_create_order_payload(bookings, fp_name)
         logger.info(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
         response = requests.post(url, params={}, json=payload)
@@ -1081,13 +1084,15 @@ def pricing(request):
 
     if not booking_id and "booking" in body:
         is_pricing_only = True
+        packed_statuses = [Booking_lines.ORIGINAL]
+    else:
+        packed_statuses = [
+            Booking_lines.ORIGINAL,
+            Booking_lines.AUTO_PACK,
+            Booking_lines.MANUAL_PACK,
+            Booking_lines.SCANNED_PACK,
+        ]
 
-    packed_statuses = [
-        Booking_lines.ORIGINAL,
-        Booking_lines.AUTO_PACK,
-        Booking_lines.MANUAL_PACK,
-        Booking_lines.SCANNED_PACK,
-    ]
     booking, success, message, results = pricing_oper(
         body, booking_id, is_pricing_only, packed_statuses
     )

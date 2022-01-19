@@ -1,3 +1,4 @@
+import math
 import logging
 import traceback
 
@@ -10,19 +11,18 @@ from api.helpers.cubic import get_cubic_meter
 logger = logging.getLogger(__name__)
 
 
-def get_pricing(fp_name, booking, booking_lines):
+def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     LOG_ID = "[BIP TNT]"  # BUILT-IN PRICING
     pricies = []
 
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
-    pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp)
-    de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp)
+    pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp, pu_zones)
+    de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp, de_zones)
 
     if not pu_zone or not de_zone:
-        raise Exception(
-            f"Not supported postal_code. [PU: {booking.pu_Address_PostalCode}({pu_zone}), DE: {booking.de_To_Address_PostalCode}({de_zone})]"
-        )
+        error_msg = f"Not supported postal_code. PU: {booking.pu_Address_PostalCode}({pu_zone}), DE: {booking.de_To_Address_PostalCode}({de_zone})"
+        raise Exception(error_msg)
 
     for service_type in service_types:
         logger.info(f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}")
@@ -67,12 +67,10 @@ def get_pricing(fp_name, booking, booking_lines):
             )
 
         chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
-        net_price += float(cost.per_UOM_charge or 0) * (
-            chargable_weight - cost.start_qty or 0
-        )
+        if service_type == "Road Express" and chargable_weight > 20:
+            chargable_weight -= 20
 
-        if cost.min_charge and net_price < cost.min_charge:
-            net_price = cost.min_charge
+        net_price += float(cost.per_UOM_charge or 0) * math.ceil(chargable_weight)
 
         logger.info(f"{LOG_ID} Final cost - {cost}")
         rule = rules.get(cost_id=cost.id)

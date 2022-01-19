@@ -61,6 +61,26 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None):
         return f"DME{str(uid)}"
 
 
+def get_m3_to_kg_factor(fp_name, data=None):
+    if fp_name.lower() == "northline":
+        return 333
+    elif (
+        fp_name.lower() == "hunter"
+        and (data and not data["is_pallet"])
+        and (
+            (data["item_length"] > 1.2 and data["item_width"] > 1.2)
+            or (data["item_height"] > 1.8)
+            or (
+                max(data["item_length"], data["item_width"]) > 1.2
+                and data["item_dead_weight"] > 59
+            )
+        )
+    ):
+        return 333
+
+    return 250
+
+
 def get_dme_status_from_fp_status(fp_name, b_status_API, booking=None):
     try:
         rules = Dme_utl_fp_statuses.objects.filter(fp_name__iexact=fp_name)

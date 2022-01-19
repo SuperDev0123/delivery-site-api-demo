@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, verify_jwt_token
 
 from .views import *
+from .views_status import *
 from .views_client import *
 from .views_zoho import *
 from .views_external_apis import *
@@ -61,6 +62,7 @@ router.register(
 )
 router.register(r"scans", ScansViewSet, basename="scans")
 router.register(r"fp_statuses", FpStatusesViewSet, basename="fp_statuses")
+router.register(r"cs_notes", DMEBookingCSNoteViewSet, basename="cs_notes")
 
 
 urlpatterns = router.urls
@@ -128,6 +130,7 @@ urlpatterns += [
     url(r"^send_zoho_ticket_reply/", send_zoho_ticket_reply),
     url(r"^get_zoho_departments/", get_zoho_departments),
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
+    # url(r"^bulk_pricing/", bulk_pricing),
     # Client apis
     url(r"^get_delivery_status/", get_delivery_status),
     url(r"^find-a-booking/", find_a_booking),

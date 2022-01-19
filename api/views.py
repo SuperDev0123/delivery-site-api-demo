@@ -986,6 +986,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "Quoted",
                     "Pushed",
                     "Entered",
+                    "Imported / Integrated",
                 ]
             ).select_related("api_booking_quote")
         elif active_tab_index == 81:  # 'Processing'
@@ -1884,7 +1885,9 @@ class BookingsViewSet(viewsets.ViewSet):
             ).filter(manifest_timestamp__range=(first_date, last_date))
 
             if clientname != "dme":
-                bookings_with_manifest.filter(b_client_name=clientname)
+                bookings_with_manifest = bookings_with_manifest.filter(
+                    b_client_name=clientname
+                )
 
             bookings_with_manifest.order_by("-manifest_timestamp")
             manifest_dates = bookings_with_manifest.values_list(
@@ -3009,6 +3012,32 @@ class BookingViewSet(viewsets.ViewSet):
             trace_error.print()
             logger.error(f"@204 {LOG_ID} Error: {str(e)}")
             return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def get_status_page_url(self, request):
+        LOG_ID = "[get_status_page_url]"
+        v_FPBookingNumber = request.GET.get("v_FPBookingNumber", None)
+        logger.info(f"{LOG_ID} v_FPBookingNumber: {v_FPBookingNumber}")
+
+        if v_FPBookingNumber:
+            bookings = Bookings.objects.filter(
+                v_FPBookingNumber__iexact=v_FPBookingNumber
+            )
+
+            if bookings:
+                booking = bookings.first()
+
+                if not booking.b_client_booking_ref_num:
+                    booking.b_client_booking_ref_num = (
+                        f"{booking.b_bookingID_Visual}_{booking.pk_booking_id}"
+                    )
+                    booking.save()
+
+                status_page_url = f"{settings.WEB_SITE_URL}/status/{booking.b_client_booking_ref_num}/"
+                return JsonResponse({"success": True, "statusPageUrl": status_page_url})
+
+        logger.error(f"{LOG_ID} Failed to find status page url")
+        return JsonResponse({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookingLinesViewSet(viewsets.ViewSet):
@@ -5560,6 +5589,25 @@ class ChartsViewSet(viewsets.ViewSet):
             # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
 
+    @action(detail=False, methods=["get"])
+    def get_num_active_bookings_per_client(self, request):
+        try:
+            result = (
+                Bookings.objects.filter(
+                    b_client_name__in=['Tempo Pty Ltd', 'Reworx', 'Plum Products Australia Ltd', 'Cinnamon Creations', 'Jason L', 'Bathroom Sales Direct'],
+                    b_dateBookedDate__isnull=False
+                )
+                .exclude(b_status__in=['Closed', 'Cancelled', 'Ready for booking', 'Delivered', 'To Quote', 'Picking', 'Picked', 'On Hold']) 
+                .extra(select={"b_client": "b_client_name"})
+                .values('b_client')
+                .annotate(ondeliveries=Count("b_client_name"))
+                .order_by("ondeliveries")
+            )
+            num_reports = list(result)
+            return JsonResponse({"results": num_reports})
+        except Exception as e:
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
 
 class CostOptionViewSet(viewsets.ModelViewSet):
     queryset = CostOption.objects.all().order_by("z_createdAt")
@@ -5646,6 +5694,46 @@ class FpStatusesViewSet(viewsets.ViewSet):
         try:
             fp_status.delete()
             return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.info(f"Delete Fp Status Error: {str(e)}")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DMEBookingCSNoteViewSet(viewsets.ModelViewSet):
+    queryset = DMEBookingCSNote.objects.all().order_by("z_createdTimeStamp")
+    serializer_class = DMEBookingCSNoteSerializer
+
+    def list(self, request):
+        booking_id = request.GET.get("bookingId")
+
+        if booking_id:
+            queryset = DMEBookingCSNote.objects.filter(booking_id=booking_id)
+        else:
+            queryset = DMEBookingCSNote.objects.all()
+
+        serializer = DMEBookingCSNoteSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        dme_employee = DME_employees.objects.get(fk_id_user_id=request.user.pk)
+        request.data[
+            "z_createdByAccount"
+        ] = f"{dme_employee.name_first} {dme_employee.name_last}"
+        serializer = DMEBookingCSNoteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            logger.info(f"Create CS Note Error: {str(serializer.errors)}")
+            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        try:
+            cs_note = DMEBookingCSNote.objects.get(pk=pk)
+            serializer = DMEBookingCSNoteSerializer(cs_note)
+            res_json = serializer.data
+            cs_note.delete()
+            return Response(res_json, status=status.HTTP_200_OK)
         except Exception as e:
             logger.info(f"Delete Fp Status Error: {str(e)}")
             return Response(status=status.HTTP_400_BAD_REQUEST)

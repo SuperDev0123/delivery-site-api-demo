@@ -1,39 +1,69 @@
 import logging
+import os
+import json
+import requests
 
 from django.db.models import Q
 
 from api.models import FP_zones, FP_vehicles
-from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.helpers.cubic import get_cubic_meter
 from api.common import trace_error
 from api.common.constants import PALLETS
-
+from api.common.pallet import lines_to_dict, vehicles_to_dict
+from api.common.ratio import _get_dim_amount, _get_weight_amount
+from api.fp_apis.utils import get_m3_to_kg_factor
 
 logger = logging.getLogger(__name__)
 
 
-def get_zone_code(postal_code, fp):
-    zones = (
-        FP_zones.objects.filter(fk_fp=fp.id)
-        .filter(
-            Q(postal_code=postal_code)
-            | Q(start_postal_code__lte=postal_code, end_postal_code__gte=postal_code)
-        )
-        .only("zone")
-    )
-
-    if zones.exists():
-        return zones.first().zone
-
-
-def get_zone(fp, state, postal_code, suburb):
-    zones = FP_zones.objects.filter(
-        state=state, postal_code=postal_code, suburb=suburb, fk_fp=fp.id
-    )
-
+def get_zone_code(postal_code, fp, zones):
     if zones:
-        return zones.first()
+        _postal_code = int(postal_code)
 
-    return None
+        for zone in zones:
+            zone_postal_code = int(zone.postal_code or -1)
+            if int(zone.fk_fp) == int(fp.id) and (
+                zone_postal_code == int(postal_code or -1)
+                or (
+                    zone.start_postal_code
+                    and zone.end_postal_code
+                    and int(zone.start_postal_code) <= _postal_code
+                    and int(zone.end_postal_code) >= _postal_code
+                )
+            ):
+                return zone.zone
+    else:
+        _zones = (
+            FP_zones.objects.filter(fk_fp=fp.id)
+            .filter(
+                Q(postal_code=postal_code)
+                | Q(
+                    start_postal_code__lte=postal_code, end_postal_code__gte=postal_code
+                )
+            )
+            .only("zone")
+        )
+
+        if _zones.exists():
+            return _zones.first().zone
+
+
+def get_zone(fp, state, postal_code, suburb, zones=[]):
+    if zones:
+        for zone in zones:
+            if (
+                zone.postal_code == postal_code
+                and zone.state == state
+                and zone.fk_fp == fp.id
+            ):
+                return zone
+    else:
+        _zones = FP_zones.objects.filter(
+            state=state, postal_code=postal_code, suburb=suburb, fk_fp=fp.id
+        )
+
+        if _zones:
+            return _zones.first()
 
 
 def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
@@ -46,33 +76,70 @@ def is_in_zone(fp, zone_code, suburb, postal_code, state, avail_zones):
     return False
 
 
-def address_filter(booking, booking_lines, rules, fp):
+def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
     LOG_ID = "[BP addr filter]"
     pu_suburb = booking.pu_Address_Suburb.lower()
-    pu_postal_code = booking.pu_Address_PostalCode.lower()
+    pu_postal_code = booking.pu_Address_PostalCode.zfill(4)
     pu_state = booking.pu_Address_State.lower()
 
     de_suburb = booking.de_To_Address_Suburb.lower()
-    de_postal_code = booking.de_To_Address_PostalCode.lower()
+    de_postal_code = booking.de_To_Address_PostalCode.zfill(4)
     de_state = booking.de_To_Address_State.lower()
 
     # Zone
     found_pu_zone = None
     found_de_zone = None
-    avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
-    avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
-    if pu_state:
-        avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
-    if pu_postal_code:
-        avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
-    if pu_suburb:
-        avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
-    if de_state:
-        avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
-    if de_postal_code:
-        avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
-    if de_suburb:
-        avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
+    avail_pu_zones = []
+    avail_de_zones = []
+
+    if pu_zones and de_zones:
+        for zone in pu_zones:
+            if int(zone.fk_fp) != int(fp.pk):
+                continue
+            if (
+                (pu_suburb and zone.suburb.lower() != pu_suburb.lower())
+                or (pu_state and zone.state.lower() != pu_state.lower())
+                or (pu_postal_code and int(zone.postal_code) != int(pu_postal_code))
+            ):
+                continue
+            else:
+                avail_pu_zones.append(zone)
+
+        for zone in de_zones:
+            if int(zone.fk_fp) != int(fp.pk):
+                continue
+            if (
+                (de_suburb and zone.suburb.lower() != de_suburb.lower())
+                or (de_state and zone.state.lower() != de_state.lower())
+                or (de_postal_code and int(zone.postal_code) != int(de_postal_code))
+            ):
+                continue
+            else:
+                avail_de_zones.append(zone)
+    else:
+        avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
+        avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
+        if pu_state:
+            avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
+        if pu_postal_code:
+            avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
+        if pu_suburb:
+            avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
+        if de_state:
+            avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
+        if de_postal_code:
+            avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
+        if de_suburb:
+            avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
+
+    logger.info(
+        f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
+    )
+
+    if fp.fp_company_name in ["Northline", "Camerons"] and (
+        not avail_pu_zones or not avail_de_zones
+    ):
+        return []
 
     filtered_rule_ids = []
     for rule in rules:
@@ -100,7 +167,7 @@ def address_filter(booking, booking_lines, rules, fp):
             # logger.info(f"@855 {LOG_ID} DE State does not match")
             continue
 
-        if rule.pu_zone and avail_pu_zones.exists():
+        if rule.pu_zone and avail_pu_zones:
             if found_pu_zone and found_pu_zone != rule.pu_zone:
                 continue
 
@@ -110,7 +177,7 @@ def address_filter(booking, booking_lines, rules, fp):
                 # logger.info(f"@856 {LOG_ID} PU Zone does not match")
                 continue
 
-        if rule.de_zone and avail_de_zones.exists():
+        if rule.de_zone and avail_de_zones:
             if found_de_zone and found_de_zone != rule.de_zone:
                 continue
 
@@ -161,6 +228,43 @@ def address_filter(booking, booking_lines, rules, fp):
     return rules.filter(pk__in=filtered_rule_ids)
 
 
+def lines_to_vehicle(lines_dict, vehicles_dict):
+    data = {
+        "bins": vehicles_dict,
+        "items": lines_dict,
+        "username": os.environ["3D_PACKING_API_USERNAME"],
+        "api_key": os.environ["3D_PACKING_API_KEY"],
+        "params": {
+            "images_background_color": "255,255,255",
+            "images_bin_border_color": "59,59,59",
+            "images_bin_fill_color": "230,230,230",
+            "images_item_border_color": "214,79,79",
+            "images_item_fill_color": "177,14,14",
+            "images_item_back_border_color": "215,103,103",
+            "images_sbs_last_item_fill_color": "99,93,93",
+            "images_sbs_last_item_border_color": "145,133,133",
+            "images_width": 100,
+            "images_height": 100,
+            "images_source": "file",
+            "images_sbs": 1,
+            "stats": 1,
+            "item_coordinates": 1,
+            "images_complete": 1,
+            "images_separated": 1,
+        },
+    }
+    url = f"{os.environ['3D_PACKING_API_URL']}/packer/pack"
+    response = requests.post(url, data=json.dumps(data))
+    res_data = response.json()["response"]
+    if res_data["status"] == -1:
+        msg = ""
+        for error in res_data["errors"]:
+            msg += f"{error['message']} \n"
+        logger.info(f"Packing API Error: {msg}")
+
+    return res_data
+
+
 def find_vehicle_ids(booking_lines, fp):
     vehicles = FP_vehicles.objects.filter(freight_provider_id=fp.id)
 
@@ -169,84 +273,44 @@ def find_vehicle_ids(booking_lines, fp):
         return
 
     try:
-        sum_cube = 0
-        max_length = 0
-        max_width = 0
-        max_height = 0
-        lines_cnt = 0
-        total_weight = 0
 
-        for item in booking_lines:
+        vehicle_ids = []
+        if len(booking_lines) == 1 and booking_lines[0].e_qty == 1:
+
+            item = booking_lines[0]
             length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
             width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
             height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
             weight = _get_weight_amount(item.e_weightUOM) * item.e_weightPerEach
+            cube = width * height * length
 
-            total_weight += weight * item.e_qty
-            max_length = length if max_length < length else max_length
-            max_width = width if max_width < width else max_width
-            max_height = height if max_height < height else max_height
-            sum_cube += width * height * length * item.e_qty
-            lines_cnt += 1
+            for vehicle in vehicles:
+                vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
+                vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
+                vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
+                vehicle_cube = vmax_width * vmax_height * vmax_length
 
-        # print(
-        #     f"Max width: {max_width}, height: {max_height}, length: {max_length}, Sum Cube = {sum_cube}"
-        # )
+                if (
+                    vmax_width >= width
+                    and vmax_height >= height
+                    and vmax_length >= length
+                    and vehicle_cube >= cube
+                    and vehicle.max_mass >= weight
+                ):
+                    vehicle_ids.append(vehicle.id)
+        else:
+            # prepare vehicles data
+            vehicles_dict = vehicles_to_dict(vehicles)
 
-        # 2021-07-07 Century only charge per vehicle
-        # if (
-        #     booking_lines.first().e_type_of_packaging
-        #     and booking_lines.first().e_type_of_packaging.lower() in PALLETS
-        # ):
-        #     for vehicle in vehicles:
-        #         vmax_width = (
-        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_width
-        #         )
-        #         vmax_height = (
-        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_height
-        #         )
-        #         vmax_length = (
-        #             _get_dim_amount(vehicle.pallet_UOM) * vehicle.max_pallet_length
-        #         )
+            # prepare lines data
+            lines_dict = lines_to_dict(booking_lines)
 
-        #         if (
-        #             vmax_width >= max_width
-        #             and max_height >= max_height
-        #             and vmax_length >= max_length
-        #             and vehicle.pallets >= len(booking_lines)
-        #         ):
-        #             vehicle_ids.append(vehicle.id)
-        # else:
-        #     for vehicle in vehicles:
-        #         vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-        #         vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-        #         vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-        #         vehicle_cube = vmax_width * vmax_height * vmax_length
+            # pack lines into vehicle
+            packed_results = lines_to_vehicle(lines_dict, vehicles_dict)
 
-        #         if (
-        #             vmax_width >= max_width
-        #             and max_height >= max_height
-        #             and vmax_length >= max_length
-        #             and vehicle_cube * 0.8 >= sum_cube
-        #         ):
-        #             vehicle_ids.append(vehicle.id)
-
-        vehicle_ids = []
-        cubic_ratio = 1 if lines_cnt == 1 else 0.8
-        for vehicle in vehicles:
-            vmax_width = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width
-            vmax_height = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height
-            vmax_length = _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length
-            vehicle_cube = vmax_width * vmax_height * vmax_length
-
-            if (
-                vmax_width >= max_width
-                and vmax_height >= max_height
-                and vmax_length >= max_length
-                and vehicle_cube * cubic_ratio >= sum_cube
-                and vehicle.max_mass >= total_weight
-            ):
-                vehicle_ids.append(vehicle.id)
+            for bin_packed in packed_results["bins_packed"]:
+                if not bin_packed["not_packed_items"]:
+                    vehicle_ids.append(int(bin_packed["bin_data"]["id"]))
 
         # Century Exceptional Rule #1
         if fp.fp_company_name.upper() == "CENTURY":
@@ -268,7 +332,7 @@ def find_vehicle_ids(booking_lines, fp):
 
             if has_pallet:
                 for vehicle_id in vehicle_ids:
-                    non_pallet_ids = [22, 23, 24, 25, 63, 64, 65, 66, 67, 68, 69, 70]
+                    non_pallet_ids = [63, 64, 65, 66, 67, 68, 69, 70]
 
                     if not vehicle_id in non_pallet_ids:
                         _vehicle_ids.append(vehicle_id)
@@ -350,8 +414,49 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
     return rule_ids
 
 
+def find_rule_ids_by_volume(booking_lines, rules, fp):
+    rule_ids = []
+
+    total_volume = 0
+    for item in booking_lines:
+        width = _get_dim_amount(item.e_dimUOM) * item.e_dimWidth
+        height = _get_dim_amount(item.e_dimUOM) * item.e_dimHeight
+        length = _get_dim_amount(item.e_dimUOM) * item.e_dimLength
+        volume = item.e_qty * length * width * height
+        total_volume += volume
+
+    for rule in rules:
+        cost = rule.cost
+
+        if total_volume and (total_volume > cost.max_volume):
+            continue
+
+        rule_ids.append(rule.id)
+
+    return rule_ids
+
+
 def find_rule_ids_by_weight(booking_lines, rules, fp):
     rule_ids = []
+
+    qty = 0
+    total_weight = 0
+    for line in booking_lines:
+        weight = (
+            line.e_qty * _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach
+        )
+        total_weight += weight
+        qty += line.e_qty
+
+    total_cubic_weight = 0
+    m3_to_kg_factor = get_m3_to_kg_factor(fp.fp_company_name)
+    for line in booking_lines:
+        total_cubic_weight += round(
+            get_cubic_meter(
+                line.e_dimLength, line.e_dimWidth, line.e_dimHeight, line.e_dimUOM
+            )
+            * m3_to_kg_factor
+        )
 
     for rule in rules:
         cost = rule.cost
@@ -360,29 +465,18 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
         # Check if only for PALLET
         if (
             cost.UOM_charge.upper() in PALLETS
-            and not booking_line.e_type_of_packaging.upper() in PALLETS
+            and not booking_lines[0].e_type_of_packaging.upper() in PALLETS
         ):
             logger.info(
                 f"@833 {fp.fp_company_name} - rule({rule.pk}) only support `Pallet`"
             )
             continue
 
-        if cost.max_weight:
+        if cost.weight_UOM and cost.max_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.max_weight
 
-        if cost.price_up_to_weight:
+        if cost.weight_UOM and cost.price_up_to_weight:
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
-
-        qty = 0
-        total_weight = 0
-        for booking_line in booking_lines:
-            weight = (
-                booking_line.e_qty
-                * _get_weight_amount(booking_line.e_weightUOM)
-                * booking_line.e_weightPerEach
-            )
-            total_weight += weight
-            qty += booking_line.e_qty
 
         if cost.UOM_charge.upper() in PALLETS:
             if cost.end_qty and cost.end_qty < qty:
@@ -395,7 +489,7 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             if cost.start_qty and cost.start_qty >= total_weight:
                 continue
 
-        if c_weight and total_weight > c_weight:
+        if c_weight and (total_weight > c_weight or total_cubic_weight > c_weight):
             continue
 
         rule_ids.append(rule.id)
@@ -469,6 +563,12 @@ def weight_filter(booking_lines, rules, fp):
         filtered_rules = rules.filter(pk__in=rule_ids)
 
     return filtered_rules
+
+
+def volume_filter(booking_lines, rules, fp):
+    filtered_rules = []
+    rule_ids = find_rule_ids_by_volume(booking_lines, rules, fp)
+    return rules.filter(pk__in=rule_ids)
 
 
 def find_cost(booking_lines, rules, fp):

@@ -270,26 +270,34 @@ def populate_fp_status_history(booking, consignmentStatuses):
     else:
         news = []
         for _new in new_fp_status_histories:
-            news.append(_new["b_status_API"])
+            has_already = False
 
-        exists = []
-        for fp_status_history in fp_status_histories:
-            exists.append(fp_status_history.status)
+            for fp_status_history in fp_status_histories:
+                # Compare status and event_time
+                if _new["b_status_API"] == fp_status_history.status and _new[
+                    "event_time"
+                ][:19] == fp_status_history.event_timestamp.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ):
+                    has_already = True
 
-        diff = list(set(news).difference(set(exists)))
+            if not has_already:
+                news.append(_new)
 
-        if not diff:
+        if not news:
             msg = f"#323 {LOG_ID} No new status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name})"
             # logger.info(msg)
             return False
 
-        for index, fp_status_history in enumerate(new_fp_status_histories):
-            if not fp_status_history["b_status_API"] in diff:
-                continue
-
-            msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {fp_status_history['b_status_API']} ({fp_status_history['status_desc']})"
+        for new in news:
+            msg = f"#324 {LOG_ID} New status from FP --- Booking: {booking.b_bookingID_Visual}({fp_name}), FP Status: {new['b_status_API']} ({new['status_desc']})"
             logger.info(msg)
 
-            create_fp_status_history(booking, fp, fp_status_history)
+            create_fp_status_history(booking, fp, new)
+
+            # Do not create new dme_status_history when same `status` but different `event_time`
+            if new["b_status_API"] == fp_status_histories[0].status:
+                logger.info(f"{LOG_ID} Same status with different even_time")
+                return False
 
         return True

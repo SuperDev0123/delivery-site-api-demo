@@ -68,7 +68,7 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
                 price["serviceName"] if "serviceName" in price else None
             )
             result["service_code"] = price["serviceType"]
-            result["tax_value_1"] = price["taxPrice"] if "etd" in price else None
+            result["tax_value_1"] = price["taxPrice"] if "taxPrice" in price else None
             results.append(result)
     elif fp_name == "tnt" and "price" in json_data:  # TNT
         for price in json_data["price"]:

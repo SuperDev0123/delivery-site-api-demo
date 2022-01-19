@@ -335,9 +335,9 @@ def build_label(
 
             fp_routing = FPRouting.objects.filter(
                 freight_provider=13,
-                suburb=de_suburb,
+                dest_suburb=de_suburb,
                 dest_postcode=de_postcode,
-                state=de_state,
+                dest_state=de_state,
             )
             if fp_routing:
                 head_port = fp_routing[0].orig_depot

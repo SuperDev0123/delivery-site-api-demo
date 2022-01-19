@@ -182,9 +182,19 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_2s = BOK_2_lines.objects.filter(
                 fk_header_id=bok_1.pk_header_id, is_deleted=False
             )
+            fp_names = [quote.freight_provider for quote in quotes]
+            fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
+            client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+
+            # Delete existing Surcharges
+            Surcharge.objects.filter(quote__in=quotes).delete()
 
             for quote in quotes:
-                gen_surcharges(bok_1, bok_2s, quote, "bok_1")
+                for fp in fps:
+                    if quote.freight_provider == fp.fp_company_name:
+                        quote_fp = fp
+
+                gen_surcharges(bok_1, bok_2s, quote, client, quote_fp, "bok_1")
 
             res_json = {"success": True, "message": "Freigth options are updated."}
             return Response(res_json, status=HTTP_200_OK)
@@ -1034,6 +1044,9 @@ def get_delivery_status(request):
                     "desc": get_dme_status_from_fp_status(
                         booking.vx_freight_provider, item["status"]
                     ),
+                    "event_timestamp": dme_time_lib.convert_to_AU_SYDNEY_tz(
+                        item["event_timestamp"]
+                    ),
                 }
                 for item in fp_status_history
             ]
@@ -1242,42 +1255,3 @@ def find_a_booking(request):
             "message": f"Order({order_number}) does not exist.",
         }
     )
-
-
-class ScansViewSet(viewsets.ViewSet):
-    serializer_class = FPStatusHistorySerializer
-    permission_classes = [AllowAny]
-
-    @action(detail=False, methods=["get"])
-    def get_scans_from_booking_id(self, request, pk=None):
-        from api.fp_apis.utils import get_dme_status_from_fp_status
-
-        booking_id = request.GET.get("bookingId")
-        try:
-            if not booking_id:
-                booking = Bookings.objects.all().order_by("-z_CreatedTimestamp")[0]
-                booking_id = booking.id
-            booking = Bookings.objects.get(id=booking_id)
-            fp_status_history = (
-                FP_status_history.objects.values(
-                    "id", "status", "desc", "event_timestamp"
-                )
-                .filter(booking_id=booking_id)
-                .order_by("-event_timestamp")
-            )
-            fp_statuses = [item["status"] for item in fp_status_history]
-            dme_statuses = get_dme_status_from_fp_status(
-                booking.vx_freight_provider, fp_statuses
-            )
-            fp_status_history = [
-                {**item, "desc": dme_statuses[index]}
-                for index, item in enumerate(fp_status_history)
-            ]
-            return Response({"scans": fp_status_history}, status=HTTP_200_OK)
-        except Exception as e:
-            logger.info(f"Get FP status history error: {str(e)}")
-            fp_status_history = []
-            return Response(
-                {"msg": str(e)},
-                status=HTTP_400_BAD_REQUEST,
-            )
