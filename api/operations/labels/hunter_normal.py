@@ -216,8 +216,10 @@ def build_label(
     )
 
     document = []
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
+    hunter_logo = "./static/assets/logos/hunter.png"
+    hunter_img = Image(hunter_logo, 30 * mm, 7.7 * mm)
 
     de_suburb = booking.de_To_Address_Suburb
     de_postcode = booking.de_To_Address_PostalCode
@@ -274,20 +276,23 @@ def build_label(
             data = [
                 [
                     dme_img,
-                    Paragraph(
-                        "<font size=%s><b>%s</b><br/><br/></font>"
-                        % (label_settings["font_size_extra_large"], "Hunter Express"),
-                        style_right_bg,
-                    ),
+                    # Paragraph(
+                    #     "<font size=%s><b>%s</b><br/><br/></font>"
+                    #     % (label_settings["font_size_extra_large"], "Hunter Express"),
+                    #     style_right_bg,
+                    # ),
+                    Paragraph("", style_center),
+                    hunter_img
                 ]
             ]
 
-            t1_w = float(label_settings["label_image_size_length"]) * (2 / 5) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (3 / 5) * mm
+            t1_w = float(label_settings["label_image_size_length"]) * (2 / 6) * mm
+            t2_w = float(label_settings["label_image_size_length"]) * (2 / 6) * mm
+            t3_w = float(label_settings["label_image_size_length"]) * (2 / 6) * mm
 
             header = Table(
                 data,
-                colWidths=[t1_w, t2_w],
+                colWidths=[t1_w, t2_w, t3_w],
                 style=[
                     ("VALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
