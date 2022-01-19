@@ -41,6 +41,7 @@ IMPORTANT_FIELDS = [
     "de_to_floor_access_by",
     "pu_service",
     "de_service",
+    "z_label_url",
 ]
 
 GENESIS_FIELDS = [
@@ -131,6 +132,11 @@ def pre_save_handler(instance, update_fields):
                 instance.dme_status_detail_updated_by = "user"
                 instance.prev_dme_status_detail = old.dme_status_detail
                 instance.dme_status_detail_updated_at = datetime.now()
+
+        # BSD
+        if instance.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8":
+            if old.z_label_url != instance.z_label_url:
+                instance.status = "Ready for Booking"
 
         # JasonL
         if instance.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":

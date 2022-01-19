@@ -28,7 +28,10 @@ def push_boks(payload, client, username, method):
         # Save bok_1
         bok_1["fk_client_id"] = client.dme_account_num
         bok_1["x_booking_Created_With"] = "DME PUSH API"
-        bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
+        bok_1["success"] = dme_constants.BOK_SUCCESS_5
+        bok_1["b_021_b_pu_avail_from_date"] = None
+        bok_1["b_022_b_pu_avail_from_time_hour"] = 0
+        bok_1["b_023_b_pu_avail_from_time_minute"] = 0
 
         # Warehouse
         bok_1["client_booking_id"] = bok_1["pk_header_id"]

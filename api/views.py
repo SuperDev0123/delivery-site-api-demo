@@ -986,6 +986,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "Quoted",
                     "Pushed",
                     "Entered",
+                    "Imported / Integrated",
                 ]
             ).select_related("api_booking_quote")
         elif active_tab_index == 81:  # 'Processing'

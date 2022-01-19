@@ -16,6 +16,7 @@ class Command(BaseCommand):
             .exclude(
                 b_status__in=[
                     "On Hold",
+                    "Imported / Integrated",
                     "Entered",
                     "Picking",
                     "Picked",
