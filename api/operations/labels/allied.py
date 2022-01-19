@@ -190,10 +190,10 @@ def build_label(
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
-    allied_logo = "./static/assets/allied_logo.png"
+    allied_logo = "./static/assets/logos/allied.png"
     allied_img = Image(allied_logo, 30 * mm, 7.7 * mm)
 
     fp_color_code = (
@@ -243,15 +243,19 @@ def build_label(
             data = [
                 [
                     dme_img,
+                    # Paragraph(
+                    #     "<font size=%s><b>%s</b></font>"
+                    #     % (
+                    #         label_settings["font_size_extra_large"],
+                    #         (booking.vx_freight_provider)
+                    #         if (booking.vx_freight_provider)
+                    #         else "",
+                    #     ),
+                    #     style_center_bg,
+                    # ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_extra_large"],
-                            (booking.vx_freight_provider)
-                            if (booking.vx_freight_provider)
-                            else "",
-                        ),
-                        style_center_bg,
+                        "",
+                        style_center,
                     ),
                     allied_img,
                 ]

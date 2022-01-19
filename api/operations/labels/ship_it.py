@@ -212,7 +212,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         bottomMargin=float(label_settings["margin_v"]) * mm,
     )
 
-    dme_logo = "./static/assets/dme_logo.png"
+    dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 8 * mm)
 
     Story = []
