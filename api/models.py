@@ -2560,7 +2560,7 @@ class BOK_1_headers(models.Model):
         verbose_name=_("Client booking id"), max_length=64, blank=True
     )
     b_021_b_pu_avail_from_date = models.DateField(
-        verbose_name=_("Available From"), default=None, blank=True
+        verbose_name=_("Available From"), default=None, blank=True, null=True
     )
     b_003_b_service_name = models.CharField(
         verbose_name=_("Service Name"), max_length=64, blank=True, null=True
