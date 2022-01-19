@@ -29,9 +29,17 @@ def push_boks(payload, client, username, method):
         bok_1["fk_client_id"] = client.dme_account_num
         bok_1["x_booking_Created_With"] = "DME PUSH API"
         bok_1["success"] = dme_constants.BOK_SUCCESS_5
+
+        # PU avail from
         bok_1["b_021_b_pu_avail_from_date"] = None
         bok_1["b_022_b_pu_avail_from_time_hour"] = 0
         bok_1["b_023_b_pu_avail_from_time_minute"] = 0
+        # if not bok_1.get("b_021_b_pu_avail_from_date"):
+        #     now_time = datetime.now()
+        #     start_date = (
+        #         now_time - timedelta(days=1) if now_time.time().hour < 12 else now_time
+        #     )
+        #     bok_1["b_021_b_pu_avail_from_date"] = next_business_day(start_date, 3)
 
         # Warehouse
         bok_1["client_booking_id"] = bok_1["pk_header_id"]
@@ -47,14 +55,6 @@ def push_boks(payload, client, username, method):
         bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
         bok_1["b_027_b_pu_address_type"] = "business"
         bok_1["b_053_b_del_address_type"] = "residential"
-
-        # PU avail from
-        if not bok_1.get("b_021_b_pu_avail_from_date"):
-            now_time = datetime.now()
-            start_date = (
-                now_time - timedelta(days=1) if now_time.time().hour < 12 else now_time
-            )
-            bok_1["b_021_b_pu_avail_from_date"] = next_business_day(start_date, 3)
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if not bok_1_serializer.is_valid():
