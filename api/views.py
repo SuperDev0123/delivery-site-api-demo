@@ -4605,12 +4605,14 @@ def build_label(request):
                 if not line.sscc:
                     line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                     line.save()
+            lines = scanned_lines
         else:
             # Populate SSCC if doesn't exist
             for line in original_lines:
                 if not line.sscc:
                     line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                     line.save()
+            lines = original_lines
 
     label_urls = []
     sscc_list = []
