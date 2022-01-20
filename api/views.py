@@ -4577,37 +4577,37 @@ def build_label(request):
     booking = Bookings.objects.get(pk=booking_id)
     lines = booking.lines().filter(is_deleted=False)
 
+    for line in lines:
+        if line.sscc and "NOSSCC_" in line.sscc:
+            line.sscc = None
+            line.save()
+
+    scanned_lines = []
+    for line in lines:
+        if line.packed_status == "scanned":
+            scanned_lines.append(line)
+
+    original_lines = []
+    for line in lines:
+        if line.packed_status == "original":
+            original_lines.append(line)
+
     if booking.api_booking_quote and not booking.vx_freight_provider in SPECIAL_FPS:
         lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
-        non_quote_lines = lines.exclude(
-            packed_status=booking.api_booking_quote.packed_status
-        )
 
         for line in lines:
             if not line.sscc:
                 line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                 line.save()
-
-        for line in non_quote_lines:
-            if line.sscc and "NOSSCC_" in line.sscc:
-                line.sscc = None
-                line.save()
     else:
-        scanned_lines = []
-        for line in lines:
-            if line.packed_status == "scanned":
-                scanned_lines.append(line)
-
         if scanned_lines:
-            lines = scanned_lines
-
-            for line in lines:
-                if line.sscc and "NOSSCC_" in line.sscc:
-                    line.sscc = None
+            for line in scanned_lines:
+                if not line.sscc:
+                    line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                     line.save()
         else:
             # Populate SSCC if doesn't exist
-            for line in lines:
+            for line in original_lines:
                 if not line.sscc:
                     line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
                     line.save()
