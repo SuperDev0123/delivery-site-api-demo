@@ -251,6 +251,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "z_locked_status_time",
             "b_booking_Priority",
             "b_booking_Category",
+            "b_promo_code",
         )
 
 

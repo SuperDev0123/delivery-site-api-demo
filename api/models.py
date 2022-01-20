@@ -1288,6 +1288,13 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
+    b_promo_code = models.CharField(
+        verbose_name=_("Promotion Code"),
+        max_length=32,
+        blank=True,
+        null=True,
+        default=None,
+    )
     v_service_Type_ID = models.CharField(
         verbose_name=_("Service Type ID"),
         max_length=64,
@@ -2973,6 +2980,7 @@ class BOK_1_headers(models.Model):
     b_092_booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    b_093_b_promo_code = models.CharField(max_length=32, default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)

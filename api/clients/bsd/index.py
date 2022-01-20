@@ -60,6 +60,8 @@ def push_boks(payload, client, username, method):
         b_010_b_notes = bok_1["shipping_method"]
         if bok_1["shipping_method"] == "local_pickup":
             bok_1["b_001_b_freight_provider"] = "Customer Collect"
+        elif bok_1["shipping_method"] == "free_shipping":
+            bok_1["b_093_b_promo_code"] = "Flash Sale Bulk"
 
         bok_1_serializer = BOK_1_Serializer(data=bok_1)
         if not bok_1_serializer.is_valid():
