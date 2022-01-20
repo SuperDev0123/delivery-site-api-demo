@@ -121,6 +121,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_client_sales_inv_num",
             "b_091_send_quote_to_pronto",
             "b_092_booking_type",
+            "b_093_b_promo_code",
             "zb_105_text_5",  # b_error_Capture
         )
 
