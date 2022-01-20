@@ -4621,7 +4621,7 @@ def build_label(request):
     for line in lines:
         if line.sscc not in sscc_list:
             sscc_list.append(line.sscc)
-            total_qty += line1.e_qty
+            total_qty += line.e_qty
             _lines = []
 
             for line1 in lines:
