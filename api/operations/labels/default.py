@@ -228,13 +228,14 @@ def build_label(
     Story = []
     j = 1
 
-    totalQty = 0
-    if one_page_label:
-        lines = [lines[0]]
-        totalQty = 1
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
+    totalQty = sscc_cnt
+    # totalQty = 0
+    # if one_page_label:
+    #     lines = [lines[0]]
+    #     totalQty = 1
+    # else:
+    #     for booking_line in lines:
+    #         totalQty = totalQty + booking_line.e_qty
 
     totalWeight = 0
     totalCubic = 0
@@ -262,7 +263,7 @@ def build_label(
                             "",
                             style_center,
                         ),
-                        fp_img
+                        fp_img,
                     ]
                 ]
 
