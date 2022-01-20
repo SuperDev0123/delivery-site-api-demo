@@ -91,6 +91,65 @@ def bdra3(param):
         return None
 
 
+def pura0(param):
+    if (
+        param["pu_address_type"].lower() == "residential"
+        and param["max_item_weight"] >= 34
+        and param["max_item_weight"] < 50
+    ):
+        return {
+            "name": "Bulk Pick up from Residential Address - Average dead or cubic weight per item 34-49kg",
+            "description": "",
+            "value": 10,
+        }
+    else:
+        return None
+
+
+def pura1(param):
+    if (
+        param["pu_address_type"].lower() == "residential"
+        and param["max_item_weight"] >= 50
+        and param["max_item_weight"] < 75
+    ):
+        return {
+            "name": "Bulk Pick up from Residential Address - Average dead or cubic weight per item 50-74kg",
+            "description": "",
+            "value": 20,
+        }
+    else:
+        return None
+
+
+def pura2(param):
+    if (
+        param["pu_address_type"].lower() == "residential"
+        and param["max_item_weight"] >= 75
+        and param["max_item_weight"] < 100
+    ):
+        return {
+            "name": "Bulk Pick up from Residential Address - Average dead or cubic weight per item 75-99kg",
+            "description": "",
+            "value": 30,
+        }
+    else:
+        return None
+
+
+def pura3(param):
+    if (
+        param["pu_address_type"].lower() == "residential"
+        and param["max_item_weight"] >= 100
+    ):
+        return {
+            "name": "Bulk Pick up from Residential Address - Average dead or cubic weight per item 100kg or greater",
+            "description": "",
+            "value": 50,
+        }
+    else:
+        return None
+
+
 def ptl(param):
     if param["pu_tail_lift"] and int(param["pu_tail_lift"]) != 0:
         return {
@@ -115,6 +174,6 @@ def dtl(param):
 
 def hunter():
     return {
-        "order": [bdra0, bdra1, bdra2, bdra3, ptl, dtl, el0, el1, el2],
+        "order": [bdra0, bdra1, bdra2, bdra3, pura0, pura1, pura2, pura3, ptl, dtl, el0, el1, el2],
         "line": [],
     }
