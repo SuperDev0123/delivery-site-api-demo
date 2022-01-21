@@ -38,16 +38,13 @@ def post_save_handler(instance, created, update_fields):
         if not booking:
             return
 
+        # Ignore when plum scans
+        if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004":
+            return
+
         # Genesis
         # if booking.b_dateBookedDate:
         #     create_shared_lines(booking)
-
-        # Ignore when plum scans
-        if (
-            booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
-            and instance.packed_status == Booking_lines.SCANNED_PACK
-        ):
-            return
 
         logger.info(f"{LOG_ID} Created new or updated important field.")
         packed_status = instance.packed_status
