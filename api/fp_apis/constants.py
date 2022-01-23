@@ -308,7 +308,8 @@ FP_UOM = {
 }
 
 SPECIAL_FPS = [
-    "Line haul General",
+    "Linehaul General",
     "Customer Pickup",
-    "JasonL In house",
+    "Customer Collect",
+    "In House Fleet",
 ]
