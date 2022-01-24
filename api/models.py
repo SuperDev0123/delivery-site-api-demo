@@ -1,3 +1,6 @@
+from operator import mod
+from pydoc import pager
+from django import db
 import pytz
 import logging
 from datetime import datetime, date, timedelta, time
@@ -339,6 +342,8 @@ class RuleTypes(models.Model):
 class Fp_freight_providers(models.Model):
     id = models.AutoField(primary_key=True)
     fp_company_name = models.CharField(max_length=64, blank=True, null=True)
+    fp_user_name = models.CharField(max_length=40, null=True)
+    fp_password = models.CharField(max_length=40, null=True)
     fp_address_country = models.CharField(max_length=32, blank=True, null=True)
     fp_inactive_date = models.DateField(blank=True, null=True)
     fp_manifest_cnt = models.IntegerField(default=1, blank=True, null=True)
@@ -5333,3 +5338,32 @@ class DMEBookingCSNote(models.Model):
 
     class Meta:
         db_table = "dme_booking_cs_note"
+
+
+class FPContacts(models.Model):
+    id = models.AutoField(primary_key=True)
+    first_name = models.CharField(max_length=20, null=False, default=None)
+    last_name = models.CharField(max_length=20, null=False, default=None)
+    company = models.CharField(max_length=20, null=False, default=None)
+    department = models.CharField(max_length=20, null=True, default=None)
+
+    email_address = models.CharField(max_length=40, null=True, default=None)
+    job_title = models.CharField(max_length=64, null=True, default=None)
+    company_main_phone = models.CharField(max_length=64, null=True, default=None)
+    home_phone = models.CharField(max_length=64, null=True, default=None)
+    mobile_phone = models.CharField(max_length=64, null=True, default=None)
+    notes = models.CharField(max_length=100, null=True, default=None)
+    webpage = models.CharField(max_length=160, null=True, default=None)
+
+    business_street1 = models.CharField(max_length=64, null=True, default=None)
+    business_street2 = models.CharField(max_length=64, null=True, default=None)
+    business_city = models.CharField(max_length=64, null=True, default=None)
+    business_country = models.CharField(max_length=64, null=True, default=None)
+    business_fax = models.CharField(max_length=64, null=True, default=None)
+    business_phone = models.CharField(max_length=64, null=True, default=None)
+    business_phone2 = models.CharField(max_length=64, null=True, default=None)
+    business_state = models.CharField(max_length=64, null=True, default=None)
+    business_postal_code = models.IntegerField(verbose_name=_("postal code"))
+
+    class Meta:
+        db_table = "fp_contacts"
