@@ -43,6 +43,7 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import auto_select_pricing
 from api.fp_apis.constants import FP_CREDENTIALS, S3_URL, DME_LEVEL_API_URL
 from api.fp_apis.utils import gen_consignment_num
+from api.fp_apis.constants import SPECIAL_FPS
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +154,10 @@ def book(request, fp_name):
                 fp_name, booking.b_bookingID_Visual
             )
             booking.save()
-            send_email_manual_book(booking)
+
+            if booking.vx_freight_provider not in SPECIAL_FPS:
+                send_email_manual_book(booking)
+
             res_json = {"success": True, "message": "Booked Successfully"}
             return JsonResponse(res_json)
         else:
