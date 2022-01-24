@@ -23,6 +23,11 @@ logger = logging.getLogger(__name__)
 
 def create_shared_booking(booking):
     LOG_ID = "[GENESIS CREATE]"
+
+    # Work for only JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        return
+
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
     if settings.ENV != "prod":
@@ -144,6 +149,11 @@ def update_shared_booking(booking, is_for="all"):
     is_for: 3 enums - 'all', 'fp_info', 'zoho_info'
     """
     LOG_ID = "[GENESIS UPDATE]"
+
+    # Work for only JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        return
+
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
     if settings.ENV != "prod":
@@ -209,6 +219,10 @@ def update_shared_booking(booking, is_for="all"):
 def create_shared_lines(booking):
     LOG_ID = "[GENESIS LINES UPDATE]"
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
+
+    # Work for only JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        return
 
     if settings.ENV != "prod":
         logger.info(f"{LOG_ID} Skipped on this env")
