@@ -43,8 +43,8 @@ def post_save_handler(instance, created, update_fields):
             return
 
         # Genesis
-        # if booking.b_dateBookedDate:
-        #     create_shared_lines(booking)
+        if booking.b_dateBookedDate:
+            create_shared_lines(booking)
 
         logger.info(f"{LOG_ID} Created new or updated important field.")
         packed_status = instance.packed_status
