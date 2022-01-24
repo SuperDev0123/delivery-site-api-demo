@@ -182,6 +182,8 @@ def post_save_handler(instance, created, update_fields):
         not created
         and not instance.z_lock_status
         and intersection(IMPORTANT_FIELDS, update_fields or [])
+        and booking.kf_client_id
+        != "461162D2-90C7-BF4E-A905-000000000004"  # Ignore when plum scans
     ):
         logger.info(f"{LOG_ID} Updated important field.")
         set_booking_quote(instance, None)
