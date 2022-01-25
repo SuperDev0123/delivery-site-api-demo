@@ -5260,6 +5260,12 @@ class S_Bookings(models.Model):
     )
     last_cs_note = models.TextField(null=True, default=None)
     last_cs_note_timestamp = models.DateTimeField(null=True, default=None)
+    s_06_Estimated_Delivery_TimeStamp = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
+    s_21_Actual_Delivery_TimeStamp = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
     z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
 
