@@ -102,7 +102,7 @@ def build_special_fp_pricings(booking, packed_status):
         or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
     ):
-        quote_0.freight_provider = "Linehaul General"
+        quote_0.freight_provider = "DME Linehaul General"
         quote_0.save()
 
         quote_1 = quote_0
