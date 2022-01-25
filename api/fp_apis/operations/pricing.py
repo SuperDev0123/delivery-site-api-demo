@@ -82,6 +82,41 @@ def _confirm_visible(booking, booking_lines, quotes):
     return quotes
 
 
+def build_special_fp_pricings(booking, packed_status):
+    quote_0 = API_booking_quotes()
+    quote_0.api_results_id = ""
+    quote_0.fk_booking_id = booking.pk_booking_id
+    quote_0.fk_client_id = booking.b_client_name
+    quote_0.account_code = None
+    quote_0.service_name = None
+    quote_0.etd = 3
+    quote_0.fee = 0
+    quote_0.service_code = None
+    quote_0.tax_value_1 = 0
+    quote_0.tax_value_1 = 0
+    quote_0.client_mu_1_minimum_values = 0
+    quote_0.packed_status = packed_status
+
+    if (
+        booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+        or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+    ):
+        quote_0.freight_provider = "Linehaul General"
+        quote_0.save()
+
+        quote_1 = quote_0
+        quote_1.pk = None
+        quote_1.freight_provider = "Customer Collect"
+        quote_1.save()
+
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        quote_2 = quote_0
+        quote_2.pk = None
+        quote_2.freight_provider = "In House Fleet"
+        quote_2.save()
+
+
 def pricing(
     body,
     booking_id,
@@ -155,6 +190,9 @@ def pricing(
                     pu_zones,
                     de_zones,
                 )
+
+            if booking_lines.count() > 0:
+                build_special_fp_pricings(booking, packed_status)
     else:
         for packed_status in packed_statuses:
             _loop_process(

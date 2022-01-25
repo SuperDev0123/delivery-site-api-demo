@@ -6,7 +6,7 @@ from django.conf import settings
 from api.models import *
 from api.common import ratio
 from api.common.booking_quote import set_booking_quote
-from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
+from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM, SPECIAL_FPS
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
 
@@ -211,8 +211,10 @@ def _is_deliverable_price(pricing, booking):
 def _get_fastest_price(pricings):
     fastest_pricing = {}
     for pricing in pricings:
-        etd = get_etd_in_hour(pricing)
+        if pricing.freight_provider in SPECIAL_FPS:
+            continue
 
+        etd = get_etd_in_hour(pricing)
         if not fastest_pricing:
             fastest_pricing["pricing"] = pricing
             fastest_pricing["etd_in_hour"] = etd
@@ -238,6 +240,9 @@ def _get_fastest_price(pricings):
 def _get_lowest_price(pricings):
     lowest_pricing = {}
     for pricing in pricings:
+        if pricing.freight_provider in SPECIAL_FPS:
+            continue
+
         if not lowest_pricing:
             lowest_pricing["pricing"] = pricing
             lowest_pricing["etd"] = get_etd_in_hour(pricing)
