@@ -81,6 +81,10 @@ def create_shared_booking(booking):
     s_booking.zoho_summary = None
     s_booking.zoho_event_datetime = None
     s_booking.booked_for_comm_communicate_via = booking.booked_for_comm_communicate_via
+    s_booking.s_06_Estimated_Delivery_TimeStamp = (
+        booking.s_06_Latest_Delivery_Date_TimeSet
+    )
+    s_booking.s_21_Actual_Delivery_TimeStamp = booking.s_21_Actual_Delivery_TimeStamp
     s_booking.z_createdAt = datetime.now()
     s_booking.z_updatedAt = datetime.now()
 
@@ -195,16 +199,22 @@ def update_shared_booking(booking, is_for="all"):
         s_booking.de_Email = booking.de_Email
         s_booking.de_to_Phone_Mobile = booking.de_to_Phone_Mobile
         s_booking.de_to_Phone_Main = booking.de_to_Phone_Main
-
-        if status_histories:
-            s_booking.fp_event_datetime = status_histories[0].event_timestamp
-            s_booking.fp_message = status_histories[0].desc
-
         s_booking.zoho_summary = None
         s_booking.zoho_event_datetime = None
         s_booking.booked_for_comm_communicate_via = (
             booking.booked_for_comm_communicate_via
         )
+        s_booking.s_06_Estimated_Delivery_TimeStamp = (
+            booking.s_06_Latest_Delivery_Date_TimeSet
+        )
+        s_booking.s_21_Actual_Delivery_TimeStamp = (
+            booking.s_21_Actual_Delivery_TimeStamp
+        )
+
+        if status_histories:
+            s_booking.fp_event_datetime = status_histories[0].event_timestamp
+            s_booking.fp_message = status_histories[0].desc
+
     elif is_for == "fp-info":
         if status_histories:
             s_booking.fp_event_datetime = status_histories[0].event_timestamp
