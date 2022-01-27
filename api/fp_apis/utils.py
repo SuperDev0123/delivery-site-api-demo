@@ -243,7 +243,7 @@ def _get_lowest_price(pricings):
         if pricing.freight_provider in SPECIAL_FPS:
             continue
 
-        if not lowest_pricing:
+        if not lowest_pricing and pricing.client_mu_1_minimum_values:
             lowest_pricing["pricing"] = pricing
             lowest_pricing["etd"] = get_etd_in_hour(pricing)
         elif lowest_pricing and pricing.client_mu_1_minimum_values:

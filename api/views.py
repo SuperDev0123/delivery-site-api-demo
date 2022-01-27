@@ -4592,27 +4592,25 @@ def build_label(request):
         if line.packed_status == "original":
             original_lines.append(line)
 
-    if booking.api_booking_quote and not booking.vx_freight_provider in SPECIAL_FPS:
-        lines = lines.filter(packed_status=booking.api_booking_quote.packed_status)
+    if booking.api_booking_quote:
+        selected_lines = []
 
         for line in lines:
-            if not line.sscc:
-                line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
-                line.save()
+            if line.packed_status == booking.api_booking_quote.packed_status:
+                selected_lines.append(line)
+
+        lines = selected_lines
     else:
         if scanned_lines:
-            for line in scanned_lines:
-                if not line.sscc:
-                    line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
-                    line.save()
             lines = scanned_lines
         else:
-            # Populate SSCC if doesn't exist
-            for line in original_lines:
-                if not line.sscc:
-                    line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
-                    line.save()
             lines = original_lines
+
+    # Populate SSCC if doesn't exist
+    for line in lines:
+        if not line.sscc:
+            line.sscc = f"NOSSCC_{booking.b_bookingID_Visual}_{line.pk}"
+            line.save()
 
     label_urls = []
     sscc_list = []
