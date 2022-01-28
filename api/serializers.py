@@ -311,6 +311,8 @@ class BookingSerializer(serializers.ModelSerializer):
                 return round(
                     obj.inv_sell_quoted_override * (1 + client_customer_mark_up), 2
                 )
+            elif obj.inv_booked_quoted:
+                return round(obj.inv_booked_quoted * (1 + client_customer_mark_up), 2)
             elif obj.inv_sell_quoted:
                 return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
 
