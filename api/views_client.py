@@ -982,11 +982,30 @@ def get_delivery_status(request):
                     and not booking.b_status in ["Closed", "Cancelled"]
                     and index == 4
                 ):
-                    timestamps.append(
-                        booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                    delivery_date = ""
+                    if booking.s_21_Actual_Delivery_TimeStamp:
+                        delivery_date = booking.s_21_Actual_Delivery_TimeStamp.strftime(
                             "%d/%m/%Y %H:%M"
                         )
-                    )
+                    elif booking.z_ModifiedTimestamp:
+                        delivery_date = booking.z_ModifiedTimestamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    elif booking.b_dateBookedDate:
+                        delivery_date = booking.b_dateBookedDate.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    elif booking.puPickUpAvailFrom_Date:
+                        delivery_date = booking.puPickUpAvailFrom_Date.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    elif booking.z_CreatedTimestamp:
+                        delivery_date = booking.z_CreatedTimestamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    else:
+                        delivery_date = ""
+                    timestamps.append(delivery_date)
                 else:
                     status_time = get_status_time_from_category(
                         booking.pk_booking_id, item
