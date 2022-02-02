@@ -811,15 +811,23 @@ def manifest_boks(request):
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def get_delivery_status(request):
+    """
+    GET request should have `identifier` param
+
+    If length is 6 or 7 - `b_bookingID_Visual`
+    If length is over 32 - `b_client_booking_ref_num`
+    """
+
     from api.fp_apis.utils import get_dme_status_from_fp_status
 
-    client_booking_id = request.GET.get("identifier")
+    identifier = request.GET.get("identifier")
     quote_data = {}
 
     # 1. Try to find from dme_bookings table
-    booking = Bookings.objects.filter(
-        b_client_booking_ref_num=client_booking_id
-    ).first()
+    if len(identifier) > 32:
+        booking = Bookings.objects.filter(b_client_booking_ref_num=identifier).first()
+    elif len(identifier) in [6, 7]:
+        booking = Bookings.objects.filter(b_bookingID_Visual=identifier).first()
 
     if booking:
         client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
@@ -829,7 +837,7 @@ def get_delivery_status(request):
 
         if not category:
             logger.info(
-                f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
+                f"#301 - unknown_status - identifier={identifier}, status={b_status}"
             )
             return Response(
                 {
@@ -1020,10 +1028,6 @@ def get_delivery_status(request):
 
         if step == 1:
             eta = (
-                # (
-                #     dme_time_lib.convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date)
-                #     + timedelta(days=int(json_quote["eta"].split()[0]))
-                # ).strftime("%d/%m/%Y")
                 dme_time_lib.next_business_day(
                     dme_time_lib.convert_to_AU_SYDNEY_tz(
                         booking.puPickUpAvailFrom_Date
@@ -1036,10 +1040,6 @@ def get_delivery_status(request):
             )
         else:
             eta = (
-                # (
-                #     dme_time_lib.convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
-                #     + timedelta(days=int(json_quote["eta"].split()[0]))
-                # ).strftime("%d/%m/%Y")
                 dme_time_lib.next_business_day(
                     dme_time_lib.convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
                     int(json_quote["eta"].split()[0]),
@@ -1090,7 +1090,7 @@ def get_delivery_status(request):
         )
 
     # 2. Try to find from Bok tables
-    bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    bok_1 = BOK_1_headers.objects.filter(client_booking_id=identifier).first()
 
     if not bok_1:
         return Response(
