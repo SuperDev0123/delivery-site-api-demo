@@ -47,7 +47,6 @@ class Command(BaseCommand):
             )
             file_path = "/home/ubuntu/jason_l/status/src/status.csv"
             csv_file = open(file_path)
-            logger.info(f"@350 {LOG_ID} File({file_path}) opened!")
 
             if len(csv_file) > 1:
                 results.append(csv_file[1])
