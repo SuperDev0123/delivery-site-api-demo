@@ -48,8 +48,9 @@ class Command(BaseCommand):
             file_path = "/home/ubuntu/jason_l/status/src/status.csv"
             csv_file = open(file_path)
 
-            if len(csv_file) > 1:
-                results.append(csv_file[1])
+            for i, line in enumerate(csv_file):
+                if i == 1:
+                    results.append(line)
 
         print(f"\nResult:\n {results}")
         print("\n----- Finished! -----")
