@@ -25,7 +25,7 @@ class Command(BaseCommand):
         print(f"Bookings count: {bookings_cnt}")
 
         results = []
-        for index, booking in enumerate(bookings[:10]):
+        for index, booking in enumerate(bookings):
             # - Split `order_num` and `suffix` -
             _order_num, suffix = booking.b_client_order_num, ""
             iters = _order_num.split("-")
