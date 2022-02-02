@@ -45,7 +45,7 @@ class Command(BaseCommand):
                     f"param2={suffix}",
                 ]
             )
-            file_path = "/home/ubuntu/jason_l/status/src/del.csv"
+            file_path = "/home/ubuntu/jason_l/status/src/status.csv"
             csv_file = open(file_path)
             logger.info(f"@350 {LOG_ID} File({file_path}) opened!")
 
