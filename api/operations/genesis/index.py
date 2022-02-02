@@ -58,6 +58,7 @@ def create_shared_booking(booking):
 
     s_booking = S_Bookings()
     s_booking.b_bookingID_Visual = booking.b_bookingID_Visual
+    s_booking.b_client_booking_ref_num = booking.b_client_booking_ref_num
     s_booking.b_dateBookedDate = booking.b_dateBookedDate
     s_booking.v_FPBookingNumber = booking.v_FPBookingNumber
     s_booking.b_client_name = booking.b_client_name
@@ -180,6 +181,7 @@ def update_shared_booking(booking, is_for="all"):
 
     if is_for == "all":
         s_booking.b_bookingID_Visual = booking.b_bookingID_Visual
+        s_booking.b_client_booking_ref_num = booking.b_client_booking_ref_num
         s_booking.b_dateBookedDate = booking.b_dateBookedDate
         s_booking.v_FPBookingNumber = booking.v_FPBookingNumber
         s_booking.b_client_name = booking.b_client_name

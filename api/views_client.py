@@ -814,7 +814,6 @@ def get_delivery_status(request):
     """
     GET request should have `identifier` param
 
-    If length is 6 or 7 - `b_bookingID_Visual`
     If length is over 32 - `b_client_booking_ref_num`
     """
 
@@ -824,10 +823,7 @@ def get_delivery_status(request):
     quote_data = {}
 
     # 1. Try to find from dme_bookings table
-    if len(identifier) > 32:
-        booking = Bookings.objects.filter(b_client_booking_ref_num=identifier).first()
-    elif len(identifier) in [6, 7]:
-        booking = Bookings.objects.filter(b_bookingID_Visual=identifier).first()
+    booking = Bookings.objects.filter(b_client_booking_ref_num=identifier).first()
 
     if booking:
         client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)

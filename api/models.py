@@ -5157,6 +5157,12 @@ class ZohoTicketSummary(models.Model):
 class S_Bookings(models.Model):
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(blank=True, null=True, default=0)
+    b_client_booking_ref_num = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
     b_dateBookedDate = models.DateTimeField(blank=True, null=True, default=None)
     v_FPBookingNumber = models.CharField(
         max_length=40,
