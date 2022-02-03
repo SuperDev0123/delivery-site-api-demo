@@ -10,7 +10,11 @@ class Command(BaseCommand):
         print("----- Get JasonL orders status... -----")
         bookings = (
             Bookings.objects.select_related("api_booking_quote")
-            .filter(b_dateBookedDate__isnull=True, b_client_name="Jason L")
+            .filter(
+                b_dateBookedDate__isnull=True,
+                b_client_order_num__isnull=False,
+                b_client_name="Jason L",
+            )
             .only(
                 "id",
                 "b_bookingID_Visual",
