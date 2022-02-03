@@ -607,173 +607,122 @@ def build_label(
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ],
-            )
-
-            Story.append(shell_table)
-
-            Story.append(Spacer(1, 5))
-
-            tbl_data1 = [
-                [
-                    Paragraph(
-                        "<font size=%s>To: <b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            booking.deToCompanyName or "",
-                        ),
-                        style_left,
-                    ),
-                ],
-            ]
-
-            shell_table = Table(
-                tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
                 ],
             )
 
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
 
+            to_desc_data = []
+            company_data = [
+                Paragraph(
+                    "<font size=%s>To: <b>%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.deToCompanyName or "",
+                    ),
+                    style_left,
+                ),
+                Paragraph(
+                    "<font size=%s>Description:&nbsp;%s</font>"
+                    % (
+                        label_settings["font_size_medium"],
+                        booking_line.e_item or "",
+                    ),
+                    style_left,
+                ),
+            ]
+            to_desc_data.append(company_data)
+
+            contact_data = []
             if (booking.de_to_Contact_F_LName or "").lower() != (
                 booking.deToCompanyName or ""
             ).lower():
-                tbl_data1 = [
-                    [
-                        Paragraph(
-                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
-                            % (
-                                label_settings["line_height_extra_large"],
-                                booking.de_to_Contact_F_LName or "",
-                                booking.de_To_Address_Street_1 or "",
-                                booking.de_To_Address_Street_2 or "",
-                            ),
-                            style_left,
+                contact_data = [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
+                        % (
+                            label_settings["font_size_large"],
+                            booking.de_to_Contact_F_LName or "",
+                            booking.de_To_Address_Street_1 or "",
+                            booking.de_To_Address_Street_2 or "",
                         ),
-                    ]
+                        style_left,
+                    ),
+                    ''
                 ]
             else:
-                tbl_data1 = [
-                    [
-                        Paragraph(
-                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
-                            % (
-                                label_settings["line_height_extra_large"],
-                                booking.de_To_Address_Street_1 or "",
-                                booking.de_To_Address_Street_2 or "",
-                            ),
-                            style_left,
+                contact_data = [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
+                        % (
+                            label_settings["font_size_large"],
+                            booking.de_To_Address_Street_1 or "",
+                            booking.de_To_Address_Street_2 or "",
                         ),
-                    ]
+                        style_left,
+                    ),
+                    ''
                 ]
+            
+            de2address_state = [
+                Paragraph(
+                    "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_To_Address_State or "",
+                    ),
+                    style_left,
+                ),
+                ''
+            ]
+            to_desc_data.append(contact_data)
+            
+            suhurb_data = [
+                Paragraph(
+                    "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_To_Address_Suburb,
+                    ),
+                    style_left,
+                ),
+                ''
+            ]
+            to_desc_data.append(suhurb_data)
 
-            shell_table = Table(
-                tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+            de2address_state = [
+                Paragraph(
+                    "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;&nbsp;%s&nbsp;&nbsp;%s</b></font>"
+                    % (
+                        label_settings["font_size_large"],
+                        booking.de_To_Address_State or "",
+                        carrier or "",
+                        booking.de_To_Address_PostalCode or "",
+                    ),
+                    style_left,
+                ),
+                ''
+            ]
+            to_desc_data.append(de2address_state)
+
+            to_desc_col1_w = float(label_settings["label_image_size_length"]) * (4 / 7) * mm
+            to_desc_col2_w = float(label_settings["label_image_size_length"]) * (3 / 7) * mm
+
+            to_desc_table = Table(
+                to_desc_data,
+                colWidths=(to_desc_col1_w, to_desc_col2_w),
                 style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
-            )
-
-            Story.append(shell_table)
-            Story.append(Spacer(1, 3))
-
-            tbl_data1 = [
-                [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            booking.de_To_Address_State or "",
-                        ),
-                        style_left,
-                    ),
-                ]
-            ]
-
-            tbl_data2 = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            carrier or "",
-                        ),
-                        style_left,
-                    ),
-                ]
-            ]
-
-            tbl_data3 = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            booking.de_To_Address_PostalCode or "",
-                        ),
-                        style_left,
-                    ),
-                ]
-            ]
-
-            data = [[tbl_data1, tbl_data3, tbl_data2]]
-
-            t1_w = float(label_settings["label_image_size_length"]) * (1 / 6) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 12) * mm
-            t3_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
-
-            shell_table = Table(
-                data,
-                colWidths=[t1_w, t2_w, t3_w],
-                style=[
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ],
-            )
-
-            tbl_data2 = [
-                [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
-                            booking.de_To_Address_Suburb,
-                        ),
-                        style_left,
-                    ),
-                ],
-                [shell_table],
-            ]
-
-            data = [[tbl_data2]]
-
-            t1_w = float(label_settings["label_image_size_length"]) * mm
-
-            shell_table = Table(
-                data,
-                colWidths=(t1_w),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("SPAN", (-1, -1), (-1, 0)),
+                    ("VALIGN", (-1, 0), (-1, -1), "TOP"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
 
-            Story.append(shell_table)
+            Story.append(to_desc_table)
             Story.append(Spacer(1, 3))
 
             tbl_data1 = [
