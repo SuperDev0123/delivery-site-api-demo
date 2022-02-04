@@ -325,7 +325,7 @@ def find_vehicle_ids(booking_lines, fp):
                 if (
                     line.e_type_of_packaging
                     and line.e_type_of_packaging.upper() in PALLETS
-                    and (max_length > 1.2 or max_width > 1.2)
+                    and (line.e_dimLength > 1.2 or line.e_dimLength > 1.2)
                 ):
                     has_pallet = True
                     break
