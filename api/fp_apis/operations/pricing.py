@@ -97,19 +97,33 @@ def build_special_fp_pricings(booking, packed_status):
     quote_0.client_mu_1_minimum_values = 0
     quote_0.packed_status = packed_status
 
+    # Plum & JasonL & BSD
     if (
         booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
         or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
     ):
-        quote_0.freight_provider = "DME Linehaul General"
-        quote_0.save()
+        # if delivery postal code is metro / CBD Melbourne or metro/ CBD Brisbane
+        postal_code = int(booking.de_To_Address_PostalCode or 0)
+        if postal_code and (
+            (
+                (postal_code >= 3000 and postal_code <= 3207)
+                or (postal_code >= 8000 and postal_code <= 8499)
+            )
+            or (
+                (postal_code >= 4000 and postal_code <= 4207)
+                or (postal_code >= 9000 and postal_code <= 9499)
+            )
+        ):
+            quote_0.freight_provider = "DME Linehaul General"
+            quote_0.save()
 
         quote_1 = quote_0
         quote_1.pk = None
         quote_1.freight_provider = "Customer Collect"
         quote_1.save()
 
+    # JasonL
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
         quote_2 = quote_0
         quote_2.pk = None
