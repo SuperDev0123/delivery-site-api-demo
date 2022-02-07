@@ -84,7 +84,7 @@ from api.fp_apis.operations.tracking import create_fp_status_history
 from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
-from api.common.common_times import convert_to_UTC_tz
+from api.common.common_times import convert_to_UTC_tz, TIME_DIFFERENCE
 from api.common.postal_code import get_postal_codes
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
@@ -523,6 +523,8 @@ class BookingsViewSet(viewsets.ViewSet):
                 start_date = datetime.strptime(start_date_str, "%d/%m/%y")
                 end_date = datetime.strptime(end_date_str, "%d/%m/%y")
                 end_date = end_date.replace(hour=23, minute=59, second=59)
+                start_date = start_date - timedelta(hours=TIME_DIFFERENCE)
+                end_date = end_date - timedelta(hours=TIME_DIFFERENCE)
                 queryset = queryset.filter(
                     manifest_timestamp__range=(start_date, end_date)
                 )
