@@ -954,9 +954,11 @@ class BookingsViewSet(viewsets.ViewSet):
                     .filter(Q(z_manifest_url__isnull=True) | Q(z_manifest_url=""))
                     .exclude(b_status__in=["Closed", "Cancelled"])
                 )
-        elif active_tab_index == 4:  # In Progress
+        elif active_tab_index == 40:  # Booked
+            queryset = queryset.filter(Q(b_status_category__in=["Booked"]))
+        elif active_tab_index == 41:  # In Progress
             queryset = queryset.filter(
-                Q(b_status_category__in=["Booked", "Transit", "On Board for Delivery"])
+                Q(b_status_category__in=["Transit", "On Board for Delivery"])
                 | Q(
                     b_status__in=[
                         "Status In Transit",
