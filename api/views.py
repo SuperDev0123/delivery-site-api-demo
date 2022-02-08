@@ -863,7 +863,9 @@ class BookingsViewSet(viewsets.ViewSet):
         warehouse_id = self.request.query_params.get("warehouseId", None)
         fp_id = self.request.query_params.get("fpId", None)
         sort_field = self.request.query_params.get("sortField", None)
-        column_filters = json.loads(self.request.query_params.get("columnFilters", {}))
+        column_filters = json.loads(
+            self.request.query_params.get("columnFilters", "{}")
+        )
         active_tab_index = json.loads(
             self.request.query_params.get("activeTabInd", None)
         )
