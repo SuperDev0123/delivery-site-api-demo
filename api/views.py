@@ -865,9 +865,8 @@ class BookingsViewSet(viewsets.ViewSet):
         sort_field = self.request.query_params.get("sortField", None)
         column_filters = self.request.query_params.get("columnFilters", None)
         column_filters = json.loads(column_filters or "{}")
-        active_tab_index = json.loads(
-            self.request.query_params.get("activeTabInd", None)
-        )
+        active_tab_index = self.request.query_params.get("activeTabInd", None)
+        active_tab_index = json.loads(active_tab_index or "{}")
         simple_search_keyword = self.request.query_params.get(
             "simpleSearchKeyword", None
         )
