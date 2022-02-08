@@ -208,12 +208,14 @@ def push_boks(payload, client, username, method):
                 "b_client_order_num": "    20176",
                 "shipping_type": "DMEM",
                 "b_client_sales_inv_num": "    TEST ORDER 20176"
-            }
+            },
+            "is_from_script": True
         }
     """
     LOG_ID = "[PUSH FROM JasonL]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
     bok_2s = []
+    is_from_script = payload.get("is_from_script")
     client_name = None
     old_quote = None
     best_quotes = None
@@ -799,7 +801,7 @@ def push_boks(payload, client, username, method):
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-        if bok_1.get("shipping_type") and selected_quote:
+        if bok_1.get("shipping_type") == "DMEM" and selected_quote:
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
@@ -809,7 +811,7 @@ def push_boks(payload, client, username, method):
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        auto_select_pricing_4_bok(bok_1_obj, quote_set)
+        auto_select_pricing_4_bok(bok_1_obj, quote_set, is_from_script)
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 

@@ -319,7 +319,9 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         return False
 
 
-def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
+def auto_select_pricing_4_bok(
+    bok_1, pricings, is_from_script=False, auto_select_type=1
+):
     if len(pricings) == 0:
         logger.info("#855 - Could not find proper pricing")
         return None
@@ -338,17 +340,24 @@ def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
     #         deliverable_pricings.append(pricing)
 
     deliverable_pricings = non_air_freight_pricings
-    filtered_pricing = {}
-    if int(auto_select_type) == 1:  # Lowest
-        if deliverable_pricings:
-            filtered_pricing = _get_lowest_price(deliverable_pricings)
-        elif non_air_freight_pricings:
-            filtered_pricing = _get_lowest_price(non_air_freight_pricings)
-    else:  # Fastest
-        if deliverable_pricings:
-            filtered_pricing = _get_fastest_price(deliverable_pricings)
-        elif non_air_freight_pricings:
-            filtered_pricing = _get_fastest_price(non_air_freight_pricings)
+    filtered_pricing = None
+
+    if is_from_script and bok_1.quote and bok_1.quote.freight_provider in SPECIAL_FPS:
+        for pricing in non_air_freight_pricings:
+            if pricing.freight_provider == bok_1.quote.freight_provider:
+                filtered_pricing = pricing
+                break
+    else:
+        if int(auto_select_type) == 1:  # Lowest
+            if deliverable_pricings:
+                filtered_pricing = _get_lowest_price(deliverable_pricings)
+            elif non_air_freight_pricings:
+                filtered_pricing = _get_lowest_price(non_air_freight_pricings)
+        else:  # Fastest
+            if deliverable_pricings:
+                filtered_pricing = _get_fastest_price(deliverable_pricings)
+            elif non_air_freight_pricings:
+                filtered_pricing = _get_fastest_price(non_air_freight_pricings)
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
