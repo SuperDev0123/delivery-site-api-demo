@@ -1124,7 +1124,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     )
 
                 # Mulitple search | Simple search | Project Name Search
-                if project_name and project_name.exists():
+                if project_name:
                     queryset = queryset.filter(b_booking_project=project_name)
                 elif (
                     multi_find_field
