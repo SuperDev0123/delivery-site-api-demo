@@ -115,7 +115,7 @@ def build_special_fp_pricings(booking, packed_status):
                 or (postal_code >= 9000 and postal_code <= 9499)
             )
         ):
-            quote_0.freight_provider = "DME Linehaul General"
+            quote_0.freight_provider = "Deliver-ME"
             quote_0.save()
 
         quote_1 = quote_0
