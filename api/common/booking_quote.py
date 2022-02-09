@@ -14,6 +14,7 @@ def set_booking_quote(booking, quote=None):
         # booking.vx_freight_provider = None
         booking.vx_account_code = None
         booking.vx_serviceName = None
+        booking.v_service_Type = None
         booking.inv_cost_quoted = None
         # booking.inv_sell_quoted = None
         booking.s_02_Booking_Cutoff_Time = None
@@ -23,6 +24,7 @@ def set_booking_quote(booking, quote=None):
         booking.vx_freight_provider = quote.freight_provider
         booking.vx_account_code = quote.account_code
         booking.vx_serviceName = quote.service_name
+        booking.v_service_Type = quote.service_code
         booking.inv_cost_quoted = (
             quote.fee * (1 + quote.mu_percentage_fuel_levy) + quote.x_price_surcharge
         )

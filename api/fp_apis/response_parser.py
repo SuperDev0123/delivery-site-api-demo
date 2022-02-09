@@ -130,8 +130,8 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
             result["freight_provider"] = get_service_provider(fp_name, False)
             result["fee"] = price["netPrice"]
             result["tax_value_1"] = price["totalTaxes"]
-            result["service_code"] = service_code
-            result["service_name"] = service_name
+            # result["service_code"] = service_code
+            # result["service_name"] = service_name
             results.append(result)
     elif (
         fp_name == "allied"
@@ -211,7 +211,6 @@ def parse_pricing_response(
     fp_name,
     booking,
     is_from_self=False,
-    service_name=None,
     account_code="DME",
 ):
     try:
@@ -229,6 +228,54 @@ def parse_pricing_response(
         error_msg = f"#580 Parse pricing res: FP - {fp_name}, {json_data}"
         logger.error(error_msg)
         error_msg = f"#581 Parse pricing error: {e}"
+        logger.error(error_msg)
+        return None
+
+
+def _api_v2(booking, fp_name, dme_client, json_data, account_code):
+    results = []
+
+    for price in json_data["prices"]:
+        result = {}
+        result["account_code"] = account_code
+        result["api_results_id"] = json_data["requestId"]
+        result["fk_booking_id"] = booking.pk_booking_id
+        result["fk_client_id"] = dme_client.company_name
+        result["freight_provider"] = get_service_provider(fp_name, False)
+        etd = price.get("etd")
+        result["etd"] = f"{etd} hours" if etd else "3 Days"
+        result["fee"] = price.get("fee")
+        result["service_name"] = price.get("serviceName")
+        result["service_code"] = price.get("serviceCode")
+        result["tax_value_1"] = price.get("tax")
+        result["tax_id_1"] = price.get("taxName")
+        results.append(result)
+
+    return results
+
+
+def parse_pricing_response_v2(
+    response,
+    fp_name,
+    booking,
+    is_from_self=False,
+    account_code="DME",
+):
+    try:
+        dme_client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
+
+        if is_from_self:  # Built-in
+            json_data = response
+            return _built_in(booking, fp_name, dme_client, json_data, account_code)
+        else:  # API
+            res_content = response.content.decode("utf8").replace("'", '"')
+            json_data = json.loads(res_content)
+            return _api_v2(booking, fp_name, dme_client, json_data, account_code)
+    except Exception as e:
+        trace_error.print()
+        error_msg = f"#584 Parse pricing res: FP - {fp_name}, {json_data}"
+        logger.error(error_msg)
+        error_msg = f"#585 Parse pricing error: {e}"
         logger.error(error_msg)
         return None
 

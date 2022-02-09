@@ -41,7 +41,13 @@ from api.fp_apis.operations.tracking import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import auto_select_pricing
-from api.fp_apis.constants import FP_CREDENTIALS, S3_URL, DME_LEVEL_API_URL
+from api.fp_apis.constants import (
+    FP_CREDENTIALS,
+    S3_URL,
+    DME_LEVEL_API_URL,
+    SPOJIT_API_URL,
+    SPOJIT_TOKEN,
+)
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.constants import SPECIAL_FPS
 
@@ -497,6 +503,7 @@ def edit_book(request, fp_name):
 @permission_classes((AllowAny,))
 def cancel_book(request, fp_name):
     try:
+        _fp_name = fp_name.lower()
         body = literal_eval(request.body.decode("utf8"))
         booking_id = body["booking_id"]
         booking = Bookings.objects.get(id=booking_id)
@@ -506,8 +513,16 @@ def cancel_book(request, fp_name):
                 payload = get_cancel_book_payload(booking, fp_name)
 
                 logger.info(f"### Payload ({fp_name} cancel book): {payload}")
-                url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
-                response = requests.delete(url, params={}, json=payload)
+
+                if _fp_name == "auspost":
+                    url = SPOJIT_API_URL + "/booking/cancelconsignment"
+                    headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
+                    response = requests.post(url, headers=headers, json=payload)
+                else:
+                    url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
+                    headers = {}
+                    response = requests.delete(url, headers=headers, json=payload)
+
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
                 s0 = json.dumps(
@@ -604,11 +619,14 @@ def get_label(request, fp_name):
             booking.kf_client_id
             in [
                 "1af6bcd2-6148-11eb-ae93-0242ac130002",
+                "461162D2-90C7-BF4E-A905-000000000004",
                 "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
             ]
             and booking.vx_freight_provider.lower() != "tnt"
-        ):  # JasonL & BSD:
-            error_msg = "JasonL order label should be built by built-in module."
+        ):  # JasonL & Plum & BSD:
+            error_msg = (
+                "Label should be built by built-in module for this client`s orders."
+            )
             return JsonResponse(
                 {"message": error_msg}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -620,7 +638,7 @@ def get_label(request, fp_name):
             )
 
         payload = {}
-        if _fp_name in ["startrack", "auspost"]:
+        if _fp_name in ["startrack"]:
             try:
                 payload = get_create_label_payload(booking, _fp_name)
 
@@ -628,10 +646,11 @@ def get_label(request, fp_name):
                     f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
-                response = requests.post(url, params={}, json=payload)
+                response = requests.post(url, headers={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
-                # # Deactivated on 2021-11-26
+
+                # # Activated on 2022-02-07
                 # s0 = json.dumps(
                 #     json_data, indent=2, sort_keys=True, default=str
                 # )  # Just for visual
@@ -656,18 +675,26 @@ def get_label(request, fp_name):
                 )
         elif _fp_name in ["tnt", "sendle"]:
             payload = get_getlabel_payload(booking, fp_name)
+        elif _fp_name in ["auspost"]:
+            payload = get_create_label_payload(booking, _fp_name)
 
         try:
             logger.info(f"### Payload ({fp_name} get_label): {payload}")
-            url = DME_LEVEL_API_URL + "/labelling/getlabel"
             json_data = None
             z_label_url = None
+
+            if _fp_name == "auspost":
+                url = SPOJIT_API_URL + "/labelling/createlabel"
+                headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
+            else:
+                url = DME_LEVEL_API_URL + "/labelling/getlabel"
+                headers = {}
 
             while (
                 json_data is None
                 or (
                     json_data is not None
-                    and _fp_name in ["startrack", "auspost"]
+                    and _fp_name in ["startrack"]
                     and json_data["labels"][0]["status"] == "PENDING"
                 )
                 or (
@@ -677,7 +704,7 @@ def get_label(request, fp_name):
                 )
             ):
                 t.sleep(5)  # Delay to wait label is created
-                response = requests.post(url, params={}, json=payload)
+                response = requests.post(url, headers=headers, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
 
                 if _fp_name in ["sendle"]:
@@ -689,10 +716,12 @@ def get_label(request, fp_name):
                 )  # Just for visual
                 logger.info(f"### Response ({fp_name} get_label): {s0}")
 
-            if _fp_name in ["startrack", "auspost"]:
+            if _fp_name in ["startrack"]:
                 z_label_url = download_external.pdf(
                     json_data["labels"][0]["url"], booking
                 )
+            elif _fp_name in ["auspost"]:
+                z_label_url = download_external.pdf(json_data["labelUrl"], booking)
             elif _fp_name in ["tnt", "sendle"]:
                 try:
                     if _fp_name == "tnt":
@@ -753,7 +782,6 @@ def get_label(request, fp_name):
                     booking.pk, email_template_name, request.user.username
                 )
 
-            # if not _fp_name in ["sendle"]:
             Log(
                 request_payload=payload,
                 request_status="SUCCESS",
@@ -798,6 +826,7 @@ def get_label(request, fp_name):
 @permission_classes((AllowAny,))
 def create_order(request, fp_name):
     results = []
+    _fp_name = fp_name.lower()
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
 
@@ -811,10 +840,16 @@ def create_order(request, fp_name):
             return JsonResponse({"message": message})
 
         payload = get_create_order_payload(bookings, fp_name)
-        logger.info(f"Payload(Create Order for ST): {payload}")
-        url = DME_LEVEL_API_URL + "/order/create"
-        response = requests.post(url, params={}, json=payload)
+        logger.info(f"Payload(Create Order for {fp_name.upper()}): {payload}")
 
+        if _fp_name == "auspost":
+            url = SPOJIT_API_URL + "/order/create"
+            headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
+        else:
+            url = DME_LEVEL_API_URL + "/order/create"
+            headers = {}
+
+        response = requests.post(url, headers=headers, json=payload)
         had_504_res = False
         while response.status_code == 504:
             had_504_res = True
@@ -825,7 +860,7 @@ def create_order(request, fp_name):
         s0 = json.dumps(
             json_data, indent=2, sort_keys=True, default=str
         )  # Just for visual
-        logger.info(f"Response(Create Order for ST): {s0}")
+        logger.info(f"Response(Create Order for {fp_name.upper()}): {s0}")
 
         try:
             Log(
@@ -837,10 +872,9 @@ def create_order(request, fp_name):
             ).save()
 
             for booking in bookings:
+                order_id = json_data.get("order_id") or json_data.get("orderId")
                 booking.vx_fp_order_id = (
-                    json_data["order_id"]
-                    if not had_504_res
-                    else json_data[0]["context"]["order_id"]
+                    order_id if not had_504_res else json_data[0]["context"]["order_id"]
                 )
                 booking.save()
 
@@ -864,7 +898,7 @@ def create_order(request, fp_name):
             return JsonResponse({"message": error_msg})
     except IndexError as e:
         trace_error.print()
-        return JsonResponse({"message": f"IndexError: e"})
+        return JsonResponse({"message": f"IndexError: {e}"})
 
 
 @api_view(["POST"])
@@ -879,24 +913,38 @@ def get_order_summary(request, fp_name):
         try:
             booking = Bookings.objects.get(id=booking_ids[0])
             payload = get_get_order_summary_payload(booking, fp_name)
-            headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+            headers = {
+                "Accept": "application/pdf",
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {SPOJIT_TOKEN}",
+            }
+            logger.info(f"### Payload ({fp_name.upper()} Get Order Summary): {payload}")
 
-            logger.info(f"### Payload ({fp_name} Get Order Summary): {payload}")
-            url = DME_LEVEL_API_URL + "/order/summary"
+            if _fp_name == "auspost":
+                url = SPOJIT_API_URL + "/order/summary"
+            else:
+                url = DME_LEVEL_API_URL + "/order/summary"
+
             response = requests.post(url, json=payload, headers=headers)
             res_content = response.content
             json_data = json.loads(res_content)
-            s0 = json.dumps(
-                json_data, indent=2, sort_keys=True, default=str
-            )  # Just for visual
-            # logger.info(f"### Response ({fp_name} Get Order Summary): {bytes(json_data["pdfData"]["data"])}")
+            # s0 = json.dumps(
+            #     json_data, indent=2, sort_keys=True, default=str
+            # )  # Just for visual
+            # logger.info(
+            #     f'### Response ({fp_name} Get Order Summary): {bytes(json_data["pdfData"]["data"])}'
+            # )
 
             try:
                 file_name = f"biopak_manifest_{str(booking.vx_fp_order_id)}_{str(datetime.now())}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
                 with open(full_path, "wb") as f:
-                    f.write(bytes(json_data["pdfData"]["data"]))
+                    if _fp_name == "auspost":
+                        f.write(json_data["order"])
+                    else:
+                        f.write(bytes(json_data["pdfData"]["data"]))
+
                     f.close()
 
                 bookings = Bookings.objects.filter(pk__in=booking_ids)

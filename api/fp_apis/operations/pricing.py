@@ -25,8 +25,11 @@ from api.models import (
 from api.fp_apis.operations.common import _set_error
 from api.fp_apis.operations.surcharge.index import gen_surcharges
 from api.fp_apis.built_in.index import get_pricing as get_self_pricing
-from api.fp_apis.response_parser import parse_pricing_response
-from api.fp_apis.payload_builder import get_pricing_payload
+from api.fp_apis.response_parser import (
+    parse_pricing_response,
+    parse_pricing_response_v2,
+)
+from api.fp_apis.payload_builder import get_pricing_payload, get_pricing_payload_v2
 from api.fp_apis.constants import (
     S3_URL,
     PRICING_TIME,
@@ -34,6 +37,8 @@ from api.fp_apis.constants import (
     BUILT_IN_PRICINGS,
     DME_LEVEL_API_URL,
     AVAILABLE_FPS_4_FC,
+    SPOJIT_API_URL,
+    SPOJIT_TOKEN,
 )
 from api.fp_apis.utils import _convert_UOM
 
@@ -115,7 +120,7 @@ def build_special_fp_pricings(booking, packed_status):
                 or (postal_code >= 9000 and postal_code <= 9499)
             )
         ):
-            quote_0.freight_provider = "DME Linehaul General"
+            quote_0.freight_provider = "Deliver-ME"
             quote_0.save()
 
         quote_1 = quote_0
@@ -327,12 +332,6 @@ async def pricing_workers(
         if _fp_name not in FP_CREDENTIALS and _fp_name not in BUILT_IN_PRICINGS:
             continue
 
-        if _fp_name == "auspost":
-            services = FP_Service_ETDs.objects.filter(
-                freight_provider__fp_company_name="AUSPost"
-            ).only("fp_delivery_time_description", "fp_delivery_service_code")
-            logger.info(f"#904 [PRICING] services: {services}")
-
         if _fp_name in FP_CREDENTIALS:
             fp_client_names = FP_CREDENTIALS[_fp_name].keys()
             b_client_name = booking.b_client_name.lower()
@@ -371,21 +370,8 @@ async def pricing_workers(
 
                     logger.info(f"#906 [PRICING] - {_fp_name}, {client_name}")
 
-                    if _fp_name == "auspost" and services:
-                        for service in services:
-                            _worker = _api_pricing_worker_builder(
-                                _fp_name,
-                                booking,
-                                booking_lines,
-                                is_pricing_only,
-                                packed_status,
-                                account_detail,
-                                service.fp_delivery_service_code,
-                                service.fp_delivery_time_description,
-                            )
-                            _workers.add(_worker)
-                    else:
-                        _worker = _api_pricing_worker_builder(
+                    if _fp_name == "auspost":
+                        _worker = _api_pricing_worker_builder_v2(
                             _fp_name,
                             booking,
                             booking_lines,
@@ -393,7 +379,17 @@ async def pricing_workers(
                             packed_status,
                             account_detail,
                         )
-                        _workers.add(_worker)
+                    else:
+                        _worker = _api_pricing_worker_builder_v1(
+                            _fp_name,
+                            booking,
+                            booking_lines,
+                            is_pricing_only,
+                            packed_status,
+                            account_detail,
+                        )
+
+                    _workers.add(_worker)
 
         if _fp_name in BUILT_IN_PRICINGS:
             logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
@@ -413,19 +409,10 @@ async def pricing_workers(
     logger.info("#919 [PRICING] - Pricing workers finished all")
 
 
-async def _api_pricing_worker_builder(
-    _fp_name,
-    booking,
-    booking_lines,
-    is_pricing_only,
-    packed_status,
-    account_detail,
-    service_code=None,
-    service_name=None,
+async def _api_pricing_worker_builder_v1(
+    _fp_name, booking, booking_lines, is_pricing_only, packed_status, account_detail
 ):
-    payload = get_pricing_payload(
-        booking, _fp_name, account_detail, booking_lines, service_code
-    )
+    payload = get_pricing_payload(_fp_name, booking, booking_lines, account_detail)
 
     if not payload:
         if is_pricing_only:
@@ -464,7 +451,6 @@ async def _api_pricing_worker_builder(
             _fp_name,
             booking,
             False,
-            service_name,
             payload["spAccountDetails"]["accountCode"],
         )
 
@@ -496,6 +482,65 @@ async def _api_pricing_worker_builder(
                     #         surcharge_obj.quote = quote
                     #         surcharge_obj.fp_id = 2  # Allied(Hardcode)
                     #         surcharge_obj.save()
+                else:
+                    logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
+    except Exception as e:
+        trace_error.print()
+        logger.info(f"@402 [PRICING] Exception: {str(e)}")
+
+
+async def _api_pricing_worker_builder_v2(
+    _fp_name, booking, booking_lines, is_pricing_only, packed_status, account_detail
+):
+    payload = get_pricing_payload_v2(_fp_name, booking, booking_lines, account_detail)
+
+    if not payload:
+        if is_pricing_only:
+            message = f"#907 [PRICING] Failed to build payload - {booking.pk_booking_id}, {_fp_name}"
+        else:
+            message = f"#907 [PRICING] Failed to build payload - {booking.b_bookingID_Visual}, {_fp_name}"
+
+        logger.info(message)
+        return None
+
+    url = SPOJIT_API_URL + "/pricing/calculateprice"
+    headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
+    logger.info(f"### [PRICING] ({_fp_name.upper()}) API url: {url}")
+    logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
+
+    try:
+        response = await requests_async.post(url, headers=headers, json=payload)
+        logger.info(
+            f"### [PRICING] Response ({_fp_name.upper()}): {response.status_code}"
+        )
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+        logger.info(f"### [PRICING] Response Detail ({_fp_name.upper()}): {s0}")
+
+        if not is_pricing_only:
+            Log.objects.create(
+                request_payload=payload,
+                request_status="SUCCESS",
+                request_type=f"{_fp_name.upper()} PRICING",
+                response=res_content,
+                fk_booking_id=booking.id,
+            )
+
+        parse_results = parse_pricing_response_v2(
+            response,
+            _fp_name,
+            booking,
+            False,
+            payload["spAccountDetails"]["accountCode"],
+        )
+
+        if parse_results and not "error" in parse_results:
+            for parse_result in parse_results:
+                parse_result["packed_status"] = packed_status
+                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                if serializer.is_valid():
+                    quote = serializer.save()
                 else:
                     logger.info(f"@401 [PRICING] Serializer error: {serializer.errors}")
     except Exception as e:
