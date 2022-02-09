@@ -1422,11 +1422,11 @@ class BookingsViewSet(viewsets.ViewSet):
 
                     if status == "In Transit":
                         booking.z_calculated_ETA = (
-                            datetime.strptime(optional_value, "%Y-%m-%d %H:%M:%S")
+                            datetime.strptime(optional_value[:10], "%Y-%m-%d %H:%M:%S")
                             + timedelta(days=delivery_kpi_days)
                         ).date()
                         booking.b_given_to_transport_date_time = datetime.strptime(
-                            optional_value, "%Y-%m-%d %H:%M:%S"
+                            optional_value[:10], "%Y-%m-%d %H:%M:%S"
                         )
 
                     status_history.create(booking, status, request.user.username)
