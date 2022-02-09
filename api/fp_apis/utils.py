@@ -231,7 +231,7 @@ def _get_fastest_price(pricings):
             ):
                 fastest_pricing["pricing"] = pricing
 
-    return fastest_pricing["pricing"]
+    return fastest_pricing.get("pricing")
 
 
 # ######################## #
@@ -261,7 +261,7 @@ def _get_lowest_price(pricings):
                     lowest_pricing["pricing"] = pricing
                     lowest_pricing["etd"] = pricing
 
-    return lowest_pricing["pricing"]
+    return lowest_pricing.get("pricing")
 
 
 def select_best_options(pricings):
