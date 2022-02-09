@@ -1401,6 +1401,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["put"])
     def change_bookings_status(self, request, format=None):
+        LOG_ID = "[CHANGE STATUS IN BULK]"
         status = request.data["status"]
         optional_value = request.data["optionalValue"]
         booking_ids = request.data["bookingIds"]
@@ -1417,11 +1418,7 @@ class BookingsViewSet(viewsets.ViewSet):
             else:
                 for booking_id in booking_ids:
                     booking = Bookings.objects.get(pk=booking_id)
-
-                    if not booking.delivery_kpi_days:
-                        delivery_kpi_days = 14
-                    else:
-                        delivery_kpi_days = int(booking.delivery_kpi_days)
+                    delivery_kpi_days = int(booking.delivery_kpi_days or 14)
 
                     if status == "In Transit":
                         booking.z_calculated_ETA = (
@@ -1437,6 +1434,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     booking.save()
                 return JsonResponse({"status": "success"})
         except Exception as e:
+            logger.error(f"{LOG_ID} Error: {str(e)}")
             return Response({"status": "error"})
 
     @action(detail=False, methods=["post"])
