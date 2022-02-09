@@ -225,7 +225,9 @@ def post_save_handler(instance, created, update_fields):
             instance.vx_account_code = quote.account_code
             instance.vx_serviceName = quote.service_name
             instance.v_service_Type = quote.service_code
-            instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+            instance.inv_cost_quoted = quote.fee * (
+                1 + (quote.mu_percentage_fuel_levy or 0)
+            )
 
             if instance.b_status == Booking_lines.SCANNED_PACK:
                 instance.inv_sell_quoted = quote.client_mu_1_minimum_values
