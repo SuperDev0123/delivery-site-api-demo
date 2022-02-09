@@ -1429,7 +1429,9 @@ class BookingsViewSet(viewsets.ViewSet):
                             optional_value[:10], "%Y-%m-%d %H:%M:%S"
                         )
 
-                    status_history.create(booking, status, request.user.username)
+                    status_history.create(
+                        booking, status, request.user.username, optional_value[:10]
+                    )
                     calc_collect_after_status_change(booking.pk_booking_id, status)
                     booking.save()
                 return JsonResponse({"status": "success"})
