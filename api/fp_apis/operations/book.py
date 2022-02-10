@@ -257,44 +257,44 @@ def response_handler_v2(_fp_name, booking, url, payload, response, json_data, bo
                 fk_booking_id=booking.id,
             ).save()
 
-            # JasonL | Plum | BSD
-            if booking.kf_client_id in [
-                "461162D2-90C7-BF4E-A905-000000000004",
-                "1af6bcd2-6148-11eb-ae93-0242ac130002",
-                "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
-            ]:
-                is_get_label = False
+            # # JasonL | Plum | BSD
+            # if booking.kf_client_id in [
+            #     "461162D2-90C7-BF4E-A905-000000000004",
+            #     "1af6bcd2-6148-11eb-ae93-0242ac130002",
+            #     "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+            # ]:
+            #     is_get_label = False
 
-            # Save Label for AusPost
-            if _fp_name == "auspost" and True:
-                file_name = f"auspost_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
-                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
+            # # Save Label for AusPost
+            # if _fp_name == "auspost" and True:
+            #     file_name = f"auspost_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+            #     full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-                with open(full_path, "wb") as f:
-                    f.write(base64.b64decode(json_data["label"]))
-                    f.close()
-                    booking.z_label_url = f"{_fp_name}_au/{file_name}"
-                    booking.save()
+            #     with open(full_path, "wb") as f:
+            #         f.write(base64.b64decode(json_data["label"]))
+            #         f.close()
+            #         booking.z_label_url = f"{_fp_name}_au/{file_name}"
+            #         booking.save()
 
-                    # Send email when GET_LABEL
-                    email_template_name = "General Booking"
+            #         # Send email when GET_LABEL
+            #         email_template_name = "General Booking"
 
-                    if booking.b_booking_Category == "Salvage Expense":
-                        email_template_name = "Return Booking"
+            #         if booking.b_booking_Category == "Salvage Expense":
+            #             email_template_name = "Return Booking"
 
-                    send_booking_status_email(booking.pk, email_template_name, booker)
+            #         send_booking_status_email(booking.pk, email_template_name, booker)
 
             # Save Label for Startrack and AusPost
-            # if _fp_name in ["startrack", "auspost"] and is_get_label:
-            #     Api_booking_confirmation_lines.objects.filter(
-            #         fk_booking_id=booking.pk_booking_id
-            #     ).delete()
+            if _fp_name in ["auspost"]:
+                Api_booking_confirmation_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id
+                ).delete()
 
-            #     for item in json_data["items"]:
-            #         book_con = Api_booking_confirmation_lines(
-            #             fk_booking_id=booking.pk_booking_id,
-            #             api_item_id=item["item_id"],
-            #         ).save()
+                for item in json_data["items"]:
+                    book_con = Api_booking_confirmation_lines(
+                        fk_booking_id=booking.pk_booking_id,
+                        api_item_id=item["itemId"],
+                    ).save()
 
             message = f"Successfully booked({booking.v_FPBookingNumber})"
             return True, message

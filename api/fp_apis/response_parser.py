@@ -243,6 +243,7 @@ def _api_v2(booking, fp_name, dme_client, json_data, account_code):
         result["fk_client_id"] = dme_client.company_name
         result["freight_provider"] = get_service_provider(fp_name, False)
         etd = price.get("etd")
+        etd = int(etd) if etd else 0
         result["etd"] = f"{etd} hours" if etd else "3 Days"
         result["fee"] = price.get("fee")
         result["service_name"] = price.get("serviceName")
