@@ -62,6 +62,8 @@ GENESIS_FIELDS = [
     "de_to_Phone_Mobile",
     "de_to_Phone_Main",
     "booked_for_comm_communicate_via",
+    "s_06_Latest_Delivery_Date_TimeSet",
+    "s_21_Actual_Delivery_TimeStamp",
 ]
 
 if settings.ENV == "local":
