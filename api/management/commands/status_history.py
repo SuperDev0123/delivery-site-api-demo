@@ -139,8 +139,9 @@ def populate_status_history(booking, dme_shs, expected_shs, is_check_only):
     for dme_sh in dme_shs:
         if dme_sh.status_last in [
             None,
+            "Imported / Integrated",
             "Ordered",
-            "Pushed",
+            "Entered",
             "Picking",
             "Picked",
             "Booked",

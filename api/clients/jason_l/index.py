@@ -584,7 +584,9 @@ def push_boks(payload, client, username, method):
         )
 
     # create status history
-    status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
+    status_history.create_4_bok(
+        bok_1["pk_header_id"], "Imported / Integrated", username
+    )
 
     # `auto_repack` logic
     carton_cnt = 0

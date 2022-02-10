@@ -644,7 +644,9 @@ def push_boks(payload, client, username, method):
         bok_1_obj = bok_1_serializer.save()
 
     # create status history
-    status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
+    status_history.create_4_bok(
+        bok_1["pk_header_id"], "Imported / Integrated", username
+    )
 
     # PU avail
     pu_avil = datetime.strptime(bok_1["b_021_b_pu_avail_from_date"], "%Y-%m-%d")
