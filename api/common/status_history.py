@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 def notify_user_via_email_sms(booking, category_new, category_old, username):
     from api.helpers.etd import get_etd
 
+    # JasonL is deactivated(2022-02-10) - "461162D2-90C7-BF4E-A905-000000000004"
     # JasonL and Plum & BSD
     if not booking.kf_client_id in [
-        "461162D2-90C7-BF4E-A905-000000000004",
         "1af6bcd2-6148-11eb-ae93-0242ac130002",
         "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
     ]:
@@ -50,8 +50,8 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
             dme_time_lib.next_business_day(
                 dme_time_lib.convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date),
                 etd,
-                booking.vx_freight_provider
-            ).strftime('%d/%m/%Y')
+                booking.vx_freight_provider,
+            ).strftime("%d/%m/%Y")
             if etd and booking.puPickUpAvailFrom_Date
             else ""
         )
