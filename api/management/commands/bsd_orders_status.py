@@ -1,0 +1,89 @@
+import subprocess
+
+from django.core.management.base import BaseCommand
+from django.conf import settings
+
+from api.models import Bookings
+import sys, time
+import os
+import uuid
+from datetime import datetime, timedelta
+import pymysql, pymysql.cursors
+import shutil
+import json
+import requests
+import traceback
+
+# from env import DB_HOST, DB_USER, DB_PASS, DB_PORT, DB_NAME, API_URL
+# from _options_lib import get_option, set_option
+# from _email_lib import send_email
+
+from woocommerce import API
+
+wcapi = API(
+    url="https://bathroomsalesdirect.com.au/",  # Your store URL
+    consumer_key="ck_b805f1858e763af3f27e5638f80e06f924ac94b1",  # Your consumer key
+    consumer_secret="cs_8b52746e7285a2cbaee34046be2e5eadb09884f2",  # Your consumer secret
+    wp_api=True,  # Enable the WP REST API integration
+    version="wc/v3",  # WooCommerce WP REST API version
+    query_string_auth=True,
+)
+
+class Command(BaseCommand):
+
+    def handle(self, *args, **options):
+        print("----- Get completed BSD orders from Woocommerce -----")
+        orderList = get_orders_from_woocommerce(datetime.now() - timedelta(days=15), datetime.now(), 'completed')
+        print("----- Completed BSD order count: %d -----" % len(orderList))
+        order_id_list = []
+        for order in orderList:
+            order_id_list.append(order["id"])
+
+        bookings = Bookings.objects.filter(
+            b_client_order_num__in=order_id_list,
+            b_client_name="Bathroom Sales Direct"
+        ).only(
+            "id",
+            "b_status",
+            "b_status_category",
+            "b_client_order_num",
+        ).update(
+             b_status = 'Closed', 
+             b_status_category='Complete', 
+             b_booking_Notes = 'Inactive, auto closed'
+        )
+        print("---- finished auto close BSD booking -------")
+
+def get_orders_from_woocommerce(from_date, to_date, status):
+    print(f"params - from_date: {from_date}, to_date: {to_date}, status: {status}")
+
+    try:
+        url = f"orders?"
+        url += "per_page=40"
+        url += f"&status={status}"
+        url += "&orderby=id"
+        url += "&order=desc"
+        # url += "&page=1"
+        # url += "&exclude=[118369,118370,118371,118372,118373,118374,118375,118376,118377,118378,118381,118382,118383,118392,118393,118394,118395,118396,118400,118402,118404,118405,118406,118407,118408,118411,118412]"
+
+        if from_date:
+            url += f"&after={from_date}"
+
+        if to_date:
+            url += f"&before={to_date}"
+
+        print(f"url - {url}")
+        order_list = wcapi.get(url).json()
+
+        if (
+            "code" in order_list
+            and order_list["code"] == "woocommerce_rest_cannot_view"
+        ):
+            print(f"Message from WooCommerce: {order_list['message']}")
+            return []
+
+        return order_list
+    except Exception as e:
+        print(f"Get orders error: {e}")
+        return []
+    
