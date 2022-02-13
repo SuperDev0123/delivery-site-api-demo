@@ -1,10 +1,8 @@
 import subprocess
-from datetime import datetime, timedelta, tzinfo
-import pytz
+from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 
 from api.models import Bookings
-
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
