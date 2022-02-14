@@ -58,22 +58,17 @@ def get_orders_from_woocommerce(from_date, to_date, status):
     print(f"params - from_date: {from_date}, to_date: {to_date}, status: {status}")
 
     try:
-        url = f"orders?"
-        url += "per_page=40"
-        url += f"&status={status}"
-        url += "&orderby=id"
-        url += "&order=desc"
-        # url += "&page=1"
-        # url += "&exclude=[118369,118370,118371,118372,118373,118374,118375,118376,118377,118378,118381,118382,118383,118392,118393,118394,118395,118396,118400,118402,118404,118405,118406,118407,118408,118411,118412]"
-
-        if from_date:
-            url += f"&after={from_date}"
-
-        if to_date:
-            url += f"&before={to_date}"
-
-        print(f"url - {url}")
-        order_list = wcapi.get(url).json()
+        order_list = []
+        index = 0
+        per_page = 40
+        while True:
+            index += 1
+            url = make_url(from_date, to_date, status, index, per_page)
+            print(f"url - {url}")
+            res = wcapi.get(url).json()
+            order_list += res
+            if len(res) < per_page:
+                break
 
         if (
             "code" in order_list
@@ -87,3 +82,17 @@ def get_orders_from_woocommerce(from_date, to_date, status):
         print(f"Get orders error: {e}")
         return []
     
+def make_url(from_date, to_date, status, index, per_page):
+    url = f"orders?"
+    url += f"per_page={per_page}"
+    url += f"&status={status}"
+    url += "&orderby=id"
+    url += "&order=desc"
+    url += f"&page={index}"
+
+    if from_date:
+        url += f"&after={from_date}"
+
+    if to_date:
+        url += f"&before={to_date}"
+    return url
