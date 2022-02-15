@@ -1959,11 +1959,11 @@ class Bookings(models.Model):
 
         return customer_group_name
 
-    @property
-    def dme_delivery_status_category(self):
-        from api.fp_apis.utils import get_status_category_from_status
+    # @property
+    # def dme_delivery_status_category(self):
+    #     from api.fp_apis.utils import get_status_category_from_status
 
-        return get_status_category_from_status(self.b_status)
+    #     return get_status_category_from_status(self.b_status)
 
     def lines(self):
         return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
@@ -2074,6 +2074,11 @@ class Bookings(models.Model):
             return DME_clients.objects.get(dme_account_num=self.kf_client_id)
         except:
             return None
+
+    def get_confirmation_lines(self):
+        return Api_booking_confirmation_lines.objects.filter(
+            fk_booking_id=self.pk_booking_id
+        )
 
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()

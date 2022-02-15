@@ -155,6 +155,10 @@ def get_tracking_payload(booking, fp_name):
         payload["consignmentDetails"] = consignmentDetails
         payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
+        confirmation_lines = booking.get_confirmation_lines()
+        tracking_ids = [line.api_item_id for line in confirmation_lines]
+        payload["itemNumbers"] = ",".join(tracking_ids)
+
         return payload
     except Exception as e:
         logger.error(f"#400 - Error while build payload: {e}")
@@ -631,7 +635,7 @@ def get_book_payload_v2(booking, fp_name):
                 "quantity": 1,
                 "volume": round(width * height * length / 1000000, 5),
                 "weight": weight or 0,
-                "reference": line.sscc or "",
+                "reference": line.sscc or line.pk,
                 "description": line.e_item,
             }
             items.append(item)

@@ -36,7 +36,7 @@ def response_handler_v1(_fp_name, booking, url, payload, response, json_data, bo
         for i in range(4):
             t.sleep(180)
             logger.info(f"### Payload ({fp_name} book): {payload}")
-            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
+            url = f"{DME_LEVEL_API_URL}/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
@@ -265,24 +265,24 @@ def response_handler_v2(_fp_name, booking, url, payload, response, json_data, bo
             # ]:
             #     is_get_label = False
 
-            # # Save Label for AusPost
-            # if _fp_name == "auspost" and True:
-            #     file_name = f"auspost_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
-            #     full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
+            # Save Label for AusPost
+            if _fp_name == "auspost" and True:
+                file_name = f"auspost_{str(booking.v_FPBookingNumber)}_{str(datetime.now())}.pdf"
+                full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
-            #     with open(full_path, "wb") as f:
-            #         f.write(base64.b64decode(json_data["label"]))
-            #         f.close()
-            #         booking.z_label_url = f"{_fp_name}_au/{file_name}"
-            #         booking.save()
+                with open(full_path, "wb") as f:
+                    f.write(base64.b64decode(json_data["label"]))
+                    f.close()
+                    booking.z_label_url = f"{_fp_name}_au/{file_name}"
+                    booking.save()
 
-            #         # Send email when GET_LABEL
-            #         email_template_name = "General Booking"
+                    # Send email when GET_LABEL
+                    email_template_name = "General Booking"
 
-            #         if booking.b_booking_Category == "Salvage Expense":
-            #             email_template_name = "Return Booking"
+                    if booking.b_booking_Category == "Salvage Expense":
+                        email_template_name = "Return Booking"
 
-            #         send_booking_status_email(booking.pk, email_template_name, booker)
+                    send_booking_status_email(booking.pk, email_template_name, booker)
 
             # Save Label for Startrack and AusPost
             if _fp_name in ["auspost"]:
@@ -293,6 +293,7 @@ def response_handler_v2(_fp_name, booking, url, payload, response, json_data, bo
                 for item in json_data["items"]:
                     book_con = Api_booking_confirmation_lines(
                         fk_booking_id=booking.pk_booking_id,
+                        fk_booking_lines_id=item["reference"],
                         api_item_id=item["itemId"],
                     ).save()
 
@@ -368,10 +369,10 @@ def book(fp_name, booking, booker):
     logger.info(f"### Payload ({fp_name} book): {payload}")
 
     if _fp_name == "auspost":
-        url = SPOJIT_API_URL + "/booking/bookconsignment"
+        url = f"{SPOJIT_API_URL}/{_fp_name}/booking/bookconsignment"
         headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
     else:
-        url = DME_LEVEL_API_URL + "/booking/bookconsignment"
+        url = f"{DME_LEVEL_API_URL}/booking/bookconsignment"
         headers = {}
 
     response = requests.post(url, headers=headers, json=payload)

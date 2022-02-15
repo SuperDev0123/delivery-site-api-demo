@@ -33,6 +33,14 @@ def _extract(fp_name, consignmentStatus):
         # is_UTC = len(event_time) == 19
         event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
         event_time = str(convert_to_UTC_tz(event_time))
+    elif fp_name.lower() in ["auspost"]:
+        event = consignmentStatus
+        eventAt = event["eventAt"]
+        eventAt = datetime.strptime(eventAt[:19], "%Y-%m-%d %H:%M:%S")
+        event["eventAt"] = str(convert_to_UTC_tz(eventAt))
+        b_status_API = event["type"]
+        status_desc = f"{event['itemReference']} - {event['description']} (Location: {event['location']})"
+        event_time = event["eventAt"]
     else:
         event_time = None
 
@@ -80,6 +88,30 @@ def _extract_bulk(fp_name, consignmentStatuses):
                 "event_time": event_time,
             }
         )
+
+    return _result
+
+
+def _extract_bulk_v2(_fp_name, events):
+    _result = []
+    _events = events
+
+    for event in _events:
+        if _fp_name == "auspost":
+            eventAt = event["eventAt"]
+            eventAt = datetime.strptime(eventAt[:19], "%Y-%m-%dT%H:%M:%S")
+            event["eventAt"] = str(convert_to_UTC_tz(eventAt))
+
+        _result.append(
+            {
+                "b_status_API": event["type"],
+                "status_desc": f"{event['itemReference']} - {event['description']} (Location: {event['location']})",
+                "event_time": event["eventAt"],
+            }
+        )
+
+    if _fp_name == "auspost":
+        _result = sorted(_result, key=lambda x: x["event_time"])  # Sort by timestamp
 
     return _result
 
@@ -207,8 +239,80 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
         send_email_missing_status(booking, fp_name, b_status_API)
 
     status_history.create(booking, new_status, request.user.username, event_time)
-    # booking.b_status = status_from_fp
-    # booking.b_booking_Notes = status_desc
+    booking.save()
+
+    # msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
+    # logger.info(msg)
+    return True
+
+
+def _get_latest_event(_fp_name, confirmation_lines, events):
+    """
+    For AusPost only
+    """
+    line_events = {}
+    _latest_event = None
+
+    for event in events:
+        for confirmation_line in confirmation_lines:
+            if event["itemReference"] == confirmation_line.api_item_id:
+                line_events[event["itemReference"]] = event
+
+    for api_item_id in line_events:
+        line_event = line_events[api_item_id]
+
+        if not _latest_event:
+            _latest_event = line_event
+        elif _latest_event["eventAt"] > line_event["eventAt"]:
+            _latest_event = line_event
+
+    return [_latest_event]
+
+
+def update_booking_with_tracking_result_v2(request, booking, fp_name, events):
+    _fp_name = fp_name.lower()
+    _events = events
+
+    if booking.z_lock_status:
+        msg = f"#380 [TRACKING] Locked Booking: {booking.b_bookingID_Visual}({fp_name})"
+        logger.info(msg)
+        return True
+
+    if not events:
+        msg = f"#381 [TRACKING] No statuses: {booking.b_bookingID_Visual}({fp_name})"
+        logger.info(msg)
+        return False
+
+    if _fp_name == "auspost":
+        confirmation_lines = booking.get_confirmation_lines()
+        _events = _get_latest_event(_fp_name, confirmation_lines, events)
+
+    # Get actual_pickup_timestamp
+    if not booking.s_20_Actual_Pickup_TimeStamp:
+        result = _get_actual_timestamp(fp_name.lower(), _events, "pickup")
+
+        if result:
+            booking.s_20_Actual_Pickup_TimeStamp = result
+
+    # Get actual_delivery_timestamp
+    if not booking.s_21_Actual_Delivery_TimeStamp:
+        result = _get_actual_timestamp(fp_name.lower(), _events, "delivery")
+
+        if result:
+            booking.s_21_Actual_Delivery_TimeStamp = result
+            booking.delivery_booking = result[:10]
+
+    # Update booking's latest status
+    last_event = _events[0]
+    b_status_API, status_desc, event_time = _extract(fp_name.lower(), last_event)
+    booking.b_status_API = b_status_API
+    new_status = get_dme_status_from_fp_status(fp_name, b_status_API, booking)
+
+    if not new_status:  # Missing status mapping rule
+        booking.b_errorCapture = f"New FP status: {b_status_API}"
+        send_email_missing_status(booking, fp_name, b_status_API)
+
+    status_history.create(booking, new_status, request.user.username, event_time)
     booking.save()
 
     # msg = f"#389 [TRACKING] Success: {booking.b_bookingID_Visual}({fp_name})"
@@ -229,19 +333,34 @@ def create_fp_status_history(booking, fp, data):
     return _fp_status_history
 
 
-def populate_fp_status_history(booking, consignmentStatuses):
-    LOG_ID = "#321 [POPULATE FP STATUS HISTORY]"
-    fp_name = booking.vx_freight_provider
+def populate_fp_status_history(booking, consignmentStatuses=[], events=[]):
+    """
+    consignmentStatuses: data from DME_NODE
+    events: data from SPOJIT
+    """
 
-    if not consignmentStatuses:
-        msg = f"#321 {LOG_ID} No statuses: {booking.b_bookingID_Visual}({fp_name})"
-        logger.info(msg)
-        return False
+    LOG_ID = "[POPULATE FP STATUS HISTORY]"
+    fp_name = booking.vx_freight_provider
+    _fp_name = fp_name.lower()
+
+    if _fp_name == "auspost":
+        if not events:
+            msg = f"#{LOG_ID} No events: {booking.b_bookingID_Visual}({fp_name})"
+            logger.info(msg)
+            return False
+
+        new_fp_status_histories = _extract_bulk_v2(_fp_name, events)
+    else:
+        if not consignmentStatuses:
+            msg = f"#321 {LOG_ID} No statuses: {booking.b_bookingID_Visual}({fp_name})"
+            logger.info(msg)
+            return False
+
+        new_fp_status_histories = _extract_bulk(fp_name, consignmentStatuses)
 
     fp_status_histories = FP_status_history.objects.filter(
         booking=booking, is_active=True
     ).order_by("-event_timestamp")
-    new_fp_status_histories = _extract_bulk(fp_name, consignmentStatuses)
     fp = booking.get_fp()
 
     # Initial Tracking
@@ -273,12 +392,16 @@ def populate_fp_status_history(booking, consignmentStatuses):
             has_already = False
 
             for fp_status_history in fp_status_histories:
+                # # Compare status and event_time
+                # if _new["b_status_API"] == fp_status_history.status and _new[
+                #     "event_time"
+                # ][:19] == fp_status_history.event_timestamp.strftime(
+                #     "%Y-%m-%d %H:%M:%S"
+                # ):
+                #     has_already = True
+
                 # Compare status and event_time
-                if _new["b_status_API"] == fp_status_history.status and _new[
-                    "event_time"
-                ][:19] == fp_status_history.event_timestamp.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ):
+                if _new["b_status_API"] == fp_status_history.status:
                     has_already = True
 
             if not has_already:

@@ -33,27 +33,15 @@ class ScansViewSet(viewsets.ViewSet):
             if not booking_id:
                 booking = Bookings.objects.all().order_by("-z_CreatedTimestamp")[0]
                 booking_id = booking.id
+
             booking = Bookings.objects.get(id=booking_id)
             fp_status_history = (
-                FP_status_history.objects.values(
-                    "id", "status", "desc", "event_timestamp"
-                )
+                FP_status_history.objects.values("status", "desc", "event_timestamp")
                 .filter(booking_id=booking_id)
                 .order_by("-event_timestamp")
             )
-            fp_statuses = [item["status"] for item in fp_status_history]
-            dme_statuses = get_dme_status_from_fp_status(
-                booking.vx_freight_provider, fp_statuses
-            )
-            fp_status_history = [
-                {**item, "desc": dme_statuses[index]}
-                for index, item in enumerate(fp_status_history)
-            ]
+            fp_status_history = [item for item in fp_status_history]
             return Response({"scans": fp_status_history}, status=HTTP_200_OK)
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
-            fp_status_history = []
-            return Response(
-                {"msg": str(e)},
-                status=HTTP_400_BAD_REQUEST,
-            )
+            return Response({"msg": str(e)}, status=HTTP_400_BAD_REQUEST)

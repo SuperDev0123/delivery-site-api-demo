@@ -36,6 +36,7 @@ from api.fp_apis.pre_check import *
 from api.fp_apis.operations.common import _set_error
 from api.fp_apis.operations.tracking import (
     update_booking_with_tracking_result,
+    update_booking_with_tracking_result_v2,
     populate_fp_status_history,
 )
 from api.fp_apis.operations.book import book as book_oper
@@ -58,6 +59,7 @@ logger = logging.getLogger(__name__)
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
 def tracking(request, fp_name):
+    _fp_name = fp_name.lower()
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
 
@@ -66,9 +68,14 @@ def tracking(request, fp_name):
         payload = get_tracking_payload(booking, fp_name)
 
         logger.info(f"### Payload ({fp_name} tracking): {payload}")
-        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
-        response = requests.post(url, params={}, json=payload)
 
+        if _fp_name == "auspost":
+            url = f"{SPOJIT_API_URL}/{_fp_name}/tracking/trackconsignment"
+            headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
+        else:
+            url = f"{DME_LEVEL_API_URL}/tracking/trackconsignment"
+
+        response = requests.post(url, headers=headers, json=payload)
         if fp_name.lower() in ["tnt"]:
             res_content = response.content.decode("utf8")
         else:
@@ -77,7 +84,7 @@ def tracking(request, fp_name):
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         # disabled on 2021-07-05
-        # logger.info(f"### Response ({fp_name} tracking): {s0}")
+        logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         try:
             Log(
@@ -88,16 +95,30 @@ def tracking(request, fp_name):
                 fk_booking_id=booking.id,
             ).save()
 
-            consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
-            consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
-            has_new = populate_fp_status_history(booking, consignmentStatuses)
-
-            if has_new:
-                update_booking_with_tracking_result(
-                    request, booking, fp_name, consignmentStatuses
+            if _fp_name == "auspost":
+                has_new = populate_fp_status_history(
+                    booking=booking, events=json_data["events"]
                 )
-                booking.b_error_Capture = None
-                booking.save()
+
+                if has_new:
+                    update_booking_with_tracking_result_v2(
+                        request, booking, fp_name, json_data["events"]
+                    )
+                    booking.b_error_Capture = None
+                    booking.save()
+            else:
+                consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
+                consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
+                has_new = populate_fp_status_history(
+                    booking=booking, consignmentStatuses=consignmentStatuses
+                )
+
+                if has_new:
+                    update_booking_with_tracking_result(
+                        request, booking, fp_name, consignmentStatuses
+                    )
+                    booking.b_error_Capture = None
+                    booking.save()
 
             return JsonResponse(
                 {
@@ -214,7 +235,7 @@ def rebook(request, fp_name):
                 )
 
             logger.info(f"### Payload ({fp_name} rebook): {payload}")
-            url = DME_LEVEL_API_URL + "/booking/rebookconsignment"
+            url = f"{DME_LEVEL_API_URL}/booking/rebookconsignment"
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
@@ -367,7 +388,7 @@ def edit_book(request, fp_name):
             payload = get_book_payload(booking, fp_name)
 
             logger.info(f"### Payload ({fp_name} edit book): {payload}")
-            url = DME_LEVEL_API_URL + "/booking/bookconsignment"
+            url = f"{DME_LEVEL_API_URL}/booking/bookconsignment"
             response = requests.post(url, params={}, json=payload)
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
@@ -515,11 +536,11 @@ def cancel_book(request, fp_name):
                 logger.info(f"### Payload ({fp_name} cancel book): {payload}")
 
                 if _fp_name == "auspost":
-                    url = SPOJIT_API_URL + "/booking/cancelconsignment"
+                    url = f"{SPOJIT_API_URL}/{_fp_name}/booking/cancelconsignment"
                     headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
                     response = requests.post(url, headers=headers, json=payload)
                 else:
-                    url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
+                    url = f"{DME_LEVEL_API_URL}/booking/cancelconsignment"
                     headers = {}
                     response = requests.delete(url, headers=headers, json=payload)
 
@@ -645,7 +666,7 @@ def get_label(request, fp_name):
                 logger.info(
                     f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
                 )
-                url = DME_LEVEL_API_URL + "/labelling/createlabel"
+                url = f"{DME_LEVEL_API_URL}/labelling/createlabel"
                 response = requests.post(url, headers={}, json=payload)
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
@@ -684,10 +705,10 @@ def get_label(request, fp_name):
             z_label_url = None
 
             if _fp_name == "auspost":
-                url = SPOJIT_API_URL + "/labelling/createlabel"
+                url = f"{SPOJIT_API_URL}/{_fp_name}/labelling/createlabel"
                 headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
             else:
-                url = DME_LEVEL_API_URL + "/labelling/getlabel"
+                url = f"{DME_LEVEL_API_URL}/labelling/getlabel"
                 headers = {}
 
             while (
@@ -843,10 +864,10 @@ def create_order(request, fp_name):
         logger.info(f"Payload(Create Order for {fp_name.upper()}): {payload}")
 
         if _fp_name == "auspost":
-            url = SPOJIT_API_URL + "/order/create"
+            url = f"{SPOJIT_API_URL}/{_fp_name}/order/create"
             headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
         else:
-            url = DME_LEVEL_API_URL + "/order/create"
+            url = f"{DME_LEVEL_API_URL}/order/create"
             headers = {}
 
         response = requests.post(url, headers=headers, json=payload)
@@ -921,9 +942,9 @@ def get_order_summary(request, fp_name):
             logger.info(f"### Payload ({fp_name.upper()} Get Order Summary): {payload}")
 
             if _fp_name == "auspost":
-                url = SPOJIT_API_URL + "/order/summary"
+                url = f"{SPOJIT_API_URL}/{_fp_name}/order/summary"
             else:
-                url = DME_LEVEL_API_URL + "/order/summary"
+                url = f"{DME_LEVEL_API_URL}/order/summary"
 
             response = requests.post(url, json=payload, headers=headers)
             res_content = response.content
@@ -1011,7 +1032,7 @@ def pod(request, fp_name):
         payload = get_pod_payload(booking, fp_name)
         logger.info(f"### Payload ({fp_name} POD): {payload}")
 
-        url = DME_LEVEL_API_URL + "/pod/fetchpod"
+        url = f"{DME_LEVEL_API_URL}/pod/fetchpod"
         response = requests.post(url, params={}, json=payload)
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
@@ -1078,7 +1099,7 @@ def reprint(request, fp_name):
             payload = get_reprint_payload(booking, fp_name)
 
             logger.info(f"### Payload ({fp_name} REPRINT): {payload}")
-            url = DME_LEVEL_API_URL + "/labelling/reprint"
+            url = f"{DME_LEVEL_API_URL}/labelling/reprint"
             response = requests.post(url, params={}, json=payload)
 
             res_content = response.content.decode("utf8").replace("'", '"')
@@ -1197,7 +1218,7 @@ def update_servce_code(request, fp_name):
         payload = get_get_accounts_payload(_fp_name)
         headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
         logger.info(f"### Payload ({fp_name.upper()} Get Accounts): {payload}")
-        url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
+        url = f"{DME_LEVEL_API_URL}/servicecode/getaccounts"
         response = requests.post(url, json=payload, headers=headers)
         res_content = response.content
         json_data = json.loads(res_content)
@@ -1249,7 +1270,7 @@ def get_etd(booking):
         payload = get_etd_payload(booking, _fp_name)
 
         logger.info(f"### Payload ({fp_name} ETD): {payload}")
-        url = DME_LEVEL_API_URL + "/pricing/getetd"
+        url = f"{DME_LEVEL_API_URL}/pricing/getetd"
         response = requests.post(url, params={}, json=payload)
 
         res_content = response.content.decode("utf8").replace("'", '"')

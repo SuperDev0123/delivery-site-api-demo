@@ -423,7 +423,7 @@ async def _api_pricing_worker_builder_v1(
         logger.info(message)
         return None
 
-    url = DME_LEVEL_API_URL + "/pricing/calculateprice"
+    url = f"{DME_LEVEL_API_URL}/pricing/calculateprice"
     logger.info(f"### [PRICING] ({_fp_name.upper()}) API url: {url}")
     logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
 
@@ -503,7 +503,7 @@ async def _api_pricing_worker_builder_v2(
         logger.info(message)
         return None
 
-    url = SPOJIT_API_URL + "/pricing/calculateprice"
+    url = f"{SPOJIT_API_URL}/{_fp_name}/pricing/calculateprice"
     headers = {"Authorization": f"Bearer {SPOJIT_TOKEN}"}
     logger.info(f"### [PRICING] ({_fp_name.upper()}) API url: {url}")
     logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
