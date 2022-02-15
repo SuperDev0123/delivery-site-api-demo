@@ -48,9 +48,9 @@ def _extract_bulk(fp_name, consignmentStatuses):
         _consignmentStatuses = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
-    elif fp_name.lower() in ["startrack", "st"]:
-        # Reverse sort order
-        _consignmentStatuses = consignmentStatuses.reverse()
+    # elif fp_name.lower() in ["startrack", "st"]:
+    #     # Reverse sort order
+    #     _consignmentStatuses = consignmentStatuses.reverse()
 
     for consignmentStatus in _consignmentStatuses:
         if fp_name.lower() in ["startrack", "st"]:
