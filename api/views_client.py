@@ -884,7 +884,8 @@ def get_delivery_status(request):
         lines = (
             lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
             .exclude(e_item__icontains="(Ignored)")
-            .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
+            .only("pk_lines_id", "e_qty", "e_item", "e_item_type", 
+                "e_type_of_packaging", "e_dimUOM", "e_dimLength", "e_dimWidth", "e_dimHeight", "e_Total_KG_weight")
         )
 
         booking_dict = {
@@ -930,6 +931,12 @@ def get_delivery_status(request):
                 "l_003_item": line.e_item,
                 "l_002_qty": line.e_qty,
                 "product": product,
+                "packaging": line.e_type_of_packaging,
+                "e_dimUOM": line.e_dimUOM,
+                "e_dimLength": line.e_dimLength,
+                "e_dimWidth": line.e_dimWidth,
+                "e_dimHeight": line.e_dimHeight,
+                "e_total_KG_weight": line.e_Total_KG_weight
             }
 
         lines = map(line_to_dict, lines)
