@@ -785,6 +785,9 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
 
 
 def send_email_missing_status(booking, fp_name, b_status_API):
+    # Deactivated on 2022-02-16
+    return None
+
     message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
     logger.error(message)
 
