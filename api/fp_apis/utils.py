@@ -121,7 +121,8 @@ def get_status_category_from_status(status):
     except Exception as e:
         message = f"#819 Category not found with this status: {status}"
         logger.error(message)
-        send_email_to_admins("Category for Status not Found", message)
+        if 'rebooked' not in status.lower():
+            send_email_to_admins("Category for Status not Found", message)
         return None
 
 
