@@ -245,12 +245,12 @@ def rebook(request, fp_name):
                     booking.b_dateBookedDate = datetime.now()
                     status_history.create(
                         booking,
-                        "PU Rebooked(Last pickup Id was "
+                        "Pickup Rebooked(Last pickup Id was "
                         + str(old_fk_fp_pickup_id)
                         + ")",
                         request.user.username,
                     )
-                    status_history.create(booking, "PU Rebooked", "jason_l")
+                    status_history.create(booking, "Pickup Rebooked", "jason_l")
                     booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote

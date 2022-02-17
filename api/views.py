@@ -5515,7 +5515,7 @@ class ChartsViewSet(viewsets.ViewSet):
     def get_num_rebooked_bookings_per_fp(self, request):
         try:
             result = (
-                Bookings.objects.filter(b_status="Pu Rebooked")
+                Bookings.objects.filter(b_status="Pickup Rebooked")
                 .values("vx_freight_provider")
                 .annotate(vx_freight_provider_count=Count("vx_freight_provider"))
                 .order_by("vx_freight_provider_count")
