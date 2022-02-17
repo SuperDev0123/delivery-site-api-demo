@@ -48,12 +48,12 @@ def _extract_bulk(fp_name, consignmentStatuses):
         _consignmentStatuses = sorted(
             consignmentStatuses, key=lambda x: x["statusUpdate"]
         )
-    elif fp_name.lower() == "startrack":
-        # Reverse sort order
-        _consignmentStatuses = consignmentStatuses.reverse()
+    # elif fp_name.lower() in ["startrack", "st"]:
+    #     # Reverse sort order
+    #     _consignmentStatuses = consignmentStatuses.reverse()
 
     for consignmentStatus in _consignmentStatuses:
-        if fp_name.lower() == "startrack":
+        if fp_name.lower() in ["startrack", "st"]:
             b_status_API = consignmentStatus["status"]
             event_time = None
             status_desc = ""
@@ -191,7 +191,7 @@ def update_booking_with_tracking_result(request, booking, fp_name, consignmentSt
             booking.delivery_booking = result[:10]
 
     # Update booking's latest status
-    if fp_name.lower() == "startrack":
+    if fp_name.lower() in ["startrack", "st"]:
         last_consignmentStatus = _consignmentStatuses[0]
     else:
         last_consignmentStatus = _consignmentStatuses[len(_consignmentStatuses) - 1]
