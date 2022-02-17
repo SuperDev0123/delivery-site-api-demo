@@ -104,16 +104,20 @@ def build_special_fp_pricings(booking, packed_status):
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
         or booking.kf_client_id == "f821586a-d476-434d-a30b-839a04e10115"
     ):
-        # if delivery postal code is metro / CBD Melbourne or metro/ CBD Brisbane
+        # restrict delivery postal code
         postal_code = int(booking.de_To_Address_PostalCode or 0)
         if postal_code and (
-            (
+            (  # metro / CBD Melbourne
                 (postal_code >= 3000 and postal_code <= 3207)
                 or (postal_code >= 8000 and postal_code <= 8499)
             )
-            or (
+            or (  # metro/ CBD Brisbane
                 (postal_code >= 4000 and postal_code <= 4207)
                 or (postal_code >= 9000 and postal_code <= 9499)
+            )
+            or (  # metro/ CBD Sydney
+                (postal_code >= 1000 and postal_code <= 2249)
+                or (postal_code >= 2760 and postal_code <= 2770)
             )
         ):
             quote_0.freight_provider = "Deliver-ME"
