@@ -479,9 +479,9 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         if cost.UOM_charge.upper() in PALLETS:
-            if cost.end_qty and cost.end_qty < qty:
+            if cost.end_qty and cost.end_qty <= qty:
                 continue
-            if cost.start_qty and cost.start_qty >= qty:
+            if cost.start_qty and cost.start_qty > qty:
                 continue
         else:
             if cost.end_qty and cost.end_qty < total_weight:
