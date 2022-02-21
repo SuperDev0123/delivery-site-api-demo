@@ -831,6 +831,22 @@ def get_delivery_status(request):
         b_status = booking.b_status
         quote = booking.api_booking_quote
 
+        # Category
+        category = get_status_category_from_status(b_status)
+        if not category:
+            logger.info(
+                f"#301 - unknown_status - identifier={identifier}, status={b_status}"
+            )
+            return Response(
+                {
+                    "code": "unknown_status",
+                    "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
+                    "step": None,
+                    "status": None,
+                },
+                status=HTTP_400_BAD_REQUEST,
+
+
         status_histories = Dme_status_history.objects.filter(
             fk_booking_id=booking.pk_booking_id
         ).order_by("-z_createdTimeStamp")
