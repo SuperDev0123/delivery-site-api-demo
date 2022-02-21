@@ -15,6 +15,7 @@ class Command(BaseCommand):
                 b_client_order_num__isnull=False,
                 b_client_name="Jason L",
             )
+            .exclude(b_status__in=["Closed", "Cancelled"])
             .order_by("z_CreatedTimestamp")
             .only(
                 "id",
