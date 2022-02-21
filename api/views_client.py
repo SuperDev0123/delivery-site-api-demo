@@ -845,7 +845,7 @@ def get_delivery_status(request):
                     "status": None,
                 },
                 status=HTTP_400_BAD_REQUEST,
-
+            )
 
         status_histories = Dme_status_history.objects.filter(
             fk_booking_id=booking.pk_booking_id
