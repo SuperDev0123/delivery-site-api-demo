@@ -829,36 +829,16 @@ def get_delivery_status(request):
         client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
         b_status = booking.b_status
         quote = booking.api_booking_quote
-        category = get_status_category_from_status(b_status)
 
-        if not category:
-            logger.info(
-                f"#301 - unknown_status - identifier={identifier}, status={b_status}"
-            )
-            return Response(
-                {
-                    "code": "unknown_status",
-                    "message": "Please contact DME support center. <bookings@deliver-me.com.au>",
-                    "step": None,
-                    "status": None,
-                },
-                status=HTTP_400_BAD_REQUEST,
-            )
-
-        status_history = Dme_status_history.objects.filter(
+        status_histories = Dme_status_history.objects.filter(
             fk_booking_id=booking.pk_booking_id
         ).order_by("-z_createdTimeStamp")
 
-        if status_history:
-            last_updated = (
-                dme_time_lib.convert_to_AU_SYDNEY_tz(
-                    status_history.first().event_time_stamp
-                ).strftime("%d/%m/%Y %H:%M")
-                if status_history.first().event_time_stamp
-                else ""
-            )
-        else:
-            last_updated = ""
+        last_updated = ""
+        if status_histories and status_history.first().event_time_stamp:
+            last_updated = dme_time_lib.convert_to_AU_SYDNEY_tz(
+                status_history.first().event_time_stamp
+            ).strftime("%d/%m/%Y %H:%M")
 
         lines = Booking_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id, packed_status=Booking_lines.ORIGINAL
@@ -942,20 +922,38 @@ def get_delivery_status(request):
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
         last_milestone = "Delivered"
-        if category == "Booked":
+        if b_status in [
+            "Picking",
+            "Ready for Booking",
+            "Ready for Despatch",
+            "Booked",
+            "Futile Pickup",
+            "Pickup Rebooked",
+        ]:
             step = 2
-        elif category == "Transit":
+        elif b_status in [
+            "In Transit",
+            "Partial In Transit",
+            "On-Forwarded",
+            "Delivery Rebooked",
+            "Delivery Delayed",
+        ]:
             step = 3
-        elif category == "On Board for Delivery":
+        elif b_status == "On Board for Delivery":
             step = 4
-        elif category == "Complete":
+        elif b_status in [
+            "Lost In Transit",
+            "Damaged",
+            "Returning",
+            "Returned",
+            "Cancelled",
+            "Closed",
+            "Delivered",
+            "Collected",
+            "Partially Delivered",
+        ]:
             step = 5
-        elif category == "Futile":
-            step = 5
-            last_milestone = "Futile Delivery"
-        elif category == "Returned":
-            step = 5
-            last_milestone = "Returned"
+            last_milestone = b_status if b_status != "Collected" else "Delivered"
         else:
             step = 1
             b_status = "Processing"
