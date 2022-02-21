@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 
 from api.models import Bookings
 
+
 class Command(BaseCommand):
     def handle(self, *args, **options):
         print("----- Get JasonL orders status... -----")
@@ -14,6 +15,7 @@ class Command(BaseCommand):
                 b_client_order_num__isnull=False,
                 b_client_name="Jason L",
             )
+            .order_by("z_CreatedTimestamp")
             .only(
                 "id",
                 "b_bookingID_Visual",
@@ -54,13 +56,16 @@ class Command(BaseCommand):
 
             for i, line in enumerate(csv_file):
                 if i == 1:
-                    line_piece = line.split('|')
+                    line_piece = line.split("|")
                     if line_piece[-1].isnumeric() and int(line_piece[-1]) > 89:
-                        results.append(line)
-                        if booking.z_CreatedTimestamp.replace(tzinfo=None) > (datetime.now() - timedelta(days=30)):
-                            booking.b_status = 'Closed'
-                            booking.b_status_category='Complete'
-                            booking.b_booking_Notes = 'Inactive, auto closed'
+                        if booking.z_CreatedTimestamp.replace(tzinfo=None) > (
+                            datetime.now() - timedelta(days=30)
+                        ):
+                            results.append(line)
+                            booking.b_status = "Closed"
+                            booking.b_status_category = "Complete"
+                            booking.b_booking_Notes = "Inactive, auto closed"
                             booking.save()
+                            print(f"{booking.b_client_order_num} is closed!")
         print(f"\nResult:\n {results}")
         print("\n----- Finished! -----")
