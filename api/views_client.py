@@ -821,6 +821,7 @@ def get_delivery_status(request):
 
     identifier = request.GET.get("identifier")
     quote_data = {}
+    last_milestone = "Delivered"
 
     # 1. Try to find from dme_bookings table
     booking = Bookings.objects.filter(b_client_booking_ref_num=identifier).first()
@@ -835,9 +836,9 @@ def get_delivery_status(request):
         ).order_by("-z_createdTimeStamp")
 
         last_updated = ""
-        if status_histories and status_history.first().event_time_stamp:
+        if status_histories and status_histories.first().event_time_stamp:
             last_updated = dme_time_lib.convert_to_AU_SYDNEY_tz(
-                status_history.first().event_time_stamp
+                status_histories.first().event_time_stamp
             ).strftime("%d/%m/%Y %H:%M")
 
         lines = Booking_lines.objects.filter(
@@ -921,7 +922,6 @@ def get_delivery_status(request):
             quote_data = SimpleQuoteSerializer(quote, context=context).data
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
-        last_milestone = "Delivered"
         if b_status in [
             "Picking",
             "Ready for Booking",
@@ -1201,7 +1201,7 @@ def get_delivery_status(request):
             "quote": json_quote,
             "booking": booking_dict,
             "eta_date": eta,
-            "last_milestone": "Delivered",
+            "last_milestone": last_milestone,
             "timestamps": [
                 dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.date_processed).strftime(
                     "%d/%m/%Y %H:%M:%S"
