@@ -1,9 +1,8 @@
 import subprocess
-
+from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 
 from api.models import Bookings
-
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -23,6 +22,7 @@ class Command(BaseCommand):
                 "b_status_category",
                 "api_booking_quote",
                 "b_client_order_num",
+                "z_CreatedTimestamp",
             )
         )
         bookings_cnt = bookings.count()
@@ -54,7 +54,13 @@ class Command(BaseCommand):
 
             for i, line in enumerate(csv_file):
                 if i == 1:
-                    results.append(line)
-
+                    line_piece = line.split('|')
+                    if line_piece[-1].isnumeric() and int(line_piece[-1]) > 89:
+                        results.append(line)
+                        if booking.z_CreatedTimestamp.replace(tzinfo=None) > (datetime.now() - timedelta(days=30)):
+                            booking.b_status = 'Closed'
+                            booking.b_status_category='Complete'
+                            booking.b_booking_Notes = 'Inactive, auto closed'
+                            booking.save()
         print(f"\nResult:\n {results}")
         print("\n----- Finished! -----")
