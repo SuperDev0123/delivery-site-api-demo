@@ -43,22 +43,25 @@ class Command(BaseCommand):
 
         bookings = (
             Bookings.objects.filter(
-                b_client_order_num__in=order_id_list,
                 b_client_name="Bathroom Sales Direct",
+                b_client_order_num__in=order_id_list,
             )
+            .exclude(b_status__in=["Closed", "Cancelled"])
             .only(
                 "id",
                 "b_status",
                 "b_status_category",
                 "b_client_order_num",
             )
-            .update(
-                b_status="Closed",
-                b_status_category="Complete",
-                b_booking_Notes="Inactive, auto closed",
-            )
         )
-        print("---- finished auto close BSD booking -------")
+        bookings.update(
+            b_status="Closed",
+            b_status_category="Complete",
+            b_booking_Notes="Inactive, auto closed",
+        )
+        print(f"Closed count: {len(bookings)} are closed!")
+        print(f"Closed bookings: {bookings}")
+        print("---- Finished auto close BSD booking -------")
 
 
 def get_orders_from_woocommerce(from_date, to_date, status):
