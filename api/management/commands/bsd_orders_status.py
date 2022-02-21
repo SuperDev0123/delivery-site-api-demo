@@ -73,6 +73,7 @@ def get_orders_from_woocommerce(from_date, to_date, status):
             url = build_req_url(from_date, to_date, status, index, per_page)
             print(f"url - {url}")
             res = wcapi.get(url).json()
+            print(f"count - {len(res)}")
             order_list += res
             if len(res) < per_page:
                 break
