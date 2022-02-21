@@ -34,7 +34,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("----- Get completed BSD orders from Woocommerce -----")
         orderList = get_orders_from_woocommerce(
-            datetime.now() - timedelta(days=15), datetime.now(), "completed"
+            datetime.now() - timedelta(days=50), datetime.now(), "completed"
         )
         print("----- Completed BSD order count: %d -----" % len(orderList))
         order_id_list = []
