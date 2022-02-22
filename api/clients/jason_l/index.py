@@ -157,7 +157,9 @@ def partial_pricing(payload, client, warehouse):
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        best_quotes = select_best_options(pricings=quote_set)
+        best_quotes = select_best_options(
+            pricings=quote_set, client=warehouse.fk_id_dme_client
+        )
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
@@ -813,8 +815,16 @@ def push_boks(payload, client, username, method):
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        auto_select_pricing_4_bok(bok_1_obj, quote_set, is_from_script)
-        best_quotes = select_best_options(pricings=quote_set)
+        auto_select_pricing_4_bok(
+            bok_1=bok_1_obj,
+            pricings=quote_set,
+            is_from_script=is_from_script,
+            auto_select_type=1,
+            client=client,
+        )
+        best_quotes = select_best_options(
+            pricings=quote_set, client=warehouse.fk_id_dme_client
+        )
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
@@ -1124,7 +1134,7 @@ def scanned(payload, client):
             else:
                 quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
 
-            best_quotes = select_best_options(pricings=quotes)
+            best_quotes = select_best_options(pricings=quotes, client=client)
             logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
 
             if best_quotes:

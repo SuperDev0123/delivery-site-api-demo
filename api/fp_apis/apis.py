@@ -1105,6 +1105,7 @@ def pricing(request):
         client = booking.get_client()
         client_customer_mark_up = client.client_customer_mark_up or 0
     except:
+        client = None
         client_customer_mark_up = 0
 
     if not success:
@@ -1133,7 +1134,7 @@ def pricing(request):
             results = results.exclude(freight_provider="Sendle")
 
         if not booking.b_dateBookedDate:
-            auto_select_pricing(booking, results, auto_select_type)
+            auto_select_pricing(booking, results, auto_select_type, client)
 
     res_json = {"success": True, "message": message, "results": json_results}
     return JsonResponse(res_json, status=status.HTTP_200_OK)
