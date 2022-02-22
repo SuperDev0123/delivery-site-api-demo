@@ -247,7 +247,7 @@ def _get_lowest_price(pricings, client=None):
         "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
     ]:
         for pricing in pricings:
-            if pricing.freight_provider == "Deliver-Me":
+            if pricing.freight_provider == "Deliver-ME":
                 return pricing
 
     for pricing in pricings:
