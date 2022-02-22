@@ -18,6 +18,8 @@ from api.models import (
     Client_FP,
     FP_Service_ETDs,
     Surcharge,
+    DME_clients,
+    Fp_freight_providers,
 )
 
 from api.fp_apis.operations.common import _set_error
@@ -34,7 +36,7 @@ from api.fp_apis.constants import (
     AVAILABLE_FPS_4_FC,
 )
 from api.fp_apis.utils import _convert_UOM
-
+from django.db import connection
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,7 @@ def pricing(
             booking_lines.append(Struct(**booking_line))
 
     if not is_pricing_only:
-        booking = Bookings.objects.filter(id=booking_id).first()
+        booking = Bookings.objects.filter(id=booking_id).order_by("id").first()
 
         if not booking:
             return None, False, "Booking does not exist", None
@@ -130,6 +132,11 @@ def pricing(
             packed_status__in=packed_statuses,
         ).update(is_used=True)
 
+    try:
+        client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
+    except:
+        client = None
+    print("@11-", datetime.now(), len(connection.queries))
     if not booking_lines:
         for packed_status in packed_statuses:
             booking_lines = Booking_lines.objects.filter(
@@ -144,6 +151,7 @@ def pricing(
                     booking_lines,
                     is_pricing_only,
                     packed_status,
+                    client,
                     pu_zones,
                     de_zones,
                 )
@@ -154,19 +162,20 @@ def pricing(
                 booking_lines,
                 is_pricing_only,
                 packed_status,
+                client,
                 pu_zones,
                 de_zones,
             )
-
+    print("@14-", datetime.now(), len(connection.queries))
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
     )
-
+    print("@15-", datetime.now(), len(connection.queries))
     return booking, True, "Retrieved all Pricing info", quotes
 
 
 def _loop_process(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking, booking_lines, is_pricing_only, packed_status, client, pu_zones, de_zones
 ):
     try:
         loop = asyncio.new_event_loop()
@@ -184,23 +193,33 @@ def _loop_process(
     finally:
         loop.close()
 
+    print("@23-", datetime.now(), len(connection.queries))
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
     )
+    fp_names = [quote.freight_provider for quote in quotes]
+    fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
     if quotes.exists():
-        # Interpolate gaps (for Plum client now)
-        quotes = interpolate_gaps(quotes)
+        if client:
+            # Interpolate gaps (for Plum client now)
+            quotes = interpolate_gaps(quotes, client)
 
         # Calculate Surcharges
         for quote in quotes:
-            gen_surcharges(booking, booking_lines, quote, "booking")
+            for fp in fps:
+                if quote.freight_provider.lower() == fp.fp_company_name.lower():
+                    quote_fp = fp
+
+            gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes)
+        quotes = apply_markups(quotes, client, fp)
 
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)
+
+    print("@24-", datetime.now(), len(connection.queries))
 
 
 async def _pricing_process(
@@ -229,6 +248,7 @@ async def pricing_workers(
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
 
+    print("@21-", datetime.now(), len(connection.queries))
     client_fps = Client_FP.objects.prefetch_related("fp").filter(
         client__company_name__iexact=booking.b_client_name, is_active=True
     )
@@ -303,7 +323,7 @@ async def pricing_workers(
 
                     logger.info(f"#906 [PRICING] - {_fp_name}, {client_name}")
 
-                    if _fp_name == "auspost" and services:
+                    if _fp_name == "auspost":
                         for service in services:
                             _worker = _api_pricing_worker_builder(
                                 _fp_name,
@@ -339,7 +359,7 @@ async def pricing_workers(
                 de_zones,
             )
             _workers.add(_worker)
-
+    print("@22-", datetime.now(), len(connection.queries))
     logger.info("#911 [PRICING] - Pricing workers will start soon")
     await asyncio.gather(*_workers)
     logger.info("#919 [PRICING] - Pricing workers finished all")
