@@ -824,7 +824,9 @@ def get_delivery_status(request):
     last_milestone = "Delivered"
 
     # 1. Try to find from dme_bookings table
-    booking = Bookings.objects.filter(b_client_booking_ref_num=identifier).first()
+    booking = Bookings.objects.filter(
+        Q(b_client_booking_ref_num=identifier) | Q(pk_booking_id=identifier)
+    ).first()
 
     if booking:
         client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
@@ -1100,7 +1102,9 @@ def get_delivery_status(request):
         )
 
     # 2. Try to find from Bok tables
-    bok_1 = BOK_1_headers.objects.filter(client_booking_id=identifier).first()
+    bok_1 = BOK_1_headers.objects.filter(
+        Q(client_booking_id=identifier) | Q(pk_header_id=identifier)
+    ).first()
 
     if not bok_1:
         return Response(
