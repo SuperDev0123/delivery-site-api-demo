@@ -873,6 +873,14 @@ def get_delivery_status(request):
                 fk_booking_id=booking.pk_booking_id,
                 packed_status=booking.api_booking_quote.packed_status,
             )
+        elif (
+            booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+            and not booking.api_booking_quote
+        ):
+            lines = Booking_lines.objects.filter(
+                fk_booking_id=booking.pk_booking_id,
+                packed_status=Booking_lines.SCANNED_PACK,
+            )
 
         has_deleted_lines = lines.filter(is_deleted=True).exists()
 
