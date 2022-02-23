@@ -29,6 +29,7 @@ def push_boks(payload, client, username, method):
         bok_1["fk_client_id"] = client.dme_account_num
         bok_1["x_booking_Created_With"] = "DME PUSH API"
         bok_1["success"] = dme_constants.BOK_SUCCESS_5
+        bok_1["shipping_type"] = "DMEM"
 
         # PU avail from
         bok_1["b_021_b_pu_avail_from_date"] = None
