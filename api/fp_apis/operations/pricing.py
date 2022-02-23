@@ -209,20 +209,20 @@ def pricing(
                     pu_zones,
                     de_zones,
                 )
+                build_special_fp_pricings(booking, packed_status)
     else:
-        for packed_status in packed_statuses:
-            _loop_process(
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                client,
-                pu_zones,
-                de_zones,
-            )
-
-    for packed_status in packed_statuses:
-        build_special_fp_pricings(booking, packed_status)
+        if booking_lines:
+            for packed_status in packed_statuses:
+                _loop_process(
+                    booking,
+                    booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    client,
+                    pu_zones,
+                    de_zones,
+                )
+                build_special_fp_pricings(booking, packed_status)
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
