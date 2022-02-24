@@ -488,6 +488,7 @@ def send_status_update_email(
     When 'Plum Products Australia Ltd' bookings status is updated
     """
     from api.fp_apis.utils import get_status_time_from_category
+    from api.common.common_times import convert_to_AU_SYDNEY_tz
 
     LOG_ID = "[STATUS UPDATE EMAIL]"
     logger.info(
@@ -502,7 +503,7 @@ def send_status_update_email(
 
     last_updated = ""
     if status_histories and status_histories.first().event_time_stamp:
-        last_updated = dme_time_lib.convert_to_AU_SYDNEY_tz(
+        last_updated = convert_to_AU_SYDNEY_tz(
             status_histories.first().event_time_stamp
         ).strftime("%d/%m/%Y %H:%M")
 
