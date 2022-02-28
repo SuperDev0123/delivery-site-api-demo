@@ -2,10 +2,9 @@ import json
 import logging
 import asyncio
 import requests_async
-from datetime import date, datetime
+from datetime import datetime
 
 from django.conf import settings
-from sqlalchemy import false
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
