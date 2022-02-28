@@ -346,7 +346,7 @@ def send_info_back_to_pronto(bok_1, quote):
     client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     tax_value_1 = bok_1.quote.tax_value_1 or 0
     ordered_qty = 1
-    surcharge_total = get_surcharges_total(bok_1, bok_2s, bok_1.quote)
+    surcharge_total = get_surcharges_total(bok_1.quote)
     item_price = "{0:.2f}".format(
         (bok_1.quote.client_mu_1_minimum_values + surcharge_total)
         * (client.client_customer_mark_up + 1)

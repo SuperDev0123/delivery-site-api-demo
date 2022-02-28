@@ -88,7 +88,7 @@ def _apply_mu(quote, fp, client):
     return quoted_dollar, fuel_levy_base, client_mu
 
 
-def apply_markups(quotes, client, fp):
+def apply_markups(quotes, client, fps):
     logger.info(f"[APPLY MU] Start")
 
     if not quotes:
@@ -98,6 +98,12 @@ def apply_markups(quotes, client, fp):
     logger.info(f"[APPLY MU] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
 
     for quote in quotes:
+        fp = None
+
+        for _fp in fps:
+            if quote.freight_provider.lower() == _fp.fp_company_name.lower():
+                fp = _fp
+
         client_mu_1_minimum_values, fuel_levy_base, client_mu = _apply_mu(
             quote, fp, client
         )

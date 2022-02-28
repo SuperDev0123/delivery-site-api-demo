@@ -1,6 +1,8 @@
 import math
 import logging
 
+from django.db.models import Q
+
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.helpers.cubic import get_cubic_meter
 from api.models import Booking_lines, Surcharge, Fp_freight_providers
@@ -93,19 +95,13 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
     return booking, lines
 
 
-def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
     m3_to_kg_factor = get_m3_to_kg_factor(booking["vx_freight_provider"])
 
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
-    lengths, widths, heights, diagonals, lines_data, lines_max_weight = (
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-    )
+    lengths, widths, heights = [], [], []
+    diagonals, lines_data, lines_max_weight = [], [], []
     has_dangerous_item = False
 
     for line in lines:
@@ -327,8 +323,11 @@ def clac_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     return surcharges
 
 
-def get_surcharges(quote):
-    return Surcharge.objects.filter(quote=quote)
+def get_surcharges(quote, booking=None):
+    if booking:
+        return Surcharge.objects.filter(Q(quote=quote) | Q(booking=booking))
+    else:
+        return Surcharge.objects.filter(quote=quote)
 
 
 def get_surcharges_total(quote):
@@ -336,7 +335,7 @@ def get_surcharges_total(quote):
     surcharges = get_surcharges(quote)
 
     for surcharge in surcharges.filter(line_id__isnull=True):
-        _total += surcharge.amount
+        _total += surcharge.amount * (surcharge.qty or 1)
 
     return _total
 
@@ -357,7 +356,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
     #     return result
 
     # Calc new surcharge opts
-    surcharges = clac_surcharges(booking_obj, line_objs, quote_obj, data_type)
+    surcharges = find_surcharges(booking_obj, line_objs, quote_obj, data_type)
 
     # Create new Surcharge objects
     for surcharge in surcharges:
@@ -366,6 +365,8 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
         surcharge_obj.name = surcharge["name"]
         surcharge_obj.amount = surcharge["value"]
         surcharge_obj.fp = fp
+        surcharge_obj.visible = True
+        surcharge_obj.qty = 1
         surcharge_obj.save()
         total += float(surcharge["value"])
         result.append(surcharge_obj)
@@ -380,14 +381,21 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
                 surcharge_obj.line_id = line["pk"]
                 surcharge_obj.qty = line["quantity"]
                 surcharge_obj.fp = fp
+                surcharge_obj.visible = True
                 surcharge_obj.save()
                 result.append(surcharge_obj)
 
+    # Get manually entered surcharges total
+    try:
+        manual_surcharges_total = booking_obj.get_manual_surcharges_total()
+    except:
+        manual_surcharges_total = 0
+
     quote_obj.client_mu_1_minimum_values = quote_obj.fee
-    quote_obj.x_price_surcharge = total
+    quote_obj.x_price_surcharge = manual_surcharges_total + total
     quote_obj.save()
 
     if data_type == "bok_1":
-        apply_markups([quote_obj], client, fp)
+        apply_markups([quote_obj], client, [fp])
 
     return result

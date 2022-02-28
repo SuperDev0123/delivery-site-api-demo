@@ -2075,6 +2075,15 @@ class Bookings(models.Model):
         except:
             return None
 
+    def get_manual_surcharges_total(self):
+        _total = 0
+        manual_surcharges = Surcharge.objects.filter(booking=self)
+
+        for surcharge in manual_surcharges:
+            _total += surcharge.qty * surcharge.amount
+
+        return _total
+
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
         creating = self._state.adding
@@ -4993,64 +5002,6 @@ class Client_FP(models.Model):
         db_table = "client_fp"
 
 
-class CostOption(models.Model):
-    id = models.AutoField(primary_key=True)
-    code = models.CharField(max_length=16, default=None, null=True)
-    description = models.CharField(max_length=64, default=None, null=True)
-    initial_markup_percentage = models.FloatField(default=0, null=True)
-    is_active = models.BooleanField(default=True)
-    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
-    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
-    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
-    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = "dme_cost_options"
-
-
-class CostOptionMap(models.Model):
-    """
-    Mapping table from FP cost option to DME's
-    """
-
-    id = models.AutoField(primary_key=True)
-    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
-    fp_cost_option = models.CharField(max_length=128, default=None, null=True)
-    dme_cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
-    is_active = models.BooleanField(default=True)
-    amount = models.FloatField(default=0, null=True)
-    is_percentage = models.BooleanField(default=False)
-    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
-    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
-    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
-    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = "dme_utl_map_fp_cost_options"
-
-
-class BookingCostOption(models.Model):
-    id = models.AutoField(primary_key=True)
-    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
-    cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
-    is_active = models.BooleanField(default=True)
-    amount = models.FloatField(default=0, null=True)
-    is_percentage = models.BooleanField(default=False)
-    qty = models.FloatField(default=1, null=True)
-    markup_percentage = models.FloatField(default=0, null=True)
-    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
-    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
-    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
-    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = "dme_booking_cost_options"
-        unique_together = (
-            "booking",
-            "cost_option",
-        )
-
-
 class FPRouting(models.Model):
     """
     This table is used only for TNT
@@ -5111,15 +5062,59 @@ class PostalCode(models.Model):
 
 class Surcharge(models.Model):
     id = models.AutoField(primary_key=True)
-    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
+    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE, null=True)
     fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=255, default=None, null=True)
     amount = models.FloatField(null=True, default=None)
     line_id = models.CharField(max_length=36, default=None, null=True)  # Line/BOK_2 pk
     qty = models.IntegerField(blank=True, null=True, default=0)  # Line/BOK_2 qty
 
+    ### New fields from 2022-02-24 ###
+    booking = models.ForeignKey(
+        Bookings, on_delete=models.CASCADE, null=True, default=None
+    )
+    # Visible to Customer
+    visible = models.BooleanField(default=False)
+    # Is manually entered by DME admin
+    is_manually_entered = models.BooleanField(default=False)
+    connote_or_reference = models.CharField(max_length=64, default=None, null=True)
+    applied_at = models.DateTimeField(null=True, default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+
+        if not creating:
+            cls = self.__class__
+            old = cls.objects.get(pk=self.pk)
+            new = self
+
+            changed_fields = []
+            for field in cls._meta.get_fields():
+                field_name = field.name
+                try:
+                    if getattr(old, field_name) != getattr(new, field_name):
+                        changed_fields.append(field_name)
+                except Exception as ex:  # Catch field does not exist exception
+                    pass
+            kwargs["update_fields"] = changed_fields
+        return super(Surcharge, self).save(*args, **kwargs)
+
     class Meta:
         db_table = "dme_surcharge"
+
+
+@receiver(post_save, sender=Surcharge)
+def post_save_surcharge(sender, instance, created, update_fields, **kwargs):
+    from api.signal_handlers.surcharge import post_save_handler
+
+    post_save_handler(instance, created, update_fields)
+
+
+@receiver(post_delete, sender=Surcharge)
+def post_delete_surcharge(sender, instance, **kwargs):
+    from api.signal_handlers.surcharge import post_delete_handler
+
+    post_delete_handler(instance)
 
 
 class FP_status_history(models.Model):

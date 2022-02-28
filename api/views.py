@@ -2095,9 +2095,14 @@ class BookingViewSet(viewsets.ViewSet):
                     client_customer_mark_up = client.client_customer_mark_up
 
                 # Get count for 'Attachments'
-                attachments = Dme_attachments.objects.filter(
+                cnt_attachments = Dme_attachments.objects.filter(
                     fk_id_dme_booking=booking.pk_booking_id
-                )
+                ).count()
+
+                # Get count for `additional surcharges`
+                cnt_additional_surcharges = Surcharge.objects.filter(
+                    booking=booking, is_manually_entered=True
+                ).count()
 
                 context = {"client_customer_mark_up": client_customer_mark_up}
 
@@ -2107,7 +2112,8 @@ class BookingViewSet(viewsets.ViewSet):
                         "nextid": nextBookingId,
                         "previd": prevBookingId,
                         "e_qty_total": e_qty_total,
-                        "cnt_attachments": len(attachments),
+                        "cnt_attachments": cnt_attachments,
+                        "cnt_additional_surcharges": cnt_additional_surcharges,
                     }
                 )
             return JsonResponse(
@@ -2117,6 +2123,7 @@ class BookingViewSet(viewsets.ViewSet):
                     "previd": 0,
                     "e_qty_total": 0,
                     "cnt_attachments": 0,
+                    "cnt_additional_surcharges": 0,
                 }
             )
         except Exception as e:
@@ -2129,6 +2136,7 @@ class BookingViewSet(viewsets.ViewSet):
                     "previd": 0,
                     "e_qty_total": 0,
                     "cnt_attachments": 0,
+                    "cnt_additional_surcharges": 0,
                 }
             )
 
@@ -5218,7 +5226,7 @@ class ClientProcessViewSet(viewsets.ModelViewSet):
         if booking_id:
             queryset = Client_Process_Mgr.objects.filter(fk_booking_id=booking_id)
         else:
-            queryset = Client_Process_Mgr.all()
+            queryset = Client_Process_Mgr.objects.all()
 
         return queryset.order_by("id")
 
@@ -5236,6 +5244,20 @@ class ClientViewSet(viewsets.ModelViewSet):
 class RoleViewSet(viewsets.ModelViewSet):
     serializer_class = RoleSerializer
     queryset = DME_Roles.objects.all()
+
+
+@permission_classes((IsAuthenticated,))
+class SurchargeViewSet(viewsets.ModelViewSet):
+    serializer_class = SurchargeSerializer
+
+    def get_queryset(self):
+        booking_id = self.request.GET["bookingId"]
+        queryset = Surcharge.objects.all()
+
+        if booking_id:
+            queryset = queryset.filter(booking_id=booking_id)
+
+        return queryset.order_by("id")
 
 
 @permission_classes((IsAuthenticated,))
@@ -5606,46 +5628,6 @@ class ChartsViewSet(viewsets.ViewSet):
         except Exception as e:
             # print(f"Error #102: {e}")
             return JsonResponse({"results": [], "success": False, "message": str(e)})
-
-
-class CostOptionViewSet(viewsets.ModelViewSet):
-    queryset = CostOption.objects.all().order_by("z_createdAt")
-    serializer_class = CostOptionSerializer
-
-
-class CostOptionMapViewSet(viewsets.ModelViewSet):
-    queryset = CostOptionMap.objects.all().order_by("z_createdAt")
-    serializer_class = CostOptionMapSerializer
-
-    def get_queryset(self):
-        fp_name = self.request.GET["fpName"]
-
-        if fp_name:
-            queryset = CostOptionMap.objects.prefetch_related("dme_cost_option").filter(
-                is_active=True, fp__fp_company_name__iexact=fp_name
-            )
-        else:
-            queryset = CostOptionMap.objects.prefetch_related("dme_cost_option").filter(
-                is_active=True
-            )
-
-        return queryset.order_by("z_createdAt")
-
-
-class BookingCostOptionViewSet(viewsets.ModelViewSet):
-    serializer_class = BookingCostOptionSerializer
-
-    def get_queryset(self):
-        booking_id = self.request.GET["bookingId"]
-
-        if booking_id:
-            queryset = BookingCostOption.objects.filter(
-                booking_id=booking_id, is_active=True
-            )
-        else:
-            queryset = BookingCostOption.objects.filter(is_active=True)
-
-        return queryset.order_by("z_createdAt")
 
 
 class PalletViewSet(NoUpdateMixin, NoDestroyMixin, viewsets.ModelViewSet):

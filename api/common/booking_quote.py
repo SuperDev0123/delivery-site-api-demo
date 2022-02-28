@@ -27,10 +27,15 @@ def set_booking_quote(booking, quote=None):
         if not quote.fee:
             booking.inv_cost_quoted = 0
         else:
-            booking.inv_cost_quoted = (
-                quote.fee * (1 + quote.mu_percentage_fuel_levy)
-                + quote.x_price_surcharge
-            )
+            surcharge = quote.x_price_surcharge if quote.x_price_surcharge else 0
+            fp_mu = quote.mu_percentage_fuel_levy
+
+            if quote.freight_provider in ["Hunter", "Allied", "Northline", "Camerons"]:
+                fuel_levy_base = (quote.fee + surcharge) * fp_mu
+            else:
+                fuel_levy_base = quote.fee * fp_mu
+
+            booking.inv_cost_quoted = quote.fee + surcharge + fuel_levy_base
 
         if quote.packed_status == API_booking_quotes.SCANNED_PACK:
             booking.inv_booked_quoted = quote.client_mu_1_minimum_values

@@ -35,9 +35,6 @@ from api.models import (
     DME_Augment_Address,
     DME_Roles,
     DME_clients,
-    CostOption,
-    CostOptionMap,
-    BookingCostOption,
     Pallet,
     Surcharge,
     Dme_utl_fp_statuses,
@@ -730,7 +727,8 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_surcharges(self, obj):
-        surcharges = get_surcharges_with_quote(obj)
+        booking = self.context.get("booking")
+        surcharges = get_surcharges_with_quote(obj, booking)
         context = {"client_mark_up_percent": obj.client_mark_up_percent}
         return SurchargeSerializer(surcharges, context=context, many=True).data
 
@@ -890,6 +888,7 @@ class FpSerializer(serializers.ModelSerializer):
             "service_cutoff_time",
             "rule_type",
             "rule_type_code",
+            "fp_markupfuel_levy_percent",
         )
 
 
@@ -1060,41 +1059,6 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CostOptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CostOption
-        fields = ("id", "code", "description", "initial_markup_percentage")
-
-
-class CostOptionMapSerializer(serializers.ModelSerializer):
-    cost_option = serializers.SerializerMethodField(read_only=True)
-
-    def get_cost_option(self, obj):
-        return CostOptionSerializer(obj.dme_cost_option).data
-
-    class Meta:
-        model = CostOptionMap
-        exclude = (
-            "z_createdBy",
-            "z_modifiedAt",
-            "z_modifiedBy",
-            "fp",
-            "dme_cost_option",
-            "is_active",
-        )
-
-
-class BookingCostOptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BookingCostOption
-        exclude = (
-            "z_createdBy",
-            "z_modifiedAt",
-            "z_modifiedBy",
-            "is_active",
-        )
-
-
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
@@ -1106,7 +1070,10 @@ class SurchargeSerializer(serializers.ModelSerializer):
     amount_cl = serializers.SerializerMethodField(read_only=True)
 
     def get_description(self, obj):
-        return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
+        try:
+            return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
+        except:
+            return ""
 
     def get_amount_cl(self, obj):
         client_mark_up_percent = self.context.get("client_mark_up_percent", 0)

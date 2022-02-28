@@ -83,6 +83,12 @@ def _confirm_visible(booking, booking_lines, quotes):
 
 
 def build_special_fp_pricings(booking, packed_status):
+    # Get manually entered surcharges total
+    try:
+        manual_surcharges_total = booking.get_manual_surcharges_total()
+    except:
+        manual_surcharges_total = 0
+
     quote_0 = API_booking_quotes()
     quote_0.api_results_id = ""
     quote_0.fk_booking_id = booking.pk_booking_id
@@ -96,6 +102,7 @@ def build_special_fp_pricings(booking, packed_status):
     quote_0.tax_value_1 = 0
     quote_0.client_mu_1_minimum_values = 0
     quote_0.packed_status = packed_status
+    quote_0.x_price_surcharge = manual_surcharges_total
 
     # Plum & JasonL & BSD & Cadrys
     if (
@@ -200,6 +207,7 @@ def pricing(
             )
 
             if booking_lines:
+                build_special_fp_pricings(booking, packed_status)
                 _loop_process(
                     booking,
                     booking_lines,
@@ -209,10 +217,10 @@ def pricing(
                     pu_zones,
                     de_zones,
                 )
-                build_special_fp_pricings(booking, packed_status)
     else:
         if booking_lines:
             for packed_status in packed_statuses:
+                build_special_fp_pricings(booking, packed_status)
                 _loop_process(
                     booking,
                     booking_lines,
@@ -222,7 +230,6 @@ def pricing(
                     pu_zones,
                     de_zones,
                 )
-                build_special_fp_pricings(booking, packed_status)
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
@@ -270,7 +277,7 @@ def _loop_process(
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes, client, fp)
+        quotes = apply_markups(quotes, client, fps)
 
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)
