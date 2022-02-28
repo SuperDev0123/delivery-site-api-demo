@@ -16,26 +16,26 @@ PRICING_TIME = 40  # seconds
 
 # "Camerons", "Toll", "Sendle", "Capital", "Century", "Fastway", "Startrack", "TNT", "Hunter", "AUSPost", "ATC"
 AVAILABLE_FPS_4_FC = [
-    "Startrack",
-    "AUSPost",
-    "TNT",
-    "Capital",
+    # "Startrack",
+    # "AUSPost",
+    # "TNT",
+    # "Capital",
     "Hunter",
-    "Sendle",
-    "Allied",
-    "Camerons",
-    "Toll",
-    "Century",
-    "ATC",
-    "Northline",
+    # "Sendle",
+    # "Allied",
+    # "Camerons",
+    # "Toll",
+    # "Century",
+    # "ATC",
+    # "Northline",
 ]
 
 BUILT_IN_PRICINGS = {
-    "atc": {"service_types": ["standard", "vip", "express"]},
-    "century": {"service_types": ["standard", "vip", "priority"]},
+    # "atc": {"service_types": ["standard", "vip", "express"]},
+    # "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
-    "toll": {"service_types": ["standard", "express"]},
-    "northline": {"service_types": ["standard"]},
+    # "toll": {"service_types": ["standard", "express"]},
+    # "northline": {"service_types": ["standard"]},
     # "tnt": {
     #     "service_types": [
     #         "Overnight - 9:00 Express*",
