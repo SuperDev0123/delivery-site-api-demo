@@ -202,7 +202,7 @@ def _loop_process(
         loop.close()
 
     quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=false
+        fk_booking_id=booking.pk_booking_id, is_used=False
     )
 
     fp_names = [quote.freight_provider for quote in quotes]
