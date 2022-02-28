@@ -31,11 +31,11 @@ AVAILABLE_FPS_4_FC = [
 ]
 
 BUILT_IN_PRICINGS = {
-    # "atc": {"service_types": ["standard", "vip", "express"]},
-    # "century": {"service_types": ["standard", "vip", "priority"]},
+    "atc": {"service_types": ["standard", "vip", "express"]},
+    "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
-    # "toll": {"service_types": ["standard", "express"]},
-    # "northline": {"service_types": ["standard"]},
+    "toll": {"service_types": ["standard", "express"]},
+    "northline": {"service_types": ["standard"]},
     # "tnt": {
     #     "service_types": [
     #         "Overnight - 9:00 Express*",
