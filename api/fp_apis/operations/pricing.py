@@ -169,7 +169,7 @@ def pricing(
                 pu_zones,
                 de_zones,
             )
-
+    print("@14-", datetime.now(), len(connection.queries))
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
     )
@@ -201,9 +201,12 @@ def _loop_process(
     finally:
         loop.close()
 
+    print("@23-", datetime.now(), len(connection.queries))
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
     )
+    fp_names = [quote.freight_provider for quote in quotes]
+    fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
     fp_names = [quote.freight_provider for quote in quotes]
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
@@ -253,6 +256,8 @@ def _loop_process(
     end_hit_count = len(connection.queries)
     print("----@_loop_process-2E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
 
+    print("@24-", datetime.now(), len(connection.queries))
+
 
 async def _pricing_process(
     booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
@@ -287,6 +292,7 @@ async def pricing_workers(
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
 
+    print("@21-", datetime.now(), len(connection.queries))
     client_fps = Client_FP.objects.prefetch_related("fp").filter(
         client__company_name__iexact=booking.b_client_name, is_active=True
     )
@@ -397,7 +403,7 @@ async def pricing_workers(
                 de_zones,
             )
             _workers.add(_worker)
-
+    print("@22-", datetime.now(), len(connection.queries))
     logger.info("#911 [PRICING] - Pricing workers will start soon")
     await asyncio.gather(*_workers)
     logger.info("#919 [PRICING] - Pricing workers finished all")
